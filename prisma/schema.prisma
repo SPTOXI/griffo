@@ -1,0 +1,87 @@
+// Prisma schema - Career Analyst Platform
+// SQLite - lightweight, economic storage for users, resumes, analyses, subscriptions
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  phone        String?
+  profession   String?
+  // Plan management (Phase 1 - simple flag-based; Phase 2 - integration with payment gateway)
+  plan         String   @default("free") // free | day | monthly | annual
+  planStartsAt DateTime?
+  planEndsAt   DateTime?
+  // For Phase 2: B2B recruiter marketplace consent
+  recruiterOptIn Boolean @default(false)
+  // Profile visibility for future recruiter search (Phase 2)
+  profileVisible Boolean @default(false)
+  // Audit
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  resumes       Resume[]
+  subscriptions Subscription[]
+  auditLogs     AuditLog[]
+}
+
+model Resume {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Original uploaded content (plain text / markdown)
+  originalContent  String
+  originalFormat   String   @default("text") // text | markdown
+  // Analysis output as JSON (scores + strengths + weaknesses + recommendations)
+  analysisJson     String?
+  // Rewritten resume content (markdown)
+  rewrittenContent String?
+  // Status flow: uploaded -> analyzed -> rewrite_requested -> rewritten -> confirmed
+  status           String   @default("uploaded")
+  // Token / cost tracking for pricing model
+  analysisTokensIn  Int     @default(0)
+  analysisTokensOut Int     @default(0)
+  rewriteTokensIn   Int     @default(0)
+  rewriteTokensOut  Int     @default(0)
+  analysisCostUsd   Float   @default(0)
+  rewriteCostUsd    Float   @default(0)
+  // Audit
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  auditLogs AuditLog[]
+}
+
+model Subscription {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan       String   // day | monthly | annual
+  priceBrl   Float
+  startsAt   DateTime @default(now())
+  endsAt     DateTime
+  status     String   @default("active") // active | expired | cancelled
+  paymentRef String?  // For Phase 2 payment gateway integration
+  createdAt  DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  resumeId  String?
+  resume    Resume?  @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  action    String   // register | login | upload | analyze | rewrite | download | subscribe
+  meta      String?  // JSON string with extra info
+  ipHash    String?  // hashed IP for security audit
+  createdAt DateTime @default(now())
+}

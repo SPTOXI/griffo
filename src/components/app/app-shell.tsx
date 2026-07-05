@@ -1,0 +1,184 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useAuth, useNav, AppView } from '@/store/auth'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import {
+  LayoutDashboard, Upload, FileSearch, FileEdit, Download, CreditCard, Settings, History,
+  LogOut, FileText, Sparkles, ChevronRight, Menu, X
+} from 'lucide-react'
+import { Dashboard } from './dashboard'
+import { UploadView } from './upload-view'
+import { AnalysisView } from './analysis-view'
+import { RewriteView } from './rewrite-view'
+import { DownloadsView } from './downloads-view'
+import { PlansView } from './plans-view'
+import { HistoryView } from './history-view'
+import { SettingsView } from './settings-view'
+
+const NAV_ITEMS: { view: AppView; label: string; icon: any }[] = [
+  { view: 'dashboard', label: 'Painel', icon: LayoutDashboard },
+  { view: 'upload', label: 'Enviar currículo', icon: Upload },
+  { view: 'analysis', label: 'Laudo', icon: FileSearch },
+  { view: 'rewrite', label: 'Reescrita', icon: FileEdit },
+  { view: 'downloads', label: 'Downloads', icon: Download },
+  { view: 'history', label: 'Histórico', icon: History },
+  { view: 'plans', label: 'Planos', icon: CreditCard },
+  { view: 'settings', label: 'Configurações', icon: Settings },
+]
+
+export function AppShell({ onExit }: { onExit: () => void }) {
+  const { user, logout } = useAuth()
+  const { view, setView } = useNav()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const initials = (user?.name || user?.email || '?')
+    .split(' ')
+    .map(s => s[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+
+  const handleLogout = async () => {
+    await logout()
+    onExit()
+  }
+
+  const planLabel = (plan: string) => {
+    if (plan === 'free') return 'Gratuito'
+    if (plan === 'day') return 'Passe Diário'
+    if (plan === 'monthly') return 'Mensal'
+    if (plan === 'annual') return 'Anual'
+    return plan
+  }
+  const planActive = user?.planActive
+
+  return (
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      {/* TOP BAR */}
+      <header className="sticky top-0 z-30 bg-white border-b border-slate-200 h-14 flex items-center px-4 gap-3">
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="lg:hidden p-2 -ml-2 rounded-md hover:bg-slate-100"
+          aria-label="Menu"
+        >
+          {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+        <button onClick={onExit} className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+            <FileText className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-slate-900 hidden sm:block">CareerLens</span>
+        </button>
+
+        <div className="hidden sm:flex items-center gap-1 ml-4 text-sm text-slate-500">
+          <span>Painel</span>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-slate-900 font-medium capitalize">{NAV_ITEMS.find(n => n.view === view)?.label}</span>
+        </div>
+
+        <div className="ml-auto flex items-center gap-2">
+          {planActive ? (
+            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 hidden sm:inline-flex">
+              <Sparkles className="w-3 h-3 mr-1" /> {planLabel(user?.plan || 'free')}
+            </Badge>
+          ) : (
+            <Button size="sm" onClick={() => setView('plans')} className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs">
+              <Sparkles className="w-3 h-3 mr-1" /> Assinar
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 p-1 pr-2 rounded-full hover:bg-slate-100 transition-colors">
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback className="bg-emerald-100 text-emerald-700 text-xs font-semibold">{initials}</AvatarFallback>
+                </Avatar>
+                <span className="hidden sm:block text-sm text-slate-700 max-w-[120px] truncate">{user?.name || user?.email}</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <p className="text-sm font-medium text-slate-900 truncate">{user?.name}</p>
+                <p className="text-xs text-slate-500 font-normal truncate">{user?.email}</p>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setView('settings')}>
+                <Settings className="w-4 h-4 mr-2" /> Configurações
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setView('plans')}>
+                <CreditCard className="w-4 h-4 mr-2" /> Meu plano
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-700">
+                <LogOut className="w-4 h-4 mr-2" /> Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
+
+      <div className="flex-1 flex">
+        {/* SIDEBAR */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 bg-black/30 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        )}
+        <aside className={`
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          fixed lg:static inset-y-0 left-0 z-40 lg:z-auto
+          w-64 bg-white border-r border-slate-200
+          flex flex-col
+          transition-transform duration-200
+          pt-14 lg:pt-0
+        `}>
+          <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon
+              const active = view === item.view
+              return (
+                <button
+                  key={item.view}
+                  onClick={() => { setView(item.view); setSidebarOpen(false) }}
+                  className={`
+                    w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors
+                    ${active ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}
+                  `}
+                >
+                  <Icon className={`w-4 h-4 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
+                  <span>{item.label}</span>
+                </button>
+              )
+            })}
+          </nav>
+          {!planActive && (
+            <div className="p-3 border-t border-slate-200">
+              <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 p-3">
+                <p className="text-xs font-semibold text-emerald-900 mb-1">Desbloqueie tudo</p>
+                <p className="text-xs text-emerald-700 mb-2">Reescrita, downloads e histórico completo.</p>
+                <Button size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 h-8 text-xs" onClick={() => setView('plans')}>
+                  Ver planos
+                </Button>
+              </div>
+            </div>
+          )}
+        </aside>
+
+        {/* MAIN */}
+        <main className="flex-1 min-w-0 overflow-x-hidden">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+            {view === 'dashboard' && <Dashboard />}
+            {view === 'upload' && <UploadView />}
+            {view === 'analysis' && <AnalysisView />}
+            {view === 'rewrite' && <RewriteView />}
+            {view === 'downloads' && <DownloadsView />}
+            {view === 'history' && <HistoryView />}
+            {view === 'plans' && <PlansView />}
+            {view === 'settings' && <SettingsView />}
+          </div>
+        </main>
+      </div>
+    </div>
+  )
+}
