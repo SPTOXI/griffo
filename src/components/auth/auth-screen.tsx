@@ -58,7 +58,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
               <FileText className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-slate-900 text-sm">CareerLens</span>
+            <span className="font-bold text-slate-900 text-sm">Griffo</span>
           </div>
         </div>
       </header>

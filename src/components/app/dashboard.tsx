@@ -48,7 +48,7 @@ export function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Olá, {user?.name?.split(' ')[0] || 'candidato(a)'} 👋</h1>
-          <p className="text-sm text-slate-500 mt-1">Aqui está o resumo da sua atividade no CareerLens.</p>
+          <p className="text-sm text-slate-500 mt-1">Aqui está o resumo da sua atividade no Griffo.</p>
         </div>
         <Button onClick={() => setView('upload')} className="bg-emerald-600 hover:bg-emerald-700 self-start sm:self-auto">
           <Upload className="w-4 h-4 mr-2" /> Novo currículo

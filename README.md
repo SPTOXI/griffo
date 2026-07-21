@@ -1,4 +1,7 @@
-# CareerLens — Análise de Currículo com IA
+# Griffo — Análise de Currículo com IA
+
+> **griffo** · do latim *graphium* — estilo, escrita, pena de escrever.
+> Porque seu currículo é a primeira coisa que falam por você antes mesmo de você abrir a boca.
 
 Plataforma de análise e reescrita de currículos baseada nas melhores práticas de RH e LinkedIn Talent Solutions. Recebe um currículo atual, gera laudo técnico com nota 0–10 em 8 dimensões, e (com autorização explícita do usuário) reescreve o currículo otimizado para ATS, disponível para download em PDF e Markdown.
 
@@ -31,7 +34,7 @@ bun install
 
 # 2. Configurar variáveis de ambiente
 cp .env.example .env
-# Edite o .env e adicione suas credenciais da Z.ai
+# Edite o .env e adicione suas credenciais
 
 # 3. Criar o banco de dados
 bun run db:push
@@ -44,12 +47,11 @@ Acesse: http://localhost:3000
 
 ## 🔐 Variáveis de ambiente
 
-Crie um arquivo `.env` na raiz com:
+Crie um arquivo `.env` na raiz com (veja `.env.example`):
 
 ```env
 DATABASE_URL="file:./db/custom.db"
 SESSION_SECRET="sua-chave-secreta-forte-aqui"  # gere com: openssl rand -hex 32
-# As credenciais da Z.ai são lidas automaticamente pelo SDK
 ```
 
 ## 📊 Modelo de negócio e custos

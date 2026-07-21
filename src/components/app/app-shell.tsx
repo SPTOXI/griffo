@@ -71,7 +71,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
             <FileText className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-slate-900 hidden sm:block">CareerLens</span>
+          <span className="font-bold text-slate-900 hidden sm:block">Griffo</span>
         </button>
 
         <div className="hidden sm:flex items-center gap-1 ml-4 text-sm text-slate-500">

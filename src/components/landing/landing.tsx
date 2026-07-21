@@ -24,7 +24,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div className="flex flex-col leading-none">
-              <span className="font-bold text-slate-900 text-base">CareerLens</span>
+              <span className="font-bold text-slate-900 text-base">Griffo</span>
               <span className="text-[10px] uppercase tracking-wider text-slate-500">Análise de Currículo</span>
             </div>
           </div>
@@ -316,7 +316,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
                 <FileText className="w-4 h-4 text-white" />
               </div>
-              <span className="font-bold text-slate-900">CareerLens</span>
+              <span className="font-bold text-slate-900">Griffo</span>
             </div>
             <p className="text-slate-500">Análise de currículo com IA, baseada em práticas de RH e LinkedIn Talent Solutions.</p>
           </div>
@@ -338,11 +338,11 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
           </div>
           <div>
             <h4 className="font-semibold text-slate-900 mb-2">Contato</h4>
-            <p className="text-slate-500">contato@careerlens.app<br/>São Paulo, Brasil</p>
+            <p className="text-slate-500">contato@griffo.app<br/>São Paulo, Brasil</p>
           </div>
         </div>
         <div className="border-t border-slate-200 py-4 text-center text-xs text-slate-500">
-          © {new Date().getFullYear()} CareerLens. Feito no Brasil. Em conformidade com a LGPD.
+          © {new Date().getFullYear()} Griffo. Feito no Brasil. Em conformidade com a LGPD.
         </div>
       </footer>
     </div>

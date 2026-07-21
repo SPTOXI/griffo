@@ -24,7 +24,7 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 animate-pulse" />
-          <p className="text-xs text-slate-400">Carregando CareerLens…</p>
+          <p className="text-xs text-slate-400">Carregando Griffo…</p>
         </div>
       </div>
     )

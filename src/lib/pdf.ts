@@ -51,7 +51,7 @@ function stripMd(s: string): string {
 export async function generateResumePdf(markdownContent: string): Promise<Buffer> {
   const doc = await PDFDocument.create()
   doc.setTitle('Currículo')
-  doc.setAuthor('CareerLens')
+  doc.setAuthor('Griffo')
   doc.setSubject('Currículo Otimizado')
   const font = await doc.embedFont(StandardFonts.Helvetica)
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold)
@@ -187,7 +187,7 @@ export async function generateAnalysisReportPdf(opts: {
 }): Promise<Buffer> {
   const doc = await PDFDocument.create()
   doc.setTitle('Laudo de Análise de Currículo')
-  doc.setAuthor('CareerLens')
+  doc.setAuthor('Griffo')
   const font = await doc.embedFont(StandardFonts.Helvetica)
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold)
   const fontItalic = await doc.embedFont(StandardFonts.HelveticaOblique)
