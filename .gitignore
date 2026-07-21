@@ -67,4 +67,4 @@ db/*.db-journal
 /upload/
 /scripts/output/
 mini-services/*/node_modules
-mini-services/*/.env*
+mini-services/*/.env*worklog.md
