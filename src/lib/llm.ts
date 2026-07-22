@@ -1,19 +1,31 @@
-import ZAI from 'z-ai-web-dev-sdk'
+import OpenAI from 'openai'
 
-let _clientPromise: Promise<any> | null = null
+const MOONSHOT_API_KEY = process.env.MOONSHOT_API_KEY
+const MOONSHOT_BASE_URL = 'https://api.moonshot.ai/v1'
+const MOONSHOT_MODEL = 'kimi-k3'
 
-function getClient(): Promise<any> {
-  if (!_clientPromise) {
-    _clientPromise = ZAI.create()
+let _client: OpenAI | null = null
+
+function getClient(): OpenAI {
+  if (!_client) {
+    if (!MOONSHOT_API_KEY) {
+      throw new Error('MOONSHOT_API_KEY is not set. Add it to your .env file.')
+    }
+    _client = new OpenAI({
+      apiKey: MOONSHOT_API_KEY,
+      baseURL: MOONSHOT_BASE_URL,
+    })
   }
-  return _clientPromise
+  return _client
 }
 
 // Cost estimation per token (USD)
-// GLM-4.6 / Flash pricing approximated for cost calculation
+// Kimi K3 pricing (July 2026):
+//   Input:  $3.00 / 1M tokens ($0.30 / 1M with cache hits)
+//   Output: $15.00 / 1M tokens
 export const TOKEN_COST = {
-  inputPer1k: 0.0006,   // $0.60 / 1M tokens
-  outputPer1k: 0.0022,  // $2.20 / 1M tokens
+  inputPer1k: 0.003,    // $3.00 / 1M tokens
+  outputPer1k: 0.015,   // $15.00 / 1M tokens
 }
 
 export interface AnalysisDimension {
@@ -86,15 +98,15 @@ Reescreva o currículo do usuário aplicando estas regras:
 Retorne APENAS o currículo reescrito em Markdown, sem comentários adicionais.`
 
 export async function analyzeResume(resumeText: string): Promise<{ analysis: ResumeAnalysis; tokensIn: number; tokensOut: number }> {
-  const client = await getClient()
+  const client = getClient()
   const userPrompt = `Analise o currículo abaixo e produza o laudo JSON conforme as instruções.\n\n--- CURRÍCULO ---\n${resumeText}`
 
   const completion = await client.chat.completions.create({
+    model: MOONSHOT_MODEL,
     messages: [
-      { role: 'assistant', content: ANALYSIS_SYSTEM },
+      { role: 'system', content: ANALYSIS_SYSTEM },
       { role: 'user', content: userPrompt },
     ],
-    thinking: { type: 'disabled' },
     temperature: 0.3,
     max_tokens: 2400,
   })
@@ -144,15 +156,15 @@ export async function analyzeResume(resumeText: string): Promise<{ analysis: Res
 }
 
 export async function rewriteResume(originalText: string, analysisJson: string): Promise<{ content: string; tokensIn: number; tokensOut: number }> {
-  const client = await getClient()
+  const client = getClient()
   const userPrompt = `Currículo original:\n\n${originalText}\n\n--- Laudo de análise (use para priorizar correções) ---\n${analysisJson}\n\nReescreva o currículo em Markdown conforme as instruções.`
 
   const completion = await client.chat.completions.create({
+    model: MOONSHOT_MODEL,
     messages: [
-      { role: 'assistant', content: REWRITE_SYSTEM },
+      { role: 'system', content: REWRITE_SYSTEM },
       { role: 'user', content: userPrompt },
     ],
-    thinking: { type: 'disabled' },
     temperature: 0.6,
     max_tokens: 3200,
   })
