@@ -57,6 +57,7 @@ server.log
 # Database files (NEVER commit SQLite)
 *.db
 *.db-journal
+*.bak
 db/*.db
 db/*.db-journal
 
