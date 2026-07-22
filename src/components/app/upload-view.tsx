@@ -24,11 +24,38 @@ export function UploadView() {
   const maxChars = 20000
   const minChars = 80
 
-  const handleFile = (file: File) => {
-    if (file.size > 500 * 1024) {
-      setError('Arquivo muito grande (máx. 500KB).')
+  const handleFile = async (file: File) => {
+    setError(null)
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Arquivo muito grande (máx. 2MB).')
       return
     }
+
+    if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+      try {
+        setLoading(true)
+        const arrayBuffer = await file.arrayBuffer()
+        const pdfParse = (await import('pdf-parse')).default
+        const data = await pdfParse(Buffer.from(arrayBuffer))
+        
+        if (!data.text || data.text.trim().length < minChars) {
+          setError('Não foi possível extrair o texto do PDF ou o conteúdo é muito curto.')
+          return
+        }
+
+        setContent(data.text)
+        setFormat('text')
+        if (!title) setTitle(file.name.replace(/\.pdf$/i, ''))
+        toast.success('Texto do PDF extraído com sucesso!')
+      } catch (err) {
+        console.error('Erro ao ler PDF:', err)
+        setError('Não foi possível ler o arquivo PDF. Tente copiar e colar o texto diretamente.')
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
     const reader = new FileReader()
     reader.onload = (e) => {
       const text = String(e.target?.result || '')
@@ -88,13 +115,13 @@ export function UploadView() {
     <div className="space-y-5 max-w-4xl">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Enviar currículo</h1>
-        <p className="text-sm text-slate-500 mt-1">Cole o texto do seu currículo ou anexe um arquivo .txt ou .md. A análise é gratuita.</p>
+        <p className="text-sm text-slate-500 mt-1">Cole o texto do seu currículo ou anexe um arquivo .pdf, .txt ou .md. A análise é gratuita.</p>
       </div>
 
       <Alert>
         <Info className="w-4 h-4" />
         <AlertDescription>
-          <strong>Como obter o melhor resultado:</strong> copie o conteúdo do seu PDF/Word colando aqui como texto puro. Mantenha seções como <em>Resumo, Experiência, Formação, Habilidades</em>. Não precisa formatar — a IA lê o conteúdo, não o design.
+          <strong>Como obter o melhor resultado:</strong> Você pode anexar um arquivo <strong>.pdf</strong>, <strong>.txt</strong> ou <strong>.md</strong>, ou copiar e colar o texto diretamente.
         </AlertDescription>
       </Alert>
 
@@ -111,12 +138,12 @@ export function UploadView() {
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <Upload className="w-4 h-4 mr-1.5" /> Anexar arquivo
+                <Upload className="w-4 h-4 mr-1.5" /> Anexar arquivo (.pdf, .txt, .md)
               </Button>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".txt,.md,.markdown,text/plain,text/markdown"
+                accept=".pdf,.txt,.md,.markdown,application/pdf,text/plain,text/markdown"
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0]
