@@ -18,6 +18,8 @@ model User {
   passwordHash String
   phone        String?
   profession   String?
+  // Role & Permissions
+  role         String   @default("user") // user | admin
   // Plan management (Phase 1 - simple flag-based; Phase 2 - integration with payment gateway)
   plan         String   @default("free") // free | day | monthly | annual
   planStartsAt DateTime?
@@ -33,6 +35,13 @@ model User {
   resumes       Resume[]
   subscriptions Subscription[]
   auditLogs     AuditLog[]
+}
+
+model SystemConfig {
+  id        String   @id @default("global")
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
 }
 
 model Resume {

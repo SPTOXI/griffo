@@ -11,6 +11,7 @@ export async function GET() {
       id: user.id,
       email: user.email,
       name: user.name,
+      role: user.role,
       profession: user.profession,
       plan: user.plan,
       planStartsAt: user.planStartsAt,

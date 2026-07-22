@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import {
   LayoutDashboard, Upload, FileSearch, FileEdit, Download, CreditCard, Settings, History,
-  LogOut, FileText, Sparkles, ChevronRight, Menu, X
+  LogOut, FileText, Sparkles, ChevronRight, Menu, X, Shield
 } from 'lucide-react'
 import { Dashboard } from './dashboard'
 import { UploadView } from './upload-view'
@@ -18,6 +18,7 @@ import { DownloadsView } from './downloads-view'
 import { PlansView } from './plans-view'
 import { HistoryView } from './history-view'
 import { SettingsView } from './settings-view'
+import { AdminView } from '../admin/admin-view'
 
 const NAV_ITEMS: { view: AppView; label: string; icon: any }[] = [
   { view: 'dashboard', label: 'Painel', icon: LayoutDashboard },
@@ -77,7 +78,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
         <div className="hidden sm:flex items-center gap-1 ml-4 text-sm text-slate-500">
           <span>Painel</span>
           <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-slate-900 font-medium capitalize">{NAV_ITEMS.find(n => n.view === view)?.label}</span>
+          <span className="text-slate-900 font-medium capitalize">{NAV_ITEMS.find(n => n.view === view)?.label || (view === 'admin' ? 'Área Admin' : view)}</span>
         </div>
 
         <div className="ml-auto flex items-center gap-2">
@@ -105,6 +106,11 @@ export function AppShell({ onExit }: { onExit: () => void }) {
                 <p className="text-xs text-slate-500 font-normal truncate">{user?.email}</p>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              {user?.role === 'admin' && (
+                <DropdownMenuItem onClick={() => setView('admin')} className="text-violet-600 font-semibold">
+                  <Shield className="w-4 h-4 mr-2" /> Área Admin
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => setView('settings')}>
                 <Settings className="w-4 h-4 mr-2" /> Configurações
               </DropdownMenuItem>
@@ -151,6 +157,21 @@ export function AppShell({ onExit }: { onExit: () => void }) {
                 </button>
               )
             })}
+
+            {user?.role === 'admin' && (
+              <div className="pt-2 mt-2 border-t border-slate-100">
+                <button
+                  onClick={() => { setView('admin'); setSidebarOpen(false) }}
+                  className={`
+                    w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors
+                    ${view === 'admin' ? 'bg-violet-50 text-violet-700 font-medium' : 'text-violet-600 hover:bg-violet-50'}
+                  `}
+                >
+                  <Shield className="w-4 h-4 text-violet-600" />
+                  <span>Área Admin</span>
+                </button>
+              </div>
+            )}
           </nav>
           {!planActive && (
             <div className="p-3 border-t border-slate-200">
@@ -176,6 +197,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
             {view === 'history' && <HistoryView />}
             {view === 'plans' && <PlansView />}
             {view === 'settings' && <SettingsView />}
+            {view === 'admin' && <AdminView />}
           </div>
         </main>
       </div>

@@ -6,6 +6,7 @@ export interface AuthUser {
   id: string
   email: string
   name: string
+  role?: string
   profession?: string | null
   plan: string
   planStartsAt?: string | null
@@ -55,6 +56,7 @@ export type AppView =
   | 'plans'
   | 'settings'
   | 'history'
+  | 'admin'
 
 interface NavState {
   view: AppView
