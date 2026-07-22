@@ -1,12 +1,12 @@
 // Prisma schema - Career Analyst Platform
-// SQLite - lightweight, economic storage for users, resumes, analyses, subscriptions
+// PostgreSQL - via Supabase for users, resumes, analyses, subscriptions
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
