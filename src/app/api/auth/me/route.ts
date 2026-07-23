@@ -14,6 +14,7 @@ export async function GET() {
       role: user.role,
       profession: user.profession,
       plan: user.plan,
+      credits: user.credits,
       planStartsAt: user.planStartsAt,
       planEndsAt: user.planEndsAt,
       recruiterOptIn: user.recruiterOptIn,

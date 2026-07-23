@@ -18,7 +18,8 @@ export async function POST(req: Request) {
     if (!parsed.success) return NextResponse.json({ error: 'Plano inválido' }, { status: 400 })
 
     const plan = parsed.data.plan
-    const pricing = computePricing().find(p => p.plan === plan)
+    const pricingMap = computePricing()
+    const pricing = pricingMap[plan]
     if (!pricing) return NextResponse.json({ error: 'Plano não encontrado' }, { status: 400 })
 
     // In Phase 1 we simulate activation (no payment gateway yet).

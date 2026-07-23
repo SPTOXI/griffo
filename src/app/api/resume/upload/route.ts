@@ -7,7 +7,7 @@ const schema = z.object({
   content: z.string().min(80).max(30000),
   format: z.enum(['text', 'markdown', 'pdf']).default('text'),
   title: z.string().optional(),
-  socialLinks: z.record(z.string()).optional(),
+  socialLinks: z.record(z.string(), z.string()).optional(),
   socialConsent: z.boolean().default(false),
 })
 

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { getCurrentUser, hasActivePlan } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth'
 import { generateResumePdf, generateAnalysisReportPdf, sanitizeMarkdown } from '@/lib/pdf'
+import { deductCredits, CREDIT_COSTS } from '@/lib/credits'
 
 // GET ?resumeId=...&type=resume_pdf|resume_md|analysis_pdf
 export async function GET(req: Request) {
@@ -18,9 +19,22 @@ export async function GET(req: Request) {
     const resume = await db.resume.findFirst({ where: { id: resumeId, userId: user.id } })
     if (!resume) return NextResponse.json({ error: 'Currículo não encontrado' }, { status: 404 })
 
-    // Downloads require active plan (paid)
-    if (!hasActivePlan(user)) {
-      return NextResponse.json({ error: 'Assine um plano para baixar.', code: 'PLAN_REQUIRED' }, { status: 403 })
+    // Deduct 1 credit for PDF download
+    const costCredits = CREDIT_COSTS.pdf_download
+    const deduction = await deductCredits(
+      user.id,
+      costCredits,
+      `Download do currículo em ${type} (${costCredits} cr)`
+    )
+
+    if (!deduction.success) {
+      return NextResponse.json(
+        {
+          error: 'Seu saldo Griffo acabou. Continue utilizando a IA adquirindo créditos.',
+          code: 'INSUFFICIENT_CREDITS',
+        },
+        { status: 402 }
+      )
     }
 
     await db.auditLog.create({
@@ -31,7 +45,7 @@ export async function GET(req: Request) {
       if (!resume.rewrittenContent) return NextResponse.json({ error: 'Currículo ainda não foi reescrito' }, { status: 400 })
       const buf = await generateResumePdf(resume.rewrittenContent)
       const safeName = (user.name || 'curriculo').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()
-      return new NextResponse(buf, {
+      return new NextResponse(new Uint8Array(buf), {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename="${safeName}_curriculo.pdf"`,
@@ -44,7 +58,7 @@ export async function GET(req: Request) {
       const md = sanitizeMarkdown(resume.rewrittenContent)
       const buf = Buffer.from(md, 'utf-8')
       const safeName = (user.name || 'curriculo').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()
-      return new NextResponse(buf, {
+      return new NextResponse(new Uint8Array(buf), {
         headers: {
           'Content-Type': 'text/markdown; charset=utf-8',
           'Content-Disposition': `attachment; filename="${safeName}_curriculo.md"`,
@@ -62,7 +76,7 @@ export async function GET(req: Request) {
         createdAt: resume.updatedAt,
       })
       const safeName = (user.name || 'analise').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()
-      return new NextResponse(buf, {
+      return new NextResponse(new Uint8Array(buf), {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename="${safeName}_laudo.pdf"`,
@@ -73,6 +87,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Tipo de download inválido' }, { status: 400 })
   } catch (e: any) {
     console.error('download error', e)
-    return NextResponse.json({ error: 'Erro ao gerar download.' }, { status: 500 })
+    return NextResponse.json({ error: 'Erro ao gerar arquivo para download' }, { status: 500 })
   }
 }

@@ -68,7 +68,8 @@ export function UploadView() {
       try {
         setLoading(true)
         const arrayBuffer = await file.arrayBuffer()
-        const pdfParse = (await import('pdf-parse')).default
+        const pdfParseModule: any = await import('pdf-parse')
+        const pdfParse = pdfParseModule.default || pdfParseModule
         const data = await pdfParse(Buffer.from(arrayBuffer))
         
         if (!data.text || data.text.trim().length < minChars) {

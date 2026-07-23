@@ -1,5 +1,5 @@
 import {
-  PDFDocument, PDFString, StandardFonts, rgb, PDFFont, PDFPage, PDFText,
+  PDFDocument, PDFString, StandardFonts, rgb, PDFFont, PDFPage,
 } from 'pdf-lib'
 
 // Color helpers

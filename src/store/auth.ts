@@ -9,6 +9,7 @@ export interface AuthUser {
   role?: string
   profession?: string | null
   plan: string
+  credits?: number
   planStartsAt?: string | null
   planEndsAt?: string | null
   planActive?: boolean
