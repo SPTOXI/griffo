@@ -43,7 +43,6 @@ export async function getClient(): Promise<{ client: OpenAI; model: string }> {
 }
 
 // Cost estimation per token (USD)
-// Kimi K3 / LLM default pricing model
 export const TOKEN_COST = {
   inputPer1k: 0.003, // $3.00 / 1M tokens
   outputPer1k: 0.015, // $15.00 / 1M tokens
@@ -56,6 +55,14 @@ export interface AnalysisDimension {
   rationale: string
 }
 
+export interface SocialProfileAdvice {
+  platform: string // 'LinkedIn' | 'Gupy' | 'GitHub' | 'Instagram' | 'Portfólio'
+  url: string
+  headline?: string
+  aboutSummary?: string
+  tips: string[]
+}
+
 export interface ResumeAnalysis {
   overall: number // 0-10 weighted overall
   dimensions: AnalysisDimension[] // each dimension scored 0-10
@@ -65,9 +72,10 @@ export interface ResumeAnalysis {
   keywords: string[] // suggested ATS keywords
   atsFriendly: boolean
   summary: string
+  socialAdvice?: SocialProfileAdvice[]
 }
 
-const ANALYSIS_SYSTEM = `Você é o avaliador de carreiras e inteligência de recrutamento do Griffo. Você combina as melhores práticas de triagem automática de ATS (Gupy, LinkedIn Talent Solutions, Workday, Taleo, Greenhouse, Lever), critérios rigorosos de recrutadores executivos, métodos de mensuração de impacto (Fórmula STAR & Google XYZ) e sistemas validados de plano de carreira e capacitação profissional.
+const ANALYSIS_SYSTEM = `Você é o avaliador de carreiras e inteligência de recrutamento do Griffo. Você combina as melhores práticas de triagem automática de ATS (Gupy, LinkedIn Talent Solutions, Workday, Taleo, Greenhouse, Lever), critérios rigorosos de recrutadores executivos, métodos de mensuração de impacto (Fórmula STAR & Google XYZ), análise de presença digital (LinkedIn/Gupy/Social) e sistemas validados de plano de carreira e capacitação profissional.
 
 Sua missão: analisar o currículo do usuário com alta precisão e gerar um laudo técnico completo e objetivo em formato JSON.
 
@@ -89,11 +97,22 @@ AVALIE ESTAS DIMENSÕES FUNDAMENTAIS (nota de 0 a 10 cada uma):
 8. "upskilling": Capacitação & Cursos Recomendados
    - Identificação de garras/gaps de conhecimento e sugestão objetiva de cursos, certificações de mercado (ex: AWS, Azure, Scrum Master, PMP, especializações) ou projetos práticos para acelerar o desenvolvimento.
 
+REGRAS DE REDES SOCIAIS & PERFIS PROFISSIONAIS (SE FORNECIDOS):
+- Se o usuário forneceu perfis profissionais ou redes sociais (LinkedIn, Gupy, GitHub, Instagram, Portfólio) com autorização, inclua no JSON a propriedade "socialAdvice": [
+    {
+      "platform": "LinkedIn" | "Gupy" | "GitHub" | "Instagram" | "Portfólio",
+      "url": "URL da plataforma",
+      "headline": "Sugestão de Título Profissional de Alto Impacto para a plataforma (ex: Título do LinkedIn)",
+      "aboutSummary": "Sugestão de texto para a seção 'Sobre' ou Bio da plataforma",
+      "tips": ["Dica 1 para otimizar o algoritmo e marca pessoal", "Dica 2 para palavras-chave e testes Gupy/LinkedIn", "Dica 3 de engajamento/portfólio"]
+    }
+  ]
+
 REGRAS DE RESPOSTA:
 - Seja franco, técnico e altamente específico.
 - "strengths": 3 a 6 pontos fortes concretos evidenciados no currículo.
 - "weaknesses": 3 a 6 pontos de atenção acionáveis (evite obviedades genéricas).
-- "recommendations": 4 a 8 recomendações diretas cobrindo ajustes de currículo, plano de carreira e capacitação técnica.
+- "recommendations": 4 a 8 recomendações diretas cobrindo ajustes de currículo, plano de carreira, redes sociais e capacitação técnica.
 - "keywords": 6 a 12 palavras-chave de alto valor no setor para otimização ATS.
 - "atsFriendly": true apenas se o currículo usar estrutura padrão facilmente interpretável por ATS.
 - "summary": Um parágrafo executivo de 4 a 6 frases com o veredito geral, nível de senioridade percebido e projeção de carreira.
@@ -117,7 +136,16 @@ Retorne EXCLUSIVAMENTE JSON válido no formato:
   "recommendations": ["..."],
   "keywords": ["..."],
   "atsFriendly": boolean,
-  "summary": "..."
+  "summary": "...",
+  "socialAdvice": [
+    {
+      "platform": "LinkedIn",
+      "url": "...",
+      "headline": "...",
+      "aboutSummary": "...",
+      "tips": ["..."]
+    }
+  ]
 }`
 
 const REWRITE_SYSTEM = `Você é o especialista master em reescrita e otimização de currículos do Griffo, alinhado aos padrões da Gupy, LinkedIn Talent Solutions e consultorias de recolocação executiva.
@@ -151,10 +179,23 @@ REGRAS RÍGIDAS DE REESCRITA:
 5. FORMATO: Retorne APENAS o currículo reescrito em Markdown limpo, sem textos introdutórios ou comentários.`
 
 export async function analyzeResume(
-  resumeText: string
+  resumeText: string,
+  socialLinks?: Record<string, string> | null,
+  socialConsent?: boolean
 ): Promise<{ analysis: ResumeAnalysis; tokensIn: number; tokensOut: number }> {
   const { client, model } = await getClient()
-  const userPrompt = `Analise o currículo abaixo de acordo com todas as diretrizes de avaliação, plano de carreira e capacitação:\n\n--- CURRÍCULO ---\n${resumeText}`
+
+  let userPrompt = `Analise o currículo abaixo de acordo com todas as diretrizes de avaliação, plano de carreira e capacitação:\n\n--- CURRÍCULO ---\n${resumeText}`
+
+  if (socialConsent && socialLinks && Object.keys(socialLinks).length > 0) {
+    userPrompt += `\n\n--- PERFIS EM REDES SOCIAIS & PLATAFORMAS (Autorizado pelo usuário para análise e otimização de presença digital) ---`
+    for (const [platform, url] of Object.entries(socialLinks)) {
+      if (url && url.trim().length > 0) {
+        userPrompt += `\n- ${platform}: ${url.trim()}`
+      }
+    }
+    userPrompt += `\n\nComo o usuário autorizou a análise de suas redes/perfis profissionais, por favor inclua o campo "socialAdvice" no JSON gerando orientações diretas de otimização para cada plataforma (especialmente sugestões de Título/Headline, seção 'Sobre' e dicas para algoritmos do LinkedIn e Gupy).`
+  }
 
   let completion
   try {
@@ -165,7 +206,7 @@ export async function analyzeResume(
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.3,
-      max_tokens: 3000,
+      max_tokens: 3500,
     })
   } catch (err: any) {
     console.error('LLM API Call Error:', err)

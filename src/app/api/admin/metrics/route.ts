@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
+import { TOKEN_COST } from '@/lib/llm'
 
 export async function GET() {
   try {
@@ -19,14 +20,12 @@ export async function GET() {
         analysisTokensOut: true,
         rewriteTokensIn: true,
         rewriteTokensOut: true,
-        analysisCostUsd: true,
-        rewriteCostUsd: true,
       }
     })
 
-    const totalCostUsd = (tokenStats._sum.analysisCostUsd || 0) + (tokenStats._sum.rewriteCostUsd || 0)
     const totalTokensIn = (tokenStats._sum.analysisTokensIn || 0) + (tokenStats._sum.rewriteTokensIn || 0)
     const totalTokensOut = (tokenStats._sum.analysisTokensOut || 0) + (tokenStats._sum.rewriteTokensOut || 0)
+    const totalCostUsd = (totalTokensIn / 1000) * TOKEN_COST.inputPer1k + (totalTokensOut / 1000) * TOKEN_COST.outputPer1k
 
     const revenueStats = await db.subscription.aggregate({
       _sum: { priceBrl: true }

@@ -32,10 +32,15 @@ export async function POST(req: Request) {
     // For simplicity and to drive conversion, require active plan OR allow free users to analyze (1st) but block rewrite.
     // Decision: free users CAN analyze (so they see value), but CANNOT rewrite or download.
 
+    let socialLinks = null
+    if (resume.socialLinksJson) {
+      try { socialLinks = JSON.parse(resume.socialLinksJson) } catch {}
+    }
+
     // Call LLM
     let analysis, tokensIn, tokensOut
     try {
-      const r = await analyzeResume(resume.originalContent)
+      const r = await analyzeResume(resume.originalContent, socialLinks, resume.socialConsent)
       analysis = r.analysis
       tokensIn = r.tokensIn
       tokensOut = r.tokensOut

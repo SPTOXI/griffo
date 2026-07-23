@@ -9,11 +9,19 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   FileSearch, Loader2, AlertCircle, Sparkles, Award, Target, Lightbulb, Key,
-  CheckCircle2, XCircle, FileEdit, Download, ArrowRight, RefreshCw
+  CheckCircle2, XCircle, FileEdit, Download, ArrowRight, RefreshCw, Share2, Globe, Linkedin
 } from 'lucide-react'
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
 } from 'recharts'
+
+interface SocialAdvice {
+  platform: string
+  url: string
+  headline?: string
+  aboutSummary?: string
+  tips: string[]
+}
 
 interface Analysis {
   overall: number
@@ -24,6 +32,7 @@ interface Analysis {
   keywords: string[]
   atsFriendly: boolean
   summary: string
+  socialAdvice?: SocialAdvice[]
 }
 
 interface Resume {
@@ -48,7 +57,6 @@ export function AnalysisView() {
     if (activeResumeId) {
       loadResume(activeResumeId)
     } else {
-      // Load list and pick most recent
       fetch('/api/resume/upload', { cache: 'no-store' })
         .then(r => r.json())
         .then(d => {
@@ -223,7 +231,7 @@ export function AnalysisView() {
       {/* SUMMARY */}
       <Card>
         <CardContent className="p-5">
-          <p className="text-xs uppercase tracking-wider text-slate-500 mb-2">Veredito</p>
+          <p className="text-xs uppercase tracking-wider text-slate-500 mb-2">Veredito Executivo</p>
           <p className="text-slate-700 leading-relaxed">{a.summary}</p>
         </CardContent>
       </Card>
@@ -232,7 +240,7 @@ export function AnalysisView() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Detalhamento por dimensão</CardTitle>
-          <CardDescription>Clique em qualquer barra para ver a justificativa</CardDescription>
+          <CardDescription>Critérios de ATS, recrutamento executivo, plano de carreira e capacitação</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {a.dimensions.map((d) => {
@@ -253,6 +261,71 @@ export function AnalysisView() {
           })}
         </CardContent>
       </Card>
+
+      {/* SOCIAL PRESENCE & ADVICE (NEW SECTION) */}
+      {a.socialAdvice && a.socialAdvice.length > 0 && (
+        <Card className="border-violet-200 bg-gradient-to-br from-white to-violet-50/30">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Share2 className="w-5 h-5 text-violet-600" />
+              <div>
+                <CardTitle className="text-base text-violet-900">
+                  Otimização de Presença Digital & Perfis (LinkedIn, Gupy & Branding)
+                </CardTitle>
+                <CardDescription>
+                  Recomendações autorizadas para alinhar seus perfis online com o currículo e atrair recrutadores.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {a.socialAdvice.map((item, idx) => (
+              <div key={idx} className="p-4 rounded-xl bg-white border border-violet-100 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-violet-600 text-white font-semibold">{item.platform}</Badge>
+                    <span className="text-xs text-slate-500 font-mono truncate max-w-xs">{item.url}</span>
+                  </div>
+                </div>
+
+                {item.headline && (
+                  <div className="bg-violet-50/60 p-3 rounded-lg border border-violet-100">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-violet-800 mb-1">
+                      💡 Título Otimizado Sugerido ({item.platform})
+                    </p>
+                    <p className="text-xs font-semibold text-slate-900 leading-normal">{item.headline}</p>
+                  </div>
+                )}
+
+                {item.aboutSummary && (
+                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                      📝 Sugestão de Texto 'Sobre' / Bio
+                    </p>
+                    <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{item.aboutSummary}</p>
+                  </div>
+                )}
+
+                {item.tips && item.tips.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                      🚀 Dicas de Otimização & Algoritmo
+                    </p>
+                    <ul className="space-y-1.5 text-xs text-slate-700">
+                      {item.tips.map((tip, tIdx) => (
+                        <li key={tIdx} className="flex items-start gap-1.5">
+                          <span className="text-violet-600 font-bold">•</span>
+                          <span>{tip}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* STRENGTHS / WEAKNESSES */}
       <div className="grid md:grid-cols-2 gap-4">

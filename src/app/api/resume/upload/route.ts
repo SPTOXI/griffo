@@ -7,6 +7,8 @@ const schema = z.object({
   content: z.string().min(80).max(30000),
   format: z.enum(['text', 'markdown', 'pdf']).default('text'),
   title: z.string().optional(),
+  socialLinks: z.record(z.string()).optional(),
+  socialConsent: z.boolean().default(false),
 })
 
 export async function POST(req: Request) {
@@ -25,13 +27,15 @@ export async function POST(req: Request) {
       )
     }
 
-    const { content, format } = parsed.data
+    const { content, format, socialLinks, socialConsent } = parsed.data
 
     const resume = await db.resume.create({
       data: {
         userId: user.id,
         originalContent: content,
         originalFormat: format,
+        socialLinksJson: socialLinks ? JSON.stringify(socialLinks) : null,
+        socialConsent: socialConsent || false,
         status: 'draft',
       },
     })
@@ -41,7 +45,7 @@ export async function POST(req: Request) {
         userId: user.id,
         resumeId: resume.id,
         action: 'upload',
-        meta: JSON.stringify({ format, length: content.length }),
+        meta: JSON.stringify({ format, length: content.length, socialConsent }),
       },
     })
 
