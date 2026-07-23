@@ -103,12 +103,14 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
                 )}
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="email">E-mail ou Usuário</Label>
+                  <Label htmlFor="username">E-mail ou Usuário</Label>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <Input
-                      id="email"
+                      id="username"
+                      name="username"
                       type="text"
+                      inputMode="text"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="admin@griffowork.com ou GriffoWork"
