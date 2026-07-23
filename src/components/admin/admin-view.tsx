@@ -1001,29 +1001,38 @@ export function AdminView() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Variant ID (30 Créditos)</label>
+                    <label className="text-xs font-semibold text-slate-700">Variant ID (Plano de Entrada)</label>
                     <Input
                       placeholder="Ex: 67890"
-                      value={configs.LEMON_VARIANT_30 || ''}
-                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_30: e.target.value })}
+                      value={configs.LEMON_VARIANT_ENTRADA || ''}
+                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_ENTRADA: e.target.value })}
                       className="text-xs font-mono"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Variant ID (100 Créditos)</label>
+                    <label className="text-xs font-semibold text-slate-700">Variant ID (Starter)</label>
                     <Input
                       placeholder="Ex: 67891"
-                      value={configs.LEMON_VARIANT_100 || ''}
-                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_100: e.target.value })}
+                      value={configs.LEMON_VARIANT_STARTER || ''}
+                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_STARTER: e.target.value })}
                       className="text-xs font-mono"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Variant ID (300 Créditos)</label>
+                    <label className="text-xs font-semibold text-slate-700">Variant ID (Carreira)</label>
                     <Input
                       placeholder="Ex: 67892"
-                      value={configs.LEMON_VARIANT_300 || ''}
-                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_300: e.target.value })}
+                      value={configs.LEMON_VARIANT_CARREIRA || ''}
+                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_CARREIRA: e.target.value })}
+                      className="text-xs font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Variant ID (Profissional)</label>
+                    <Input
+                      placeholder="Ex: 67893"
+                      value={configs.LEMON_VARIANT_PROFISSIONAL || ''}
+                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_PROFISSIONAL: e.target.value })}
                       className="text-xs font-mono"
                     />
                   </div>

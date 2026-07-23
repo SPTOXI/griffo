@@ -35,9 +35,10 @@ export async function POST(req: Request) {
     
     // Determine variant based on credits
     let variantId = ''
-    if (pkg.credits === 30) variantId = configs.LEMON_VARIANT_30 || ''
-    if (pkg.credits === 100) variantId = configs.LEMON_VARIANT_100 || ''
-    if (pkg.credits === 300) variantId = configs.LEMON_VARIANT_300 || ''
+    if (packageId === 'entrada') variantId = configs.LEMON_VARIANT_ENTRADA || ''
+    if (packageId === 'starter') variantId = configs.LEMON_VARIANT_STARTER || ''
+    if (packageId === 'carreira') variantId = configs.LEMON_VARIANT_CARREIRA || ''
+    if (packageId === 'profissional') variantId = configs.LEMON_VARIANT_PROFISSIONAL || ''
 
     if (!storeId || !variantId) {
       // Se não configurado, faz fallback pra compra local simulada para facilitar desenvolvimento
