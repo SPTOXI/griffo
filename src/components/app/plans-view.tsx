@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { CreditCard, Check, Loader2, Sparkles, Zap, CheckCircle2, ShoppingBag, Gift } from 'lucide-react'
+import { CreditCard, Check, Loader2, Sparkles, Zap, CheckCircle2, ShoppingBag, FileSearch, Edit3, ArrowRight, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import { CREDIT_PACKAGES, CREDIT_COSTS } from '@/lib/credits'
 
@@ -123,8 +123,8 @@ export function PlansView() {
             >
               {isEntry && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-amber-500 text-slate-950 hover:bg-amber-500 shadow-sm px-2.5 py-0.5 text-[11px] font-extrabold flex items-center gap-1 whitespace-nowrap">
-                    <Gift className="w-3 h-3 fill-slate-950" /> BÔNUS: +10 CRÉDITOS GRÁTIS!
+                  <Badge className="bg-amber-500 text-slate-950 hover:bg-amber-500 shadow-sm px-2.5 py-0.5 text-[11px] font-extrabold whitespace-nowrap">
+                    ⭐ Melhor Oferta de Entrada
                   </Badge>
                 </div>
               )}
@@ -144,31 +144,23 @@ export function PlansView() {
                     <div className="flex items-baseline gap-1">
                       <span className="text-2xl font-extrabold text-slate-900">R$ {pkg.priceBrl.toFixed(2).replace('.', ',')}</span>
                     </div>
-                    {pkg.bonusCredits > 0 ? (
-                      <p className="text-[11px] text-amber-700 font-bold mt-1 flex items-center gap-1">
-                        <Gift className="w-3.5 h-3.5" /> 30 cr pagos + 10 cr grátis = 40 cr (2 Análises)!
-                      </p>
-                    ) : (
-                      <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
-                        R$ {pkg.pricePerCredit.toFixed(3).replace('.', ',')} por crédito
-                      </p>
-                    )}
+                    <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
+                      R$ {pkg.pricePerCredit.toFixed(3).replace('.', ',')} por crédito
+                    </p>
                   </div>
 
                   <ul className="space-y-2 mb-5 text-xs text-slate-700">
                     <li className="flex items-center gap-1.5 font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> {pkg.credits} créditos ({isEntry ? '2 avaliações completas' : `${pkg.credits / 20} análises`})
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> {pkg.credits} créditos no saldo
                     </li>
-                    {pkg.bonusCredits > 0 && (
-                      <li className="flex items-center gap-1.5 text-amber-800 font-bold bg-amber-100/70 p-1.5 rounded-lg border border-amber-200">
-                        <Gift className="w-3.5 h-3.5 text-amber-600 shrink-0" /> +10 créditos adicionais grátis
-                      </li>
-                    )}
-                    <li className="flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Sem mensalidade
+                    <li className="flex items-center gap-1.5 text-slate-600">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Uso livre em Avaliação ou Reescrita
                     </li>
                     <li className="flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Acesso total a todas IAs
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Sem mensalidade ou expiração
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Acesso total a todas as IAs
                     </li>
                   </ul>
                 </div>
@@ -192,6 +184,48 @@ export function PlansView() {
           )
         })}
       </div>
+
+      {/* GUIA EXPLICATIVO: AVALIAÇÃO VS REESCRITA */}
+      <Card className="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 text-white border-none shadow-lg">
+        <CardHeader className="pb-3">
+          <Badge variant="outline" className="w-fit border-indigo-400 text-indigo-300 bg-indigo-950/60 text-xs mb-1">
+            Guia Explicativo
+          </Badge>
+          <CardTitle className="text-lg text-white flex items-center gap-2">
+            Entenda as Diferenças entre Avaliação e Reescrita do Currículo
+          </CardTitle>
+          <CardDescription className="text-slate-300 text-xs">
+            Você é livre para escolher como utilizar seu saldo de créditos entre a avaliação técnica ou a reescrita de experiências.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          <div className="bg-white/10 rounded-xl p-4 space-y-2.5 backdrop-blur-sm border border-white/10">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+              <FileSearch className="w-5 h-5 shrink-0" />
+              <span>Avaliação do Currículo (20 créditos)</span>
+            </div>
+            <p className="text-xs text-slate-200 leading-relaxed">
+              <strong>Diagnóstico Completo em 8 Dimensões:</strong> Analisa seu currículo atual como um recrutador técnico e robô ATS. Aponta Nota Geral, pontos fortes, vulnerabilidades, palavras-chave faltantes e nível de atratividade comercial.
+            </p>
+            <div className="text-[11px] text-emerald-300 font-medium flex items-center gap-1 pt-1">
+              <span>Indicado para: Saber onde melhorar antes de enviar currículos.</span>
+            </div>
+          </div>
+
+          <div className="bg-white/10 rounded-xl p-4 space-y-2.5 backdrop-blur-sm border border-white/10">
+            <div className="flex items-center gap-2 text-indigo-300 font-bold text-sm">
+              <Edit3 className="w-5 h-5 shrink-0" />
+              <span>Reescrita do Currículo (10 créditos)</span>
+            </div>
+            <p className="text-xs text-slate-200 leading-relaxed">
+              <strong>Reformulação Prática de Experiências:</strong> Reescreve suas experiências profissionais aplicando a <strong>Fórmula STAR (Situação, Tarefa, Ação, Resultado)</strong> e a <strong>Fórmula Google XYZ</strong>, garantindo 100% de veracidade dos fatos com máximo impacto executivo.
+            </p>
+            <div className="text-[11px] text-indigo-300 font-medium flex items-center gap-1 pt-1">
+              <span>Indicado para: Transformar textos simples em realizações de alto impacto.</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* CONSUMPTION TABLE GUIDE */}
       <Card>
@@ -219,7 +253,7 @@ export function PlansView() {
                   { name: 'Resumo Profissional / Melhoria de Trecho', cost: CREDIT_COSTS.professional_summary },
                   { name: 'Reescrever Experiência Profissional (STAR/XYZ)', cost: CREDIT_COSTS.rewrite_experience },
                   { name: 'Carta de Apresentação Personalizada', cost: CREDIT_COSTS.cover_letter },
-                  { name: 'Análise Completa do Currículo em 8 Dimensões', cost: CREDIT_COSTS.full_analysis },
+                  { name: 'Avaliação Completa do Currículo em 8 Dimensões', cost: CREDIT_COSTS.full_analysis },
                   { name: 'Otimização de Perfil (LinkedIn, Gupy, etc.)', cost: CREDIT_COSTS.social_optimization },
                   { name: 'Comparar Currículo com Vaga Alvo', cost: CREDIT_COSTS.resume_comparison },
                 ].map((item) => (

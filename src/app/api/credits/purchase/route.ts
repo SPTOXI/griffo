@@ -25,11 +25,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: res.error || 'Erro ao processar compra.' }, { status: 400 })
     }
 
-    const bonusMsg = res.packageInfo?.bonusCredits ? ` (incluindo 🎁 +${res.packageInfo.bonusCredits} créditos bônus grátis!)` : ''
-
     return NextResponse.json({
       success: true,
-      message: `${res.packageInfo?.name} ativado com sucesso! +${res.packageInfo?.credits} créditos adicionados ao seu saldo${bonusMsg}.`,
+      message: res.postPurchaseMessage || `${res.packageInfo?.name} ativado com sucesso!`,
       newBalance: res.newBalance,
       package: res.packageInfo,
     })

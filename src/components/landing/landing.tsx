@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   FileText, Sparkles, ShieldCheck, Download, TrendingUp, Target, CheckCircle2,
   ArrowRight, Brain, Search, Award, Lock, Users, BarChart3, Zap, Globe, Share2,
-  Check, HelpCircle, ChevronDown, Star, MessageSquare, Menu, X
+  Check, HelpCircle, ChevronDown, Star, MessageSquare, Menu, X, FileSearch, Edit3
 } from 'lucide-react'
 import { useAuth } from '@/store/auth'
 
@@ -329,19 +329,19 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
         <div className="text-center max-w-2xl mx-auto mb-10">
           <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-900 px-3 py-1 text-xs font-semibold">Sem Mensalidades ou Fidelidade</Badge>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-3">Plano de Entrada por apenas R$ 9,90 com 2 Avaliações Completas!</h2>
-          <p className="text-sm sm:text-base text-slate-600">Adquira o Plano de Entrada para começar com +10 créditos bônus grátis ou escolha o pacote ideal para o seu momento.</p>
+          <p className="text-sm sm:text-base text-slate-600">Adquira o Plano de Entrada para começar ou escolha o pacote ideal para o seu momento profissional.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-7xl mx-auto items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-7xl mx-auto items-stretch mb-12">
           <PlanCard
             name="Plano de Entrada"
             price="R$ 9,90"
-            period="40 cr (2 Avaliações Completas!)"
+            period="40 créditos (2 Avaliações Completas)"
             features={[
-              'Compre 30 cr por R$ 9,90 e GANHE +10 grátis!',
-              'Total de 40 créditos liberados no saldo',
+              '40 créditos liberados no seu saldo',
               'Suficiente para 2 avaliações completas',
-              'Ou 4 reescritas com a fórmula STAR',
+              'Escolha livre entre Avaliação e Reescrita',
+              'Downloads em PDF e texto editável',
               'Oferta exclusiva de boas-vindas',
             ]}
             highlight={true}
@@ -354,8 +354,8 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             period="100 créditos (R$ 0,299 / crédito)"
             features={[
               '100 créditos adicionados ao saldo',
-              'Suficiente para 5 análises completas',
-              'Ou 10 reescritas profissionais',
+              'Suficiente para 5 avaliações completas',
+              'Uso flexível entre Avaliação e Reescrita',
               'Downloads em PDF e texto editável',
               'Sem mensalidade ou expiração',
             ]}
@@ -369,8 +369,8 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             period="500 créditos (R$ 0,199 / crédito)"
             features={[
               '500 créditos adicionados ao saldo',
-              'Suficiente para 25 análises completas',
-              'Ou 50 reescritas de experiências',
+              'Suficiente para 25 avaliações completas',
+              'Uso flexível entre Avaliação e Reescrita',
               'Otimização de LinkedIn e Gupy',
               'Melhor custo-benefício da plataforma',
               'Sem expiração de saldo',
@@ -386,8 +386,8 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             period="1.500 créditos (R$ 0,166 / crédito)"
             features={[
               '1.500 créditos adicionados ao saldo',
-              'Suficiente para 75 análises completas',
-              'Ou 150 reescritas de experiências',
+              'Suficiente para 75 avaliações completas',
+              'Uso flexível entre Avaliação e Reescrita',
               'Uso intensivo e consultoria contínua',
               'Maior desconto por crédito',
               'Atendimento e suporte prioritário',
@@ -396,6 +396,49 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             cta="Adquirir Pacote Profissional"
             onCta={() => onNavigate('signup')}
           />
+        </div>
+
+        {/* GUIA EXPLICATIVO: AVALIAÇÃO VS REESCRITA */}
+        <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl max-w-5xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-6">
+            <Badge variant="outline" className="border-indigo-400 text-indigo-300 bg-indigo-950/60 text-xs mb-2">
+              Entenda Nossas Ferramentas
+            </Badge>
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+              Qual a diferença entre Avaliação e Reescrita do Currículo?
+            </h3>
+            <p className="text-slate-300 text-xs sm:text-sm">
+              Você pode utilizar seus créditos como preferir em qualquer momento da sua busca por emprego.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white/10 rounded-2xl p-5 border border-white/10 space-y-3 backdrop-blur-sm">
+              <div className="flex items-center gap-2.5 text-emerald-400 font-bold text-base">
+                <FileSearch className="w-6 h-6 shrink-0" />
+                <span>Avaliação do Currículo (20 créditos)</span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                <strong>Diagnóstico Executivo em 8 Dimensões:</strong> Analisa seu currículo sob a ótica de um recrutador técnico e robô ATS. Aponta Nota Geral, pontos fortes, vulnerabilidades, palavras-chave faltantes e nivelamento comercial.
+              </p>
+              <div className="text-xs text-emerald-300 font-medium pt-1">
+                ✓ Ideal para: Descobrir falhas ocultas antes de enviar para vagas.
+              </div>
+            </div>
+
+            <div className="bg-white/10 rounded-2xl p-5 border border-white/10 space-y-3 backdrop-blur-sm">
+              <div className="flex items-center gap-2.5 text-indigo-300 font-bold text-base">
+                <Edit3 className="w-6 h-6 shrink-0" />
+                <span>Reescrita do Currículo (10 créditos)</span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                <strong>Reformulação Prática de Experiências:</strong> Reescreve suas experiências profissionais aplicando a <strong>Fórmula STAR (Situação, Tarefa, Ação, Resultado)</strong> e a <strong>Fórmula Google XYZ</strong>, garantindo 100% de veracidade dos fatos.
+              </p>
+              <div className="text-xs text-indigo-300 font-medium pt-1">
+                ✓ Ideal para: Transformar descrições simples em realizações de alto impacto.
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -28,13 +28,13 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
   {
     id: 'entrada',
     name: 'Plano de Entrada',
-    credits: 40, // 30 pagos + 10 bônus grátis (permite exatamente 2 análises completas de 20 cr)
+    credits: 40, // 30 pagos + 10 bônus pós-compra = 40 cr (2 avaliações completas de 20 cr)
     paidCredits: 30,
     bonusCredits: 10,
     priceBrl: 9.90,
     pricePerCredit: 0.2475,
     entryOnly: true,
-    desc: 'Permite 2 avaliações completas: compre 30 créditos por R$ 9,90 e GANHE +10 grátis!',
+    desc: '40 créditos no saldo (suficiente para 2 avaliações completas de currículo)',
   },
   {
     id: 'starter',
@@ -44,7 +44,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     bonusCredits: 0,
     priceBrl: 29.90,
     pricePerCredit: 0.299,
-    desc: 'Ideal para ajustes rápidos e melhorias pontuais de currículo',
+    desc: '100 créditos no saldo (suficiente para 5 avaliações completas de currículo)',
   },
   {
     id: 'carreira',
@@ -55,7 +55,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     priceBrl: 99.90,
     pricePerCredit: 0.199,
     popular: true,
-    desc: 'Melhor custo-benefício para processos seletivos e recolocação',
+    desc: '500 créditos no saldo (suficiente para 25 avaliações completas de currículo)',
   },
   {
     id: 'profissional',
@@ -65,7 +65,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     bonusCredits: 0,
     priceBrl: 249.90,
     pricePerCredit: 0.166,
-    desc: 'Indicado para uso intensivo e transição de carreira contínua',
+    desc: '1.500 créditos no saldo (suficiente para 75 avaliações completas de currículo)',
   },
 ]
 
@@ -122,7 +122,7 @@ export async function deductCredits(
 export async function purchaseCreditPackage(
   userId: string,
   packageId: string
-): Promise<{ success: boolean; packageInfo?: CreditPackage; newBalance?: number; error?: string }> {
+): Promise<{ success: boolean; packageInfo?: CreditPackage; newBalance?: number; postPurchaseMessage?: string; error?: string }> {
   const pkg = CREDIT_PACKAGES.find((p) => p.id === packageId)
   if (!pkg) {
     return { success: false, error: 'Pacote de créditos inválido.' }
@@ -137,8 +137,8 @@ export async function purchaseCreditPackage(
   })
 
   const transactionDesc = pkg.bonusCredits > 0
-    ? `${pkg.name} (${pkg.paidCredits} cr + 🎁 ${pkg.bonusCredits} cr bônus grátis)`
-    : `${pkg.name} (${pkg.credits} créditos)`
+    ? `${pkg.name} (${pkg.credits} créditos ativados)`
+    : `${pkg.name} (${pkg.credits} créditos ativados)`
 
   await db.creditTransaction.create({
     data: {
@@ -158,10 +158,15 @@ export async function purchaseCreditPackage(
     },
   })
 
+  const postPurchaseMessage = pkg.bonusCredits > 0
+    ? `Parabéns! ${pkg.name} ativado com sucesso. Você ganhou 10 créditos adicionais!`
+    : `${pkg.name} ativado com sucesso! +${pkg.credits} créditos adicionados ao seu saldo.`
+
   return {
     success: true,
     packageInfo: pkg,
     newBalance: updatedUser.credits,
+    postPurchaseMessage,
   }
 }
 
