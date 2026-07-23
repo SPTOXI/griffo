@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   FileText, Sparkles, ShieldCheck, Download, TrendingUp, Target, CheckCircle2,
   ArrowRight, Brain, Search, Award, Lock, Users, BarChart3, Zap, Globe, Share2,
-  Check, HelpCircle, ChevronDown, Star, MessageSquare
+  Check, HelpCircle, ChevronDown, Star, MessageSquare, Menu, X
 } from 'lucide-react'
 import { useAuth } from '@/store/auth'
 
@@ -15,13 +15,14 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
   const { user } = useAuth()
   const [period, setPeriod] = useState<'day' | 'monthly' | 'annual'>('monthly')
   const [openFaq, setOpenFaq] = useState<number | null>(0)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index)
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white font-sans selection:bg-emerald-100 selection:text-emerald-900">
+    <div className="min-h-screen flex flex-col bg-white font-sans selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden">
       {/* NAV */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/90 border-b border-slate-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -34,6 +35,8 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               <span className="text-[10px] font-medium uppercase tracking-wider text-emerald-600">Inteligência Profissional</span>
             </div>
           </div>
+
+          {/* DESKTOP NAV */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
             <a href="#features" className="text-slate-600 hover:text-emerald-600 transition-colors">Recursos</a>
             <a href="#social" className="text-slate-600 hover:text-emerald-600 transition-colors">Presença Digital</a>
@@ -41,7 +44,9 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             <a href="#pricing" className="text-slate-600 hover:text-emerald-600 transition-colors">Planos</a>
             <a href="#faq" className="text-slate-600 hover:text-emerald-600 transition-colors">Dúvidas</a>
           </nav>
-          <div className="flex items-center gap-3">
+
+          {/* DESKTOP CTAS */}
+          <div className="hidden md:flex items-center gap-3">
             {user ? (
               <Button onClick={() => onNavigate('app')} size="sm" className="bg-emerald-600 hover:bg-emerald-700 shadow-sm">
                 Meu painel <ArrowRight className="w-4 h-4 ml-1.5" />
@@ -57,36 +62,74 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               </>
             )}
           </div>
+
+          {/* MOBILE TOGGLE BUTTON */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
+            aria-label="Abrir menu"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
+
+        {/* MOBILE NAV DROPDOWN MENU */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-5 space-y-3 shadow-xl">
+            <nav className="flex flex-col space-y-2 text-sm font-medium text-slate-700">
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">Recursos</a>
+              <a href="#social" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">Presença Digital</a>
+              <a href="#how" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">Como funciona</a>
+              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">Planos</a>
+              <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">Dúvidas</a>
+            </nav>
+            <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+              {user ? (
+                <Button onClick={() => { setMobileMenuOpen(false); onNavigate('app') }} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                  Meu painel <ArrowRight className="w-4 h-4 ml-1.5" />
+                </Button>
+              ) : (
+                <>
+                  <Button onClick={() => { setMobileMenuOpen(false); onNavigate('login') }} variant="outline" className="w-full">
+                    Entrar
+                  </Button>
+                  <Button onClick={() => { setMobileMenuOpen(false); onNavigate('signup') }} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                    Analisar grátis
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* HERO */}
-      <section className="relative overflow-hidden pt-12 pb-20 md:py-24">
+      <section className="relative overflow-hidden pt-8 sm:pt-12 pb-16 md:py-24">
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/60 via-white to-white pointer-events-none" />
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[500px] h-[500px] rounded-full bg-emerald-200/30 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[500px] h-[500px] rounded-full bg-teal-200/30 blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 sm:w-[500px] h-80 sm:h-[500px] rounded-full bg-emerald-200/30 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 sm:w-[500px] h-80 sm:h-[500px] rounded-full bg-teal-200/30 blur-3xl pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-            <div className="space-y-6 text-left">
-              <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800 px-3 py-1 text-xs font-semibold rounded-full shadow-sm">
-                <Sparkles className="w-3.5 h-3.5 mr-1.5 text-emerald-600" /> IA + Padrões Gupy, LinkedIn & Recrutamento Global
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-8 items-center">
+            <div className="space-y-5 sm:space-y-6 text-left">
+              <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800 px-3 py-1 text-xs font-semibold rounded-full shadow-sm max-w-full truncate">
+                <Sparkles className="w-3.5 h-3.5 mr-1.5 text-emerald-600 shrink-0 inline" /> IA + Padrões Gupy, LinkedIn & Recrutamento Global
               </Badge>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.08]">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
                 Destaque seu <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 bg-clip-text text-transparent">currículo</span> e conquiste as melhores vagas.
               </h1>
-              <p className="text-lg text-slate-600 leading-relaxed max-w-xl">
+              <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl">
                 Envie seu currículo em segundos e receba um laudo técnico completo em 8 dimensões. Descubra sua nota de aprovação em filtros ATS (Gupy, Workday, Taleo) e receba recomendações exclusivas para otimizar seus perfis no LinkedIn e redes profissionais.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <Button onClick={() => onNavigate('signup')} size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-base h-13 px-8 shadow-lg shadow-emerald-600/20 font-semibold">
+                <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-base h-12 sm:h-13 px-8 shadow-lg shadow-emerald-600/20 font-semibold">
                   Analisar meu currículo agora <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
-                <Button onClick={() => onNavigate('login')} size="lg" variant="outline" className="text-base h-13 px-7 border-slate-300 text-slate-700 hover:bg-slate-50">
+                <Button onClick={() => onNavigate('login')} size="lg" variant="outline" className="w-full sm:w-auto text-base h-12 sm:h-13 px-7 border-slate-300 text-slate-700 hover:bg-slate-50">
                   Já tenho conta
                 </Button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-medium text-slate-600 pt-3 border-t border-slate-100">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-medium text-slate-600 pt-3 border-t border-slate-100">
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Análise Gratuita</span>
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Sem Cartão</span>
                 <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" /> LGPD & GDPR</span>
@@ -95,39 +138,39 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             </div>
 
             {/* INTERACTIVE MOCKUP CARD */}
-            <div className="relative lg:ml-4">
+            <div className="relative lg:ml-4 mt-4 lg:mt-0">
               <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-teal-500/20 rounded-3xl transform rotate-1 blur-lg -z-10" />
               <Card className="shadow-2xl border-slate-200/90 rounded-2xl overflow-hidden bg-white">
                 <CardContent className="p-0">
-                  <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
+                  <div className="bg-slate-900 text-white px-4 sm:px-5 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                      <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                      <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
                     </div>
-                    <span className="text-xs font-mono text-slate-300 flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-emerald-400" /> laudo_avaliativo_griffo.json
+                    <span className="text-[11px] sm:text-xs font-mono text-slate-300 flex items-center gap-1.5 truncate">
+                      <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> laudo_avaliativo_griffo.json
                     </span>
-                    <Badge className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono border-none">ALTA PRECISÃO</Badge>
+                    <Badge className="bg-emerald-500/20 text-emerald-300 text-[9px] sm:text-[10px] font-mono border-none shrink-0">ALTA PRECISÃO</Badge>
                   </div>
-                  <div className="p-6 space-y-5">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Nota Geral de Qualificação</p>
-                        <div className="flex items-baseline gap-2 mt-0.5">
-                          <span className="text-5xl font-extrabold text-slate-900">8.7</span>
-                          <span className="text-slate-400 font-medium text-sm">/ 10</span>
+                        <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Nota Geral de Qualificação</p>
+                        <div className="flex items-baseline gap-1.5 mt-0.5">
+                          <span className="text-4xl sm:text-5xl font-extrabold text-slate-900">8.7</span>
+                          <span className="text-slate-400 font-medium text-xs sm:text-sm">/ 10</span>
                         </div>
                       </div>
                       <div className="text-right space-y-1">
-                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 font-semibold px-2.5 py-0.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Aprovado em ATS
+                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 font-semibold px-2 py-0.5 text-[10px] sm:text-xs">
+                          <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600 inline" /> Aprovado em ATS
                         </Badge>
-                        <p className="text-[11px] text-slate-500">Compatível com Gupy & Workday</p>
+                        <p className="text-[10px] sm:text-[11px] text-slate-500">Compatível com Gupy & Workday</p>
                       </div>
                     </div>
 
-                    <div className="space-y-2.5">
+                    <div className="space-y-2">
                       {[
                         { l: 'Estrutura & Leitura Automática (ATS)', s: 9.2, color: 'bg-emerald-500' },
                         { l: 'Impacto Quantificado (Fórmula STAR/XYZ)', s: 8.8, color: 'bg-emerald-500' },
@@ -135,9 +178,9 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
                         { l: 'Trajetória & Plano de Carreira', s: 8.3, color: 'bg-teal-500' },
                       ].map((d) => (
                         <div key={d.l}>
-                          <div className="flex justify-between text-xs mb-1 font-medium">
-                            <span className="text-slate-700">{d.l}</span>
-                            <span className="font-bold text-slate-900">{d.s.toFixed(1)}</span>
+                          <div className="flex justify-between text-[11px] sm:text-xs mb-1 font-medium">
+                            <span className="text-slate-700 truncate pr-2">{d.l}</span>
+                            <span className="font-bold text-slate-900 shrink-0">{d.s.toFixed(1)}</span>
                           </div>
                           <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
                             <div className={`h-full rounded-full ${d.color}`} style={{ width: `${d.s * 10}%` }} />
@@ -146,9 +189,9 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
                       ))}
                     </div>
 
-                    <div className="rounded-xl bg-violet-50/80 border border-violet-100 p-3.5 space-y-1.5">
+                    <div className="rounded-xl bg-violet-50/80 border border-violet-100 p-3 sm:p-3.5 space-y-1">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-violet-900">
-                        <Share2 className="w-3.5 h-3.5 text-violet-600" /> Sugestão de Headline Otimizada (LinkedIn / Gupy)
+                        <Share2 className="w-3.5 h-3.5 text-violet-600 shrink-0" /> Sugestão de Headline Otimizada (LinkedIn / Gupy)
                       </div>
                       <p className="text-xs text-slate-700 font-medium leading-relaxed">
                         "Desenvolvedor Full Stack Sênior | React, Node.js, Cloud (AWS) | Especialista em Arquitetura Distribuída & Alta Escalabilidade"
@@ -164,7 +207,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 
       {/* STATS BAR */}
       <section className="border-y border-slate-200/80 bg-slate-50/70">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center">
           <Stat icon={<Brain className="w-5 h-5" />} value="8 Dimensões" label="Análise minuciosa de currículo" />
           <Stat icon={<Target className="w-5 h-5" />} value="Gupy & ATS" label="Verificação de filtros de recrutamento" />
           <Stat icon={<Globe className="w-5 h-5" />} value="Perfis Globais" label="LinkedIn, Behance, GitHub, Xing, etc." />
@@ -172,29 +215,29 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
         </div>
       </section>
 
-      {/* GLOBAL SOCIAL PRESENCE FEATURE HIGHLIGHT (NEW SECTION) */}
-      <section id="social" className="py-16 md:py-24 bg-gradient-to-br from-slate-900 via-slate-950 to-emerald-950 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* GLOBAL SOCIAL PRESENCE FEATURE HIGHLIGHT */}
+      <section id="social" className="py-14 sm:py-20 md:py-24 bg-gradient-to-br from-slate-900 via-slate-950 to-emerald-950 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 sm:w-96 h-80 sm:h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+            <div className="space-y-5">
               <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20 px-3 py-1">
                 <Globe className="w-3.5 h-3.5 mr-1.5" /> Presença Digital & Otimização Global
               </Badge>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
                 Sua carreira vai além do papel. Otimize seus perfis em qualquer plataforma.
               </h2>
-              <p className="text-slate-300 leading-relaxed text-base">
+              <p className="text-slate-300 leading-relaxed text-sm sm:text-base">
                 Com o Griffo, você não apenas melhora seu currículo em PDF — você otimiza toda a sua imagem profissional nas redes sociais e plataformas estratégicas para o mercado onde deseja atuar.
               </p>
-              <div className="grid sm:grid-cols-2 gap-4 pt-2">
-                <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
                   <p className="font-semibold text-emerald-400 text-sm flex items-center gap-1.5">
                     <Share2 className="w-4 h-4" /> LinkedIn & Gupy
                   </p>
                   <p className="text-xs text-slate-300">Sugestões de Título (Headline), seção 'Sobre' e termos para o algoritmo de recrutadores.</p>
                 </div>
-                <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-1.5">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
                   <p className="font-semibold text-emerald-400 text-sm flex items-center gap-1.5">
                     <Globe className="w-4 h-4" /> Perfis Internacionais & Tech
                   </p>
@@ -203,25 +246,25 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               </div>
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur space-y-4">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-6 backdrop-blur space-y-3.5">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <span className="text-xs font-mono text-emerald-400 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4" /> Otimização com Autorização do Usuário
+                <span className="text-xs font-mono text-emerald-400 flex items-center gap-1.5 truncate">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" /> Otimização com Autorização do Usuário
                 </span>
-                <Badge className="bg-white/10 text-white">LGPD / GDPR</Badge>
+                <Badge className="bg-white/10 text-white shrink-0">LGPD / GDPR</Badge>
               </div>
 
-              <div className="space-y-3">
-                <div className="p-3.5 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 mb-1">LinkedIn — Título Profissional Sugerido</p>
+              <div className="space-y-2.5">
+                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">LinkedIn — Título Profissional Sugerido</p>
                   <p className="text-xs text-white">"Engenheiro de Dados Sênior | Python, PySpark, Dataproc, BigQuery | Especialista em Data Lakes e Pipeline de Alta Performance"</p>
                 </div>
-                <div className="p-3.5 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 mb-1">Behance / Portfólio — Dica de Posicionamento</p>
+                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">Behance / Portfólio — Dica de Posicionamento</p>
                   <p className="text-xs text-white">"Destaque os cases com dados de impacto (ex: 'Redesign que aumentou a conversão em +35%') na capa dos 3 primeiros projetos do perfil."</p>
                 </div>
-                <div className="p-3.5 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 mb-1">Gupy — Palavras-chave de Triagem</p>
+                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">Gupy — Palavras-chave de Triagem</p>
                   <p className="text-xs text-white">"Certifique-se de preencher as seções de testes técnicos e incluir exatamente os termos 'Scrum', 'Jest' e 'Micro-frontends'."</p>
                 </div>
               </div>
@@ -232,12 +275,12 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 
       {/* FEATURES */}
       <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-        <div className="text-center max-w-2xl mx-auto mb-14">
+        <div className="text-center max-w-2xl mx-auto mb-12">
           <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs">Recursos Completos</Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-3">Tudo o que você precisa para se destacar nas seleções.</h2>
-          <p className="text-slate-600">Construído com base nas melhores práticas de RH, LinkedIn Talent Solutions e algoritmos de triagem automática.</p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-3">Tudo o que você precisa para se destacar nas seleções.</h2>
+          <p className="text-sm sm:text-base text-slate-600">Construído com base nas melhores práticas de RH, LinkedIn Talent Solutions e algoritmos de triagem automática.</p>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           <Feature icon={<BarChart3 className="w-5 h-5" />} title="Laudo em 8 Dimensões"
             desc="Avaliação minuciosa de estrutura, resumo, resultados quantificados, hard/soft skills, experiência, palavras-chave ATS, trajetória e plano de capacitação." />
           <Feature icon={<Search className="w-5 h-5" />} title="Verificação de Filtros ATS"
@@ -256,12 +299,12 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       {/* HOW IT WORKS */}
       <section id="how" className="bg-slate-900 text-white py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-14">
+          <div className="text-center max-w-2xl mx-auto mb-12">
             <Badge className="bg-white/10 text-emerald-300 hover:bg-white/10 px-3 py-1">Passo a Passo</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mt-3 mb-3">Do envio ao novo currículo em 5 passos simples.</h2>
-            <p className="text-slate-300">Rápido, transparente e sob seu controle em todas as fases.</p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mt-3 mb-3">Do envio ao novo currículo em 5 passos simples.</h2>
+            <p className="text-sm sm:text-base text-slate-300">Rápido, transparente e sob seu controle em todas as fases.</p>
           </div>
-          <div className="grid md:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
             {[
               { n: '01', t: 'Envie o Currículo', d: 'Anexe um PDF, arquivo de texto ou cole diretamente o conteúdo.' },
               { n: '02', t: 'Informe seus Perfis', d: 'Insira opcionalmente seus links profissionais (LinkedIn, Gupy, etc.).' },
@@ -275,7 +318,6 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
                   <h3 className="font-semibold text-base">{s.t}</h3>
                   <p className="text-xs text-slate-300 leading-relaxed">{s.d}</p>
                 </div>
-                {i < 4 && <ArrowRight className="hidden md:block w-4 h-4 text-slate-600 absolute top-1/2 -right-3 -translate-y-1/2" />}
               </div>
             ))}
           </div>
@@ -284,25 +326,25 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 
       {/* PRICING */}
       <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-        <div className="text-center max-w-2xl mx-auto mb-10">
+        <div className="text-center max-w-2xl mx-auto mb-8">
           <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800 px-3 py-1 text-xs">Planos Acessíveis</Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-3">Escolha o plano ideal para o seu momento profissional.</h2>
-          <p className="text-slate-600">Sem pegadinhas ou fidelidade. Cancele quando quiser com apenas 1 clique.</p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-3">Escolha o plano ideal para o seu momento profissional.</h2>
+          <p className="text-sm sm:text-base text-slate-600">Sem pegadinhas ou fidelidade. Cancele quando quiser com apenas 1 clique.</p>
         </div>
 
         <div className="flex items-center justify-center gap-1 mb-8">
-          <div className="inline-flex p-1 bg-slate-100 rounded-xl text-sm font-medium">
+          <div className="inline-flex p-1 bg-slate-100 rounded-xl text-xs sm:text-sm font-medium max-w-full overflow-x-auto">
             {(['day', 'monthly', 'annual'] as const).map(p => (
               <button key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-5 py-2 rounded-lg transition-all ${period === p ? 'bg-white shadow-sm font-semibold text-slate-900' : 'text-slate-600 hover:text-slate-900'}`}>
+                className={`px-3 sm:px-5 py-2 rounded-lg transition-all whitespace-nowrap ${period === p ? 'bg-white shadow-sm font-semibold text-slate-900' : 'text-slate-600 hover:text-slate-900'}`}>
                 {p === 'day' ? 'Passe Diário' : p === 'monthly' ? 'Mensal' : 'Anual'}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
           <PlanCard
             name="Passe Diário"
             price="R$ 19,90"
@@ -357,9 +399,9 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       {/* FAQ SECTION */}
       <section id="faq" className="bg-slate-50 py-16 md:py-24 border-t border-slate-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs">Perguntas Frequentes</Badge>
-            <h2 className="text-3xl font-bold text-slate-900 mt-3 mb-2">Ficou com alguma dúvida?</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-3 mb-2">Ficou com alguma dúvida?</h2>
             <p className="text-slate-600 text-sm">Respostas para as perguntas mais comuns dos nossos usuários.</p>
           </div>
 
@@ -391,8 +433,8 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
                   onClick={() => toggleFaq(index)}
                   className="w-full p-4 text-left font-semibold text-slate-900 text-sm flex justify-between items-center hover:bg-slate-50 transition-colors"
                 >
-                  <span>{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${openFaq === index ? 'rotate-180 text-emerald-600' : ''}`} />
+                  <span className="pr-2">{faq.q}</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ${openFaq === index ? 'rotate-180 text-emerald-600' : ''}`} />
                 </button>
                 {openFaq === index && (
                   <div className="px-4 pb-4 pt-1 text-xs text-slate-600 leading-relaxed border-t border-slate-100">
@@ -406,16 +448,16 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       </section>
 
       {/* FINAL CTA */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-3xl p-8 sm:p-12 text-white shadow-xl shadow-emerald-600/20 space-y-5">
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 text-center">
+        <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-3xl p-6 sm:p-12 text-white shadow-xl shadow-emerald-600/20 space-y-5">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
             Pronto para transformar sua apresentação profissional?
           </h2>
-          <p className="text-emerald-100 max-w-xl mx-auto text-base">
+          <p className="text-emerald-100 max-w-xl mx-auto text-sm sm:text-base">
             Crie sua conta gratuita agora e receba o laudo técnico do seu currículo em menos de 30 segundos. Sem cartão de crédito.
           </p>
           <div className="pt-2">
-            <Button onClick={() => onNavigate('signup')} size="lg" className="bg-white text-emerald-900 hover:bg-slate-100 h-13 px-8 text-base font-bold shadow-lg">
+            <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-white text-emerald-900 hover:bg-slate-100 h-12 sm:h-13 px-8 text-base font-bold shadow-lg">
               Analisar meu currículo grátis <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
@@ -424,7 +466,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 
       {/* FOOTER */}
       <footer className="mt-auto border-t border-slate-200 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid md:grid-cols-4 gap-8 text-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-sm">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
@@ -448,9 +490,9 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
           <div>
             <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider mb-3">Segurança & Privacidade</h4>
             <ul className="space-y-2 text-xs text-slate-600">
-              <li className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> LGPD & GDPR Compliant</li>
-              <li className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-emerald-600" /> Criptografia de Dados</li>
-              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Sem Venda de Dados</li>
+              <li className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> LGPD & GDPR Compliant</li>
+              <li className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Criptografia de Dados</li>
+              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Sem Venda de Dados</li>
             </ul>
           </div>
           <div>
@@ -472,9 +514,9 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 function Stat({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <div className="w-10 h-10 rounded-xl bg-emerald-100/80 text-emerald-700 flex items-center justify-center mb-1">{icon}</div>
-      <p className="text-2xl font-bold text-slate-900">{value}</p>
-      <p className="text-xs text-slate-500">{label}</p>
+      <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-xl bg-emerald-100/80 text-emerald-700 flex items-center justify-center mb-1">{icon}</div>
+      <p className="text-xl sm:text-2xl font-bold text-slate-900">{value}</p>
+      <p className="text-[11px] sm:text-xs text-slate-500 leading-tight">{label}</p>
     </div>
   )
 }
@@ -482,7 +524,7 @@ function Stat({ icon, value, label }: { icon: React.ReactNode; value: string; la
 function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
     <Card className="border-slate-200/90 hover:shadow-lg transition-all hover:border-emerald-300 h-full bg-white">
-      <CardContent className="p-6">
+      <CardContent className="p-5 sm:p-6">
         <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 border border-emerald-100">{icon}</div>
         <h3 className="font-bold text-slate-900 text-base mb-2">{title}</h3>
         <p className="text-xs text-slate-600 leading-relaxed">{desc}</p>
@@ -508,12 +550,12 @@ function PlanCard({ name, price, period, features, highlight, popular, cta, onCt
           <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 shadow-sm px-3 py-0.5 text-xs font-bold">Mais Vendido</Badge>
         </div>
       )}
-      <CardContent className="p-6 flex-1 flex flex-col justify-between">
+      <CardContent className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
         <div>
           <h3 className="font-bold text-slate-900 text-lg">{name}</h3>
           <p className="text-xs text-slate-500 mb-4">{period}</p>
           <div className="mb-6">
-            <span className="text-4xl font-extrabold text-slate-900">{price}</span>
+            <span className="text-3xl sm:text-4xl font-extrabold text-slate-900">{price}</span>
           </div>
           <ul className="space-y-2.5 mb-6">
             {features.map((f) => (
