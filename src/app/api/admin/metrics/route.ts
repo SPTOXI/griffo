@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
-import { TOKEN_COST } from '@/lib/llm'
 
 export async function GET() {
   try {
@@ -14,23 +13,23 @@ export async function GET() {
     const totalResumes = await db.resume.count()
     const totalSubscriptions = await db.subscription.count({ where: { status: 'active' } })
 
-    const tokenStats = await db.resume.aggregate({
+    const tokenStats = await db.aiLog.aggregate({
       _sum: {
-        analysisTokensIn: true,
-        analysisTokensOut: true,
-        rewriteTokensIn: true,
-        rewriteTokensOut: true,
-      }
+        tokensIn: true,
+        tokensOut: true,
+        costUsd: true,
+      },
     })
 
-    const totalTokensIn = (tokenStats._sum.analysisTokensIn || 0) + (tokenStats._sum.rewriteTokensIn || 0)
-    const totalTokensOut = (tokenStats._sum.analysisTokensOut || 0) + (tokenStats._sum.rewriteTokensOut || 0)
-    const totalCostUsd = (totalTokensIn / 1000) * TOKEN_COST.inputPer1k + (totalTokensOut / 1000) * TOKEN_COST.outputPer1k
+    const totalTokensIn = tokenStats._sum.tokensIn || 0
+    const totalTokensOut = tokenStats._sum.tokensOut || 0
+    const totalCostUsd = tokenStats._sum.costUsd || 0
 
-    const revenueStats = await db.subscription.aggregate({
-      _sum: { priceBrl: true }
+    const revenueStats = await db.creditTransaction.aggregate({
+      where: { type: 'purchase' },
+      _sum: { costBrl: true },
     })
-    const totalRevenueBrl = revenueStats._sum.priceBrl || 0
+    const totalRevenueBrl = revenueStats._sum.costBrl || 0
 
     return NextResponse.json({
       metrics: {
@@ -45,12 +44,12 @@ export async function GET() {
         },
         financial: {
           totalRevenueBrl,
-          estimatedProfitBrl: totalRevenueBrl - (totalCostUsd * 5.4)
-        }
-      }
+          estimatedProfitBrl: totalRevenueBrl - totalCostUsd * 5.4,
+        },
+      },
     })
   } catch (e: any) {
-    console.error('admin metrics error', e)
-    return NextResponse.json({ error: 'Erro ao carregar métricas' }, { status: 500 })
+    console.error('admin metrics get error', e)
+    return NextResponse.json({ error: 'Erro ao buscar métricas' }, { status: 500 })
   }
 }

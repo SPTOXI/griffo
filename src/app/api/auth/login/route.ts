@@ -63,6 +63,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Usuário/E-mail ou senha incorretos.' }, { status: 401 })
     }
 
+    if (user.disabled && user.role !== 'admin') {
+      return NextResponse.json({ error: 'Sua conta foi desabilitada pelo administrador do sistema.' }, { status: 403 })
+    }
+
     try {
       await db.auditLog.create({
         data: { userId: user.id, action: 'login' },

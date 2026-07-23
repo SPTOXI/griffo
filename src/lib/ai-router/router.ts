@@ -66,7 +66,6 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         await db.aiLog.create({
           data: {
             userId: req.userId || null,
-            resumeId: req.resumeId || null,
             taskType: req.taskType,
             primaryModel: primaryRuntime.model,
             usedModel: runtime.model,

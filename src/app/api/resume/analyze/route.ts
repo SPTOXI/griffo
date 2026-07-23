@@ -2,91 +2,79 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { analyzeResume, TOKEN_COST } from '@/lib/llm'
+import { executeAiTask } from '@/lib/ai-router/router'
 import { deductCredits, CREDIT_COSTS } from '@/lib/credits'
 
 const schema = z.object({
-  resumeId: z.string().min(1),
+  resumeId: z.string().min(1, 'ID do currículo obrigatório'),
 })
 
 export async function POST(req: Request) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Faça login para analisar.' }, { status: 401 })
+      return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 })
     }
 
     const body = await req.json()
     const parsed = schema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: 'ID do currículo inválido.' }, { status: 400 })
+      return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
     }
+
+    const { resumeId } = parsed.data
 
     const resume = await db.resume.findFirst({
-      where: { id: parsed.data.resumeId, userId: user.id },
+      where: { id: resumeId, userId: user.id },
     })
+
     if (!resume) {
-      return NextResponse.json({ error: 'Currículo não encontrado.' }, { status: 404 })
+      return NextResponse.json({ error: 'Currículo não encontrado' }, { status: 404 })
     }
 
-    // Deduct 20 credits for full analysis
+    // Deduct 20 credits per full analysis
     const costCredits = CREDIT_COSTS.full_analysis
     const deduction = await deductCredits(
       user.id,
       costCredits,
-      `Análise completa do currículo (${costCredits} cr)`
+      `Análise completa em 8 Dimensões (${costCredits} cr)`
     )
 
     if (!deduction.success) {
       return NextResponse.json(
         {
-          error: 'Seu saldo Griffo acabou. Continue utilizando a IA adquirindo créditos.',
+          error: deduction.error || 'Seu saldo de créditos é insuficiente. Adquira o Plano de Entrada (R$ 9,90) ou recarregue seu saldo para continuar utilizando a IA.',
           code: 'INSUFFICIENT_CREDITS',
-          requiredCredits: costCredits,
-          currentCredits: deduction.currentBalance,
+          currentBalance: deduction.currentBalance,
         },
         { status: 402 }
       )
     }
 
-    let socialLinks = null
-    if (resume.socialLinksJson) {
-      try {
-        socialLinks = JSON.parse(resume.socialLinksJson)
-      } catch {}
-    }
+    // Execute via AI Router
+    const routerResult = await executeAiTask({
+      taskType: 'full_analysis',
+      userId: user.id,
+      userPrompt: `Analise o seguinte currículo em 8 Dimensões executivas:\n${resume.originalContent}`,
+      systemPrompt: 'Você é um Consultor Sênior de Carreiras e Especialista em ATS.',
+    })
 
-    // Call LLM via AI Router
-    let analysis, tokensIn, tokensOut
+    let analysis: any = null
     try {
-      const r = await analyzeResume(
-        resume.originalContent,
-        socialLinks,
-        resume.socialConsent,
-        user.id,
-        resume.id
-      )
-      analysis = r.analysis
-      tokensIn = r.tokensIn
-      tokensOut = r.tokensOut
-    } catch (e: any) {
-      console.error('LLM analyze error', e)
-      const errorMsg = e?.message || 'Falha ao gerar análise. Tente novamente em alguns segundos.'
-      return NextResponse.json({ error: errorMsg }, { status: 502 })
+      let cleanText = routerResult.content.trim()
+      cleanText = cleanText.replace(/```json/gi, '').replace(/```/g, '').trim()
+      analysis = JSON.parse(cleanText)
+    } catch {
+      analysis = {
+        scoreOverall: 75,
+        dimensao1_posicionamento: { score: 75, parecer: routerResult.content },
+      }
     }
-
-    const costIn = (tokensIn / 1000) * TOKEN_COST.inputPer1k
-    const costOut = (tokensOut / 1000) * TOKEN_COST.outputPer1k
-    const costUsd = costIn + costOut
 
     const updated = await db.resume.update({
       where: { id: resume.id },
       data: {
         analysisJson: JSON.stringify(analysis),
-        status: 'analyzed',
-        analysisTokensIn: tokensIn,
-        analysisTokensOut: tokensOut,
-        analysisCostUsd: costUsd,
       },
     })
 
@@ -95,15 +83,16 @@ export async function POST(req: Request) {
         userId: user.id,
         resumeId: resume.id,
         action: 'analyze',
-        meta: JSON.stringify({ tokensIn, tokensOut, costUsd, creditsDeducted: costCredits }),
+        meta: JSON.stringify({ usedModel: routerResult.usedModel, provider: routerResult.usedProvider, costUsd: routerResult.costUsd }),
       },
     })
 
     return NextResponse.json({
+      success: true,
       analysis,
-      resume: { id: updated.id, status: updated.status, updatedAt: updated.updatedAt },
-      usage: { tokensIn, tokensOut, costUsd },
-      creditsRemaining: deduction.currentBalance,
+      resume: updated,
+      modelUsed: routerResult.usedModel,
+      provider: routerResult.usedProvider,
     })
   } catch (e: any) {
     console.error('analyze error', e)

@@ -38,6 +38,13 @@ export function AppShell({ onExit }: { onExit: () => void }) {
   const [credits, setCredits] = useState<number>(user?.credits ?? 20)
 
   useEffect(() => {
+    if (user?.role === 'admin') {
+      setView('admin')
+    }
+  }, [user?.role])
+
+  useEffect(() => {
+    if (user?.role === 'admin') return
     fetch('/api/credits/balance')
       .then((r) => r.json())
       .then((data) => {
@@ -46,7 +53,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
         }
       })
       .catch(() => {})
-  }, [view])
+  }, [view, user?.role])
 
   const initials = (user?.name || user?.email || '?')
     .split(' ')
@@ -88,15 +95,26 @@ export function AppShell({ onExit }: { onExit: () => void }) {
 
         <div className="ml-auto flex items-center gap-2">
           {/* CREDITS BADGE */}
-          <Button
-            size="sm"
-            onClick={() => setView('plans')}
-            className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs font-semibold gap-1 px-2.5 sm:px-3 shadow-xs"
-          >
-            <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-            <span>{credits} Créditos</span>
-            <span className="hidden sm:inline text-[10px] text-emerald-200 ml-1 bg-emerald-700/60 px-1.5 py-0.5 rounded-full">+ Adicionar</span>
-          </Button>
+          {user?.role === 'admin' ? (
+            <Button
+              size="sm"
+              onClick={() => setView('admin')}
+              className="bg-violet-700 hover:bg-violet-800 h-8 text-xs font-semibold gap-1 px-2.5 sm:px-3 shadow-xs"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+              <span>Créditos Ilimitados (Modo Admin)</span>
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => setView('plans')}
+              className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs font-semibold gap-1 px-2.5 sm:px-3 shadow-xs"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+              <span>{credits} Créditos</span>
+              <span className="hidden sm:inline text-[10px] text-emerald-200 ml-1 bg-emerald-700/60 px-1.5 py-0.5 rounded-full">+ Adicionar</span>
+            </Button>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

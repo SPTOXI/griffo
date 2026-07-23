@@ -84,8 +84,24 @@ export async function deductCredits(
 ): Promise<{ success: boolean; currentBalance: number; error?: string }> {
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: { credits: true },
+    select: { credits: true, role: true, disabled: true },
   })
+
+  if (user?.disabled) {
+    return {
+      success: false,
+      currentBalance: 0,
+      error: 'Sua conta está desabilitada pelo administrador do sistema.',
+    }
+  }
+
+  // Admin users have unlimited credits and bypass deductions
+  if (user?.role === 'admin') {
+    return {
+      success: true,
+      currentBalance: 999999,
+    }
+  }
 
   const currentBalance = user?.credits ?? 0
 

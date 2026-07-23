@@ -20,6 +20,7 @@ model User {
   profession   String?
   // Role & Permissions
   role         String   @default("user") // user | admin
+  disabled     Boolean  @default(false) // Account status: false = active, true = disabled
   // Plan / Credit Balance (Phase 1 Monetização por Créditos)
   credits      Int      @default(0)      // 0 credits on signup (free user must acquire Plano de Entrada)
   plan         String   @default("free") // free | day | monthly | annual
@@ -47,6 +48,18 @@ model SystemConfig {
   updatedAt DateTime @updatedAt
 }
 
+model AiApiKey {
+  id        String   @id @default(cuid())
+  name      String   // Name/Label (e.g., "Kimi K3 Produção")
+  provider  String   // moonshot | anthropic | deepseek | gemini
+  apiKey    String   // Secret API key
+  baseUrl   String?  // Custom base URL if needed
+  model     String   // Target AI model string
+  status    String   @default("active") // active | paused
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Resume {
   id               String   @id @default(cuid())
   userId           String
@@ -58,24 +71,19 @@ model Resume {
   analysisJson     String?
   // Rewritten resume content (markdown)
   rewrittenContent String?
-  // Status flow: uploaded -> analyzed -> rewrite_requested -> rewritten -> confirmed
-  status           String   @default("uploaded")
-  // Token / cost tracking for pricing model
-  analysisTokensIn  Int     @default(0)
-  analysisTokensOut Int     @default(0)
-  rewriteTokensIn   Int     @default(0)
-  rewriteTokensOut  Int     @default(0)
-  analysisCostUsd   Float   @default(0)
-  rewriteCostUsd    Float   @default(0)
-  // Social links & presence analysis
-  socialLinksJson   String?
-  socialConsent     Boolean  @default(false)
-  // Audit
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  // ATS target check results
+  atsScore         Int?
+  // Target job title / industry if provided
+  targetJob        String?
+  // Social links submitted with resume (JSON stringified record)
+  socialLinksJson  String?
+  // User consent for social links evaluation
+  socialConsent    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   auditLogs AuditLog[]
-  aiLogs    AiLog[]
 }
 
 model Subscription {
@@ -86,9 +94,23 @@ model Subscription {
   priceBrl   Float
   startsAt   DateTime @default(now())
   endsAt     DateTime
-  status     String   @default("active") // active | expired | cancelled
-  paymentRef String?  // For Phase 2 payment gateway integration
-  createdAt  DateTime @default(now())
+  status     String   @default("active") // active | cancelled | expired
+  paymentRef String?  // gateway ref
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CreditTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Int      // positive for purchase/grant, negative for deduction
+  type        String   // welcome | purchase | consume | admin_grant
+  description String
+  costBrl     Float?
+
+  createdAt DateTime @default(now())
 }
 
 model AuditLog {
@@ -97,9 +119,8 @@ model AuditLog {
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   resumeId  String?
   resume    Resume?  @relation(fields: [resumeId], references: [id], onDelete: SetNull)
-  action    String   // register | login | upload | analyze | rewrite | download | subscribe | failover | credit_purchase | credit_consume
-  meta      String?  // JSON string with extra info
-  ipHash    String?  // hashed IP for security audit
+  action    String   // upload | analyze | rewrite | download | subscribe | login | register
+  meta      String?  // JSON additional context
   createdAt DateTime @default(now())
 }
 
@@ -107,29 +128,16 @@ model AiLog {
   id             String   @id @default(cuid())
   userId         String?
   user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  resumeId       String?
-  resume         Resume?  @relation(fields: [resumeId], references: [id], onDelete: SetNull)
-  taskType       String   // full_analysis | rewrite | ocr_extraction | normalization | social_advice
-  primaryModel   String   // e.g. kimi-k3
-  usedModel      String   // e.g. claude-3-5-sonnet (if failover occurred)
-  provider       String   // kimi | claude | deepseek | gemini
+  taskType       String   // ocr | initial_ats | normalization | rewriting | cover_letter | linkedin | full_analysis
+  primaryModel   String   // initial intended model
+  usedModel      String   // actual model that succeeded
+  provider       String   // moonshot | anthropic | deepseek | gemini
   tokensIn       Int      @default(0)
   tokensOut      Int      @default(0)
-  costUsd        Float    @default(0)
+  costUsd        Float    @default(0.0)
   responseTimeMs Int      @default(0)
-  status         String   @default("success") // success | failover | error
-  errorCode      String?  // 429, 500, 502, 503, 504, timeout, etc.
+  status         String   @default("success") // success | fallback | error
   failoverCount  Int      @default(0)
+  errorMessage   String?
   createdAt      DateTime @default(now())
-}
-
-model CreditTransaction {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount      Int      // positive for purchase/welcome, negative for consumption
-  type        String   // welcome | purchase | consume | admin_grant
-  description String   // e.g. "Análise completa (20 cr)", "Pacote Carreira (500 cr)"
-  costBrl     Float?   // BRL paid if purchase
-  createdAt   DateTime @default(now())
 }

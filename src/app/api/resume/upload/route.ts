@@ -36,7 +36,6 @@ export async function POST(req: Request) {
         originalFormat: format,
         socialLinksJson: socialLinks ? JSON.stringify(socialLinks) : null,
         socialConsent: socialConsent || false,
-        status: 'draft',
       },
     })
 
