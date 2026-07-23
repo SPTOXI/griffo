@@ -142,16 +142,16 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-teal-500/20 rounded-3xl transform rotate-1 blur-lg -z-10" />
               <Card className="shadow-2xl border-slate-200/90 rounded-2xl overflow-hidden bg-white">
                 <CardContent className="p-0">
-                  <div className="bg-slate-900 text-white px-4 sm:px-5 py-3 flex items-center justify-between">
+                  <div className="bg-slate-900 text-white px-4 sm:px-5 py-3.5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
                       <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
                     </div>
-                    <span className="text-[11px] sm:text-xs font-mono text-slate-300 flex items-center gap-1.5 truncate">
-                      <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> laudo_avaliativo_griffo.json
+                    <span className="text-[11px] sm:text-xs font-medium text-slate-300 flex items-center gap-1.5 truncate">
+                      <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Relatório Técnico de Avaliação
                     </span>
-                    <Badge className="bg-emerald-500/20 text-emerald-300 text-[9px] sm:text-[10px] font-mono border-none shrink-0">ALTA PRECISÃO</Badge>
+                    <Badge className="bg-emerald-500/20 text-emerald-300 text-[9px] sm:text-[10px] font-semibold border-none shrink-0">ALTA PRECISÃO</Badge>
                   </div>
                   <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4">
@@ -211,7 +211,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
           <Stat icon={<Brain className="w-5 h-5" />} value="8 Dimensões" label="Análise minuciosa de currículo" />
           <Stat icon={<Target className="w-5 h-5" />} value="Gupy & ATS" label="Verificação de filtros de recrutamento" />
           <Stat icon={<Globe className="w-5 h-5" />} value="Perfis Globais" label="LinkedIn, Behance, GitHub, Xing, etc." />
-          <Stat icon={<Download className="w-5 h-5" />} value="PDF + Markdown" label="Reescrita profissional pronta" />
+          <Stat icon={<Download className="w-5 h-5" />} value="PDF & Editável" label="Reescrita profissional pronta" />
         </div>
       </section>
 
@@ -248,7 +248,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-6 backdrop-blur space-y-3.5">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <span className="text-xs font-mono text-emerald-400 flex items-center gap-1.5 truncate">
+                <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5 truncate">
                   <CheckCircle2 className="w-4 h-4 shrink-0" /> Otimização com Autorização do Usuário
                 </span>
                 <Badge className="bg-white/10 text-white shrink-0">LGPD / GDPR</Badge>
@@ -289,8 +289,8 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             desc="Com sua aprovação explícita, a IA reescreve seu currículo aplicando a fórmula STAR e Google XYZ — preservando 100% da veracidade dos seus dados." />
           <Feature icon={<Share2 className="w-5 h-5" />} title="Otimização de Presença Digital"
             desc="Dicas sob medida para seu perfil do LinkedIn, Gupy, Behance, GitHub, Xing e redes profissionais para atrair recrutadores ativamente." />
-          <Feature icon={<Download className="w-5 h-5" />} title="Download em PDF + Markdown"
-            desc="Baixe seu currículo reescrito e laudo em PDF elegante e arquivo Markdown editável — pronto para enviar a empresas ou salvar." />
+          <Feature icon={<Download className="w-5 h-5" />} title="Download em PDF e Formato Editável"
+            desc="Baixe seu currículo reescrito e laudo em PDF elegante e arquivo de texto editável — pronto para enviar a empresas ou salvar." />
           <Feature icon={<ShieldCheck className="w-5 h-5" />} title="Privacidade & Segurança Total"
             desc="Seus dados são criptografados e protegidos em conformidade rigorosa com a LGPD e GDPR. Seus dados nunca são vendidos a terceiros." />
         </div>
@@ -306,15 +306,15 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
             {[
-              { n: '01', t: 'Envie o Currículo', d: 'Anexe um PDF, arquivo de texto ou cole diretamente o conteúdo.' },
+              { n: '01', t: 'Envie o Currículo', d: 'Anexe um arquivo PDF, documento de texto ou cole diretamente o conteúdo.' },
               { n: '02', t: 'Informe seus Perfis', d: 'Insira opcionalmente seus links profissionais (LinkedIn, Gupy, etc.).' },
               { n: '03', t: 'Receba o Laudo', d: 'Confira a pontuação 0–10 em 8 dimensões, pontos fortes e fracos.' },
               { n: '04', t: 'Autorize a Reescrita', d: 'Se desejar, solicite a reescrita otimizada com a fórmula STAR.' },
-              { n: '05', t: 'Baixe em PDF ou MD', d: 'Baixe a versão final pronta para aplicar em vagas imediatamente.' },
+              { n: '05', t: 'Baixe em PDF ou Editável', d: 'Baixe a versão final pronta para aplicar em vagas imediatamente.' },
             ].map((s, i) => (
               <div key={s.n} className="relative">
                 <div className="rounded-xl bg-white/5 border border-white/10 p-5 h-full space-y-2">
-                  <div className="text-emerald-400 text-xs font-mono font-bold">{s.n}</div>
+                  <div className="text-emerald-400 text-xs font-semibold">{s.n}</div>
                   <h3 className="font-semibold text-base">{s.t}</h3>
                   <p className="text-xs text-slate-300 leading-relaxed">{s.d}</p>
                 </div>
@@ -352,7 +352,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             features={[
               '5 análises completas de currículo',
               '3 reescritas profissionais',
-              'Downloads ilimitados (PDF + MD)',
+              'Downloads ilimitados (PDF & Texto Editável)',
               'Otimização para LinkedIn & Gupy',
               'Verificação de aprovação em ATS',
             ]}
@@ -369,7 +369,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               '20 reescritas profissionais / mês',
               'Otimização contínua de Redes Sociais',
               'Histórico completo de laudos',
-              'Downloads ilimitados em PDF & MD',
+              'Downloads ilimitados em PDF & Texto Editável',
               'Suporte prioritário por e-mail',
             ]}
             highlight={period === 'monthly'}
