@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     let content, tokensIn, tokensOut
     try {
-      const r = await rewriteResume(resume.originalContent, resume.analysisJson)
+      const r = await rewriteResume(resume.originalContent, resume.analysisJson, user.id, resume.id)
       content = r.content
       tokensIn = r.tokensIn
       tokensOut = r.tokensOut

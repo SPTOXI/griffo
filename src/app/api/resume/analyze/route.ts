@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     // Call LLM
     let analysis, tokensIn, tokensOut
     try {
-      const r = await analyzeResume(resume.originalContent, socialLinks, resume.socialConsent)
+      const r = await analyzeResume(resume.originalContent, socialLinks, resume.socialConsent, user.id, resume.id)
       analysis = r.analysis
       tokensIn = r.tokensIn
       tokensOut = r.tokensOut

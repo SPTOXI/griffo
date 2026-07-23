@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import { db } from './db'
+import { executeAiTask } from './ai-router/router'
 
 export async function getLlmConfig() {
   let apiKey = process.env.MOONSHOT_API_KEY || process.env.LLM_API_KEY || ''
@@ -46,6 +47,44 @@ export async function getClient(): Promise<{ client: OpenAI; model: string }> {
 export const TOKEN_COST = {
   inputPer1k: 0.003, // $3.00 / 1M tokens
   outputPer1k: 0.015, // $15.00 / 1M tokens
+}
+
+export function costPerCycleUsd(): number {
+  const analysisIn = (1800 / 1000) * TOKEN_COST.inputPer1k
+  const analysisOut = (1500 / 1000) * TOKEN_COST.outputPer1k
+  const rewriteIn = (2500 / 1000) * TOKEN_COST.inputPer1k
+  const rewriteOut = (2200 / 1000) * TOKEN_COST.outputPer1k
+  return analysisIn + analysisOut + rewriteIn + rewriteOut
+}
+
+export function computePricing() {
+  const brlRate = 5.4
+  const cycleUsd = costPerCycleUsd()
+  const cycleBrl = cycleUsd * brlRate
+
+  return {
+    day: {
+      priceBrl: 19.90,
+      estimatedCycles: 5,
+      estimatedAiCostBrl: cycleBrl * 5,
+      marginBrl: 19.90 - cycleBrl * 5,
+      marginPercent: Math.round(((19.90 - cycleBrl * 5) / 19.90) * 100),
+    },
+    monthly: {
+      priceBrl: 39.90,
+      estimatedCycles: 15,
+      estimatedAiCostBrl: cycleBrl * 15,
+      marginBrl: 39.90 - cycleBrl * 15,
+      marginPercent: Math.round(((39.90 - cycleBrl * 15) / 39.90) * 100),
+    },
+    annual: {
+      priceBrl: 299.90,
+      estimatedCycles: 100,
+      estimatedAiCostBrl: cycleBrl * 100,
+      marginBrl: 299.90 - cycleBrl * 100,
+      marginPercent: Math.round(((299.90 - cycleBrl * 100) / 299.90) * 100),
+    },
+  }
 }
 
 export interface AnalysisDimension {
@@ -98,53 +137,35 @@ AVALIE ESTAS DIMENSÕES FUNDAMENTAIS (nota de 0 a 10 cada uma):
    - Identificação de garras/gaps de conhecimento e sugestão objetiva de cursos, certificações de mercado (ex: AWS, Azure, Scrum Master, PMP, especializações) ou projetos práticos para acelerar o desenvolvimento.
 
 REGRAS DE PRESENÇA DIGITAL & REDES SOCIAIS GLOBAIS (SE FORNECIDAS):
-- O Griffo é uma plataforma global de carreira. O candidato pode incluir QUALQUER plataforma ou rede relevante para seu setor (ex: LinkedIn, Gupy, GitHub, Behance, Dribbble, StackOverflow, Kaggle, Xing, Medium, Substack, YouTube, Instagram, Portfólio próprio, etc.).
-- Se o usuário forneceu perfis profissionais com autorização, inclua obrigatoriamente no JSON a propriedade "socialAdvice": [
-    {
-      "platform": "Nome da Plataforma fornecida pelo usuário (ex: LinkedIn, Gupy, Behance, StackOverflow, Kaggle, Xing, etc.)",
-      "url": "URL fornecida",
-      "headline": "Sugestão de Título Profissional de Alto Impacto específico para a plataforma",
-      "aboutSummary": "Sugestão de texto para a seção 'Sobre' / Bio / Apresentação da plataforma",
-      "tips": ["Dica 1 de posicionamento de marca e SEO no perfil", "Dica 2 para o algoritmo e visibilidade de recrutadores", "Dica 3 de exibição de projetos, cases ou conexões"]
-    }
-  ]
+Se o usuário forneceu links para perfis profissionais (LinkedIn, Gupy, Behance, Dribbble, GitHub, StackOverflow, Kaggle, Xing, Medium, Substack, Portfólio próprio) e autorizou a análise de presença digital, avalie esses canais no contexto da meta profissional dele e gere uma chave "socialAdvice" no JSON contendo sugestões de Headline (Título), seção 'Sobre' e dicas de algoritmos/SEO para cada perfil.
 
-REGRAS DE RESPOSTA:
-- Seja franco, técnico e altamente específico.
-- "strengths": 3 a 6 pontos fortes concretos evidenciados no currículo.
-- "weaknesses": 3 a 6 pontos de atenção acionáveis (evite obviedades genéricas).
-- "recommendations": 4 a 8 recomendações diretas cobrindo ajustes de currículo, plano de carreira, redes sociais e capacitação técnica.
-- "keywords": 6 a 12 palavras-chave de alto valor no setor para otimização ATS.
-- "atsFriendly": true apenas se o currículo usar estrutura padrão facilmente interpretável por ATS.
-- "summary": Um parágrafo executivo de 4 a 6 frases com o veredito geral, nível de senioridade percebido e projeção de carreira.
-- "overall": Média ponderada das dimensões (pesos maiores em impacto, estrutura/ATS e palavras-chave), arredondada para 1 casa decimal.
-
-Retorne EXCLUSIVAMENTE JSON válido no formato:
+FORMATO DE SAÍDA EXIGIDO:
+Você deve retornar APENAS um objeto JSON válido, sem qualquer texto fora do JSON, sem marcações markdown extra. O JSON deve ter a estrutura exata:
 {
-  "overall": number,
+  "overall": 8.5,
   "dimensions": [
-    { "key": "structure", "label": "Estrutura & Compatibilidade ATS", "score": number, "rationale": "..." },
-    { "key": "summary", "label": "Resumo & Posicionamento", "score": number, "rationale": "..." },
-    { "key": "impact", "label": "Resultados Quantificados (STAR/XYZ)", "score": number, "rationale": "..." },
-    { "key": "skills", "label": "Habilidades & Ferramentas", "score": number, "rationale": "..." },
-    { "key": "experience", "label": "Experiência & Verbos de Ação", "score": number, "rationale": "..." },
-    { "key": "keywords", "label": "Palavras-Chave (Gupy/LinkedIn)", "score": number, "rationale": "..." },
-    { "key": "career", "label": "Trajetória & Plano de Carreira", "score": number, "rationale": "..." },
-    { "key": "upskilling", "label": "Capacitação & Cursos Recomendados", "score": number, "rationale": "..." }
+    { "key": "structure", "label": "Estrutura & Compatibilidade ATS", "score": 9, "rationale": "Explicação..." },
+    { "key": "summary", "label": "Resumo & Posicionamento", "score": 8, "rationale": "Explicação..." },
+    { "key": "impact", "label": "Resultados Quantificados (STAR/XYZ)", "score": 8, "rationale": "Explicação..." },
+    { "key": "skills", "label": "Habilidades & Ferramentas", "score": 9, "rationale": "Explicação..." },
+    { "key": "experience", "label": "Experiência & Verbos de Ação", "score": 8, "rationale": "Explicação..." },
+    { "key": "keywords", "label": "Palavras-Chave (Gupy/LinkedIn)", "score": 9, "rationale": "Explicação..." },
+    { "key": "career", "label": "Trajetória & Plano de Carreira", "score": 8, "rationale": "Explicação..." },
+    { "key": "upskilling", "label": "Capacitação & Cursos Recomendados", "score": 8, "rationale": "Explicação..." }
   ],
-  "strengths": ["..."],
-  "weaknesses": ["..."],
-  "recommendations": ["..."],
-  "keywords": ["..."],
-  "atsFriendly": boolean,
-  "summary": "...",
+  "strengths": ["Ponto forte 1", "Ponto forte 2"],
+  "weaknesses": ["Ponto a melhorar 1", "Ponto a melhorar 2"],
+  "recommendations": ["Recomendação prática 1", "Recomendação prática 2"],
+  "keywords": ["React", "TypeScript", "Node.js", "Jest", "Docker"],
+  "atsFriendly": true,
+  "summary": "Resumo executivo com diagnóstico geral...",
   "socialAdvice": [
     {
       "platform": "LinkedIn",
       "url": "...",
-      "headline": "...",
-      "aboutSummary": "...",
-      "tips": ["..."]
+      "headline": "Título Profissional Recomendado",
+      "aboutSummary": "Texto sugerido para o Sobre...",
+      "tips": ["Dica de algoritmo 1", "Dica de palavras-chave 2"]
     }
   ]
 }`
@@ -182,10 +203,10 @@ REGRAS RÍGIDAS DE REESCRITA:
 export async function analyzeResume(
   resumeText: string,
   socialLinks?: Record<string, string> | null,
-  socialConsent?: boolean
+  socialConsent?: boolean,
+  userId?: string,
+  resumeId?: string
 ): Promise<{ analysis: ResumeAnalysis; tokensIn: number; tokensOut: number }> {
-  const { client, model } = await getClient()
-
   let userPrompt = `Analise o currículo abaixo de acordo com todas as diretrizes de avaliação, plano de carreira e capacitação:\n\n--- CURRÍCULO ---\n${resumeText}`
 
   if (socialConsent && socialLinks && Object.keys(socialLinks).length > 0) {
@@ -198,33 +219,19 @@ export async function analyzeResume(
     userPrompt += `\n\nComo o usuário autorizou a análise de suas redes/perfis profissionais, por favor inclua o campo "socialAdvice" no JSON gerando orientações diretas de otimização para cada plataforma (especialmente sugestões de Título/Headline, seção 'Sobre' e dicas para algoritmos do LinkedIn e Gupy).`
   }
 
-  let completion
-  try {
-    completion = await client.chat.completions.create({
-      model,
-      messages: [
-        { role: 'system', content: ANALYSIS_SYSTEM },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.3,
-      max_tokens: 3500,
-    })
-  } catch (err: any) {
-    console.error('LLM API Call Error:', err)
-    if (err.status === 401 || err.message?.includes('Invalid Authentication') || err.message?.includes('API key')) {
-      throw new Error(
-        'Chave de API inválida ou expirada (Erro 401 Authentication). Por favor, verifique ou atualize a MOONSHOT_API_KEY no painel Admin ou no arquivo .env.'
-      )
-    }
-    throw new Error(err.message || 'Falha ao conectar com o serviço de Inteligência Artificial.')
-  }
-
-  const content = completion.choices?.[0]?.message?.content || ''
-  const tokensIn = completion.usage?.prompt_tokens || Math.ceil(userPrompt.length / 4)
-  const tokensOut = completion.usage?.completion_tokens || Math.ceil(content.length / 4)
+  // Execute via AI Router
+  const res = await executeAiTask({
+    taskType: 'full_analysis',
+    systemPrompt: ANALYSIS_SYSTEM,
+    userPrompt,
+    temperature: 0.3,
+    maxTokens: 3500,
+    userId,
+    resumeId,
+  })
 
   // Extract JSON string cleanly
-  let cleaned = content.trim()
+  let cleaned = res.content.trim()
   if (cleaned.startsWith('```')) {
     cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')
   }
@@ -259,111 +266,80 @@ export async function analyzeResume(
     }
   }
 
-  return { analysis, tokensIn, tokensOut }
+  return { analysis, tokensIn: res.tokensIn, tokensOut: res.tokensOut }
 }
 
 export async function rewriteResume(
   originalText: string,
-  analysisJson: string
+  analysisJson: string,
+  userId?: string,
+  resumeId?: string
 ): Promise<{ content: string; tokensIn: number; tokensOut: number }> {
-  const { client, model } = await getClient()
   const userPrompt = `Currículo original:\n\n${originalText}\n\n--- Laudo de análise (use para priorizar correções) ---\n${analysisJson}\n\nReescreva o currículo em Markdown conforme as instruções.`
 
-  let completion
-  try {
-    completion = await client.chat.completions.create({
-      model,
-      messages: [
-        { role: 'system', content: REWRITE_SYSTEM },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.5,
-      max_tokens: 3500,
-    })
-  } catch (err: any) {
-    console.error('LLM Rewrite Error:', err)
-    if (err.status === 401 || err.message?.includes('Invalid Authentication') || err.message?.includes('API key')) {
-      throw new Error(
-        'Chave de API inválida ou expirada (Erro 401 Authentication). Por favor, verifique ou atualize a MOONSHOT_API_KEY no painel Admin ou no arquivo .env.'
-      )
-    }
-    throw new Error(err.message || 'Falha ao reescrever o currículo com a IA.')
-  }
+  // Execute via AI Router
+  const res = await executeAiTask({
+    taskType: 'rewrite',
+    systemPrompt: REWRITE_SYSTEM,
+    userPrompt,
+    temperature: 0.5,
+    maxTokens: 3500,
+    userId,
+    resumeId,
+  })
 
-  const content = completion.choices?.[0]?.message?.content || ''
-  const tokensIn = completion.usage?.prompt_tokens || Math.ceil(userPrompt.length / 4)
-  const tokensOut = completion.usage?.completion_tokens || Math.ceil(content.length / 4)
-  return { content: content.trim(), tokensIn, tokensOut }
+  return { content: res.content.trim(), tokensIn: res.tokensIn, tokensOut: res.tokensOut }
 }
 
 // Pricing model
 export interface PlanPricing {
-  plan: 'day' | 'monthly' | 'annual'
-  label: string
-  analysesIncluded: number
-  rewritesIncluded: number
-  estimatedCostUsd: number
+  id: string
+  name: string
   priceBrl: number
-  marginBrl: number
-  marginPct: number
+  period: string
+  features: string[]
 }
 
-const COST_PER_ANALYSIS_IN_TOKENS = 1800
-const COST_PER_ANALYSIS_OUT_TOKENS = 1500
-const COST_PER_REWRITE_IN_TOKENS = 2500
-const COST_PER_REWRITE_OUT_TOKENS = 2200
-const STORAGE_COST_PER_USER_PER_DAY_USD = 0.0008
-
-export function costPerCycleUsd(): number {
-  const analysisIn = (COST_PER_ANALYSIS_IN_TOKENS / 1000) * TOKEN_COST.inputPer1k
-  const analysisOut = (COST_PER_ANALYSIS_OUT_TOKENS / 1000) * TOKEN_COST.outputPer1k
-  const rewriteIn = (COST_PER_REWRITE_IN_TOKENS / 1000) * TOKEN_COST.inputPer1k
-  const rewriteOut = (COST_PER_REWRITE_OUT_TOKENS / 1000) * TOKEN_COST.outputPer1k
-  return analysisIn + analysisOut + rewriteIn + rewriteOut
-}
-
-export function computePricing(): PlanPricing[] {
-  const cycleCost = costPerCycleUsd()
-  const brlUsd = 5.4
-
-  const day: PlanPricing = {
-    plan: 'day',
-    label: 'Passe Diário',
-    analysesIncluded: 5,
-    rewritesIncluded: 3,
-    estimatedCostUsd: cycleCost * 5 + STORAGE_COST_PER_USER_PER_DAY_USD * 1,
-    priceBrl: 19.9,
-    marginBrl: 0,
-    marginPct: 0,
-  }
-  day.marginBrl = day.priceBrl - day.estimatedCostUsd * brlUsd
-  day.marginPct = (day.marginBrl / day.priceBrl) * 100
-
-  const monthly: PlanPricing = {
-    plan: 'monthly',
-    label: 'Assinatura Mensal',
-    analysesIncluded: 30,
-    rewritesIncluded: 20,
-    estimatedCostUsd: cycleCost * 30 + STORAGE_COST_PER_USER_PER_DAY_USD * 30,
-    priceBrl: 39.9,
-    marginBrl: 0,
-    marginPct: 0,
-  }
-  monthly.marginBrl = monthly.priceBrl - monthly.estimatedCostUsd * brlUsd
-  monthly.marginPct = (monthly.marginBrl / monthly.priceBrl) * 100
-
-  const annual: PlanPricing = {
-    plan: 'annual',
-    label: 'Assinatura Anual',
-    analysesIncluded: 365,
-    rewritesIncluded: 240,
-    estimatedCostUsd: cycleCost * 365 + STORAGE_COST_PER_USER_PER_DAY_USD * 365,
-    priceBrl: 299.9,
-    marginBrl: 0,
-    marginPct: 0,
-  }
-  annual.marginBrl = annual.priceBrl - annual.estimatedCostUsd * brlUsd
-  annual.marginPct = (annual.marginBrl / annual.priceBrl) * 100
-
-  return [day, monthly, annual]
+export const PRICING_PLANS: Record<string, PlanPricing> = {
+  day: {
+    id: 'day',
+    name: 'Passe Diário',
+    priceBrl: 19.90,
+    period: '24 horas',
+    features: [
+      '5 análises completas de currículo',
+      '3 reescritas profissionais',
+      'Downloads ilimitados (PDF & Texto Editável)',
+      'Otimização para LinkedIn & Gupy',
+      'Verificação de aprovação em ATS',
+    ],
+  },
+  monthly: {
+    id: 'monthly',
+    name: 'Assinatura Mensal',
+    priceBrl: 39.90,
+    period: 'por mês',
+    features: [
+      '30 análises de currículo / mês',
+      '20 reescritas profissionais / mês',
+      'Otimização contínua de Redes Sociais',
+      'Histórico completo de laudos',
+      'Downloads ilimitados em PDF & Texto Editável',
+      'Suporte prioritário por e-mail',
+    ],
+  },
+  annual: {
+    id: 'annual',
+    name: 'Assinatura Anual',
+    priceBrl: 299.90,
+    period: 'por ano (equivalente a R$ 24,99/mês)',
+    features: [
+      '365 análises de currículo / ano',
+      '240 reescritas profissionais / ano',
+      'Otimização ilimitada de Presença Digital',
+      'Economize +37% em relação ao mensal',
+      'Histórico vitalício durante a assinatura',
+      'Suporte prioritário via canal direto',
+    ],
+  },
 }

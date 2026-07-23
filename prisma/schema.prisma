@@ -35,6 +35,7 @@ model User {
   resumes       Resume[]
   subscriptions Subscription[]
   auditLogs     AuditLog[]
+  aiLogs        AiLog[]
 }
 
 model SystemConfig {
@@ -72,6 +73,7 @@ model Resume {
   updatedAt        DateTime @updatedAt
 
   auditLogs AuditLog[]
+  aiLogs    AiLog[]
 }
 
 model Subscription {
@@ -93,8 +95,28 @@ model AuditLog {
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   resumeId  String?
   resume    Resume?  @relation(fields: [resumeId], references: [id], onDelete: SetNull)
-  action    String   // register | login | upload | analyze | rewrite | download | subscribe
+  action    String   // register | login | upload | analyze | rewrite | download | subscribe | failover
   meta      String?  // JSON string with extra info
   ipHash    String?  // hashed IP for security audit
   createdAt DateTime @default(now())
+}
+
+model AiLog {
+  id             String   @id @default(cuid())
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  resumeId       String?
+  resume         Resume?  @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  taskType       String   // full_analysis | rewrite | ocr_extraction | normalization | social_advice
+  primaryModel   String   // e.g. kimi-k3
+  usedModel      String   // e.g. claude-3-5-sonnet (if failover occurred)
+  provider       String   // kimi | claude | deepseek | gemini
+  tokensIn       Int      @default(0)
+  tokensOut      Int      @default(0)
+  costUsd        Float    @default(0)
+  responseTimeMs Int      @default(0)
+  status         String   @default("success") // success | failover | error
+  errorCode      String?  // 429, 500, 502, 503, 504, timeout, etc.
+  failoverCount  Int      @default(0)
+  createdAt      DateTime @default(now())
 }
