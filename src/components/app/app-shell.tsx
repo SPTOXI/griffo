@@ -166,6 +166,26 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           <div className="p-4 space-y-1">
             <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Navegação</p>
             <nav className="space-y-1">
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => {
+                    setView('admin')
+                    setSidebarOpen(false)
+                  }}
+                  className={`
+                    w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold
+                    transition-all shadow-xs mb-2
+                    ${view === 'admin'
+                      ? 'bg-violet-700 text-white shadow-md'
+                      : 'bg-violet-50 text-violet-900 border border-violet-200 hover:bg-violet-100'
+                    }
+                  `}
+                >
+                  <Shield className={`w-4 h-4 ${view === 'admin' ? 'text-amber-300' : 'text-violet-600'}`} />
+                  <span>Área Admin (Painel Mestre)</span>
+                </button>
+              )}
+
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon
                 const active = view === item.view
@@ -194,15 +214,27 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           </div>
 
           <div className="mt-auto p-4 border-t border-slate-200 space-y-3 bg-slate-50/50">
-            <div className="rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 p-3 text-white space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold">
-                <Zap className="w-4 h-4 text-amber-300 fill-amber-300" /> Saldo Atual
+            {user?.role === 'admin' ? (
+              <div className="rounded-xl bg-gradient-to-br from-violet-700 to-indigo-900 p-3 text-white space-y-2 shadow-md">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-violet-200">
+                  <Shield className="w-4 h-4 text-amber-300" /> Modo Administrador
+                </div>
+                <p className="text-xl font-extrabold text-white">♾️ Créditos Ilimitados</p>
+                <Button onClick={() => { setView('admin'); setSidebarOpen(false) }} size="sm" className="w-full bg-white text-violet-950 hover:bg-slate-100 font-bold text-xs h-8">
+                  Acessar Área Admin
+                </Button>
               </div>
-              <p className="text-2xl font-extrabold">{credits} <span className="text-xs font-normal text-emerald-100">créditos</span></p>
-              <Button onClick={() => { setView('plans'); setSidebarOpen(false) }} size="sm" className="w-full bg-white text-emerald-900 hover:bg-slate-100 font-bold text-xs h-8">
-                Adicionar Créditos
-              </Button>
-            </div>
+            ) : (
+              <div className="rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 p-3 text-white space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold">
+                  <Zap className="w-4 h-4 text-amber-300 fill-amber-300" /> Saldo Atual
+                </div>
+                <p className="text-2xl font-extrabold">{credits} <span className="text-xs font-normal text-emerald-100">créditos</span></p>
+                <Button onClick={() => { setView('plans'); setSidebarOpen(false) }} size="sm" className="w-full bg-white text-emerald-900 hover:bg-slate-100 font-bold text-xs h-8">
+                  Adicionar Créditos
+                </Button>
+              </div>
+            )}
           </div>
         </aside>
 
