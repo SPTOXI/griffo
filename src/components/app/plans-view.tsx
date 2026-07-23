@@ -266,7 +266,7 @@ export function PlansView() {
             </div>
 
             <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 space-y-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Preço do modelo (GLM-4.6)</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Preço do modelo (Kimi K3 / IA Alta Precisão)</p>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="flex justify-between"><span className="text-slate-600">Entrada</span><span className="font-mono">${pricing.tokenCost.inputPer1k.toFixed(4)}/1K tokens</span></div>
                 <div className="flex justify-between"><span className="text-slate-600">Saída</span><span className="font-mono">${pricing.tokenCost.outputPer1k.toFixed(4)}/1K tokens</span></div>
