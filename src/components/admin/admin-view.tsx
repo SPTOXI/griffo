@@ -485,9 +485,6 @@ export function AdminView() {
           <TabsTrigger value="ai-router" className="gap-1.5">
             <Cpu className="w-4 h-4" /> Telemetria de IA
           </TabsTrigger>
-          <TabsTrigger value="system" className="gap-1.5">
-            <Shield className="w-4 h-4" /> Parâmetros Gerais
-          </TabsTrigger>
         </TabsList>
 
         {/* USERS TAB - WITH SELECTION & ACTIONS */}
@@ -1083,58 +1080,6 @@ export function AdminView() {
             </CardContent>
           </Card>
         </TabsContent>
-
-        {/* GENERAL SYSTEM TAB */}
-        <TabsContent value="system" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Parâmetros Gerais do Sistema</CardTitle>
-              <CardDescription>Ajuste opções globais e chaves de API.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-700">
-                    Chave da API da IA (MOONSHOT_API_KEY)
-                  </label>
-                  <Input
-                    type="password"
-                    placeholder="sk-..."
-                    value={configs.MOONSHOT_API_KEY || ''}
-                    onChange={(e) => setConfigs({ ...configs, MOONSHOT_API_KEY: e.target.value })}
-                    className="text-xs font-mono"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Modelo Principal (Model)</label>
-                  <Input
-                    placeholder="kimi-k3"
-                    value={configs.KIMI_MODEL || 'kimi-k3'}
-                    onChange={(e) => setConfigs({ ...configs, KIMI_MODEL: e.target.value })}
-                    className="text-xs font-mono"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">URL Base (Base URL)</label>
-                  <Input
-                    placeholder="https://api.moonshot.ai/v1"
-                    value={configs.LLM_BASE_URL || 'https://api.moonshot.ai/v1'}
-                    onChange={(e) => setConfigs({ ...configs, LLM_BASE_URL: e.target.value })}
-                    className="text-xs font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2 flex justify-end">
-                <Button onClick={saveSettings} disabled={savingConfig} className="bg-violet-600 hover:bg-violet-700">
-                  {savingConfig ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
-                  Salvar Parâmetros Gerais
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   )
 }
