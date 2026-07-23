@@ -988,8 +988,6 @@ export function AdminView() {
                   />
                 </div>
               </div>
-              </div>
-
               <div className="pt-6 pb-2">
                 <h3 className="text-sm font-semibold text-slate-800 border-b pb-2 mb-4">Integração Lemon Squeezy (Modo Teste)</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
