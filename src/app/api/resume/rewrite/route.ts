@@ -45,7 +45,8 @@ export async function POST(req: Request) {
       tokensOut = r.tokensOut
     } catch (e: any) {
       console.error('LLM rewrite error', e)
-      return NextResponse.json({ error: 'Falha ao reescrever. Tente novamente.' }, { status: 502 })
+      const errorMsg = e?.message || 'Falha ao reescrever. Tente novamente.'
+      return NextResponse.json({ error: errorMsg }, { status: 502 })
     }
 
     const costIn = (tokensIn / 1000) * TOKEN_COST.inputPer1k

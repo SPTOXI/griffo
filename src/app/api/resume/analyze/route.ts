@@ -41,7 +41,8 @@ export async function POST(req: Request) {
       tokensOut = r.tokensOut
     } catch (e: any) {
       console.error('LLM analyze error', e)
-      return NextResponse.json({ error: 'Falha ao gerar análise. Tente novamente em alguns segundos.' }, { status: 502 })
+      const errorMsg = e?.message || 'Falha ao gerar análise. Tente novamente em alguns segundos.'
+      return NextResponse.json({ error: errorMsg }, { status: 502 })
     }
 
     const costIn = (tokensIn / 1000) * TOKEN_COST.inputPer1k

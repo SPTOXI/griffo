@@ -392,13 +392,40 @@ export function AdminView() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 sm:col-span-2">
                   <label className="text-xs font-semibold text-slate-700">
-                    Modelo Principal Kimi (Moonshot AI)
+                    Chave da API da IA (MOONSHOT_API_KEY)
                   </label>
                   <Input
+                    type="password"
+                    placeholder="sk-..."
+                    value={configs.MOONSHOT_API_KEY || ''}
+                    onChange={(e) => setConfigs({ ...configs, MOONSHOT_API_KEY: e.target.value })}
+                    className="text-xs font-mono"
+                  />
+                  <p className="text-[11px] text-slate-500">
+                    Cole sua chave da Moonshot AI (Kimi K3), OpenAI, DeepSeek ou outro provedor compatível.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Modelo Principal de IA (Model)
+                  </label>
+                  <Input
+                    placeholder="kimi-k3"
                     value={configs.KIMI_MODEL || 'kimi-k3'}
                     onChange={(e) => setConfigs({ ...configs, KIMI_MODEL: e.target.value })}
+                    className="text-xs font-mono"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">
+                    URL Base da API (Base URL)
+                  </label>
+                  <Input
+                    placeholder="https://api.moonshot.ai/v1"
+                    value={configs.LLM_BASE_URL || 'https://api.moonshot.ai/v1'}
+                    onChange={(e) => setConfigs({ ...configs, LLM_BASE_URL: e.target.value })}
                     className="text-xs font-mono"
                   />
                 </div>
