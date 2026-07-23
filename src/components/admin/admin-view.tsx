@@ -988,6 +988,49 @@ export function AdminView() {
                   />
                 </div>
               </div>
+              </div>
+
+              <div className="pt-6 pb-2">
+                <h3 className="text-sm font-semibold text-slate-800 border-b pb-2 mb-4">Integração Lemon Squeezy (Modo Teste)</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Store ID</label>
+                    <Input
+                      placeholder="Ex: 12345"
+                      value={configs.LEMON_STORE_ID || ''}
+                      onChange={(e) => setConfigs({ ...configs, LEMON_STORE_ID: e.target.value })}
+                      className="text-xs font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Variant ID (30 Créditos)</label>
+                    <Input
+                      placeholder="Ex: 67890"
+                      value={configs.LEMON_VARIANT_30 || ''}
+                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_30: e.target.value })}
+                      className="text-xs font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Variant ID (100 Créditos)</label>
+                    <Input
+                      placeholder="Ex: 67891"
+                      value={configs.LEMON_VARIANT_100 || ''}
+                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_100: e.target.value })}
+                      className="text-xs font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Variant ID (300 Créditos)</label>
+                    <Input
+                      placeholder="Ex: 67892"
+                      value={configs.LEMON_VARIANT_300 || ''}
+                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_300: e.target.value })}
+                      className="text-xs font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
 
               <div className="pt-2 flex justify-end">
                 <Button onClick={saveSettings} disabled={savingConfig} className="bg-emerald-600 hover:bg-emerald-700">

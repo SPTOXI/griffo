@@ -109,7 +109,17 @@ model CreditTransaction {
   type        String   // welcome | purchase | consume | admin_grant
   description String
   costBrl     Float?
+  paymentRef  String?  // Lemon Squeezy Order ID or Subscription ID
+  status      String   @default("completed") // pending | completed | failed
 
+  createdAt DateTime @default(now())
+}
+
+model WebhookEvent {
+  id        String   @id @default(cuid())
+  eventName String
+  processed Boolean  @default(false)
+  body      String   // JSON stringified payload
   createdAt DateTime @default(now())
 }
 

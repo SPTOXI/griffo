@@ -62,6 +62,11 @@ export function PlansView() {
         toast.error(data.error || 'Erro ao adquirir pacote.')
         return
       }
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
+        return
+      }
+
       toast.success(data.message || 'Créditos adicionados com sucesso!')
       await hydrate()
       await loadCreditsData()
