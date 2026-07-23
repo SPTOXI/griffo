@@ -1080,6 +1080,7 @@ export function AdminView() {
             </CardContent>
           </Card>
         </TabsContent>
+      </Tabs>
     </div>
   )
 }
