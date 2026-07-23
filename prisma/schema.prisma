@@ -21,7 +21,7 @@ model User {
   // Role & Permissions
   role         String   @default("user") // user | admin
   // Plan / Credit Balance (Phase 1 Monetização por Créditos)
-  credits      Int      @default(20)     // 20 welcome credits on signup
+  credits      Int      @default(0)      // 0 credits on signup (free user must acquire Plano de Entrada)
   plan         String   @default("free") // free | day | monthly | annual
   planStartsAt DateTime?
   planEndsAt   DateTime?

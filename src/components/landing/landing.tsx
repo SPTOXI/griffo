@@ -327,22 +327,37 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       {/* PRICING & CREDIT PACKAGES */}
       <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800 px-3 py-1 text-xs">Monetização Transparente por Créditos</Badge>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-3">Escolha o pacote ideal e use a IA sem mensalidades.</h2>
-          <p className="text-sm sm:text-base text-slate-600">Experimente grátis com 20 créditos de boas-vindas ao se cadastrar. Compre saldo adicional apenas quando precisar.</p>
+          <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-900 px-3 py-1 text-xs font-semibold">Sem Mensalidades ou Fidelidade</Badge>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-3">Comece com o Plano de Entrada e GANHE +10 Créditos Bônus Grátis!</h2>
+          <p className="text-sm sm:text-base text-slate-600">Compre o Plano de Entrada para começar ou escolha o pacote ideal para a sua busca de emprego.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-7xl mx-auto items-stretch">
+          <PlanCard
+            name="Plano de Entrada"
+            price="R$ 19,90"
+            period="50 cr + 🎁 10 cr grátis = 60 créditos!"
+            features={[
+              'Compre 50 créditos e GANHE +10 grátis!',
+              'Total de 60 créditos liberados no saldo',
+              'Suficiente para 3 análises completas',
+              'Ou 6 reescritas com a fórmula STAR',
+              'Oferta exclusiva de boas-vindas',
+            ]}
+            highlight={true}
+            cta="Adquirir Plano de Entrada"
+            onCta={() => onNavigate('signup')}
+          />
           <PlanCard
             name="Pacote Starter"
             price="R$ 29,90"
             period="100 créditos (R$ 0,299 / crédito)"
             features={[
-              '100 créditos adicionados ao seu saldo',
+              '100 créditos adicionados ao saldo',
               'Suficiente para 5 análises completas',
-              'Ou 10 reescritas com a fórmula STAR',
+              'Ou 10 reescritas profissionais',
               'Downloads em PDF e texto editável',
-              'Sem mensalidade ou data de expiração',
+              'Sem mensalidade ou expiração',
             ]}
             highlight={false}
             cta="Adquirir Pacote Starter"
@@ -353,11 +368,11 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             price="R$ 99,90"
             period="500 créditos (R$ 0,199 / crédito)"
             features={[
-              '500 créditos adicionados ao seu saldo',
+              '500 créditos adicionados ao saldo',
               'Suficiente para 25 análises completas',
-              'Ou 50 reescritas profissionais',
+              'Ou 50 reescritas de experiências',
               'Otimização de LinkedIn e Gupy',
-              'Melhor custo-benefício para recolocação',
+              'Melhor custo-benefício da plataforma',
               'Sem expiração de saldo',
             ]}
             highlight={true}
@@ -370,11 +385,11 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             price="R$ 249,90"
             period="1.500 créditos (R$ 0,166 / crédito)"
             features={[
-              '1.500 créditos adicionados ao seu saldo',
+              '1.500 créditos adicionados ao saldo',
               'Suficiente para 75 análises completas',
               'Ou 150 reescritas de experiências',
               'Uso intensivo e consultoria contínua',
-              'Maior desconto por crédito da plataforma',
+              'Maior desconto por crédito',
               'Atendimento e suporte prioritário',
             ]}
             highlight={false}

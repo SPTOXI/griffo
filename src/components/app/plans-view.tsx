@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { CreditCard, Check, Loader2, Sparkles, Zap, CheckCircle2, ShoppingBag, ArrowRight } from 'lucide-react'
+import { CreditCard, Check, Loader2, Sparkles, Zap, CheckCircle2, ShoppingBag, Gift } from 'lucide-react'
 import { toast } from 'sonner'
 import { CREDIT_PACKAGES, CREDIT_COSTS } from '@/lib/credits'
 
@@ -22,7 +22,7 @@ interface CreditTx {
 export function PlansView() {
   const { user, hydrate } = useAuth()
   const { setView } = useNav()
-  const [credits, setCredits] = useState<number>(20)
+  const [credits, setCredits] = useState<number>(0)
   const [transactions, setTransactions] = useState<CreditTx[]>([])
   const [loading, setLoading] = useState(true)
   const [buyingId, setBuyingId] = useState<string | null>(null)
@@ -49,7 +49,7 @@ export function PlansView() {
     }
   }
 
-  const handleBuy = async (packageId: 'starter' | 'carreira' | 'profissional') => {
+  const handleBuy = async (packageId: 'entrada' | 'starter' | 'carreira' | 'profissional') => {
     setBuyingId(packageId)
     try {
       const r = await fetch('/api/credits/purchase', {
@@ -82,14 +82,14 @@ export function PlansView() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-6xl">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <Zap className="w-6 h-6 text-amber-500 fill-amber-500" /> Saldo & Pacotes de Créditos
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Adquira saldo sob demanda para utilizar as ferramentas de Inteligência Artificial do Griffo.
+            Adquira o Plano de Entrada ou recarregue seu saldo para utilizar as ferramentas de Inteligência Artificial do Griffo.
           </p>
         </div>
 
@@ -105,47 +105,70 @@ export function PlansView() {
         </div>
       </div>
 
-      {/* CREDIT PACKAGES */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-        {CREDIT_PACKAGES.filter((p) => p.id !== 'free').map((pkg) => {
+      {/* CREDIT PACKAGES GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 pt-2">
+        {CREDIT_PACKAGES.map((pkg) => {
           const isBuying = buyingId === pkg.id
+          const isEntry = pkg.id === 'entrada'
           return (
             <Card
               key={pkg.id}
               className={`relative border-2 transition-all flex flex-col justify-between bg-white ${
-                pkg.popular ? 'border-emerald-500 shadow-xl scale-[1.02]' : 'border-slate-200 hover:border-emerald-300 shadow-sm'
+                isEntry
+                  ? 'border-amber-400 shadow-lg bg-gradient-to-b from-amber-50/40 via-white to-white'
+                  : pkg.popular
+                  ? 'border-emerald-500 shadow-xl scale-[1.02]'
+                  : 'border-slate-200 hover:border-emerald-300 shadow-sm'
               }`}
             >
-              {pkg.popular && (
+              {isEntry && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 shadow-sm px-3 py-0.5 text-xs font-bold">
-                    Melhor Custo-Benefício
+                  <Badge className="bg-amber-500 text-slate-950 hover:bg-amber-500 shadow-sm px-2.5 py-0.5 text-[11px] font-extrabold flex items-center gap-1 whitespace-nowrap">
+                    <Gift className="w-3 h-3 fill-slate-950" /> BÔNUS: +10 CRÉDITOS GRÁTIS!
                   </Badge>
                 </div>
               )}
-              <CardContent className="p-6 flex-1 flex flex-col justify-between">
+              {pkg.popular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 shadow-sm px-3 py-0.5 text-xs font-bold whitespace-nowrap">
+                    Mais Vendido
+                  </Badge>
+                </div>
+              )}
+              <CardContent className="p-5 flex-1 flex flex-col justify-between">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-xl">{pkg.name}</h3>
-                  <p className="text-xs text-slate-500 mb-4">{pkg.desc}</p>
+                  <h3 className="font-bold text-slate-900 text-lg mb-1">{pkg.name}</h3>
+                  <p className="text-[11px] text-slate-500 mb-3 min-h-[32px]">{pkg.desc}</p>
 
                   <div className="mb-4">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-extrabold text-slate-900">R$ {pkg.priceBrl.toFixed(2).replace('.', ',')}</span>
+                      <span className="text-2xl font-extrabold text-slate-900">R$ {pkg.priceBrl.toFixed(2).replace('.', ',')}</span>
                     </div>
-                    <p className="text-xs text-emerald-700 font-medium mt-0.5">
-                      R$ {pkg.pricePerCredit.toFixed(3).replace('.', ',')} por crédito ({pkg.credits} créditos)
-                    </p>
+                    {pkg.bonusCredits > 0 ? (
+                      <p className="text-[11px] text-amber-700 font-bold mt-1 flex items-center gap-1">
+                        <Gift className="w-3.5 h-3.5" /> 50 cr pagos + 10 cr grátis = 60 cr!
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
+                        R$ {pkg.pricePerCredit.toFixed(3).replace('.', ',')} por crédito
+                      </p>
+                    )}
                   </div>
 
-                  <ul className="space-y-2.5 mb-6 text-xs text-slate-700">
-                    <li className="flex items-center gap-2 font-medium">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> {pkg.credits} créditos adicionados ao saldo
+                  <ul className="space-y-2 mb-5 text-xs text-slate-700">
+                    <li className="flex items-center gap-1.5 font-semibold">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> {pkg.credits} créditos no saldo
                     </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Sem expiração ou taxa mensal
+                    {pkg.bonusCredits > 0 && (
+                      <li className="flex items-center gap-1.5 text-amber-800 font-bold bg-amber-100/70 p-1.5 rounded-lg border border-amber-200">
+                        <Gift className="w-3.5 h-3.5 text-amber-600 shrink-0" /> +10 créditos adicionais grátis
+                      </li>
+                    )}
+                    <li className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Sem mensalidade
                     </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Acesso total a todas as IAs do Griffo
+                    <li className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Acesso total a todas IAs
                     </li>
                   </ul>
                 </div>
@@ -153,12 +176,16 @@ export function PlansView() {
                 <Button
                   onClick={() => handleBuy(pkg.id as any)}
                   disabled={isBuying}
-                  className={`w-full h-11 font-semibold ${
-                    pkg.popular ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md' : 'bg-slate-900 hover:bg-slate-800 text-white'
+                  className={`w-full h-10 text-xs font-bold ${
+                    isEntry
+                      ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-md'
+                      : pkg.popular
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
+                      : 'bg-slate-900 hover:bg-slate-800 text-white'
                   }`}
                 >
-                  {isBuying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShoppingBag className="w-4 h-4 mr-2" />}
-                  Adquirir {pkg.credits} Créditos
+                  {isBuying ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <ShoppingBag className="w-4 h-4 mr-1.5" />}
+                  Adquirir {pkg.name}
                 </Button>
               </CardContent>
             </Card>
@@ -183,7 +210,7 @@ export function PlansView() {
                 <tr>
                   <th className="px-4 py-3">Funcionalidade / Ação</th>
                   <th className="px-4 py-3">Consumo em Créditos</th>
-                  <th className="px-4 py-3">Custo Aproximado (Pacote Carreira)</th>
+                  <th className="px-4 py-3">Custo Aproximado (Plano de Entrada)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -204,7 +231,7 @@ export function PlansView() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3 font-mono text-slate-600">
-                      R$ {(item.cost * 0.199).toFixed(2).replace('.', ',')}
+                      R$ {(item.cost * 0.331).toFixed(2).replace('.', ',')}
                     </td>
                   </tr>
                 ))}

@@ -12,48 +12,60 @@ export const CREDIT_COSTS = {
 } as const
 
 export interface CreditPackage {
-  id: 'free' | 'starter' | 'carreira' | 'profissional'
+  id: 'entrada' | 'starter' | 'carreira' | 'profissional'
   name: string
   credits: number
+  paidCredits: number
+  bonusCredits: number
   priceBrl: number
   pricePerCredit: number
   popular?: boolean
+  entryOnly?: boolean
   desc: string
 }
 
 export const CREDIT_PACKAGES: CreditPackage[] = [
   {
-    id: 'free',
-    name: 'Gratuito',
-    credits: 20,
-    priceBrl: 0.0,
-    pricePerCredit: 0.0,
-    desc: 'Boas-vindas ao se cadastrar (permite 1 análise completa)',
+    id: 'entrada',
+    name: 'Plano de Entrada',
+    credits: 60, // 50 pagos + 10 bônus grátis
+    paidCredits: 50,
+    bonusCredits: 10,
+    priceBrl: 19.90,
+    pricePerCredit: 0.331,
+    entryOnly: true,
+    desc: 'Exclusivo para novos usuários: compre 50 créditos e GANHE +10 créditos grátis de presente!',
   },
   {
     id: 'starter',
     name: 'Pacote Starter',
     credits: 100,
+    paidCredits: 100,
+    bonusCredits: 0,
     priceBrl: 29.90,
     pricePerCredit: 0.299,
-    desc: 'Ideal para ajustes rápidos e melhorias pontuais',
+    desc: 'Ideal para ajustes rápidos e melhorias pontuais de currículo',
   },
   {
     id: 'carreira',
     name: 'Pacote Carreira',
     credits: 500,
+    paidCredits: 500,
+    bonusCredits: 0,
     priceBrl: 99.90,
     pricePerCredit: 0.199,
     popular: true,
-    desc: 'Melhor custo-benefício para processos seletivos',
+    desc: 'Melhor custo-benefício para processos seletivos e recolocação',
   },
   {
     id: 'profissional',
     name: 'Pacote Profissional',
     credits: 1500,
+    paidCredits: 1500,
+    bonusCredits: 0,
     priceBrl: 249.90,
     pricePerCredit: 0.166,
-    desc: 'Indicado para uso intensivo e transição de carreira',
+    desc: 'Indicado para uso intensivo e transição de carreira contínua',
   },
 ]
 
@@ -81,7 +93,7 @@ export async function deductCredits(
     return {
       success: false,
       currentBalance,
-      error: 'Seu saldo Griffo acabou. Continue utilizando a IA adquirindo créditos.',
+      error: 'Seu saldo de créditos é insuficiente. Adquira o Plano de Entrada ou recarregue seu saldo para continuar utilizando a IA.',
     }
   }
 
@@ -112,7 +124,7 @@ export async function purchaseCreditPackage(
   packageId: string
 ): Promise<{ success: boolean; packageInfo?: CreditPackage; newBalance?: number; error?: string }> {
   const pkg = CREDIT_PACKAGES.find((p) => p.id === packageId)
-  if (!pkg || pkg.id === 'free') {
+  if (!pkg) {
     return { success: false, error: 'Pacote de créditos inválido.' }
   }
 
@@ -124,12 +136,16 @@ export async function purchaseCreditPackage(
     },
   })
 
+  const transactionDesc = pkg.bonusCredits > 0
+    ? `${pkg.name} (${pkg.paidCredits} cr + 🎁 ${pkg.bonusCredits} cr bônus grátis)`
+    : `${pkg.name} (${pkg.credits} créditos)`
+
   await db.creditTransaction.create({
     data: {
       userId,
       amount: pkg.credits,
       type: 'purchase',
-      description: `${pkg.name} (${pkg.credits} créditos)`,
+      description: transactionDesc,
       costBrl: pkg.priceBrl,
     },
   })
@@ -138,7 +154,7 @@ export async function purchaseCreditPackage(
     data: {
       userId,
       action: 'credit_purchase',
-      meta: JSON.stringify({ packageId, credits: pkg.credits, priceBrl: pkg.priceBrl }),
+      meta: JSON.stringify({ packageId, credits: pkg.credits, bonusCredits: pkg.bonusCredits, priceBrl: pkg.priceBrl }),
     },
   })
 

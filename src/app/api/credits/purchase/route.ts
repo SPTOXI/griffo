@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { purchaseCreditPackage } from '@/lib/credits'
 
 const schema = z.object({
-  packageId: z.enum(['starter', 'carreira', 'profissional']),
+  packageId: z.enum(['entrada', 'starter', 'carreira', 'profissional']),
 })
 
 export async function POST(req: Request) {
@@ -25,9 +25,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: res.error || 'Erro ao processar compra.' }, { status: 400 })
     }
 
+    const bonusMsg = res.packageInfo?.bonusCredits ? ` (incluindo 🎁 +${res.packageInfo.bonusCredits} créditos bônus grátis!)` : ''
+
     return NextResponse.json({
       success: true,
-      message: `Pacote ${res.packageInfo?.name} ativado com sucesso! +${res.packageInfo?.credits} créditos adicionados ao seu saldo.`,
+      message: `${res.packageInfo?.name} ativado com sucesso! +${res.packageInfo?.credits} créditos adicionados ao seu saldo${bonusMsg}.`,
       newBalance: res.newBalance,
       package: res.packageInfo,
     })
