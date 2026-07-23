@@ -28,13 +28,13 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
   {
     id: 'entrada',
     name: 'Plano de Entrada',
-    credits: 60, // 50 pagos + 10 bônus grátis
-    paidCredits: 50,
+    credits: 40, // 30 pagos + 10 bônus grátis (permite exatamente 2 análises completas de 20 cr)
+    paidCredits: 30,
     bonusCredits: 10,
-    priceBrl: 19.90,
-    pricePerCredit: 0.331,
+    priceBrl: 9.90,
+    pricePerCredit: 0.2475,
     entryOnly: true,
-    desc: 'Exclusivo para novos usuários: compre 50 créditos e GANHE +10 créditos grátis de presente!',
+    desc: 'Permite 2 avaliações completas: compre 30 créditos por R$ 9,90 e GANHE +10 grátis!',
   },
   {
     id: 'starter',
@@ -93,7 +93,7 @@ export async function deductCredits(
     return {
       success: false,
       currentBalance,
-      error: 'Seu saldo de créditos é insuficiente. Adquira o Plano de Entrada ou recarregue seu saldo para continuar utilizando a IA.',
+      error: 'Seu saldo de créditos é insuficiente. Adquira o Plano de Entrada (R$ 9,90) ou recarregue seu saldo para continuar utilizando a IA.',
     }
   }
 

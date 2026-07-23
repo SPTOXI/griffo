@@ -328,24 +328,24 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-900 px-3 py-1 text-xs font-semibold">Sem Mensalidades ou Fidelidade</Badge>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-3">Comece com o Plano de Entrada e GANHE +10 Créditos Bônus Grátis!</h2>
-          <p className="text-sm sm:text-base text-slate-600">Compre o Plano de Entrada para começar ou escolha o pacote ideal para a sua busca de emprego.</p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-3">Plano de Entrada por apenas R$ 9,90 com 2 Avaliações Completas!</h2>
+          <p className="text-sm sm:text-base text-slate-600">Adquira o Plano de Entrada para começar com +10 créditos bônus grátis ou escolha o pacote ideal para o seu momento.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-7xl mx-auto items-stretch">
           <PlanCard
             name="Plano de Entrada"
-            price="R$ 19,90"
-            period="50 cr + 🎁 10 cr grátis = 60 créditos!"
+            price="R$ 9,90"
+            period="40 cr (2 Avaliações Completas!)"
             features={[
-              'Compre 50 créditos e GANHE +10 grátis!',
-              'Total de 60 créditos liberados no saldo',
-              'Suficiente para 3 análises completas',
-              'Ou 6 reescritas com a fórmula STAR',
+              'Compre 30 cr por R$ 9,90 e GANHE +10 grátis!',
+              'Total de 40 créditos liberados no saldo',
+              'Suficiente para 2 avaliações completas',
+              'Ou 4 reescritas com a fórmula STAR',
               'Oferta exclusiva de boas-vindas',
             ]}
             highlight={true}
-            cta="Adquirir Plano de Entrada"
+            cta="Adquirir Plano de Entrada (R$ 9,90)"
             onCta={() => onNavigate('signup')}
           />
           <PlanCard

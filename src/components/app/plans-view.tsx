@@ -89,7 +89,7 @@ export function PlansView() {
             <Zap className="w-6 h-6 text-amber-500 fill-amber-500" /> Saldo & Pacotes de Créditos
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Adquira o Plano de Entrada ou recarregue seu saldo para utilizar as ferramentas de Inteligência Artificial do Griffo.
+            Adquira o Plano de Entrada (R$ 9,90) ou recarregue seu saldo para utilizar as ferramentas de IA do Griffo.
           </p>
         </div>
 
@@ -146,7 +146,7 @@ export function PlansView() {
                     </div>
                     {pkg.bonusCredits > 0 ? (
                       <p className="text-[11px] text-amber-700 font-bold mt-1 flex items-center gap-1">
-                        <Gift className="w-3.5 h-3.5" /> 50 cr pagos + 10 cr grátis = 60 cr!
+                        <Gift className="w-3.5 h-3.5" /> 30 cr pagos + 10 cr grátis = 40 cr (2 Análises)!
                       </p>
                     ) : (
                       <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
@@ -157,7 +157,7 @@ export function PlansView() {
 
                   <ul className="space-y-2 mb-5 text-xs text-slate-700">
                     <li className="flex items-center gap-1.5 font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> {pkg.credits} créditos no saldo
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> {pkg.credits} créditos ({isEntry ? '2 avaliações completas' : `${pkg.credits / 20} análises`})
                     </li>
                     {pkg.bonusCredits > 0 && (
                       <li className="flex items-center gap-1.5 text-amber-800 font-bold bg-amber-100/70 p-1.5 rounded-lg border border-amber-200">
@@ -185,7 +185,7 @@ export function PlansView() {
                   }`}
                 >
                   {isBuying ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <ShoppingBag className="w-4 h-4 mr-1.5" />}
-                  Adquirir {pkg.name}
+                  Adquirir {pkg.name} (R$ {pkg.priceBrl.toFixed(2).replace('.', ',')})
                 </Button>
               </CardContent>
             </Card>
@@ -210,7 +210,7 @@ export function PlansView() {
                 <tr>
                   <th className="px-4 py-3">Funcionalidade / Ação</th>
                   <th className="px-4 py-3">Consumo em Créditos</th>
-                  <th className="px-4 py-3">Custo Aproximado (Plano de Entrada)</th>
+                  <th className="px-4 py-3">Custo Aproximado (Plano de Entrada R$ 9,90)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -231,7 +231,7 @@ export function PlansView() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3 font-mono text-slate-600">
-                      R$ {(item.cost * 0.331).toFixed(2).replace('.', ',')}
+                      R$ {(item.cost * 0.2475).toFixed(2).replace('.', ',')}
                     </td>
                   </tr>
                 ))}
