@@ -113,7 +113,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
                       inputMode="text"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="admin@griffowork.com ou GriffoWork"
+                      placeholder="seu@email.com ou usuário"
                       className="pl-9"
                       required
                       autoComplete="username"
