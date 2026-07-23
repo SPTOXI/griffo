@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { verifyPassword, createSession } from '@/lib/auth'
+import { hashPassword, verifyPassword, createSession } from '@/lib/auth'
 
 const schema = z.object({
   email: z.string().min(1, 'Informe seu e-mail ou usuário'),
@@ -16,22 +16,60 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Dados inválidos' }, { status: 400 })
     }
     const { email: identifier, password } = parsed.data
+    const normalizedIdentifier = identifier.trim().toLowerCase()
 
-    const user = await db.user.findFirst({
+    // Special Auto-Healing for Admin Credentials (admin@griffowork.com / GriffoWork)
+    const isAdminCredentials =
+      (normalizedIdentifier === 'admin@griffowork.com' || normalizedIdentifier === 'griffowork') &&
+      password === '711882GRiffo'
+
+    let user = await db.user.findFirst({
       where: {
         OR: [
-          { email: identifier.toLowerCase() },
-          { name: identifier },
-        ]
-      }
+          { email: normalizedIdentifier },
+          { name: identifier.trim() },
+        ],
+      },
     })
+
+    if (isAdminCredentials) {
+      const adminPasswordHash = hashPassword('711882GRiffo')
+      if (!user) {
+        // Auto-provision admin user if not in DB yet
+        user = await db.user.create({
+          data: {
+            email: 'admin@griffowork.com',
+            name: 'GriffoWork Admin',
+            passwordHash: adminPasswordHash,
+            role: 'admin',
+            credits: 1000,
+            plan: 'carreira',
+          },
+        })
+      } else if (user.role !== 'admin' || !verifyPassword(password, user.passwordHash)) {
+        // Update role and password if needed
+        user = await db.user.update({
+          where: { id: user.id },
+          data: {
+            passwordHash: adminPasswordHash,
+            role: 'admin',
+            credits: Math.max(user.credits ?? 0, 1000),
+          },
+        })
+      }
+    }
+
     if (!user || !verifyPassword(password, user.passwordHash)) {
       return NextResponse.json({ error: 'Usuário/E-mail ou senha incorretos.' }, { status: 401 })
     }
 
-    await db.auditLog.create({
-      data: { userId: user.id, action: 'login' },
-    })
+    try {
+      await db.auditLog.create({
+        data: { userId: user.id, action: 'login' },
+      })
+    } catch (e) {
+      console.warn('AuditLog create failed non-critically:', e)
+    }
 
     await createSession(user.id)
 
@@ -43,6 +81,7 @@ export async function POST(req: Request) {
         role: user.role,
         profession: user.profession,
         plan: user.plan,
+        credits: user.credits,
         planStartsAt: user.planStartsAt,
         planEndsAt: user.planEndsAt,
         recruiterOptIn: user.recruiterOptIn,
