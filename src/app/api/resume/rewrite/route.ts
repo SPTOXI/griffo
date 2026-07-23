@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { getCurrentUser, hasActivePlan } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth'
 import { rewriteResume, TOKEN_COST } from '@/lib/llm'
+import { deductCredits, CREDIT_COSTS } from '@/lib/credits'
 
 const schema = z.object({
   resumeId: z.string().min(1),
-  authorized: z.boolean().refine(v => v === true, 'Autorização necessária para reescrever.'),
+  authorized: z.boolean().refine((v) => v === true, 'Autorização necessária para reescrever.'),
 })
 
 export async function POST(req: Request) {
@@ -19,12 +20,10 @@ export async function POST(req: Request) {
     const body = await req.json()
     const parsed = schema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Dados inválidos' }, { status: 400 })
-    }
-
-    // Rewriting requires an active plan (paid). Free users can analyze but not rewrite.
-    if (!hasActivePlan(user)) {
-      return NextResponse.json({ error: 'Assine um plano para reescrever seu currículo.', code: 'PLAN_REQUIRED' }, { status: 403 })
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || 'Dados inválidos' },
+        { status: 400 }
+      )
     }
 
     const resume = await db.resume.findFirst({
@@ -37,9 +36,34 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Analise o currículo antes de reescrever.' }, { status: 400 })
     }
 
+    // Deduct 10 credits for rewrite
+    const costCredits = CREDIT_COSTS.rewrite_experience
+    const deduction = await deductCredits(
+      user.id,
+      costCredits,
+      `Reescrita profissional do currículo (${costCredits} cr)`
+    )
+
+    if (!deduction.success) {
+      return NextResponse.json(
+        {
+          error: 'Seu saldo Griffo acabou. Continue utilizando a IA adquirindo créditos.',
+          code: 'INSUFFICIENT_CREDITS',
+          requiredCredits: costCredits,
+          currentCredits: deduction.currentBalance,
+        },
+        { status: 402 }
+      )
+    }
+
     let content, tokensIn, tokensOut
     try {
-      const r = await rewriteResume(resume.originalContent, resume.analysisJson, user.id, resume.id)
+      const r = await rewriteResume(
+        resume.originalContent,
+        resume.analysisJson,
+        user.id,
+        resume.id
+      )
       content = r.content
       tokensIn = r.tokensIn
       tokensOut = r.tokensOut
@@ -69,7 +93,7 @@ export async function POST(req: Request) {
         userId: user.id,
         resumeId: resume.id,
         action: 'rewrite',
-        meta: JSON.stringify({ tokensIn, tokensOut, costUsd }),
+        meta: JSON.stringify({ tokensIn, tokensOut, costUsd, creditsDeducted: costCredits }),
       },
     })
 
@@ -77,6 +101,7 @@ export async function POST(req: Request) {
       content,
       resume: { id: updated.id, status: updated.status, updatedAt: updated.updatedAt },
       usage: { tokensIn, tokensOut, costUsd },
+      creditsRemaining: deduction.currentBalance,
     })
   } catch (e: any) {
     console.error('rewrite error', e)
@@ -102,13 +127,8 @@ export async function PATCH(req: Request) {
       data: { status: newStatus },
     })
 
-    await db.auditLog.create({
-      data: { userId: user.id, resumeId: resume.id, action: action === 'confirm' ? 'rewrite_confirmed' : 'rewrite_rejected' },
-    })
-
     return NextResponse.json({ resume: { id: updated.id, status: updated.status } })
-  } catch (e: any) {
-    console.error('rewrite patch error', e)
-    return NextResponse.json({ error: 'Erro ao atualizar.' }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Erro ao atualizar' }, { status: 500 })
   }
 }

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Shield, Users, CreditCard, Cpu, Search, Loader2, Save, CheckCircle, RefreshCw, Activity, AlertTriangle, ArrowUpRight, BarChart3, Layers } from 'lucide-react'
+import { Shield, Users, CreditCard, Cpu, Search, Loader2, Save, RefreshCw, Activity, BarChart3, Zap, DollarSign, TrendingUp, Percent } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface AdminUser {
@@ -16,6 +16,7 @@ interface AdminUser {
   email: string
   role: string
   plan: string
+  credits?: number
   createdAt: string
   _count: { resumes: number; subscriptions: number }
 }
@@ -75,7 +76,10 @@ export function AdminView() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [aiMetrics, setAiMetrics] = useState<AiMetricsData | null>(null)
-  const [configs, setConfigs] = useState<Record<string, string>>({})
+  const [configs, setConfigs] = useState<Record<string, string>>({
+    CREDIT_PRICE_BRL: '0.20',
+    AI_AVG_COST_BRL: '0.05',
+  })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [planFilter, setPlanFilter] = useState('all')
@@ -104,7 +108,7 @@ export function AdminView() {
 
       if (uData.users) setUsers(uData.users)
       if (mData.metrics) setMetrics(mData.metrics)
-      if (cData.config) setConfigs(cData.config)
+      if (cData.config) setConfigs((prev) => ({ ...prev, ...cData.config }))
       if (aiData.costs) setAiMetrics(aiData)
     } catch (e) {
       toast.error('Erro ao carregar dados administrativos')
@@ -160,6 +164,17 @@ export function AdminView() {
     return matchesSearch && matchesPlan
   })
 
+  // Credit Finance Stats Calculation
+  const totalRevenueBrl = metrics?.financial.totalRevenueBrl || 0
+  const purchasingUsersCount = users.filter((u) => u.plan !== 'free').length
+  const freeUsersCount = Math.max(0, users.length - purchasingUsersCount)
+  const conversionRate = users.length > 0 ? (purchasingUsersCount / users.length) * 100 : 0
+  const ticketMédioBrl = purchasingUsersCount > 0 ? totalRevenueBrl / purchasingUsersCount : 0
+
+  const creditPriceBrl = parseFloat(configs.CREDIT_PRICE_BRL || '0.20')
+  const aiAvgCostBrl = parseFloat(configs.AI_AVG_COST_BRL || '0.05')
+  const baselineMarginPercent = aiAvgCostBrl > 0 ? Math.round(((creditPriceBrl - aiAvgCostBrl) / aiAvgCostBrl) * 100) : 300
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -176,7 +191,7 @@ export function AdminView() {
             <Shield className="w-6 h-6 text-violet-600" /> Painel Administrativo
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Gerencie usuários, AI Router, telemetria de modelos, custos de IA e gateways de pagamento.
+            Gerencie monetização por créditos, usuários, AI Router, telemetria e parâmetros financeiros.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={loadData}>
@@ -189,8 +204,9 @@ export function AdminView() {
           <Card>
             <CardContent className="pt-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-500">Usuários Registrados</p>
+                <p className="text-xs font-medium text-slate-500">Usuários Totais</p>
                 <p className="text-2xl font-bold text-slate-900">{metrics.totalUsers}</p>
+                <p className="text-[10px] text-emerald-600 font-medium">{freeUsersCount} Free / {purchasingUsersCount} Compradores</p>
               </div>
               <Users className="w-8 h-8 text-blue-500 opacity-80" />
             </CardContent>
@@ -198,54 +214,182 @@ export function AdminView() {
           <Card>
             <CardContent className="pt-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-500">Assinaturas Ativas</p>
-                <p className="text-2xl font-bold text-slate-900">{metrics.activeSubscriptions}</p>
+                <p className="text-xs font-medium text-slate-500">Receita Gerada</p>
+                <p className="text-2xl font-bold text-slate-900">R$ {totalRevenueBrl.toFixed(2)}</p>
+                <p className="text-[10px] text-slate-400">Ticket Médio: R$ {ticketMédioBrl.toFixed(2)}</p>
               </div>
-              <CreditCard className="w-8 h-8 text-emerald-500 opacity-80" />
+              <DollarSign className="w-8 h-8 text-emerald-500 opacity-80" />
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-500">Custo Acumulado IA</p>
-                <p className="text-2xl font-bold text-slate-900">
-                  R$ {(aiMetrics?.costs.totalAiCostBrl || metrics.aiUsage.totalCostBrl).toFixed(2)}
-                </p>
-                <p className="text-[10px] text-slate-400">
-                  ${(aiMetrics?.costs.totalAiCostUsd || metrics.aiUsage.totalCostUsd).toFixed(3)} USD
-                </p>
+                <p className="text-xs font-medium text-slate-500">Taxa de Conversão</p>
+                <p className="text-2xl font-bold text-slate-900">{conversionRate.toFixed(1)}%</p>
+                <p className="text-[10px] text-slate-400">Free para Comprador</p>
               </div>
-              <Cpu className="w-8 h-8 text-amber-500 opacity-80" />
+              <TrendingUp className="w-8 h-8 text-amber-500 opacity-80" />
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-500">Failovers Registrados</p>
-                <p className="text-2xl font-bold text-slate-900">{aiMetrics?.usage.totalFailovers || 0}</p>
-                <p className="text-[10px] text-slate-400">Troca automática invisível</p>
+                <p className="text-xs font-medium text-slate-500">Margem por Crédito</p>
+                <p className="text-2xl font-bold text-slate-900">{baselineMarginPercent}%</p>
+                <p className="text-[10px] text-slate-400">R$ {creditPriceBrl} / Custo R$ {aiAvgCostBrl}</p>
               </div>
-              <Activity className="w-8 h-8 text-violet-500 opacity-80" />
+              <Percent className="w-8 h-8 text-violet-500 opacity-80" />
             </CardContent>
           </Card>
         </div>
       )}
 
-      <Tabs defaultValue="users" className="space-y-4">
+      <Tabs defaultValue="credits-finance" className="space-y-4">
         <TabsList className="bg-slate-100 p-1">
+          <TabsTrigger value="credits-finance" className="gap-1.5">
+            <Zap className="w-4 h-4" /> Monetização & Créditos
+          </TabsTrigger>
           <TabsTrigger value="users" className="gap-1.5">
-            <Users className="w-4 h-4" /> Usuários e Permissões
+            <Users className="w-4 h-4" /> Usuários e Saldos
           </TabsTrigger>
           <TabsTrigger value="ai-router" className="gap-1.5">
-            <Cpu className="w-4 h-4" /> IA & Roteamento (AI Router)
-          </TabsTrigger>
-          <TabsTrigger value="payments" className="gap-1.5">
-            <CreditCard className="w-4 h-4" /> Pagamentos & Gateway
+            <Cpu className="w-4 h-4" /> IA & Roteamento
           </TabsTrigger>
           <TabsTrigger value="system" className="gap-1.5">
             <Shield className="w-4 h-4" /> Configurações Gerais
           </TabsTrigger>
         </TabsList>
+
+        {/* CREDITS FINANCE TAB */}
+        <TabsContent value="credits-finance" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* FINANCIAL DASHBOARD */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-emerald-600" /> Dashboard Financeiro de Créditos
+                </CardTitle>
+                <CardDescription>Resumo de vendas, consumo, receita e margens de IA.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-xs">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span className="text-slate-600">Receita Bruta Gerada</span>
+                  <span className="font-bold text-slate-900 text-sm font-mono">R$ {totalRevenueBrl.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span className="text-slate-600">Custo Estimado de IA (Consumo)</span>
+                  <span className="font-mono text-slate-700 font-semibold">
+                    R$ {((aiMetrics?.costs.totalAiCostUsd || 0) * 5.4).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span className="text-slate-600">Margem Bruta Operacional</span>
+                  <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold">
+                    {baselineMarginPercent}%
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span className="text-slate-600">Preço do Crédito</span>
+                  <span className="font-mono text-slate-900 font-semibold">R$ {creditPriceBrl.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-600">Custo Operacional Médio da IA</span>
+                  <span className="font-mono text-slate-700 font-semibold">R$ {aiAvgCostBrl.toFixed(2)}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* USER CONVERSION DASHBOARD */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Users className="w-5 h-5 text-blue-600" /> Métricas de Usuários & Conversão
+                </CardTitle>
+                <CardDescription>Acompanhamento de usuários gratuitos versus compradores.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-xs">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span className="text-slate-600">Usuários Gratuitos (Griffo Free - 20 cr)</span>
+                  <span className="font-bold text-slate-900 font-mono">{freeUsersCount}</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span className="text-slate-600">Usuários Compradores de Pacotes</span>
+                  <span className="font-bold text-emerald-700 font-mono">{purchasingUsersCount}</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span className="text-slate-600">Taxa de Conversão (Free ➔ Comprador)</span>
+                  <span className="font-mono font-bold text-slate-900">{conversionRate.toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span className="text-slate-600">Ticket Médio por Comprador</span>
+                  <span className="font-mono text-emerald-700 font-semibold">R$ {ticketMédioBrl.toFixed(2)}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* FINANCIAL RULE FORM */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Regra Financeira & Parâmetros de Créditos</CardTitle>
+              <CardDescription>
+                Ajuste o preço por crédito, o custo operacional médio da IA e os valores dos pacotes comerciais.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Preço do Crédito (R$)</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={configs.CREDIT_PRICE_BRL || '0.20'}
+                    onChange={(e) => setConfigs({ ...configs, CREDIT_PRICE_BRL: e.target.value })}
+                    className="text-xs font-mono"
+                  />
+                  <p className="text-[10px] text-slate-400">Padrão: R$ 0,20</p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Custo Médio da IA (R$)</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={configs.AI_AVG_COST_BRL || '0.05'}
+                    onChange={(e) => setConfigs({ ...configs, AI_AVG_COST_BRL: e.target.value })}
+                    className="text-xs font-mono"
+                  />
+                  <p className="text-[10px] text-slate-400">Padrão: R$ 0,05</p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Créditos de Boas-Vindas</label>
+                  <Input
+                    type="number"
+                    value={configs.WELCOME_CREDITS || '20'}
+                    onChange={(e) => setConfigs({ ...configs, WELCOME_CREDITS: e.target.value })}
+                    className="text-xs font-mono"
+                  />
+                  <p className="text-[10px] text-slate-400">Concedidos no cadastro (20 cr)</p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Margem Calculada</label>
+                  <Input
+                    readOnly
+                    value={`${baselineMarginPercent}%`}
+                    className="text-xs font-mono bg-slate-50 font-bold text-emerald-700"
+                  />
+                  <p className="text-[10px] text-slate-400">Meta de Margem: 300%</p>
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <Button onClick={saveSettings} disabled={savingConfig} className="bg-emerald-600 hover:bg-emerald-700">
+                  {savingConfig ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
+                  Salvar Regras Financeiras
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* USERS TAB */}
         <TabsContent value="users" className="space-y-4">
@@ -253,9 +397,9 @@ export function AdminView() {
             <CardHeader className="pb-3">
               <div className="flex flex-col sm:flex-row justify-between gap-3 sm:items-center">
                 <div>
-                  <CardTitle className="text-base">Gestão de Usuários</CardTitle>
+                  <CardTitle className="text-base">Gestão de Usuários e Saldos de Créditos</CardTitle>
                   <CardDescription>
-                    Gerencie papéis (Admin/User) e atribua planos manualmente.
+                    Gerencie papéis (Admin/User), atribua créditos ou pacotes manualmente.
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
@@ -275,9 +419,9 @@ export function AdminView() {
                     <SelectContent>
                       <SelectItem value="all">Todos Planos</SelectItem>
                       <SelectItem value="free">Free</SelectItem>
-                      <SelectItem value="day">Diário</SelectItem>
-                      <SelectItem value="monthly">Mensal</SelectItem>
-                      <SelectItem value="annual">Anual</SelectItem>
+                      <SelectItem value="starter">Starter</SelectItem>
+                      <SelectItem value="carreira">Carreira</SelectItem>
+                      <SelectItem value="profissional">Profissional</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -290,8 +434,9 @@ export function AdminView() {
                     <tr>
                       <th className="px-4 py-3">Usuário</th>
                       <th className="px-4 py-3">Função (Role)</th>
-                      <th className="px-4 py-3">Plano Atual</th>
-                      <th className="px-4 py-3">Currículos</th>
+                      <th className="px-4 py-3">Pacote Atribuído</th>
+                      <th className="px-4 py-3">Saldo de Créditos</th>
+                      <th className="px-4 py-3">Envios</th>
                       <th className="px-4 py-3">Data de Cadastro</th>
                     </tr>
                   </thead>
@@ -321,16 +466,19 @@ export function AdminView() {
                             value={u.plan || 'free'}
                             onValueChange={(v) => updateUser(u.id, undefined, v)}
                           >
-                            <SelectTrigger className="h-7 text-[11px] w-28">
+                            <SelectTrigger className="h-7 text-[11px] w-32">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="free">Gratuito</SelectItem>
-                              <SelectItem value="day">Passe Diário</SelectItem>
-                              <SelectItem value="monthly">Mensal</SelectItem>
-                              <SelectItem value="annual">Anual</SelectItem>
+                              <SelectItem value="free">Free (20 cr)</SelectItem>
+                              <SelectItem value="starter">Starter (100 cr)</SelectItem>
+                              <SelectItem value="carreira">Carreira (500 cr)</SelectItem>
+                              <SelectItem value="profissional">Profissional (1.500 cr)</SelectItem>
                             </SelectContent>
                           </Select>
+                        </td>
+                        <td className="px-4 py-3 font-mono font-bold text-emerald-700">
+                          {u.credits ?? 20} cr
                         </td>
                         <td className="px-4 py-3 font-mono text-slate-600">
                           {u._count.resumes} envios
@@ -347,15 +495,14 @@ export function AdminView() {
           </Card>
         </TabsContent>
 
-        {/* AI ROUTER & TELEMETRY TAB */}
+        {/* AI ROUTER TAB */}
         <TabsContent value="ai-router" className="space-y-6">
-          {/* CARDS SUMMARY */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="bg-gradient-to-br from-slate-900 to-slate-950 text-white">
               <CardContent className="p-4 space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">Roteamento Ativo</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">Roteamento Inteligente</p>
                 <p className="text-sm font-medium">Kimi K3, Claude 3.5, DeepSeek, Gemini</p>
-                <p className="text-xs text-slate-300">Distribuição automática de tarefas por menor custo e maior precisão.</p>
+                <p className="text-xs text-slate-300">Roteamento por menor custo e failover automático.</p>
               </CardContent>
             </Card>
             <Card>
@@ -369,24 +516,19 @@ export function AdminView() {
             </Card>
             <Card>
               <CardContent className="p-4 space-y-1">
-                <p className="text-xs font-medium text-slate-500">Custo Médio / Usuário</p>
-                <p className="text-xl font-bold text-slate-900">
-                  R$ {((aiMetrics?.costs.avgCostPerUserUsd || 0) * 5.4).toFixed(2)}
-                </p>
-                <p className="text-[10px] text-slate-400">${(aiMetrics?.costs.avgCostPerUserUsd || 0).toFixed(3)} USD</p>
+                <p className="text-xs font-medium text-slate-500">Failovers Automáticos</p>
+                <p className="text-xl font-bold text-slate-900">{aiMetrics?.usage.totalFailovers || 0}</p>
+                <p className="text-[10px] text-slate-400">Sem impacto no usuário</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* BENCHMARK COMPARATIVE TABLE */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-emerald-600" /> Tabela Comparativa entre Modelos de IA
               </CardTitle>
-              <CardDescription>
-                Métricas agregadas em tempo real por modelo para apoio a tomada de decisão no AI Router.
-              </CardDescription>
+              <CardDescription>Métricas agregadas em tempo real por modelo.</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -400,7 +542,6 @@ export function AdminView() {
                       <th className="px-4 py-3">Tempo Médio</th>
                       <th className="px-4 py-3">Custo Médio / Call</th>
                       <th className="px-4 py-3">Taxa de Sucesso</th>
-                      <th className="px-4 py-3">Failovers</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -420,213 +561,17 @@ export function AdminView() {
                               {b.successRatePct}%
                             </Badge>
                           </td>
-                          <td className="px-4 py-3 font-mono text-slate-600">{b.failoverCount}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={8} className="px-4 py-6 text-center text-slate-400">
+                        <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
                           Nenhuma chamada de IA registrada no histórico recente.
                         </td>
                       </tr>
                     )}
                   </tbody>
                 </table>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* RANKINGS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs uppercase font-bold text-slate-500 tracking-wider">Top Funcionalidades (Custo)</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-xs">
-                {aiMetrics?.rankings.topTasks && aiMetrics.rankings.topTasks.length > 0 ? (
-                  aiMetrics.rankings.topTasks.map((t) => (
-                    <div key={t.task} className="flex justify-between items-center border-b border-slate-100 pb-1.5">
-                      <span className="font-medium text-slate-700 capitalize">{t.task.replace('_', ' ')}</span>
-                      <span className="font-mono text-slate-900 font-semibold">R$ {(t.costUsd * 5.4).toFixed(2)}</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-slate-400 text-[11px]">Sem registros.</p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs uppercase font-bold text-slate-500 tracking-wider">Provedores Mais Utilizados</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-xs">
-                {aiMetrics?.rankings.topModels && aiMetrics.rankings.topModels.length > 0 ? (
-                  aiMetrics.rankings.topModels.map((m) => (
-                    <div key={m.provider} className="flex justify-between items-center border-b border-slate-100 pb-1.5">
-                      <span className="font-semibold text-slate-800 uppercase text-[11px]">{m.provider}</span>
-                      <span className="font-mono text-slate-600">{m.calls} chamadas</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-slate-400 text-[11px]">Sem registros.</p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs uppercase font-bold text-slate-500 tracking-wider">Top 10 Usuários em Consumo</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-xs">
-                {aiMetrics?.rankings.topUsers && aiMetrics.rankings.topUsers.length > 0 ? (
-                  aiMetrics.rankings.topUsers.map((u) => (
-                    <div key={u.userId} className="flex justify-between items-center border-b border-slate-100 pb-1.5">
-                      <span className="font-medium text-slate-700 truncate max-w-[130px]">{u.email}</span>
-                      <span className="font-mono text-emerald-700 font-semibold">R$ {(u.costUsd * 5.4).toFixed(2)}</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-slate-400 text-[11px]">Sem registros.</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* AI ROUTER API KEYS FORM */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Configuração de Chaves por Provedor no AI Router</CardTitle>
-              <CardDescription>
-                Cadastre as API Keys dos provedores para habilitar a distribuição dinâmica e failover automático.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Kimi K3 / Moonshot AI Key</label>
-                  <Input
-                    type="password"
-                    placeholder="sk-..."
-                    value={configs.MOONSHOT_API_KEY || ''}
-                    onChange={(e) => setConfigs({ ...configs, MOONSHOT_API_KEY: e.target.value })}
-                    className="text-xs font-mono"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Anthropic Claude Key (CLAUDE_API_KEY)</label>
-                  <Input
-                    type="password"
-                    placeholder="sk-ant-..."
-                    value={configs.CLAUDE_API_KEY || ''}
-                    onChange={(e) => setConfigs({ ...configs, CLAUDE_API_KEY: e.target.value })}
-                    className="text-xs font-mono"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">DeepSeek Key (DEEPSEEK_API_KEY)</label>
-                  <Input
-                    type="password"
-                    placeholder="sk-..."
-                    value={configs.DEEPSEEK_API_KEY || ''}
-                    onChange={(e) => setConfigs({ ...configs, DEEPSEEK_API_KEY: e.target.value })}
-                    className="text-xs font-mono"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Google Gemini Key (GEMINI_API_KEY)</label>
-                  <Input
-                    type="password"
-                    placeholder="AIzaSy..."
-                    value={configs.GEMINI_API_KEY || ''}
-                    onChange={(e) => setConfigs({ ...configs, GEMINI_API_KEY: e.target.value })}
-                    className="text-xs font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2 flex justify-end">
-                <Button onClick={saveSettings} disabled={savingConfig} className="bg-emerald-600 hover:bg-emerald-700">
-                  {savingConfig ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
-                  Salvar Chaves do AI Router
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* PAYMENTS TAB */}
-        <TabsContent value="payments" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Gateway de Pagamento & Checkout</CardTitle>
-              <CardDescription>
-                Configure credenciais para processar pagamentos via Pix / Cartão de Crédito.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">
-                    Provedor Principal (Gateway)
-                  </label>
-                  <Select
-                    value={configs.PAYMENT_PROVIDER || 'mercadopago'}
-                    onValueChange={(v) => setConfigs({ ...configs, PAYMENT_PROVIDER: v })}
-                  >
-                    <SelectTrigger className="text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mercadopago">Mercado Pago (Pix + Cartão)</SelectItem>
-                      <SelectItem value="stripe">Stripe</SelectItem>
-                      <SelectItem value="asaas">Asaas (Boleto/Pix)</SelectItem>
-                      <SelectItem value="manual">Modo Manual / Sandbox</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">
-                    Chave Pública / Public Key
-                  </label>
-                  <Input
-                    placeholder="APP_USR-..."
-                    value={configs.PAYMENT_PUBLIC_KEY || ''}
-                    onChange={(e) =>
-                      setConfigs({ ...configs, PAYMENT_PUBLIC_KEY: e.target.value })
-                    }
-                    className="text-xs font-mono"
-                  />
-                </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-700">
-                    Access Token / Secret Key
-                  </label>
-                  <Input
-                    type="password"
-                    placeholder="APP_USR-..."
-                    value={configs.PAYMENT_SECRET_KEY || ''}
-                    onChange={(e) =>
-                      setConfigs({ ...configs, PAYMENT_SECRET_KEY: e.target.value })
-                    }
-                    className="text-xs font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2 flex justify-end">
-                <Button
-                  onClick={saveSettings}
-                  disabled={savingConfig}
-                  className="bg-violet-600 hover:bg-violet-700"
-                >
-                  {savingConfig ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
-                  ) : (
-                    <Save className="w-4 h-4 mr-1.5" />
-                  )}
-                  Salvar Configurações de Pagamento
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -637,9 +582,7 @@ export function AdminView() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Parâmetros Gerais do Sistema</CardTitle>
-              <CardDescription>
-                Ajuste opções globais de limite e inteligência artificial.
-              </CardDescription>
+              <CardDescription>Ajuste opções globais e chaves de API.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -654,14 +597,9 @@ export function AdminView() {
                     onChange={(e) => setConfigs({ ...configs, MOONSHOT_API_KEY: e.target.value })}
                     className="text-xs font-mono"
                   />
-                  <p className="text-[11px] text-slate-500">
-                    Cole sua chave da Moonshot AI (Kimi K3), OpenAI, DeepSeek ou outro provedor compatível.
-                  </p>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">
-                    Modelo Principal de IA (Model)
-                  </label>
+                  <label className="text-xs font-semibold text-slate-700">Modelo Principal (Model)</label>
                   <Input
                     placeholder="kimi-k3"
                     value={configs.KIMI_MODEL || 'kimi-k3'}
@@ -670,9 +608,7 @@ export function AdminView() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">
-                    URL Base da API (Base URL)
-                  </label>
+                  <label className="text-xs font-semibold text-slate-700">URL Base (Base URL)</label>
                   <Input
                     placeholder="https://api.moonshot.ai/v1"
                     value={configs.LLM_BASE_URL || 'https://api.moonshot.ai/v1'}
@@ -680,32 +616,11 @@ export function AdminView() {
                     className="text-xs font-mono"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">
-                    Limite de Análises Free Por Usuário
-                  </label>
-                  <Input
-                    type="number"
-                    value={configs.FREE_ANALYSIS_LIMIT || '1'}
-                    onChange={(e) =>
-                      setConfigs({ ...configs, FREE_ANALYSIS_LIMIT: e.target.value })
-                    }
-                    className="text-xs"
-                  />
-                </div>
               </div>
 
               <div className="pt-2 flex justify-end">
-                <Button
-                  onClick={saveSettings}
-                  disabled={savingConfig}
-                  className="bg-violet-600 hover:bg-violet-700"
-                >
-                  {savingConfig ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
-                  ) : (
-                    <Save className="w-4 h-4 mr-1.5" />
-                  )}
+                <Button onClick={saveSettings} disabled={savingConfig} className="bg-violet-600 hover:bg-violet-700">
+                  {savingConfig ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
                   Salvar Parâmetros Gerais
                 </Button>
               </div>

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { getCurrentUser, hasActivePlan } from '@/lib/auth'
-import { analyzeResume, costPerCycleUsd, TOKEN_COST } from '@/lib/llm'
+import { getCurrentUser } from '@/lib/auth'
+import { analyzeResume, TOKEN_COST } from '@/lib/llm'
+import { deductCredits, CREDIT_COSTS } from '@/lib/credits'
 
 const schema = z.object({
   resumeId: z.string().min(1),
@@ -28,19 +29,43 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Currículo não encontrado.' }, { status: 404 })
     }
 
-    // Phase-1 plan check: allow free users to analyze one resume as trial? 
-    // For simplicity and to drive conversion, require active plan OR allow free users to analyze (1st) but block rewrite.
-    // Decision: free users CAN analyze (so they see value), but CANNOT rewrite or download.
+    // Deduct 20 credits for full analysis
+    const costCredits = CREDIT_COSTS.full_analysis
+    const deduction = await deductCredits(
+      user.id,
+      costCredits,
+      `Análise completa do currículo (${costCredits} cr)`
+    )
+
+    if (!deduction.success) {
+      return NextResponse.json(
+        {
+          error: 'Seu saldo Griffo acabou. Continue utilizando a IA adquirindo créditos.',
+          code: 'INSUFFICIENT_CREDITS',
+          requiredCredits: costCredits,
+          currentCredits: deduction.currentBalance,
+        },
+        { status: 402 }
+      )
+    }
 
     let socialLinks = null
     if (resume.socialLinksJson) {
-      try { socialLinks = JSON.parse(resume.socialLinksJson) } catch {}
+      try {
+        socialLinks = JSON.parse(resume.socialLinksJson)
+      } catch {}
     }
 
-    // Call LLM
+    // Call LLM via AI Router
     let analysis, tokensIn, tokensOut
     try {
-      const r = await analyzeResume(resume.originalContent, socialLinks, resume.socialConsent, user.id, resume.id)
+      const r = await analyzeResume(
+        resume.originalContent,
+        socialLinks,
+        resume.socialConsent,
+        user.id,
+        resume.id
+      )
       analysis = r.analysis
       tokensIn = r.tokensIn
       tokensOut = r.tokensOut
@@ -70,7 +95,7 @@ export async function POST(req: Request) {
         userId: user.id,
         resumeId: resume.id,
         action: 'analyze',
-        meta: JSON.stringify({ tokensIn, tokensOut, costUsd }),
+        meta: JSON.stringify({ tokensIn, tokensOut, costUsd, creditsDeducted: costCredits }),
       },
     })
 
@@ -78,7 +103,7 @@ export async function POST(req: Request) {
       analysis,
       resume: { id: updated.id, status: updated.status, updatedAt: updated.updatedAt },
       usage: { tokensIn, tokensOut, costUsd },
-      planActive: hasActivePlan(user),
+      creditsRemaining: deduction.currentBalance,
     })
   } catch (e: any) {
     console.error('analyze error', e)

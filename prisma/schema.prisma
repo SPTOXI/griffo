@@ -20,7 +20,8 @@ model User {
   profession   String?
   // Role & Permissions
   role         String   @default("user") // user | admin
-  // Plan management (Phase 1 - simple flag-based; Phase 2 - integration with payment gateway)
+  // Plan / Credit Balance (Phase 1 Monetização por Créditos)
+  credits      Int      @default(20)     // 20 welcome credits on signup
   plan         String   @default("free") // free | day | monthly | annual
   planStartsAt DateTime?
   planEndsAt   DateTime?
@@ -32,10 +33,11 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  resumes       Resume[]
-  subscriptions Subscription[]
-  auditLogs     AuditLog[]
-  aiLogs        AiLog[]
+  resumes            Resume[]
+  subscriptions      Subscription[]
+  auditLogs          AuditLog[]
+  aiLogs             AiLog[]
+  creditTransactions CreditTransaction[]
 }
 
 model SystemConfig {
@@ -95,7 +97,7 @@ model AuditLog {
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   resumeId  String?
   resume    Resume?  @relation(fields: [resumeId], references: [id], onDelete: SetNull)
-  action    String   // register | login | upload | analyze | rewrite | download | subscribe | failover
+  action    String   // register | login | upload | analyze | rewrite | download | subscribe | failover | credit_purchase | credit_consume
   meta      String?  // JSON string with extra info
   ipHash    String?  // hashed IP for security audit
   createdAt DateTime @default(now())
@@ -119,4 +121,15 @@ model AiLog {
   errorCode      String?  // 429, 500, 502, 503, 504, timeout, etc.
   failoverCount  Int      @default(0)
   createdAt      DateTime @default(now())
+}
+
+model CreditTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Int      // positive for purchase/welcome, negative for consumption
+  type        String   // welcome | purchase | consume | admin_grant
+  description String   // e.g. "Análise completa (20 cr)", "Pacote Carreira (500 cr)"
+  costBrl     Float?   // BRL paid if purchase
+  createdAt   DateTime @default(now())
 }

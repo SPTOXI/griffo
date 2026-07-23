@@ -324,73 +324,61 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
         </div>
       </section>
 
-      {/* PRICING */}
+      {/* PRICING & CREDIT PACKAGES */}
       <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-        <div className="text-center max-w-2xl mx-auto mb-8">
-          <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800 px-3 py-1 text-xs">Planos Acessíveis</Badge>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-3">Escolha o plano ideal para o seu momento profissional.</h2>
-          <p className="text-sm sm:text-base text-slate-600">Sem pegadinhas ou fidelidade. Cancele quando quiser com apenas 1 clique.</p>
-        </div>
-
-        <div className="flex items-center justify-center gap-1 mb-8">
-          <div className="inline-flex p-1 bg-slate-100 rounded-xl text-xs sm:text-sm font-medium max-w-full overflow-x-auto">
-            {(['day', 'monthly', 'annual'] as const).map(p => (
-              <button key={p}
-                onClick={() => setPeriod(p)}
-                className={`px-3 sm:px-5 py-2 rounded-lg transition-all whitespace-nowrap ${period === p ? 'bg-white shadow-sm font-semibold text-slate-900' : 'text-slate-600 hover:text-slate-900'}`}>
-                {p === 'day' ? 'Passe Diário' : p === 'monthly' ? 'Mensal' : 'Anual'}
-              </button>
-            ))}
-          </div>
+        <div className="text-center max-w-2xl mx-auto mb-10">
+          <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800 px-3 py-1 text-xs">Monetização Transparente por Créditos</Badge>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-3">Escolha o pacote ideal e use a IA sem mensalidades.</h2>
+          <p className="text-sm sm:text-base text-slate-600">Experimente grátis com 20 créditos de boas-vindas ao se cadastrar. Compre saldo adicional apenas quando precisar.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
           <PlanCard
-            name="Passe Diário"
-            price="R$ 19,90"
-            period="Acesso válido por 24 horas"
+            name="Pacote Starter"
+            price="R$ 29,90"
+            period="100 créditos (R$ 0,299 / crédito)"
             features={[
-              '5 análises completas de currículo',
-              '3 reescritas profissionais',
-              'Downloads ilimitados (PDF & Texto Editável)',
-              'Otimização para LinkedIn & Gupy',
-              'Verificação de aprovação em ATS',
+              '100 créditos adicionados ao seu saldo',
+              'Suficiente para 5 análises completas',
+              'Ou 10 reescritas com a fórmula STAR',
+              'Downloads em PDF e texto editável',
+              'Sem mensalidade ou data de expiração',
             ]}
-            highlight={period === 'day'}
-            cta="Garantir Passe Diário"
+            highlight={false}
+            cta="Adquirir Pacote Starter"
             onCta={() => onNavigate('signup')}
           />
           <PlanCard
-            name="Assinatura Mensal"
-            price="R$ 39,90"
-            period="por mês · cancele quando quiser"
+            name="Pacote Carreira"
+            price="R$ 99,90"
+            period="500 créditos (R$ 0,199 / crédito)"
             features={[
-              '30 análises de currículo / mês',
-              '20 reescritas profissionais / mês',
-              'Otimização contínua de Redes Sociais',
-              'Histórico completo de laudos',
-              'Downloads ilimitados em PDF & Texto Editável',
-              'Suporte prioritário por e-mail',
+              '500 créditos adicionados ao seu saldo',
+              'Suficiente para 25 análises completas',
+              'Ou 50 reescritas profissionais',
+              'Otimização de LinkedIn e Gupy',
+              'Melhor custo-benefício para recolocação',
+              'Sem expiração de saldo',
             ]}
-            highlight={period === 'monthly'}
+            highlight={true}
             popular
-            cta="Começar Assinatura Mensal"
+            cta="Garantir Pacote Carreira"
             onCta={() => onNavigate('signup')}
           />
           <PlanCard
-            name="Assinatura Anual"
-            price="R$ 299,90"
-            period="por ano · equivalente a R$ 24,99/mês"
+            name="Pacote Profissional"
+            price="R$ 249,90"
+            period="1.500 créditos (R$ 0,166 / crédito)"
             features={[
-              '365 análises de currículo / ano',
-              '240 reescritas profissionais / ano',
-              'Otimização ilimitada de Presença Digital',
-              'Economize +37% em relação ao mensal',
-              'Histórico vitalício durante a assinatura',
-              'Suporte prioritário via canal direto',
+              '1.500 créditos adicionados ao seu saldo',
+              'Suficiente para 75 análises completas',
+              'Ou 150 reescritas de experiências',
+              'Uso intensivo e consultoria contínua',
+              'Maior desconto por crédito da plataforma',
+              'Atendimento e suporte prioritário',
             ]}
-            highlight={period === 'annual'}
-            cta="Garantir Plano Anual"
+            highlight={false}
+            cta="Adquirir Pacote Profissional"
             onCta={() => onNavigate('signup')}
           />
         </div>

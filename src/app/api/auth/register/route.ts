@@ -32,11 +32,22 @@ export async function POST(req: Request) {
         passwordHash,
         profession: profession || null,
         plan: 'free',
+        credits: 20, // 20 welcome credits
+      },
+    })
+
+    // Log welcome credits transaction
+    await db.creditTransaction.create({
+      data: {
+        userId: user.id,
+        amount: 20,
+        type: 'welcome',
+        description: 'Créditos de Boas-Vindas Griffo Free (20 cr)',
       },
     })
 
     await db.auditLog.create({
-      data: { userId: user.id, action: 'register', meta: JSON.stringify({ email: user.email }) },
+      data: { userId: user.id, action: 'register', meta: JSON.stringify({ email: user.email, credits: 20 }) },
     })
 
     await createSession(user.id)
@@ -48,6 +59,7 @@ export async function POST(req: Request) {
         name: user.name,
         profession: user.profession,
         plan: user.plan,
+        credits: user.credits,
         planEndsAt: user.planEndsAt,
       },
     })

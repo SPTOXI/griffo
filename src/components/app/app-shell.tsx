@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import {
   LayoutDashboard, Upload, FileSearch, FileEdit, Download, CreditCard, Settings, History,
-  LogOut, FileText, Sparkles, ChevronRight, Menu, X, Shield
+  LogOut, FileText, Sparkles, ChevronRight, Menu, X, Shield, Zap
 } from 'lucide-react'
 import { Dashboard } from './dashboard'
 import { UploadView } from './upload-view'
@@ -27,7 +27,7 @@ const NAV_ITEMS: { view: AppView; label: string; icon: any }[] = [
   { view: 'rewrite', label: 'Reescrita', icon: FileEdit },
   { view: 'downloads', label: 'Downloads', icon: Download },
   { view: 'history', label: 'Histórico', icon: History },
-  { view: 'plans', label: 'Planos', icon: CreditCard },
+  { view: 'plans', label: 'Comprar Créditos', icon: CreditCard },
   { view: 'settings', label: 'Configurações', icon: Settings },
 ]
 
@@ -35,6 +35,18 @@ export function AppShell({ onExit }: { onExit: () => void }) {
   const { user, logout } = useAuth()
   const { view, setView } = useNav()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [credits, setCredits] = useState<number>(user?.credits ?? 20)
+
+  useEffect(() => {
+    fetch('/api/credits/balance')
+      .then((r) => r.json())
+      .then((data) => {
+        if (typeof data.credits === 'number') {
+          setCredits(data.credits)
+        }
+      })
+      .catch(() => {})
+  }, [view])
 
   const initials = (user?.name || user?.email || '?')
     .split(' ')
@@ -47,15 +59,6 @@ export function AppShell({ onExit }: { onExit: () => void }) {
     await logout()
     onExit()
   }
-
-  const planLabel = (plan: string) => {
-    if (plan === 'free') return 'Gratuito'
-    if (plan === 'day') return 'Passe Diário'
-    if (plan === 'monthly') return 'Mensal'
-    if (plan === 'annual') return 'Anual'
-    return plan
-  }
-  const planActive = user?.planActive
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 overflow-x-hidden">
@@ -84,15 +87,17 @@ export function AppShell({ onExit }: { onExit: () => void }) {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {planActive ? (
-            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 hidden sm:inline-flex text-xs">
-              <Sparkles className="w-3 h-3 mr-1 text-emerald-600" /> {planLabel(user?.plan || 'free')}
-            </Badge>
-          ) : (
-            <Button size="sm" onClick={() => setView('plans')} className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs font-semibold">
-              <Sparkles className="w-3 h-3 mr-1" /> Assinar
-            </Button>
-          )}
+          {/* CREDITS BADGE */}
+          <Button
+            size="sm"
+            onClick={() => setView('plans')}
+            className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs font-semibold gap-1 px-2.5 sm:px-3 shadow-xs"
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+            <span>{credits} Créditos</span>
+            <span className="hidden sm:inline text-[10px] text-emerald-200 ml-1 bg-emerald-700/60 px-1.5 py-0.5 rounded-full">+ Adicionar</span>
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 p-1 pr-2 rounded-full hover:bg-slate-100 transition-colors">
@@ -117,7 +122,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
                 <Settings className="w-4 h-4 mr-2" /> Configurações
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setView('plans')} className="cursor-pointer">
-                <CreditCard className="w-4 h-4 mr-2" /> Meu plano
+                <CreditCard className="w-4 h-4 mr-2" /> Comprar Créditos ({credits} cr)
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-700 cursor-pointer">
@@ -139,82 +144,61 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           w-64 bg-white border-r border-slate-200
           flex flex-col
           transition-transform duration-200 ease-in-out
-          pt-0 lg:pt-0 shadow-xl lg:shadow-none
         `}>
-          {/* Mobile sidebar header */}
-          <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-                <FileText className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-bold text-slate-900 text-sm">Menu Griffo</span>
-            </div>
-            <button onClick={() => setSidebarOpen(false)} className="p-1 rounded-md text-slate-500 hover:bg-slate-100">
-              <X className="w-5 h-5" />
-            </button>
+          <div className="p-4 space-y-1">
+            <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Navegação</p>
+            <nav className="space-y-1">
+              {NAV_ITEMS.map((item) => {
+                const Icon = item.icon
+                const active = view === item.view
+                return (
+                  <button
+                    key={item.view}
+                    onClick={() => {
+                      setView(item.view)
+                      setSidebarOpen(false)
+                    }}
+                    className={`
+                      w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium
+                      transition-colors
+                      ${active
+                        ? 'bg-emerald-50 text-emerald-800 font-semibold'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      }
+                    `}
+                  >
+                    <Icon className={`w-4 h-4 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
+                    <span>{item.label}</span>
+                  </button>
+                )
+              })}
+            </nav>
           </div>
 
-          <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon
-              const active = view === item.view
-              return (
-                <button
-                  key={item.view}
-                  onClick={() => { setView(item.view); setSidebarOpen(false) }}
-                  className={`
-                    w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                    ${active ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}
-                  `}
-                >
-                  <Icon className={`w-4 h-4 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
-                  <span>{item.label}</span>
-                </button>
-              )
-            })}
-
-            {user?.role === 'admin' && (
-              <div className="pt-2 mt-2 border-t border-slate-100">
-                <button
-                  onClick={() => { setView('admin'); setSidebarOpen(false) }}
-                  className={`
-                    w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                    ${view === 'admin' ? 'bg-violet-50 text-violet-700 font-medium' : 'text-violet-600 hover:bg-violet-50'}
-                  `}
-                >
-                  <Shield className="w-4 h-4 text-violet-600" />
-                  <span>Área Admin</span>
-                </button>
+          <div className="mt-auto p-4 border-t border-slate-200 space-y-3 bg-slate-50/50">
+            <div className="rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 p-3 text-white space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold">
+                <Zap className="w-4 h-4 text-amber-300 fill-amber-300" /> Saldo Atual
               </div>
-            )}
-          </nav>
-
-          {!planActive && (
-            <div className="p-3 border-t border-slate-200">
-              <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 p-3">
-                <p className="text-xs font-semibold text-emerald-900 mb-1">Desbloqueie tudo</p>
-                <p className="text-xs text-emerald-700 mb-2">Reescrita, downloads e histórico completo.</p>
-                <Button size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 h-8 text-xs font-semibold" onClick={() => { setView('plans'); setSidebarOpen(false) }}>
-                  Ver planos
-                </Button>
-              </div>
+              <p className="text-2xl font-extrabold">{credits} <span className="text-xs font-normal text-emerald-100">créditos</span></p>
+              <Button onClick={() => { setView('plans'); setSidebarOpen(false) }} size="sm" className="w-full bg-white text-emerald-900 hover:bg-slate-100 font-bold text-xs h-8">
+                Adicionar Créditos
+              </Button>
             </div>
-          )}
+          </div>
         </aside>
 
-        {/* MAIN */}
-        <main className="flex-1 min-w-0 overflow-x-hidden">
-          <div className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
-            {view === 'dashboard' && <Dashboard />}
-            {view === 'upload' && <UploadView />}
-            {view === 'analysis' && <AnalysisView />}
-            {view === 'rewrite' && <RewriteView />}
-            {view === 'downloads' && <DownloadsView />}
-            {view === 'history' && <HistoryView />}
-            {view === 'plans' && <PlansView />}
-            {view === 'settings' && <SettingsView />}
-            {view === 'admin' && <AdminView />}
-          </div>
+        {/* MAIN CONTENT */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-hidden">
+          {view === 'dashboard' && <Dashboard />}
+          {view === 'upload' && <UploadView />}
+          {view === 'analysis' && <AnalysisView />}
+          {view === 'rewrite' && <RewriteView />}
+          {view === 'downloads' && <DownloadsView />}
+          {view === 'history' && <HistoryView />}
+          {view === 'plans' && <PlansView />}
+          {view === 'settings' && <SettingsView />}
+          {view === 'admin' && <AdminView />}
         </main>
       </div>
     </div>
