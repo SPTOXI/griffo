@@ -32,7 +32,7 @@ model User {
   profileVisible Boolean @default(false)
   // Audit
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 
   resumes            Resume[]
   subscriptions      Subscription[]
@@ -45,7 +45,7 @@ model SystemConfig {
   id        String   @id @default("global")
   key       String   @unique
   value     String
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model AiApiKey {
@@ -57,7 +57,7 @@ model AiApiKey {
   model     String   // Target AI model string
   status    String   @default("active") // active | paused
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Resume {
@@ -81,7 +81,7 @@ model Resume {
   socialConsent    Boolean  @default(false)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 
   auditLogs AuditLog[]
 }
@@ -98,7 +98,7 @@ model Subscription {
   paymentRef String?  // gateway ref
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model CreditTransaction {
