@@ -97,14 +97,15 @@ AVALIE ESTAS DIMENSÕES FUNDAMENTAIS (nota de 0 a 10 cada uma):
 8. "upskilling": Capacitação & Cursos Recomendados
    - Identificação de garras/gaps de conhecimento e sugestão objetiva de cursos, certificações de mercado (ex: AWS, Azure, Scrum Master, PMP, especializações) ou projetos práticos para acelerar o desenvolvimento.
 
-REGRAS DE REDES SOCIAIS & PERFIS PROFISSIONAIS (SE FORNECIDOS):
-- Se o usuário forneceu perfis profissionais ou redes sociais (LinkedIn, Gupy, GitHub, Instagram, Portfólio) com autorização, inclua no JSON a propriedade "socialAdvice": [
+REGRAS DE PRESENÇA DIGITAL & REDES SOCIAIS GLOBAIS (SE FORNECIDAS):
+- O Griffo é uma plataforma global de carreira. O candidato pode incluir QUALQUER plataforma ou rede relevante para seu setor (ex: LinkedIn, Gupy, GitHub, Behance, Dribbble, StackOverflow, Kaggle, Xing, Medium, Substack, YouTube, Instagram, Portfólio próprio, etc.).
+- Se o usuário forneceu perfis profissionais com autorização, inclua obrigatoriamente no JSON a propriedade "socialAdvice": [
     {
-      "platform": "LinkedIn" | "Gupy" | "GitHub" | "Instagram" | "Portfólio",
-      "url": "URL da plataforma",
-      "headline": "Sugestão de Título Profissional de Alto Impacto para a plataforma (ex: Título do LinkedIn)",
-      "aboutSummary": "Sugestão de texto para a seção 'Sobre' ou Bio da plataforma",
-      "tips": ["Dica 1 para otimizar o algoritmo e marca pessoal", "Dica 2 para palavras-chave e testes Gupy/LinkedIn", "Dica 3 de engajamento/portfólio"]
+      "platform": "Nome da Plataforma fornecida pelo usuário (ex: LinkedIn, Gupy, Behance, StackOverflow, Kaggle, Xing, etc.)",
+      "url": "URL fornecida",
+      "headline": "Sugestão de Título Profissional de Alto Impacto específico para a plataforma",
+      "aboutSummary": "Sugestão de texto para a seção 'Sobre' / Bio / Apresentação da plataforma",
+      "tips": ["Dica 1 de posicionamento de marca e SEO no perfil", "Dica 2 para o algoritmo e visibilidade de recrutadores", "Dica 3 de exibição de projetos, cases ou conexões"]
     }
   ]
 

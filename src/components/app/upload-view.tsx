@@ -10,9 +10,30 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
-  Upload, FileText, Sparkles, Loader2, CheckCircle2, AlertCircle, Info, Share2, Globe, Linkedin, CheckSquare, Square
+  Upload, FileText, Sparkles, Loader2, CheckCircle2, AlertCircle, Info, Share2, Globe, CheckSquare, Square, Plus, Trash2
 } from 'lucide-react'
 import { toast } from 'sonner'
+
+export interface CustomSocialField {
+  id: string
+  platform: string
+  url: string
+}
+
+const PRESET_PLATFORMS = [
+  'LinkedIn',
+  'Gupy',
+  'GitHub',
+  'Behance',
+  'Dribbble',
+  'StackOverflow',
+  'Kaggle',
+  'Xing',
+  'Medium',
+  'Substack',
+  'Portfólio / Site',
+  'Instagram / Redes',
+]
 
 export function UploadView() {
   const { openResume, setView } = useNav()
@@ -20,11 +41,12 @@ export function UploadView() {
   const [title, setTitle] = useState('')
   const [format, setFormat] = useState<'text' | 'markdown'>('text')
   
-  // Social profiles state
-  const [linkedinUrl, setLinkedinUrl] = useState('')
-  const [gupyUrl, setGupyUrl] = useState('')
-  const [githubUrl, setGithubUrl] = useState('')
-  const [portfolioUrl, setPortfolioUrl] = useState('')
+  // Dynamic Custom Social Profiles State
+  const [socialProfiles, setSocialProfiles] = useState<CustomSocialField[]>([
+    { id: '1', platform: 'LinkedIn', url: '' },
+    { id: '2', platform: 'Gupy', url: '' },
+    { id: '3', platform: 'GitHub', url: '' },
+  ])
   const [socialConsent, setSocialConsent] = useState(true)
 
   const [loading, setLoading] = useState(false)
@@ -79,6 +101,23 @@ export function UploadView() {
     reader.readAsText(file)
   }
 
+  const addSocialProfile = () => {
+    setSocialProfiles([
+      ...socialProfiles,
+      { id: Date.now().toString(), platform: 'LinkedIn', url: '' },
+    ])
+  }
+
+  const updateSocialProfile = (id: string, field: 'platform' | 'url', value: string) => {
+    setSocialProfiles(
+      socialProfiles.map((p) => (p.id === id ? { ...p, [field]: value } : p))
+    )
+  }
+
+  const removeSocialProfile = (id: string) => {
+    setSocialProfiles(socialProfiles.filter((p) => p.id !== id))
+  }
+
   const submit = async () => {
     setError(null)
     if (content.length < minChars) {
@@ -91,11 +130,15 @@ export function UploadView() {
     }
     setLoading(true)
 
+    // Build socialLinks dictionary from dynamic list
     const socialLinks: Record<string, string> = {}
-    if (linkedinUrl.trim()) socialLinks['LinkedIn'] = linkedinUrl.trim()
-    if (gupyUrl.trim()) socialLinks['Gupy'] = gupyUrl.trim()
-    if (githubUrl.trim()) socialLinks['GitHub'] = githubUrl.trim()
-    if (portfolioUrl.trim()) socialLinks['Portfólio / Instagram'] = portfolioUrl.trim()
+    for (const p of socialProfiles) {
+      const name = p.platform.trim() || 'Rede Profissional'
+      const link = p.url.trim()
+      if (link) {
+        socialLinks[name] = link
+      }
+    }
 
     try {
       const r = await fetch('/api/resume/upload', {
@@ -205,73 +248,78 @@ export function UploadView() {
             </div>
           </div>
 
-          {/* SOCIAL PROFILES & CONSENT (NEW) */}
-          <div className="pt-3 border-t border-slate-100 space-y-3">
-            <div>
-              <p className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                <Share2 className="w-3.5 h-3.5 text-violet-600" /> Perfis em Redes Sociais & Plataformas (Opcional)
-              </p>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                Forneça o link dos seus perfis para receber dicas personalizadas de otimização de imagem profissional (LinkedIn, Gupy, etc).
-              </p>
+          {/* DYNAMIC GLOBAL SOCIAL & PROFESSIONAL PROFILES */}
+          <div className="pt-4 border-t border-slate-100 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                  <Share2 className="w-3.5 h-3.5 text-violet-600" /> Presença Digital & Perfis Profissionais Globais (Opcional)
+                </p>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Insira o link das redes e plataformas relevantes para a área e mercado que deseja atuar (LinkedIn, Gupy, Behance, GitHub, Xing, StackOverflow, etc.).
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addSocialProfile}
+                className="text-xs text-violet-700 border-violet-200 hover:bg-violet-50 shrink-0 self-start sm:self-auto"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar perfil
+              </Button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div>
-                <Label htmlFor="linkedin" className="text-[11px] text-slate-600">Perfil do LinkedIn</Label>
-                <Input
-                  id="linkedin"
-                  placeholder="https://linkedin.com/in/seu-perfil"
-                  value={linkedinUrl}
-                  onChange={(e) => setLinkedinUrl(e.target.value)}
-                  className="h-8 text-xs font-mono"
-                />
-              </div>
-              <div>
-                <Label htmlFor="gupy" className="text-[11px] text-slate-600">Perfil do Gupy</Label>
-                <Input
-                  id="gupy"
-                  placeholder="https://candidato.gupy.io/..."
-                  value={gupyUrl}
-                  onChange={(e) => setGupyUrl(e.target.value)}
-                  className="h-8 text-xs font-mono"
-                />
-              </div>
-              <div>
-                <Label htmlFor="github" className="text-[11px] text-slate-600">GitHub (para Tech)</Label>
-                <Input
-                  id="github"
-                  placeholder="https://github.com/seu-usuario"
-                  value={githubUrl}
-                  onChange={(e) => setGithubUrl(e.target.value)}
-                  className="h-8 text-xs font-mono"
-                />
-              </div>
-              <div>
-                <Label htmlFor="portfolio" className="text-[11px] text-slate-600">Portfólio / Instagram Profissional</Label>
-                <Input
-                  id="portfolio"
-                  placeholder="https://instagram.com/... ou https://seu-site.com"
-                  value={portfolioUrl}
-                  onChange={(e) => setPortfolioUrl(e.target.value)}
-                  className="h-8 text-xs font-mono"
-                />
-              </div>
+            <div className="space-y-2.5">
+              {socialProfiles.map((item, index) => (
+                <div key={item.id} className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200/80">
+                  <div className="w-1/3 sm:w-1/4">
+                    <Input
+                      list={`platform-suggestions-${item.id}`}
+                      placeholder="Rede / Plataforma"
+                      value={item.platform}
+                      onChange={(e) => updateSocialProfile(item.id, 'platform', e.target.value)}
+                      className="h-8 text-xs font-semibold text-slate-800 bg-white"
+                    />
+                    <datalist id={`platform-suggestions-${item.id}`}>
+                      {PRESET_PLATFORMS.map((plat) => (
+                        <option key={plat} value={plat} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      placeholder={`Link do perfil (ex: https://...)`}
+                      value={item.url}
+                      onChange={(e) => updateSocialProfile(item.id, 'url', e.target.value)}
+                      className="h-8 text-xs font-mono bg-white"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeSocialProfile(item.id)}
+                    className="p-1.5 text-slate-400 hover:text-red-600 transition-colors"
+                    title="Remover perfil"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
             </div>
 
             <div className="flex items-center gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setSocialConsent(!socialConsent)}
-                className="flex items-center gap-2 text-xs text-slate-700 hover:text-slate-900 select-none text-left"
+                className="flex items-start sm:items-center gap-2 text-xs text-slate-700 hover:text-slate-900 select-none text-left"
               >
                 {socialConsent ? (
-                  <CheckSquare className="w-4 h-4 text-violet-600 shrink-0" />
+                  <CheckSquare className="w-4 h-4 text-violet-600 shrink-0 mt-0.5 sm:mt-0" />
                 ) : (
-                  <Square className="w-4 h-4 text-slate-400 shrink-0" />
+                  <Square className="w-4 h-4 text-slate-400 shrink-0 mt-0.5 sm:mt-0" />
                 )}
                 <span>
-                  Autorizo a IA a analisar meus perfis fornecidos e gerar recomendações personalizadas de presença digital e otimização para LinkedIn/Gupy.
+                  Autorizo a inteligência do Griffo a analisar meus perfis fornecidos e gerar recomendações personalizadas de posicionamento e otimização de presença digital global.
                 </span>
               </button>
             </div>
@@ -287,7 +335,7 @@ export function UploadView() {
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between pt-2 border-t border-slate-100">
             <p className="text-xs text-slate-500 flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              Análise gratuita · Dados criptografados · LGPD
+              Análise gratuita · Dados criptografados · LGPD / GDPR
             </p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setView('dashboard')} disabled={loading}>Cancelar</Button>
@@ -311,7 +359,7 @@ export function UploadView() {
         <CardContent className="p-4 flex items-start gap-3">
           <FileText className="w-4 h-4 text-slate-500 mt-0.5 shrink-0" />
           <div className="text-xs text-slate-600 space-y-1">
-            <p><strong>O que será analisado:</strong> estrutura, resumo, resultados (STAR/XYZ), hard/soft skills, palavras-chave ATS, trajetória de carreira, sugestão de cursos/capacitação e otimização de presença digital (LinkedIn/Gupy).</p>
+            <p><strong>O que será analisado:</strong> estrutura, resumo, resultados (STAR/XYZ), hard/soft skills, palavras-chave ATS, trajetória de carreira, sugestão de cursos/capacitação e otimização de presença digital global (LinkedIn, Gupy, Behance, GitHub, etc.).</p>
             <p><strong>Tempo estimado:</strong> 15–30 segundos. <strong>Custo real da análise:</strong> ~ R$ 0,12 (você não paga nada no plano gratuito).</p>
           </div>
         </CardContent>
