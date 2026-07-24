@@ -1075,132 +1075,29 @@ export function AdminView() {
                   </div>
                 </div>
 
-                <h3 className="text-sm font-semibold text-slate-800 border-b pb-2 mb-4">Integração Lemon Squeezy (Gateway Secundário)</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <label className="text-xs font-semibold text-slate-700">Lemon Squeezy API Key</label>
-                    <Input
-                      type="password"
-                      placeholder="Ex: eyJhbGciOiJKV1..."
-                      value={configs.LEMON_API_KEY || ''}
-                      onChange={(e) => setConfigs({ ...configs, LEMON_API_KEY: e.target.value })}
-                      className="text-xs font-mono"
-                    />
-                  </div>
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <label className="text-xs font-semibold text-slate-700">Lemon Squeezy Webhook Secret</label>
-                    <Input
-                      type="password"
-                      placeholder="Ex: segredo_super_seguro"
-                      value={configs.LEMON_WEBHOOK_SECRET || ''}
-                      onChange={(e) => setConfigs({ ...configs, LEMON_WEBHOOK_SECRET: e.target.value })}
-                      className="text-xs font-mono"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Store ID</label>
-                    <Input
-                      placeholder="Ex: 12345"
-                      value={configs.LEMON_STORE_ID || ''}
-                      onChange={(e) => setConfigs({ ...configs, LEMON_STORE_ID: e.target.value })}
-                      className="text-xs font-mono"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Variant ID (Plano de Entrada)</label>
-                    <Input
-                      placeholder="Ex: 67890"
-                      value={configs.LEMON_VARIANT_ENTRADA || ''}
-                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_ENTRADA: e.target.value })}
-                      className="text-xs font-mono"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Variant ID (Starter)</label>
-                    <Input
-                      placeholder="Ex: 67891"
-                      value={configs.LEMON_VARIANT_STARTER || ''}
-                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_STARTER: e.target.value })}
-                      className="text-xs font-mono"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Variant ID (Carreira)</label>
-                    <Input
-                      placeholder="Ex: 67892"
-                      value={configs.LEMON_VARIANT_CARREIRA || ''}
-                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_CARREIRA: e.target.value })}
-                      className="text-xs font-mono"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Variant ID (Profissional)</label>
-                    <Input
-                      placeholder="Ex: 67893"
-                      value={configs.LEMON_VARIANT_PROFISSIONAL || ''}
-                      onChange={(e) => setConfigs({ ...configs, LEMON_VARIANT_PROFISSIONAL: e.target.value })}
-                      className="text-xs font-mono"
-                    />
-                  </div>
-                </div>
               </div>
 
-              <div className="pt-2 flex justify-between items-center flex-wrap gap-2">
-                <Button
-                  type="button"
-                  onClick={handleSyncLemonSqueezy}
-                  disabled={syncingLemon || !configs.LEMON_API_KEY}
-                  variant="outline"
-                  className="border-emerald-500 text-emerald-700 hover:bg-emerald-50 text-xs font-bold"
-                >
-                  {syncingLemon ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <RefreshCw className="w-4 h-4 mr-1.5" />}
-                  ⚡ Sincronizar Loja & Pacotes via API
-                </Button>
-                <Button onClick={saveSettings} disabled={savingConfig} className="bg-emerald-600 hover:bg-emerald-700 text-xs font-bold">
+              <div className="pt-2 flex justify-end items-center flex-wrap gap-2">
+                <Button onClick={saveSettings} disabled={savingConfig} className="bg-indigo-600 hover:bg-indigo-700 text-xs font-bold">
                   {savingConfig ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
-                  Salvar Regras Financeiras
+                  Salvar Regras & Chaves Stripe
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {syncedLemonDetails && (
-            <Card className="bg-emerald-50 border border-emerald-200">
-              <CardContent className="p-4 text-xs space-y-2">
-                <div className="flex items-center gap-2 text-emerald-900 font-bold text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  Sincronização Concluída: {syncedLemonDetails.count} variante(s) encontrada(s) na Loja #{syncedLemonDetails.storeId || 'N/A'}
-                </div>
-                <div className="text-slate-700">
-                  <span className="font-semibold">Itens vinculados:</span>
-                  <ul className="list-disc pl-5 mt-1 space-y-0.5 font-mono text-[11px]">
-                    {syncedLemonDetails.list?.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* LIST / TABLE OF REGISTERED LEMON SQUEEZY PARAMETERS */}
+          {/* LIST / TABLE OF REGISTERED STRIPE PARAMETERS */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5 text-emerald-600" /> Parâmetros e Credenciais de Pagamento Registrados ({[
-                  configs.LEMON_API_KEY,
-                  configs.LEMON_WEBHOOK_SECRET,
-                  configs.LEMON_STORE_ID,
-                  configs.LEMON_VARIANT_ENTRADA,
-                  configs.LEMON_VARIANT_STARTER,
-                  configs.LEMON_VARIANT_CARREIRA,
-                  configs.LEMON_VARIANT_PROFISSIONAL,
-                ].filter(Boolean).length} / 7)
+                <CreditCard className="w-5 h-5 text-indigo-600" /> Status da Integração Stripe ({[
+                  configs.STRIPE_SECRET_KEY,
+                  configs.STRIPE_PUBLISHABLE_KEY,
+                  configs.STRIPE_WEBHOOK_SECRET,
+                ].filter(Boolean).length} / 3)
               </CardTitle>
               <CardDescription>
-                Lista completa das chaves de API, webhook e Variant IDs ativas no sistema GriffoWork.
+                Parâmetros e chaves ativas do gateway Stripe no sistema GriffoWork.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
@@ -1208,40 +1105,20 @@ export function AdminView() {
                 <table className="w-full text-xs text-left">
                   <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-y border-slate-200">
                     <tr>
-                      <th className="px-4 py-3">Parâmetro / Recurso</th>
+                      <th className="px-4 py-3">Recurso / Chave</th>
                       <th className="px-4 py-3">Valor Registrado</th>
                       <th className="px-4 py-3">Status no Sistema</th>
                       <th className="px-4 py-3 text-right">Escopo / Função</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    <tr className="hover:bg-indigo-50/40 bg-indigo-50/20">
-                      <td className="px-4 py-3 font-semibold text-indigo-950 flex items-center gap-1.5">
-                        <CreditCard className="w-3.5 h-3.5 text-indigo-600" /> Stripe Secret Key (Gateway Principal)
-                      </td>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3 font-semibold text-slate-900">Stripe Secret Key</td>
                       <td className="px-4 py-3 font-mono text-slate-700 font-bold">
-                        {configs.STRIPE_SECRET_KEY ? `${configs.STRIPE_SECRET_KEY.slice(0, 12)}••••••••` : 'Não Cadastrada'}
+                        {configs.STRIPE_SECRET_KEY ? `${configs.STRIPE_SECRET_KEY.slice(0, 14)}••••••••` : 'Não Cadastrada'}
                       </td>
                       <td className="px-4 py-3">
                         {configs.STRIPE_SECRET_KEY ? (
-                          <Badge className="bg-indigo-600 text-white border-none font-bold text-[10px]">
-                            🟢 STRIPE ATIVO & PRONTO
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-slate-100 text-slate-600 border-none font-medium text-[10px]">
-                            OPCIONAL (USAR LEMON)
-                          </Badge>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right text-indigo-700 font-semibold text-[11px]">Checkout & Pix/Card</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-semibold text-slate-900">Lemon Squeezy API Key</td>
-                      <td className="px-4 py-3 font-mono text-slate-600">
-                        {configs.LEMON_API_KEY ? `${configs.LEMON_API_KEY.slice(0, 10)}••••••••` : 'Não Cadastrada'}
-                      </td>
-                      <td className="px-4 py-3">
-                        {configs.LEMON_API_KEY ? (
                           <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
                             CADASTRADA & ATIVA
                           </Badge>
@@ -1251,17 +1128,17 @@ export function AdminView() {
                           </Badge>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">SDK / Checkout API</td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Checkout API Server</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-semibold text-slate-900">Webhook Secret</td>
-                      <td className="px-4 py-3 font-mono text-slate-600">
-                        {configs.LEMON_WEBHOOK_SECRET ? `${configs.LEMON_WEBHOOK_SECRET.slice(0, 6)}••••••••` : 'Não Cadastrado'}
+                      <td className="px-4 py-3 font-semibold text-slate-900">Stripe Publishable Key</td>
+                      <td className="px-4 py-3 font-mono text-slate-700 font-bold">
+                        {configs.STRIPE_PUBLISHABLE_KEY ? `${configs.STRIPE_PUBLISHABLE_KEY.slice(0, 14)}••••••••` : 'Não Cadastrada'}
                       </td>
                       <td className="px-4 py-3">
-                        {configs.LEMON_WEBHOOK_SECRET ? (
+                        {configs.STRIPE_PUBLISHABLE_KEY ? (
                           <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
-                            CADASTRADO & ATIVO
+                            CADASTRADA & ATIVA
                           </Badge>
                         ) : (
                           <Badge className="bg-rose-100 text-rose-800 border-none font-bold text-[10px]">
@@ -1269,79 +1146,65 @@ export function AdminView() {
                           </Badge>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">HMAC SHA256 Signature</td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Frontend Client Key</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-semibold text-slate-900">Store ID (ID da Loja)</td>
-                      <td className="px-4 py-3 font-mono text-slate-800 font-bold">
-                        {configs.LEMON_STORE_ID || 'Não Cadastrado'}
+                      <td className="px-4 py-3 font-semibold text-slate-900">Stripe Webhook Secret</td>
+                      <td className="px-4 py-3 font-mono text-slate-700 font-bold">
+                        {configs.STRIPE_WEBHOOK_SECRET ? `${configs.STRIPE_WEBHOOK_SECRET.slice(0, 10)}••••••••` : 'Opcional (Desmarcado)'}
                       </td>
                       <td className="px-4 py-3">
-                        {configs.LEMON_STORE_ID ? (
+                        {configs.STRIPE_WEBHOOK_SECRET ? (
                           <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
-                            LOJA VINCULADA
+                            HMAC SIGNATURE ATIVO
                           </Badge>
                         ) : (
-                          <Badge className="bg-rose-100 text-rose-800 border-none font-bold text-[10px]">
-                            PENDENTE
+                          <Badge className="bg-slate-100 text-slate-600 border-none font-medium text-[10px]">
+                            MODO AUTO-FALLBACK
                           </Badge>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Checkout Store</td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Assinatura de Webhook</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
                       <td className="px-4 py-3 font-semibold text-slate-900">Plano de Entrada (R$ 9,90)</td>
-                      <td className="px-4 py-3 font-mono text-slate-700 font-medium">
-                        {configs.LEMON_VARIANT_ENTRADA ? `Variant ID: ${configs.LEMON_VARIANT_ENTRADA}` : 'Não Configurado'}
-                      </td>
+                      <td className="px-4 py-3 font-mono text-slate-700">40 Créditos (30+10 Bônus)</td>
                       <td className="px-4 py-3">
-                        {configs.LEMON_VARIANT_ENTRADA ? (
-                          <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
-                            PRONTO PARA VENDA
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-amber-100 text-amber-800 border-none font-bold text-[10px]">
-                            PENDENTE
-                          </Badge>
-                        )}
+                        <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
+                          PRONTO NO STRIPE
+                        </Badge>
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">40 Créditos (30+10)</td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Catalogo & Dynamic Checkout</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
                       <td className="px-4 py-3 font-semibold text-slate-900">Pacote Starter (R$ 29,90)</td>
-                      <td className="px-4 py-3 font-mono text-slate-700 font-medium">
-                        {configs.LEMON_VARIANT_STARTER ? `Variant ID: ${configs.LEMON_VARIANT_STARTER}` : 'Não Configurado'}
-                      </td>
+                      <td className="px-4 py-3 font-mono text-slate-700">100 Créditos</td>
                       <td className="px-4 py-3">
-                        {configs.LEMON_VARIANT_STARTER ? (
-                          <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
-                            PRONTO PARA VENDA
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-amber-100 text-amber-800 border-none font-bold text-[10px]">
-                            PENDENTE
-                          </Badge>
-                        )}
+                        <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
+                          PRONTO NO STRIPE
+                        </Badge>
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">100 Créditos</td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Catalogo & Dynamic Checkout</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
                       <td className="px-4 py-3 font-semibold text-slate-900">Pacote Carreira (R$ 99,90)</td>
-                      <td className="px-4 py-3 font-mono text-slate-700 font-medium">
-                        {configs.LEMON_VARIANT_CARREIRA ? `Variant ID: ${configs.LEMON_VARIANT_CARREIRA}` : 'Não Configurado'}
-                      </td>
+                      <td className="px-4 py-3 font-mono text-slate-700">500 Créditos</td>
                       <td className="px-4 py-3">
-                        {configs.LEMON_VARIANT_CARREIRA ? (
-                          <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
-                            PRONTO PARA VENDA
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-amber-100 text-amber-800 border-none font-bold text-[10px]">
-                            PENDENTE
-                          </Badge>
-                        )}
+                        <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
+                          PRONTO NO STRIPE
+                        </Badge>
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">500 Créditos</td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Catalogo & Dynamic Checkout</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3 font-semibold text-slate-900">Pacote Profissional (R$ 249,90)</td>
+                      <td className="px-4 py-3 font-mono text-slate-700">1.500 Créditos</td>
+                      <td className="px-4 py-3">
+                        <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
+                          PRONTO NO STRIPE
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Catalogo & Dynamic Checkout</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
                       <td className="px-4 py-3 font-semibold text-slate-900">Pacote Profissional (R$ 249,90)</td>
