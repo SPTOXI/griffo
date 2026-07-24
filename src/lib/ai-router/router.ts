@@ -12,30 +12,46 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   const primaryProviderId = INITIAL_TASK_ROUTING[req.taskType] || 'kimi'
   const primaryRuntime = await getProviderRuntimeConfig(primaryProviderId)
 
-  // Build sequence of providers to try (primary first, then fallback chain)
-  const providerChain: ProviderId[] = [
+  // 1. Collect all candidate providers to try
+  const candidateProviders: ProviderId[] = [
     primaryProviderId,
     ...FALLBACK_CHAIN[primaryProviderId].filter((id) => id !== primaryProviderId),
   ]
 
+  // 2. Also check if there are any active keys registered in AiApiKey table for OTHER providers
+  try {
+    const activeDbKeys = await db.aiApiKey.findMany({
+      where: { status: 'active' },
+      select: { provider: true },
+    })
+    for (const keyObj of activeDbKeys) {
+      const pId = keyObj.provider.toLowerCase() as ProviderId
+      if (!candidateProviders.includes(pId)) {
+        candidateProviders.push(pId)
+      }
+    }
+  } catch (e) {
+    // Ignore
+  }
+
   let lastError: any = null
   let failoverCount = 0
 
-  for (let i = 0; i < providerChain.length; i++) {
-    const currentProviderId = providerChain[i]
+  for (let i = 0; i < candidateProviders.length; i++) {
+    const currentProviderId = candidateProviders[i]
     const runtime = await getProviderRuntimeConfig(currentProviderId)
 
-    // If no API key configured for this provider and it's not primary, skip
-    if (!runtime.apiKey && currentProviderId !== primaryProviderId) {
+    // Skip provider if no API key is available
+    if (!runtime.apiKey) {
       continue
     }
 
     const startCallTime = Date.now()
     try {
       const client = new OpenAI({
-        apiKey: runtime.apiKey || (await getProviderRuntimeConfig('kimi')).apiKey,
+        apiKey: runtime.apiKey,
         baseURL: runtime.baseURL,
-        timeout: 20000, // 20s timeout per call
+        timeout: 25000, // 25s timeout per call
       })
 
       const completion = await client.chat.completions.create({
@@ -50,6 +66,11 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
 
       const responseTimeMs = Date.now() - startCallTime
       const content = completion.choices?.[0]?.message?.content || ''
+      
+      if (!content) {
+        throw new Error(`Resposta vazia recebida do provedor ${currentProviderId}`)
+      }
+
       const tokensIn =
         completion.usage?.prompt_tokens ||
         Math.ceil((req.systemPrompt.length + req.userPrompt.length) / 4)
@@ -112,20 +133,22 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
       }
     } catch (err: any) {
       lastError = err
-      if (i < providerChain.length - 1) {
-        failoverCount++
-        console.warn(
-          `[AI Router] Provider '${currentProviderId}' failed (${err?.status || err?.message || 'Error'}). Triggering failover to next provider...`
-        )
-      }
+      failoverCount++
+      console.warn(
+        `[AI Router] Provedor '${currentProviderId}' falhou (${err?.status || err?.message || 'Error'}). Tentando próximo provedor na fila de contingência...`
+      )
     }
   }
 
   // If all attempts failed, throw descriptive error
-  const statusCode = lastError?.status || 502
   let errorMsg = lastError?.message || 'Falha ao conectar com os serviços de Inteligência Artificial.'
   if (lastError?.status === 401 || lastError?.message?.includes('Invalid Authentication')) {
-    errorMsg = 'Chave de API inválida ou expirada (Erro 401). Por favor, atualize as credenciais no Painel Admin.'
+    errorMsg = 'Chave de API de IA inválida ou expirada (Erro 401). Por favor, verifique as chaves cadastradas na Área Admin.'
+  } else if (lastError?.status === 404 || lastError?.message?.includes('404')) {
+    errorMsg = 'Endereço ou Modelo de IA não encontrado (Erro 404). Por favor, verifique o modelo e chave no Painel Admin.'
+  } else if (!lastError) {
+    errorMsg = 'Nenhuma chave de API de IA ativa encontrada no sistema. Cadastre uma chave em Área Admin > Chaves de IA.'
   }
+
   throw new Error(errorMsg)
 }
