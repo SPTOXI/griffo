@@ -10,10 +10,12 @@ import {
   Check, HelpCircle, ChevronDown, Star, MessageSquare, Menu, X, FileSearch, Edit3
 } from 'lucide-react'
 import { useAuth } from '@/store/auth'
+import { useI18n } from '@/context/i18n-context'
+import { LanguageSelector } from '@/components/ui/language-selector'
 
 export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | 'app') => void }) {
   const { user } = useAuth()
-  const [period, setPeriod] = useState<'day' | 'monthly' | 'annual'>('monthly')
+  const { t } = useI18n()
   const [openFaq, setOpenFaq] = useState<number | null>(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -36,63 +38,68 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 
           {/* DESKTOP NAV */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <a href="#features" className="text-slate-600 hover:text-[#0B63E5] transition-colors">Recursos</a>
-            <a href="#social" className="text-slate-600 hover:text-[#0B63E5] transition-colors">Presença Digital</a>
-            <a href="#how" className="text-slate-600 hover:text-[#0B63E5] transition-colors">Como funciona</a>
-            <a href="#pricing" className="text-slate-600 hover:text-[#0B63E5] transition-colors">Planos</a>
-            <a href="#faq" className="text-slate-600 hover:text-[#0B63E5] transition-colors">Dúvidas</a>
+            <a href="#features" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.features}</a>
+            <a href="#social" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.social}</a>
+            <a href="#how" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a>
+            <a href="#pricing" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.plans}</a>
+            <a href="#faq" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.faq}</a>
           </nav>
 
-          {/* DESKTOP CTAS */}
+          {/* DESKTOP CTAS & LANGUAGE SELECTOR */}
           <div className="hidden md:flex items-center gap-3">
+            <LanguageSelector />
+
             {user ? (
               <Button onClick={() => onNavigate('app')} size="sm" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md font-semibold">
-                Meu painel <ArrowRight className="w-4 h-4 ml-1.5" />
+                {t.nav.myPanel} <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
             ) : (
               <>
                 <Button onClick={() => onNavigate('login')} size="sm" variant="ghost" className="text-slate-700 hover:text-slate-900 font-medium">
-                  Entrar
+                  {t.nav.login}
                 </Button>
                 <Button onClick={() => onNavigate('signup')} size="sm" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md font-semibold px-4">
-                  Analisar grátis
+                  {t.nav.freeAnalysis}
                 </Button>
               </>
             )}
           </div>
 
-          {/* MOBILE TOGGLE BUTTON */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
-            aria-label="Abrir menu"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* MOBILE TOGGLE BUTTON & LANGUAGE SELECTOR */}
+          <div className="flex md:hidden items-center gap-2">
+            <LanguageSelector />
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
+              aria-label="Menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* MOBILE NAV DROPDOWN MENU */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-5 space-y-3 shadow-xl">
             <nav className="flex flex-col space-y-2 text-sm font-medium text-slate-700">
-              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">Recursos</a>
-              <a href="#social" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">Presença Digital</a>
-              <a href="#how" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">Como funciona</a>
-              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">Planos</a>
-              <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">Dúvidas</a>
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">{t.nav.features}</a>
+              <a href="#social" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">{t.nav.social}</a>
+              <a href="#how" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">{t.nav.howItWorks}</a>
+              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">{t.nav.plans}</a>
+              <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">{t.nav.faq}</a>
             </nav>
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
               {user ? (
                 <Button onClick={() => { setMobileMenuOpen(false); onNavigate('app') }} className="w-full bg-[#0B63E5] hover:bg-[#0052CC]">
-                  Meu painel <ArrowRight className="w-4 h-4 ml-1.5" />
+                  {t.nav.myPanel} <ArrowRight className="w-4 h-4 ml-1.5" />
                 </Button>
               ) : (
                 <>
                   <Button onClick={() => { setMobileMenuOpen(false); onNavigate('login') }} variant="outline" className="w-full">
-                    Entrar
+                    {t.nav.login}
                   </Button>
                   <Button onClick={() => { setMobileMenuOpen(false); onNavigate('signup') }} className="w-full bg-[#0B63E5] hover:bg-[#0052CC]">
-                    Analisar grátis
+                    {t.nav.freeAnalysis}
                   </Button>
                 </>
               )}
@@ -111,27 +118,27 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-8 items-center">
             <div className="space-y-5 sm:space-y-6 text-left">
               <Badge variant="outline" className="border-blue-300 bg-blue-50 text-[#0B63E5] px-3 py-1 text-xs font-bold rounded-full shadow-xs max-w-full truncate">
-                <Sparkles className="w-3.5 h-3.5 mr-1.5 text-[#0B63E5] shrink-0 inline" /> IA + Padrões Gupy, LinkedIn & Recrutamento Global
+                <Sparkles className="w-3.5 h-3.5 mr-1.5 text-[#0B63E5] shrink-0 inline" /> {t.hero.badge}
               </Badge>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#0B192E] leading-[1.1]">
-                Destaque seu <span className="bg-gradient-to-r from-[#0B192E] via-[#0B63E5] to-[#2563EB] bg-clip-text text-transparent">currículo</span> e conquiste as melhores vagas.
+                {t.hero.title1}<span className="bg-gradient-to-r from-[#0B192E] via-[#0B63E5] to-[#2563EB] bg-clip-text text-transparent">{t.hero.titleAccent}</span>{t.hero.title2}
               </h1>
               <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl">
-                Envie seu currículo em segundos e receba um laudo técnico completo em 8 dimensões. Descubra sua nota de aprovação em filtros ATS (Gupy, Workday, Taleo) e receba recomendações exclusivas para otimizar seus perfis no LinkedIn e redes profissionais.
+                {t.hero.subtitle}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-[#0B63E5] hover:bg-[#0052CC] text-white text-base h-12 sm:h-13 px-8 shadow-lg shadow-blue-600/25 font-bold">
-                  Analisar meu currículo agora <ArrowRight className="w-5 h-5 ml-2" />
+                  {t.hero.ctaPrimary} <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
                 <Button onClick={() => onNavigate('login')} size="lg" variant="outline" className="w-full sm:w-auto text-base h-12 sm:h-13 px-7 border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold">
-                  Já tenho conta
+                  {t.hero.ctaSecondary}
                 </Button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-semibold text-slate-600 pt-3 border-t border-slate-100">
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#0B63E5] shrink-0" /> Análise Gratuita</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#0B63E5] shrink-0" /> Sem Cartão</span>
-                <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-[#0B63E5] shrink-0" /> LGPD & GDPR</span>
-                <span className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-[#0B63E5] shrink-0" /> 100% Seguro</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeFree}</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeNoCard}</span>
+                <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeSecurity}</span>
+                <span className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeSafe}</span>
               </div>
             </div>
 
@@ -147,14 +154,14 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
                       <div className="w-2.5 h-2.5 rounded-full bg-blue-500/80" />
                     </div>
                     <span className="text-[11px] sm:text-xs font-medium text-slate-300 flex items-center gap-1.5 truncate">
-                      <FileText className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Relatório Técnico de Avaliação
+                      <FileText className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> {t.mockup.title}
                     </span>
-                    <Badge className="bg-[#0B63E5]/20 text-blue-300 text-[9px] sm:text-[10px] font-semibold border-none shrink-0">ALTA PRECISÃO</Badge>
+                    <Badge className="bg-[#0B63E5]/20 text-blue-300 text-[9px] sm:text-[10px] font-semibold border-none shrink-0">{t.mockup.precision}</Badge>
                   </div>
                   <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4">
                       <div>
-                        <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Nota Geral de Qualificação</p>
+                        <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">{t.mockup.overallScore}</p>
                         <div className="flex items-baseline gap-1.5 mt-0.5">
                           <span className="text-4xl sm:text-5xl font-extrabold text-[#0B192E]">8.7</span>
                           <span className="text-slate-400 font-medium text-xs sm:text-sm">/ 10</span>
@@ -162,18 +169,18 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
                       </div>
                       <div className="text-right space-y-1">
                         <Badge className="bg-blue-100 text-[#0B63E5] border-blue-200 font-bold px-2 py-0.5 text-[10px] sm:text-xs">
-                          <CheckCircle2 className="w-3 h-3 mr-1 text-[#0B63E5] inline" /> Aprovado em ATS
+                          <CheckCircle2 className="w-3 h-3 mr-1 text-[#0B63E5] inline" /> {t.mockup.atsApproved}
                         </Badge>
-                        <p className="text-[10px] sm:text-[11px] text-slate-500">Compatível com Gupy & Workday</p>
+                        <p className="text-[10px] sm:text-[11px] text-slate-500">{t.mockup.atsSub}</p>
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       {[
-                        { l: 'Estrutura & Leitura Automática (ATS)', s: 9.2, color: 'bg-[#0B63E5]' },
-                        { l: 'Impacto Quantificado (Fórmula STAR/XYZ)', s: 8.8, color: 'bg-[#0B63E5]' },
-                        { l: 'Match de Palavras-Chave de Mercado', s: 8.5, color: 'bg-[#0B63E5]' },
-                        { l: 'Trajetória & Plano de Carreira', s: 8.3, color: 'bg-indigo-600' },
+                        { l: t.mockup.dim1, s: 9.2, color: 'bg-[#0B63E5]' },
+                        { l: t.mockup.dim2, s: 8.8, color: 'bg-[#0B63E5]' },
+                        { l: t.mockup.dim3, s: 8.5, color: 'bg-[#0B63E5]' },
+                        { l: t.mockup.dim4, s: 8.3, color: 'bg-indigo-600' },
                       ].map((d) => (
                         <div key={d.l}>
                           <div className="flex justify-between text-[11px] sm:text-xs mb-1 font-medium">
@@ -189,10 +196,10 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 
                     <div className="rounded-xl bg-blue-50/80 border border-blue-100 p-3 sm:p-3.5 space-y-1">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-[#0B192E]">
-                        <Share2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Sugestão de Headline Otimizada (LinkedIn / Gupy)
+                        <Share2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> {t.mockup.suggestionTitle}
                       </div>
                       <p className="text-xs text-slate-700 font-medium leading-relaxed">
-                        "Desenvolvedor Full Stack Sênior | React, Node.js, Cloud (AWS) | Especialista em Arquitetura Distribuída & Alta Escalabilidade"
+                        {t.mockup.suggestionText}
                       </p>
                     </div>
                   </div>
@@ -206,10 +213,10 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       {/* STATS BAR */}
       <section className="border-y border-slate-200/80 bg-slate-50/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center">
-          <Stat icon={<Brain className="w-5 h-5" />} value="8 Dimensões" label="Análise minuciosa de currículo" />
-          <Stat icon={<Target className="w-5 h-5" />} value="Gupy & ATS" label="Verificação de filtros de recrutamento" />
-          <Stat icon={<Globe className="w-5 h-5" />} value="Perfis Globais" label="LinkedIn, Behance, GitHub, Xing, etc." />
-          <Stat icon={<Download className="w-5 h-5" />} value="PDF & Editável" label="Reescrita profissional pronta" />
+          <Stat icon={<Brain className="w-5 h-5" />} value={t.stats.dimTitle} label={t.stats.dimSub} />
+          <Stat icon={<Target className="w-5 h-5" />} value={t.stats.atsTitle} label={t.stats.atsSub} />
+          <Stat icon={<Globe className="w-5 h-5" />} value={t.stats.globalTitle} label={t.stats.globalSub} />
+          <Stat icon={<Download className="w-5 h-5" />} value={t.stats.pdfTitle} label={t.stats.pdfSub} />
         </div>
       </section>
 
@@ -220,26 +227,26 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
             <div className="space-y-5">
               <Badge className="bg-[#0B63E5]/20 text-blue-300 border-blue-500/30 hover:bg-[#0B63E5]/20 px-3 py-1 font-bold">
-                <Globe className="w-3.5 h-3.5 mr-1.5 text-[#0B63E5]" /> Presença Digital & Otimização Global
+                <Globe className="w-3.5 h-3.5 mr-1.5 text-[#0B63E5]" /> {t.social.badge}
               </Badge>
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight">
-                Sua carreira vai além do papel. Otimize seus perfis em qualquer plataforma.
+                {t.social.title}
               </h2>
               <p className="text-slate-300 leading-relaxed text-sm sm:text-base">
-                Com o GriffoWork, você não apenas melhora seu currículo em PDF — você otimiza toda a sua imagem profissional nas redes sociais e plataformas estratégicas para o mercado onde deseja atuar.
+                {t.social.subtitle}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                 <div className="p-3.5 sm:p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
                   <p className="font-semibold text-blue-400 text-sm flex items-center gap-1.5">
-                    <Share2 className="w-4 h-4 text-[#0B63E5]" /> LinkedIn & Gupy
+                    <Share2 className="w-4 h-4 text-[#0B63E5]" /> {t.social.card1Title}
                   </p>
-                  <p className="text-xs text-slate-300">Sugestões de Título (Headline), seção 'Sobre' e termos para o algoritmo de recrutadores.</p>
+                  <p className="text-xs text-slate-300">{t.social.card1Sub}</p>
                 </div>
                 <div className="p-3.5 sm:p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
                   <p className="font-semibold text-blue-400 text-sm flex items-center gap-1.5">
-                    <Globe className="w-4 h-4 text-[#0B63E5]" /> Perfis Internacionais & Tech
+                    <Globe className="w-4 h-4 text-[#0B63E5]" /> {t.social.card2Title}
                   </p>
-                  <p className="text-xs text-slate-300">Recomendações para Behance, GitHub, StackOverflow, Kaggle, Xing, Portfólios e redes locais.</p>
+                  <p className="text-xs text-slate-300">{t.social.card2Sub}</p>
                 </div>
               </div>
             </div>
@@ -247,23 +254,23 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-6 backdrop-blur space-y-3.5">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <span className="text-xs font-bold text-blue-400 flex items-center gap-1.5 truncate">
-                  <CheckCircle2 className="w-4 h-4 shrink-0 text-[#0B63E5]" /> Otimização com Autorização do Usuário
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-[#0B63E5]" /> {t.social.optInTitle}
                 </span>
-                <Badge className="bg-white/10 text-white shrink-0">LGPD / GDPR</Badge>
+                <Badge className="bg-white/10 text-white shrink-0">{t.social.lgpdBadge}</Badge>
               </div>
 
               <div className="space-y-2.5">
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1">LinkedIn — Título Profissional Sugerido</p>
-                  <p className="text-xs text-white">"Engenheiro de Dados Sênior | Python, PySpark, Dataproc, BigQuery | Especialista em Data Lakes e Pipeline de Alta Performance"</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1">{t.social.linkedInHead}</p>
+                  <p className="text-xs text-white">"Senior Data Engineer | Python, PySpark, Dataproc, BigQuery | High-Performance Data Pipeline Specialist"</p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1">Behance / Portfólio — Dica de Posicionamento</p>
-                  <p className="text-xs text-white">"Destaque os cases com dados de impacto (ex: 'Redesign que aumentou a conversão em +35%') na capa dos 3 primeiros projetos do perfil."</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1">{t.social.behanceHead}</p>
+                  <p className="text-xs text-white">"Highlight case studies with quantified impact (e.g. 'Redesign that boosted conversion by +35%') on portfolio covers."</p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1">Gupy — Palavras-chave de Triagem</p>
-                  <p className="text-xs text-white">"Certifique-se de preencher as seções de testes técnicos e incluir exatamente os termos 'Scrum', 'Jest' e 'Micro-frontends'."</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1">{t.social.gupyHead}</p>
+                  <p className="text-xs text-white">"Ensure exact keyword alignment with terms like 'Scrum', 'Jest', and 'Micro-frontends'."</p>
                 </div>
               </div>
             </div>
@@ -274,23 +281,17 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       {/* FEATURES */}
       <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs">Recursos Completos</Badge>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#0B192E] mt-3 mb-3">Tudo o que você precisa para se destacar nas seleções.</h2>
-          <p className="text-sm sm:text-base text-slate-600">Construído com base nas melhores práticas de RH, LinkedIn Talent Solutions e algoritmos de triagem automática.</p>
+          <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs">{t.features.badge}</Badge>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#0B192E] mt-3 mb-3">{t.features.title}</h2>
+          <p className="text-sm sm:text-base text-slate-600">{t.features.subtitle}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-          <Feature icon={<BarChart3 className="w-5 h-5" />} title="Laudo em 8 Dimensões"
-            desc="Avaliação minuciosa de estrutura, resumo, resultados quantificados, hard/soft skills, experiência, palavras-chave ATS, trajetória e plano de capacitação." />
-          <Feature icon={<Search className="w-5 h-5" />} title="Verificação de Filtros ATS"
-            desc="Testamos se seu currículo é lido corretamente por robôs de recrutamento (Gupy, Workday, Taleo, Greenhouse) antes de chegar ao recrutador." />
-          <Feature icon={<Sparkles className="w-5 h-5" />} title="Reescrita com Autorização"
-            desc="Com sua aprovação explícita, a IA reescreve seu currículo aplicando a fórmula STAR e Google XYZ — preservando 100% da veracidade dos seus dados." />
-          <Feature icon={<Share2 className="w-5 h-5" />} title="Otimização de Presença Digital"
-            desc="Dicas sob medida para seu perfil do LinkedIn, Gupy, Behance, GitHub, Xing e redes profissionais para atrair recrutadores ativamente." />
-          <Feature icon={<Download className="w-5 h-5" />} title="Download em PDF e Formato Editável"
-            desc="Baixe seu currículo reescrito e laudo em PDF elegante e arquivo de texto editável — pronto para enviar a empresas ou salvar." />
-          <Feature icon={<ShieldCheck className="w-5 h-5" />} title="Privacidade & Segurança Total"
-            desc="Seus dados são criptografados e protegidos em conformidade rigorosa com a LGPD e GDPR. Seus dados nunca são vendidos a terceiros." />
+          <Feature icon={<BarChart3 className="w-5 h-5" />} title={t.features.f1Title} desc={t.features.f1Desc} />
+          <Feature icon={<Search className="w-5 h-5" />} title={t.features.f2Title} desc={t.features.f2Desc} />
+          <Feature icon={<Sparkles className="w-5 h-5" />} title={t.features.f3Title} desc={t.features.f3Desc} />
+          <Feature icon={<Share2 className="w-5 h-5" />} title={t.features.f4Title} desc={t.features.f4Desc} />
+          <Feature icon={<Download className="w-5 h-5" />} title={t.features.f5Title} desc={t.features.f5Desc} />
+          <Feature icon={<ShieldCheck className="w-5 h-5" />} title={t.features.f6Title} desc={t.features.f6Desc} />
         </div>
       </section>
 
@@ -298,18 +299,18 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       <section id="how" className="bg-[#0B192E] text-white py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <Badge className="bg-white/10 text-blue-300 hover:bg-white/10 px-3 py-1 font-bold">Passo a Passo</Badge>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mt-3 mb-3">Do envio ao novo currículo em 5 passos simples.</h2>
-            <p className="text-sm sm:text-base text-slate-300">Rápido, transparente e sob seu controle em todas as fases.</p>
+            <Badge className="bg-white/10 text-blue-300 hover:bg-white/10 px-3 py-1 font-bold">{t.how.badge}</Badge>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mt-3 mb-3">{t.how.title}</h2>
+            <p className="text-sm sm:text-base text-slate-300">{t.how.subtitle}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
             {[
-              { n: '01', t: 'Envie o Currículo', d: 'Anexe um arquivo PDF, documento de texto ou cole diretamente o conteúdo.' },
-              { n: '02', t: 'Informe seus Perfis', d: 'Insira opcionalmente seus links profissionais (LinkedIn, Gupy, etc.).' },
-              { n: '03', t: 'Receba o Laudo', d: 'Confira a pontuação 0–10 em 8 dimensões, pontos fortes e fracos.' },
-              { n: '04', t: 'Autorize a Reescrita', d: 'Se desejar, solicite a reescrita otimizada com a fórmula STAR.' },
-              { n: '05', t: 'Baixe em PDF ou Editável', d: 'Baixe a versão final pronta para aplicar em vagas imediatamente.' },
-            ].map((s, i) => (
+              { n: '01', t: t.how.s1Title, d: t.how.s1Desc },
+              { n: '02', t: t.how.s2Title, d: t.how.s2Desc },
+              { n: '03', t: t.how.s3Title, d: t.how.s3Desc },
+              { n: '04', t: t.how.s4Title, d: t.how.s4Desc },
+              { n: '05', t: t.how.s5Title, d: t.how.s5Desc },
+            ].map((s) => (
               <div key={s.n} className="relative">
                 <div className="rounded-xl bg-white/5 border border-white/10 p-5 h-full space-y-2">
                   <div className="text-[#0B63E5] text-xs font-bold">{s.n}</div>
@@ -325,73 +326,73 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       {/* PRICING & CREDIT PACKAGES */}
       <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-900 px-3 py-1 text-xs font-bold">Sem Mensalidades ou Fidelidade</Badge>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0B192E] mt-3 mb-3">Plano de Entrada por apenas R$ 9,90 com 2 Avaliações Completas!</h2>
-          <p className="text-sm sm:text-base text-slate-600">Adquira o Plano de Entrada para começar ou escolha o pacote ideal para o seu momento profissional.</p>
+          <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-900 px-3 py-1 text-xs font-bold">{t.pricing.badge}</Badge>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0B192E] mt-3 mb-3">{t.pricing.title}</h2>
+          <p className="text-sm sm:text-base text-slate-600">{t.pricing.subtitle}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-7xl mx-auto items-stretch mb-12">
           <PlanCard
-            name="Plano de Entrada"
-            price="R$ 9,90"
-            period="40 créditos (2 Avaliações Completas)"
+            name={t.pricing.entryTitle}
+            price="R$ 9,90 / $1.99"
+            period={t.pricing.entryDesc}
             features={[
-              '40 créditos liberados no seu saldo',
-              'Suficiente para 2 avaliações completas',
-              'Escolha livre entre Avaliação e Reescrita',
-              'Downloads em PDF e texto editável',
-              'Oferta exclusiva de boas-vindas',
+              '40 credits / créditos',
+              '2 complete audit reports',
+              'Audit & AI Rewrite choice',
+              'PDF & Editable downloads',
+              'Exclusive welcome offer',
             ]}
             highlight={true}
-            cta="Adquirir Plano de Entrada (R$ 9,90)"
+            cta={t.pricing.buyCta}
             onCta={() => onNavigate('signup')}
           />
           <PlanCard
-            name="Pacote Starter"
-            price="R$ 29,90"
-            period="100 créditos (R$ 0,299 / crédito)"
+            name={t.pricing.starterTitle}
+            price="R$ 29,90 / $5.99"
+            period={t.pricing.starterDesc}
             features={[
-              '100 créditos adicionados ao saldo',
-              'Suficiente para 5 avaliações completas',
-              'Uso flexível entre Avaliação e Reescrita',
-              'Downloads em PDF e texto editável',
-              'Sem mensalidade ou expiração',
+              '100 credits / créditos',
+              '5 complete audit reports',
+              'Audit & AI Rewrite choice',
+              'PDF & Editable downloads',
+              'No expiration or monthly fees',
             ]}
             highlight={false}
-            cta="Adquirir Pacote Starter"
+            cta={t.pricing.buyCta}
             onCta={() => onNavigate('signup')}
           />
           <PlanCard
-            name="Pacote Carreira"
-            price="R$ 99,90"
-            period="500 créditos (R$ 0,199 / crédito)"
+            name={t.pricing.carreiraTitle}
+            price="R$ 99,90 / $19.99"
+            period={t.pricing.carreiraDesc}
             features={[
-              '500 créditos adicionados ao saldo',
-              'Suficiente para 25 avaliações completas',
-              'Uso flexível entre Avaliação e Reescrita',
-              'Otimização de LinkedIn e Gupy',
-              'Melhor custo-benefício da plataforma',
-              'Sem expiração de saldo',
+              '500 credits / créditos',
+              '25 complete audit reports',
+              'Audit & AI Rewrite choice',
+              'LinkedIn & ATS Optimization',
+              'Best platform value',
+              'No expiration of credits',
             ]}
             highlight={true}
             popular
-            cta="Garantir Pacote Carreira"
+            cta={t.pricing.buyCta}
             onCta={() => onNavigate('signup')}
           />
           <PlanCard
-            name="Pacote Profissional"
-            price="R$ 249,90"
-            period="1.500 créditos (R$ 0,166 / crédito)"
+            name={t.pricing.profTitle}
+            price="R$ 249,90 / $49.99"
+            period={t.pricing.profDesc}
             features={[
-              '1.500 créditos adicionados ao saldo',
-              'Suficiente para 75 avaliações completas',
-              'Uso flexível entre Avaliação e Reescrita',
-              'Uso intensivo e consultoria contínua',
-              'Maior desconto por crédito',
-              'Atendimento e suporte prioritário',
+              '1,500 credits / créditos',
+              '75 complete audit reports',
+              'Audit & AI Rewrite choice',
+              'Power user & agency access',
+              'Highest credit discount',
+              'Priority dedicated support',
             ]}
             highlight={false}
-            cta="Adquirir Pacote Profissional"
+            cta={t.pricing.buyCta}
             onCta={() => onNavigate('signup')}
           />
         </div>
@@ -400,13 +401,13 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
         <div className="bg-gradient-to-br from-[#0B192E] via-slate-900 to-[#0B192E] text-white rounded-3xl p-6 sm:p-8 shadow-xl max-w-5xl mx-auto border border-blue-900/40">
           <div className="text-center max-w-2xl mx-auto mb-6">
             <Badge variant="outline" className="border-blue-400 text-blue-300 bg-blue-950/60 text-xs mb-2 font-bold">
-              Entenda Nossas Ferramentas
+              GriffoWork
             </Badge>
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
-              Qual a diferença entre Avaliação e Reescrita do Currículo?
+              {t.pricing.guideTitle}
             </h3>
             <p className="text-slate-300 text-xs sm:text-sm">
-              Você pode utilizar seus créditos como preferir em qualquer momento da sua busca por emprego.
+              {t.pricing.guideSub}
             </p>
           </div>
 
@@ -414,26 +415,26 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             <div className="bg-white/10 rounded-2xl p-5 border border-white/10 space-y-3 backdrop-blur-sm">
               <div className="flex items-center gap-2.5 text-blue-400 font-bold text-base">
                 <FileSearch className="w-6 h-6 shrink-0 text-[#0B63E5]" />
-                <span>Avaliação do Currículo (20 créditos)</span>
+                <span>{t.pricing.tool1Title}</span>
               </div>
               <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-                <strong>Diagnóstico Executivo em 8 Dimensões:</strong> Analisa seu currículo sob a ótica de um recrutador técnico e robô ATS. Aponta Nota Geral, pontos fortes, vulnerabilidades, palavras-chave faltantes e nivelamento comercial.
+                {t.pricing.tool1Desc}
               </p>
               <div className="text-xs text-blue-300 font-semibold pt-1">
-                ✓ Ideal para: Descobrir falhas ocultas antes de enviar para vagas.
+                {t.pricing.tool1Ideal}
               </div>
             </div>
 
             <div className="bg-white/10 rounded-2xl p-5 border border-white/10 space-y-3 backdrop-blur-sm">
               <div className="flex items-center gap-2.5 text-indigo-300 font-bold text-base">
                 <Edit3 className="w-6 h-6 shrink-0 text-indigo-400" />
-                <span>Reescrita do Currículo (10 créditos)</span>
+                <span>{t.pricing.tool2Title}</span>
               </div>
               <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-                <strong>Reformulação Prática de Experiências:</strong> Reescreve suas experiências profissionais aplicando a <strong>Fórmula STAR (Situação, Tarefa, Ação, Resultado)</strong> e a <strong>Fórmula Google XYZ</strong>, garantindo 100% de veracidade dos fatos.
+                {t.pricing.tool2Desc}
               </p>
               <div className="text-xs text-indigo-300 font-semibold pt-1">
-                ✓ Ideal para: Transformar descrições simples em realizações de alto impacto.
+                {t.pricing.tool2Ideal}
               </div>
             </div>
           </div>
@@ -444,33 +445,18 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       <section id="faq" className="bg-slate-50 py-16 md:py-24 border-t border-slate-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
-            <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs font-bold">Perguntas Frequentes</Badge>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B192E] mt-3 mb-2">Ficou com alguma dúvida?</h2>
-            <p className="text-slate-600 text-sm">Respostas para as perguntas mais comuns dos nossos usuários.</p>
+            <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs font-bold">{t.faq.badge}</Badge>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B192E] mt-3 mb-2">{t.faq.title}</h2>
+            <p className="text-slate-600 text-sm">{t.faq.subtitle}</p>
           </div>
 
           <div className="space-y-3">
             {[
-              {
-                q: 'Como funciona a verificação de compatibilidade ATS (Gupy, Workday, Taleo)?',
-                a: 'Nossa inteligência simula os algoritmos de leitura de sistemas ATS utilizados pelas maiores empresas. Ela checa se o cabeçalho, ordem cronológica, seções e densidade de palavras-chave estão legíveis para robôs de triagem.'
-              },
-              {
-                q: 'A IA inventa informações ou experiências no meu currículo?',
-                a: 'Não. O GriffoWork segue uma diretriz rígida de veracidade: mantemos 100% das suas empresas, cargos, datas e formação reais. A IA reestrutura a escrita aplicando métodos validados (fórmulas STAR e Google XYZ) para destacar os seus resultados reais de forma impactante.'
-              },
-              {
-                q: 'Como funciona a otimização de perfis (LinkedIn, Gupy, Behance, GitHub)?',
-                a: 'Se você fornecer os links dos seus perfis com autorização, a IA gera títulos otimizados (Headlines), resumos para a seção "Sobre" e dicas de algoritmo para atrair mais recrutadores no mercado de atuação que você busca.'
-              },
-              {
-                q: 'Meus dados e meu currículo estão seguros?',
-                a: 'Totalmente. Trabalhamos em conformidade rigorosa com a LGPD (Lei Geral de Proteção de Dados) e GDPR. Seus dados são criptografados e não são compartilhados nem vendidos a terceiros sem seu consentimento prévio.'
-              },
-              {
-                q: 'Como funciona o saldo de créditos?',
-                a: 'Os créditos adquiridos não possuem expiração ou mensalidade. Você utiliza no seu tempo para realizar avaliações completas ou reescritas de currículo sempre que precisar se candidatar a novas vagas.'
-              }
+              { q: t.faq.q1, a: t.faq.a1 },
+              { q: t.faq.q2, a: t.faq.a2 },
+              { q: t.faq.q3, a: t.faq.a3 },
+              { q: t.faq.q4, a: t.faq.a4 },
+              { q: t.faq.q5, a: t.faq.a5 },
             ].map((faq, index) => (
               <div key={index} className="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
                 <button
@@ -495,14 +481,14 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 text-center">
         <div className="bg-gradient-to-br from-[#0B192E] via-slate-900 to-[#0B63E5] rounded-3xl p-6 sm:p-12 text-white shadow-2xl space-y-5">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
-            Pronto para transformar sua apresentação profissional?
+            {t.ctaFinal.title}
           </h2>
           <p className="text-blue-100 max-w-xl mx-auto text-sm sm:text-base">
-            Crie sua conta gratuita agora e receba o laudo técnico do seu currículo em menos de 30 segundos. Sem cartão de crédito.
+            {t.ctaFinal.subtitle}
           </p>
           <div className="pt-2">
             <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-white text-[#0B192E] hover:bg-blue-50 h-12 sm:h-13 px-8 text-base font-extrabold shadow-lg">
-              Analisar meu currículo grátis <ArrowRight className="w-5 h-5 ml-2 text-[#0B63E5]" />
+              {t.ctaFinal.button} <ArrowRight className="w-5 h-5 ml-2 text-[#0B63E5]" />
             </Button>
           </div>
         </div>
@@ -516,32 +502,32 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               <img src="/logo.png" alt="GriffoWork Logo" className="h-9 w-auto object-contain rounded-md shrink-0" />
               <div className="flex flex-col leading-none">
                 <span className="font-extrabold text-[#0B192E] text-base tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
-                <span className="text-[8px] font-bold uppercase tracking-wider text-[#0B63E5]">Inteligência Profissional</span>
+                <span className="text-[8px] font-bold uppercase tracking-wider text-[#0B63E5]">Global AI Career Intelligence</span>
               </div>
             </div>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Plataforma de inteligência de carreira, análise de currículo por IA e otimização de presença digital baseada nos melhores padrões de recrutamento.
+              {t.footer.desc}
             </p>
           </div>
           <div>
-            <h4 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">Navegação</h4>
+            <h4 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">{t.footer.navTitle}</h4>
             <ul className="space-y-2 text-xs text-slate-600 font-medium">
-              <li><a href="#features" className="hover:text-[#0B63E5] transition-colors">Recursos</a></li>
-              <li><a href="#social" className="hover:text-[#0B63E5] transition-colors">Presença Digital</a></li>
-              <li><a href="#pricing" className="hover:text-[#0B63E5] transition-colors">Planos</a></li>
-              <li><a href="#how" className="hover:text-[#0B63E5] transition-colors">Como funciona</a></li>
+              <li><a href="#features" className="hover:text-[#0B63E5] transition-colors">{t.nav.features}</a></li>
+              <li><a href="#social" className="hover:text-[#0B63E5] transition-colors">{t.nav.social}</a></li>
+              <li><a href="#pricing" className="hover:text-[#0B63E5] transition-colors">{t.nav.plans}</a></li>
+              <li><a href="#how" className="hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">Segurança & Privacidade</h4>
+            <h4 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">{t.footer.secTitle}</h4>
             <ul className="space-y-2 text-xs text-slate-600 font-medium">
               <li className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> LGPD & GDPR Compliant</li>
-              <li className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Criptografia de Dados</li>
-              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Sem Venda de Dados</li>
+              <li className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Data Encryption</li>
+              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Privacy First</li>
             </ul>
           </div>
           <div>
-            <h4 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">Contato & Domínio Oficial</h4>
+            <h4 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">{t.footer.contactTitle}</h4>
             <p className="text-xs text-slate-600 leading-relaxed font-medium">
               contato@griffo.work<br/>
               <strong>https://griffo.work</strong><br/>
@@ -550,7 +536,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
           </div>
         </div>
         <div className="border-t border-slate-200 py-4 text-center text-xs text-slate-500 font-medium">
-          © {new Date().getFullYear()} GriffoWork. Todos os direitos reservados. Em conformidade com a LGPD e GDPR.
+          © {new Date().getFullYear()} {t.footer.rights}
         </div>
       </footer>
     </div>
@@ -593,7 +579,7 @@ function PlanCard({ name, price, period, features, highlight, popular, cta, onCt
     <Card className={`relative border-2 transition-all flex flex-col justify-between ${popular ? 'border-[#0B63E5] shadow-xl scale-[1.02] bg-white' : highlight ? 'border-amber-400 shadow-md bg-white' : 'border-slate-200 hover:border-blue-300 bg-white'}`}>
       {popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-[#0B63E5] text-white hover:bg-[#0B63E5] shadow-sm px-3 py-0.5 text-xs font-bold">Mais Vendido</Badge>
+          <Badge className="bg-[#0B63E5] text-white hover:bg-[#0B63E5] shadow-sm px-3 py-0.5 text-xs font-bold">Popular</Badge>
         </div>
       )}
       <CardContent className="p-5 sm:p-6 flex-1 flex flex-col justify-between">

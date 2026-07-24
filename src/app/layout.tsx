@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { I18nProvider } from "@/context/i18n-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GriffoWork — Análise de Currículo por IA",
-  description: "Análise profissional de currículo com Inteligência Artificial: nota 0-10 em 8 dimensões executivas, otimização para ATS e reescrita estratégica.",
-  keywords: ["griffowork", "currículo", "análise de currículo por IA", "ATS", "RH", "carreira", "griffo.work"],
+  title: "GriffoWork — Análise de Currículo por IA | Global Resume AI Audit",
+  description: "Análise profissional de currículo com Inteligência Artificial em Português, Inglês e Espanhol: nota 0-10 em 8 dimensões executivas, otimização para ATS e reescrita estratégica.",
+  keywords: ["griffowork", "currículo", "resume ai", "cv audit", "análise de currículo por IA", "ATS", "RH", "carreira", "griffo.work"],
   authors: [{ name: "GriffoWork" }],
   icons: {
     icon: [
@@ -27,8 +28,8 @@ export const metadata: Metadata = {
     apple: '/logo.png',
   },
   openGraph: {
-    title: "GriffoWork — Análise de Currículo por IA",
-    description: "Análise profissional de currículo por IA em 8 dimensões executivas. Descubra sua nota ATS e destaque-se nas seleções.",
+    title: "GriffoWork — Análise de Currículo por IA | Global Resume AI Audit",
+    description: "Análise profissional de currículo por IA em 8 dimensões executivas. Descubra sua nota ATS e destaque-se nas seleções globais.",
     siteName: "GriffoWork",
     url: "https://griffo.work",
     images: [{ url: '/logo.png', width: 1200, height: 1200, alt: 'GriffoWork Logo' }],
@@ -52,8 +53,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        {children}
-        <Toaster />
+        <I18nProvider>
+          {children}
+          <Toaster />
+        </I18nProvider>
       </body>
     </html>
   );

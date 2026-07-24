@@ -21,6 +21,7 @@ import { HistoryView } from './history-view'
 import { SettingsView } from './settings-view'
 import { AdminView } from '../admin/admin-view'
 import { PaymentStatusModal } from './payment-status-modal'
+import { LanguageSelector } from '../ui/language-selector'
 
 const NAV_ITEMS: { view: AppView; label: string; icon: any }[] = [
   { view: 'dashboard', label: 'Painel', icon: LayoutDashboard },
@@ -127,6 +128,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <LanguageSelector />
           {/* CREDITS BADGE */}
           {user?.role === 'admin' ? (
             <Button

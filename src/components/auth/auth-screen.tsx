@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FileText, ArrowLeft, Mail, Lock, User, Briefcase, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '@/store/auth'
+import { useI18n } from '@/context/i18n-context'
+import { LanguageSelector } from '@/components/ui/language-selector'
 
 type Mode = 'login' | 'signup'
 
@@ -19,6 +21,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const { hydrate } = useAuth()
+  const { t } = useI18n()
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,15 +51,18 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-emerald-50 via-white to-white">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50/50 via-white to-white">
       <header className="h-16 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
           <button onClick={onBack} className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </button>
-          <div className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="GriffoWork" className="h-8 w-auto object-contain rounded-md shrink-0" />
-            <span className="font-extrabold text-[#0B192E] text-base tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              <img src="/logo.png" alt="GriffoWork" className="h-8 w-auto object-contain rounded-md shrink-0" />
+              <span className="font-extrabold text-[#0B192E] text-base tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
+            </div>
+            <LanguageSelector />
           </div>
         </div>
       </header>
@@ -66,11 +72,11 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
           <Card className="shadow-xl border-slate-200">
             <CardContent className="p-6 sm:p-8">
               <div className="text-center mb-6">
-                <h1 className="text-2xl font-bold text-slate-900">
-                  {mode === 'login' ? 'Bem-vindo de volta' : 'Crie sua conta'}
+                <h1 className="text-2xl font-bold text-[#0B192E]">
+                  {mode === 'login' ? t.auth.welcomeBack : t.auth.createAccount}
                 </h1>
                 <p className="text-sm text-slate-500 mt-1">
-                  {mode === 'login' ? 'Entre para acessar seus laudos.' : 'Análise gratuita. Sem cartão de crédito.'}
+                  {mode === 'login' ? t.auth.loginSub : t.auth.signupSub}
                 </p>
               </div>
 
@@ -84,111 +90,91 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
               <form onSubmit={submit} className="space-y-4">
                 {mode === 'signup' && (
                   <div className="space-y-1.5">
-                    <Label htmlFor="name">Nome completo</Label>
+                    <Label htmlFor="name">{t.auth.fullName}</Label>
                     <div className="relative">
                       <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                       <Input
                         id="name"
+                        type="text"
+                        placeholder="Maria Silva"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Maria Souza"
                         className="pl-9"
                         required
-                        autoComplete="name"
                       />
                     </div>
                   </div>
                 )}
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="username">E-mail ou Usuário</Label>
+                  <Label htmlFor="email">{t.auth.email}</Label>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <Input
-                      id="username"
-                      name="username"
+                      id="email"
                       type="text"
-                      inputMode="text"
+                      placeholder="seuemail@exemplo.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="seu@email.com ou usuário"
                       className="pl-9"
                       required
-                      autoComplete="username"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="password">Senha</Label>
+                  <Label htmlFor="password">{t.auth.password}</Label>
                   <div className="relative">
                     <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <Input
                       id="password"
                       type="password"
+                      placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
                       className="pl-9"
                       required
-                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                      minLength={6}
                     />
                   </div>
-                  {mode === 'signup' && <p className="text-xs text-slate-500">Mínimo de 6 caracteres.</p>}
                 </div>
 
                 {mode === 'signup' && (
                   <div className="space-y-1.5">
-                    <Label htmlFor="profession">Profissão atual <span className="text-slate-400 text-xs">(opcional)</span></Label>
+                    <Label htmlFor="profession">{t.auth.profession}</Label>
                     <div className="relative">
                       <Briefcase className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                       <Input
                         id="profession"
+                        type="text"
+                        placeholder="Ex: Engenheiro de Software"
                         value={profession}
                         onChange={(e) => setProfession(e.target.value)}
-                        placeholder="Desenvolvedora Front-end"
                         className="pl-9"
                       />
                     </div>
                   </div>
                 )}
 
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 h-11"
-                >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (mode === 'login' ? 'Entrar' : 'Criar conta gratuita')}
+                <Button type="submit" disabled={loading} className="w-full bg-[#0B63E5] hover:bg-[#0052CC] text-white font-bold h-11 shadow-md">
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : mode === 'login' ? (
+                    t.auth.loginBtn
+                  ) : (
+                    t.auth.signupBtn
+                  )}
                 </Button>
               </form>
 
-              {mode === 'signup' && (
-                <div className="mt-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
-                  <p className="font-semibold flex items-center gap-1 mb-1"><CheckCircle2 className="w-3.5 h-3.5" /> Ao criar sua conta, você concorda em:</p>
-                  <ul className="list-disc pl-4 space-y-0.5 text-emerald-700">
-                    <li>Receber análise gratuita do seu currículo.</li>
-                    <li>Permitir armazenamento seguro e criptografado dos seus dados (LGPD).</li>
-                    <li>Decidir depois se quer aparecer para recrutadores (opt-in).</li>
-                  </ul>
-                </div>
-              )}
-
-              <p className="text-center text-sm text-slate-600 mt-6">
-                {mode === 'login' ? (
-                  <>Não tem conta?{' '}
-                    <button onClick={() => { setMode('signup'); setError(null) }} className="text-emerald-700 font-semibold hover:underline">
-                      Criar agora
-                    </button>
-                  </>
-                ) : (
-                  <>Já tem conta?{' '}
-                    <button onClick={() => { setMode('login'); setError(null) }} className="text-emerald-700 font-semibold hover:underline">
-                      Entrar
-                    </button>
-                  </>
-                )}
-              </p>
+              <div className="mt-6 text-center border-t border-slate-100 pt-4">
+                <button
+                  type="button"
+                  onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(null) }}
+                  className="text-xs text-[#0B63E5] hover:underline font-semibold"
+                >
+                  {mode === 'login' ? t.auth.noAccount : t.auth.hasAccount}
+                </button>
+              </div>
             </CardContent>
           </Card>
         </div>
