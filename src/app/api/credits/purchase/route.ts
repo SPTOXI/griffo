@@ -31,31 +31,29 @@ export async function POST(req: Request) {
 
     // Load configs
     const configs = await getGlobalSettings()
-    const storeId = configs.LEMON_STORE_ID
+    const apiKey = configs.LEMON_API_KEY || process.env.LEMON_SQUEEZY_API_KEY || process.env.LEMON_API_KEY || ''
+    const storeId = configs.LEMON_STORE_ID || process.env.LEMON_SQUEEZY_STORE_ID || process.env.LEMON_STORE_ID || ''
     
     // Determine variant based on credits
     let variantId = ''
-    if (packageId === 'entrada') variantId = configs.LEMON_VARIANT_ENTRADA || ''
-    if (packageId === 'starter') variantId = configs.LEMON_VARIANT_STARTER || ''
-    if (packageId === 'carreira') variantId = configs.LEMON_VARIANT_CARREIRA || ''
-    if (packageId === 'profissional') variantId = configs.LEMON_VARIANT_PROFISSIONAL || ''
+    if (packageId === 'entrada') variantId = configs.LEMON_VARIANT_ENTRADA || process.env.LEMON_VARIANT_ENTRADA || ''
+    if (packageId === 'starter') variantId = configs.LEMON_VARIANT_STARTER || process.env.LEMON_VARIANT_STARTER || ''
+    if (packageId === 'carreira') variantId = configs.LEMON_VARIANT_CARREIRA || process.env.LEMON_VARIANT_CARREIRA || ''
+    if (packageId === 'profissional') variantId = configs.LEMON_VARIANT_PROFISSIONAL || process.env.LEMON_VARIANT_PROFISSIONAL || ''
 
-    if (!storeId || !variantId) {
-      // Se não configurado, faz fallback pra compra local simulada para facilitar desenvolvimento
-      const res = await purchaseCreditPackage(user.id, packageId)
-      if (!res.success) {
-        return NextResponse.json({ error: res.error || 'Erro ao processar compra.' }, { status: 400 })
-      }
+    const missing: string[] = []
+    if (!apiKey) missing.push('API Key')
+    if (!storeId) missing.push('Store ID')
+    if (!variantId) missing.push(`Variant ID (${pkg.name})`)
+
+    if (missing.length > 0) {
       return NextResponse.json({
-        success: true,
-        message: res.postPurchaseMessage || `${res.packageInfo?.name} ativado com sucesso!`,
-        newBalance: res.newBalance,
-        package: res.packageInfo,
-      })
+        error: `Configuração do Lemon Squeezy pendente no Painel Admin: Falta cadastrar ${missing.join(', ')}.`
+      }, { status: 400 })
     }
 
     // Configuração do Lemon Squeezy via SDK
-    setupLemonSqueezy()
+    setupLemonSqueezy(apiKey)
 
     try {
       const { data, error } = await createCheckout(storeId, variantId, {
@@ -75,7 +73,10 @@ export async function POST(req: Request) {
 
       if (error) {
         console.error('Lemon Squeezy Checkout Error:', error)
-        return NextResponse.json({ error: 'Erro ao gerar checkout seguro.' }, { status: 500 })
+        const errMsg = typeof error === 'object' && error !== null && 'message' in error
+          ? (error as any).message
+          : 'Erro ao gerar checkout no Lemon Squeezy'
+        return NextResponse.json({ error: `Erro no gateway de pagamento: ${errMsg}` }, { status: 400 })
       }
 
       // Return the checkout URL
@@ -83,9 +84,9 @@ export async function POST(req: Request) {
         success: true,
         checkoutUrl: data?.data.attributes.url
       })
-    } catch (checkoutErr) {
+    } catch (checkoutErr: any) {
       console.error('Lemon Squeezy exception:', checkoutErr)
-      return NextResponse.json({ error: 'Falha ao conectar com gateway de pagamento.' }, { status: 500 })
+      return NextResponse.json({ error: `Falha ao conectar com Lemon Squeezy: ${checkoutErr?.message || checkoutErr}` }, { status: 500 })
     }
   } catch (e: any) {
     console.error('credit purchase API error:', e)

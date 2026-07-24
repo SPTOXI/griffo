@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { db as prisma } from '@/lib/db';
+import { getGlobalSettings } from '@/lib/settings';
 
 export async function POST(req: Request) {
   try {
     const rawBody = await req.text();
     const signature = req.headers.get('x-signature') || '';
-    const secret = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET || '';
+    const configs = await getGlobalSettings();
+    const secret = configs.LEMON_WEBHOOK_SECRET || process.env.LEMON_SQUEEZY_WEBHOOK_SECRET || process.env.LEMON_WEBHOOK_SECRET || '';
 
     // Verify signature
     const hmac = crypto.createHmac('sha256', secret);

@@ -990,7 +990,29 @@ export function AdminView() {
               </div>
               <div className="pt-6 pb-2">
                 <h3 className="text-sm font-semibold text-slate-800 border-b pb-2 mb-4">Integração Lemon Squeezy (Modo Teste)</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="text-xs font-semibold text-slate-700">Lemon Squeezy API Key</label>
+                    <Input
+                      type="password"
+                      placeholder="Ex: eyJhbGciOiJKV1..."
+                      value={configs.LEMON_API_KEY || ''}
+                      onChange={(e) => setConfigs({ ...configs, LEMON_API_KEY: e.target.value })}
+                      className="text-xs font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="text-xs font-semibold text-slate-700">Lemon Squeezy Webhook Secret</label>
+                    <Input
+                      type="password"
+                      placeholder="Ex: segredo_super_seguro"
+                      value={configs.LEMON_WEBHOOK_SECRET || ''}
+                      onChange={(e) => setConfigs({ ...configs, LEMON_WEBHOOK_SECRET: e.target.value })}
+                      className="text-xs font-mono"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-700">Store ID</label>
                     <Input
