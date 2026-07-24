@@ -96,6 +96,6 @@ export async function POST(req: Request) {
     })
   } catch (e: any) {
     console.error('analyze error', e)
-    return NextResponse.json({ error: 'Erro ao analisar currículo.' }, { status: 500 })
+    return NextResponse.json({ error: e?.message || 'Erro ao analisar currículo.' }, { status: 500 })
   }
 }

@@ -5,7 +5,7 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   kimi: {
     id: 'kimi',
     name: 'Kimi K3 (Moonshot AI)',
-    defaultModel: 'kimi-k3',
+    defaultModel: 'moonshot-v1-8k',
     baseURL: 'https://api.moonshot.ai/v1',
     apiKeyEnvVar: 'MOONSHOT_API_KEY',
     pricing: {
@@ -72,27 +72,48 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
   let baseURL = base.baseURL
   let model = base.defaultModel
 
+  // 1. Check AiApiKey table for active key registered by admin
+  try {
+    const providerName = providerId === 'kimi' ? 'moonshot' : providerId
+    const registeredKeys = await db.aiApiKey.findMany({
+      where: { status: 'active' },
+      orderBy: { updatedAt: 'desc' },
+    })
+
+    const matchingKey = registeredKeys.find(
+      (k) => k.provider.toLowerCase() === providerName.toLowerCase()
+    )
+
+    if (matchingKey) {
+      if (matchingKey.apiKey) apiKey = matchingKey.apiKey
+      if (matchingKey.baseUrl) baseURL = matchingKey.baseUrl
+      if (matchingKey.model) model = matchingKey.model
+    }
+  } catch (e) {
+    console.warn('Failed to fetch AiApiKey:', e)
+  }
+
+  // 2. Check SystemConfig table
   try {
     const configs = await db.systemConfig.findMany()
     for (const c of configs) {
-      if (c.key === `${providerId.toUpperCase()}_API_KEY` && c.value) {
-        apiKey = c.value
-      } else if (providerId === 'kimi' && (c.key === 'MOONSHOT_API_KEY' || c.key === 'LLM_API_KEY') && c.value) {
+      if ((c.key === `${providerId.toUpperCase()}_API_KEY` || c.key === 'MOONSHOT_API_KEY') && c.value) {
         apiKey = c.value
       }
-
-      if (c.key === `${providerId.toUpperCase()}_MODEL` && c.value) {
-        model = c.value
-      } else if (providerId === 'kimi' && (c.key === 'KIMI_MODEL' || c.key === 'LLM_MODEL') && c.value) {
+      if ((c.key === `${providerId.toUpperCase()}_MODEL` || c.key === 'KIMI_MODEL') && c.value) {
         model = c.value
       }
-
       if (c.key === `${providerId.toUpperCase()}_BASE_URL` && c.value) {
         baseURL = c.value
       }
     }
   } catch (e) {
-    // Fallback to env or default
+    // Fallback to env
+  }
+
+  // Fallback for Moonshot AI model if model is 'kimi-k3' (Moonshot API requires 'moonshot-v1-8k' or 'moonshot-v1-32k')
+  if (providerId === 'kimi' && (model === 'kimi-k3' || !model)) {
+    model = 'moonshot-v1-8k'
   }
 
   return {
