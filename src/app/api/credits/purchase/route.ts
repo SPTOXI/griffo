@@ -6,6 +6,8 @@ import { getGlobalSettings } from '@/lib/settings'
 import { setupLemonSqueezy } from '@/lib/lemonsqueezy'
 import { createCheckout } from '@lemonsqueezy/lemonsqueezy.js'
 
+export const dynamic = 'force-dynamic'
+
 const schema = z.object({
   packageId: z.enum(['entrada', 'starter', 'carreira', 'profissional']),
 })

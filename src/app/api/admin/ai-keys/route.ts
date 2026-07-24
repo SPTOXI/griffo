@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/admin/ai-keys - List registered AI API keys
 export async function GET() {
   try {
