@@ -58,8 +58,8 @@ export async function POST(req: Request) {
             },
           ],
           mode: 'payment',
-          success_url: `${appUrl}/dashboard?payment=success&credits=${pkg.credits}`,
-          cancel_url: `${appUrl}/dashboard?payment=cancelled`,
+          success_url: `${appUrl}/?payment=success&credits=${pkg.credits}`,
+          cancel_url: `${appUrl}/?payment=cancelled`,
           client_reference_id: user.id,
           customer_email: user.email || undefined,
           metadata: {
@@ -115,7 +115,7 @@ export async function POST(req: Request) {
           }
         },
         productOptions: {
-          redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://griffo.vercel.app'}/dashboard`,
+          redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://griffo.vercel.app'}/?payment=success`,
           receiptButtonText: 'Voltar para o GriffoWork',
           receiptThankYouNote: `Obrigado! Seus ${pkg.credits} créditos foram adicionados à sua conta.`
         }

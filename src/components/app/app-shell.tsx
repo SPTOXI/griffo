@@ -55,6 +55,29 @@ export function AppShell({ onExit }: { onExit: () => void }) {
       .catch(() => {})
   }, [view, user?.role])
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const paymentStatus = params.get('payment')
+      if (paymentStatus === 'success') {
+        const addedCredits = params.get('credits')
+        toast.success(`🎉 Pagamento confirmado! ${addedCredits ? addedCredits + ' créditos' : 'Créditos'} adicionados à sua conta.`)
+        window.history.replaceState({}, document.title, window.location.pathname)
+        fetch('/api/credits/balance')
+          .then((r) => r.json())
+          .then((data) => {
+            if (typeof data.credits === 'number') {
+              setCredits(data.credits)
+            }
+          })
+          .catch(() => {})
+      } else if (paymentStatus === 'cancelled') {
+        toast.error('Pagamento cancelado.')
+        window.history.replaceState({}, document.title, window.location.pathname)
+      }
+    }
+  }, [])
+
   const initials = (user?.name || user?.email || '?')
     .split(' ')
     .map(s => s[0])
