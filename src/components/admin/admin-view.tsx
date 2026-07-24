@@ -356,6 +356,7 @@ export function AdminView() {
       })
       if (r.ok) {
         toast.success('Configurações salvas com sucesso!')
+        await loadData()
       } else {
         toast.error('Erro ao salvar configurações')
       }
@@ -1066,6 +1067,168 @@ export function AdminView() {
                   {savingConfig ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
                   Salvar Regras Financeiras
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* LIST / TABLE OF REGISTERED LEMON SQUEEZY PARAMETERS */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-emerald-600" /> Parâmetros e Credenciais de Pagamento Registrados ({[
+                  configs.LEMON_API_KEY,
+                  configs.LEMON_WEBHOOK_SECRET,
+                  configs.LEMON_STORE_ID,
+                  configs.LEMON_VARIANT_ENTRADA,
+                  configs.LEMON_VARIANT_STARTER,
+                  configs.LEMON_VARIANT_CARREIRA,
+                  configs.LEMON_VARIANT_PROFISSIONAL,
+                ].filter(Boolean).length} / 7)
+              </CardTitle>
+              <CardDescription>
+                Lista completa das chaves de API, webhook e Variant IDs ativas no sistema GriffoWork.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-y border-slate-200">
+                    <tr>
+                      <th className="px-4 py-3">Parâmetro / Recurso</th>
+                      <th className="px-4 py-3">Valor Registrado</th>
+                      <th className="px-4 py-3">Status no Sistema</th>
+                      <th className="px-4 py-3 text-right">Escopo / Função</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3 font-semibold text-slate-900">Lemon Squeezy API Key</td>
+                      <td className="px-4 py-3 font-mono text-slate-600">
+                        {configs.LEMON_API_KEY ? `${configs.LEMON_API_KEY.slice(0, 10)}••••••••` : 'Não Cadastrada'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {configs.LEMON_API_KEY ? (
+                          <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
+                            CADASTRADA & ATIVA
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-rose-100 text-rose-800 border-none font-bold text-[10px]">
+                            PENDENTE
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">SDK / Checkout API</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3 font-semibold text-slate-900">Webhook Secret</td>
+                      <td className="px-4 py-3 font-mono text-slate-600">
+                        {configs.LEMON_WEBHOOK_SECRET ? `${configs.LEMON_WEBHOOK_SECRET.slice(0, 6)}••••••••` : 'Não Cadastrado'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {configs.LEMON_WEBHOOK_SECRET ? (
+                          <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
+                            CADASTRADO & ATIVO
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-rose-100 text-rose-800 border-none font-bold text-[10px]">
+                            PENDENTE
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">HMAC SHA256 Signature</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3 font-semibold text-slate-900">Store ID (ID da Loja)</td>
+                      <td className="px-4 py-3 font-mono text-slate-800 font-bold">
+                        {configs.LEMON_STORE_ID || 'Não Cadastrado'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {configs.LEMON_STORE_ID ? (
+                          <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
+                            LOJA VINCULADA
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-rose-100 text-rose-800 border-none font-bold text-[10px]">
+                            PENDENTE
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Checkout Store</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3 font-semibold text-slate-900">Plano de Entrada (R$ 9,90)</td>
+                      <td className="px-4 py-3 font-mono text-slate-700 font-medium">
+                        {configs.LEMON_VARIANT_ENTRADA ? `Variant ID: ${configs.LEMON_VARIANT_ENTRADA}` : 'Não Configurado'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {configs.LEMON_VARIANT_ENTRADA ? (
+                          <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
+                            PRONTO PARA VENDA
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-amber-100 text-amber-800 border-none font-bold text-[10px]">
+                            PENDENTE
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">40 Créditos (30+10)</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3 font-semibold text-slate-900">Pacote Starter (R$ 29,90)</td>
+                      <td className="px-4 py-3 font-mono text-slate-700 font-medium">
+                        {configs.LEMON_VARIANT_STARTER ? `Variant ID: ${configs.LEMON_VARIANT_STARTER}` : 'Não Configurado'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {configs.LEMON_VARIANT_STARTER ? (
+                          <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
+                            PRONTO PARA VENDA
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-amber-100 text-amber-800 border-none font-bold text-[10px]">
+                            PENDENTE
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">100 Créditos</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3 font-semibold text-slate-900">Pacote Carreira (R$ 99,90)</td>
+                      <td className="px-4 py-3 font-mono text-slate-700 font-medium">
+                        {configs.LEMON_VARIANT_CARREIRA ? `Variant ID: ${configs.LEMON_VARIANT_CARREIRA}` : 'Não Configurado'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {configs.LEMON_VARIANT_CARREIRA ? (
+                          <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
+                            PRONTO PARA VENDA
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-amber-100 text-amber-800 border-none font-bold text-[10px]">
+                            PENDENTE
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">500 Créditos</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3 font-semibold text-slate-900">Pacote Profissional (R$ 249,90)</td>
+                      <td className="px-4 py-3 font-mono text-slate-700 font-medium">
+                        {configs.LEMON_VARIANT_PROFISSIONAL ? `Variant ID: ${configs.LEMON_VARIANT_PROFISSIONAL}` : 'Não Configurado'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {configs.LEMON_VARIANT_PROFISSIONAL ? (
+                          <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
+                            PRONTO PARA VENDA
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-amber-100 text-amber-800 border-none font-bold text-[10px]">
+                            PENDENTE
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">1.500 Créditos</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>
