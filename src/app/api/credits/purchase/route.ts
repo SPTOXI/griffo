@@ -33,7 +33,8 @@ export async function POST(req: Request) {
 
     // Load configs
     const configs = await getGlobalSettings()
-    const stripeSecretKey = configs.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || ''
+    const defaultStripeSecretKey = 'sk_test_51Twl2qCj91meBoFNJ99PxV9bodntxDv0BK2nfLcyZhbYgI4lXOnAsVryex8W0aWaddG6vNmATEL5na3NDj0SftMI00sxKXm9Od'
+    const stripeSecretKey = configs.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || defaultStripeSecretKey
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://griffo.vercel.app'
 
     // 1. STRIPE CHECKOUT (Primary Gateway)
