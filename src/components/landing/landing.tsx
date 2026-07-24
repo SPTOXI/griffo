@@ -27,7 +27,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-slate-200/80 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img src="/logo.png" alt="GriffoWork" className="h-10 w-auto object-contain rounded-md shrink-0" />
+            <img src="/logo.png" alt="GriffoWork Logo" className="h-10 w-auto object-contain rounded-md shrink-0" />
             <div className="flex flex-col leading-none">
               <span className="font-extrabold text-[#0B192E] text-xl tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
               <span className="text-[9px] font-bold uppercase tracking-wider text-[#0B63E5] mt-0.5">Análise de Currículo por IA</span>
@@ -136,33 +136,33 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             </div>
 
             {/* INTERACTIVE MOCKUP CARD */}
-            <div className="relative lg:ml-4 mt-4 lg:mt-0">
-              <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-teal-500/20 rounded-3xl transform rotate-1 blur-lg -z-10" />
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/20 to-indigo-500/20 rounded-3xl transform rotate-1 blur-lg -z-10" />
               <Card className="shadow-2xl border-slate-200/90 rounded-2xl overflow-hidden bg-white">
                 <CardContent className="p-0">
-                  <div className="bg-slate-900 text-white px-4 sm:px-5 py-3.5 flex items-center justify-between">
+                  <div className="bg-[#0B192E] text-white px-4 sm:px-5 py-3.5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
                       <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-blue-500/80" />
                     </div>
                     <span className="text-[11px] sm:text-xs font-medium text-slate-300 flex items-center gap-1.5 truncate">
-                      <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Relatório Técnico de Avaliação
+                      <FileText className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Relatório Técnico de Avaliação
                     </span>
-                    <Badge className="bg-emerald-500/20 text-emerald-300 text-[9px] sm:text-[10px] font-semibold border-none shrink-0">ALTA PRECISÃO</Badge>
+                    <Badge className="bg-[#0B63E5]/20 text-blue-300 text-[9px] sm:text-[10px] font-semibold border-none shrink-0">ALTA PRECISÃO</Badge>
                   </div>
                   <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4">
                       <div>
                         <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Nota Geral de Qualificação</p>
                         <div className="flex items-baseline gap-1.5 mt-0.5">
-                          <span className="text-4xl sm:text-5xl font-extrabold text-slate-900">8.7</span>
+                          <span className="text-4xl sm:text-5xl font-extrabold text-[#0B192E]">8.7</span>
                           <span className="text-slate-400 font-medium text-xs sm:text-sm">/ 10</span>
                         </div>
                       </div>
                       <div className="text-right space-y-1">
-                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 font-semibold px-2 py-0.5 text-[10px] sm:text-xs">
-                          <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600 inline" /> Aprovado em ATS
+                        <Badge className="bg-blue-100 text-[#0B63E5] border-blue-200 font-bold px-2 py-0.5 text-[10px] sm:text-xs">
+                          <CheckCircle2 className="w-3 h-3 mr-1 text-[#0B63E5] inline" /> Aprovado em ATS
                         </Badge>
                         <p className="text-[10px] sm:text-[11px] text-slate-500">Compatível com Gupy & Workday</p>
                       </div>
@@ -170,15 +170,15 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 
                     <div className="space-y-2">
                       {[
-                        { l: 'Estrutura & Leitura Automática (ATS)', s: 9.2, color: 'bg-emerald-500' },
-                        { l: 'Impacto Quantificado (Fórmula STAR/XYZ)', s: 8.8, color: 'bg-emerald-500' },
-                        { l: 'Match de Palavras-Chave de Mercado', s: 8.5, color: 'bg-emerald-500' },
-                        { l: 'Trajetória & Plano de Carreira', s: 8.3, color: 'bg-teal-500' },
+                        { l: 'Estrutura & Leitura Automática (ATS)', s: 9.2, color: 'bg-[#0B63E5]' },
+                        { l: 'Impacto Quantificado (Fórmula STAR/XYZ)', s: 8.8, color: 'bg-[#0B63E5]' },
+                        { l: 'Match de Palavras-Chave de Mercado', s: 8.5, color: 'bg-[#0B63E5]' },
+                        { l: 'Trajetória & Plano de Carreira', s: 8.3, color: 'bg-indigo-600' },
                       ].map((d) => (
                         <div key={d.l}>
                           <div className="flex justify-between text-[11px] sm:text-xs mb-1 font-medium">
                             <span className="text-slate-700 truncate pr-2">{d.l}</span>
-                            <span className="font-bold text-slate-900 shrink-0">{d.s.toFixed(1)}</span>
+                            <span className="font-bold text-[#0B192E] shrink-0">{d.s.toFixed(1)}</span>
                           </div>
                           <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
                             <div className={`h-full rounded-full ${d.color}`} style={{ width: `${d.s * 10}%` }} />
@@ -187,9 +187,9 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
                       ))}
                     </div>
 
-                    <div className="rounded-xl bg-violet-50/80 border border-violet-100 p-3 sm:p-3.5 space-y-1">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-violet-900">
-                        <Share2 className="w-3.5 h-3.5 text-violet-600 shrink-0" /> Sugestão de Headline Otimizada (LinkedIn / Gupy)
+                    <div className="rounded-xl bg-blue-50/80 border border-blue-100 p-3 sm:p-3.5 space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#0B192E]">
+                        <Share2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Sugestão de Headline Otimizada (LinkedIn / Gupy)
                       </div>
                       <p className="text-xs text-slate-700 font-medium leading-relaxed">
                         "Desenvolvedor Full Stack Sênior | React, Node.js, Cloud (AWS) | Especialista em Arquitetura Distribuída & Alta Escalabilidade"
@@ -214,30 +214,30 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       </section>
 
       {/* GLOBAL SOCIAL PRESENCE FEATURE HIGHLIGHT */}
-      <section id="social" className="py-14 sm:py-20 md:py-24 bg-gradient-to-br from-slate-900 via-slate-950 to-emerald-950 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 sm:w-96 h-80 sm:h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      <section id="social" className="py-14 sm:py-20 md:py-24 bg-gradient-to-br from-[#0B192E] via-slate-950 to-[#0B192E] text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 sm:w-96 h-80 sm:h-96 bg-[#0B63E5]/10 rounded-full blur-3xl pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
             <div className="space-y-5">
-              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20 px-3 py-1">
-                <Globe className="w-3.5 h-3.5 mr-1.5" /> Presença Digital & Otimização Global
+              <Badge className="bg-[#0B63E5]/20 text-blue-300 border-blue-500/30 hover:bg-[#0B63E5]/20 px-3 py-1 font-bold">
+                <Globe className="w-3.5 h-3.5 mr-1.5 text-[#0B63E5]" /> Presença Digital & Otimização Global
               </Badge>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight">
                 Sua carreira vai além do papel. Otimize seus perfis em qualquer plataforma.
               </h2>
               <p className="text-slate-300 leading-relaxed text-sm sm:text-base">
-                Com o Griffo, você não apenas melhora seu currículo em PDF — você otimiza toda a sua imagem profissional nas redes sociais e plataformas estratégicas para o mercado onde deseja atuar.
+                Com o GriffoWork, você não apenas melhora seu currículo em PDF — você otimiza toda a sua imagem profissional nas redes sociais e plataformas estratégicas para o mercado onde deseja atuar.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                 <div className="p-3.5 sm:p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
-                  <p className="font-semibold text-emerald-400 text-sm flex items-center gap-1.5">
-                    <Share2 className="w-4 h-4" /> LinkedIn & Gupy
+                  <p className="font-semibold text-blue-400 text-sm flex items-center gap-1.5">
+                    <Share2 className="w-4 h-4 text-[#0B63E5]" /> LinkedIn & Gupy
                   </p>
                   <p className="text-xs text-slate-300">Sugestões de Título (Headline), seção 'Sobre' e termos para o algoritmo de recrutadores.</p>
                 </div>
                 <div className="p-3.5 sm:p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
-                  <p className="font-semibold text-emerald-400 text-sm flex items-center gap-1.5">
-                    <Globe className="w-4 h-4" /> Perfis Internacionais & Tech
+                  <p className="font-semibold text-blue-400 text-sm flex items-center gap-1.5">
+                    <Globe className="w-4 h-4 text-[#0B63E5]" /> Perfis Internacionais & Tech
                   </p>
                   <p className="text-xs text-slate-300">Recomendações para Behance, GitHub, StackOverflow, Kaggle, Xing, Portfólios e redes locais.</p>
                 </div>
@@ -246,23 +246,23 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-6 backdrop-blur space-y-3.5">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5 truncate">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" /> Otimização com Autorização do Usuário
+                <span className="text-xs font-bold text-blue-400 flex items-center gap-1.5 truncate">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-[#0B63E5]" /> Otimização com Autorização do Usuário
                 </span>
                 <Badge className="bg-white/10 text-white shrink-0">LGPD / GDPR</Badge>
               </div>
 
               <div className="space-y-2.5">
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">LinkedIn — Título Profissional Sugerido</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1">LinkedIn — Título Profissional Sugerido</p>
                   <p className="text-xs text-white">"Engenheiro de Dados Sênior | Python, PySpark, Dataproc, BigQuery | Especialista em Data Lakes e Pipeline de Alta Performance"</p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">Behance / Portfólio — Dica de Posicionamento</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1">Behance / Portfólio — Dica de Posicionamento</p>
                   <p className="text-xs text-white">"Destaque os cases com dados de impacto (ex: 'Redesign que aumentou a conversão em +35%') na capa dos 3 primeiros projetos do perfil."</p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">Gupy — Palavras-chave de Triagem</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1">Gupy — Palavras-chave de Triagem</p>
                   <p className="text-xs text-white">"Certifique-se de preencher as seções de testes técnicos e incluir exatamente os termos 'Scrum', 'Jest' e 'Micro-frontends'."</p>
                 </div>
               </div>
@@ -275,7 +275,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs">Recursos Completos</Badge>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-3">Tudo o que você precisa para se destacar nas seleções.</h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#0B192E] mt-3 mb-3">Tudo o que você precisa para se destacar nas seleções.</h2>
           <p className="text-sm sm:text-base text-slate-600">Construído com base nas melhores práticas de RH, LinkedIn Talent Solutions e algoritmos de triagem automática.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
@@ -295,11 +295,11 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how" className="bg-slate-900 text-white py-16 md:py-24">
+      <section id="how" className="bg-[#0B192E] text-white py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <Badge className="bg-white/10 text-emerald-300 hover:bg-white/10 px-3 py-1">Passo a Passo</Badge>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mt-3 mb-3">Do envio ao novo currículo em 5 passos simples.</h2>
+            <Badge className="bg-white/10 text-blue-300 hover:bg-white/10 px-3 py-1 font-bold">Passo a Passo</Badge>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mt-3 mb-3">Do envio ao novo currículo em 5 passos simples.</h2>
             <p className="text-sm sm:text-base text-slate-300">Rápido, transparente e sob seu controle em todas as fases.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
@@ -312,8 +312,8 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             ].map((s, i) => (
               <div key={s.n} className="relative">
                 <div className="rounded-xl bg-white/5 border border-white/10 p-5 h-full space-y-2">
-                  <div className="text-emerald-400 text-xs font-semibold">{s.n}</div>
-                  <h3 className="font-semibold text-base">{s.t}</h3>
+                  <div className="text-[#0B63E5] text-xs font-bold">{s.n}</div>
+                  <h3 className="font-bold text-base">{s.t}</h3>
                   <p className="text-xs text-slate-300 leading-relaxed">{s.d}</p>
                 </div>
               </div>
@@ -325,8 +325,8 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       {/* PRICING & CREDIT PACKAGES */}
       <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-900 px-3 py-1 text-xs font-semibold">Sem Mensalidades ou Fidelidade</Badge>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-3">Plano de Entrada por apenas R$ 9,90 com 2 Avaliações Completas!</h2>
+          <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-900 px-3 py-1 text-xs font-bold">Sem Mensalidades ou Fidelidade</Badge>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0B192E] mt-3 mb-3">Plano de Entrada por apenas R$ 9,90 com 2 Avaliações Completas!</h2>
           <p className="text-sm sm:text-base text-slate-600">Adquira o Plano de Entrada para começar ou escolha o pacote ideal para o seu momento profissional.</p>
         </div>
 
@@ -397,9 +397,9 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
         </div>
 
         {/* GUIA EXPLICATIVO: AVALIAÇÃO VS REESCRITA */}
-        <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl max-w-5xl mx-auto">
+        <div className="bg-gradient-to-br from-[#0B192E] via-slate-900 to-[#0B192E] text-white rounded-3xl p-6 sm:p-8 shadow-xl max-w-5xl mx-auto border border-blue-900/40">
           <div className="text-center max-w-2xl mx-auto mb-6">
-            <Badge variant="outline" className="border-indigo-400 text-indigo-300 bg-indigo-950/60 text-xs mb-2">
+            <Badge variant="outline" className="border-blue-400 text-blue-300 bg-blue-950/60 text-xs mb-2 font-bold">
               Entenda Nossas Ferramentas
             </Badge>
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
@@ -412,27 +412,27 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white/10 rounded-2xl p-5 border border-white/10 space-y-3 backdrop-blur-sm">
-              <div className="flex items-center gap-2.5 text-emerald-400 font-bold text-base">
-                <FileSearch className="w-6 h-6 shrink-0" />
+              <div className="flex items-center gap-2.5 text-blue-400 font-bold text-base">
+                <FileSearch className="w-6 h-6 shrink-0 text-[#0B63E5]" />
                 <span>Avaliação do Currículo (20 créditos)</span>
               </div>
               <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
                 <strong>Diagnóstico Executivo em 8 Dimensões:</strong> Analisa seu currículo sob a ótica de um recrutador técnico e robô ATS. Aponta Nota Geral, pontos fortes, vulnerabilidades, palavras-chave faltantes e nivelamento comercial.
               </p>
-              <div className="text-xs text-emerald-300 font-medium pt-1">
+              <div className="text-xs text-blue-300 font-semibold pt-1">
                 ✓ Ideal para: Descobrir falhas ocultas antes de enviar para vagas.
               </div>
             </div>
 
             <div className="bg-white/10 rounded-2xl p-5 border border-white/10 space-y-3 backdrop-blur-sm">
               <div className="flex items-center gap-2.5 text-indigo-300 font-bold text-base">
-                <Edit3 className="w-6 h-6 shrink-0" />
+                <Edit3 className="w-6 h-6 shrink-0 text-indigo-400" />
                 <span>Reescrita do Currículo (10 créditos)</span>
               </div>
               <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
                 <strong>Reformulação Prática de Experiências:</strong> Reescreve suas experiências profissionais aplicando a <strong>Fórmula STAR (Situação, Tarefa, Ação, Resultado)</strong> e a <strong>Fórmula Google XYZ</strong>, garantindo 100% de veracidade dos fatos.
               </p>
-              <div className="text-xs text-indigo-300 font-medium pt-1">
+              <div className="text-xs text-indigo-300 font-semibold pt-1">
                 ✓ Ideal para: Transformar descrições simples em realizações de alto impacto.
               </div>
             </div>
@@ -444,8 +444,8 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       <section id="faq" className="bg-slate-50 py-16 md:py-24 border-t border-slate-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
-            <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs">Perguntas Frequentes</Badge>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-3 mb-2">Ficou com alguma dúvida?</h2>
+            <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs font-bold">Perguntas Frequentes</Badge>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B192E] mt-3 mb-2">Ficou com alguma dúvida?</h2>
             <p className="text-slate-600 text-sm">Respostas para as perguntas mais comuns dos nossos usuários.</p>
           </div>
 
@@ -457,7 +457,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               },
               {
                 q: 'A IA inventa informações ou experiências no meu currículo?',
-                a: 'Não. O Griffo segue uma diretriz rígida de veracidade: mantemos 100% das suas empresas, cargos, datas e formação reais. A IA reestrutura a escrita aplicando métodos validados (fórmulas STAR e Google XYZ) para destacar os seus resultados reais de forma impactante.'
+                a: 'Não. O GriffoWork segue uma diretriz rígida de veracidade: mantemos 100% das suas empresas, cargos, datas e formação reais. A IA reestrutura a escrita aplicando métodos validados (fórmulas STAR e Google XYZ) para destacar os seus resultados reais de forma impactante.'
               },
               {
                 q: 'Como funciona a otimização de perfis (LinkedIn, Gupy, Behance, GitHub)?',
@@ -468,17 +468,17 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
                 a: 'Totalmente. Trabalhamos em conformidade rigorosa com a LGPD (Lei Geral de Proteção de Dados) e GDPR. Seus dados são criptografados e não são compartilhados nem vendidos a terceiros sem seu consentimento prévio.'
               },
               {
-                q: 'Posso cancelar minha assinatura quando quiser?',
-                a: 'Sim! Você pode cancelar a qualquer momento diretamente no seu painel de usuário sem taxas de cancelamento ou burocracia.'
+                q: 'Como funciona o saldo de créditos?',
+                a: 'Os créditos adquiridos não possuem expiração ou mensalidade. Você utiliza no seu tempo para realizar avaliações completas ou reescritas de currículo sempre que precisar se candidatar a novas vagas.'
               }
             ].map((faq, index) => (
-              <div key={index} className="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-sm">
+              <div key={index} className="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
                 <button
                   onClick={() => toggleFaq(index)}
-                  className="w-full p-4 text-left font-semibold text-slate-900 text-sm flex justify-between items-center hover:bg-slate-50 transition-colors"
+                  className="w-full p-4 text-left font-bold text-[#0B192E] text-sm flex justify-between items-center hover:bg-slate-50 transition-colors"
                 >
                   <span className="pr-2">{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ${openFaq === index ? 'rotate-180 text-emerald-600' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ${openFaq === index ? 'rotate-180 text-[#0B63E5]' : ''}`} />
                 </button>
                 {openFaq === index && (
                   <div className="px-4 pb-4 pt-1 text-xs text-slate-600 leading-relaxed border-t border-slate-100">
@@ -493,62 +493,64 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 
       {/* FINAL CTA */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 text-center">
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-3xl p-6 sm:p-12 text-white shadow-xl shadow-emerald-600/20 space-y-5">
+        <div className="bg-gradient-to-br from-[#0B192E] via-slate-900 to-[#0B63E5] rounded-3xl p-6 sm:p-12 text-white shadow-2xl space-y-5">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
             Pronto para transformar sua apresentação profissional?
           </h2>
-          <p className="text-emerald-100 max-w-xl mx-auto text-sm sm:text-base">
+          <p className="text-blue-100 max-w-xl mx-auto text-sm sm:text-base">
             Crie sua conta gratuita agora e receba o laudo técnico do seu currículo em menos de 30 segundos. Sem cartão de crédito.
           </p>
           <div className="pt-2">
-            <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-white text-emerald-900 hover:bg-slate-100 h-12 sm:h-13 px-8 text-base font-bold shadow-lg">
-              Analisar meu currículo grátis <ArrowRight className="w-5 h-5 ml-2" />
+            <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-white text-[#0B192E] hover:bg-blue-50 h-12 sm:h-13 px-8 text-base font-extrabold shadow-lg">
+              Analisar meu currículo grátis <ArrowRight className="w-5 h-5 ml-2 text-[#0B63E5]" />
             </Button>
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
+      {/* FOOTER WITH OFFICIAL LOGO */}
       <footer className="mt-auto border-t border-slate-200 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-sm">
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
-                <FileText className="w-4 h-4 text-white" />
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="GriffoWork Logo" className="h-9 w-auto object-contain rounded-md shrink-0" />
+              <div className="flex flex-col leading-none">
+                <span className="font-extrabold text-[#0B192E] text-base tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
+                <span className="text-[8px] font-bold uppercase tracking-wider text-[#0B63E5]">Inteligência Profissional</span>
               </div>
-              <span className="font-bold text-slate-900 text-base">Griffo</span>
             </div>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Plataforma de inteligência de carreira, análise de currículo e otimização de presença digital baseada nos melhores padrões de recrutamento.
+              Plataforma de inteligência de carreira, análise de currículo por IA e otimização de presença digital baseada nos melhores padrões de recrutamento.
             </p>
           </div>
           <div>
-            <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider mb-3">Navegação</h4>
-            <ul className="space-y-2 text-xs text-slate-600">
-              <li><a href="#features" className="hover:text-emerald-600 transition-colors">Recursos</a></li>
-              <li><a href="#social" className="hover:text-emerald-600 transition-colors">Presença Digital</a></li>
-              <li><a href="#pricing" className="hover:text-emerald-600 transition-colors">Planos</a></li>
-              <li><a href="#how" className="hover:text-emerald-600 transition-colors">Como funciona</a></li>
+            <h4 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">Navegação</h4>
+            <ul className="space-y-2 text-xs text-slate-600 font-medium">
+              <li><a href="#features" className="hover:text-[#0B63E5] transition-colors">Recursos</a></li>
+              <li><a href="#social" className="hover:text-[#0B63E5] transition-colors">Presença Digital</a></li>
+              <li><a href="#pricing" className="hover:text-[#0B63E5] transition-colors">Planos</a></li>
+              <li><a href="#how" className="hover:text-[#0B63E5] transition-colors">Como funciona</a></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider mb-3">Segurança & Privacidade</h4>
-            <ul className="space-y-2 text-xs text-slate-600">
-              <li className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> LGPD & GDPR Compliant</li>
-              <li className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Criptografia de Dados</li>
-              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Sem Venda de Dados</li>
+            <h4 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">Segurança & Privacidade</h4>
+            <ul className="space-y-2 text-xs text-slate-600 font-medium">
+              <li className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> LGPD & GDPR Compliant</li>
+              <li className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Criptografia de Dados</li>
+              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Sem Venda de Dados</li>
             </ul>
           </div>
           <div>
-            <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider mb-3">Contato</h4>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              contato@griffo.app<br/>
+            <h4 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">Contato & Domínio Oficial</h4>
+            <p className="text-xs text-slate-600 leading-relaxed font-medium">
+              contato@griffo.work<br/>
+              <strong>https://griffo.work</strong><br/>
               São Paulo, SP · Brasil
             </p>
           </div>
         </div>
-        <div className="border-t border-slate-200 py-4 text-center text-xs text-slate-500">
-          © {new Date().getFullYear()} Griffo. Todos os direitos reservados. Em conformidade com a LGPD e GDPR.
+        <div className="border-t border-slate-200 py-4 text-center text-xs text-slate-500 font-medium">
+          © {new Date().getFullYear()} GriffoWork. Todos os direitos reservados. Em conformidade com a LGPD e GDPR.
         </div>
       </footer>
     </div>
@@ -558,8 +560,8 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 function Stat({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-xl bg-emerald-100/80 text-emerald-700 flex items-center justify-center mb-1">{icon}</div>
-      <p className="text-xl sm:text-2xl font-bold text-slate-900">{value}</p>
+      <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-xl bg-blue-50 text-[#0B63E5] flex items-center justify-center mb-1 border border-blue-100">{icon}</div>
+      <p className="text-xl sm:text-2xl font-bold text-[#0B192E]">{value}</p>
       <p className="text-[11px] sm:text-xs text-slate-500 leading-tight">{label}</p>
     </div>
   )
@@ -567,10 +569,10 @@ function Stat({ icon, value, label }: { icon: React.ReactNode; value: string; la
 
 function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
-    <Card className="border-slate-200/90 hover:shadow-lg transition-all hover:border-emerald-300 h-full bg-white">
+    <Card className="border-slate-200/90 hover:shadow-lg transition-all hover:border-blue-300 h-full bg-white">
       <CardContent className="p-5 sm:p-6">
-        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 border border-emerald-100">{icon}</div>
-        <h3 className="font-bold text-slate-900 text-base mb-2">{title}</h3>
+        <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0B63E5] flex items-center justify-center mb-4 border border-blue-100">{icon}</div>
+        <h3 className="font-bold text-[#0B192E] text-base mb-2">{title}</h3>
         <p className="text-xs text-slate-600 leading-relaxed">{desc}</p>
       </CardContent>
     </Card>
@@ -588,28 +590,28 @@ function PlanCard({ name, price, period, features, highlight, popular, cta, onCt
   onCta: () => void
 }) {
   return (
-    <Card className={`relative border-2 transition-all flex flex-col justify-between ${popular ? 'border-emerald-500 shadow-xl scale-[1.02] bg-white' : highlight ? 'border-emerald-400 shadow-md bg-white' : 'border-slate-200 hover:border-emerald-300 bg-white'}`}>
+    <Card className={`relative border-2 transition-all flex flex-col justify-between ${popular ? 'border-[#0B63E5] shadow-xl scale-[1.02] bg-white' : highlight ? 'border-amber-400 shadow-md bg-white' : 'border-slate-200 hover:border-blue-300 bg-white'}`}>
       {popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 shadow-sm px-3 py-0.5 text-xs font-bold">Mais Vendido</Badge>
+          <Badge className="bg-[#0B63E5] text-white hover:bg-[#0B63E5] shadow-sm px-3 py-0.5 text-xs font-bold">Mais Vendido</Badge>
         </div>
       )}
       <CardContent className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
         <div>
-          <h3 className="font-bold text-slate-900 text-lg">{name}</h3>
+          <h3 className="font-bold text-[#0B192E] text-lg">{name}</h3>
           <p className="text-xs text-slate-500 mb-4">{period}</p>
           <div className="mb-6">
-            <span className="text-3xl sm:text-4xl font-extrabold text-slate-900">{price}</span>
+            <span className="text-3xl sm:text-4xl font-extrabold text-[#0B192E]">{price}</span>
           </div>
           <ul className="space-y-2.5 mb-6">
             {features.map((f) => (
               <li key={f} className="flex items-start gap-2 text-xs text-slate-700">
-                <CheckCircle2 className="w-4 h-4 mt-0.5 text-emerald-600 shrink-0" /> {f}
+                <CheckCircle2 className="w-4 h-4 mt-0.5 text-[#0B63E5] shrink-0" /> {f}
               </li>
             ))}
           </ul>
         </div>
-        <Button onClick={onCta} className={`w-full h-11 font-semibold ${popular ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md' : 'bg-slate-900 hover:bg-slate-800 text-white'}`}>
+        <Button onClick={onCta} className={`w-full h-11 font-bold ${popular ? 'bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md' : 'bg-[#0B192E] hover:bg-slate-800 text-white'}`}>
           {cta}
         </Button>
       </CardContent>
