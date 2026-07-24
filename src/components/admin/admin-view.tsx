@@ -367,6 +367,40 @@ export function AdminView() {
     }
   }
 
+  const [syncingLemon, setSyncingLemon] = useState(false)
+
+  const handleSyncLemonSqueezy = async () => {
+    if (!configs.LEMON_API_KEY) {
+      toast.error('Insira a Lemon Squeezy API Key antes de sincronizar.')
+      return
+    }
+    setSyncingLemon(true)
+    try {
+      const r = await fetch('/api/admin/lemonsqueezy/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: configs.LEMON_API_KEY,
+          webhookSecret: configs.LEMON_WEBHOOK_SECRET,
+        }),
+      })
+      const data = await r.json()
+      if (!r.ok) {
+        toast.error(data.error || 'Erro ao sincronizar com Lemon Squeezy.')
+        return
+      }
+      toast.success(data.message || 'Sincronização realizada com sucesso!')
+      if (data.updates) {
+        setConfigs((prev) => ({ ...prev, ...data.updates }))
+      }
+      await loadData()
+    } catch {
+      toast.error('Falha de conexão durante a sincronização.')
+    } finally {
+      setSyncingLemon(false)
+    }
+  }
+
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
       u.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -1062,8 +1096,18 @@ export function AdminView() {
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end">
-                <Button onClick={saveSettings} disabled={savingConfig} className="bg-emerald-600 hover:bg-emerald-700">
+              <div className="pt-2 flex justify-between items-center flex-wrap gap-2">
+                <Button
+                  type="button"
+                  onClick={handleSyncLemonSqueezy}
+                  disabled={syncingLemon || !configs.LEMON_API_KEY}
+                  variant="outline"
+                  className="border-emerald-500 text-emerald-700 hover:bg-emerald-50 text-xs font-bold"
+                >
+                  {syncingLemon ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <RefreshCw className="w-4 h-4 mr-1.5" />}
+                  ⚡ Sincronizar Loja & Pacotes via API
+                </Button>
+                <Button onClick={saveSettings} disabled={savingConfig} className="bg-emerald-600 hover:bg-emerald-700 text-xs font-bold">
                   {savingConfig ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
                   Salvar Regras Financeiras
                 </Button>
