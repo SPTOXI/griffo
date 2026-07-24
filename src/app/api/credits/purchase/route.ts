@@ -62,7 +62,7 @@ export async function POST(req: Request) {
           },
         ],
         mode: 'payment',
-        success_url: `${appUrl}/?payment=success&credits=${pkg.credits}`,
+        success_url: `${appUrl}/?payment=success&session_id={CHECKOUT_SESSION_ID}&credits=${pkg.credits}`,
         cancel_url: `${appUrl}/?payment=cancelled`,
         client_reference_id: user.id,
         customer_email: user.email || undefined,

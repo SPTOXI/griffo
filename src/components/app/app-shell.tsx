@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { useAuth, useNav, AppView } from '@/store/auth'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -59,18 +60,39 @@ export function AppShell({ onExit }: { onExit: () => void }) {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const paymentStatus = params.get('payment')
+      const sessionId = params.get('session_id')
+
       if (paymentStatus === 'success') {
         const addedCredits = params.get('credits')
-        toast.success(`🎉 Pagamento confirmado! ${addedCredits ? addedCredits + ' créditos' : 'Créditos'} adicionados à sua conta.`)
         window.history.replaceState({}, document.title, window.location.pathname)
-        fetch('/api/credits/balance')
-          .then((r) => r.json())
-          .then((data) => {
-            if (typeof data.credits === 'number') {
-              setCredits(data.credits)
-            }
+
+        if (sessionId) {
+          fetch('/api/credits/verify-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId }),
           })
-          .catch(() => {})
+            .then((r) => r.json())
+            .then((data) => {
+              if (typeof data.totalCredits === 'number') {
+                setCredits(data.totalCredits)
+                toast.success(`🎉 Pagamento verificado com sucesso! Saldo atualizado para ${data.totalCredits} créditos.`)
+              } else {
+                toast.success(`🎉 Pagamento confirmado! ${addedCredits ? addedCredits + ' créditos' : 'Créditos'} adicionados.`)
+              }
+            })
+            .catch(() => {
+              toast.success(`🎉 Pagamento confirmado! Créditos adicionados.`)
+            })
+        } else {
+          toast.success(`🎉 Pagamento confirmado! ${addedCredits ? addedCredits + ' créditos' : 'Créditos'} adicionados.`)
+          fetch('/api/credits/balance')
+            .then((r) => r.json())
+            .then((data) => {
+              if (typeof data.credits === 'number') setCredits(data.credits)
+            })
+            .catch(() => {})
+        }
       } else if (paymentStatus === 'cancelled') {
         toast.error('Pagamento cancelado.')
         window.history.replaceState({}, document.title, window.location.pathname)
