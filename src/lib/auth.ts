@@ -21,11 +21,10 @@ export function verifyPassword(password: string, stored: string): boolean {
   return timingSafeEqual(hashBuf, testBuf)
 }
 
-// --- Session management via signed cookie ---
-// Lightweight JWT-like token: payload.signature
+// --- Session management via non-persistent session cookie ---
 const SESSION_SECRET = process.env.SESSION_SECRET || 'career-analyst-dev-secret-change-me'
 const SESSION_COOKIE = 'ca_session'
-const SESSION_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000 // Max 24 hours active window
 
 function sign(payload: string): string {
   const sig = createHmac('sha256', SESSION_SECRET).update(payload).digest('hex')
@@ -50,14 +49,15 @@ function verify(token: string): string | null {
 }
 
 export async function createSession(userId: string): Promise<void> {
-  const payload = JSON.stringify({ uid: userId, iat: Date.now(), exp: Date.now() + SESSION_MAX_AGE * 1000 })
+  const payload = JSON.stringify({ uid: userId, iat: Date.now(), exp: Date.now() + SESSION_TTL_MS })
   const token = sign(Buffer.from(payload).toString('base64url'))
   const cookieStore = await cookies()
+  
+  // Non-persistent Session Cookie: omitting maxAge/expires forces the browser to discard the cookie on browser close
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: SESSION_MAX_AGE,
     path: '/',
   })
 }
