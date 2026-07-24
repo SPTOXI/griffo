@@ -135,6 +135,50 @@ export async function deductCredits(
   }
 }
 
+export async function refundCredits(
+  userId: string,
+  amount: number,
+  reason: string
+): Promise<{ success: boolean; newBalance: number }> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  })
+
+  if (user?.role === 'admin') {
+    return { success: true, newBalance: 999999 }
+  }
+
+  const updatedUser = await db.user.update({
+    where: { id: userId },
+    data: {
+      credits: { increment: amount },
+    },
+  })
+
+  await db.creditTransaction.create({
+    data: {
+      userId,
+      amount: amount,
+      type: 'refund',
+      description: `Reembolso automático: ${reason}`,
+    },
+  })
+
+  await db.auditLog.create({
+    data: {
+      userId,
+      action: 'credit_refund',
+      meta: JSON.stringify({ amount, reason, newBalance: updatedUser.credits }),
+    },
+  })
+
+  return {
+    success: true,
+    newBalance: updatedUser.credits,
+  }
+}
+
 export async function purchaseCreditPackage(
   userId: string,
   packageId: string

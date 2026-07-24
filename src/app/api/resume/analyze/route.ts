@@ -3,13 +3,16 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
-import { deductCredits, CREDIT_COSTS } from '@/lib/credits'
+import { deductCredits, refundCredits, CREDIT_COSTS } from '@/lib/credits'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório'),
 })
 
 export async function POST(req: Request) {
+  let deducted = false
+  const costCredits = CREDIT_COSTS.full_analysis
+
   try {
     const user = await getCurrentUser()
     if (!user) {
@@ -33,7 +36,6 @@ export async function POST(req: Request) {
     }
 
     // Deduct 20 credits per full analysis
-    const costCredits = CREDIT_COSTS.full_analysis
     const deduction = await deductCredits(
       user.id,
       costCredits,
@@ -50,6 +52,8 @@ export async function POST(req: Request) {
         { status: 402 }
       )
     }
+
+    deducted = true
 
     // Execute via AI Router
     const routerResult = await executeAiTask({
@@ -96,6 +100,24 @@ export async function POST(req: Request) {
     })
   } catch (e: any) {
     console.error('analyze error', e)
+    if (deducted) {
+      try {
+        const user = await getCurrentUser()
+        if (user) {
+          const refundRes = await refundCredits(user.id, costCredits, `Falha na IA: ${e?.message || 'Erro de execução'}`)
+          return NextResponse.json(
+            {
+              error: `Ocorreu uma falha durante o processamento da IA (${e?.message || 'Erro de conexão'}). Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente!`,
+              refunded: true,
+              currentBalance: refundRes.newBalance,
+            },
+            { status: 500 }
+          )
+        }
+      } catch (refundErr) {
+        console.error('Failed to refund credits:', refundErr)
+      }
+    }
     return NextResponse.json({ error: e?.message || 'Erro ao analisar currículo.' }, { status: 500 })
   }
 }
