@@ -20,6 +20,7 @@ import { PlansView } from './plans-view'
 import { HistoryView } from './history-view'
 import { SettingsView } from './settings-view'
 import { AdminView } from '../admin/admin-view'
+import { PaymentStatusModal } from './payment-status-modal'
 
 const NAV_ITEMS: { view: AppView; label: string; icon: any }[] = [
   { view: 'dashboard', label: 'Painel', icon: LayoutDashboard },
@@ -37,6 +38,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
   const { view, setView } = useNav()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [credits, setCredits] = useState<number>(user?.credits ?? 20)
+  const [activePaymentSession, setActivePaymentSession] = useState<{ sessionId: string; expectedCredits?: number } | null>(null)
 
   useEffect(() => {
     if (user && user.role !== 'admin' && view === 'admin') {
@@ -61,38 +63,23 @@ export function AppShell({ onExit }: { onExit: () => void }) {
       const params = new URLSearchParams(window.location.search)
       const paymentStatus = params.get('payment')
       const sessionId = params.get('session_id')
+      const credits = params.get('credits')
 
-      if (paymentStatus === 'success') {
-        const addedCredits = params.get('credits')
+      if (paymentStatus === 'success' && sessionId) {
+        setActivePaymentSession({
+          sessionId,
+          expectedCredits: credits ? parseInt(credits, 10) : undefined,
+        })
         window.history.replaceState({}, document.title, window.location.pathname)
-
-        if (sessionId) {
-          fetch('/api/credits/verify-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId }),
+      } else if (paymentStatus === 'success' && !sessionId) {
+        toast.success(`🎉 Pagamento confirmado! Créditos adicionados.`)
+        window.history.replaceState({}, document.title, window.location.pathname)
+        fetch('/api/credits/balance')
+          .then((r) => r.json())
+          .then((data) => {
+            if (typeof data.credits === 'number') setCredits(data.credits)
           })
-            .then((r) => r.json())
-            .then((data) => {
-              if (typeof data.totalCredits === 'number') {
-                setCredits(data.totalCredits)
-                toast.success(`🎉 Pagamento verificado com sucesso! Saldo atualizado para ${data.totalCredits} créditos.`)
-              } else {
-                toast.success(`🎉 Pagamento confirmado! ${addedCredits ? addedCredits + ' créditos' : 'Créditos'} adicionados.`)
-              }
-            })
-            .catch(() => {
-              toast.success(`🎉 Pagamento confirmado! Créditos adicionados.`)
-            })
-        } else {
-          toast.success(`🎉 Pagamento confirmado! ${addedCredits ? addedCredits + ' créditos' : 'Créditos'} adicionados.`)
-          fetch('/api/credits/balance')
-            .then((r) => r.json())
-            .then((data) => {
-              if (typeof data.credits === 'number') setCredits(data.credits)
-            })
-            .catch(() => {})
-        }
+          .catch(() => {})
       } else if (paymentStatus === 'cancelled') {
         toast.error('Pagamento cancelado.')
         window.history.replaceState({}, document.title, window.location.pathname)
@@ -296,6 +283,15 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           {view === 'admin' && (user?.role === 'admin' ? <AdminView /> : <Dashboard />)}
         </main>
       </div>
+
+      {activePaymentSession && (
+        <PaymentStatusModal
+          sessionId={activePaymentSession.sessionId}
+          expectedCredits={activePaymentSession.expectedCredits}
+          onComplete={(newBalance) => setCredits(newBalance)}
+          onClose={() => setActivePaymentSession(null)}
+        />
+      )}
     </div>
   )
 }
