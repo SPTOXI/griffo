@@ -141,11 +141,11 @@ export function AppShell({ onExit }: { onExit: () => void }) {
             <Button
               size="sm"
               onClick={() => setView('plans')}
-              className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs font-semibold gap-1 px-2.5 sm:px-3 shadow-xs"
+              className="bg-[#0B63E5] hover:bg-[#0052CC] text-white h-8 text-xs font-semibold gap-1 px-2.5 sm:px-3 shadow-xs"
             >
               <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
               <span>{credits} Créditos</span>
-              <span className="hidden sm:inline text-[10px] text-emerald-200 ml-1 bg-emerald-700/60 px-1.5 py-0.5 rounded-full">+ Adicionar</span>
+              <span className="hidden sm:inline text-[10px] text-blue-100 ml-1 bg-blue-700/60 px-1.5 py-0.5 rounded-full">+ Adicionar</span>
             </Button>
           )}
 
@@ -153,7 +153,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 p-1 pr-2 rounded-full hover:bg-slate-100 transition-colors">
                 <Avatar className="w-8 h-8">
-                  <AvatarFallback className="bg-emerald-100 text-emerald-700 text-xs font-semibold">{initials}</AvatarFallback>
+                  <AvatarFallback className="bg-blue-100 text-[#0B63E5] text-xs font-bold">{initials}</AvatarFallback>
                 </Avatar>
                 <span className="hidden md:block text-xs sm:text-sm text-slate-700 max-w-[100px] truncate">{user?.name || user?.email}</span>
               </button>
@@ -258,12 +258,12 @@ export function AppShell({ onExit }: { onExit: () => void }) {
                 </Button>
               </div>
             ) : (
-              <div className="rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 p-3 text-white space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold">
+              <div className="rounded-xl bg-gradient-to-br from-[#0B192E] to-[#0B63E5] p-3.5 text-white space-y-2 shadow-md">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-200">
                   <Zap className="w-4 h-4 text-amber-300 fill-amber-300" /> Saldo Atual
                 </div>
-                <p className="text-2xl font-extrabold">{credits} <span className="text-xs font-normal text-emerald-100">créditos</span></p>
-                <Button onClick={() => { setView('plans'); setSidebarOpen(false) }} size="sm" className="w-full bg-white text-emerald-900 hover:bg-slate-100 font-bold text-xs h-8">
+                <p className="text-2xl font-extrabold">{credits} <span className="text-xs font-normal text-blue-100">créditos</span></p>
+                <Button onClick={() => { setView('plans'); setSidebarOpen(false) }} size="sm" className="w-full bg-white text-[#0B192E] hover:bg-blue-50 font-bold text-xs h-8">
                   Adicionar Créditos
                 </Button>
               </div>

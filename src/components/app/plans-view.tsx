@@ -99,11 +99,11 @@ export function PlansView() {
         </div>
 
         {/* CURRENT BALANCE BANNER */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl px-5 py-3 text-white flex items-center gap-4 shadow-md">
+        <div className="bg-gradient-to-r from-[#0B192E] to-[#0B63E5] rounded-2xl px-5 py-3.5 text-white flex items-center gap-4 shadow-md">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-200">Seu Saldo Disponível</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-200">Seu Saldo Disponível</p>
             <p className="text-2xl font-extrabold flex items-center gap-1.5">
-              {credits} <span className="text-sm font-normal text-emerald-100">créditos</span>
+              {credits} <span className="text-sm font-normal text-blue-100">créditos</span>
             </p>
           </div>
           <Zap className="w-8 h-8 text-amber-300 fill-amber-300 opacity-90 shrink-0" />
@@ -122,8 +122,8 @@ export function PlansView() {
                 isEntry
                   ? 'border-amber-400 shadow-lg bg-gradient-to-b from-amber-50/40 via-white to-white'
                   : pkg.popular
-                  ? 'border-emerald-500 shadow-xl scale-[1.02]'
-                  : 'border-slate-200 hover:border-emerald-300 shadow-sm'
+                  ? 'border-[#0B63E5] shadow-xl scale-[1.02]'
+                  : 'border-slate-200 hover:border-blue-300 shadow-sm'
               }`}
             >
               {isEntry && (
@@ -135,7 +135,7 @@ export function PlansView() {
               )}
               {pkg.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 shadow-sm px-3 py-0.5 text-xs font-bold whitespace-nowrap">
+                  <Badge className="bg-[#0B63E5] text-white hover:bg-[#0B63E5] shadow-sm px-3 py-0.5 text-xs font-bold whitespace-nowrap">
                     Mais Vendido
                   </Badge>
                 </div>
@@ -149,23 +149,23 @@ export function PlansView() {
                     <div className="flex items-baseline gap-1">
                       <span className="text-2xl font-extrabold text-slate-900">R$ {pkg.priceBrl.toFixed(2).replace('.', ',')}</span>
                     </div>
-                    <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
+                    <p className="text-[11px] text-[#0B63E5] font-semibold mt-0.5">
                       R$ {pkg.pricePerCredit.toFixed(3).replace('.', ',')} por crédito
                     </p>
                   </div>
 
                   <ul className="space-y-2 mb-5 text-xs text-slate-700">
                     <li className="flex items-center gap-1.5 font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> {pkg.credits} créditos no saldo
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> {pkg.credits} créditos no saldo
                     </li>
                     <li className="flex items-center gap-1.5 text-slate-600">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Uso livre em Avaliação ou Reescrita
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Uso livre em Avaliação ou Reescrita
                     </li>
                     <li className="flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Sem mensalidade ou expiração
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Sem mensalidade ou expiração
                     </li>
                     <li className="flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Acesso total a todas as IAs
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Acesso total a todas as IAs
                     </li>
                   </ul>
                 </div>
@@ -177,7 +177,7 @@ export function PlansView() {
                     isEntry
                       ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-md'
                       : pkg.popular
-                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
+                      ? 'bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md'
                       : 'bg-slate-900 hover:bg-slate-800 text-white'
                   }`}
                 >
