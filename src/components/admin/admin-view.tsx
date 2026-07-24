@@ -368,6 +368,7 @@ export function AdminView() {
   }
 
   const [syncingLemon, setSyncingLemon] = useState(false)
+  const [syncedLemonDetails, setSyncedLemonDetails] = useState<{ storeId?: string; count?: number; list?: string[] } | null>(null)
 
   const handleSyncLemonSqueezy = async () => {
     if (!configs.LEMON_API_KEY) {
@@ -392,6 +393,13 @@ export function AdminView() {
       toast.success(data.message || 'Sincronização realizada com sucesso!')
       if (data.updates) {
         setConfigs((prev) => ({ ...prev, ...data.updates }))
+      }
+      if (data.variantsFoundList) {
+        setSyncedLemonDetails({
+          storeId: data.storeId,
+          count: data.variantsFoundCount,
+          list: data.variantsFoundList,
+        })
       }
       await loadData()
     } catch {
@@ -1114,6 +1122,25 @@ export function AdminView() {
               </div>
             </CardContent>
           </Card>
+
+          {syncedLemonDetails && (
+            <Card className="bg-emerald-50 border border-emerald-200">
+              <CardContent className="p-4 text-xs space-y-2">
+                <div className="flex items-center gap-2 text-emerald-900 font-bold text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  Sincronização Concluída: {syncedLemonDetails.count} variante(s) encontrada(s) na Loja #{syncedLemonDetails.storeId || 'N/A'}
+                </div>
+                <div className="text-slate-700">
+                  <span className="font-semibold">Itens vinculados:</span>
+                  <ul className="list-disc pl-5 mt-1 space-y-0.5 font-mono text-[11px]">
+                    {syncedLemonDetails.list?.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* LIST / TABLE OF REGISTERED LEMON SQUEEZY PARAMETERS */}
           <Card>
