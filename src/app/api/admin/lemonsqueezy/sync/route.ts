@@ -25,8 +25,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Insira a Lemon Squeezy API Key antes de sincronizar.' }, { status: 400 })
     }
 
-    // 1. Fetch Stores from Lemon Squeezy
-    const storesRes = await fetch('https://api.lemonsqueezy.com/v1/stores', {
+    // 1. Fetch Products with Variants included
+    const productsRes = await fetch('https://api.lemonsqueezy.com/v1/products?include=variants', {
       headers: {
         'Accept': 'application/vnd.api+json',
         'Content-Type': 'application/vnd.api+json',
@@ -34,73 +34,97 @@ export async function POST(req: Request) {
       }
     })
 
-    if (!storesRes.ok) {
-      const errText = await storesRes.text()
-      console.error('Lemon Squeezy Sync Stores error:', errText)
+    if (!productsRes.ok) {
+      const errText = await productsRes.text()
+      console.error('Lemon Squeezy Sync Products error:', errText)
       return NextResponse.json({ error: 'Chave de API da Lemon Squeezy inválida ou sem permissão.' }, { status: 400 })
     }
 
-    const storesData = await storesRes.json()
-    const stores = storesData.data || []
-    if (stores.length === 0) {
-      return NextResponse.json({ error: 'Nenhuma loja encontrada na sua conta da Lemon Squeezy.' }, { status: 404 })
-    }
+    const productsData = await productsRes.json()
+    const rawProducts = productsData.data || []
+    const includedVariants = productsData.included || []
 
-    const storeId = stores[0].id
-
-    // 2. Fetch Products and Variants
-    const variantsRes = await fetch('https://api.lemonsqueezy.com/v1/variants?include=product', {
-      headers: {
-        'Accept': 'application/vnd.api+json',
-        'Content-Type': 'application/vnd.api+json',
-        'Authorization': `Bearer ${apiKey}`
+    if (rawProducts.length === 0) {
+      // Fallback: If no products, try fetching stores to at least save storeId
+      const storesRes = await fetch('https://api.lemonsqueezy.com/v1/stores', {
+        headers: {
+          'Accept': 'application/vnd.api+json',
+          'Content-Type': 'application/vnd.api+json',
+          'Authorization': `Bearer ${apiKey}`
+        }
+      })
+      if (storesRes.ok) {
+        const storesData = await storesRes.json()
+        const stores = storesData.data || []
+        if (stores.length > 0) {
+          const storeId = String(stores[0].id)
+          await db.systemConfig.upsert({
+            where: { key: 'LEMON_STORE_ID' },
+            update: { value: storeId },
+            create: { key: 'LEMON_STORE_ID', value: storeId }
+          })
+          await db.systemConfig.upsert({
+            where: { key: 'LEMON_API_KEY' },
+            update: { value: apiKey },
+            create: { key: 'LEMON_API_KEY', value: apiKey }
+          })
+          return NextResponse.json({
+            success: true,
+            message: `Store ID (${storeId}) encontrado! Porém nenhum produto foi cadastrado na Lemon Squeezy ainda.`,
+            storeId,
+            updates: { LEMON_API_KEY: apiKey, LEMON_STORE_ID: storeId }
+          })
+        }
       }
-    })
-
-    let variantsList: Array<{ id: string; name: string; productName: string; price: number }> = []
-
-    if (variantsRes.ok) {
-      const variantsData = await variantsRes.json()
-      const rawVariants = variantsData.data || []
-      const included = variantsData.included || []
-
-      const productMap: Record<string, string> = {}
-      included.forEach((item: any) => {
-        if (item.type === 'products') {
-          productMap[item.id] = item.attributes.name
-        }
-      })
-
-      variantsList = rawVariants.map((v: any) => {
-        const prodId = v.attributes.product_id?.toString()
-        const productName = (prodId && productMap[prodId]) || v.attributes.name || 'Produto'
-        return {
-          id: v.id.toString(),
-          name: v.attributes.name,
-          productName,
-          price: v.attributes.price / 100, // cents to main currency
-        }
-      })
+      return NextResponse.json({ error: 'Nenhum produto cadastrado na sua conta Lemon Squeezy.' }, { status: 404 })
     }
 
-    // 3. Map variants to GriffoWork packages
+    // Get Store ID from first product
+    const storeId = String(rawProducts[0].attributes.store_id)
+
+    // Build structured product list
+    const parsedProducts = rawProducts.map((p: any) => {
+      const pName = String(p.attributes.name || '')
+      const pPrice = Number(p.attributes.price || 0)
+      const variantIdData = p.relationships?.variants?.data?.[0]?.id
+      const variantId = variantIdData ? String(variantIdData) : ''
+
+      return {
+        productId: String(p.id),
+        variantId,
+        name: pName,
+        price: pPrice,
+        priceFormatted: p.attributes.price_formatted || '',
+      }
+    }).filter((p: any) => Boolean(p.variantId))
+
+    // Sort products by price ascending
+    const sortedByPrice = [...parsedProducts].sort((a, b) => a.price - b.price)
+
     let variantEntrada = ''
     let variantStarter = ''
     let variantCarreira = ''
     let variantProfissional = ''
 
-    variantsList.forEach((v) => {
-      const pName = (v.productName + ' ' + v.name).toLowerCase()
-      if (pName.includes('entrada') || (v.price >= 8 && v.price <= 15)) {
-        variantEntrada = v.id
-      } else if (pName.includes('starter') || (v.price >= 20 && v.price <= 45)) {
-        variantStarter = v.id
-      } else if (pName.includes('carreira') || (v.price >= 70 && v.price <= 130)) {
-        variantCarreira = v.id
-      } else if (pName.includes('profissional') || (v.price >= 180 && v.price <= 350)) {
-        variantProfissional = v.id
+    // Name-based matching first
+    parsedProducts.forEach((p: any) => {
+      const lowerName = p.name.toLowerCase()
+      if (lowerName.includes('entrada') || lowerName.includes('9.90') || lowerName.includes('9,90') || lowerName.includes('40')) {
+        variantEntrada = p.variantId
+      } else if (lowerName.includes('starter') || lowerName.includes('29.90') || lowerName.includes('29,90') || lowerName.includes('100')) {
+        variantStarter = p.variantId
+      } else if (lowerName.includes('carreira') || lowerName.includes('99.90') || lowerName.includes('99,90') || lowerName.includes('500')) {
+        variantCarreira = p.variantId
+      } else if (lowerName.includes('profissional') || lowerName.includes('249.90') || lowerName.includes('249,90') || lowerName.includes('1500')) {
+        variantProfissional = p.variantId
       }
     })
+
+    // Fallback: Position-based / price-based assignment for unassigned ones
+    if (!variantEntrada && sortedByPrice[0]) variantEntrada = sortedByPrice[0].variantId
+    if (!variantStarter && sortedByPrice[1]) variantStarter = sortedByPrice[1].variantId
+    if (!variantCarreira && sortedByPrice[2]) variantCarreira = sortedByPrice[2].variantId
+    if (!variantProfissional && sortedByPrice[3]) variantProfissional = sortedByPrice[3].variantId
 
     // Prepare configs to upsert
     const updates: Record<string, string> = {
@@ -126,10 +150,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Sincronização com Lemon Squeezy realizada com sucesso!',
+      message: `Sucesso! Loja #${storeId} e ${parsedProducts.length} produto(s) sincronizados automaticamente!`,
       storeId,
+      productsFound: parsedProducts.map((p: any) => `${p.name} (Variant #${p.variantId})`),
       syncedCount: Object.keys(updates).length,
-      variantsFound: variantsList.length,
       updates
     })
   } catch (e: any) {
