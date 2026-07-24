@@ -1032,7 +1032,43 @@ export function AdminView() {
                 </div>
               </div>
               <div className="pt-6 pb-2">
-                <h3 className="text-sm font-semibold text-slate-800 border-b pb-2 mb-4">Integração Lemon Squeezy (Modo Teste)</h3>
+                <h3 className="text-sm font-semibold text-slate-800 border-b pb-2 mb-4 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-indigo-600" /> Integração Stripe Checkout (Gateway Principal)
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Stripe Secret Key (sk_...)</label>
+                    <Input
+                      type="password"
+                      placeholder="sk_live_... ou sk_test_..."
+                      value={configs.STRIPE_SECRET_KEY || ''}
+                      onChange={(e) => setConfigs({ ...configs, STRIPE_SECRET_KEY: e.target.value })}
+                      className="text-xs font-mono border-indigo-200 focus:border-indigo-500"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Stripe Publishable Key (pk_...)</label>
+                    <Input
+                      type="text"
+                      placeholder="pk_live_... ou pk_test_..."
+                      value={configs.STRIPE_PUBLISHABLE_KEY || ''}
+                      onChange={(e) => setConfigs({ ...configs, STRIPE_PUBLISHABLE_KEY: e.target.value })}
+                      className="text-xs font-mono border-indigo-200 focus:border-indigo-500"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Stripe Webhook Secret (whsec_...)</label>
+                    <Input
+                      type="password"
+                      placeholder="whsec_..."
+                      value={configs.STRIPE_WEBHOOK_SECRET || ''}
+                      onChange={(e) => setConfigs({ ...configs, STRIPE_WEBHOOK_SECRET: e.target.value })}
+                      className="text-xs font-mono border-indigo-200 focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <h3 className="text-sm font-semibold text-slate-800 border-b pb-2 mb-4">Integração Lemon Squeezy (Gateway Secundário)</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-xs font-semibold text-slate-700">Lemon Squeezy API Key</label>
@@ -1172,6 +1208,26 @@ export function AdminView() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
+                    <tr className="hover:bg-indigo-50/40 bg-indigo-50/20">
+                      <td className="px-4 py-3 font-semibold text-indigo-950 flex items-center gap-1.5">
+                        <CreditCard className="w-3.5 h-3.5 text-indigo-600" /> Stripe Secret Key (Gateway Principal)
+                      </td>
+                      <td className="px-4 py-3 font-mono text-slate-700 font-bold">
+                        {configs.STRIPE_SECRET_KEY ? `${configs.STRIPE_SECRET_KEY.slice(0, 12)}••••••••` : 'Não Cadastrada'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {configs.STRIPE_SECRET_KEY ? (
+                          <Badge className="bg-indigo-600 text-white border-none font-bold text-[10px]">
+                            🟢 STRIPE ATIVO & PRONTO
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-slate-100 text-slate-600 border-none font-medium text-[10px]">
+                            OPCIONAL (USAR LEMON)
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-indigo-700 font-semibold text-[11px]">Checkout & Pix/Card</td>
+                    </tr>
                     <tr className="hover:bg-slate-50/50">
                       <td className="px-4 py-3 font-semibold text-slate-900">Lemon Squeezy API Key</td>
                       <td className="px-4 py-3 font-mono text-slate-600">

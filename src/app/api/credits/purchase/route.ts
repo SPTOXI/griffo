@@ -33,6 +33,53 @@ export async function POST(req: Request) {
 
     // Load configs
     const configs = await getGlobalSettings()
+    const stripeSecretKey = configs.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || ''
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://griffo.vercel.app'
+
+    // 1. STRIPE CHECKOUT (Primary Gateway)
+    if (stripeSecretKey) {
+      try {
+        const { getStripe } = await import('@/lib/stripe')
+        const stripe = getStripe(stripeSecretKey)
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'brl',
+                product_data: {
+                  name: `GriffoWork - ${pkg.name}`,
+                  description: pkg.desc,
+                },
+                unit_amount: Math.round(pkg.priceBrl * 100),
+              },
+              quantity: 1,
+            },
+          ],
+          mode: 'payment',
+          success_url: `${appUrl}/dashboard?payment=success&credits=${pkg.credits}`,
+          cancel_url: `${appUrl}/dashboard?payment=cancelled`,
+          client_reference_id: user.id,
+          customer_email: user.email || undefined,
+          metadata: {
+            user_id: user.id,
+            credit_amount: pkg.credits.toString(),
+            package_id: pkg.id,
+          },
+        })
+
+        return NextResponse.json({
+          success: true,
+          gateway: 'stripe',
+          checkoutUrl: session.url,
+        })
+      } catch (stripeErr: any) {
+        console.error('Stripe Checkout Error:', stripeErr)
+        return NextResponse.json({ error: `Erro ao criar checkout no Stripe: ${stripeErr.message || stripeErr}` }, { status: 400 })
+      }
+    }
+
+    // 2. LEMON SQUEEZY (Secondary Gateway)
     const apiKey = configs.LEMON_API_KEY || process.env.LEMON_SQUEEZY_API_KEY || process.env.LEMON_API_KEY || ''
     const storeId = configs.LEMON_STORE_ID || process.env.LEMON_SQUEEZY_STORE_ID || process.env.LEMON_STORE_ID || ''
     
@@ -44,13 +91,13 @@ export async function POST(req: Request) {
     if (packageId === 'profissional') variantId = configs.LEMON_VARIANT_PROFISSIONAL || process.env.LEMON_VARIANT_PROFISSIONAL || ''
 
     const missing: string[] = []
-    if (!apiKey) missing.push('API Key')
+    if (!apiKey) missing.push('Lemon API Key ou Stripe Secret Key')
     if (!storeId) missing.push('Store ID')
     if (!variantId) missing.push(`Variant ID (${pkg.name})`)
 
     if (missing.length > 0) {
       return NextResponse.json({
-        error: `Configuração do Lemon Squeezy pendente no Painel Admin: Falta cadastrar ${missing.join(', ')}.`
+        error: `Configuração de gateway de pagamento pendente no Painel Admin: Cadastre a Stripe Secret Key ou Lemon Squeezy.`
       }, { status: 400 })
     }
 
