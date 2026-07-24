@@ -38,10 +38,10 @@ export function AppShell({ onExit }: { onExit: () => void }) {
   const [credits, setCredits] = useState<number>(user?.credits ?? 20)
 
   useEffect(() => {
-    if (user?.role === 'admin') {
-      setView('admin')
+    if (user && user.role !== 'admin' && view === 'admin') {
+      setView('dashboard')
     }
-  }, [user?.role])
+  }, [user, view, setView])
 
   useEffect(() => {
     if (user?.role === 'admin') return
@@ -248,7 +248,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           {view === 'history' && <HistoryView />}
           {view === 'plans' && <PlansView />}
           {view === 'settings' && <SettingsView />}
-          {view === 'admin' && <AdminView />}
+          {view === 'admin' && (user?.role === 'admin' ? <AdminView /> : <Dashboard />)}
         </main>
       </div>
     </div>

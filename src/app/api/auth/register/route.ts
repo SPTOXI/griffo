@@ -31,6 +31,7 @@ export async function POST(req: Request) {
         name,
         passwordHash,
         profession: profession || null,
+        role: 'user',
         plan: 'free',
         credits: 0, // 0 credits on signup (free user must acquire Plano de Entrada)
       },
