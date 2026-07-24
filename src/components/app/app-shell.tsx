@@ -110,11 +110,12 @@ export function AppShell({ onExit }: { onExit: () => void }) {
         >
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
-        <button onClick={onExit} className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
-            <FileText className="w-4 h-4 text-white" />
+        <button onClick={onExit} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <img src="/logo.png" alt="GriffoWork" className="h-9 w-auto object-contain rounded-md shrink-0" />
+          <div className="hidden sm:flex flex-col text-left leading-none">
+            <span className="font-extrabold text-[#0B192E] text-base tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
+            <span className="text-[9px] font-semibold tracking-wider text-slate-400 uppercase">Análise por IA</span>
           </div>
-          <span className="font-bold text-slate-900 text-base hidden sm:inline">Griffo</span>
         </button>
 
         <div className="hidden sm:flex items-center gap-1 ml-3 text-xs sm:text-sm text-slate-500 truncate">

@@ -21,10 +21,10 @@ export default function Home() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 animate-pulse" />
-          <p className="text-xs text-slate-400">Carregando Griffo…</p>
+          <img src="/logo.png" alt="GriffoWork Logo" className="w-16 h-16 object-contain animate-pulse rounded-lg" />
+          <p className="text-xs font-semibold text-[#0B192E] tracking-wider uppercase">Carregando GriffoWork…</p>
         </div>
       </div>
     )

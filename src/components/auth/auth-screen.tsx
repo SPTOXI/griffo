@@ -49,16 +49,14 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-emerald-50 via-white to-white">
-      <header className="h-16 border-b border-slate-200 bg-white/80 backdrop-blur">
+      <header className="h-16 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
-          <button onClick={onBack} className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900">
+          <button onClick={onBack} className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </button>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-              <FileText className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-slate-900 text-sm">Griffo</span>
+          <div className="flex items-center gap-2.5">
+            <img src="/logo.png" alt="GriffoWork" className="h-8 w-auto object-contain rounded-md shrink-0" />
+            <span className="font-extrabold text-[#0B192E] text-base tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
           </div>
         </div>
       </header>

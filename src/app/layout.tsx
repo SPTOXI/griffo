@@ -14,20 +14,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Griffo - Análise de Currículo com IA",
-  description: "Análise profissional de currículo com IA: nota 0-10 em 8 dimensões, pontos fortes e fracos, reescrita autorizada e download em PDF e Markdown. Baseado nas melhores práticas de RH e LinkedIn.",
-  keywords: ["currículo", "análise de currículo", "ATS", "RH", "recrutamento", "LinkedIn", "carreira", "IA"],
-  authors: [{ name: "Griffo" }],
+  title: "GriffoWork — Análise de Currículo por IA",
+  description: "Análise profissional de currículo com Inteligência Artificial: nota 0-10 em 8 dimensões executivas, otimização para ATS e reescrita estratégica.",
+  keywords: ["griffowork", "currículo", "análise de currículo por IA", "ATS", "RH", "carreira", "griffo.work"],
+  authors: [{ name: "GriffoWork" }],
+  icons: {
+    icon: [
+      { url: '/logo.png' },
+      { url: '/favicon.ico' },
+    ],
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
   openGraph: {
-    title: "Griffo - Análise de Currículo com IA",
-    description: "Descubra o que seu currículo realmente diz sobre você. Laudo técnico 0-10, reescrita autorizada e download em PDF/MD.",
-    siteName: "Griffo",
+    title: "GriffoWork — Análise de Currículo por IA",
+    description: "Análise profissional de currículo por IA em 8 dimensões executivas. Descubra sua nota ATS e destaque-se nas seleções.",
+    siteName: "GriffoWork",
+    url: "https://griffo.work",
+    images: [{ url: '/logo.png', width: 1200, height: 1200, alt: 'GriffoWork Logo' }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Griffo - Análise de Currículo com IA",
-    description: "Laudo profissional de currículo com nota 0-10 em 8 dimensões.",
+    title: "GriffoWork — Análise de Currículo por IA",
+    description: "Laudo profissional de currículo por IA em 8 dimensões executivas.",
+    images: ['/logo.png'],
   },
 };
 

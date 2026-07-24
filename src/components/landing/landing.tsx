@@ -22,41 +22,39 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white font-sans selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-white font-sans selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
       {/* NAV */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-white/90 border-b border-slate-200/80">
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-slate-200/80 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-500/20">
-              <FileText className="w-5 h-5 text-white" />
-            </div>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <img src="/logo.png" alt="GriffoWork" className="h-10 w-auto object-contain rounded-md shrink-0" />
             <div className="flex flex-col leading-none">
-              <span className="font-bold text-slate-900 text-base tracking-tight">Griffo</span>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-emerald-600">Inteligência Profissional</span>
+              <span className="font-extrabold text-[#0B192E] text-xl tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-[#0B63E5] mt-0.5">Análise de Currículo por IA</span>
             </div>
           </div>
 
           {/* DESKTOP NAV */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <a href="#features" className="text-slate-600 hover:text-emerald-600 transition-colors">Recursos</a>
-            <a href="#social" className="text-slate-600 hover:text-emerald-600 transition-colors">Presença Digital</a>
-            <a href="#how" className="text-slate-600 hover:text-emerald-600 transition-colors">Como funciona</a>
-            <a href="#pricing" className="text-slate-600 hover:text-emerald-600 transition-colors">Planos</a>
-            <a href="#faq" className="text-slate-600 hover:text-emerald-600 transition-colors">Dúvidas</a>
+            <a href="#features" className="text-slate-600 hover:text-[#0B63E5] transition-colors">Recursos</a>
+            <a href="#social" className="text-slate-600 hover:text-[#0B63E5] transition-colors">Presença Digital</a>
+            <a href="#how" className="text-slate-600 hover:text-[#0B63E5] transition-colors">Como funciona</a>
+            <a href="#pricing" className="text-slate-600 hover:text-[#0B63E5] transition-colors">Planos</a>
+            <a href="#faq" className="text-slate-600 hover:text-[#0B63E5] transition-colors">Dúvidas</a>
           </nav>
 
           {/* DESKTOP CTAS */}
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <Button onClick={() => onNavigate('app')} size="sm" className="bg-emerald-600 hover:bg-emerald-700 shadow-sm">
+              <Button onClick={() => onNavigate('app')} size="sm" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md font-semibold">
                 Meu painel <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
             ) : (
               <>
-                <Button onClick={() => onNavigate('login')} size="sm" variant="ghost" className="text-slate-700 hover:text-slate-900">
+                <Button onClick={() => onNavigate('login')} size="sm" variant="ghost" className="text-slate-700 hover:text-slate-900 font-medium">
                   Entrar
                 </Button>
-                <Button onClick={() => onNavigate('signup')} size="sm" className="bg-emerald-600 hover:bg-emerald-700 shadow-sm">
+                <Button onClick={() => onNavigate('signup')} size="sm" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md font-semibold px-4">
                   Analisar grátis
                 </Button>
               </>
@@ -85,7 +83,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             </nav>
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
               {user ? (
-                <Button onClick={() => { setMobileMenuOpen(false); onNavigate('app') }} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                <Button onClick={() => { setMobileMenuOpen(false); onNavigate('app') }} className="w-full bg-[#0B63E5] hover:bg-[#0052CC]">
                   Meu painel <ArrowRight className="w-4 h-4 ml-1.5" />
                 </Button>
               ) : (
@@ -93,7 +91,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
                   <Button onClick={() => { setMobileMenuOpen(false); onNavigate('login') }} variant="outline" className="w-full">
                     Entrar
                   </Button>
-                  <Button onClick={() => { setMobileMenuOpen(false); onNavigate('signup') }} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                  <Button onClick={() => { setMobileMenuOpen(false); onNavigate('signup') }} className="w-full bg-[#0B63E5] hover:bg-[#0052CC]">
                     Analisar grátis
                   </Button>
                 </>
@@ -105,35 +103,35 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 
       {/* HERO */}
       <section className="relative overflow-hidden pt-8 sm:pt-12 pb-16 md:py-24">
-        <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/60 via-white to-white pointer-events-none" />
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 sm:w-[500px] h-80 sm:h-[500px] rounded-full bg-emerald-200/30 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 sm:w-[500px] h-80 sm:h-[500px] rounded-full bg-teal-200/30 blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-50/60 via-white to-white pointer-events-none" />
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 sm:w-[500px] h-80 sm:h-[500px] rounded-full bg-blue-200/30 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 sm:w-[500px] h-80 sm:h-[500px] rounded-full bg-indigo-200/30 blur-3xl pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-8 items-center">
             <div className="space-y-5 sm:space-y-6 text-left">
-              <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800 px-3 py-1 text-xs font-semibold rounded-full shadow-sm max-w-full truncate">
-                <Sparkles className="w-3.5 h-3.5 mr-1.5 text-emerald-600 shrink-0 inline" /> IA + Padrões Gupy, LinkedIn & Recrutamento Global
+              <Badge variant="outline" className="border-blue-300 bg-blue-50 text-[#0B63E5] px-3 py-1 text-xs font-bold rounded-full shadow-xs max-w-full truncate">
+                <Sparkles className="w-3.5 h-3.5 mr-1.5 text-[#0B63E5] shrink-0 inline" /> IA + Padrões Gupy, LinkedIn & Recrutamento Global
               </Badge>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
-                Destaque seu <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 bg-clip-text text-transparent">currículo</span> e conquiste as melhores vagas.
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#0B192E] leading-[1.1]">
+                Destaque seu <span className="bg-gradient-to-r from-[#0B192E] via-[#0B63E5] to-[#2563EB] bg-clip-text text-transparent">currículo</span> e conquiste as melhores vagas.
               </h1>
               <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl">
                 Envie seu currículo em segundos e receba um laudo técnico completo em 8 dimensões. Descubra sua nota de aprovação em filtros ATS (Gupy, Workday, Taleo) e receba recomendações exclusivas para otimizar seus perfis no LinkedIn e redes profissionais.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-base h-12 sm:h-13 px-8 shadow-lg shadow-emerald-600/20 font-semibold">
+                <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-[#0B63E5] hover:bg-[#0052CC] text-white text-base h-12 sm:h-13 px-8 shadow-lg shadow-blue-600/25 font-bold">
                   Analisar meu currículo agora <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
-                <Button onClick={() => onNavigate('login')} size="lg" variant="outline" className="w-full sm:w-auto text-base h-12 sm:h-13 px-7 border-slate-300 text-slate-700 hover:bg-slate-50">
+                <Button onClick={() => onNavigate('login')} size="lg" variant="outline" className="w-full sm:w-auto text-base h-12 sm:h-13 px-7 border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold">
                   Já tenho conta
                 </Button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-medium text-slate-600 pt-3 border-t border-slate-100">
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Análise Gratuita</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Sem Cartão</span>
-                <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" /> LGPD & GDPR</span>
-                <span className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-emerald-600 shrink-0" /> 100% Seguro</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-semibold text-slate-600 pt-3 border-t border-slate-100">
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#0B63E5] shrink-0" /> Análise Gratuita</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#0B63E5] shrink-0" /> Sem Cartão</span>
+                <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-[#0B63E5] shrink-0" /> LGPD & GDPR</span>
+                <span className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-[#0B63E5] shrink-0" /> 100% Seguro</span>
               </div>
             </div>
 
