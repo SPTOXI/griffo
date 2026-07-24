@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Shield, Users, CreditCard, Cpu, Search, Loader2, Save, RefreshCw, Activity,
-  BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle
+  BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag
 } from 'lucide-react'
 import { toast } from 'sonner'
 
