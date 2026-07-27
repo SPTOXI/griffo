@@ -197,7 +197,7 @@ export function UploadView() {
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <CardTitle className="text-base">Conteúdo do currículo</CardTitle>
               <CardDescription>Mín. {minChars} caracteres · Máx. {maxChars.toLocaleString('pt-BR')}</CardDescription>
@@ -273,8 +273,8 @@ export function UploadView() {
 
             <div className="space-y-2.5">
               {socialProfiles.map((item, index) => (
-                <div key={item.id} className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200/80">
-                  <div className="w-1/3 sm:w-1/4">
+                <div key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200/80">
+                  <div className="w-full sm:w-1/3 md:w-1/4">
                     <Input
                       list={`platform-suggestions-${item.id}`}
                       placeholder="Rede / Plataforma"

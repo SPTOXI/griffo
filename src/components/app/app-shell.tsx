@@ -134,20 +134,20 @@ export function AppShell({ onExit }: { onExit: () => void }) {
             <Button
               size="sm"
               onClick={() => setView('admin')}
-              className="bg-violet-700 hover:bg-violet-800 h-8 text-xs font-semibold gap-1 px-2.5 sm:px-3 shadow-xs"
+              className="bg-violet-700 hover:bg-violet-800 h-8 text-xs font-semibold gap-1 px-2 sm:px-3 shadow-xs"
             >
-              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-              <span>Créditos Ilimitados (Modo Admin)</span>
+              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300 shrink-0" />
+              <span><span className="hidden sm:inline">Créditos Ilimitados (</span>Admin<span className="hidden sm:inline">)</span></span>
             </Button>
           ) : (
             <Button
               size="sm"
               onClick={() => setView('plans')}
-              className="bg-[#0B63E5] hover:bg-[#0052CC] text-white h-8 text-xs font-semibold gap-1 px-2.5 sm:px-3 shadow-xs"
+              className="bg-[#0B63E5] hover:bg-[#0052CC] text-white h-8 text-xs font-semibold gap-1 px-2 sm:px-3 shadow-xs"
             >
-              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-              <span>{credits} Créditos</span>
-              <span className="hidden sm:inline text-[10px] text-blue-100 ml-1 bg-blue-700/60 px-1.5 py-0.5 rounded-full">+ Adicionar</span>
+              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300 shrink-0" />
+              <span>{credits} <span className="hidden sm:inline">Créditos</span><span className="sm:hidden">cr</span></span>
+              <span className="hidden md:inline text-[10px] text-blue-100 ml-1 bg-blue-700/60 px-1.5 py-0.5 rounded-full">+ Adicionar</span>
             </Button>
           )}
 
