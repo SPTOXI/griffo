@@ -117,7 +117,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-8 items-center">
             <div className="space-y-5 sm:space-y-6 text-left">
-              <Badge variant="outline" className="border-blue-300 bg-blue-50 text-[#0B63E5] px-3 py-1 text-xs font-bold rounded-full shadow-xs max-w-full truncate">
+              <Badge variant="outline" className="border-blue-300 bg-blue-50 text-[#0B63E5] px-3 py-1 text-xs font-bold rounded-full shadow-xs w-fit leading-snug whitespace-normal">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5 text-[#0B63E5] shrink-0 inline" /> {t.hero.badge}
               </Badge>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#0B192E] leading-[1.1]">
@@ -251,26 +251,26 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               </div>
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-6 backdrop-blur space-y-3.5">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <span className="text-xs font-bold text-blue-400 flex items-center gap-1.5 truncate">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-6 backdrop-blur space-y-3.5 w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+                <span className="text-xs font-bold text-blue-400 flex items-center gap-1.5 leading-snug">
                   <CheckCircle2 className="w-4 h-4 shrink-0 text-[#0B63E5]" /> {t.social.optInTitle}
                 </span>
-                <Badge className="bg-white/10 text-white shrink-0">{t.social.lgpdBadge}</Badge>
+                <Badge className="bg-white/10 text-white shrink-0 w-fit">{t.social.lgpdBadge}</Badge>
               </div>
 
               <div className="space-y-2.5">
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1">{t.social.linkedInHead}</p>
-                  <p className="text-xs text-white">"Senior Data Engineer | Python, PySpark, Dataproc, BigQuery | High-Performance Data Pipeline Specialist"</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1 leading-normal">{t.social.linkedInHead}</p>
+                  <p className="text-xs text-white leading-relaxed break-words">"Senior Data Engineer | Python, PySpark, Dataproc, BigQuery | High-Performance Data Pipeline Specialist"</p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1">{t.social.behanceHead}</p>
-                  <p className="text-xs text-white">"Highlight case studies with quantified impact (e.g. 'Redesign that boosted conversion by +35%') on portfolio covers."</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1 leading-normal">{t.social.behanceHead}</p>
+                  <p className="text-xs text-white leading-relaxed break-words">"Highlight case studies with quantified impact (e.g. 'Redesign that boosted conversion by +35%') on portfolio covers."</p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1">{t.social.gupyHead}</p>
-                  <p className="text-xs text-white">"Ensure exact keyword alignment with terms like 'Scrum', 'Jest', and 'Micro-frontends'."</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1 leading-normal">{t.social.gupyHead}</p>
+                  <p className="text-xs text-white leading-relaxed break-words">"Ensure exact keyword alignment with terms like 'Scrum', 'Jest', and 'Micro-frontends'."</p>
                 </div>
               </div>
             </div>
