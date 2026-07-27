@@ -185,4 +185,3 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   const detailedError = `Falha ao processar com as IAs ativas. Diagnóstico por provedor: [${diagSummary}]`
   throw new Error(detailedError)
 }
-}
