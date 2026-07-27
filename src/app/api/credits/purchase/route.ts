@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic'
 
 const schema = z.object({
   packageId: z.enum(['entrada', 'starter', 'carreira', 'profissional']),
+  currency: z.enum(['brl', 'usd', 'eur']).optional(),
 })
 
 export async function POST(req: Request) {
@@ -24,9 +25,22 @@ export async function POST(req: Request) {
     }
 
     const packageId = parsed.data.packageId
+    const targetCurrency = parsed.data.currency || 'brl'
     const pkg = CREDIT_PACKAGES.find((p) => p.id === packageId)
     if (!pkg) {
       return NextResponse.json({ error: 'Pacote não encontrado.' }, { status: 400 })
+    }
+
+    // Determine unit amount and currency code
+    let unitAmount = Math.round(pkg.priceBrl * 100)
+    let currencyCode = 'brl'
+
+    if (targetCurrency === 'usd') {
+      unitAmount = Math.round(pkg.priceUsd * 100)
+      currencyCode = 'usd'
+    } else if (targetCurrency === 'eur') {
+      unitAmount = Math.round(pkg.priceEur * 100)
+      currencyCode = 'eur'
     }
 
     // Load configs
@@ -51,12 +65,12 @@ export async function POST(req: Request) {
         line_items: [
           {
             price_data: {
-              currency: 'brl',
+              currency: currencyCode,
               product_data: {
                 name: `GriffoWork - ${pkg.name}`,
                 description: pkg.desc,
               },
-              unit_amount: Math.round(pkg.priceBrl * 100),
+              unit_amount: unitAmount,
             },
             quantity: 1,
           },
@@ -70,6 +84,7 @@ export async function POST(req: Request) {
           user_id: user.id,
           credit_amount: pkg.credits.toString(),
           package_id: pkg.id,
+          currency: currencyCode,
         },
       })
 

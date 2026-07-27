@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CreditCard, Check, Loader2, Sparkles, Zap, CheckCircle2, ShoppingBag, FileSearch, Edit3, ArrowRight, Info } from 'lucide-react'
 import { toast } from 'sonner'
-import { CREDIT_PACKAGES, CREDIT_COSTS } from '@/lib/credits'
+import { useI18n } from '@/context/i18n-context'
+import { CREDIT_PACKAGES, CREDIT_COSTS, getPackagePriceDisplay } from '@/lib/credits'
 
 interface CreditTx {
   id: string
@@ -22,6 +23,7 @@ interface CreditTx {
 export function PlansView() {
   const { user, hydrate } = useAuth()
   const { setView } = useNav()
+  const { detectedCountry, lang } = useI18n()
   const [credits, setCredits] = useState<number>(0)
   const [transactions, setTransactions] = useState<CreditTx[]>([])
   const [loading, setLoading] = useState(true)
@@ -52,10 +54,14 @@ export function PlansView() {
   const handleBuy = async (packageId: 'entrada' | 'starter' | 'carreira' | 'profissional') => {
     setBuyingId(packageId)
     try {
+      const pkgObj = CREDIT_PACKAGES.find(p => p.id === packageId)
+      const display = pkgObj ? getPackagePriceDisplay(pkgObj, detectedCountry, lang) : null
+      const targetCurrency = display ? display.code.toLowerCase() : 'brl'
+
       const r = await fetch('/api/credits/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packageId }),
+        body: JSON.stringify({ packageId, currency: targetCurrency }),
       })
       const data = await r.json()
       if (!r.ok) {
@@ -115,6 +121,7 @@ export function PlansView() {
         {CREDIT_PACKAGES.map((pkg) => {
           const isBuying = buyingId === pkg.id
           const isEntry = pkg.id === 'entrada'
+          const display = getPackagePriceDisplay(pkg, detectedCountry, lang)
           return (
             <Card
               key={pkg.id}
@@ -147,25 +154,25 @@ export function PlansView() {
 
                   <div className="mb-4">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-extrabold text-slate-900">R$ {pkg.priceBrl.toFixed(2).replace('.', ',')}</span>
+                      <span className="text-2xl font-extrabold text-slate-900">{display.priceFormatted}</span>
                     </div>
                     <p className="text-[11px] text-[#0B63E5] font-semibold mt-0.5">
-                      R$ {pkg.pricePerCredit.toFixed(3).replace('.', ',')} por crédito
+                      {display.perCreditFormatted} {lang === 'pt' ? 'por crédito' : 'per credit'}
                     </p>
                   </div>
 
                   <ul className="space-y-2 mb-5 text-xs text-slate-700">
                     <li className="flex items-center gap-1.5 font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> {pkg.credits} créditos no saldo
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> {pkg.credits} {lang === 'pt' ? 'créditos no saldo' : 'credits included'}
                     </li>
                     <li className="flex items-center gap-1.5 text-slate-600">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Uso livre em Avaliação ou Reescrita
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> {lang === 'pt' ? 'Uso livre em Avaliação ou Reescrita' : 'Flexibility across Audit & AI Rewrite'}
                     </li>
                     <li className="flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Sem mensalidade ou expiração
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> {lang === 'pt' ? 'Sem mensalidade ou expiração' : 'No monthly fees or expiration'}
                     </li>
                     <li className="flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Acesso total a todas as IAs
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> {lang === 'pt' ? 'Acesso total a todas as IAs' : 'Full access to all AI models'}
                     </li>
                   </ul>
                 </div>
@@ -182,7 +189,7 @@ export function PlansView() {
                   }`}
                 >
                   {isBuying ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <ShoppingBag className="w-4 h-4 mr-1.5" />}
-                  Adquirir {pkg.name} (R$ {pkg.priceBrl.toFixed(2).replace('.', ',')})
+                  Adquirir {pkg.name} ({display.priceFormatted})
                 </Button>
               </CardContent>
             </Card>

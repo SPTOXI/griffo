@@ -18,7 +18,11 @@ export interface CreditPackage {
   paidCredits: number
   bonusCredits: number
   priceBrl: number
-  pricePerCredit: number
+  priceUsd: number
+  priceEur: number
+  pricePerCreditBrl: number
+  pricePerCreditUsd: number
+  pricePerCreditEur: number
   popular?: boolean
   entryOnly?: boolean
   desc: string
@@ -28,11 +32,15 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
   {
     id: 'entrada',
     name: 'Plano de Entrada',
-    credits: 40, // 30 pagos + 10 bônus pós-compra = 40 cr (2 avaliações completas de 20 cr)
+    credits: 40,
     paidCredits: 30,
     bonusCredits: 10,
     priceBrl: 9.90,
-    pricePerCredit: 0.2475,
+    priceUsd: 1.99,
+    priceEur: 1.99,
+    pricePerCreditBrl: 0.2475,
+    pricePerCreditUsd: 0.049,
+    pricePerCreditEur: 0.049,
     entryOnly: true,
     desc: '40 créditos no saldo (suficiente para 2 avaliações completas de currículo)',
   },
@@ -43,7 +51,11 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     paidCredits: 100,
     bonusCredits: 0,
     priceBrl: 29.90,
-    pricePerCredit: 0.299,
+    priceUsd: 5.99,
+    priceEur: 5.99,
+    pricePerCreditBrl: 0.299,
+    pricePerCreditUsd: 0.059,
+    pricePerCreditEur: 0.059,
     desc: '100 créditos no saldo (suficiente para 5 avaliações completas de currículo)',
   },
   {
@@ -53,7 +65,11 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     paidCredits: 500,
     bonusCredits: 0,
     priceBrl: 99.90,
-    pricePerCredit: 0.199,
+    priceUsd: 19.99,
+    priceEur: 19.99,
+    pricePerCreditBrl: 0.199,
+    pricePerCreditUsd: 0.039,
+    pricePerCreditEur: 0.039,
     popular: true,
     desc: '500 créditos no saldo (suficiente para 25 avaliações completas de currículo)',
   },
@@ -64,10 +80,51 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     paidCredits: 1500,
     bonusCredits: 0,
     priceBrl: 249.90,
-    pricePerCredit: 0.166,
+    priceUsd: 49.99,
+    priceEur: 49.99,
+    pricePerCreditBrl: 0.166,
+    pricePerCreditUsd: 0.033,
+    pricePerCreditEur: 0.033,
     desc: '1.500 créditos no saldo (suficiente para 75 avaliações completas de currículo)',
   },
 ]
+
+export function getPackagePriceDisplay(
+  pkg: CreditPackage,
+  country: string = 'BR',
+  lang: string = 'pt'
+): { priceFormatted: string; perCreditFormatted: string; currencySymbol: string; code: 'BRL' | 'USD' | 'EUR' } {
+  const c = (country || 'BR').toUpperCase().trim()
+
+  // Eurozone countries
+  const euroCountries = ['ES', 'PT', 'FR', 'DE', 'IT', 'NL', 'BE', 'AT', 'IE', 'FI', 'GR']
+
+  if (c === 'BR' || (lang === 'pt' && c === 'BR')) {
+    return {
+      priceFormatted: `R$ ${pkg.priceBrl.toFixed(2).replace('.', ',')}`,
+      perCreditFormatted: `R$ ${pkg.pricePerCreditBrl.toFixed(3).replace('.', ',')}`,
+      currencySymbol: 'R$',
+      code: 'BRL',
+    }
+  }
+
+  if (euroCountries.includes(c)) {
+    return {
+      priceFormatted: `€ ${pkg.priceEur.toFixed(2).replace('.', ',')}`,
+      perCreditFormatted: `€ ${pkg.pricePerCreditEur.toFixed(3).replace('.', ',')}`,
+      currencySymbol: '€',
+      code: 'EUR',
+    }
+  }
+
+  // Default USD for rest of the world (US, LATAM, Asia, UK, etc.)
+  return {
+    priceFormatted: `$ ${pkg.priceUsd.toFixed(2)}`,
+    perCreditFormatted: `$ ${pkg.pricePerCreditUsd.toFixed(3)}`,
+    currencySymbol: '$',
+    code: 'USD',
+  }
+}
 
 export async function getUserCredits(userId: string): Promise<number> {
   const user = await db.user.findUnique({
@@ -88,200 +145,101 @@ export async function deductCredits(
   })
 
   if (user?.disabled) {
+    return { success: false, currentBalance: 0, error: 'Sua conta está suspensa.' }
+  }
+
+  if (!user) {
+    return { success: false, currentBalance: 0, error: 'Usuário não encontrado.' }
+  }
+
+  // Admins are exempt from spending credits
+  if (user.role === 'admin') {
+    return { success: true, currentBalance: user.credits }
+  }
+
+  if (user.credits < amount) {
     return {
       success: false,
-      currentBalance: 0,
-      error: 'Sua conta está desabilitada pelo administrador do sistema.',
+      currentBalance: user.credits,
+      error: `Saldo insuficiente (${user.credits} créditos). Esta ação requer ${amount} créditos.`,
     }
   }
 
-  // Admin users have unlimited credits and bypass deductions
-  if (user?.role === 'admin') {
-    return {
-      success: true,
-      currentBalance: 999999,
-    }
-  }
+  const updated = await db.$transaction(async (tx) => {
+    const updatedUser = await tx.user.update({
+      where: { id: userId },
+      data: { credits: { decrement: amount } },
+      select: { credits: true },
+    })
 
-  const currentBalance = user?.credits ?? 0
+    await tx.creditTransaction.create({
+      data: {
+        userId,
+        amount: -amount,
+        type: 'spend',
+        description,
+      },
+    })
 
-  if (currentBalance < amount) {
-    return {
-      success: false,
-      currentBalance,
-      error: 'Seu saldo de créditos é insuficiente. Adquira o Plano de Entrada (R$ 9,90) ou recarregue seu saldo para continuar utilizando a IA.',
-    }
-  }
-
-  const updatedUser = await db.user.update({
-    where: { id: userId },
-    data: {
-      credits: { decrement: amount },
-    },
+    return updatedUser
   })
 
-  await db.creditTransaction.create({
-    data: {
-      userId,
-      amount: -amount,
-      type: 'consume',
-      description,
-    },
-  })
-
-  return {
-    success: true,
-    currentBalance: updatedUser.credits,
-  }
+  return { success: true, currentBalance: updated.credits }
 }
 
 export async function refundCredits(
   userId: string,
   amount: number,
   reason: string
-): Promise<{ success: boolean; newBalance: number }> {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
+): Promise<{ success: boolean; currentBalance: number }> {
+  const updated = await db.$transaction(async (tx) => {
+    const updatedUser = await tx.user.update({
+      where: { id: userId },
+      data: { credits: { increment: amount } },
+      select: { credits: true },
+    })
+
+    await tx.creditTransaction.create({
+      data: {
+        userId,
+        amount,
+        type: 'refund',
+        description: `Reembolso automático: ${reason}`,
+      },
+    })
+
+    return updatedUser
   })
 
-  if (user?.role === 'admin') {
-    return { success: true, newBalance: 999999 }
-  }
-
-  const updatedUser = await db.user.update({
-    where: { id: userId },
-    data: {
-      credits: { increment: amount },
-    },
-  })
-
-  await db.creditTransaction.create({
-    data: {
-      userId,
-      amount: amount,
-      type: 'refund',
-      description: `Reembolso automático: ${reason}`,
-    },
-  })
-
-  await db.auditLog.create({
-    data: {
-      userId,
-      action: 'credit_refund',
-      meta: JSON.stringify({ amount, reason, newBalance: updatedUser.credits }),
-    },
-  })
-
-  return {
-    success: true,
-    newBalance: updatedUser.credits,
-  }
+  return { success: true, currentBalance: updated.credits }
 }
 
-export async function purchaseCreditPackage(
+export async function addCredits(
   userId: string,
-  packageId: string
-): Promise<{ success: boolean; packageInfo?: CreditPackage; newBalance?: number; postPurchaseMessage?: string; error?: string }> {
-  const pkg = CREDIT_PACKAGES.find((p) => p.id === packageId)
-  if (!pkg) {
-    return { success: false, error: 'Pacote de créditos inválido.' }
-  }
+  amount: number,
+  type: 'welcome' | 'purchase' | 'admin_gift',
+  description: string,
+  costBrl?: number
+): Promise<{ success: boolean; currentBalance: number }> {
+  const updated = await db.$transaction(async (tx) => {
+    const updatedUser = await tx.user.update({
+      where: { id: userId },
+      data: { credits: { increment: amount } },
+      select: { credits: true },
+    })
 
-  const updatedUser = await db.user.update({
-    where: { id: userId },
-    data: {
-      credits: { increment: pkg.credits },
-      plan: pkg.id,
-    },
+    await tx.creditTransaction.create({
+      data: {
+        userId,
+        amount,
+        type,
+        description,
+        costBrl,
+      },
+    })
+
+    return updatedUser
   })
 
-  const transactionDesc = pkg.bonusCredits > 0
-    ? `${pkg.name} (${pkg.credits} créditos ativados)`
-    : `${pkg.name} (${pkg.credits} créditos ativados)`
-
-  await db.creditTransaction.create({
-    data: {
-      userId,
-      amount: pkg.credits,
-      type: 'purchase',
-      description: transactionDesc,
-      costBrl: pkg.priceBrl,
-    },
-  })
-
-  await db.auditLog.create({
-    data: {
-      userId,
-      action: 'credit_purchase',
-      meta: JSON.stringify({ packageId, credits: pkg.credits, bonusCredits: pkg.bonusCredits, priceBrl: pkg.priceBrl }),
-    },
-  })
-
-  const postPurchaseMessage = pkg.bonusCredits > 0
-    ? `Parabéns! ${pkg.name} ativado com sucesso. Você ganhou 10 créditos adicionais!`
-    : `${pkg.name} ativado com sucesso! +${pkg.credits} créditos adicionados ao seu saldo.`
-
-  return {
-    success: true,
-    packageInfo: pkg,
-    newBalance: updatedUser.credits,
-    postPurchaseMessage,
-  }
-}
-
-export async function getCreditAdminMetrics() {
-  const [totalUsers, buyersCount, purchases, consumes, aiLogs] = await Promise.all([
-    db.user.count(),
-    db.creditTransaction.groupBy({
-      by: ['userId'],
-      where: { type: 'purchase' },
-    }),
-    db.creditTransaction.aggregate({
-      where: { type: 'purchase' },
-      _sum: { amount: true, costBrl: true },
-      _count: { id: true },
-    }),
-    db.creditTransaction.aggregate({
-      where: { type: 'consume' },
-      _sum: { amount: true },
-    }),
-    db.aiLog.aggregate({
-      _sum: { costUsd: true },
-    }),
-  ])
-
-  const freeUsers = Math.max(0, totalUsers - buyersCount.length)
-  const purchasingUsers = buyersCount.length
-  const conversionRate = totalUsers > 0 ? (purchasingUsers / totalUsers) * 100 : 0
-
-  const creditsSold = purchases._sum.amount || 0
-  const revenueBrl = purchases._sum.costBrl || 0
-  const creditsConsumed = Math.abs(consumes._sum.amount || 0)
-
-  const ticketMédioBrl = purchasingUsers > 0 ? revenueBrl / purchasingUsers : 0
-
-  // Estimated AI Cost (USD converted to BRL @ 5.4 rate)
-  const aiCostUsd = aiLogs._sum.costUsd || 0
-  const estimatedAiCostBrl = aiCostUsd * 5.4
-
-  const marginBrl = Math.max(0, revenueBrl - estimatedAiCostBrl)
-  const marginPercent = revenueBrl > 0 ? (marginBrl / revenueBrl) * 100 : 300 // 300% standard baseline margin
-
-  return {
-    finance: {
-      creditsSold,
-      revenueBrl,
-      creditsConsumed,
-      estimatedAiCostBrl,
-      marginBrl,
-      marginPercent,
-    },
-    users: {
-      freeUsers,
-      purchasingUsers,
-      conversionRate,
-      ticketMédioBrl,
-    },
-  }
+  return { success: true, currentBalance: updated.credits }
 }

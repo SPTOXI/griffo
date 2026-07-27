@@ -12,10 +12,11 @@ import {
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
 import { LanguageSelector } from '@/components/ui/language-selector'
+import { CREDIT_PACKAGES, getPackagePriceDisplay } from '@/lib/credits'
 
 export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | 'app') => void }) {
   const { user } = useAuth()
-  const { t } = useI18n()
+  const { t, lang, detectedCountry } = useI18n()
   const [openFaq, setOpenFaq] = useState<number | null>(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -332,69 +333,32 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-7xl mx-auto items-stretch mb-12">
-          <PlanCard
-            name={t.pricing.entryTitle}
-            price="R$ 9,90 / $1.99"
-            period={t.pricing.entryDesc}
-            features={[
-              '40 credits / créditos',
-              '2 complete audit reports',
-              'Audit & AI Rewrite choice',
-              'PDF & Editable downloads',
-              'Exclusive welcome offer',
-            ]}
-            highlight={true}
-            cta={t.pricing.buyCta}
-            onCta={() => onNavigate('signup')}
-          />
-          <PlanCard
-            name={t.pricing.starterTitle}
-            price="R$ 29,90 / $5.99"
-            period={t.pricing.starterDesc}
-            features={[
-              '100 credits / créditos',
-              '5 complete audit reports',
-              'Audit & AI Rewrite choice',
-              'PDF & Editable downloads',
-              'No expiration or monthly fees',
-            ]}
-            highlight={false}
-            cta={t.pricing.buyCta}
-            onCta={() => onNavigate('signup')}
-          />
-          <PlanCard
-            name={t.pricing.carreiraTitle}
-            price="R$ 99,90 / $19.99"
-            period={t.pricing.carreiraDesc}
-            features={[
-              '500 credits / créditos',
-              '25 complete audit reports',
-              'Audit & AI Rewrite choice',
-              'LinkedIn & ATS Optimization',
-              'Best platform value',
-              'No expiration of credits',
-            ]}
-            highlight={true}
-            popular
-            cta={t.pricing.buyCta}
-            onCta={() => onNavigate('signup')}
-          />
-          <PlanCard
-            name={t.pricing.profTitle}
-            price="R$ 249,90 / $49.99"
-            period={t.pricing.profDesc}
-            features={[
-              '1,500 credits / créditos',
-              '75 complete audit reports',
-              'Audit & AI Rewrite choice',
-              'Power user & agency access',
-              'Highest credit discount',
-              'Priority dedicated support',
-            ]}
-            highlight={false}
-            cta={t.pricing.buyCta}
-            onCta={() => onNavigate('signup')}
-          />
+          {CREDIT_PACKAGES.map((pkg) => {
+            const display = getPackagePriceDisplay(pkg, detectedCountry, lang)
+            const isEntry = pkg.id === 'entrada'
+            return (
+              <PlanCard
+                key={pkg.id}
+                name={isEntry ? t.pricing.entryTitle : pkg.id === 'starter' ? t.pricing.starterTitle : pkg.id === 'carreira' ? t.pricing.carreiraTitle : t.pricing.profTitle}
+                price={display.priceFormatted}
+                perCredit={`${display.perCreditFormatted} / ${lang === 'pt' ? 'crédito' : 'credit'}`}
+                period={`${pkg.credits} ${lang === 'pt' ? 'créditos' : 'credits'}`}
+                features={[
+                  `${pkg.credits} ${lang === 'pt' ? 'créditos no saldo' : 'credits included'}`,
+                  lang === 'pt' ? 'Uso flexível em Avaliação ou Reescrita' : 'Flexibility across Audit & AI Rewrite',
+                  lang === 'pt' ? 'Downloads em PDF e texto editável' : 'PDF & Editable text exports',
+                  lang === 'pt' ? 'Sem mensalidade ou expiração' : 'No monthly fees or credit expiration',
+                  pkg.id === 'carreira' || pkg.id === 'profissional'
+                    ? (lang === 'pt' ? 'Otimização de LinkedIn e Gupy' : 'LinkedIn & ATS optimization')
+                    : (lang === 'pt' ? 'Oferta exclusiva de entrada' : 'Welcome offer package'),
+                ]}
+                highlight={isEntry || !!pkg.popular}
+                popular={pkg.popular}
+                cta={t.pricing.buyCta}
+                onCta={() => onNavigate('signup')}
+              />
+            )
+          })}
         </div>
 
         {/* GUIA EXPLICATIVO: AVALIAÇÃO VS REESCRITA */}
@@ -565,9 +529,10 @@ function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; 
   )
 }
 
-function PlanCard({ name, price, period, features, highlight, popular, cta, onCta }: {
+function PlanCard({ name, price, perCredit, period, features, highlight, popular, cta, onCta }: {
   name: string
   price: string
+  perCredit?: string
   period: string
   features: string[]
   highlight: boolean
@@ -588,6 +553,7 @@ function PlanCard({ name, price, period, features, highlight, popular, cta, onCt
           <p className="text-xs text-slate-500 mb-4">{period}</p>
           <div className="mb-6">
             <span className="text-3xl sm:text-4xl font-extrabold text-[#0B192E]">{price}</span>
+            {perCredit && <p className="text-xs font-semibold text-[#0B63E5] mt-1">{perCredit}</p>}
           </div>
           <ul className="space-y-2.5 mb-6">
             {features.map((f) => (
