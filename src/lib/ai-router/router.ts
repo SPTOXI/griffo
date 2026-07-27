@@ -5,6 +5,7 @@ import {
   FALLBACK_CHAIN,
   getProviderRuntimeConfig,
   INITIAL_TASK_ROUTING,
+  normalizeProviderId,
 } from './registry'
 
 export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
@@ -25,8 +26,8 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
       select: { provider: true },
     })
     for (const keyObj of activeDbKeys) {
-      const pId = keyObj.provider.toLowerCase() as ProviderId
-      if (!candidateProviders.includes(pId)) {
+      const pId = normalizeProviderId(keyObj.provider)
+      if (pId && !candidateProviders.includes(pId)) {
         candidateProviders.push(pId)
       }
     }

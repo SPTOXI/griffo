@@ -48,6 +48,22 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   },
 }
 
+// Normalize provider names that may differ between DB records and PROVIDER_CONFIGS keys
+const PROVIDER_ALIASES: Record<string, ProviderId> = {
+  moonshot: 'kimi',
+  'moonshot-ai': 'kimi',
+  anthropic: 'claude',
+  google: 'gemini',
+  'google-gemini': 'gemini',
+}
+
+export function normalizeProviderId(raw: string): ProviderId | null {
+  const lower = raw.toLowerCase().trim()
+  if (lower in PROVIDER_CONFIGS) return lower as ProviderId
+  if (lower in PROVIDER_ALIASES) return PROVIDER_ALIASES[lower]
+  return null
+}
+
 // Distribution of primary models per task
 export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   ocr_extraction: 'gemini',
@@ -68,20 +84,29 @@ export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
 
 export async function getProviderRuntimeConfig(providerId: ProviderId) {
   const base = PROVIDER_CONFIGS[providerId]
+  if (!base) {
+    console.warn(`[AI Registry] Unknown provider '${providerId}', skipping.`)
+    return {
+      providerId,
+      apiKey: '',
+      baseURL: '',
+      model: '',
+      pricing: { inputPer1k: 0, outputPer1k: 0 },
+    }
+  }
   let apiKey = process.env[base.apiKeyEnvVar] || process.env.MOONSHOT_API_KEY || process.env.LLM_API_KEY || ''
   let baseURL = base.baseURL
   let model = base.defaultModel
 
   // 1. Check AiApiKey table for active key registered by admin
   try {
-    const providerName = providerId === 'kimi' ? 'moonshot' : providerId
     const registeredKeys = await db.aiApiKey.findMany({
       where: { status: 'active' },
       orderBy: { updatedAt: 'desc' },
     })
 
     const matchingKey = registeredKeys.find(
-      (k) => k.provider.toLowerCase() === providerName.toLowerCase()
+      (k) => normalizeProviderId(k.provider) === providerId
     )
 
     if (matchingKey) {
