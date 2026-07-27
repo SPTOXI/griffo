@@ -37,6 +37,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
 
   let lastError: any = null
   let failoverCount = 0
+  const attemptDiagnostics: string[] = []
 
   for (let i = 0; i < candidateProviders.length; i++) {
     const currentProviderId = candidateProviders[i]
@@ -44,38 +45,74 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
 
     // Skip provider if no API key is available
     if (!runtime.apiKey) {
+      attemptDiagnostics.push(`${currentProviderId.toUpperCase()}: Sem chave de API`)
       continue
     }
 
     const startCallTime = Date.now()
     try {
-      const client = new OpenAI({
-        apiKey: runtime.apiKey,
-        baseURL: runtime.baseURL,
-        timeout: 25000, // 25s timeout per call
-      })
+      let content = ''
+      let tokensIn = 0
+      let tokensOut = 0
 
-      const completion = await client.chat.completions.create({
-        model: runtime.model,
-        messages: [
-          { role: 'system', content: req.systemPrompt },
-          { role: 'user', content: req.userPrompt },
-        ],
-        temperature: req.temperature ?? 0.3,
-        max_tokens: req.maxTokens ?? 3500,
-      })
+      if (currentProviderId === 'claude') {
+        // Native Anthropic Messages API integration
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'x-api-key': runtime.apiKey,
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: runtime.model || 'claude-3-5-sonnet-20241022',
+            max_tokens: req.maxTokens ?? 3500,
+            system: req.systemPrompt,
+            messages: [{ role: 'user', content: req.userPrompt }],
+          }),
+        })
+
+        const data = await res.json()
+
+        if (!res.ok) {
+          const status = res.status
+          const errMsg = data.error?.message || data.message || JSON.stringify(data)
+          throw new Error(`[Claude API ${status}] ${errMsg}`)
+        }
+
+        content = data.content?.[0]?.text || ''
+        tokensIn = data.usage?.input_tokens || Math.ceil((req.systemPrompt.length + req.userPrompt.length) / 4)
+        tokensOut = data.usage?.output_tokens || Math.ceil(content.length / 4)
+      } else {
+        // OpenAI-compatible SDK for Kimi, DeepSeek, Gemini
+        const client = new OpenAI({
+          apiKey: runtime.apiKey,
+          baseURL: runtime.baseURL,
+          timeout: 25000, // 25s timeout per call
+        })
+
+        const completion = await client.chat.completions.create({
+          model: runtime.model,
+          messages: [
+            { role: 'system', content: req.systemPrompt },
+            { role: 'user', content: req.userPrompt },
+          ],
+          temperature: req.temperature ?? 0.3,
+          max_tokens: req.maxTokens ?? 3500,
+        })
+
+        content = completion.choices?.[0]?.message?.content || ''
+        tokensIn =
+          completion.usage?.prompt_tokens ||
+          Math.ceil((req.systemPrompt.length + req.userPrompt.length) / 4)
+        tokensOut = completion.usage?.completion_tokens || Math.ceil(content.length / 4)
+      }
 
       const responseTimeMs = Date.now() - startCallTime
-      const content = completion.choices?.[0]?.message?.content || ''
-      
+
       if (!content) {
         throw new Error(`Resposta vazia recebida do provedor ${currentProviderId}`)
       }
-
-      const tokensIn =
-        completion.usage?.prompt_tokens ||
-        Math.ceil((req.systemPrompt.length + req.userPrompt.length) / 4)
-      const tokensOut = completion.usage?.completion_tokens || Math.ceil(content.length / 4)
 
       const costIn = (tokensIn / 1000) * runtime.pricing.inputPer1k
       const costOut = (tokensOut / 1000) * runtime.pricing.outputPer1k
@@ -111,7 +148,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
                 taskType: req.taskType,
                 primaryProvider: primaryProviderId,
                 usedProvider: currentProviderId,
-                errorCode: lastError?.status || lastError?.code || '429/500/TIMEOUT',
+                attemptDiagnostics,
               }),
             },
           })
@@ -135,21 +172,17 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
     } catch (err: any) {
       lastError = err
       failoverCount++
+      const diagStr = `${currentProviderId.toUpperCase()}: ${err?.status || err?.code || 'ERR'} (${err?.message || 'Falha'})`
+      attemptDiagnostics.push(diagStr)
       console.warn(
-        `[AI Router] Provedor '${currentProviderId}' falhou (${err?.status || err?.message || 'Error'}). Tentando próximo provedor na fila de contingência...`
+        `[AI Router] Provedor '${currentProviderId}' falhou: ${diagStr}. Tentando próximo na fila...`
       )
     }
   }
 
-  // If all attempts failed, throw descriptive error
-  let errorMsg = lastError?.message || 'Falha ao conectar com os serviços de Inteligência Artificial.'
-  if (lastError?.status === 401 || lastError?.message?.includes('Invalid Authentication')) {
-    errorMsg = 'Chave de API de IA inválida ou expirada (Erro 401). Por favor, verifique as chaves cadastradas na Área Admin.'
-  } else if (lastError?.status === 404 || lastError?.message?.includes('404')) {
-    errorMsg = 'Endereço ou Modelo de IA não encontrado (Erro 404). Por favor, verifique o modelo e chave no Painel Admin.'
-  } else if (!lastError) {
-    errorMsg = 'Nenhuma chave de API de IA ativa encontrada no sistema. Cadastre uma chave em Área Admin > Chaves de IA.'
-  }
-
-  throw new Error(errorMsg)
+  // If all attempts failed, throw detailed diagnostic error
+  const diagSummary = attemptDiagnostics.join(' | ')
+  const detailedError = `Falha ao processar com as IAs ativas. Diagnóstico por provedor: [${diagSummary}]`
+  throw new Error(detailedError)
+}
 }

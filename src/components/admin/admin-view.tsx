@@ -108,10 +108,32 @@ export function AdminView() {
   // New API Key form state
   const [newKeyName, setNewKeyName] = useState('')
   const [newKeyProvider, setNewKeyProvider] = useState('moonshot')
+  const [newKeyModel, setNewKeyModel] = useState('moonshot-v1-8k')
   const [newKeyApiKey, setNewKeyApiKey] = useState('')
-  const [newKeyModel, setNewKeyModel] = useState('kimi-k3')
   const [newKeyBaseUrl, setNewKeyBaseUrl] = useState('')
   const [addingKey, setAddingKey] = useState(false)
+
+  // AI Diagnostic Test state
+  const [testingAi, setTestingAi] = useState(false)
+  const [aiTestResults, setAiTestResults] = useState<Record<string, any> | null>(null)
+
+  const runAiTest = async () => {
+    setTestingAi(true)
+    try {
+      const res = await fetch('/api/admin/ai-test')
+      const data = await res.json()
+      if (data.results) {
+        setAiTestResults(data.results)
+        toast.success('Diagnóstico das IAs concluído com sucesso!')
+      } else {
+        toast.error(data.error || 'Erro ao executar teste de IAs.')
+      }
+    } catch {
+      toast.error('Falha de conexão ao testar IAs.')
+    } finally {
+      setTestingAi(false)
+    }
+  }
 
   useEffect(() => {
     loadData()
@@ -722,7 +744,30 @@ export function AdminView() {
                             {isAdmin ? (
                               <span className="text-violet-700">♾️ Ilimitado</span>
                             ) : (
-                              <span className="text-emerald-700">{u.credits ?? 0} cr</span>
+                              <div className="flex items-center gap-1">
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  defaultValue={u.credits ?? 0}
+                                  key={`credits-${u.id}-${u.credits}`}
+                                  className="h-7 w-20 text-[11px] font-mono font-bold px-2 border-slate-300 focus:border-emerald-500"
+                                  onBlur={(e) => {
+                                    const val = parseInt(e.target.value, 10)
+                                    if (!isNaN(val) && val >= 0 && val !== u.credits) {
+                                      updateUser(u.id, { credits: val })
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      const val = parseInt((e.target as HTMLInputElement).value, 10)
+                                      if (!isNaN(val) && val >= 0 && val !== u.credits) {
+                                        updateUser(u.id, { credits: val })
+                                      }
+                                    }
+                                  }}
+                                />
+                                <span className="text-[10px] text-slate-500 font-sans font-semibold">cr</span>
+                              </div>
                             )}
                           </td>
                           <td className="px-4 py-3 text-right">
@@ -851,14 +896,78 @@ export function AdminView() {
 
           {/* LIST REGISTERED API KEYS */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Key className="w-5 h-5 text-violet-600" /> APIs de IA Cadastradas no Sistema ({aiKeys.length})
-              </CardTitle>
-              <CardDescription>
-                Lista de todas as chaves salvas com controle de status (Ativar/Pausar) e opção de exclusão.
-              </CardDescription>
+            <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Key className="w-5 h-5 text-violet-600" /> APIs de IA Cadastradas no Sistema ({aiKeys.length})
+                </CardTitle>
+                <CardDescription>
+                  Lista de todas as chaves salvas com controle de status (Ativar/Pausar) e opção de exclusão.
+                </CardDescription>
+              </div>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={runAiTest}
+                disabled={testingAi}
+                className="border-violet-300 text-violet-700 hover:bg-violet-50 font-bold shrink-0 shadow-sm"
+              >
+                {testingAi ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1.5" />}
+                Diagnóstico de Conexão com IAs
+              </Button>
             </CardHeader>
+
+            {/* DIAGNOSTIC RESULTS PANEL */}
+            {aiTestResults && (
+              <div className="p-4 bg-slate-900 text-slate-100 border-y border-slate-800 space-y-3 font-mono text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-amber-400 flex items-center gap-1.5">
+                    <Zap className="w-4 h-4 text-amber-400" /> Relatório do Diagnóstico de Conexão:
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setAiTestResults(null)}
+                    className="h-6 text-[10px] text-slate-400 hover:text-white"
+                  >
+                    Fechar
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {Object.entries(aiTestResults).map(([pId, res]: [string, any]) => (
+                    <div
+                      key={pId}
+                      className={`p-3 rounded-lg border text-xs space-y-1 ${
+                        res.status === 'SUCCESS'
+                          ? 'bg-emerald-950/40 border-emerald-700/50 text-emerald-200'
+                          : 'bg-rose-950/40 border-rose-700/50 text-rose-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between font-bold">
+                        <span className="uppercase tracking-wider">{pId}</span>
+                        {res.status === 'SUCCESS' ? (
+                          <Badge className="bg-emerald-600 text-white text-[10px]">
+                            SUCCESS ({res.latencyMs}ms)
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-rose-600 text-white text-[10px]">
+                            FAILED (HTTP {res.httpCode || 'ERR'})
+                          </Badge>
+                        )}
+                      </div>
+                      {res.status === 'SUCCESS' ? (
+                        <p className="text-[11px] text-emerald-300">Resposta: "{res.response}"</p>
+                      ) : (
+                        <p className="text-[11px] text-rose-300 break-all font-sans">
+                          {res.errorMessage || res.error?.message || JSON.stringify(res.errorDetails || res.error || 'Falha')}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left">
