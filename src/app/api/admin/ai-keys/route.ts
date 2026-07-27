@@ -16,9 +16,16 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     })
 
-    // Mask secret keys for safety (e.g. sk-1234...abcd)
+    // Mask secret keys for safety and omit raw apiKey from response
     const sanitizedKeys = keys.map((k) => ({
-      ...k,
+      id: k.id,
+      name: k.name,
+      provider: k.provider,
+      baseUrl: k.baseUrl,
+      model: k.model,
+      status: k.status,
+      createdAt: k.createdAt,
+      updatedAt: k.updatedAt,
       maskedKey: k.apiKey.length > 8 ? `${k.apiKey.slice(0, 4)}...${k.apiKey.slice(-4)}` : '****',
     }))
 
@@ -71,7 +78,14 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       key: {
-        ...newKey,
+        id: newKey.id,
+        name: newKey.name,
+        provider: newKey.provider,
+        baseUrl: newKey.baseUrl,
+        model: newKey.model,
+        status: newKey.status,
+        createdAt: newKey.createdAt,
+        updatedAt: newKey.updatedAt,
         maskedKey: newKey.apiKey.length > 8 ? `${newKey.apiKey.slice(0, 4)}...${newKey.apiKey.slice(-4)}` : '****',
       },
       message: `Chave da API "${newKey.name}" para ${newKey.provider.toUpperCase()} cadastrada com sucesso!`,
@@ -113,7 +127,14 @@ export async function PATCH(req: Request) {
     return NextResponse.json({
       success: true,
       key: {
-        ...updated,
+        id: updated.id,
+        name: updated.name,
+        provider: updated.provider,
+        baseUrl: updated.baseUrl,
+        model: updated.model,
+        status: updated.status,
+        createdAt: updated.createdAt,
+        updatedAt: updated.updatedAt,
         maskedKey: updated.apiKey.length > 8 ? `${updated.apiKey.slice(0, 4)}...${updated.apiKey.slice(-4)}` : '****',
       },
       message: `Status da API "${updated.name}" alterado para ${status === 'active' ? 'ATIVA' : 'PAUSADA'}.`,
