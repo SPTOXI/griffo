@@ -346,7 +346,7 @@ export function UploadView() {
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
                 {loading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analisando…</>
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando…</>
                 ) : (
                   <>Analisar currículo <Sparkles className="w-4 h-4 ml-2" /></>
                 )}

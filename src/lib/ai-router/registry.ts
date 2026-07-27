@@ -65,21 +65,25 @@ export function normalizeProviderId(raw: string): ProviderId | null {
 }
 
 // Distribution of primary models per task
+// NOTE: All tasks default to 'kimi' (Moonshot) since it's the only provider
+// with an env-level API key. If additional keys are registered via Admin panel
+// (AiApiKey table), the router will auto-discover and include them.
 export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
-  ocr_extraction: 'gemini',
-  normalization: 'deepseek',
-  rewrite: 'claude',
+  ocr_extraction: 'kimi',
+  normalization: 'kimi',
+  rewrite: 'kimi',
   full_analysis: 'kimi',
-  social_advice: 'claude',
-  cover_letter: 'claude',
+  social_advice: 'kimi',
+  cover_letter: 'kimi',
 }
 
 // Fallback sequence if primary provider fails
+// Claude is last because it requires its own ANTHROPIC_API_KEY
 export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
-  kimi: ['claude', 'deepseek', 'gemini'],
+  kimi: ['deepseek', 'gemini', 'claude'],
   claude: ['kimi', 'deepseek', 'gemini'],
-  deepseek: ['gemini', 'kimi', 'claude'],
-  gemini: ['deepseek', 'kimi', 'claude'],
+  deepseek: ['kimi', 'gemini', 'claude'],
+  gemini: ['kimi', 'deepseek', 'claude'],
 }
 
 export async function getProviderRuntimeConfig(providerId: ProviderId) {
@@ -94,7 +98,7 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
       pricing: { inputPer1k: 0, outputPer1k: 0 },
     }
   }
-  let apiKey = process.env[base.apiKeyEnvVar] || process.env.MOONSHOT_API_KEY || process.env.LLM_API_KEY || ''
+  let apiKey = process.env[base.apiKeyEnvVar] || ''
   let baseURL = base.baseURL
   let model = base.defaultModel
 
@@ -122,10 +126,11 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
   try {
     const configs = await db.systemConfig.findMany()
     for (const c of configs) {
-      if ((c.key === `${providerId.toUpperCase()}_API_KEY` || c.key === 'MOONSHOT_API_KEY') && c.value) {
+      const keyPrefix = providerId === 'kimi' ? 'MOONSHOT' : providerId.toUpperCase()
+      if ((c.key === `${keyPrefix}_API_KEY` || c.key === `${providerId.toUpperCase()}_API_KEY`) && c.value) {
         apiKey = c.value
       }
-      if ((c.key === `${providerId.toUpperCase()}_MODEL` || c.key === 'KIMI_MODEL') && c.value) {
+      if ((c.key === `${keyPrefix}_MODEL` || c.key === `${providerId.toUpperCase()}_MODEL`) && c.value) {
         model = c.value
       }
       if (c.key === `${providerId.toUpperCase()}_BASE_URL` && c.value) {
