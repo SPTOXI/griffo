@@ -64,26 +64,26 @@ export function normalizeProviderId(raw: string): ProviderId | null {
   return null
 }
 
-// Distribution of primary models per task
-// NOTE: All tasks default to 'kimi' (Moonshot) since it's the only provider
-// with an env-level API key. If additional keys are registered via Admin panel
-// (AiApiKey table), the router will auto-discover and include them.
+// Distribution of primary models per task (optimized by provider specialty)
+// - Gemini: best for OCR/vision and fast extraction
+// - DeepSeek: cost-effective for normalization/structuring
+// - Claude: superior writing quality for rewrites and creative content
+// - Kimi: strong full-document analysis and reasoning
 export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
-  ocr_extraction: 'kimi',
-  normalization: 'kimi',
-  rewrite: 'kimi',
+  ocr_extraction: 'gemini',
+  normalization: 'deepseek',
+  rewrite: 'claude',
   full_analysis: 'kimi',
-  social_advice: 'kimi',
-  cover_letter: 'kimi',
+  social_advice: 'claude',
+  cover_letter: 'claude',
 }
 
 // Fallback sequence if primary provider fails
-// Claude is last because it requires its own ANTHROPIC_API_KEY
 export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
-  kimi: ['deepseek', 'gemini', 'claude'],
+  kimi: ['deepseek', 'claude', 'gemini'],
   claude: ['kimi', 'deepseek', 'gemini'],
   deepseek: ['kimi', 'gemini', 'claude'],
-  gemini: ['kimi', 'deepseek', 'claude'],
+  gemini: ['deepseek', 'kimi', 'claude'],
 }
 
 export async function getProviderRuntimeConfig(providerId: ProviderId) {
