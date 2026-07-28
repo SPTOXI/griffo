@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/store/auth'
+import { useAuth, useNav } from '@/store/auth'
 import { Landing } from '@/components/landing/landing'
 import { AuthScreen } from '@/components/auth/auth-screen'
 import { AppShell } from '@/components/app/app-shell'
@@ -10,11 +10,19 @@ type Screen = 'landing' | 'login' | 'signup' | 'app'
 
 export default function Home() {
   const { user, hydrated, hydrate } = useAuth()
+  const setNavView = useNav((s) => s.setView)
   const [screen, setScreen] = useState<Screen>('landing')
 
   useEffect(() => {
     hydrate()
-  }, [hydrate])
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const v = params.get('view')
+      if (v === 'admin' || v === 'upload' || v === 'analysis' || v === 'rewrite' || v === 'plans') {
+        setNavView(v as any)
+      }
+    }
+  }, [hydrate, setNavView])
 
   // If user is logged in, force app screen
   const effectiveScreen: Screen = user ? 'app' : screen
