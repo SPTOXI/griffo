@@ -453,16 +453,20 @@ export function AdminView() {
     }
   }
 
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch =
-      u.name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase())
+  const safeUsers = Array.isArray(users) ? users : []
+  const safeSearch = (search || '').toLowerCase()
+
+  const filteredUsers = safeUsers.filter((u) => {
+    if (!u) return false
+    const nameMatch = u.name ? u.name.toLowerCase().includes(safeSearch) : false
+    const emailMatch = u.email ? u.email.toLowerCase().includes(safeSearch) : false
+    const matchesSearch = !safeSearch || nameMatch || emailMatch
     const matchesPlan = planFilter === 'all' || u.plan === planFilter
     return matchesSearch && matchesPlan
   })
 
   const toggleSelectAll = () => {
-    const selectableUsers = filteredUsers.filter((u) => u.role !== 'admin')
+    const selectableUsers = filteredUsers.filter((u) => u && u.role !== 'admin')
     if (selectedUserIds.length === selectableUsers.length) {
       setSelectedUserIds([])
     } else {
@@ -479,14 +483,14 @@ export function AdminView() {
   }
 
   // Credit Finance Stats Calculation
-  const totalRevenueBrl = metrics?.financial.totalRevenueBrl || 0
-  const purchasingUsersCount = users.filter((u) => u.plan !== 'free').length
-  const freeUsersCount = Math.max(0, users.length - purchasingUsersCount)
-  const conversionRate = users.length > 0 ? (purchasingUsersCount / users.length) * 100 : 0
+  const totalRevenueBrl = metrics?.financial?.totalRevenueBrl || 0
+  const purchasingUsersCount = safeUsers.filter((u) => u && u.plan !== 'free').length
+  const freeUsersCount = Math.max(0, safeUsers.length - purchasingUsersCount)
+  const conversionRate = safeUsers.length > 0 ? (purchasingUsersCount / safeUsers.length) * 100 : 0
   const ticketMédioBrl = purchasingUsersCount > 0 ? totalRevenueBrl / purchasingUsersCount : 0
 
-  const creditPriceBrl = parseFloat(configs.CREDIT_PRICE_BRL || '0.20')
-  const aiAvgCostBrl = parseFloat(configs.AI_AVG_COST_BRL || '0.05')
+  const creditPriceBrl = parseFloat(configs?.CREDIT_PRICE_BRL || '0.20')
+  const aiAvgCostBrl = parseFloat(configs?.AI_AVG_COST_BRL || '0.05')
   const baselineMarginPercent = aiAvgCostBrl > 0 ? Math.round(((creditPriceBrl - aiAvgCostBrl) / aiAvgCostBrl) * 100) : 300
 
   if (loading) {
