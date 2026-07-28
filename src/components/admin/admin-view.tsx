@@ -157,34 +157,26 @@ export function AdminView() {
   const loadData = async (isInitial = false) => {
     if (isInitial) setLoading(true)
     try {
-      const [uRes, mRes, cRes, aiRes, keysRes] = await Promise.all([
-        fetch('/api/admin/users'),
-        fetch('/api/admin/metrics'),
-        fetch('/api/admin/settings'),
-        fetch('/api/admin/ai-metrics'),
-        fetch('/api/admin/ai-keys'),
-      ])
+      const res = await fetch('/api/admin/dashboard')
+      const data = await res.json().catch(() => ({}))
 
-      const [uData, mData, cData, aiData, keysData] = await Promise.all([
-        uRes.json().catch(() => ({})),
-        mRes.json().catch(() => ({})),
-        cRes.json().catch(() => ({})),
-        aiRes.json().catch(() => ({})),
-        keysRes.json().catch(() => ({})),
-      ])
+      if (data.error) {
+        toast.error(data.error)
+        return
+      }
 
-      if (uData.users) setUsers(uData.users)
-      if (mData.metrics) setMetrics(mData.metrics)
-      if (cData.config) {
+      if (data.users) setUsers(data.users)
+      if (data.metrics) setMetrics(data.metrics)
+      if (data.config) {
         setConfigs((prev) => ({
           STRIPE_SECRET_KEY: 'sk_test_51Twl2qCj91meBoFNJ99PxV9bodntxDv0BK2nfLcyZhbYgI4lXOnAsVryex8W0aWaddG6vNmATEL5na3NDj0SftMI00sxKXm9Od',
           STRIPE_PUBLISHABLE_KEY: 'pk_test_51Twl2qCj91meBoFNPM3CvKk9GSu8bTh9z8UxUfs5lWfOPRJM9DYkbNxqYz3XvBe4hPxG3dWHQSum54ePTmv8sGmE00IONktykv',
           ...prev,
-          ...cData.config,
+          ...data.config,
         }))
       }
-      if (aiData.costs) setAiMetrics(aiData)
-      if (keysData.keys) setAiKeys(keysData.keys)
+      if (data.aiMetrics) setAiMetrics(data.aiMetrics)
+      if (data.keys) setAiKeys(data.keys)
     } catch (e) {
       toast.error('Erro ao carregar dados administrativos')
     } finally {
