@@ -1,5 +1,5 @@
 import { db } from '../db'
-import { ModelBenchmarkItem, ProviderId } from './types'
+import { ModelBenchmarkItem, OperationalFailureItem, ProviderId } from './types'
 import { PROVIDER_CONFIGS } from './registry'
 
 export async function getAiMetricsData() {
@@ -49,6 +49,33 @@ export async function getAiMetricsData() {
   let totalAiCostUsd = 0
   let totalAiCalls = 0
   let totalFailovers = auditFailovers
+  let totalErrors = 0
+
+  const failureLogs = logs.filter((l) => l.status === 'error' || l.errorMessage)
+  totalErrors = failureLogs.length
+
+  const failureUserIds = Array.from(new Set(failureLogs.map((l) => l.userId).filter(Boolean))) as string[]
+  const failureUsers =
+    failureUserIds.length > 0
+      ? await db.user.findMany({
+          where: { id: { in: failureUserIds } },
+          select: { id: true, email: true, name: true },
+        })
+      : []
+  const userEmailMap = new Map(failureUsers.map((u) => [u.id, u.email || u.name || u.id]))
+
+  const operationalFailures: OperationalFailureItem[] = failureLogs.slice(0, 50).map((l) => ({
+    id: l.id,
+    createdAt: l.createdAt.toISOString(),
+    taskType: l.taskType,
+    primaryModel: l.primaryModel,
+    provider: l.provider,
+    status: l.status,
+    failoverCount: l.failoverCount,
+    errorMessage: l.errorMessage,
+    userId: l.userId,
+    userEmail: l.userId ? userEmailMap.get(l.userId) || l.userId : 'Anônimo / Sistema',
+  }))
 
   for (const log of logs) {
     totalAiCalls++
@@ -152,6 +179,7 @@ export async function getAiMetricsData() {
     usage: {
       totalAiCalls,
       totalFailovers,
+      totalErrors,
       callsByProvider,
       callsByTask,
       latencyByProvider: Object.fromEntries(
@@ -171,5 +199,6 @@ export async function getAiMetricsData() {
       topUsers,
     },
     benchmarks: benchmarkTable,
+    operationalFailures,
   }
 }

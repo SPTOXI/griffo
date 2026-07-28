@@ -88,17 +88,17 @@ export async function POST(req: Request) {
       provider: routerResult.usedProvider,
     })
   } catch (e: any) {
-    console.error('rewrite error', e)
+    console.error('rewrite error:', e?.diagnostic || e?.message || e)
     if (deducted) {
       try {
         const user = await getCurrentUser()
         if (user) {
-          const refundRes = await refundCredits(user.id, costCredits, `Falha na IA: ${e?.message || 'Erro de execução'}`)
+          const refundRes = await refundCredits(user.id, costCredits, 'Falha no processamento de IA')
           return NextResponse.json(
             {
-              error: `Ocorreu uma falha durante o processamento da IA (${e?.message || 'Erro de conexão'}). Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente!`,
+              error: `Ocorreu uma falha durante o processamento da IA. Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente!`,
               refunded: true,
-              currentBalance: refundRes.newBalance,
+              currentBalance: refundRes.currentBalance,
             },
             { status: 500 }
           )
@@ -107,6 +107,6 @@ export async function POST(req: Request) {
         console.error('Failed to refund credits:', refundErr)
       }
     }
-    return NextResponse.json({ error: e?.message || 'Erro ao reescrever currículo.' }, { status: 500 })
+    return NextResponse.json({ error: 'Ocorreu um erro ao reescrever o currículo. Tente novamente em instantes.' }, { status: 500 })
   }
 }

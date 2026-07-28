@@ -141,9 +141,18 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
     // Fallback to env
   }
 
-  // Fallback for Moonshot AI model if model is 'kimi-k3' (Moonshot API requires 'moonshot-v1-8k' or 'moonshot-v1-32k')
+  // Auto-correct common model naming mismatches configured in DB/env
   if (providerId === 'kimi' && (model === 'kimi-k3' || !model)) {
     model = 'moonshot-v1-8k'
+  }
+  if (providerId === 'claude' && (model === 'claude-3-5-sonnet' || !model)) {
+    model = 'claude-3-5-sonnet-20241022'
+  }
+  if (providerId === 'deepseek' && (model === 'deepseek v3' || model === 'deepseek-v3' || !model)) {
+    model = 'deepseek-v4-pro'
+  }
+  if (providerId === 'gemini' && (model === 'gemini-pro' || !model)) {
+    model = 'gemini-1.5-flash'
   }
 
   return {

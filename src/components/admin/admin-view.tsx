@@ -63,6 +63,19 @@ interface BenchmarkItem {
   failoverCount: number
 }
 
+interface OperationalFailure {
+  id: string
+  createdAt: string
+  taskType: string
+  primaryModel: string
+  provider: string
+  status: string
+  failoverCount: number
+  errorMessage: string | null
+  userId?: string | null
+  userEmail?: string | null
+}
+
 interface AiMetricsData {
   costs: {
     totalAiCostUsd: number
@@ -75,6 +88,7 @@ interface AiMetricsData {
   usage: {
     totalAiCalls: number
     totalFailovers: number
+    totalErrors?: number
     callsByProvider: Record<string, number>
     callsByTask: Record<string, number>
     latencyByProvider: Record<string, number>
@@ -85,6 +99,7 @@ interface AiMetricsData {
     topUsers: Array<{ userId: string; email: string; costUsd: number; calls: number }>
   }
   benchmarks: BenchmarkItem[]
+  operationalFailures?: OperationalFailure[]
 }
 
 export function AdminView() {
@@ -1342,7 +1357,7 @@ export function AdminView() {
 
         {/* AI TELEMETRY TAB */}
         <TabsContent value="ai-router" className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <Card className="bg-gradient-to-br from-slate-900 to-slate-950 text-white">
               <CardContent className="p-4 space-y-1">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">Roteamento Inteligente</p>
@@ -1363,7 +1378,14 @@ export function AdminView() {
               <CardContent className="p-4 space-y-1">
                 <p className="text-xs font-medium text-slate-500">Failovers Automáticos</p>
                 <p className="text-xl font-bold text-slate-900">{aiMetrics?.usage.totalFailovers || 0}</p>
-                <p className="text-[10px] text-slate-400">Sem impacto no usuário</p>
+                <p className="text-[10px] text-slate-400">Recuperado via redundância</p>
+              </CardContent>
+            </Card>
+            <Card className={aiMetrics?.usage?.totalErrors ? "border-rose-200 bg-rose-50/20" : ""}>
+              <CardContent className="p-4 space-y-1">
+                <p className="text-xs font-medium text-slate-500">Falhas Operacionais</p>
+                <p className="text-xl font-bold text-rose-600">{aiMetrics?.usage.totalErrors || 0}</p>
+                <p className="text-[10px] text-slate-400">Log de erros gravado em BD</p>
               </CardContent>
             </Card>
           </div>
@@ -1412,6 +1434,62 @@ export function AdminView() {
                       <tr>
                         <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
                           Nenhuma chamada de IA registrada no histórico recente.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* OPERATIONAL FAILURE LOG TABLE FOR ADMIN ANALYSIS */}
+          <Card className="border-rose-200">
+            <CardHeader className="pb-3 bg-rose-50/30">
+              <CardTitle className="text-base flex items-center gap-2 text-rose-950">
+                <AlertCircle className="w-5 h-5 text-rose-600" /> Log de Análise de Falhas Operacionais de IA
+              </CardTitle>
+              <CardDescription>
+                Registro técnico detalhado das falhas de provedores/APIs. Oculto dos usuários finais para segurança.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-y border-slate-200">
+                    <tr>
+                      <th className="px-4 py-3">Data / Hora</th>
+                      <th className="px-4 py-3">Tarefa</th>
+                      <th className="px-4 py-3">Provedor Principal</th>
+                      <th className="px-4 py-3">Usuário</th>
+                      <th className="px-4 py-3">Diagnóstico por Provedor</th>
+                      <th className="px-4 py-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {aiMetrics?.operationalFailures && aiMetrics.operationalFailures.length > 0 ? (
+                      aiMetrics.operationalFailures.map((fail) => (
+                        <tr key={fail.id} className="hover:bg-slate-50/50">
+                          <td className="px-4 py-3 font-mono text-[11px] text-slate-600 whitespace-nowrap">
+                            {new Date(fail.createdAt).toLocaleString('pt-BR')}
+                          </td>
+                          <td className="px-4 py-3 font-medium text-slate-900">{fail.taskType}</td>
+                          <td className="px-4 py-3 uppercase text-[10px] font-bold text-slate-500">{fail.provider}</td>
+                          <td className="px-4 py-3 text-slate-600 truncate max-w-[150px]">{fail.userEmail || fail.userId || 'N/A'}</td>
+                          <td className="px-4 py-3 font-mono text-[11px] text-rose-700 bg-rose-50/50 p-2 rounded max-w-[420px] break-words">
+                            {fail.errorMessage || 'Falha não especificada'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge className="bg-rose-100 text-rose-800 border-none font-semibold uppercase text-[10px]">
+                              FALHA OPERACIONAL
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
+                          Nenhuma falha operacional de IA registrada no histórico.
                         </td>
                       </tr>
                     )}

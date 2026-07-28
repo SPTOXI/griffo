@@ -56,3 +56,17 @@ export interface ModelBenchmarkItem {
   successRatePct: number
   failoverCount: number
 }
+
+export interface OperationalFailureItem {
+  id: string
+  createdAt: string
+  taskType: string
+  primaryModel: string
+  provider: string
+  status: string
+  failoverCount: number
+  errorMessage: string | null
+  userId?: string | null
+  userEmail?: string | null
+}
+

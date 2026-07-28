@@ -9,6 +9,7 @@ import {
 } from './registry'
 
 export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
+  const taskStartTime = Date.now()
   // Determine primary provider for task
   const primaryProviderId = INITIAL_TASK_ROUTING[req.taskType] || 'kimi'
   const primaryRuntime = await getProviderRuntimeConfig(primaryProviderId)
@@ -180,8 +181,50 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
     }
   }
 
-  // If all attempts failed, throw detailed diagnostic error
+  // If all attempts failed, record operational failure log in DB for analysis and throw clean user-safe error
   const diagSummary = attemptDiagnostics.join(' | ')
   const detailedError = `Falha ao processar com as IAs ativas. Diagnóstico por provedor: [${diagSummary}]`
-  throw new Error(detailedError)
+  const totalLatencyMs = Date.now() - taskStartTime
+
+  try {
+    await db.aiLog.create({
+      data: {
+        userId: req.userId || null,
+        taskType: req.taskType,
+        primaryModel: primaryRuntime.model,
+        usedModel: 'ALL_PROVIDERS_FAILED',
+        provider: primaryProviderId,
+        tokensIn: 0,
+        tokensOut: 0,
+        costUsd: 0,
+        responseTimeMs: totalLatencyMs,
+        status: 'error',
+        failoverCount,
+        errorMessage: diagSummary,
+      },
+    })
+
+    await db.auditLog.create({
+      data: {
+        userId: req.userId || null,
+        resumeId: req.resumeId || null,
+        action: 'ai_error',
+        meta: JSON.stringify({
+          taskType: req.taskType,
+          primaryProvider: primaryProviderId,
+          attemptDiagnostics,
+          summary: diagSummary,
+        }),
+      },
+    })
+  } catch (logErr) {
+    console.error('Failed to log operational AI error:', logErr)
+  }
+
+  console.error('[AI Router Error] Operational failure across all providers:', detailedError)
+
+  const userSafeError: any = new Error('Falha ao processar com as IAs ativas.')
+  userSafeError.diagnostic = detailedError
+  userSafeError.attemptDiagnostics = attemptDiagnostics
+  throw userSafeError
 }
