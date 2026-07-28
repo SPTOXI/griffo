@@ -151,11 +151,11 @@ export function AdminView() {
   }
 
   useEffect(() => {
-    loadData()
+    loadData(true)
   }, [])
 
-  const loadData = async () => {
-    setLoading(true)
+  const loadData = async (isInitial = false) => {
+    if (isInitial) setLoading(true)
     try {
       const [uRes, mRes, cRes, aiRes, keysRes] = await Promise.all([
         fetch('/api/admin/users'),
@@ -185,13 +185,10 @@ export function AdminView() {
       }
       if (aiData.costs) setAiMetrics(aiData)
       if (keysData.keys) setAiKeys(keysData.keys)
-
-      // Trigger background health check test for all AI APIs
-      runAiTest()
     } catch (e) {
       toast.error('Erro ao carregar dados administrativos')
     } finally {
-      setLoading(false)
+      if (isInitial) setLoading(false)
     }
   }
 
