@@ -71,6 +71,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
             system: req.systemPrompt,
             messages: [{ role: 'user', content: req.userPrompt }],
           }),
+          signal: AbortSignal.timeout(10000),
         })
 
         const data = await res.json()
@@ -89,7 +90,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         const client = new OpenAI({
           apiKey: runtime.apiKey,
           baseURL: runtime.baseURL,
-          timeout: 25000, // 25s timeout per call
+          timeout: 10000, // 10s timeout per call
         })
 
         const completion = await client.chat.completions.create({

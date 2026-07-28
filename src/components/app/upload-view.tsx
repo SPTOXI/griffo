@@ -358,7 +358,6 @@ export function UploadView() {
           <FileText className="w-4 h-4 text-slate-500 mt-0.5 shrink-0" />
           <div className="text-xs text-slate-600 space-y-1">
             <p><strong>O que será analisado:</strong> estrutura, resumo, resultados (STAR/XYZ), hard/soft skills, palavras-chave ATS, trajetória de carreira, sugestão de cursos/capacitação e otimização de presença digital global (LinkedIn, Gupy, Behance, GitHub, etc.).</p>
-            <p><strong>Tempo estimado:</strong> 15–30 segundos. <strong>Custo real da análise:</strong> ~ R$ 0,12 (você não paga nada no plano gratuito).</p>
           </div>
         </CardContent>
       </Card>
