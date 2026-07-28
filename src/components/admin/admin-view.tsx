@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -103,6 +104,7 @@ interface AiMetricsData {
 }
 
 export function AdminView() {
+  const { user, hydrated } = useAuth()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [aiKeys, setAiKeys] = useState<AiApiKeyItem[]>([])
   const [metrics, setMetrics] = useState<Metrics | null>(null)
@@ -135,7 +137,7 @@ export function AdminView() {
   const runAiTest = async () => {
     setTestingAi(true)
     try {
-      const res = await fetch('/api/admin/ai-test')
+      const res = await fetch('/api/admin/ai-test', { cache: 'no-store' })
       const data = await res.json()
       if (data.results) {
         setAiTestResults(data.results)
@@ -151,13 +153,15 @@ export function AdminView() {
   }
 
   useEffect(() => {
-    loadData(true)
-  }, [])
+    if (hydrated && user?.role === 'admin') {
+      loadData(true)
+    }
+  }, [hydrated, user?.role])
 
   const loadData = async (isInitial = false) => {
     if (isInitial) setLoading(true)
     try {
-      const res = await fetch('/api/admin/dashboard')
+      const res = await fetch('/api/admin/dashboard', { cache: 'no-store' })
       const data = await res.json().catch(() => ({}))
 
       if (data.error) {

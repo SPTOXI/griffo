@@ -15,14 +15,17 @@ export default function Home() {
 
   useEffect(() => {
     hydrate()
-    if (typeof window !== 'undefined') {
+  }, [])
+
+  useEffect(() => {
+    if (hydrated && typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const v = params.get('view')
       if (v === 'admin' || v === 'upload' || v === 'analysis' || v === 'rewrite' || v === 'plans') {
         setNavView(v as any)
       }
     }
-  }, [hydrate, setNavView])
+  }, [hydrated, setNavView])
 
   // If user is logged in, force app screen
   const effectiveScreen: Screen = user ? 'app' : screen

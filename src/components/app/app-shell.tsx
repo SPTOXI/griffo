@@ -35,17 +35,17 @@ const NAV_ITEMS: { view: AppView; label: string; icon: any }[] = [
 ]
 
 export function AppShell({ onExit }: { onExit: () => void }) {
-  const { user, logout } = useAuth()
+  const { user, logout, hydrated } = useAuth()
   const { view, setView } = useNav()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [credits, setCredits] = useState<number>(user?.credits ?? 20)
   const [activePaymentSession, setActivePaymentSession] = useState<{ sessionId: string; expectedCredits?: number } | null>(null)
 
   useEffect(() => {
-    if (user && user.role !== 'admin' && view === 'admin') {
+    if (hydrated && user && user.role !== 'admin' && view === 'admin') {
       setView('dashboard')
     }
-  }, [user, view, setView])
+  }, [hydrated, user, view, setView])
 
   useEffect(() => {
     if (user?.role === 'admin') return
@@ -283,7 +283,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           {view === 'history' && <HistoryView />}
           {view === 'plans' && <PlansView />}
           {view === 'settings' && <SettingsView />}
-          {view === 'admin' && (user?.role === 'admin' ? <AdminView /> : <Dashboard />)}
+          {view === 'admin' && <AdminView />}
         </main>
       </div>
 
