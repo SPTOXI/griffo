@@ -164,8 +164,8 @@ export function UploadView() {
       })
       const adata = await ar.json().catch(() => ({}))
       if (!ar.ok) {
-        toast.error(adata.error || 'Ocorreu uma falha ao gerar a análise.')
-        openResume(data.resume.id, 'analysis')
+        setError(adata.error || 'Ocorreu uma falha ao gerar a análise.')
+        setLoading(false)
         return
       }
       openResume(data.resume.id, 'analysis')

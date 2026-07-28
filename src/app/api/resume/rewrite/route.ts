@@ -89,20 +89,17 @@ export async function POST(req: Request) {
     })
   } catch (e: any) {
     console.error('rewrite error:', e?.diagnostic || e?.message || e)
-    if (deducted) {
+    if (deducted && user?.id) {
       try {
-        const user = await getCurrentUser()
-        if (user) {
-          const refundRes = await refundCredits(user.id, costCredits, 'Falha no processamento de IA')
-          return NextResponse.json(
-            {
-              error: `Ocorreu uma falha durante o processamento da IA. Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente!`,
-              refunded: true,
-              currentBalance: refundRes.currentBalance,
-            },
-            { status: 500 }
-          )
-        }
+        const refundRes = await refundCredits(user.id, costCredits, 'Falha no processamento de IA')
+        return NextResponse.json(
+          {
+            error: `Ocorreu uma falha durante o processamento da IA. Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente!`,
+            refunded: true,
+            currentBalance: refundRes.currentBalance,
+          },
+          { status: 500 }
+        )
       } catch (refundErr) {
         console.error('Failed to refund credits:', refundErr)
       }
