@@ -141,25 +141,28 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
     // Fallback to env
   }
 
+  let trimmedModel = model.trim()
+  const lowerModel = trimmedModel.toLowerCase()
+
   // Auto-correct common model naming mismatches configured in DB/env
-  if (providerId === 'kimi' && (model === 'kimi-k3' || !model)) {
-    model = 'moonshot-v1-8k'
+  if (providerId === 'kimi' && (lowerModel.includes('kimi') || !trimmedModel)) {
+    trimmedModel = 'moonshot-v1-8k'
   }
-  if (providerId === 'claude' && (model === 'claude-3-5-sonnet' || !model)) {
-    model = 'claude-3-5-sonnet-20241022'
+  if (providerId === 'claude' && (lowerModel === 'claude-3-5-sonnet' || !trimmedModel)) {
+    trimmedModel = 'claude-3-5-sonnet-20241022'
   }
-  if (providerId === 'deepseek' && (model === 'deepseek v3' || model === 'deepseek-v3' || !model)) {
-    model = 'deepseek-v4-pro'
+  if (providerId === 'deepseek' && (lowerModel.includes('v3') || lowerModel === 'deepseek-chat' || !trimmedModel)) {
+    trimmedModel = 'deepseek-v4-pro'
   }
-  if (providerId === 'gemini' && (model === 'gemini-pro' || !model)) {
-    model = 'gemini-1.5-flash'
+  if (providerId === 'gemini' && (lowerModel === 'gemini-pro' || !trimmedModel)) {
+    trimmedModel = 'gemini-1.5-flash'
   }
 
   return {
     providerId,
     apiKey: apiKey.trim(),
     baseURL: baseURL.trim(),
-    model: model.trim(),
+    model: trimmedModel,
     pricing: base.pricing,
   }
 }
