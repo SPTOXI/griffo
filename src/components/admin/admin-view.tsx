@@ -1365,22 +1365,22 @@ export function AdminView() {
               <CardContent className="p-4 space-y-1">
                 <p className="text-xs font-medium text-slate-500">Custo Médio / Análise</p>
                 <p className="text-xl font-bold text-slate-900">
-                  R$ {((aiMetrics?.costs.avgCostPerAnalysisUsd || 0) * 5.4).toFixed(3)}
+                  R$ {((aiMetrics?.costs?.avgCostPerAnalysisUsd || 0) * 5.4).toFixed(3)}
                 </p>
-                <p className="text-[10px] text-slate-400">${(aiMetrics?.costs.avgCostPerAnalysisUsd || 0).toFixed(4)} USD</p>
+                <p className="text-[10px] text-slate-400">${(aiMetrics?.costs?.avgCostPerAnalysisUsd || 0).toFixed(4)} USD</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4 space-y-1">
                 <p className="text-xs font-medium text-slate-500">Failovers Automáticos</p>
-                <p className="text-xl font-bold text-slate-900">{aiMetrics?.usage.totalFailovers || 0}</p>
+                <p className="text-xl font-bold text-slate-900">{aiMetrics?.usage?.totalFailovers || 0}</p>
                 <p className="text-[10px] text-slate-400">Recuperado via redundância</p>
               </CardContent>
             </Card>
             <Card className={aiMetrics?.usage?.totalErrors ? "border-rose-200 bg-rose-50/20" : ""}>
               <CardContent className="p-4 space-y-1">
                 <p className="text-xs font-medium text-slate-500">Falhas Operacionais</p>
-                <p className="text-xl font-bold text-rose-600">{aiMetrics?.usage.totalErrors || 0}</p>
+                <p className="text-xl font-bold text-rose-600">{aiMetrics?.usage?.totalErrors || 0}</p>
                 <p className="text-[10px] text-slate-400">Log de erros gravado em BD</p>
               </CardContent>
             </Card>
