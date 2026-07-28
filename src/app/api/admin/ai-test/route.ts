@@ -44,13 +44,16 @@ export async function GET() {
           results[pId] = {
             status: 'SUCCESS',
             latencyMs: Date.now() - startTime,
-            response: data.content?.[0]?.text || data,
+            response: data.content?.[0]?.text || 'OK',
+            model: config.model,
           }
         } else {
+          const errMsg = data.error?.message || data.message || JSON.stringify(data)
           results[pId] = {
             status: 'FAILED',
             httpCode: res.status,
-            error: data.error || data,
+            errorMessage: errMsg,
+            model: config.model,
           }
         }
       } else {
@@ -68,16 +71,16 @@ export async function GET() {
         results[pId] = {
           status: 'SUCCESS',
           latencyMs: Date.now() - startTime,
-          response: completion.choices?.[0]?.message?.content,
+          response: completion.choices?.[0]?.message?.content || 'OK',
+          model: config.model,
         }
       }
     } catch (err: any) {
       results[pId] = {
         status: 'FAILED',
         httpCode: err?.status || err?.code || 500,
-        errorName: err?.name,
-        errorMessage: err?.message,
-        errorDetails: err?.error || err,
+        errorMessage: err?.message || 'Erro de conexão ou resposta inválida',
+        model: config.model,
       }
     }
   }

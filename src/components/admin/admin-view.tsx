@@ -185,6 +185,9 @@ export function AdminView() {
       }
       if (aiData.costs) setAiMetrics(aiData)
       if (keysData.keys) setAiKeys(keysData.keys)
+
+      // Trigger background health check test for all AI APIs
+      runAiTest()
     } catch (e) {
       toast.error('Erro ao carregar dados administrativos')
     } finally {
@@ -1389,6 +1392,83 @@ export function AdminView() {
               </CardContent>
             </Card>
           </div>
+
+          {/* LIVE HEALTH CHECK FOR ALL AI PROVIDERS */}
+          <Card className="border-indigo-100 bg-gradient-to-r from-slate-900 to-indigo-950 text-white">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2 text-white">
+                  <Activity className="w-5 h-5 text-emerald-400" /> Diagnóstico de Conexão das APIs (Health Check)
+                </CardTitle>
+                <CardDescription className="text-slate-300">
+                  Status operacional em tempo real de cada API de IA cadastrada.
+                </CardDescription>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={runAiTest}
+                disabled={testingAi}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white border-none font-bold shrink-0 shadow-sm"
+              >
+                {testingAi ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1.5" />}
+                Testar Conexão com Todas as IAs Agora
+              </Button>
+            </CardHeader>
+            <CardContent className="pt-2 pb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                {['kimi', 'deepseek', 'claude', 'gemini'].map((pId) => {
+                  const res = aiTestResults?.[pId]
+                  const provNames: Record<string, string> = {
+                    kimi: 'Kimi (Moonshot)',
+                    deepseek: 'DeepSeek AI',
+                    claude: 'Claude (Anthropic)',
+                    gemini: 'Google Gemini',
+                  }
+
+                  let statusBg = 'bg-slate-800/80 border-slate-700 text-slate-300'
+                  let badgeText = 'NÃO TESTADO'
+                  let badgeColor = 'bg-slate-700 text-slate-200'
+
+                  if (testingAi) {
+                    badgeText = 'TESTANDO...'
+                    badgeColor = 'bg-indigo-600 text-white animate-pulse'
+                  } else if (res) {
+                    if (res.status === 'SUCCESS') {
+                      statusBg = 'bg-emerald-950/60 border-emerald-700/60 text-emerald-100'
+                      badgeText = `OPERACIONAL (${res.latencyMs || 0}ms)`
+                      badgeColor = 'bg-emerald-600 text-white font-bold'
+                    } else if (res.status === 'SKIPPED') {
+                      statusBg = 'bg-amber-950/40 border-amber-800/50 text-amber-200'
+                      badgeText = 'SEM CHAVE'
+                      badgeColor = 'bg-amber-600 text-white font-bold'
+                    } else {
+                      statusBg = 'bg-rose-950/60 border-rose-700/60 text-rose-100'
+                      badgeText = `FALHA (HTTP ${res.httpCode || 'ERR'})`
+                      badgeColor = 'bg-rose-600 text-white font-bold'
+                    }
+                  }
+
+                  return (
+                    <div key={pId} className={`p-3 rounded-lg border text-xs space-y-2 ${statusBg}`}>
+                      <div className="flex items-center justify-between font-semibold">
+                        <span>{provNames[pId]}</span>
+                        <Badge className={`${badgeColor} text-[10px]`}>{badgeText}</Badge>
+                      </div>
+                      {res?.model && (
+                        <p className="text-[10px] text-slate-300 font-mono">Modelo: {res.model}</p>
+                      )}
+                      {res?.errorMessage && (
+                        <p className="text-[10px] text-rose-300 font-mono bg-rose-950/80 p-2 rounded break-words">
+                          {res.errorMessage}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader className="pb-3">
