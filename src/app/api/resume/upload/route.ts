@@ -4,12 +4,12 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 
 const schema = z.object({
-  content: z.string().default(''),
-  format: z.enum(['text', 'markdown', 'pdf']).default('text'),
-  title: z.string().optional(),
-  socialLinks: z.record(z.string(), z.string()).optional(),
-  socialConsent: z.boolean().default(false),
-  pdfBase64: z.string().optional(),
+  content: z.string().nullable().optional().default(''),
+  format: z.enum(['text', 'markdown', 'pdf']).nullable().optional().default('text'),
+  title: z.string().nullable().optional(),
+  socialLinks: z.record(z.string(), z.string()).nullable().optional(),
+  socialConsent: z.boolean().nullable().optional().default(false),
+  pdfBase64: z.string().nullable().optional(),
 })
 
 async function parsePdfBuffer(buffer: Buffer): Promise<string> {

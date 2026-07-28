@@ -142,11 +142,11 @@ export function UploadView() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content,
-          format,
-          title,
+          format: format || 'text',
+          title: title || undefined,
           socialLinks,
-          socialConsent,
-          pdfBase64,
+          socialConsent: socialConsent || false,
+          ...(pdfBase64 ? { pdfBase64 } : {}),
         }),
       })
       const data = await r.json().catch(() => ({}))
