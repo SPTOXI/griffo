@@ -4,12 +4,31 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 
 const schema = z.object({
-  content: z.string().min(80).max(30000),
+  content: z.string().default(''),
   format: z.enum(['text', 'markdown', 'pdf']).default('text'),
   title: z.string().optional(),
   socialLinks: z.record(z.string(), z.string()).optional(),
   socialConsent: z.boolean().default(false),
+  pdfBase64: z.string().optional(),
 })
+
+async function parsePdfBuffer(buffer: Buffer): Promise<string> {
+  try {
+    const pdfParse = require('pdf-parse')
+    if (typeof pdfParse === 'function') {
+      const res = await pdfParse(buffer)
+      return res.text || ''
+    }
+    if (pdfParse.PDFParse) {
+      const parser = new pdfParse.PDFParse({ data: buffer })
+      const res = await parser.getText()
+      return typeof res === 'string' ? res : res?.text || ''
+    }
+  } catch (e: any) {
+    console.error('Failed to parse PDF buffer:', e?.message || e)
+  }
+  return ''
+}
 
 export async function POST(req: Request) {
   try {
@@ -27,7 +46,25 @@ export async function POST(req: Request) {
       )
     }
 
-    const { content, format, socialLinks, socialConsent } = parsed.data
+    const { format, socialLinks, socialConsent, pdfBase64 } = parsed.data
+    let content = parsed.data.content
+
+    // Server-side PDF extraction if pdfBase64 is supplied
+    if (pdfBase64) {
+      const cleanBase64 = pdfBase64.replace(/^data:application\/pdf;base64,/, '')
+      const buffer = Buffer.from(cleanBase64, 'base64')
+      const extractedText = await parsePdfBuffer(buffer)
+      if (extractedText && extractedText.trim().length >= 30) {
+        content = extractedText.trim()
+      }
+    }
+
+    if (!content || content.trim().length < 50) {
+      return NextResponse.json(
+        { error: 'Conteúdo do currículo muito curto. Forneça pelo menos 50 caracteres de texto.' },
+        { status: 400 }
+      )
+    }
 
     const resume = await db.resume.create({
       data: {

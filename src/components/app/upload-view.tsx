@@ -49,47 +49,42 @@ export function UploadView() {
   ])
   const [socialConsent, setSocialConsent] = useState(true)
 
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const charCount = content.length
   const maxChars = 20000
-  const minChars = 80
+  const minChars = 30
 
   const handleFile = async (file: File) => {
     setError(null)
-    if (file.size > 2 * 1024 * 1024) {
-      setError('Arquivo muito grande (máx. 2MB).')
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Arquivo muito grande (máx. 5MB).')
       return
     }
 
     if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
-      try {
-        setLoading(true)
-        const arrayBuffer = await file.arrayBuffer()
-        const pdfParseModule: any = await import('pdf-parse')
-        const pdfParse = pdfParseModule.default || pdfParseModule
-        const data = await pdfParse(Buffer.from(arrayBuffer))
-        
-        if (!data.text || data.text.trim().length < minChars) {
-          setError('Não foi possível extrair o texto do PDF ou o conteúdo é muito curto.')
-          return
-        }
-
-        setContent(data.text)
-        setFormat('text')
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const result = String(e.target?.result || '')
+        setPdfBase64(result)
+        setFormat('pdf')
         if (!title) setTitle(file.name.replace(/\.pdf$/i, ''))
-        toast.success('Texto do PDF extraído com sucesso!')
-      } catch (err) {
-        console.error('Erro ao ler PDF:', err)
-        setError('Não foi possível ler o arquivo PDF. Tente copiar e colar o texto diretamente.')
-      } finally {
-        setLoading(false)
+        setContent((prev) =>
+          prev.trim().length >= minChars
+            ? prev
+            : `[Arquivo PDF Anexado: ${file.name}] - O texto será processado e analisado automaticamente.`
+        )
+        toast.success('Arquivo PDF anexado com sucesso!')
       }
+      reader.onerror = () => setError('Não foi possível ler o arquivo PDF.')
+      reader.readAsDataURL(file)
       return
     }
 
+    setPdfBase64(null)
     const reader = new FileReader()
     reader.onload = (e) => {
       const text = String(e.target?.result || '')
@@ -121,12 +116,12 @@ export function UploadView() {
 
   const submit = async () => {
     setError(null)
-    if (content.length < minChars) {
-      setError(`Currículo muito curto. Cole pelo menos ${minChars} caracteres.`)
+    if (!pdfBase64 && content.length < minChars) {
+      setError(`Currículo muito curto. Cole pelo menos ${minChars} caracteres de texto.`)
       return
     }
     if (content.length > maxChars) {
-      setError(`Currículo muito longo (máx. ${maxChars} caracteres).`)
+      setError(`Currículo muito longo (máx. ${maxChars.toLocaleString('pt-BR')} caracteres).`)
       return
     }
     setLoading(true)
@@ -151,29 +146,31 @@ export function UploadView() {
           title,
           socialLinks,
           socialConsent,
+          pdfBase64,
         }),
       })
-      const data = await r.json()
+      const data = await r.json().catch(() => ({}))
       if (!r.ok) {
-        setError(data.error || 'Erro ao salvar.')
+        setError(data.error || 'Erro ao salvar currículo.')
+        setLoading(false)
         return
       }
-      toast.success('Currículo enviado! Iniciando análise…')
-      
+      toast.success('Currículo enviado! Gerando laudo de análise…')
+
       const ar = await fetch('/api/resume/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resumeId: data.resume.id }),
       })
-      const adata = await ar.json()
+      const adata = await ar.json().catch(() => ({}))
       if (!ar.ok) {
-        setError(adata.error || 'Falha ao analisar.')
+        toast.error(adata.error || 'Ocorreu uma falha ao gerar a análise.')
         openResume(data.resume.id, 'analysis')
         return
       }
       openResume(data.resume.id, 'analysis')
     } catch (e: any) {
-      setError('Erro de conexão.')
+      setError('Erro de conexão ao enviar o currículo.')
     } finally {
       setLoading(false)
     }
