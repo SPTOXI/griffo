@@ -6,12 +6,16 @@ import { getAiMetricsData } from '@/lib/ai-router/metrics'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  const startTime = Date.now()
+  console.log('[API Admin Dashboard] Iniciando processamento da requisição GET /api/admin/dashboard')
   try {
     const admin = await getAdminUser()
     if (!admin) {
+      console.warn('[API Admin Dashboard] Acesso negado: usuário não é administrado ou sessão inválida.')
       return NextResponse.json({ error: 'Acesso restrito a administradores.' }, { status: 403 })
     }
 
+    console.log(`[API Admin Dashboard] Administrador autenticado (${admin.email}). Executando consultas no banco de dados...`)
     const [users, totalUsers, totalResumes, activeSubscriptions, tokenStats, revenueStats, configsRaw, aiMetrics, rawKeys] = await Promise.all([
       db.user.findMany({
         orderBy: { createdAt: 'desc' },
@@ -45,8 +49,14 @@ export async function GET() {
       }),
       db.systemConfig.findMany(),
       getAiMetricsData().catch((e) => {
-        console.warn('getAiMetricsData failed gracefully:', e)
-        return null
+        console.error('[API Admin Dashboard Error] getAiMetricsData falhou:', e)
+        return {
+          costs: { totalAiCostUsd: 0, totalAiCostBrl: 0, avgCostPerUserUsd: 0, avgCostPerAnalysisUsd: 0, costByProvider: {}, costByTask: {} },
+          usage: { totalAiCalls: 0, totalFailovers: 0, callsByProvider: {}, callsByTask: {}, latencyByProvider: {} },
+          rankings: { topTasks: [], topModels: [], topUsers: [] },
+          benchmarks: [],
+          operationalFailures: []
+        }
       }),
       db.aiApiKey.findMany({
         orderBy: { createdAt: 'desc' },
@@ -75,6 +85,9 @@ export async function GET() {
       maskedKey: k.apiKey.length > 8 ? `${k.apiKey.slice(0, 4)}...${k.apiKey.slice(-4)}` : '****',
     }))
 
+    const duration = Date.now() - startTime
+    console.log(`[API Admin Dashboard] Concluído com sucesso em ${duration}ms. Retornando ${users.length} usuários e ${keys.length} chaves de IA.`)
+
     return NextResponse.json({
       users,
       metrics: {
@@ -97,7 +110,7 @@ export async function GET() {
       keys,
     })
   } catch (e: any) {
-    console.error('admin dashboard get error', e)
-    return NextResponse.json({ error: 'Erro ao carregar dados do painel administrativo.' }, { status: 500 })
+    console.error('[API Admin Dashboard ERRO FATAL]', e?.message || e, e?.stack)
+    return NextResponse.json({ error: 'Erro ao carregar dados do painel administrativo: ' + (e?.message || 'Falha desconhecida no banco') }, { status: 500 })
   }
 }

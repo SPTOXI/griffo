@@ -30,6 +30,11 @@ async function parsePdfBuffer(buffer: Buffer): Promise<string> {
   return ''
 }
 
+export async function OPTIONS(req: Request) {
+  // Respond to preflight requests for CORS
+  return new Response(null, { status: 200, headers: { 'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } })
+}
+
 export async function POST(req: Request) {
   try {
     const user = await getCurrentUser()
@@ -89,5 +94,24 @@ export async function POST(req: Request) {
   } catch (e: any) {
     console.error('upload error', e)
     return NextResponse.json({ error: 'Erro ao salvar currículo.' }, { status: 500 })
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 })
+    }
+
+    const resumes = await db.resume.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    return NextResponse.json({ resumes })
+  } catch (e: any) {
+    console.error('fetch resumes error', e)
+    return NextResponse.json({ error: 'Erro ao buscar currículos.' }, { status: 500 })
   }
 }

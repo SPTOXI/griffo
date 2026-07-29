@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,9 +10,47 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Shield, Users, CreditCard, Cpu, Search, Loader2, Save, RefreshCw, Activity,
-  BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag
+  BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles
 } from 'lucide-react'
 import { toast } from 'sonner'
+
+class AdminErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error }
+  }
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('[AdminErrorBoundary] Capturado erro fatal no AdminView:', error, errorInfo)
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-6 max-w-2xl mx-auto my-10 bg-rose-50 border-2 border-rose-300 rounded-2xl text-rose-950 space-y-4 shadow-lg">
+          <div className="flex items-center gap-3 border-b border-rose-200 pb-3">
+            <AlertCircle className="w-8 h-8 text-rose-600 shrink-0" />
+            <div>
+              <h2 className="text-lg font-extrabold">Erro ao renderizar Área Admin</h2>
+              <p className="text-xs text-rose-700">O sistema capturou uma exceção durante o processamento do painel.</p>
+            </div>
+          </div>
+          <div className="bg-rose-950 text-rose-100 p-3 rounded-lg font-mono text-xs overflow-x-auto">
+            <p className="font-bold text-amber-300">{this.state.error?.name || 'Error'}: {this.state.error?.message || 'Erro desconhecido'}</p>
+            <pre className="mt-2 text-[10px] opacity-80 whitespace-pre-wrap">{this.state.error?.stack}</pre>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={() => window.location.reload()} className="bg-white hover:bg-rose-100 text-rose-900 border-rose-300">
+              <RefreshCw className="w-4 h-4 mr-2" /> Recarregar Página
+            </Button>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 interface AdminUser {
   id: string
@@ -104,6 +142,14 @@ interface AiMetricsData {
 }
 
 export function AdminView() {
+  return (
+    <AdminErrorBoundary>
+      <AdminViewContent />
+    </AdminErrorBoundary>
+  )
+}
+
+function AdminViewContent() {
   const { user, hydrated } = useAuth()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [aiKeys, setAiKeys] = useState<AiApiKeyItem[]>([])
@@ -153,18 +199,33 @@ export function AdminView() {
   }
 
   useEffect(() => {
+    console.log('[AdminView:Step1] useEffect verificado -> hydrated:', hydrated, '| user role:', user?.role)
     if (hydrated && user?.role === 'admin') {
       loadData(true)
     }
   }, [hydrated, user?.role])
 
   const loadData = async (isInitial = false) => {
+    console.log('[AdminView:Step2] Iniciando carga de dados -> /api/admin/dashboard (isInitial:', isInitial, ')')
     if (isInitial) setLoading(true)
     try {
       const res = await fetch('/api/admin/dashboard', { cache: 'no-store' })
-      const data = await res.json().catch(() => ({}))
+      console.log('[AdminView:Step2] Retorno HTTP status:', res.status)
+      const data = await res.json().catch((err) => {
+        console.error('[AdminView:Erro] Falha ao processar JSON da API:', err)
+        return {}
+      })
+
+      console.log('[AdminView:Step3] Dados recebidos com sucesso:', {
+        hasUsers: !!data.users,
+        usersCount: data.users?.length,
+        hasMetrics: !!data.metrics,
+        hasAiMetrics: !!data.aiMetrics,
+        hasConfig: !!data.config
+      })
 
       if (data.error) {
+        console.error('[AdminView:Erro] API retornou erro:', data.error)
         toast.error(data.error)
         return
       }
@@ -182,9 +243,11 @@ export function AdminView() {
       if (data.aiMetrics) setAiMetrics(data.aiMetrics)
       if (data.keys) setAiKeys(data.keys)
     } catch (e) {
+      console.error('[AdminView:Erro] Exceção em loadData:', e)
       toast.error('Erro ao carregar dados administrativos')
     } finally {
       if (isInitial) setLoading(false)
+      console.log('[AdminView:Step3] Carga finalizada (loading = false)')
     }
   }
 
@@ -485,17 +548,20 @@ export function AdminView() {
   const conversionRate = safeUsers.length > 0 ? (purchasingUsersCount / safeUsers.length) * 100 : 0
   const ticketMédioBrl = purchasingUsersCount > 0 ? totalRevenueBrl / purchasingUsersCount : 0
 
-  const creditPriceBrl = parseFloat(configs?.CREDIT_PRICE_BRL || '0.20')
-  const aiAvgCostBrl = parseFloat(configs?.AI_AVG_COST_BRL || '0.05')
+  const creditPriceBrl = parseFloat(configs?.CREDIT_PRICE_BRL || '0.20') || 0.20
+  const aiAvgCostBrl = parseFloat(configs?.AI_AVG_COST_BRL || '0.05') || 0.05
   const baselineMarginPercent = aiAvgCostBrl > 0 ? Math.round(((creditPriceBrl - aiAvgCostBrl) / aiAvgCostBrl) * 100) : 300
 
   if (loading) {
+    console.log('[AdminView:Render] Modo Loading em exibição...')
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-slate-500" />
       </div>
     )
   }
+
+  console.log('[AdminView:Step4] Renderizando interface final (sem erro)')
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -1076,7 +1142,7 @@ export function AdminView() {
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-slate-600">Custo Estimado de IA (Consumo)</span>
                   <span className="font-mono text-slate-700 font-semibold">
-                    R$ {((aiMetrics?.costs.totalAiCostUsd || 0) * 5.4).toFixed(2)}
+                    R$ {((aiMetrics?.costs?.totalAiCostUsd || 0) * 5.4).toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
