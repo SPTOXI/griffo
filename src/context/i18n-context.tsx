@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { DICTIONARIES, Language, TranslationDictionary, detectBrowserLanguage } from '@/lib/i18n'
+import { internalFetch } from '@/lib/internal-fetch'
 
 interface I18nContextType {
   lang: Language
@@ -29,7 +30,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     }
 
     // 2. Fetch server-side country detection from edge
-    fetch('/api/i18n/geo')
+    internalFetch('/api/i18n/geo')
       .then((r) => r.json())
       .then((data) => {
         if (data.country) setDetectedCountry(data.country)

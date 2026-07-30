@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Upload, FileSearch, FileEdit, Download, CreditCard, ArrowRight, Sparkles, TrendingUp, Clock, AlertCircle } from 'lucide-react'
+import { internalFetch } from '@/lib/internal-fetch'
 
 interface ResumeListItem {
   id: string
@@ -22,7 +23,7 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/resume/upload', { cache: 'no-store' })
+    internalFetch('/api/resume/upload', { credentials: 'include', cache: 'no-store' })
       .then(r => r.json())
       .then(d => { setResumes(d.resumes || []); setLoading(false) })
       .catch(() => setLoading(false))

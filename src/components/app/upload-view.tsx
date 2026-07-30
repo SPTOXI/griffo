@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Upload, FileText, Sparkles, Loader2, CheckCircle2, AlertCircle, Info, Share2, Globe, CheckSquare, Square, Plus, Trash2
 } from 'lucide-react'
+import { internalFetch } from '@/lib/internal-fetch'
 import { toast } from 'sonner'
 
 export interface CustomSocialField {
@@ -137,7 +138,7 @@ export function UploadView() {
     }
 
     try {
-      const r = await fetch('/api/resume/upload', {
+      const r = await internalFetch('/api/resume/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -157,7 +158,7 @@ export function UploadView() {
       }
       toast.success('Currículo enviado! Gerando laudo de análise…')
 
-      const ar = await fetch('/api/resume/analyze', {
+      const ar = await internalFetch('/api/resume/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resumeId: data.resume.id }),

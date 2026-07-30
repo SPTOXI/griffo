@@ -1,6 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
+import { internalFetch } from '@/lib/internal-fetch'
 
 export interface AuthUser {
   id: string
@@ -35,7 +36,7 @@ export const useAuth = create<AuthState>((set, get) => ({
   setLoading: (b) => set({ loading: b }),
   hydrate: async () => {
     try {
-      const r = await fetch('/api/auth/me', { cache: 'no-store' })
+      const r = await internalFetch('/api/auth/me')
       const data = await r.json()
       set({ user: data.user || null, hydrated: true })
     } catch {
@@ -43,7 +44,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     }
   },
   logout: async () => {
-    try { await fetch('/api/auth/logout', { method: 'POST' }) } catch {}
+    try { await internalFetch('/api/auth/logout', { method: 'POST' }) } catch {}
     set({ user: null })
   },
 }))

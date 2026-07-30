@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { User, Shield, Bell, Lock, Users, Eye, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { internalFetch } from '@/lib/internal-fetch'
 
 export function SettingsView() {
   const { user, hydrate, logout } = useAuth()
@@ -24,7 +25,7 @@ export function SettingsView() {
   const saveProfile = async () => {
     setSaving(true)
     try {
-      const r = await fetch('/api/user/settings', {
+      const r = await internalFetch('/api/user/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, profession }),
@@ -45,7 +46,7 @@ export function SettingsView() {
     setRecruiterOptIn(checked)
     if (!checked) setProfileVisible(false)
     try {
-      await fetch('/api/user/settings', {
+      await internalFetch('/api/user/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recruiterOptIn: checked, profileVisible: false }),
@@ -63,7 +64,7 @@ export function SettingsView() {
   const toggleProfileVisible = async (checked: boolean) => {
     setProfileVisible(checked)
     try {
-      await fetch('/api/user/settings', {
+      await internalFetch('/api/user/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profileVisible: checked }),

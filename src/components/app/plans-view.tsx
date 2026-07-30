@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth, useNav } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { internalFetch } from '@/lib/internal-fetch'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CreditCard, Check, Loader2, Sparkles, Zap, CheckCircle2, ShoppingBag, FileSearch, Edit3, ArrowRight, Info } from 'lucide-react'
@@ -34,22 +35,18 @@ export function PlansView() {
   }, [])
 
   const loadCreditsData = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const r = await fetch('/api/credits/balance')
-      const data = await r.json()
-      if (typeof data.credits === 'number') {
-        setCredits(data.credits)
-      }
-      if (Array.isArray(data.transactions)) {
-        setTransactions(data.transactions)
-      }
+      const r = await internalFetch('/api/credits/balance');
+      const data = await r.json();
+      if (typeof data.credits === 'number') setCredits(data.credits);
+      if (Array.isArray(data.transactions)) setTransactions(data.transactions);
     } catch {
-      toast.error('Erro ao carregar saldo de créditos.')
+      toast.error('Erro ao carregar saldo de créditos.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleBuy = async (packageId: 'entrada' | 'starter' | 'carreira' | 'profissional') => {
     setBuyingId(packageId)
@@ -58,7 +55,7 @@ export function PlansView() {
       const display = pkgObj ? getPackagePriceDisplay(pkgObj, detectedCountry, lang) : null
       const targetCurrency = display ? display.code.toLowerCase() : 'brl'
 
-      const r = await fetch('/api/credits/purchase', {
+      const r = await internalFetch('/api/credits/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ packageId, currency: targetCurrency }),
@@ -69,7 +66,7 @@ export function PlansView() {
         return
       }
       if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl
+        window.location.assign(data.checkoutUrl);
         return
       }
 

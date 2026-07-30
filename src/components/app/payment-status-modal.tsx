@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { CheckCircle2, Loader2, AlertTriangle, ShieldCheck, Sparkles, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { internalFetch } from '@/lib/internal-fetch'
 import { Badge } from '@/components/ui/badge'
 
 interface PaymentStatusModalProps {
@@ -38,7 +39,7 @@ export function PaymentStatusModal({ sessionId, expectedCredits, onComplete, onC
       setStep2Status('loading')
 
       try {
-        const res = await fetch('/api/credits/verify-session', {
+        const res = await internalFetch('/api/credits/verify-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId }),

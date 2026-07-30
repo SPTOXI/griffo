@@ -66,7 +66,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
             'content-type': 'application/json',
           },
           body: JSON.stringify({
-            model: runtime.model || 'claude-3-5-sonnet-20241022',
+            model: runtime.model || 'claude-sonnet-5',
             max_tokens: req.maxTokens ?? 3500,
             system: req.systemPrompt,
             messages: [{ role: 'user', content: req.userPrompt }],

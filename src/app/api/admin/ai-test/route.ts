@@ -34,7 +34,7 @@ export async function GET() {
             'content-type': 'application/json',
           },
           body: JSON.stringify({
-            model: config.model || 'claude-3-5-sonnet-20241022',
+            model: config.model || 'claude-sonnet-5',
             max_tokens: 10,
             messages: [{ role: 'user', content: 'Responder: OK' }],
           }),

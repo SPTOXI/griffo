@@ -11,6 +11,7 @@ import {
   Download, FileText, FileType, Loader2, AlertCircle, Lock, CheckCircle2, FileSearch, FileEdit, ArrowRight
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { internalFetch } from '@/lib/internal-fetch'
 
 interface ResumeListItem {
   id: string
@@ -42,7 +43,7 @@ export function DownloadsView() {
   const loadList = async (preferId?: string) => {
     setLoading(true)
     try {
-      const r = await fetch('/api/resume/upload', { cache: 'no-store' })
+      const r = await internalFetch('/api/resume/upload', { cache: 'no-store' })
       const data = await r.json()
       setResumes(data.resumes || [])
       if (preferId) {
@@ -59,7 +60,7 @@ export function DownloadsView() {
 
   const loadStatus = async (id: string) => {
     try {
-      const r = await fetch(`/api/resume/${id}?id=${id}`, { cache: 'no-store' })
+      const r = await internalFetch(`/api/resume/${id}?id=${id}`, { cache: 'no-store' })
       const data = await r.json()
       if (r.ok && data.resume) {
         setStatusInfo({
@@ -79,7 +80,7 @@ export function DownloadsView() {
     }
     setDownloading(type)
     try {
-      const r = await fetch(`/api/resume/download?resumeId=${selected}&type=${type}`)
+      const r = await internalFetch(`/api/resume/download?resumeId=${selected}&type=${type}`)
       if (!r.ok) {
         const data = await r.json().catch(() => ({}))
         if (data.code === 'PLAN_REQUIRED') {

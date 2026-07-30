@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth, useNav } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { internalFetch } from '@/lib/internal-fetch'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -36,22 +37,28 @@ export function RewriteView() {
 
   useEffect(() => {
     if (activeResumeId) {
-      loadResume(activeResumeId)
+      loadResume(activeResumeId);
     } else {
-      fetch('/api/resume/upload', { cache: 'no-store' })
-        .then(r => r.json())
-        .then(d => {
-          if (d.resumes?.length) loadResume(d.resumes[0].id)
-          else setLoading(false)
-        })
-        .catch(() => setLoading(false))
+      (async () => {
+        try {
+          const r = await internalFetch('/api/resume/upload', { cache: 'no-store' });
+          const d = await r.json();
+          if (d.resumes?.length) {
+            loadResume(d.resumes[0].id);
+          } else {
+            setLoading(false);
+          }
+        } catch {
+          setLoading(false);
+        }
+      })();
     }
   }, [activeResumeId])
 
   const loadResume = async (id: string) => {
     setLoading(true)
     try {
-      const r = await fetch(`/api/resume/${id}?id=${id}`, { cache: 'no-store' })
+      const r = await internalFetch(`/api/resume/${id}?id=${id}`, { cache: 'no-store' })
       const data = await r.json()
       if (r.ok) setResume(data.resume)
     } finally {
@@ -68,7 +75,7 @@ export function RewriteView() {
     setRewriting(true)
     setError(null)
     try {
-      const r = await fetch('/api/resume/rewrite', {
+      const r = await internalFetch('/api/resume/rewrite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resumeId: resume.id, authorized: true }),
@@ -96,7 +103,7 @@ export function RewriteView() {
   const confirmRewrite = async () => {
     if (!resume) return
     try {
-      const r = await fetch('/api/resume/rewrite', {
+      const r = await internalFetch('/api/resume/rewrite', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resumeId: resume.id, action: 'confirm' }),
@@ -112,7 +119,7 @@ export function RewriteView() {
   const rejectRewrite = async () => {
     if (!resume) return
     try {
-      const r = await fetch('/api/resume/rewrite', {
+      const r = await internalFetch('/api/resume/rewrite', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resumeId: resume.id, action: 'reject' }),

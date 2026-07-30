@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useNav } from '@/store/auth'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { internalFetch } from '@/lib/internal-fetch'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { History, Trash2, FileSearch, FileEdit, Download, Upload } from 'lucide-react'
@@ -24,19 +25,21 @@ export function HistoryView() {
 
   const load = () => {
     setLoading(true)
-    fetch('/api/resume/upload', { cache: 'no-store' })
+    internalFetch('/api/resume/upload', { cache: 'no-store' })
       .then(r => r.json())
       .then(d => setResumes(d.resumes || []))
       .finally(() => setLoading(false))
-  }
+  };
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load();
+  }, []);
 
   const del = async (id: string) => {
     if (!confirm('Excluir este currículo permanentemente? Esta ação não pode ser desfeita.')) return
     setDeleting(id)
     try {
-      const r = await fetch(`/api/resume/${id}?id=${id}`, { method: 'DELETE' })
+      const r = await internalFetch(`/api/resume/${id}?id=${id}`, { method: 'DELETE' })
       if (r.ok) {
         toast.success('Currículo excluído.')
         load()

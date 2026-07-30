@@ -5,7 +5,7 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   kimi: {
     id: 'kimi',
     name: 'Kimi K3 (Moonshot AI)',
-    defaultModel: 'moonshot-v1-8k',
+    defaultModel: 'kimi-k3',
     baseURL: 'https://api.moonshot.ai/v1',
     apiKeyEnvVar: 'MOONSHOT_API_KEY',
     pricing: {
@@ -16,7 +16,7 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   claude: {
     id: 'claude',
     name: 'Claude (Anthropic)',
-    defaultModel: 'claude-3-5-sonnet-20241022',
+    defaultModel: 'claude-sonnet-5',
     baseURL: 'https://api.anthropic.com/v1',
     apiKeyEnvVar: 'ANTHROPIC_API_KEY',
     pricing: {
@@ -38,7 +38,7 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   gemini: {
     id: 'gemini',
     name: 'Google Gemini',
-    defaultModel: 'gemini-1.5-flash',
+    defaultModel: 'gemini-2.5-flash',
     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
     apiKeyEnvVar: 'GEMINI_API_KEY',
     pricing: {
@@ -145,17 +145,17 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
   const lowerModel = trimmedModel.toLowerCase()
 
   // Auto-correct common model naming mismatches configured in DB/env
-  if (providerId === 'kimi' && (lowerModel.includes('kimi') || !trimmedModel)) {
-    trimmedModel = 'moonshot-v1-8k'
+  if (providerId === 'kimi' && (lowerModel === 'moonshot-v1-8k' || lowerModel.startsWith('moonshot-v1') || !trimmedModel)) {
+    trimmedModel = 'kimi-k3'
   }
-  if (providerId === 'claude' && (lowerModel === 'claude-3-5-sonnet' || !trimmedModel)) {
-    trimmedModel = 'claude-3-5-sonnet-20241022'
+  if (providerId === 'claude' && (lowerModel === 'claude-3-5-sonnet' || lowerModel === 'claude-3-5-sonnet-20241022' || !trimmedModel)) {
+    trimmedModel = 'claude-sonnet-5'
   }
   if (providerId === 'deepseek' && (lowerModel.includes('v3') || lowerModel === 'deepseek-chat' || !trimmedModel)) {
     trimmedModel = 'deepseek-v4-pro'
   }
-  if (providerId === 'gemini' && (lowerModel === 'gemini-pro' || !trimmedModel)) {
-    trimmedModel = 'gemini-1.5-flash'
+  if (providerId === 'gemini' && (lowerModel === 'gemini-pro' || lowerModel === 'gemini-1.5-flash' || !trimmedModel)) {
+    trimmedModel = 'gemini-2.5-flash'
   }
 
   return {

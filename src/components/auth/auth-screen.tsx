@@ -9,6 +9,7 @@ import { FileText, ArrowLeft, Mail, Lock, User, Briefcase, Loader2, AlertCircle,
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
 import { LanguageSelector } from '@/components/ui/language-selector'
+import { internalFetch } from '@/lib/internal-fetch'
 
 type Mode = 'login' | 'signup'
 
@@ -32,11 +33,11 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
       const body = mode === 'login'
         ? { email, password }
         : { name, email, password, profession: profession || undefined }
-      const r = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
+      const r = await internalFetch(endpoint, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body)
+});
       const data = await r.json()
       if (!r.ok) {
         setError(data.error || 'Falha na operação')

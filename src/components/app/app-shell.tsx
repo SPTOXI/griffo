@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { internalFetch } from '@/lib/internal-fetch';
 import { useAuth, useNav, AppView } from '@/store/auth'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -49,7 +50,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
 
   useEffect(() => {
     if (user?.role === 'admin') return
-    fetch('/api/credits/balance')
+    internalFetch('/api/credits/balance')
       .then((r) => r.json())
       .then((data) => {
         if (typeof data.credits === 'number') {
@@ -75,7 +76,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
       } else if (paymentStatus === 'success' && !sessionId) {
         toast.success(`🎉 Pagamento confirmado! Créditos adicionados.`)
         window.history.replaceState({}, document.title, window.location.pathname)
-        fetch('/api/credits/balance')
+        internalFetch('/api/credits/balance')
           .then((r) => r.json())
           .then((data) => {
             if (typeof data.credits === 'number') setCredits(data.credits)

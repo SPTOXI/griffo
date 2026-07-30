@@ -14,6 +14,7 @@ import {
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
 } from 'recharts'
+import { internalFetch } from '@/lib/internal-fetch'
 
 interface SocialAdvice {
   platform: string
@@ -57,7 +58,7 @@ export function AnalysisView() {
     if (activeResumeId) {
       loadResume(activeResumeId)
     } else {
-      fetch('/api/resume/upload', { cache: 'no-store' })
+      internalFetch('/api/resume/upload')
         .then(r => r.json())
         .then(d => {
           if (d.resumes?.length) {
@@ -75,7 +76,7 @@ export function AnalysisView() {
     setLoading(true)
     setError(null)
     try {
-      const r = await fetch(`/api/resume/${id}?id=${id}`, { cache: 'no-store' })
+      const r = await internalFetch(`/api/resume/${id}?id=${id}`, { cache: 'no-store' })
       const data = await r.json()
       if (!r.ok) {
         setError(data.error || 'Erro ao carregar.')
@@ -94,11 +95,13 @@ export function AnalysisView() {
     setAnalyzing(true)
     setError(null)
     try {
-      const r = await fetch('/api/resume/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeId: resume.id }),
-      })
+      const r = await internalFetch('/api/resume/analyze', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ resumeId: resume.id })
+})
+
+
       const data = await r.json()
       if (!r.ok) {
         setError(data.error || 'Falha ao reanalisar.')

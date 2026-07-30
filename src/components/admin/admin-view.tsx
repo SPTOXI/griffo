@@ -13,6 +13,7 @@ import {
   BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { internalFetch } from '@/lib/internal-fetch';
 
 class AdminErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: React.ReactNode }) {
@@ -171,7 +172,7 @@ function AdminViewContent() {
   // New API Key form state
   const [newKeyName, setNewKeyName] = useState('')
   const [newKeyProvider, setNewKeyProvider] = useState('moonshot')
-  const [newKeyModel, setNewKeyModel] = useState('moonshot-v1-8k')
+  const [newKeyModel, setNewKeyModel] = useState('kimi-k3')
   const [newKeyApiKey, setNewKeyApiKey] = useState('')
   const [newKeyBaseUrl, setNewKeyBaseUrl] = useState('')
   const [addingKey, setAddingKey] = useState(false)
@@ -183,7 +184,7 @@ function AdminViewContent() {
   const runAiTest = async () => {
     setTestingAi(true)
     try {
-      const res = await fetch('/api/admin/ai-test', { cache: 'no-store' })
+      const res = await internalFetch('/api/admin/ai-test', { cache: 'no-store' })
       const data = await res.json()
       if (data.results) {
         setAiTestResults(data.results)
@@ -209,7 +210,7 @@ function AdminViewContent() {
     console.log('[AdminView:Step2] Iniciando carga de dados -> /api/admin/dashboard (isInitial:', isInitial, ')')
     if (isInitial) setLoading(true)
     try {
-      const res = await fetch('/api/admin/dashboard', { cache: 'no-store' })
+      const res = await internalFetch('/api/admin/dashboard', { cache: 'no-store' })
       console.log('[AdminView:Step2] Retorno HTTP status:', res.status)
       const data = await res.json().catch((err) => {
         console.error('[AdminView:Erro] Falha ao processar JSON da API:', err)
@@ -255,9 +256,9 @@ function AdminViewContent() {
   const handleProviderChange = (provider: string) => {
     setNewKeyProvider(provider)
     if (provider === 'moonshot') setNewKeyModel('kimi-k3')
-    else if (provider === 'anthropic') setNewKeyModel('claude-3-5-sonnet')
+    else if (provider === 'anthropic') setNewKeyModel('claude-sonnet-5')
     else if (provider === 'deepseek') setNewKeyModel('deepseek-chat')
-    else if (provider === 'gemini') setNewKeyModel('gemini-1.5-flash')
+    else if (provider === 'gemini') setNewKeyModel('gemini-2.5-flash')
   }
 
   // Register a new AI API Key
@@ -269,7 +270,7 @@ function AdminViewContent() {
     }
     setAddingKey(true)
     try {
-      const r = await fetch('/api/admin/ai-keys', {
+      const r = await internalFetch('/api/admin/ai-keys', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -290,7 +291,7 @@ function AdminViewContent() {
       setNewKeyApiKey('')
       setNewKeyBaseUrl('')
       // Reload AI Keys
-      const keysRes = await fetch('/api/admin/ai-keys')
+      const keysRes = await internalFetch('/api/admin/ai-keys')
       const keysData = await keysRes.json()
       if (keysData.keys) setAiKeys(keysData.keys)
     } catch {
@@ -304,7 +305,7 @@ function AdminViewContent() {
   const handleToggleAiKey = async (id: string, currentStatus: string) => {
     const nextStatus = currentStatus === 'active' ? 'paused' : 'active'
     try {
-      const r = await fetch('/api/admin/ai-keys', {
+      const r = await internalFetch('/api/admin/ai-keys', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status: nextStatus }),
@@ -325,7 +326,7 @@ function AdminViewContent() {
   const handleDeleteAiKey = async (id: string, name: string) => {
     if (!confirm(`Tem certeza que deseja deletar a chave de API "${name}"?`)) return
     try {
-      const r = await fetch(`/api/admin/ai-keys?id=${id}`, { method: 'DELETE' })
+      const r = await internalFetch(`/api/admin/ai-keys?id=${id}`, { method: 'DELETE' })
       const data = await r.json()
       if (!r.ok) {
         toast.error(data.error || 'Erro ao deletar chave')
@@ -341,7 +342,7 @@ function AdminViewContent() {
   // User Management Actions
   const updateUser = async (userId: string, updates: { role?: string; plan?: string; credits?: number; disabled?: boolean }) => {
     try {
-      const r = await fetch('/api/admin/users', {
+      const r = await internalFetch('/api/admin/users', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, ...updates }),
@@ -376,7 +377,7 @@ function AdminViewContent() {
     }
     if (!confirm(`Deseja realmente deletar o usuário "${user.name || user.email}"? Esta ação não pode ser desfeita.`)) return
     try {
-      const r = await fetch('/api/admin/users', {
+      const r = await internalFetch('/api/admin/users', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userIds: [user.id] }),
@@ -415,7 +416,7 @@ function AdminViewContent() {
     setActionLoading(true)
     try {
       if (action === 'delete') {
-        const r = await fetch('/api/admin/users', {
+        const r = await internalFetch('/api/admin/users', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userIds: selectedUserIds }),
@@ -432,10 +433,10 @@ function AdminViewContent() {
         const nextDisabled = action === 'disable'
         await Promise.all(
           selectedUserIds.map((id) =>
-            fetch('/api/admin/users', {
+            internalFetch('/api/admin/users', {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: id, disabled: nextDisabled }),
+              body: JSON.stringify({ userId: id, disabled: nextDisabled })
             })
           )
         )
@@ -452,7 +453,7 @@ function AdminViewContent() {
   const saveSettings = async () => {
     setSavingConfig(true)
     try {
-      const r = await fetch('/api/admin/settings', {
+      const r = await internalFetch('/api/admin/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(configs),
@@ -480,7 +481,7 @@ function AdminViewContent() {
     }
     setSyncingLemon(true)
     try {
-      const r = await fetch('/api/admin/lemonsqueezy/sync', {
+      const r = await internalFetch('/api/admin/lemonsqueezy/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -925,9 +926,9 @@ function AdminViewContent() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="moonshot">Moonshot AI (Kimi K3)</SelectItem>
-                        <SelectItem value="anthropic">Anthropic (Claude 3.5)</SelectItem>
+                        <SelectItem value="anthropic">Anthropic (Claude Sonnet 5)</SelectItem>
                         <SelectItem value="deepseek">DeepSeek (DeepSeek V3)</SelectItem>
-                        <SelectItem value="gemini">Google (Gemini 1.5)</SelectItem>
+                        <SelectItem value="gemini">Google (Gemini 2.5)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
