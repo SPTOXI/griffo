@@ -145,8 +145,15 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
   const lowerModel = trimmedModel.toLowerCase()
 
   // Auto-correct common model naming mismatches configured in DB/env
-  if (providerId === 'kimi' && (lowerModel === 'k3' || lowerModel === 'moonshot-v1-8k' || lowerModel.startsWith('moonshot-v1') || !trimmedModel)) {
-    trimmedModel = 'kimi-k3'
+  if (providerId === 'kimi') {
+    if (
+      lowerModel === 'k3' ||
+      lowerModel === 'kimi-k2.6' ||
+      lowerModel.startsWith('moonshot-v1') ||
+      !trimmedModel
+    ) {
+      trimmedModel = 'kimi-k3'
+    }
   }
   if (providerId === 'claude' && (lowerModel === 'claude-3-5-sonnet' || lowerModel === 'claude-3-5-sonnet-20241022' || !trimmedModel)) {
     trimmedModel = 'claude-sonnet-5'
