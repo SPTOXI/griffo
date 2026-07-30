@@ -258,7 +258,7 @@ function AdminViewContent() {
     if (provider === 'moonshot') setNewKeyModel('kimi-k3')
     else if (provider === 'anthropic') setNewKeyModel('claude-sonnet-5')
     else if (provider === 'deepseek') setNewKeyModel('deepseek-chat')
-    else if (provider === 'gemini') setNewKeyModel('gemini-2.5-flash')
+    else if (provider === 'gemini') setNewKeyModel('gemini-2.0-flash')
   }
 
   // Register a new AI API Key
@@ -928,7 +928,7 @@ function AdminViewContent() {
                         <SelectItem value="moonshot">Moonshot AI (Kimi K3)</SelectItem>
                         <SelectItem value="anthropic">Anthropic (Claude Sonnet 5)</SelectItem>
                         <SelectItem value="deepseek">DeepSeek (DeepSeek V3)</SelectItem>
-                        <SelectItem value="gemini">Google (Gemini 2.5)</SelectItem>
+                        <SelectItem value="gemini">Google (Gemini 2.0 Flash)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

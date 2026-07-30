@@ -38,7 +38,7 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   gemini: {
     id: 'gemini',
     name: 'Google Gemini',
-    defaultModel: 'gemini-2.5-flash',
+    defaultModel: 'gemini-2.0-flash',
     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
     apiKeyEnvVar: 'GEMINI_API_KEY',
     pricing: {
@@ -154,8 +154,8 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
   if (providerId === 'deepseek' && (lowerModel.includes('v3') || lowerModel === 'deepseek-chat' || !trimmedModel)) {
     trimmedModel = 'deepseek-v4-pro'
   }
-  if (providerId === 'gemini' && (lowerModel === 'gemini-pro' || lowerModel === 'gemini-1.5-flash' || !trimmedModel)) {
-    trimmedModel = 'gemini-2.5-flash'
+  if (providerId === 'gemini' && (lowerModel === 'gemini-pro' || lowerModel === 'gemini-1.5-flash' || lowerModel === 'gemini-2.5-flash' || !trimmedModel)) {
+    trimmedModel = 'gemini-2.0-flash'
   }
 
   return {
