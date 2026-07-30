@@ -172,7 +172,7 @@ function AdminViewContent() {
   // New API Key form state
   const [newKeyName, setNewKeyName] = useState('')
   const [newKeyProvider, setNewKeyProvider] = useState('moonshot')
-  const [newKeyModel, setNewKeyModel] = useState('kimi-k3')
+  const [newKeyModel, setNewKeyModel] = useState('k3')
   const [newKeyApiKey, setNewKeyApiKey] = useState('')
   const [newKeyBaseUrl, setNewKeyBaseUrl] = useState('')
   const [addingKey, setAddingKey] = useState(false)
@@ -255,7 +255,7 @@ function AdminViewContent() {
   // Auto set model preset on provider change
   const handleProviderChange = (provider: string) => {
     setNewKeyProvider(provider)
-    if (provider === 'moonshot') setNewKeyModel('kimi-k3')
+    if (provider === 'moonshot') setNewKeyModel('k3')
     else if (provider === 'anthropic') setNewKeyModel('claude-sonnet-5')
     else if (provider === 'deepseek') setNewKeyModel('deepseek-chat')
     else if (provider === 'gemini') setNewKeyModel('gemini-2.0-flash')
@@ -925,7 +925,7 @@ function AdminViewContent() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="moonshot">Moonshot AI (Kimi K3)</SelectItem>
+                        <SelectItem value="moonshot">Kimi Code (k3)</SelectItem>
                         <SelectItem value="anthropic">Anthropic (Claude Sonnet 5)</SelectItem>
                         <SelectItem value="deepseek">DeepSeek (DeepSeek V3)</SelectItem>
                         <SelectItem value="gemini">Google (Gemini 2.0 Flash)</SelectItem>
@@ -935,7 +935,7 @@ function AdminViewContent() {
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-700">Modelo Alvo (Model)</label>
                     <Input
-                      placeholder="kimi-k3"
+                      placeholder="k3"
                       value={newKeyModel}
                       onChange={(e) => setNewKeyModel(e.target.value)}
                       className="text-xs font-mono"
