@@ -57,9 +57,10 @@ export async function GET() {
           }
         }
       } else {
+        const cleanApiKey = config.apiKey?.trim().replace(/^["']|["']$/g, '')
         // OpenAI-compatible SDK call test
         const client = new OpenAI({
-          apiKey: config.apiKey,
+          apiKey: cleanApiKey,
           baseURL: config.baseURL,
           timeout: 10000,
         })

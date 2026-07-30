@@ -86,9 +86,18 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         tokensIn = data.usage?.input_tokens || Math.ceil((req.systemPrompt.length + req.userPrompt.length) / 4)
         tokensOut = data.usage?.output_tokens || Math.ceil(content.length / 4)
       } else {
+        if (currentProviderId === 'kimi') {
+          console.log('[KIMI DEBUG] baseURL:', runtime.baseURL)
+          console.log('[KIMI DEBUG] model:', runtime.model)
+          console.log('[KIMI DEBUG] key prefix:', runtime.apiKey?.slice(0, 15) + '...')
+          console.log('[KIMI DEBUG] key length:', runtime.apiKey?.length)
+        }
+
+        const cleanApiKey = runtime.apiKey?.trim().replace(/^["']|["']$/g, '')
+
         // OpenAI-compatible SDK for Kimi, DeepSeek, Gemini
         const client = new OpenAI({
-          apiKey: runtime.apiKey,
+          apiKey: cleanApiKey,
           baseURL: runtime.baseURL,
           timeout: 10000, // 10s timeout per call
         })

@@ -4,7 +4,7 @@ import { ProviderConfig, ProviderId, TaskType } from './types'
 export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   kimi: {
     id: 'kimi',
-    name: 'Kimi (Moonshot AI)',
+    name: 'Kimi K3 (Moonshot AI)',
     defaultModel: 'kimi-k3',
     baseURL: 'https://api.moonshot.ai/v1',
     apiKeyEnvVar: 'MOONSHOT_API_KEY',
