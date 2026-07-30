@@ -93,22 +93,15 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
           timeout: 10000, // 10s timeout per call
         })
 
-        const completionParams: any = {
+        const completion = await client.chat.completions.create({
           model: runtime.model,
           messages: [
             { role: 'system', content: req.systemPrompt },
             { role: 'user', content: req.userPrompt },
           ],
           temperature: req.temperature ?? 0.3,
-        }
-
-        if (currentProviderId === 'kimi') {
-          completionParams.max_completion_tokens = req.maxTokens ?? 3500
-        } else {
-          completionParams.max_tokens = req.maxTokens ?? 3500
-        }
-
-        const completion = await client.chat.completions.create(completionParams)
+          max_tokens: req.maxTokens ?? 3500,
+        })
 
         content = completion.choices?.[0]?.message?.content || ''
         tokensIn =

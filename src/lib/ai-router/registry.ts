@@ -4,9 +4,9 @@ import { ProviderConfig, ProviderId, TaskType } from './types'
 export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   kimi: {
     id: 'kimi',
-    name: 'Kimi Code',
-    defaultModel: 'k3',
-    baseURL: 'https://api.kimi.com/coding/v1',
+    name: 'Kimi (Moonshot AI)',
+    defaultModel: 'kimi-k3',
+    baseURL: 'https://api.moonshot.ai/v1',
     apiKeyEnvVar: 'MOONSHOT_API_KEY',
     pricing: {
       inputPer1k: 0.003, // $3.00 / 1M
@@ -145,16 +145,8 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
   const lowerModel = trimmedModel.toLowerCase()
 
   // Auto-correct common model naming mismatches configured in DB/env
-  if (providerId === 'kimi') {
-    if (
-      lowerModel === 'kimi-k3' ||
-      lowerModel === 'kimi-k2.6' ||
-      lowerModel.startsWith('kimi-k') ||
-      lowerModel.startsWith('moonshot-v1') ||
-      !trimmedModel
-    ) {
-      trimmedModel = 'k3'
-    }
+  if (providerId === 'kimi' && (lowerModel === 'k3' || lowerModel === 'moonshot-v1-8k' || lowerModel.startsWith('moonshot-v1') || !trimmedModel)) {
+    trimmedModel = 'kimi-k3'
   }
   if (providerId === 'claude' && (lowerModel === 'claude-3-5-sonnet' || lowerModel === 'claude-3-5-sonnet-20241022' || !trimmedModel)) {
     trimmedModel = 'claude-sonnet-5'
