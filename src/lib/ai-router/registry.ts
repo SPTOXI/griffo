@@ -76,6 +76,7 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   full_analysis: 'kimi',
   social_advice: 'claude',
   cover_letter: 'claude',
+  support_chat: 'deepseek',
 }
 
 // Fallback sequence if primary provider fails (Gemini disabled)

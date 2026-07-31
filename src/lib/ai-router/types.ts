@@ -5,6 +5,7 @@ export type TaskType =
   | 'full_analysis'
   | 'social_advice'
   | 'cover_letter'
+  | 'support_chat'
 
 export type ProviderId = 'gemini' | 'deepseek' | 'claude' | 'kimi'
 

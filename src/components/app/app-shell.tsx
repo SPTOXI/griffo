@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import {
   LayoutDashboard, Upload, FileSearch, FileEdit, Download, CreditCard, Settings, History,
-  LogOut, FileText, Sparkles, ChevronRight, Menu, X, Shield, Zap
+  LogOut, FileText, Sparkles, ChevronRight, Menu, X, Shield, Zap, HelpCircle
 } from 'lucide-react'
 import { Dashboard } from './dashboard'
 import { UploadView } from './upload-view'
@@ -20,6 +20,7 @@ import { DownloadsView } from './downloads-view'
 import { PlansView } from './plans-view'
 import { HistoryView } from './history-view'
 import { SettingsView } from './settings-view'
+import { SupportView } from './support-view'
 import { AdminView } from '../admin/admin-view'
 import { PaymentStatusModal } from './payment-status-modal'
 import { LanguageSelector } from '../ui/language-selector'
@@ -32,6 +33,7 @@ const NAV_ITEMS: { view: AppView; label: string; icon: any }[] = [
   { view: 'downloads', label: 'Downloads', icon: Download },
   { view: 'history', label: 'Histórico', icon: History },
   { view: 'plans', label: 'Comprar Créditos', icon: CreditCard },
+  { view: 'support', label: 'Suporte & Dúvidas', icon: HelpCircle },
   { view: 'settings', label: 'Configurações', icon: Settings },
 ]
 
@@ -283,6 +285,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           {view === 'downloads' && <DownloadsView />}
           {view === 'history' && <HistoryView />}
           {view === 'plans' && <PlansView />}
+          {view === 'support' && <SupportView />}
           {view === 'settings' && <SettingsView />}
           {view === 'admin' && <AdminView />}
         </main>

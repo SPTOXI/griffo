@@ -59,6 +59,7 @@ export type AppView =
   | 'plans'
   | 'settings'
   | 'history'
+  | 'support'
   | 'admin'
 
 interface NavState {
