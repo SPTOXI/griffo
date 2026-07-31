@@ -58,12 +58,23 @@ export async function POST(req: Request) {
 
     deducted = true
 
+    // Extract ATS keywords from analysis if present
+    let keywordsHint = ''
+    if (resume.analysisJson) {
+      try {
+        const parsedAnalysis = JSON.parse(resume.analysisJson)
+        if (Array.isArray(parsedAnalysis.keywords) && parsedAnalysis.keywords.length > 0) {
+          keywordsHint = `\n\nPalavras-Chave Estratégicas (ATS) obrigatórias a serem incorporadas organicamente na reescrita: ${parsedAnalysis.keywords.join(', ')}.`
+        }
+      } catch {}
+    }
+
     // Execute via AI Router
     const routerResult = await executeAiTask({
       taskType: 'rewrite',
       userId: user.id,
-      userPrompt: `Reescreva o seguinte currículo aplicando a fórmula STAR (Situação, Tarefa, Ação, Resultado) e a fórmula Google XYZ mantendo 100% de veracidade dos fatos:\n${resume.originalContent}`,
-      systemPrompt: 'Você é um Redator Executivo Sênior especialista em currículos de alto impacto.',
+      userPrompt: `Reescreva o seguinte currículo aplicando a fórmula STAR (Situação, Tarefa, Ação, Resultado) e a fórmula Google XYZ mantendo 100% de veracidade dos fatos.${keywordsHint}\n\nCurrículo Original:\n${resume.originalContent}`,
+      systemPrompt: 'Você é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas ATS (Gupy, LinkedIn, Workday).',
     })
 
     const updated = await db.resume.update({

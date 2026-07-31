@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
-  Download, FileText, FileType, Loader2, AlertCircle, Lock, CheckCircle2, FileSearch, FileEdit, ArrowRight
+  Download, FileText, FileType, Loader2, AlertCircle, Lock, CheckCircle2, FileSearch, FileEdit, ArrowRight, Share2, Copy
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { internalFetch } from '@/lib/internal-fetch'
@@ -71,7 +71,7 @@ export function DownloadsView() {
     } catch {}
   }
 
-  const download = async (type: 'resume_pdf' | 'resume_md' | 'analysis_pdf') => {
+  const download = async (type: 'resume_pdf' | 'resume_md' | 'resume_txt' | 'analysis_pdf' | 'social_advice_txt' | 'social_advice_md') => {
     if (!selected) return
     if (!planActive) {
       toast.error('Assine um plano para baixar.')
@@ -183,7 +183,7 @@ export function DownloadsView() {
           </Card>
 
           {selected && statusInfo && (
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* ANALYSIS PDF */}
               <Card className={!statusInfo.hasAnalysis ? 'opacity-60' : ''}>
                 <CardHeader className="pb-3">
@@ -194,7 +194,7 @@ export function DownloadsView() {
                       </div>
                       <div>
                         <CardTitle className="text-base">Laudo de análise</CardTitle>
-                        <CardDescription>PDF · nota 0–10 e detalhamento</CardDescription>
+                        <CardDescription>PDF · nota 0–10 e relatório</CardDescription>
                       </div>
                     </div>
                     {statusInfo.hasAnalysis && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
@@ -218,7 +218,7 @@ export function DownloadsView() {
                 </CardContent>
               </Card>
 
-              {/* RESUME PDF */}
+              {/* RESUME EXPORTS */}
               <Card className={!statusInfo.hasRewrite ? 'opacity-60' : ''}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -228,7 +228,7 @@ export function DownloadsView() {
                       </div>
                       <div>
                         <CardTitle className="text-base">Currículo reescrito</CardTitle>
-                        <CardDescription>PDF + Markdown · pronto para envio</CardDescription>
+                        <CardDescription>PDF, TXT e Markdown</CardDescription>
                       </div>
                     </div>
                     {statusInfo.hasRewrite && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
@@ -250,6 +250,15 @@ export function DownloadsView() {
                         Baixar PDF
                       </Button>
                       <Button
+                        onClick={() => download('resume_txt')}
+                        disabled={!!downloading || !planActive}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        {downloading === 'resume_txt' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                        Baixar Texto (.txt)
+                      </Button>
+                      <Button
                         onClick={() => download('resume_md')}
                         disabled={!!downloading || !planActive}
                         variant="outline"
@@ -262,15 +271,61 @@ export function DownloadsView() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* SOCIAL / BRANDING ADVICE EXPORTS */}
+              <Card className={!statusInfo.hasAnalysis ? 'opacity-60' : ''}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                        <Share2 className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">Presença Digital</CardTitle>
+                        <CardDescription>Otimização LinkedIn & Gupy</CardDescription>
+                      </div>
+                    </div>
+                    {statusInfo.hasAnalysis && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {!statusInfo.hasAnalysis ? (
+                    <Button variant="outline" className="w-full" onClick={() => openResume(selected, 'analysis')}>
+                      Analisar primeiro <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        onClick={() => download('social_advice_txt')}
+                        disabled={!!downloading || !planActive}
+                        variant="outline"
+                        className="w-full border-indigo-200 text-indigo-900 hover:bg-indigo-50"
+                      >
+                        {downloading === 'social_advice_txt' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                        Baixar Dicas (.txt)
+                      </Button>
+                      <Button
+                        onClick={() => download('social_advice_md')}
+                        disabled={!!downloading || !planActive}
+                        variant="outline"
+                        className="w-full border-indigo-200 text-indigo-900 hover:bg-indigo-50"
+                      >
+                        {downloading === 'social_advice_md' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                        Baixar Dicas (.md)
+                      </Button>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
 
           {/* INFO */}
           <Card className="border-slate-200 bg-slate-50">
             <CardContent className="p-4 text-xs text-slate-600 space-y-1">
-              <p><strong>PDF do laudo:</strong> documento formatado com nota geral, dimensões, pontos fortes/fracos, recomendações e palavras-chave.</p>
-              <p><strong>PDF do currículo:</strong> currículo reescrito formatado profissionalmente, pronto para enviar a recrutadores.</p>
-              <p><strong>Markdown (.md):</strong> versão editável para você ajustar no LinkedIn, portfólio ou editor de texto.</p>
+              <p><strong>PDF do laudo:</strong> documento formatado com nota geral, dimensões, pontos fortes/fracos e recomendações.</p>
+              <p><strong>Currículo reescrito (PDF / TXT / .MD):</strong> versões otimizadas prontas para envio aos recrutadores ou editáveis no seu computador.</p>
+              <p><strong>Dicas de Presença Digital (.TXT / .MD):</strong> guia prático de biografia, títulos e palavras-chave para aplicar diretamente no seu LinkedIn e Gupy.</p>
             </CardContent>
           </Card>
         </>

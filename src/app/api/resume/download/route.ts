@@ -66,6 +66,61 @@ export async function GET(req: Request) {
       })
     }
 
+    if (type === 'resume_txt') {
+      if (!resume.rewrittenContent) return NextResponse.json({ error: 'Currículo ainda não foi reescrito' }, { status: 400 })
+      // Strip basic markdown hashes and stars for clean plain text
+      const txt = resume.rewrittenContent
+        .replace(/^#+\s+/gm, '')
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/\*(.*?)\*/g, '$1')
+      const buf = Buffer.from(txt, 'utf-8')
+      const safeName = (user.name || 'curriculo').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()
+      return new NextResponse(new Uint8Array(buf), {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${safeName}_curriculo.txt"`,
+        },
+      })
+    }
+
+    if (type === 'social_advice_txt' || type === 'social_advice_md') {
+      if (!resume.analysisJson) return NextResponse.json({ error: 'Análise não disponível' }, { status: 400 })
+      const analysis = JSON.parse(resume.analysisJson)
+      const socialAdvice = Array.isArray(analysis.socialAdvice) ? analysis.socialAdvice : []
+      if (socialAdvice.length === 0) return NextResponse.json({ error: 'Nenhum conselho de rede social disponível neste laudo' }, { status: 400 })
+
+      let contentStr = `# Otimização de Presença Digital & Redes Sociais\n\n`
+      for (const item of socialAdvice) {
+        contentStr += `## ${item.platform}\n`
+        contentStr += `URL: ${item.url}\n\n`
+        if (item.headline) contentStr += `### 💡 Título Sugerido\n${item.headline}\n\n`
+        if (item.aboutSummary) contentStr += `### 📝 Texto "Sobre" / Bio\n${item.aboutSummary}\n\n`
+        if (item.tips && item.tips.length > 0) {
+          contentStr += `### 🚀 Dicas de Otimização & Algoritmo\n`
+          for (const tip of item.tips) {
+            contentStr += `- ${tip}\n`
+          }
+          contentStr += `\n`
+        }
+        contentStr += `---\n\n`
+      }
+
+      if (type === 'social_advice_txt') {
+        contentStr = contentStr.replace(/^#+\s+/gm, '').replace(/---/g, '==============')
+      }
+
+      const ext = type === 'social_advice_txt' ? 'txt' : 'md'
+      const mime = type === 'social_advice_txt' ? 'text/plain' : 'text/markdown'
+      const buf = Buffer.from(contentStr, 'utf-8')
+      const safeName = (user.name || 'presenca_digital').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()
+      return new NextResponse(new Uint8Array(buf), {
+        headers: {
+          'Content-Type': `${mime}; charset=utf-8`,
+          'Content-Disposition': `attachment; filename="${safeName}_redes_sociais.${ext}"`,
+        },
+      })
+    }
+
     if (type === 'analysis_pdf') {
       if (!resume.analysisJson) return NextResponse.json({ error: 'Análise não disponível' }, { status: 400 })
       const analysis = JSON.parse(resume.analysisJson)

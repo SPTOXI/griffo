@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   FileEdit, Loader2, AlertCircle, ShieldCheck, Lock, Sparkles, Check, X,
-  RefreshCw, Download, ArrowRight, Eye
+  RefreshCw, Download, ArrowRight, Eye, Key, Copy
 } from 'lucide-react'
 import { toast } from 'sonner'
 import ReactMarkdown from 'react-markdown'
@@ -255,6 +255,43 @@ export function RewriteView() {
               </div>
             </CardContent>
           </Card>
+
+          {/* ATS STRATEGIC KEYWORDS DEDICATED SECTION */}
+          {resume.analysis?.keywords && Array.isArray(resume.analysis.keywords) && resume.analysis.keywords.length > 0 && (
+            <Card className="border-violet-200 bg-gradient-to-r from-violet-50/50 to-indigo-50/30">
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Key className="w-4 h-4 text-violet-600 shrink-0" />
+                      <h3 className="text-sm font-bold text-violet-950">🧩 Palavras-Chave Estratégicas (ATS) Incorporadas</h3>
+                    </div>
+                    <p className="text-xs text-slate-600">
+                      Estes termos essenciais foram integrados na reescrita para garantir pontuação máxima nos robôs de triagem (Gupy, LinkedIn, Workday).
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white border-violet-200 text-violet-800 hover:bg-violet-100 text-xs shrink-0 self-start sm:self-center"
+                    onClick={() => {
+                      navigator.clipboard.writeText(resume.analysis.keywords.join(', '))
+                      toast.success('Palavras-chave copiadas!')
+                    }}
+                  >
+                    <Copy className="w-3.5 h-3.5 mr-1" /> Copiar termos
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {resume.analysis.keywords.map((kw: string, i: number) => (
+                    <Badge key={i} className="bg-violet-600 text-white font-medium hover:bg-violet-700 text-xs px-2.5 py-0.5">
+                      {kw}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowOriginal(!showOriginal)}>

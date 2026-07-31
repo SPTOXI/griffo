@@ -282,19 +282,54 @@ export function AnalysisView() {
         </CardContent>
       </Card>
 
-      {/* SOCIAL PRESENCE & ADVICE (NEW SECTION) */}
+      {/* SOCIAL PRESENCE & ADVICE (NEW DEDICATED SECTION) */}
       {a.socialAdvice && a.socialAdvice.length > 0 && (
-        <Card className="border-violet-200 bg-gradient-to-br from-white to-violet-50/30">
+        <Card className="border-violet-200 bg-gradient-to-br from-white to-violet-50/40 shadow-sm">
           <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Share2 className="w-5 h-5 text-violet-600" />
-              <div>
-                <CardTitle className="text-base text-violet-900">
-                  Otimização de Presença Digital & Perfis (LinkedIn, Gupy & Branding)
-                </CardTitle>
-                <CardDescription>
-                  Recomendações autorizadas para alinhar seus perfis online com o currículo e atrair recrutadores.
-                </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center shrink-0 border border-violet-200">
+                  <Share2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base text-violet-900 font-bold">
+                    Otimização de Presença Digital (LinkedIn, Gupy & Branding)
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-600">
+                    Recomendações técnicas personalizadas para alinhar seus perfis online ao currículo e passar pelos filtros dos recrutadores.
+                  </CardDescription>
+                </div>
+              </div>
+
+              {/* DOWNLOAD & EXPORT SOCIAL ADVICE */}
+              <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    let text = `Otimização de Presença Digital & Redes Sociais\n\n`
+                    for (const s of a.socialAdvice) {
+                      text += `[${s.platform}] ${s.url}\n`
+                      if (s.headline) text += `Título Sugerido: ${s.headline}\n`
+                      if (s.aboutSummary) text += `Texto Sobre: ${s.aboutSummary}\n`
+                      if (s.tips?.length) text += `Dicas: ${s.tips.join('; ')}\n`
+                      text += `\n`
+                    }
+                    navigator.clipboard.writeText(text)
+                    toast.success('Dicas de redes sociais copiadas para a área de transferência!')
+                  }}
+                  className="bg-white border-violet-200 text-violet-800 hover:bg-violet-50 text-xs"
+                >
+                  Copiar dicas
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openResume(resume.id, 'downloads')}
+                  className="bg-violet-600 text-white hover:bg-violet-700 text-xs"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1" /> Baixar relatórios
+                </Button>
               </div>
             </div>
           </CardHeader>
@@ -303,25 +338,51 @@ export function AnalysisView() {
               <div key={idx} className="p-4 rounded-xl bg-white border border-violet-100 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-violet-600 text-white font-semibold">{item.platform}</Badge>
+                    <Badge className="bg-violet-600 text-white font-semibold px-2.5 py-0.5">{item.platform}</Badge>
                     <span className="text-xs text-slate-500 font-mono truncate max-w-xs">{item.url}</span>
                   </div>
                 </div>
 
                 {item.headline && (
                   <div className="bg-violet-50/60 p-3 rounded-lg border border-violet-100">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-violet-800 mb-1">
-                      💡 Título Otimizado Sugerido ({item.platform})
-                    </p>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-violet-800">
+                        💡 Título Otimizado Sugerido ({item.platform})
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-[10px] px-2 text-violet-700 hover:bg-violet-100"
+                        onClick={() => {
+                          navigator.clipboard.writeText(item.headline || '')
+                          toast.success('Título copiado!')
+                        }}
+                      >
+                        Copiar título
+                      </Button>
+                    </div>
                     <p className="text-xs font-semibold text-slate-900 leading-normal">{item.headline}</p>
                   </div>
                 )}
 
                 {item.aboutSummary && (
                   <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
-                      📝 Sugestão de Texto 'Sobre' / Bio
-                    </p>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                        📝 Sugestão de Texto 'Sobre' / Bio
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-[10px] px-2 text-slate-600 hover:bg-slate-200"
+                        onClick={() => {
+                          navigator.clipboard.writeText(item.aboutSummary || '')
+                          toast.success('Texto copiado!')
+                        }}
+                      >
+                        Copiar texto
+                      </Button>
+                    </div>
                     <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{item.aboutSummary}</p>
                   </div>
                 )}
