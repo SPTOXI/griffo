@@ -112,7 +112,8 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
           max_tokens: req.maxTokens ?? 3500,
         })
 
-        content = completion.choices?.[0]?.message?.content || ''
+        const msg = completion.choices?.[0]?.message
+        content = msg?.content || (msg as any)?.reasoning_content || ''
         tokensIn =
           completion.usage?.prompt_tokens ||
           Math.ceil((req.systemPrompt.length + req.userPrompt.length) / 4)

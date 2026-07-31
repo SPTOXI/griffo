@@ -67,12 +67,14 @@ export async function GET() {
         const completion = await client.chat.completions.create({
           model: config.model,
           messages: [{ role: 'user', content: 'Responder: OK' }],
-          max_tokens: 10,
+          max_tokens: 300,
         })
+        const testMsg = completion.choices?.[0]?.message
+        const textResp = testMsg?.content || (testMsg as any)?.reasoning_content || 'OK'
         results[pId] = {
           status: 'SUCCESS',
           latencyMs: Date.now() - startTime,
-          response: completion.choices?.[0]?.message?.content || 'OK',
+          response: textResp,
           model: config.model,
         }
       }
