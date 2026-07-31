@@ -70,7 +70,7 @@ export function normalizeProviderId(raw: string): ProviderId | null {
 // - Claude: superior writing quality for rewrites and creative content
 // - Kimi: strong full-document analysis and reasoning
 export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
-  ocr_extraction: 'gemini',
+  ocr_extraction: 'deepseek',
   normalization: 'deepseek',
   rewrite: 'claude',
   full_analysis: 'kimi',
@@ -78,11 +78,11 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   cover_letter: 'claude',
 }
 
-// Fallback sequence if primary provider fails
+// Fallback sequence if primary provider fails (Gemini disabled)
 export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
-  kimi: ['deepseek', 'claude', 'gemini'],
-  claude: ['kimi', 'deepseek', 'gemini'],
-  deepseek: ['kimi', 'gemini', 'claude'],
+  kimi: ['deepseek', 'claude'],
+  claude: ['kimi', 'deepseek'],
+  deepseek: ['kimi', 'claude'],
   gemini: ['deepseek', 'kimi', 'claude'],
 }
 

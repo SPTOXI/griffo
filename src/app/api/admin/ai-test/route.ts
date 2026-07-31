@@ -11,7 +11,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 
-  const providers = ['kimi', 'deepseek', 'claude', 'gemini'] as const
+  const providers = ['kimi', 'deepseek', 'claude'] as const
   const results: Record<string, any> = {}
 
   for (const pId of providers) {
