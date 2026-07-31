@@ -29,7 +29,7 @@ export function DownloadsView() {
   const [downloading, setDownloading] = useState<string | null>(null)
   const [statusInfo, setStatusInfo] = useState<{ hasAnalysis: boolean; hasRewrite: boolean } | null>(null)
 
-  const planActive = user?.planActive
+  const canDownload = planActive || (user?.credits || 0) >= 1
 
   useEffect(() => {
     if (activeResumeId) {
@@ -73,8 +73,8 @@ export function DownloadsView() {
 
   const download = async (type: 'resume_pdf' | 'resume_md' | 'resume_txt' | 'analysis_pdf' | 'social_advice_txt' | 'social_advice_md') => {
     if (!selected) return
-    if (!planActive) {
-      toast.error('Assine um plano para baixar.')
+    if (!canDownload) {
+      toast.error('Adquira um pacote de créditos ou assine um plano para realizar downloads.')
       setView('plans')
       return
     }
@@ -83,8 +83,8 @@ export function DownloadsView() {
       const r = await internalFetch(`/api/resume/download?resumeId=${selected}&type=${type}`)
       if (!r.ok) {
         const data = await r.json().catch(() => ({}))
-        if (data.code === 'PLAN_REQUIRED') {
-          toast.error('Plano necessário para baixar.')
+        if (data.code === 'INSUFFICIENT_CREDITS' || data.code === 'PLAN_REQUIRED') {
+          toast.error('Saldo de créditos insuficiente.')
           setView('plans')
           return
         }
@@ -125,14 +125,14 @@ export function DownloadsView() {
     <div className="space-y-5 max-w-4xl">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Downloads</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Baixe o laudo e o currículo reescrito em PDF e Markdown.</p>
+        <p className="text-sm text-slate-500 mt-0.5">Baixe o laudo e o currículo reescrito em PDF, TXT e Markdown.</p>
       </div>
 
-      {!planActive && (
+      {!canDownload && (
         <Alert className="border-amber-200 bg-amber-50">
           <Lock className="w-4 h-4 text-amber-600" />
           <AlertDescription className="text-amber-900">
-            Os downloads exigem um plano ativo. <button onClick={() => setView('plans')} className="font-semibold underline">Assinar agora</button> a partir de R$ 19,90.
+            Os downloads exigem saldo de créditos ou plano ativo. <button onClick={() => setView('plans')} className="font-semibold underline">Adquirir créditos</button> a partir de R$ 9,90.
           </AlertDescription>
         </Alert>
       )}
@@ -208,7 +208,7 @@ export function DownloadsView() {
                   ) : (
                     <Button
                       onClick={() => download('analysis_pdf')}
-                      disabled={!!downloading || !planActive}
+                      disabled={!!downloading || !canDownload}
                       className="w-full bg-sky-600 hover:bg-sky-700"
                     >
                       {downloading === 'analysis_pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
@@ -243,7 +243,7 @@ export function DownloadsView() {
                     <>
                       <Button
                         onClick={() => download('resume_pdf')}
-                        disabled={!!downloading || !planActive}
+                        disabled={!!downloading || !canDownload}
                         className="w-full bg-violet-600 hover:bg-violet-700"
                       >
                         {downloading === 'resume_pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileType className="w-4 h-4 mr-2" />}
@@ -251,7 +251,7 @@ export function DownloadsView() {
                       </Button>
                       <Button
                         onClick={() => download('resume_txt')}
-                        disabled={!!downloading || !planActive}
+                        disabled={!!downloading || !canDownload}
                         variant="outline"
                         className="w-full"
                       >
@@ -260,7 +260,7 @@ export function DownloadsView() {
                       </Button>
                       <Button
                         onClick={() => download('resume_md')}
-                        disabled={!!downloading || !planActive}
+                        disabled={!!downloading || !canDownload}
                         variant="outline"
                         className="w-full"
                       >
@@ -297,7 +297,7 @@ export function DownloadsView() {
                     <>
                       <Button
                         onClick={() => download('social_advice_txt')}
-                        disabled={!!downloading || !planActive}
+                        disabled={!!downloading || !canDownload}
                         variant="outline"
                         className="w-full border-indigo-200 text-indigo-900 hover:bg-indigo-50"
                       >
@@ -306,7 +306,7 @@ export function DownloadsView() {
                       </Button>
                       <Button
                         onClick={() => download('social_advice_md')}
-                        disabled={!!downloading || !planActive}
+                        disabled={!!downloading || !canDownload}
                         variant="outline"
                         className="w-full border-indigo-200 text-indigo-900 hover:bg-indigo-50"
                       >

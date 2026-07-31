@@ -9,37 +9,94 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { User, Shield, Bell, Lock, Users, Eye, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import { User, Shield, Bell, Lock, Users, Eye, AlertCircle, CheckCircle2, Loader2, Share2, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { internalFetch } from '@/lib/internal-fetch'
+
+const AVAILABLE_PLATFORMS = [
+  'LinkedIn',
+  'Gupy',
+  'GitHub',
+  'Behance',
+  'Dribbble',
+  'StackOverflow',
+  'Kaggle',
+  'Xing',
+  'Medium / Substack',
+  'Portfólio / Site',
+  'Instagram / Redes',
+]
+
+interface CustomSocialField {
+  id: string
+  platform: string
+  url: string
+}
 
 export function SettingsView() {
   const { user, hydrate, logout } = useAuth()
   const { setView } = useNav()
   const [name, setName] = useState(user?.name || '')
   const [profession, setProfession] = useState(user?.profession || '')
+  
+  // Saved social links state
+  const initialSocial: CustomSocialField[] = user?.socialLinks
+    ? Object.entries(user.socialLinks).map(([platform, url], i) => ({ id: i.toString(), platform, url }))
+    : [
+        { id: '1', platform: 'LinkedIn', url: '' },
+        { id: '2', platform: 'Gupy', url: '' },
+        { id: '3', platform: 'GitHub', url: '' },
+      ]
+
+  const [socialProfiles, setSocialProfiles] = useState<CustomSocialField[]>(initialSocial)
   const [saving, setSaving] = useState(false)
   const [recruiterOptIn, setRecruiterOptIn] = useState(user?.recruiterOptIn || false)
   const [profileVisible, setProfileVisible] = useState(user?.profileVisible || false)
 
   const saveProfile = async () => {
     setSaving(true)
+    const socialLinksDict: Record<string, string> = {}
+    for (const p of socialProfiles) {
+      const plat = p.platform.trim()
+      const link = p.url.trim()
+      if (plat && link) {
+        socialLinksDict[plat] = link
+      }
+    }
+
     try {
       const r = await internalFetch('/api/user/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, profession }),
+        body: JSON.stringify({ name, profession, socialLinks: socialLinksDict }),
       })
       if (!r.ok) {
         const d = await r.json().catch(() => ({}))
         toast.error(d.error || 'Falha ao salvar.')
         return
       }
-      toast.success('Perfil salvo com sucesso!')
+      toast.success('Perfil e redes sociais salvas com sucesso!')
       await hydrate()
     } finally {
       setSaving(false)
     }
+  }
+
+  const addSocialProfile = () => {
+    setSocialProfiles([
+      ...socialProfiles,
+      { id: Date.now().toString(), platform: 'LinkedIn', url: '' },
+    ])
+  }
+
+  const updateSocialProfile = (id: string, field: 'platform' | 'url', value: string) => {
+    setSocialProfiles(
+      socialProfiles.map((p) => (p.id === id ? { ...p, [field]: value } : p))
+    )
+  }
+
+  const removeSocialProfile = (id: string) => {
+    setSocialProfiles(socialProfiles.filter((p) => p.id !== id))
   }
 
   const toggleOptIn = async (checked: boolean) => {
@@ -107,7 +164,65 @@ export function SettingsView() {
             <Label htmlFor="profession">Profissão</Label>
             <Input id="profession" value={profession} onChange={(e) => setProfession(e.target.value)} placeholder="Ex: Desenvolvedora Front-end" />
           </div>
-          <Button onClick={saveProfile} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
+
+          {/* SOCIAL PROFILES / WORK NETWORKS */}
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                <Share2 className="w-3.5 h-3.5 text-violet-600" />
+                Redes Sociais & Perfis Profissionais (Padrão para Análise)
+              </Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={addSocialProfile}
+                className="h-7 text-xs text-violet-700 hover:text-violet-900 hover:bg-violet-50 px-2"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar perfil
+              </Button>
+            </div>
+            <p className="text-xs text-slate-500">
+              Cadastre aqui os links do seu LinkedIn, Gupy, GitHub, etc. Eles serão preenchidos automaticamente em todas as novas análises.
+            </p>
+
+            <div className="space-y-2">
+              {socialProfiles.map((field) => (
+                <div key={field.id} className="flex items-center gap-2">
+                  <select
+                    value={field.platform}
+                    onChange={(e) => updateSocialProfile(field.id, 'platform', e.target.value)}
+                    className="h-9 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800 font-medium focus:outline-none focus:ring-1 focus:ring-violet-500 w-36 shrink-0"
+                  >
+                    {AVAILABLE_PLATFORMS.map((plat) => (
+                      <option key={plat} value={plat}>
+                        {plat}
+                      </option>
+                    ))}
+                  </select>
+                  <Input
+                    value={field.url}
+                    onChange={(e) => updateSocialProfile(field.id, 'url', e.target.value)}
+                    placeholder={`Link do seu perfil (${field.platform})`}
+                    className="h-9 text-xs flex-1"
+                  />
+                  {socialProfiles.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeSocialProfile(field.id)}
+                      className="h-9 w-9 text-slate-400 hover:text-red-600 hover:bg-red-50 shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Button onClick={saveProfile} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 mt-2">
             {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
             Salvar alterações
           </Button>

@@ -19,6 +19,7 @@ export async function GET() {
       planEndsAt: user.planEndsAt,
       recruiterOptIn: user.recruiterOptIn,
       profileVisible: user.profileVisible,
+      socialLinks: user.socialLinks ? JSON.parse(user.socialLinks) : null,
       planActive: hasActivePlan(user),
     },
   })

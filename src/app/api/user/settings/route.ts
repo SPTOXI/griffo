@@ -8,6 +8,7 @@ const schema = z.object({
   profession: z.string().max(120).optional(),
   recruiterOptIn: z.boolean().optional(),
   profileVisible: z.boolean().optional(),
+  socialLinks: z.record(z.string(), z.string()).optional(),
 })
 
 export async function PATCH(req: Request) {
@@ -22,6 +23,7 @@ export async function PATCH(req: Request) {
     const data: any = {}
     if (parsed.data.name !== undefined) data.name = parsed.data.name
     if (parsed.data.profession !== undefined) data.profession = parsed.data.profession
+    if (parsed.data.socialLinks !== undefined) data.socialLinks = JSON.stringify(parsed.data.socialLinks)
     if (parsed.data.recruiterOptIn !== undefined) {
       data.recruiterOptIn = parsed.data.recruiterOptIn
       if (!parsed.data.recruiterOptIn) data.profileVisible = false

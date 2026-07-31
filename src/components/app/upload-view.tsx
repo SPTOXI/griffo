@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { useNav } from '@/store/auth'
+import { useAuth, useNav } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -38,16 +38,21 @@ const PRESET_PLATFORMS = [
 
 export function UploadView() {
   const { openResume, setView } = useNav()
+  const { user } = useAuth()
   const [content, setContent] = useState('')
   const [title, setTitle] = useState('')
   const [format, setFormat] = useState<'text' | 'markdown'>('text')
   
-  // Dynamic Custom Social Profiles State
-  const [socialProfiles, setSocialProfiles] = useState<CustomSocialField[]>([
-    { id: '1', platform: 'LinkedIn', url: '' },
-    { id: '2', platform: 'Gupy', url: '' },
-    { id: '3', platform: 'GitHub', url: '' },
-  ])
+  // Dynamic Custom Social Profiles State - autofill from user profile if saved
+  const initialSocial: CustomSocialField[] = user?.socialLinks && Object.keys(user.socialLinks).length > 0
+    ? Object.entries(user.socialLinks).map(([platform, url], i) => ({ id: i.toString(), platform, url }))
+    : [
+        { id: '1', platform: 'LinkedIn', url: '' },
+        { id: '2', platform: 'Gupy', url: '' },
+        { id: '3', platform: 'GitHub', url: '' },
+      ]
+
+  const [socialProfiles, setSocialProfiles] = useState<CustomSocialField[]>(initialSocial)
   const [socialConsent, setSocialConsent] = useState(true)
 
   const [pdfBase64, setPdfBase64] = useState<string | null>(null)

@@ -16,6 +16,7 @@ export interface AuthUser {
   planActive?: boolean
   recruiterOptIn?: boolean
   profileVisible?: boolean
+  socialLinks?: Record<string, string> | null
 }
 
 interface AuthState {
