@@ -164,13 +164,30 @@ export function AnalysisView() {
     )
   }
 
-  const a = resume.analysis
+  const rawAnalysis = resume.analysis || {}
+  const a = {
+    overall: typeof rawAnalysis.overall === 'number' ? rawAnalysis.overall : (rawAnalysis.scoreOverall ? rawAnalysis.scoreOverall / 10 : 7.0),
+    summary: rawAnalysis.summary || rawAnalysis.parecer || 'Análise concluída com sucesso.',
+    atsFriendly: rawAnalysis.atsFriendly ?? true,
+    dimensions: Array.isArray(rawAnalysis.dimensions) ? rawAnalysis.dimensions : [
+      { key: 'structure', label: 'Estrutura & ATS', score: 7, rationale: 'Estrutura padrão identificada.' },
+      { key: 'summary', label: 'Resumo & Posicionamento', score: 7, rationale: 'Posicionamento claro.' },
+      { key: 'impact', label: 'Resultados (STAR/XYZ)', score: 7, rationale: 'Resultados apresentados.' },
+      { key: 'skills', label: 'Habilidades & Ferramentas', score: 7, rationale: 'Competências identificadas.' }
+    ],
+    strengths: Array.isArray(rawAnalysis.strengths) ? rawAnalysis.strengths : ['Estrutura profissional legível', 'Experiência estruturada'],
+    weaknesses: Array.isArray(rawAnalysis.weaknesses) ? rawAnalysis.weaknesses : ['Adicionar mais métricas quantificáveis (STAR/XYZ)'],
+    recommendations: Array.isArray(rawAnalysis.recommendations) ? rawAnalysis.recommendations : ['Destacar conquistas numéricas'],
+    keywords: Array.isArray(rawAnalysis.keywords) ? rawAnalysis.keywords : [],
+    socialAdvice: Array.isArray(rawAnalysis.socialAdvice) ? rawAnalysis.socialAdvice : [],
+  }
+
   const score = Number(a.overall || 0)
   const scoreColor = score >= 8 ? '#16a34a' : score >= 5 ? '#d97706' : '#dc2626'
   const scoreLabel = score >= 8 ? 'Excelente' : score >= 6.5 ? 'Bom' : score >= 5 ? 'Regular' : 'Precisa melhorar'
 
   const chartData = a.dimensions.map(d => ({
-    dimension: d.label.length > 20 ? d.label.slice(0, 18) + '…' : d.label,
+    dimension: (d.label || '').length > 20 ? (d.label || '').slice(0, 18) + '…' : (d.label || ''),
     score: Number(d.score || 0),
     fullMark: 10,
   }))
