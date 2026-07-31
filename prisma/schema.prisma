@@ -40,6 +40,7 @@ model User {
   auditLogs          AuditLog[]
   aiLogs             AiLog[]
   creditTransactions CreditTransaction[]
+  incidents          SystemIncident[]
 }
 
 model SystemConfig {
@@ -151,4 +152,18 @@ model AiLog {
   failoverCount  Int      @default(0)
   errorMessage   String?
   createdAt      DateTime @default(now())
+}
+
+model SystemIncident {
+  id               String   @id @default(cuid())
+  reportedByUserId String?
+  user             User?    @relation(fields: [reportedByUserId], references: [id], onDelete: SetNull)
+  title            String
+  description      String
+  severity         String   @default("medium") // low | medium | high | critical
+  status           String   @default("investigating") // investigating | auto_fixed | action_required | resolved
+  diagnosticResult String?  // JSON with simulation and test results
+  alertSent        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
 }

@@ -639,6 +639,9 @@ function AdminViewContent() {
           <TabsTrigger value="ai-router" className="gap-1.5">
             <Cpu className="w-4 h-4" /> Telemetria de IA
           </TabsTrigger>
+          <TabsTrigger value="incidents" className="gap-1.5">
+            <AlertCircle className="w-4 h-4 text-amber-600" /> Central de Agentes & Incidentes
+          </TabsTrigger>
         </TabsList>
 
         {/* USERS TAB - WITH SELECTION & ACTIONS */}
@@ -1643,7 +1646,202 @@ function AdminViewContent() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* INCIDENTS & AGENT CONTROL TAB */}
+        <TabsContent value="incidents" className="space-y-4">
+          <IncidentsAdminTab />
+        </TabsContent>
       </Tabs>
+    </div>
+  )
+}
+
+function IncidentsAdminTab() {
+  const [incidents, setIncidents] = useState<any[]>([])
+  const [alertEmail, setAlertEmail] = useState('')
+  const [alertWebhook, setAlertWebhook] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [runningDiag, setRunningDiag] = useState(false)
+  const [savingConfig, setSavingConfig] = useState(false)
+
+  const loadIncidents = async () => {
+    setLoading(true)
+    try {
+      const res = await internalFetch('/api/admin/incidents')
+      const data = await res.json()
+      if (data.incidents) setIncidents(data.incidents)
+      if (data.config) {
+        setAlertEmail(data.config.adminAlertEmail || '')
+        setAlertWebhook(data.config.adminAlertWebhook || '')
+      }
+    } catch {
+      toast.error('Erro ao carregar lista de incidentes')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadIncidents()
+  }, [])
+
+  const handleSaveConfig = async () => {
+    setSavingConfig(true)
+    try {
+      await internalFetch('/api/admin/incidents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_config', alertEmail, alertWebhook }),
+      })
+      toast.success('Canais de notificação do Admin atualizados com sucesso!')
+    } catch {
+      toast.error('Erro ao salvar canais de alerta')
+    } finally {
+      setSavingConfig(false)
+    }
+  }
+
+  const handleRunDiagnostic = async () => {
+    setRunningDiag(true)
+    try {
+      const res = await internalFetch('/api/admin/incidents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'run_diagnostic' }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        toast.success('Auto-Diagnóstico executado em tempo real!')
+        loadIncidents()
+      }
+    } catch {
+      toast.error('Falha ao executar diagnóstico')
+    } finally {
+      setRunningDiag(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* CONFIG ALERT CHANNELS */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-violet-600" /> Canais de Notificação e Mensageiro do Administrador
+          </CardTitle>
+          <CardDescription>
+            Cadastre os canais oficiais para onde o Agente 2 enviará alertas urgentes sobre erros graves.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">E-mail do Administrador (Alertas)</label>
+              <Input
+                value={alertEmail}
+                onChange={(e) => setAlertEmail(e.target.value)}
+                placeholder="admin@griffowork.com"
+                className="text-xs"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">Webhook de Mensageiro (Telegram / Discord / Slack)</label>
+              <Input
+                value={alertWebhook}
+                onChange={(e) => setAlertWebhook(e.target.value)}
+                placeholder="https://discord.com/api/webhooks/..."
+                className="text-xs font-mono"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button size="sm" onClick={handleSaveConfig} disabled={savingConfig} className="bg-violet-700 hover:bg-violet-800">
+              {savingConfig ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+              Salvar Canais de Alerta
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* INCIDENTS TABLE & AUTO-DIAGNOSTIC TRIGGER */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between py-4">
+          <div>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Activity className="w-5 h-5 text-emerald-600" /> Central de Erros & Auto-Reparo em Tempo Real
+            </CardTitle>
+            <CardDescription>
+              Relatórios de falhas detectados pelo Agente de Suporte e resultados das simulações ativas.
+            </CardDescription>
+          </div>
+          <Button size="sm" onClick={handleRunDiagnostic} disabled={runningDiag} variant="outline" className="border-emerald-300 text-emerald-900 hover:bg-emerald-50">
+            {runningDiag ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1.5" />}
+            Simular & Diagnosticar Agora
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-y border-slate-200">
+                <tr>
+                  <th className="px-4 py-3">Data / Hora</th>
+                  <th className="px-4 py-3">Usuário</th>
+                  <th className="px-4 py-3">Incidente / Relato</th>
+                  <th className="px-4 py-3">Severidade</th>
+                  <th className="px-4 py-3">Status do Agente 2</th>
+                  <th className="px-4 py-3">Alerta Enviado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {incidents.length > 0 ? (
+                  incidents.map((inc) => (
+                    <tr key={inc.id} className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3 font-mono text-[11px] text-slate-600 whitespace-nowrap">
+                        {new Date(inc.createdAt).toLocaleString('pt-BR')}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 font-medium">
+                        {inc.user?.email || inc.reportedByUserId || 'Sistema'}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-slate-900 max-w-[260px] truncate" title={inc.description}>
+                        {inc.title}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge className={`uppercase text-[10px] font-bold ${
+                          inc.severity === 'critical' ? 'bg-rose-600 text-white' :
+                          inc.severity === 'high' ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-800'
+                        }`}>
+                          {inc.severity}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge className={`uppercase text-[10px] font-semibold ${
+                          inc.status === 'auto_fixed' ? 'bg-emerald-100 text-emerald-800' :
+                          inc.status === 'action_required' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {inc.status === 'auto_fixed' ? 'AUTO-CORRIGIDO' : inc.status === 'action_required' ? 'AÇÃO REQUERIDA' : 'EM ANÁLISE'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 font-medium">
+                        {inc.alertSent ? (
+                          <span className="text-emerald-600 flex items-center gap-1 font-bold"><CheckCircle2 className="w-3.5 h-3.5" /> Sim</span>
+                        ) : (
+                          <span className="text-slate-400">Não necessário</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
+                      Nenhum incidente ativo registrado no momento. Todos os serviços estão operando normalmente.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

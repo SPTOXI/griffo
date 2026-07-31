@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
+import { db } from '@/lib/db'
+import { runDiagnosticAndHealing } from '@/lib/agents/diagnostic-agent'
 
 const schema = z.object({
   message: z.string().min(1, 'Mensagem em branco').max(1000, 'Mensagem muito longa'),
@@ -70,6 +72,29 @@ export async function POST(req: Request) {
 
     const { message, history } = parsed.data
 
+    // Detect if user is reporting a system error or failure
+    const isErrorReport = /(erro|falha|bug|travou|não funciona|quebrou|caiu|não consigo baixar|não carrega|problema|500)/i.test(message)
+    let incidentId: string | undefined
+
+    if (isErrorReport) {
+      // 1. Agente 1 registra um incidente para monitoramento
+      const incident = await db.systemIncident.create({
+        data: {
+          reportedByUserId: user.id,
+          title: `Relato do Usuário: ${message.slice(0, 80)}`,
+          description: message,
+          severity: 'medium',
+          status: 'investigating',
+        },
+      })
+      incidentId = incident.id
+
+      // 2. Aciona o Agente 2 (Auto-Diagnóstico e Reparo) em segundo plano
+      runDiagnosticAndHealing(incidentId).catch((err) =>
+        console.error('Background Diagnostic Agent error:', err)
+      )
+    }
+
     // Build dialogue context
     let formattedHistory = ''
     if (history && history.length > 0) {
@@ -88,8 +113,15 @@ export async function POST(req: Request) {
       maxTokens: 1000,
     })
 
+    let reply = routerResult.content.trim()
+
+    if (isErrorReport) {
+      reply += '\n\n*(Sinalizei nossa equipe de Auto-Diagnóstico de Sistemas em tempo real. Uma verificação ativa foi iniciada automaticamente para identificar e solucionar o problema.)*'
+    }
+
     return NextResponse.json({
-      reply: routerResult.content.trim(),
+      reply,
+      incidentCreated: !!incidentId,
     })
   } catch (e: any) {
     console.error('support chat error:', e)
