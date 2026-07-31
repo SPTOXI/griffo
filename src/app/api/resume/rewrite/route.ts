@@ -11,6 +11,7 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   let deducted = false
+  let userId: string | undefined = undefined
   const costCredits = CREDIT_COSTS.rewrite_experience
 
   try {
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 })
     }
+    userId = user.id
 
     const body = await req.json()
     const parsed = schema.safeParse(body)
@@ -89,9 +91,9 @@ export async function POST(req: Request) {
     })
   } catch (e: any) {
     console.error('rewrite error:', e?.diagnostic || e?.message || e)
-    if (deducted && user?.id) {
+    if (deducted && userId) {
       try {
-        const refundRes = await refundCredits(user.id, costCredits, 'Falha no processamento de IA')
+        const refundRes = await refundCredits(userId, costCredits, 'Falha no processamento de IA')
         return NextResponse.json(
           {
             error: `Ocorreu uma falha durante o processamento da IA. Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente!`,

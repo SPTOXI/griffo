@@ -115,7 +115,10 @@ export function UploadView() {
     setSocialProfiles(socialProfiles.filter((p) => p.id !== id))
   }
 
-  const submit = async () => {
+  const [loadingStep, setLoadingStep] = useState<string | null>(null)
+
+  const submit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     setError(null)
     if (!pdfBase64 && content.length < minChars) {
       setError(`Currículo muito curto. Cole pelo menos ${minChars} caracteres de texto.`)
@@ -126,6 +129,7 @@ export function UploadView() {
       return
     }
     setLoading(true)
+    setLoadingStep('Enviando arquivo e extraindo conteúdo...')
 
     // Build socialLinks dictionary from dynamic list
     const socialLinks: Record<string, string> = {}
@@ -154,9 +158,12 @@ export function UploadView() {
       if (!r.ok) {
         setError(data.error || 'Erro ao salvar currículo.')
         setLoading(false)
+        setLoadingStep(null)
         return
       }
-      toast.success('Currículo enviado! Gerando laudo de análise…')
+
+      setLoadingStep('Analisando currículo em 8 dimensões com Inteligência Artificial...')
+      toast.success('Currículo salvo! Processando laudo com a IA...')
 
       const ar = await internalFetch('/api/resume/analyze', {
         method: 'POST',
@@ -165,15 +172,17 @@ export function UploadView() {
       })
       const adata = await ar.json().catch(() => ({}))
       if (!ar.ok) {
-        setError(adata.error || 'Ocorreu uma falha ao gerar a análise.')
-        setLoading(false)
+        // Even if analysis fails, redirect to resume page so user doesn't lose their upload
+        toast.error(adata.error || 'A análise demorou mais que o esperado. Seu currículo foi salvo no histórico!')
+        openResume(data.resume.id, 'analysis')
         return
       }
       openResume(data.resume.id, 'analysis')
     } catch (e: any) {
-      setError('Erro de conexão ao enviar o currículo.')
+      setError('Erro de conexão ao enviar o currículo. Verifique sua rede e tente novamente.')
     } finally {
       setLoading(false)
+      setLoadingStep(null)
     }
   }
 
@@ -331,6 +340,15 @@ export function UploadView() {
             </Alert>
           )}
 
+          {loading && loadingStep && (
+            <Alert className="bg-violet-50 border-violet-200 text-violet-900">
+              <Loader2 className="w-4 h-4 animate-spin text-violet-600 shrink-0" />
+              <AlertDescription className="text-xs font-medium">
+                {loadingStep}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between pt-2 border-t border-slate-100">
             <p className="text-xs text-slate-500 flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -340,11 +358,11 @@ export function UploadView() {
               <Button variant="outline" onClick={() => setView('dashboard')} disabled={loading}>Cancelar</Button>
               <Button
                 onClick={submit}
-                disabled={loading || content.length < minChars}
+                disabled={loading || (!pdfBase64 && content.length < minChars)}
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
                 {loading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando…</>
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processando…</>
                 ) : (
                   <>Analisar currículo <Sparkles className="w-4 h-4 ml-2" /></>
                 )}

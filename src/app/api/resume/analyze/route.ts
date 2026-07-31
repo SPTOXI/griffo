@@ -11,6 +11,7 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   let deducted = false
+  let userId: string | undefined = undefined
   const costCredits = CREDIT_COSTS.full_analysis
 
   try {
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 })
     }
+    userId = user.id
 
     const body = await req.json()
     const parsed = schema.safeParse(body)
@@ -59,8 +61,9 @@ export async function POST(req: Request) {
     const routerResult = await executeAiTask({
       taskType: 'full_analysis',
       userId: user.id,
-      userPrompt: `Analise o seguinte currículo em 8 Dimensões executivas:\n${resume.originalContent}`,
-      systemPrompt: 'Você é um Consultor Sênior de Carreiras e Especialista em ATS.',
+      systemPrompt: 'Você é um avaliador de currículos e ATS. Retorne EXATAMENTE um JSON válido com os campos: overall, dimensions, strengths, weaknesses, recommendations, keywords, atsFriendly, summary.',
+      userPrompt: `Analise objetivamente o seguinte currículo:\n\n${resume.originalContent.slice(0, 15000)}`,
+      maxTokens: 2500,
     })
 
     let analysis: any = null
@@ -100,9 +103,9 @@ export async function POST(req: Request) {
     })
   } catch (e: any) {
     console.error('analyze error:', e?.diagnostic || e?.message || e)
-    if (deducted && user?.id) {
+    if (deducted && userId) {
       try {
-        const refundRes = await refundCredits(user.id, costCredits, 'Falha no processamento de IA')
+        const refundRes = await refundCredits(userId, costCredits, 'Falha no processamento de IA')
         return NextResponse.json(
           {
             error: `Ocorreu uma falha durante o processamento da IA. Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente!`,
