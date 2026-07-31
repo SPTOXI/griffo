@@ -21,10 +21,10 @@ export function verifyPassword(password: string, stored: string): boolean {
   return timingSafeEqual(hashBuf, testBuf)
 }
 
-// --- Session management via non-persistent session cookie ---
+// --- Session management via strictly non-persistent session cookie ---
 const SESSION_SECRET = process.env.SESSION_SECRET || 'career-analyst-dev-secret-change-me'
 const SESSION_COOKIE = 'ca_session'
-const SESSION_TTL_MS = 24 * 60 * 60 * 1000 // Max 24 hours active window
+const SESSION_TTL_MS = 2 * 60 * 60 * 1000 // 2 hours active window max
 
 function sign(payload: string): string {
   const sig = createHmac('sha256', SESSION_SECRET).update(payload).digest('hex')
@@ -53,7 +53,8 @@ export async function createSession(userId: string): Promise<void> {
   const token = sign(Buffer.from(payload).toString('base64url'))
   const cookieStore = await cookies()
   
-  // Non-persistent Session Cookie: omitting maxAge/expires forces the browser to discard the cookie on browser close
+  // Non-persistent Session Cookie: NO maxAge, NO expires
+  // This guarantees browser deletes the session cookie automatically on browser tab/window close
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
@@ -64,7 +65,14 @@ export async function createSession(userId: string): Promise<void> {
 
 export async function destroySession(): Promise<void> {
   const cookieStore = await cookies()
-  cookieStore.delete(SESSION_COOKIE)
+  cookieStore.set(SESSION_COOKIE, '', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 0,
+    expires: new Date(0),
+  })
 }
 
 export async function getCurrentUser() {
