@@ -7,6 +7,7 @@ import {
   INITIAL_TASK_ROUTING,
   normalizeProviderId,
 } from './registry'
+import { auditQualityOfAiResult } from '../agents/quality-agent'
 
 export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   const taskStartTime = Date.now()
@@ -124,6 +125,13 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
 
       if (!content) {
         throw new Error(`Resposta vazia recebida do provedor ${currentProviderId}`)
+      }
+
+      // Quality Agent Check (Fase 2)
+      const qualityResult = auditQualityOfAiResult(req.taskType, content)
+      if (!qualityResult.approved) {
+        attemptDiagnostics.push(`${currentProviderId.toUpperCase()} (Reprovado no Agente de Qualidade): ${qualityResult.feedback}`)
+        throw new Error(`Qualidade insuficiente (${qualityResult.feedback})`)
       }
 
       const costIn = (tokensIn / 1000) * runtime.pricing.inputPer1k

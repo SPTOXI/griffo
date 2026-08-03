@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { cleanAndOptimizeTextForAi } from '@/lib/ocr/extractor'
 
 const schema = z.object({
   content: z.string().nullable().optional().default(''),
@@ -64,6 +65,10 @@ export async function POST(req: Request) {
       if (extractedText && extractedText.trim().length >= 30) {
         content = extractedText.trim()
       }
+    }
+
+    if (content) {
+      content = cleanAndOptimizeTextForAi(content)
     }
 
     if (!content || content.trim().length < 50) {
