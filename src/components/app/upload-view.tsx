@@ -41,6 +41,8 @@ export function UploadView() {
   const { user } = useAuth()
   const [content, setContent] = useState('')
   const [title, setTitle] = useState('')
+  const [targetJob, setTargetJob] = useState('')
+  const [targetJobDescription, setTargetJobDescription] = useState('')
   const [format, setFormat] = useState<'text' | 'markdown'>('text')
   
   // Dynamic Custom Social Profiles State - autofill from user profile if saved
@@ -154,6 +156,8 @@ export function UploadView() {
           content,
           format: format || 'text',
           title: title || undefined,
+          targetJob: targetJob || undefined,
+          targetJobDescription: targetJobDescription || undefined,
           socialLinks,
           socialConsent: socialConsent || false,
           ...(pdfBase64 ? { pdfBase64 } : {}),
@@ -258,6 +262,34 @@ export function UploadView() {
                   alternar
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* TARGET JOB & MATCHING (FASE 1) */}
+          <div className="pt-3 border-t border-slate-100 space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="targetJob" className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-sky-600" /> Cargo ou Vaga Alvo Desejada (Opcional)
+              </Label>
+              <Input
+                id="targetJob"
+                value={targetJob}
+                onChange={(e) => setTargetJob(e.target.value)}
+                placeholder="Ex: Gerente de Projetos Senior, Desenvolvedor React, Analista Financeiro..."
+                className="text-xs h-9"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="targetJobDescription" className="text-xs font-medium text-slate-600">
+                Descrição ou Requisitos da Vaga Alvo (Cole o anúncio do LinkedIn, Gupy, etc.)
+              </Label>
+              <Textarea
+                id="targetJobDescription"
+                value={targetJobDescription}
+                onChange={(e) => setTargetJobDescription(e.target.value)}
+                placeholder="Cole aqui os requisitos, qualificações e atribuições da vaga para calcularmos o % de Match Exato e apontar lacunas de conhecimento..."
+                className="min-h-[80px] text-xs font-mono resize-y"
+              />
             </div>
           </div>
 

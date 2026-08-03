@@ -31,9 +31,19 @@ interface SocialAdvice {
   tips: string[]
 }
 
+interface JobMatch {
+  targetJob?: string
+  matchPercentage: number
+  verdict?: string
+  matchedRequirements?: string[]
+  missingRequirements?: string[]
+  actionPlan?: string[]
+}
+
 interface Analysis {
   overall: number
   dimensions: { key: string; label: string; score: number; rationale: string }[]
+  jobMatch?: JobMatch
   targetedChanges?: TargetedChange[]
   strengths: string[]
   weaknesses: string[]
@@ -263,6 +273,102 @@ export function AnalysisView() {
           <p className="text-slate-700 leading-relaxed">{a.summary}</p>
         </CardContent>
       </Card>
+
+      {/* TARGET JOB MATCHING (FASE 1 - NOVO PAINEL DE COMPATIBILIDADE) */}
+      {rawAnalysis.jobMatch && (
+        <Card className="border-indigo-200 bg-gradient-to-br from-indigo-50/40 via-white to-sky-50/30 shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                  <Target className="w-5 h-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base text-indigo-950 font-bold flex items-center gap-2">
+                    Análise de Compatibilidade por Vaga Alvo
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-600">
+                    {rawAnalysis.jobMatch.targetJob ? `Cargo Alvo: ${rawAnalysis.jobMatch.targetJob}` : 'Comparativo de exigências x conhecimentos do candidato'}
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-indigo-100 shadow-xs self-start sm:self-auto">
+                <span className="text-xs font-semibold text-slate-500">Score de Match:</span>
+                <span className="text-2xl font-extrabold text-indigo-600">
+                  {rawAnalysis.jobMatch.matchPercentage}%
+                </span>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {rawAnalysis.jobMatch.verdict && (
+              <div className="p-3 rounded-lg bg-white border border-indigo-100 text-xs text-slate-700 leading-relaxed">
+                <p className="font-bold text-indigo-900 mb-0.5">💡 Avaliação de Aderência:</p>
+                <p>{rawAnalysis.jobMatch.verdict}</p>
+              </div>
+            )}
+
+            <div className="grid md:grid-cols-2 gap-4 text-xs">
+              {/* MATCHED REQUIREMENTS */}
+              <div className="p-4 rounded-xl bg-white border border-emerald-100 space-y-2">
+                <p className="font-bold text-emerald-900 text-xs flex items-center gap-1.5 border-b border-emerald-50 pb-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Requisitos Atendidos (Conhecimentos OK)
+                </p>
+                {rawAnalysis.jobMatch.matchedRequirements?.length ? (
+                  <ul className="space-y-1.5">
+                    {rawAnalysis.jobMatch.matchedRequirements.map((req: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-1.5 text-slate-700">
+                        <span className="text-emerald-600 font-bold">•</span>
+                        <span>{req}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-slate-400">Nenhum requisito diretamente correspondido.</p>
+                )}
+              </div>
+
+              {/* MISSING REQUIREMENTS */}
+              <div className="p-4 rounded-xl bg-white border border-rose-100 space-y-2">
+                <p className="font-bold text-rose-900 text-xs flex items-center gap-1.5 border-b border-rose-50 pb-2">
+                  <XCircle className="w-4 h-4 text-rose-600" /> Requisitos Faltantes / Lacunas a Desenvolver
+                </p>
+                {rawAnalysis.jobMatch.missingRequirements?.length ? (
+                  <ul className="space-y-1.5">
+                    {rawAnalysis.jobMatch.missingRequirements.map((req: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-1.5 text-slate-700">
+                        <span className="text-rose-600 font-bold">•</span>
+                        <span>{req}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-emerald-600 font-medium">Parabéns! Nenhuma lacuna crítica encontrada.</p>
+                )}
+              </div>
+            </div>
+
+            {/* ACTION PLAN & LEARNING PATH */}
+            {rawAnalysis.jobMatch.actionPlan && rawAnalysis.jobMatch.actionPlan.length > 0 && (
+              <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-2 text-xs">
+                <p className="font-bold text-amber-950 flex items-center gap-1.5">
+                  <Lightbulb className="w-4 h-4 text-amber-600" /> Plano de Ação & Orientação para Performar Melhor:
+                </p>
+                <ul className="space-y-1 text-slate-800 pl-1">
+                  {rawAnalysis.jobMatch.actionPlan.map((action: string, idx: number) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <Badge variant="outline" className="bg-amber-100 text-amber-900 border-amber-300 font-mono text-[10px] shrink-0 mt-0.5">
+                        {idx + 1}
+                      </Badge>
+                      <span className="leading-relaxed">{action}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* DIMENSIONS DETAIL */}
       <Card>

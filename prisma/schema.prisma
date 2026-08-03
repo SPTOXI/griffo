@@ -76,7 +76,9 @@ model Resume {
   // ATS target check results
   atsScore         Int?
   // Target job title / industry if provided
-  targetJob        String?
+  targetJob            String?
+  targetJobDescription String?
+  jobMatchJson         String?
   // Social links submitted with resume (JSON stringified record)
   socialLinksJson  String?
   // User consent for social links evaluation

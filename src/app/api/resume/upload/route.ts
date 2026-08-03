@@ -7,6 +7,8 @@ const schema = z.object({
   content: z.string().nullable().optional().default(''),
   format: z.enum(['text', 'markdown', 'pdf']).nullable().optional().default('text'),
   title: z.string().nullable().optional(),
+  targetJob: z.string().nullable().optional(),
+  targetJobDescription: z.string().nullable().optional(),
   socialLinks: z.record(z.string(), z.string()).nullable().optional(),
   socialConsent: z.boolean().nullable().optional().default(false),
   pdfBase64: z.string().nullable().optional(),
@@ -51,7 +53,7 @@ export async function POST(req: Request) {
       )
     }
 
-    const { format, socialLinks, socialConsent, pdfBase64 } = parsed.data
+    const { format, targetJob, targetJobDescription, socialLinks, socialConsent, pdfBase64 } = parsed.data
     let content = parsed.data.content
 
     // Server-side PDF extraction if pdfBase64 is supplied
@@ -76,6 +78,8 @@ export async function POST(req: Request) {
         userId: user.id,
         originalContent: content,
         originalFormat: format,
+        targetJob: targetJob || null,
+        targetJobDescription: targetJobDescription || null,
         socialLinksJson: socialLinks ? JSON.stringify(socialLinks) : null,
         socialConsent: socialConsent || false,
       },

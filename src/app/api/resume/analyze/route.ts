@@ -109,6 +109,14 @@ Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seg
       "rationale": "Justificativa detalhada."
     }
   ],
+  "jobMatch": {
+    "targetJob": "Cargo/Vaga analisada",
+    "matchPercentage": number (0 a 100),
+    "verdict": "Veredito rápido sobre a aderência do candidato à vaga",
+    "matchedRequirements": ["Requisito 1 que o candidato possui", "Requisito 2"],
+    "missingRequirements": ["Requisito 1 exigido pela vaga mas ausente no currículo", "Requisito 2"],
+    "actionPlan": ["Passo 1 para aumentar as chances", "Passo 2 de capacitação/ajuste"]
+  },
   "targetedChanges": [
     {
       "section": "Nome da seção (ex: Resumo Profissional, Experiência 1, Habilidades)",
@@ -135,12 +143,16 @@ Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seg
   ]
 }`
 
+    const jobText = (resume.targetJob || resume.targetJobDescription)
+      ? `\n\nVAGA / CARGO ALVO DESEJADO PELO CANDIDATO:\nCargo: ${resume.targetJob || 'Não especificado'}\nDescrição/Requisitos da Vaga:\n${resume.targetJobDescription || 'Nenhuma descrição fornecida.'}`
+      : '\n\n(Nenhuma vaga alvo específica fornecida. Avalie a aderência geral para a área de atuação do currículo).'
+
     // Execute via AI Router
     const routerResult = await executeAiTask({
       taskType: 'full_analysis',
       userId: user.id,
       systemPrompt: SYSTEM_ANALYZE_PROMPT,
-      userPrompt: `Realize a análise preditiva completa e detalhada do seguinte currículo e redes sociais:\n\nCONTEÚDO DO CURRÍCULO:\n${resume.originalContent.slice(0, 15000)}${socialLinksText}`,
+      userPrompt: `Realize a análise preditiva completa e detalhada do seguinte currículo, mídias sociais e aderência à vaga alvo:\n\nCONTEÚDO DO CURRÍCULO:\n${resume.originalContent.slice(0, 15000)}${socialLinksText}${jobText}`,
       maxTokens: 3500,
     })
 
