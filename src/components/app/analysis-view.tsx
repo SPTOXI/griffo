@@ -16,6 +16,13 @@ import {
 } from 'recharts'
 import { internalFetch } from '@/lib/internal-fetch'
 
+interface TargetedChange {
+  section: string
+  originalText: string
+  rationale: string
+  suggestedText: string
+}
+
 interface SocialAdvice {
   platform: string
   url: string
@@ -27,6 +34,7 @@ interface SocialAdvice {
 interface Analysis {
   overall: number
   dimensions: { key: string; label: string; score: number; rationale: string }[]
+  targetedChanges?: TargetedChange[]
   strengths: string[]
   weaknesses: string[]
   recommendations: string[]
@@ -282,6 +290,56 @@ export function AnalysisView() {
         </CardContent>
       </Card>
 
+      {/* TARGETED CHANGES (ONDE E POR QUE MUDAR) */}
+      {rawAnalysis.targetedChanges && rawAnalysis.targetedChanges.length > 0 && (
+        <Card className="border-sky-200 bg-sky-50/20 shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0 border border-sky-200">
+                <Target className="w-5 h-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base text-sky-950 font-bold">
+                  🎯 Onde & Por Que Ajustar (Diagnóstico Ponto a Ponto)
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-600">
+                  A IA identificou trechos exatos que estão reduzindo sua nota e justifica o impacto de cada alteração.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {rawAnalysis.targetedChanges.map((tc: any, idx: number) => (
+              <div key={idx} className="p-4 rounded-xl bg-white border border-sky-100 shadow-2xs space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className="bg-sky-50 text-sky-900 border-sky-200 font-semibold text-[11px]">
+                    📍 {tc.section}
+                  </Badge>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 rounded-lg bg-rose-50/70 border border-rose-100 text-rose-950 space-y-1">
+                    <p className="font-bold text-[10px] uppercase text-rose-800">❌ Trecho Atual no Currículo</p>
+                    <p className="font-mono text-[11px] leading-relaxed">"{tc.originalText}"</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-100 text-emerald-950 space-y-1">
+                    <p className="font-bold text-[10px] uppercase text-emerald-800">✨ Sugestão Recomendada (Fórmula STAR/XYZ)</p>
+                    <p className="font-mono text-[11px] leading-relaxed">"{tc.suggestedText}"</p>
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-amber-50/60 border border-amber-100 text-xs text-amber-950 space-y-0.5">
+                  <p className="font-bold text-[10px] uppercase text-amber-800 flex items-center gap-1">
+                    <Lightbulb className="w-3.5 h-3.5" /> Justificativa Técnica & Motivo da Alteração:
+                  </p>
+                  <p className="leading-relaxed text-slate-700">{tc.rationale}</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* SOCIAL PRESENCE & ADVICE (NEW DEDICATED SECTION) */}
       {a.socialAdvice && a.socialAdvice.length > 0 && (
         <Card className="border-violet-200 bg-gradient-to-br from-white to-violet-50/40 shadow-sm">
@@ -292,11 +350,11 @@ export function AnalysisView() {
                   <Share2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-base text-violet-900 font-bold">
-                    Otimização de Presença Digital (LinkedIn, Gupy & Branding)
+                  <CardTitle className="text-base text-violet-900 font-bold flex items-center gap-1.5">
+                    Otimização Global de Presença Digital (LinkedIn, Gupy, GitHub, Workana & Mercado Global)
                   </CardTitle>
                   <CardDescription className="text-xs text-slate-600">
-                    Recomendações técnicas personalizadas para alinhar seus perfis online ao currículo e passar pelos filtros dos recrutadores.
+                    Estratégias de SEO de perfil, títulos otimizados e bios para aumentar suas exibições em algoritmos de recrutamento e plataformas globais.
                   </CardDescription>
                 </div>
               </div>

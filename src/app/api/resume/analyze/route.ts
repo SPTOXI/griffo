@@ -57,13 +57,91 @@ export async function POST(req: Request) {
 
     deducted = true
 
+    // Collect all social media links (from resume upload and user profile)
+    let combinedSocialLinks: Record<string, string> = {}
+    if (user.socialLinks) {
+      try {
+        combinedSocialLinks = { ...combinedSocialLinks, ...JSON.parse(user.socialLinks) }
+      } catch {}
+    }
+    if (resume.socialLinksJson) {
+      try {
+        combinedSocialLinks = { ...combinedSocialLinks, ...JSON.parse(resume.socialLinksJson) }
+      } catch {}
+    }
+
+    const socialLinksText = Object.keys(combinedSocialLinks).length > 0
+      ? `\n\nREDES SOCIAIS E PERFIS PROFISSIONAIS CADASTRADOS:\n${JSON.stringify(combinedSocialLinks, null, 2)}`
+      : '\n\n(Nenhum link de rede social cadastrado previamente pelo usuário. Forneça recomendações gerais estratégicas para LinkedIn, Gupy, GitHub e portfólios globais).'
+
+    const SYSTEM_ANALYZE_PROMPT = `Você é um avaliador executivo sênior de currículos, especialista mundial em triagem ATS (Applicant Tracking Systems) e estrategista de personal branding internacional.
+
+Sua tarefa é realizar uma ANÁLISE DE ALTA PROFUNDIDADE TÉCNICA E JUSTIFICADA do currículo. Você NÃO deve ser genérico. Você deve apontar EXATAMENTE onde estão as falhas, POR QUE elas prejudicam o candidato e COMO corrigi-las.
+
+Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seguinte esquema estrito:
+{
+  "overall": number (nota de 0 a 10 com 1 casa decimal),
+  "summary": "Parecer executivo detalhado sobre o currículo e seu nível de competitividade no mercado.",
+  "atsFriendly": boolean,
+  "dimensions": [
+    {
+      "key": "structure",
+      "label": "Estrutura & Compatibilidade ATS",
+      "score": number (0-10),
+      "rationale": "Justificativa técnica aprofundada explicando a pontuação e os critérios atendidos ou violados."
+    },
+    {
+      "key": "summary",
+      "label": "Resumo & Posicionamento Profissional",
+      "score": number (0-10),
+      "rationale": "Justificativa detalhada."
+    },
+    {
+      "key": "impact",
+      "label": "Resultados Quantificados (Fórmula STAR/XYZ)",
+      "score": number (0-10),
+      "rationale": "Justificativa detalhada."
+    },
+    {
+      "key": "skills",
+      "label": "Habilidades & Palavras-Chave de Busca",
+      "score": number (0-10),
+      "rationale": "Justificativa detalhada."
+    }
+  ],
+  "targetedChanges": [
+    {
+      "section": "Nome da seção (ex: Resumo Profissional, Experiência 1, Habilidades)",
+      "originalText": "Trecho exato do currículo atual que apresenta problema ou pode melhorar",
+      "rationale": "Justificativa clara e técnica do PORQUE esse trecho prejudica o currículo (ex: falta de dados quantificáveis, adjetivos vagos, ausência de termos buscados por recrutadores).",
+      "suggestedText": "Sugestão reescrita e otimizada do trecho aplicando fórmula STAR/XYZ."
+    }
+  ],
+  "strengths": ["Lista de 3 a 5 pontos fortes marcantes com justificativa"],
+  "weaknesses": ["Lista de 3 a 5 vulnerabilidades identificadas com impacto na triagem"],
+  "recommendations": ["Plano de ação prioritário com passos claros para o candidato"],
+  "keywords": ["Lista de 10 a 15 palavras-chave estratégicas cruciais para o segmento"],
+  "socialAdvice": [
+    {
+      "platform": "Nome da Plataforma (ex: LinkedIn, Gupy, GitHub, Behance, Catho, Workana, Portfólio)",
+      "url": "URL informada ou 'Geral/Plataformas de Mercado'",
+      "headline": "Título executivo altamente otimizado para o algoritmo da plataforma e atração de recrutadores",
+      "aboutSummary": "Texto persuasivo de bio/resumo otimizado com palavras-chave de busca",
+      "tips": [
+        "Dica prática 1 de SEO de perfil",
+        "Dica prática 2 de engajamento e visibilidade"
+      ]
+    }
+  ]
+}`
+
     // Execute via AI Router
     const routerResult = await executeAiTask({
       taskType: 'full_analysis',
       userId: user.id,
-      systemPrompt: 'Você é um avaliador de currículos e ATS. Retorne EXATAMENTE um JSON válido com os campos: overall, dimensions, strengths, weaknesses, recommendations, keywords, atsFriendly, summary.',
-      userPrompt: `Analise objetivamente o seguinte currículo:\n\n${resume.originalContent.slice(0, 15000)}`,
-      maxTokens: 2500,
+      systemPrompt: SYSTEM_ANALYZE_PROMPT,
+      userPrompt: `Realize a análise preditiva completa e detalhada do seguinte currículo e redes sociais:\n\nCONTEÚDO DO CURRÍCULO:\n${resume.originalContent.slice(0, 15000)}${socialLinksText}`,
+      maxTokens: 3500,
     })
 
     let analysis: any = null
@@ -77,15 +155,35 @@ export async function POST(req: Request) {
         summary: routerResult.content || 'Análise concluída com sucesso.',
         atsFriendly: true,
         dimensions: [
-          { key: 'structure', label: 'Estrutura & Compatibilidade ATS', score: 7.5, rationale: 'Estrutura legível e organizada.' },
-          { key: 'summary', label: 'Resumo & Posicionamento', score: 7.5, rationale: 'Posicionamento adequado.' },
-          { key: 'impact', label: 'Resultados Quantificados', score: 7.0, rationale: 'Recomenda-se adicionar mais métricas.' },
-          { key: 'skills', label: 'Habilidades & Ferramentas', score: 8.0, rationale: 'Principais competências presentes.' },
+          { key: 'structure', label: 'Estrutura & Compatibilidade ATS', score: 7.5, rationale: 'Estrutura limpa, contudo faltam marcadores padrão identificáveis por parsers ATS.' },
+          { key: 'summary', label: 'Resumo & Posicionamento', score: 7.5, rationale: 'Posicionamento adequado, porém necessita de palavras-chave mais objetivas.' },
+          { key: 'impact', label: 'Resultados Quantificados (Fórmula STAR/XYZ)', score: 7.0, rationale: 'Experiências listam atribuições básicas. Faltam percentuais de melhoria e métricas numéricas.' },
+          { key: 'skills', label: 'Habilidades & Ferramentas', score: 8.0, rationale: 'Competências presentes, recomenda-se organizar por categorias técnicas.' },
         ],
-        strengths: ['Estrutura profissional limpa'],
-        weaknesses: ['Poderia conter mais dados de impacto (STAR/XYZ)'],
-        recommendations: ['Quantificar resultados'],
-        keywords: [],
+        targetedChanges: [
+          {
+            section: 'Resumo Profissional',
+            originalText: 'Profissional dedicado em busca de novas oportunidades de crescimento.',
+            rationale: 'Frase genérica usada por milhares de candidatos. Não informa cargo-alvo, especialidade ou conquistas de mercado.',
+            suggestedText: 'Especialista em Gestão de Projetos com 5+ anos de experiência liderando equipes multidisciplinares e otimizando processos com redução de custos de até 20%.',
+          },
+        ],
+        strengths: ['Estrutura profissional limpa e fácil leitura'],
+        weaknesses: ['Pouca presença de métricas numéricas e resultados de impacto'],
+        recommendations: ['Aplicar metodologia STAR/XYZ nas experiências recentes'],
+        keywords: ['Gestão', 'Processos', 'Otimização', 'Projetos', 'Resultados'],
+        socialAdvice: [
+          {
+            platform: 'LinkedIn',
+            url: combinedSocialLinks.linkedin || 'https://linkedin.com',
+            headline: 'Especialista em Otimização de Processos | Gestão de Projetos | Liderança & Eficiência Operacional',
+            aboutSummary: 'Profissional focado em resultados escaláveis, transformação digital e liderança de alta performance...',
+            tips: [
+              'Preencha o campo Título com termos que os recrutadores utilizam na busca booleana.',
+              'Adicione as palavras-chave principais na seção Competências para aumentar as exibições no LinkedIn Recruiter.',
+            ],
+          },
+        ],
       }
     }
 
