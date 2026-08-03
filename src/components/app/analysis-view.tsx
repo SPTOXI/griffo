@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   FileSearch, Loader2, AlertCircle, Sparkles, Award, Target, Lightbulb, Key,
-  CheckCircle2, XCircle, FileEdit, Download, ArrowRight, RefreshCw, Share2, Globe, Linkedin
+  CheckCircle2, XCircle, FileEdit, Download, ArrowRight, RefreshCw, Share2, Globe, Linkedin, Compass
 } from 'lucide-react'
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
@@ -69,8 +69,33 @@ export function AnalysisView() {
   const [resume, setResume] = useState<Resume | null>(null)
   const [loading, setLoading] = useState(true)
   const [analyzing, setAnalyzing] = useState(false)
+  const [orienting, setOrienting] = useState(false)
+  const [careerOrientation, setCareerOrientation] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
   const [list, setList] = useState<{ id: string; status: string; updatedAt: string }[]>([])
+
+  const handleGenerateOrientation = async () => {
+    if (!resume?.id) return
+    setOrienting(true)
+    try {
+      const res = await internalFetch('/api/resume/career-orientation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeId: resume.id }),
+      })
+      const data = await res.json()
+      if (res.ok && data.careerOrientation) {
+        setCareerOrientation(data.careerOrientation)
+        toast.success('Diagnóstico de Orientação Vocacional gerado com sucesso!')
+      } else {
+        toast.error(data.error || 'Erro ao gerar orientação de carreira.')
+      }
+    } catch {
+      toast.error('Falha de conexão ao gerar orientação vocacional.')
+    } finally {
+      setOrienting(false)
+    }
+  }
 
   useEffect(() => {
     if (activeResumeId) {
@@ -369,6 +394,82 @@ export function AnalysisView() {
           </CardContent>
         </Card>
       )}
+
+      {/* CAREER ORIENTATION & VOCATIONAL AGENT (PARA CANDIDATOS INDECISOS) */}
+      <Card className="border-sky-200 bg-gradient-to-br from-sky-50/50 via-white to-indigo-50/30">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                <Compass className="w-5 h-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base text-sky-950 font-bold">
+                  Indeciso de qual vaga concorrer? Orientação Vocacional de Carreira
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-600">
+                  Nosso Agente de Carreira analisa seu perfil e descobre as 3 áreas/cargos do mercado em que você tem maior chance imediata de contratação.
+                </CardDescription>
+              </div>
+            </div>
+            <Button
+              onClick={handleGenerateOrientation}
+              disabled={orienting}
+              className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shrink-0 self-start sm:self-auto"
+            >
+              {orienting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1.5" />}
+              {careerOrientation ? 'Atualizar Diagnóstico' : 'Descobrir Minha Área Ideal'}
+            </Button>
+          </div>
+        </CardHeader>
+        {careerOrientation && (
+          <CardContent className="space-y-4 pt-0">
+            <div className="p-3.5 rounded-xl bg-white border border-sky-100 text-xs text-slate-700 space-y-1">
+              <p className="font-bold text-sky-950 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-sky-600" /> Resumo do Perfil Identificado:
+              </p>
+              <p className="leading-relaxed">{careerOrientation.profileSummary}</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-3 text-xs">
+              {careerOrientation.topMatchingAreas?.map((area: any, idx: number) => (
+                <div key={idx} className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 shadow-2xs">
+                  <div className="flex justify-between items-start gap-1">
+                    <Badge variant="outline" className="bg-sky-100 text-sky-900 border-sky-300 font-bold text-[10px]">
+                      Opção #{idx + 1}
+                    </Badge>
+                    <span className="font-extrabold text-sky-600 text-sm">{area.matchPercentage}% Match</span>
+                  </div>
+                  <h4 className="font-bold text-slate-900 text-sm">{area.role}</h4>
+                  <p className="text-slate-600 leading-relaxed text-[11px]">{area.whyFit}</p>
+                  {area.requiredSkillsToLearn?.length > 0 && (
+                    <div className="pt-2 border-t border-slate-100 space-y-1">
+                      <p className="font-semibold text-slate-700 text-[10px] uppercase tracking-wider">Habilidades recomendadas:</p>
+                      <ul className="space-y-1">
+                        {area.requiredSkillsToLearn.map((skill: string, sIdx: number) => (
+                          <li key={sIdx} className="flex items-center gap-1 text-[11px] text-slate-600">
+                            <span className="text-sky-500 font-bold">•</span>
+                            <span>{skill}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {careerOrientation.careerAdvice && (
+              <div className="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-200/80 text-xs text-indigo-950 space-y-1">
+                <p className="font-bold flex items-center gap-1.5">
+                  <Lightbulb className="w-4 h-4 text-indigo-600" /> Conselho Estratégico de Carreira:
+                </p>
+                <p className="leading-relaxed">{careerOrientation.careerAdvice}</p>
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
 
       {/* DIMENSIONS DETAIL */}
       <Card>

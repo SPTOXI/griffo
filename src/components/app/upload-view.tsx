@@ -43,7 +43,36 @@ export function UploadView() {
   const [title, setTitle] = useState('')
   const [targetJob, setTargetJob] = useState('')
   const [targetJobDescription, setTargetJobDescription] = useState('')
+  const [jobUrl, setJobUrl] = useState('')
+  const [fetchingUrl, setFetchingUrl] = useState(false)
   const [format, setFormat] = useState<'text' | 'markdown'>('text')
+
+  const handleFetchJobFromUrl = async () => {
+    if (!jobUrl || !jobUrl.trim()) {
+      toast.error('Informe a URL da vaga (ex: https://linkedin.com/jobs/view/...)')
+      return
+    }
+    setFetchingUrl(true)
+    try {
+      const res = await internalFetch('/api/resume/job-fetch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: jobUrl.trim() }),
+      })
+      const data = await res.json()
+      if (res.ok && data.description) {
+        if (!targetJob) setTargetJob(data.title || 'Vaga Importada via Link')
+        setTargetJobDescription(data.description)
+        toast.success('Conteúdo da vaga importado com sucesso via Link!')
+      } else {
+        toast.error(data.error || 'Erro ao importar vaga pela URL.')
+      }
+    } catch {
+      toast.error('Falha ao conectar com o serviço de importação de vaga.')
+    } finally {
+      setFetchingUrl(false)
+    }
+  }
   
   // Dynamic Custom Social Profiles State - autofill from user profile if saved
   const initialSocial: CustomSocialField[] = user?.socialLinks && Object.keys(user.socialLinks).length > 0
@@ -265,12 +294,45 @@ export function UploadView() {
             </div>
           </div>
 
-          {/* TARGET JOB & MATCHING (FASE 1) */}
+          {/* TARGET JOB & MATCHING (FASE 1 + IMPORTAÇÃO DE URL) */}
           <div className="pt-3 border-t border-slate-100 space-y-3">
-            <div className="space-y-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <Label htmlFor="targetJob" className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-sky-600" /> Cargo ou Vaga Alvo Desejada (Opcional)
               </Label>
+              <Badge variant="outline" className="text-[10px] text-sky-700 bg-sky-50 border-sky-200 self-start sm:self-auto">
+                Ou cole o Link do anúncio abaixo 🔗
+              </Badge>
+            </div>
+
+            {/* IMPORT VIA URL */}
+            <div className="space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <Label htmlFor="jobUrl" className="text-[11px] font-medium text-slate-600 flex items-center gap-1">
+                <Globe className="w-3 h-3 text-slate-500" /> Importar Anúncio de Vaga pelo Link (LinkedIn, Gupy, Catho, etc.)
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="jobUrl"
+                  type="url"
+                  value={jobUrl}
+                  onChange={(e) => setJobUrl(e.target.value)}
+                  placeholder="https://www.linkedin.com/jobs/view/..."
+                  className="text-xs h-9 bg-white"
+                />
+                <Button
+                  type="button"
+                  onClick={handleFetchJobFromUrl}
+                  disabled={fetchingUrl}
+                  variant="outline"
+                  className="text-xs h-9 font-semibold shrink-0 bg-white hover:bg-slate-100"
+                >
+                  {fetchingUrl ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Globe className="w-3.5 h-3.5 mr-1 text-sky-600" />}
+                  Importar Link
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-1">
               <Input
                 id="targetJob"
                 value={targetJob}
@@ -281,14 +343,14 @@ export function UploadView() {
             </div>
             <div className="space-y-1">
               <Label htmlFor="targetJobDescription" className="text-xs font-medium text-slate-600">
-                Descrição ou Requisitos da Vaga Alvo (Cole o anúncio do LinkedIn, Gupy, etc.)
+                Descrição ou Requisitos da Vaga Alvo (Copia & Cola ou Texto Extraído do Link)
               </Label>
               <Textarea
                 id="targetJobDescription"
                 value={targetJobDescription}
                 onChange={(e) => setTargetJobDescription(e.target.value)}
-                placeholder="Cole aqui os requisitos, qualificações e atribuições da vaga para calcularmos o % de Match Exato e apontar lacunas de conhecimento..."
-                className="min-h-[80px] text-xs font-mono resize-y"
+                placeholder="Cole aqui os requisitos, qualificações e atribuições da vaga para calcularmos o % de Match Exato e apontar lacunas de conhecimento (ou use o botão 'Importar Link' acima)..."
+                className="min-h-[85px] text-xs font-mono resize-y"
               />
             </div>
           </div>
