@@ -642,6 +642,9 @@ function AdminViewContent() {
           <TabsTrigger value="incidents" className="gap-1.5">
             <AlertCircle className="w-4 h-4 text-amber-600" /> Central de Agentes & Incidentes
           </TabsTrigger>
+          <TabsTrigger value="director" className="gap-1.5">
+            <Award className="w-4 h-4 text-violet-600" /> 👑 Coordenador Mestre 24h
+          </TabsTrigger>
         </TabsList>
 
         {/* USERS TAB - WITH SELECTION & ACTIONS */}
@@ -1651,6 +1654,11 @@ function AdminViewContent() {
         <TabsContent value="incidents" className="space-y-4">
           <IncidentsAdminTab />
         </TabsContent>
+
+        {/* DIRECTOR AGENT TAB (FASE 4) */}
+        <TabsContent value="director" className="space-y-4">
+          <DirectorAdminTab />
+        </TabsContent>
       </Tabs>
     </div>
   )
@@ -1842,6 +1850,158 @@ function IncidentsAdminTab() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function DirectorAdminTab() {
+  const [briefing, setBriefing] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  const loadBriefing = async () => {
+    setLoading(true)
+    try {
+      const res = await internalFetch('/api/admin/director')
+      const data = await res.json()
+      if (data.briefing) {
+        setBriefing(data.briefing)
+        toast.success('Boletim do Coordenador de Agentes atualizado!')
+      } else {
+        toast.error(data.error || 'Erro ao carregar boletim.')
+      }
+    } catch {
+      toast.error('Falha de conexão ao comunicar com o Coordenador.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadBriefing()
+  }, [])
+
+  return (
+    <div className="space-y-6 max-w-5xl">
+      {/* DIRECTOR AGENT HEADER */}
+      <Card className="border-violet-300 bg-gradient-to-br from-violet-950 via-slate-900 to-indigo-950 text-white shadow-lg overflow-hidden">
+        <CardContent className="p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold text-xl shadow-md shrink-0">
+                👑
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-extrabold text-white">Coordenador Mestre de Agentes</h2>
+                  <Badge className="bg-emerald-500 text-white font-bold text-[10px] uppercase">
+                    Diretor Operacional 24H
+                  </Badge>
+                </div>
+                <p className="text-xs text-violet-200 mt-0.5">
+                  Supervisão contínua, consolidação de KPIs e orquestração do enxame autônomo de IAs.
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={loadBriefing}
+              disabled={loading}
+              className="bg-white text-violet-950 hover:bg-violet-100 font-bold text-xs shrink-0"
+            >
+              {loading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1.5" />}
+              Gerar Relatório Executivo 24h
+            </Button>
+          </div>
+
+          {briefing && (
+            <div className="pt-3 border-t border-violet-800/60 text-xs leading-relaxed text-violet-100 space-y-2">
+              <p className="font-bold uppercase text-[10px] text-amber-300 tracking-wider">
+                📝 Síntese Executiva do Diretor Mestre ({new Date(briefing.generatedAt).toLocaleString('pt-BR')}):
+              </p>
+              <div className="p-3.5 rounded-xl bg-violet-900/40 border border-violet-700/50 font-sans text-sm text-white leading-relaxed">
+                {briefing.executiveSummary}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* METRICS GRID */}
+      {briefing && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="border-slate-200">
+            <CardContent className="pt-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500">Requisições de IA (24h)</p>
+                <p className="text-2xl font-extrabold text-slate-900">{briefing.totalAiCalls24h}</p>
+                <p className="text-[10px] text-slate-400">Chamadas processadas</p>
+              </div>
+              <Cpu className="w-7 h-7 text-violet-600 opacity-80" />
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200">
+            <CardContent className="pt-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500">Taxa de Qualidade</p>
+                <p className="text-2xl font-extrabold text-emerald-600">{briefing.qualityApprovalRate}%</p>
+                <p className="text-[10px] text-slate-400">Aprovação do Agente 3</p>
+              </div>
+              <Award className="w-7 h-7 text-emerald-600 opacity-80" />
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200">
+            <CardContent className="pt-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500">Custo Total de IA (24h)</p>
+                <p className="text-2xl font-extrabold text-slate-900">${briefing.totalCostUsd24h?.toFixed(4)}</p>
+                <p className="text-[10px] text-emerald-600 font-medium">~{briefing.tokenSavingsEstimatedPercent}% economia (OCR)</p>
+              </div>
+              <Zap className="w-7 h-7 text-amber-500 opacity-80" />
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200">
+            <CardContent className="pt-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500">Incidentes Ativos</p>
+                <p className="text-2xl font-extrabold text-slate-900">{briefing.incidentsActiveCount}</p>
+                <p className="text-[10px] text-slate-400">{briefing.failoverCount24h} fallbacks no roteador</p>
+              </div>
+              <Activity className="w-7 h-7 text-blue-500 opacity-80" />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ENXAME DE AGENTES STATUS LIST */}
+      {briefing && briefing.agentStatusMap && (
+        <Card className="border-slate-200">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Shield className="w-5 h-5 text-indigo-600" /> Status do Enxame de Agentes Autônomos
+            </CardTitle>
+            <CardDescription>
+              Monitoramento individualizado da saúde de cada sub-agente especializado no sistema.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {Object.entries(briefing.agentStatusMap).map(([agentName, info]: [string, any], idx: number) => (
+              <div key={idx} className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-bold text-slate-900">{agentName}</p>
+                  <p className="text-xs text-slate-600">{info.message}</p>
+                </div>
+                <Badge className={`uppercase text-[10px] font-bold shrink-0 ${
+                  info.status === 'online' ? 'bg-emerald-100 text-emerald-800 border-none' : 'bg-amber-100 text-amber-800 border-none'
+                }`}>
+                  {info.status === 'online' ? '● ONLINE' : '▲ ATENÇÃO'}
+                </Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
