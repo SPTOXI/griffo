@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   FileSearch, Loader2, AlertCircle, Sparkles, Award, Target, Lightbulb, Key,
-  CheckCircle2, XCircle, FileEdit, Download, ArrowRight, RefreshCw, Share2, Globe, Linkedin, Compass, Info
+  CheckCircle2, XCircle, FileEdit, Download, ArrowRight, RefreshCw, Share2, Globe, Linkedin, Compass, Info, BarChart3
 } from 'lucide-react'
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
