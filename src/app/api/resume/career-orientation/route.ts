@@ -36,27 +36,15 @@ export async function POST(req: Request) {
     const systemPrompt = `Você é o Agente Especialista em Orientação de Carreira e Diagnóstico Vocacional do GriffoWork.
 Analise o histórico, hard skills, soft skills e conquistas do candidato e determine as 3 melhores áreas ou cargos do mercado atual em que ele possui maior afinidade e chances imediatas de sucesso.
 
-Responda APENAS um JSON válido no seguinte formato:
+Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto antes ou depois do JSON:
 {
-  "profileSummary": "Resumo do perfil e vocação identificados",
+  "profileSummary": "Resumo do perfil e vocação identificados (em Português PT-BR)",
   "topMatchingAreas": [
     {
       "role": "Nome do Cargo/Área Sugerida 1",
       "matchPercentage": number (0 a 100),
       "whyFit": "Justificativa técnica de porque o candidato se encaixa perfeitamente nesta área",
       "requiredSkillsToLearn": ["Skill ou ferramenta 1 a estudar", "Skill 2"]
-    },
-    {
-      "role": "Nome do Cargo/Área Sugerida 2",
-      "matchPercentage": number (0 a 100),
-      "whyFit": "Justificativa técnica",
-      "requiredSkillsToLearn": ["Skill 1", "Skill 2"]
-    },
-    {
-      "role": "Nome do Cargo/Área Sugerida 3",
-      "matchPercentage": number (0 a 100),
-      "whyFit": "Justificativa técnica",
-      "requiredSkillsToLearn": ["Skill 1", "Skill 2"]
     }
   ],
   "careerAdvice": "Orientação geral e dicas para o candidato decidir seu próximo passo profissional com confiança."
@@ -70,7 +58,15 @@ Responda APENAS um JSON válido no seguinte formato:
       maxTokens: 2500,
     })
 
-    let cleanJson = aiResponse.content.trim().replace(/```json/gi, '').replace(/```/g, '').trim()
+    // Remove markdown formatting if present and extract the JSON object
+    let cleanJson = aiResponse.content.trim()
+    const jsonMatch = cleanJson.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      cleanJson = jsonMatch[0]
+    } else {
+      cleanJson = cleanJson.replace(/```json/gi, '').replace(/```/g, '').trim()
+    }
+    
     const orientationData = JSON.parse(cleanJson)
 
     return NextResponse.json({ careerOrientation: orientationData })

@@ -73,8 +73,8 @@ export async function POST(req: Request) {
     const routerResult = await executeAiTask({
       taskType: 'rewrite',
       userId: user.id,
-      userPrompt: `Reescreva o seguinte currículo aplicando a fórmula STAR (Situação, Tarefa, Ação, Resultado) e a fórmula Google XYZ mantendo 100% de veracidade dos fatos.${keywordsHint}\n\nCurrículo Original:\n${resume.originalContent}`,
-      systemPrompt: 'Você é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas ATS (Gupy, LinkedIn, Workday).',
+      userPrompt: `Reescreva o seguinte currículo aplicando a fórmula STAR (Situação, Tarefa, Ação, Resultado) e a fórmula Google XYZ mantendo 100% de veracidade dos fatos.${keywordsHint}\n\nIMPORTANTE: A resposta DEVE ser estruturada usando formatação Markdown (com títulos, negritos e listas em bullet points). A resposta DEVE ser estritamente no idioma Português (pt-BR) independente do idioma original.\n\nCurrículo Original:\n${resume.originalContent}`,
+      systemPrompt: 'Você é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas ATS (Gupy, LinkedIn, Workday). Responda sempre em Português e formatação estruturada em Markdown limpo e atrativo.',
     })
 
     const updated = await db.resume.update({
@@ -118,5 +118,40 @@ export async function POST(req: Request) {
       }
     }
     return NextResponse.json({ error: 'Ocorreu um erro ao reescrever o currículo. Tente novamente em instantes.' }, { status: 500 })
+  }
+}
+
+export async function PATCH(req: Request) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 })
+    }
+
+    const body = await req.json()
+    const { resumeId, action } = body
+    if (!resumeId) return NextResponse.json({ error: 'ID do currículo obrigatório.' }, { status: 400 })
+
+    const resume = await db.resume.findFirst({
+      where: { id: resumeId, userId: user.id },
+    })
+
+    if (!resume) {
+      return NextResponse.json({ error: 'Currículo não encontrado' }, { status: 404 })
+    }
+
+    if (action === 'reject') {
+      await db.resume.update({
+        where: { id: resume.id },
+        data: { rewrittenContent: null },
+      })
+    }
+
+    // In both "confirm" and "reject" we return success, "confirm" doesn't strictly need a db change,
+    // as it just allows the UI to proceed to the downloads section since the resume already has rewrittenContent.
+    return NextResponse.json({ success: true })
+  } catch (e: any) {
+    console.error('rewrite PATCH error:', e)
+    return NextResponse.json({ error: 'Erro ao processar.' }, { status: 500 })
   }
 }

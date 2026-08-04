@@ -626,24 +626,27 @@ function AdminViewContent() {
       )}
 
       <Tabs defaultValue="users" className="space-y-4">
-        <TabsList className="bg-slate-100 p-1">
-          <TabsTrigger value="users" className="gap-1.5">
-            <Users className="w-4 h-4" /> Gestão de Usuários
+        <TabsList className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-transparent p-0 w-full mb-8 h-auto">
+          <TabsTrigger value="users" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
+            <Users className="w-5 h-5 text-blue-600" /> <span className="font-semibold text-sm">Gestão de Usuários</span>
           </TabsTrigger>
-          <TabsTrigger value="ai-keys" className="gap-1.5">
-            <Key className="w-4 h-4" /> Cadastrar APIs de IA (4 IAs)
+          <TabsTrigger value="ai-keys" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
+            <Key className="w-5 h-5 text-indigo-600" /> <span className="font-semibold text-sm">Cadastrar APIs de IA (4 IAs)</span>
           </TabsTrigger>
-          <TabsTrigger value="credits-finance" className="gap-1.5">
-            <Zap className="w-4 h-4" /> Monetização & Créditos
+          <TabsTrigger value="credits-finance" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
+            <Zap className="w-5 h-5 text-yellow-600" /> <span className="font-semibold text-sm">Monetização & Créditos</span>
           </TabsTrigger>
-          <TabsTrigger value="ai-router" className="gap-1.5">
-            <Cpu className="w-4 h-4" /> Telemetria de IA
+          <TabsTrigger value="ai-router" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
+            <Cpu className="w-5 h-5 text-slate-600" /> <span className="font-semibold text-sm">Telemetria de IA</span>
           </TabsTrigger>
-          <TabsTrigger value="incidents" className="gap-1.5">
-            <AlertCircle className="w-4 h-4 text-amber-600" /> Central de Agentes & Incidentes
+          <TabsTrigger value="incidents" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600" /> <span className="font-semibold text-sm">Central de Agentes & Incidentes</span>
           </TabsTrigger>
-          <TabsTrigger value="director" className="gap-1.5">
-            <Award className="w-4 h-4 text-violet-600" /> 👑 Coordenador Mestre 24h
+          <TabsTrigger value="director" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
+            <Award className="w-5 h-5 text-violet-600" /> <span className="font-semibold text-sm">👑 Coordenador Mestre 24h</span>
+          </TabsTrigger>
+          <TabsTrigger value="health" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3 md:col-span-2">
+            <Activity className="w-5 h-5 text-emerald-600" /> <span className="font-semibold text-sm">Saúde do Sistema</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1659,6 +1662,11 @@ function AdminViewContent() {
         <TabsContent value="director" className="space-y-4">
           <DirectorAdminTab />
         </TabsContent>
+
+        {/* HEALTH DASHBOARD TAB */}
+        <TabsContent value="health" className="space-y-4">
+          <HealthAdminTab />
+        </TabsContent>
       </Tabs>
     </div>
   )
@@ -2005,3 +2013,108 @@ function DirectorAdminTab() {
     </div>
   )
 }
+
+function HealthAdminTab() {
+  const [healthData, setHealthData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  const checkHealth = async () => {
+    setLoading(true)
+    try {
+      const res = await internalFetch('/api/admin/health', { cache: 'no-store' })
+      const data = await res.json()
+      if (res.ok) setHealthData(data)
+      else toast.error(data.error || 'Erro ao carregar dados de saúde.')
+    } catch {
+      toast.error('Falha de conexão.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { checkHealth() }, [])
+
+  if (loading && !healthData) {
+    return <div className="py-12 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900">Saúde do Sistema</h2>
+          <p className="text-sm text-slate-500">Monitoramento em tempo real dos serviços críticos.</p>
+        </div>
+        <Button onClick={checkHealth} disabled={loading} variant="outline" className="bg-white">
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Diagnóstico Atualizado
+        </Button>
+      </div>
+
+      {healthData && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* DATABASE CARD */}
+          <Card className={healthData.components.database.status === 'error' ? 'border-rose-300 bg-rose-50' : 'border-emerald-200 bg-emerald-50'}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                Database <Badge variant="outline">{healthData.components.database.status}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{healthData.components.database.latencyMs}ms</p>
+              <p className="text-xs text-slate-500">Latência de query básica</p>
+              {healthData.components.database.error && (
+                <p className="text-xs text-rose-600 mt-2">{healthData.components.database.error}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ENVIRONMENT VARIABLES CARD */}
+          <Card className={healthData.components.env.status === 'error' ? 'border-rose-300 bg-rose-50' : 'border-emerald-200 bg-emerald-50'}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                Environment <Badge variant="outline">{healthData.components.env.status}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{healthData.components.env.missingKeys.length === 0 ? 'OK' : 'FALHA'}</p>
+              <p className="text-xs text-slate-500">Variáveis de ambiente</p>
+              {healthData.components.env.missingKeys.length > 0 && (
+                <p className="text-xs text-rose-600 mt-2 font-bold break-words">Faltando: {healthData.components.env.missingKeys.join(', ')}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* AI PROVIDERS CARD */}
+          <Card className={healthData.components.aiProviders.status === 'error' ? 'border-rose-300 bg-rose-50' : 'border-emerald-200 bg-emerald-50'}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                Provedores IA <Badge variant="outline">{healthData.components.aiProviders.status}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{healthData.components.aiProviders.activeKeys}</p>
+              <p className="text-xs text-slate-500">Chaves de API ativas</p>
+              <p className="text-xs text-slate-700 mt-2">{healthData.components.aiProviders.message}</p>
+            </CardContent>
+          </Card>
+
+          {/* INCIDENTS CARD */}
+          <Card className={healthData.components.incidents.status === 'degraded' ? 'border-amber-300 bg-amber-50' : 'border-emerald-200 bg-emerald-50'}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                Estabilidade <Badge variant="outline">{healthData.components.incidents.status}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{healthData.components.incidents.activeCount}</p>
+              <p className="text-xs text-slate-500">Incidentes pendentes</p>
+              <p className="text-xs mt-2 text-amber-700 font-semibold">{healthData.components.incidents.recentAiErrors} erros de IA nas últimas 24h</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  )
+}
+

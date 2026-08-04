@@ -24,41 +24,72 @@ export async function POST(req: Request) {
 
     const targetUrl = parsed.data.url
 
-    // Requisita a página web
-    const res = await fetch(targetUrl, {
+    // Use Jina Reader API to bypass basic anti-bot blocks and extract clean markdown
+    const jinaUrl = `https://r.jina.ai/${targetUrl}`
+    const res = await fetch(jinaUrl, {
       headers: {
+        'Accept': 'text/plain',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
       },
     })
 
-    if (!res.ok) {
-      return NextResponse.json({ error: `Não foi possível acessar a URL fornecida (HTTP ${res.status}).` }, { status: 400 })
+    let extractedContent = ''
+    let pageTitle = 'Vaga Importada via Link'
+
+    if (res.ok) {
+      const text = await res.text()
+      // Jina returns markdown, usually the title is "Title: ..." at the top
+      const titleMatch = text.match(/^Title:\s*(.+)/m)
+      if (titleMatch) pageTitle = titleMatch[1].trim()
+      
+      extractedContent = text.trim()
+    } else {
+      // Fallback to direct fetch if Jina fails
+      const fallbackRes = await fetch(targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        },
+      })
+
+      if (!fallbackRes.ok) {
+        return NextResponse.json({ error: `Não foi possível acessar a URL fornecida (HTTP ${fallbackRes.status}).` }, { status: 400 })
+      }
+
+      const html = await fallbackRes.text()
+      let cleanText = html
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+
+      const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i)
+      if (titleMatch) pageTitle = titleMatch[1].trim()
+      
+      extractedContent = cleanText
     }
 
-    const html = await res.text()
-
-    // Extrai texto limpando tags HTML basico
-    let cleanText = html
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
-      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-
-    if (cleanText.length < 50) {
-      return NextResponse.json({ error: 'Não foi possível extrair o texto do anúncio desta URL.' }, { status: 400 })
+    if (extractedContent.length < 50) {
+      return NextResponse.json({ error: 'Não foi possível extrair o texto do anúncio desta URL. Verifique se a página exige login.' }, { status: 400 })
     }
 
-    // Tenta extrair título da página
-    const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i)
-    const pageTitle = titleMatch ? titleMatch[1].trim() : ''
+    const isBlocked = 
+      pageTitle.toLowerCase().includes('security measure') ||
+      pageTitle.toLowerCase().includes('cloudflare') ||
+      pageTitle.toLowerCase().includes('attention required') ||
+      extractedContent.toLowerCase().includes('please enable js') ||
+      extractedContent.toLowerCase().includes('verify you are human')
+
+    if (isBlocked) {
+      return NextResponse.json({ error: 'A importação foi bloqueada pelo sistema de segurança do site (ex: Glassdoor/LinkedIn). Por favor, copie e cole o texto da vaga manualmente.' }, { status: 400 })
+    }
 
     // Limita tamanho a 10.000 caracteres para otimização
-    const extractedContent = cleanText.slice(0, 10000)
+    extractedContent = extractedContent.slice(0, 10000)
 
     return NextResponse.json({
-      title: pageTitle || 'Vaga Importada via Link',
+      title: pageTitle,
       description: extractedContent,
       sourceUrl: targetUrl,
     })
