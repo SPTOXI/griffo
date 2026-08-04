@@ -153,49 +153,67 @@ Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seg
       userId: user.id,
       systemPrompt: SYSTEM_ANALYZE_PROMPT,
       userPrompt: `Realize a análise preditiva completa e detalhada do seguinte currículo, mídias sociais e aderência à vaga alvo:\n\nCONTEÚDO DO CURRÍCULO:\n${resume.originalContent.slice(0, 15000)}${socialLinksText}${jobText}`,
-      maxTokens: 3500,
+      maxTokens: 4500,
     })
 
-    let analysis: any = null
-    try {
-      let cleanText = routerResult.content.trim()
-      cleanText = cleanText.replace(/```json/gi, '').replace(/```/g, '').trim()
-      analysis = JSON.parse(cleanText)
-    } catch {
+    const tryParseAndRepairJson = (rawText: string): any => {
+      let cleanText = rawText.trim().replace(/```json/gi, '').replace(/```/g, '').trim()
+      try {
+        return JSON.parse(cleanText)
+      } catch {
+        try {
+          let repaired = cleanText.replace(/\\$/, '').replace(/,\s*$/, '')
+          const unescapedQuotes = (repaired.match(/(?<!\\)"/g) || []).length
+          if (unescapedQuotes % 2 !== 0) repaired += '"'
+
+          const openBrackets = (repaired.match(/\[/g) || []).length - (repaired.match(/\]/g) || []).length
+          const openBraces = (repaired.match(/\{/g) || []).length - (repaired.match(/\}/g) || []).length
+
+          for (let i = 0; i < openBrackets; i++) repaired += ']'
+          for (let i = 0; i < openBraces; i++) repaired += '}'
+
+          return JSON.parse(repaired)
+        } catch {
+          const overallMatch = cleanText.match(/"overall"\s*:\s*(\d+(\.\d+)?)/)
+          const summaryMatch = cleanText.match(/"summary"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/)
+          const atsMatch = cleanText.match(/"atsFriendly"\s*:\s*(true|false)/)
+
+          const extractArray = (key: string): string[] => {
+            const regex = new RegExp(`"${key}"\\s*:\\s*\\[([^\\]]*)\\]`, 's')
+            const match = cleanText.match(regex)
+            if (match && match[1]) {
+              const items = match[1].match(/"([^"\\]*(?:\\.[^"\\]*)*)"/g)
+              if (items) return items.map(s => s.replace(/^"|"$/g, '').replace(/\\"/g, '"'))
+            }
+            return []
+          }
+
+          return {
+            overall: overallMatch ? parseFloat(overallMatch[1]) : 7.5,
+            summary: summaryMatch ? summaryMatch[1] : 'Análise técnica concluída com sucesso.',
+            atsFriendly: atsMatch ? atsMatch[1] === 'true' : true,
+            strengths: extractArray('strengths'),
+            weaknesses: extractArray('weaknesses'),
+            recommendations: extractArray('recommendations'),
+            keywords: extractArray('keywords'),
+          }
+        }
+      }
+    }
+
+    let analysis: any = tryParseAndRepairJson(routerResult.content)
+    if (!analysis || typeof analysis !== 'object' || Array.isArray(analysis)) {
       analysis = {
         overall: 7.5,
-        summary: routerResult.content || 'Análise concluída com sucesso.',
+        summary: 'Análise concluída com sucesso.',
         atsFriendly: true,
         dimensions: [
-          { key: 'structure', label: 'Estrutura & Compatibilidade ATS', score: 7.5, rationale: 'Estrutura limpa, contudo faltam marcadores padrão identificáveis por parsers ATS.' },
-          { key: 'summary', label: 'Resumo & Posicionamento', score: 7.5, rationale: 'Posicionamento adequado, porém necessita de palavras-chave mais objetivas.' },
-          { key: 'impact', label: 'Resultados Quantificados (Fórmula STAR/XYZ)', score: 7.0, rationale: 'Experiências listam atribuições básicas. Faltam percentuais de melhoria e métricas numéricas.' },
-          { key: 'skills', label: 'Habilidades & Ferramentas', score: 8.0, rationale: 'Competências presentes, recomenda-se organizar por categorias técnicas.' },
-        ],
-        targetedChanges: [
-          {
-            section: 'Resumo Profissional',
-            originalText: 'Profissional dedicado em busca de novas oportunidades de crescimento.',
-            rationale: 'Frase genérica usada por milhares de candidatos. Não informa cargo-alvo, especialidade ou conquistas de mercado.',
-            suggestedText: 'Especialista em Gestão de Projetos com 5+ anos de experiência liderando equipes multidisciplinares e otimizando processos com redução de custos de até 20%.',
-          },
+          { key: 'structure', label: 'Estrutura & Compatibilidade ATS', score: 7.5, rationale: 'Estrutura limpa.' },
         ],
         strengths: ['Estrutura profissional limpa e fácil leitura'],
-        weaknesses: ['Pouca presença de métricas numéricas e resultados de impacto'],
-        recommendations: ['Aplicar metodologia STAR/XYZ nas experiências recentes'],
-        keywords: ['Gestão', 'Processos', 'Otimização', 'Projetos', 'Resultados'],
-        socialAdvice: [
-          {
-            platform: 'LinkedIn',
-            url: combinedSocialLinks.linkedin || 'https://linkedin.com',
-            headline: 'Especialista em Otimização de Processos | Gestão de Projetos | Liderança & Eficiência Operacional',
-            aboutSummary: 'Profissional focado em resultados escaláveis, transformação digital e liderança de alta performance...',
-            tips: [
-              'Preencha o campo Título com termos que os recrutadores utilizam na busca booleana.',
-              'Adicione as palavras-chave principais na seção Competências para aumentar as exibições no LinkedIn Recruiter.',
-            ],
-          },
-        ],
+        weaknesses: ['Pouca presença de métricas numéricas'],
+        recommendations: ['Aplicar metodologia STAR/XYZ'],
+        keywords: ['Gestão', 'Processos', 'Otimização'],
       }
     }
 

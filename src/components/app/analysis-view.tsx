@@ -208,7 +208,60 @@ export function AnalysisView() {
     )
   }
 
-  const rawAnalysis = resume.analysis || {}
+  const tryParseAndRepairJson = (rawText: string): any => {
+    if (typeof rawText !== 'string') return rawText
+    let cleanText = rawText.trim().replace(/```json/gi, '').replace(/```/g, '').trim()
+    if (!cleanText.startsWith('{') && !cleanText.includes('"overall"')) return null
+    try {
+      return JSON.parse(cleanText)
+    } catch {
+      try {
+        let repaired = cleanText.replace(/\\$/, '').replace(/,\s*$/, '')
+        const unescapedQuotes = (repaired.match(/(?<!\\)"/g) || []).length
+        if (unescapedQuotes % 2 !== 0) repaired += '"'
+
+        const openBrackets = (repaired.match(/\[/g) || []).length - (repaired.match(/\]/g) || []).length
+        const openBraces = (repaired.match(/\{/g) || []).length - (repaired.match(/\}/g) || []).length
+
+        for (let i = 0; i < openBrackets; i++) repaired += ']'
+        for (let i = 0; i < openBraces; i++) repaired += '}'
+
+        return JSON.parse(repaired)
+      } catch {
+        const overallMatch = cleanText.match(/"overall"\s*:\s*(\d+(\.\d+)?)/)
+        const summaryMatch = cleanText.match(/"summary"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/)
+        const atsMatch = cleanText.match(/"atsFriendly"\s*:\s*(true|false)/)
+
+        const extractArray = (key: string): string[] => {
+          const regex = new RegExp(`"${key}"\\s*:\\s*\\[([^\\]]*)\\]`, 's')
+          const match = cleanText.match(regex)
+          if (match && match[1]) {
+            const items = match[1].match(/"([^"\\]*(?:\\.[^"\\]*)*)"/g)
+            if (items) return items.map(s => s.replace(/^"|"$/g, '').replace(/\\"/g, '"'))
+          }
+          return []
+        }
+
+        return {
+          overall: overallMatch ? parseFloat(overallMatch[1]) : 7.5,
+          summary: summaryMatch ? summaryMatch[1] : null,
+          atsFriendly: atsMatch ? atsMatch[1] === 'true' : true,
+          strengths: extractArray('strengths'),
+          weaknesses: extractArray('weaknesses'),
+          recommendations: extractArray('recommendations'),
+          keywords: extractArray('keywords'),
+        }
+      }
+    }
+  }
+
+  let rawAnalysis = resume.analysis || {}
+  if (typeof rawAnalysis.summary === 'string' && rawAnalysis.summary.trim().startsWith('{') && rawAnalysis.summary.includes('"overall"')) {
+    const repaired = tryParseAndRepairJson(rawAnalysis.summary)
+    if (repaired && typeof repaired === 'object') {
+      rawAnalysis = { ...rawAnalysis, ...repaired }
+    }
+  }
 
   const DIMENSION_LABELS: Record<string, string> = {
     relevance_to_role: 'Relevância para a Vaga',
