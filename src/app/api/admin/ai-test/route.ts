@@ -79,11 +79,13 @@ export async function GET() {
         }
       }
     } catch (err: any) {
+      const detailedErr = err?.error?.message || err?.error?.code || err?.message || JSON.stringify(err)
       results[pId] = {
         status: 'FAILED',
         httpCode: err?.status || err?.code || 500,
-        errorMessage: err?.message || 'Erro de conexão ou resposta inválida',
+        errorMessage: detailedErr,
         model: config.model,
+        baseURL: config.baseURL,
       }
     }
   }
