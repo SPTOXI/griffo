@@ -24,6 +24,7 @@ import { SupportView } from './support-view'
 import { AdminView } from '../admin/admin-view'
 import { PaymentStatusModal } from './payment-status-modal'
 import { LanguageSelector } from '../ui/language-selector'
+import { useI18n } from '@/context/i18n-context'
 
 const NAV_ITEMS: { view: AppView; label: string; icon: any }[] = [
   { view: 'dashboard', label: 'Painel', icon: LayoutDashboard },
@@ -38,8 +39,15 @@ const NAV_ITEMS: { view: AppView; label: string; icon: any }[] = [
 ]
 
 export function AppShell({ onExit }: { onExit: () => void }) {
+  const { lang } = useI18n()
   const { user, logout, hydrated } = useAuth()
   const { view, setView } = useNav()
+
+  const appSubtitles: Record<string, string> = {
+    pt: 'Inteligência de Carreira',
+    en: 'Career Intelligence',
+    es: 'Inteligencia de Carrera',
+  }
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [credits, setCredits] = useState<number>(user?.credits ?? 20)
   const [activePaymentSession, setActivePaymentSession] = useState<{ sessionId: string; expectedCredits?: number } | null>(null)
@@ -118,7 +126,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           <img src="/logo.png" alt="GriffoWork" className="h-9 w-auto object-contain rounded-md shrink-0" />
           <div className="hidden sm:flex flex-col text-left leading-none">
             <span className="font-extrabold text-[#0B192E] text-base tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
-            <span className="text-[9px] font-semibold tracking-wider text-slate-400 uppercase">Análise por IA</span>
+            <span className="text-[9px] font-extrabold tracking-wider text-[#0B63E5] uppercase">{appSubtitles[lang] || appSubtitles.pt}</span>
           </div>
         </button>
 
