@@ -270,7 +270,7 @@ export function SettingsView() {
           <Alert>
             <AlertCircle className="w-4 h-4" />
             <AlertDescription>
-              Na Fase 2, recrutadores verificados poderão buscar candidatos por score, dimensões de força e palavras-chave. <strong>Você está no controle:</strong> pode ativar ou desativar a qualquer momento. Dados sensíveis (e-mail, telefone) só aparecem após você aceitar um match.
+              Recrutadores verificados poderão buscar candidatos por score, dimensões de força e palavras-chave. <strong>Você está no controle:</strong> pode ativar ou desativar a qualquer momento. Dados sensíveis (e-mail, telefone) só aparecem após você aceitar um match.
             </AlertDescription>
           </Alert>
 

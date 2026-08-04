@@ -56,6 +56,11 @@ interface Analysis {
   socialAdvice?: SocialAdvice[]
 }
 
+// Ensure rawAnalysis access is also typed
+interface RawAnalysis extends Partial<Analysis> {
+  [key: string]: unknown
+}
+
 interface Resume {
   id: string
   status: string
@@ -74,6 +79,7 @@ export function AnalysisView() {
   const [orienting, setOrienting] = useState(false)
   const [careerOrientation, setCareerOrientation] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'all' | 'overview' | 'social' | 'match' | 'career' | 'dimensions' | 'targeted'>('all')
   const [list, setList] = useState<{ id: string; status: string; updatedAt: string }[]>([])
 
   const handleGenerateOrientation = async () => {
@@ -297,10 +303,14 @@ export function AnalysisView() {
     clarity_formatting: 'Clareza & Formatação',
     ats_optimization: 'Otimização ATS',
     keyword_integration: 'Integração de Palavras-Chave',
-    structure: 'Estrutura & Organização',
+    structure: 'Estrutura & Compatibilidade ATS',
     summary: 'Resumo & Posicionamento',
     impact: 'Resultados (STAR/XYZ)',
     skills: 'Habilidades & Ferramentas',
+    experience: 'Experiência & Verbos de Ação',
+    keywords: 'Palavras-Chave & Match',
+    career: 'Trajetória & Plano de Carreira',
+    upskilling: 'Capacitação & Cursos',
     education: 'Formação & Cursos',
     language: 'Linguagem & Tom',
   }
@@ -331,10 +341,14 @@ export function AnalysisView() {
     }
 
     return [
-      { key: 'structure', label: 'Estrutura & ATS', score: 7, rationale: 'Estrutura padrão identificada.' },
+      { key: 'structure', label: 'Estrutura & Compatibilidade ATS', score: 7, rationale: 'Estrutura padrão identificada.' },
       { key: 'summary', label: 'Resumo & Posicionamento', score: 7, rationale: 'Posicionamento claro.' },
       { key: 'impact', label: 'Resultados (STAR/XYZ)', score: 7, rationale: 'Resultados apresentados.' },
-      { key: 'skills', label: 'Habilidades & Ferramentas', score: 7, rationale: 'Competências identificadas.' }
+      { key: 'skills', label: 'Habilidades & Ferramentas', score: 7, rationale: 'Competências identificadas.' },
+      { key: 'experience', label: 'Experiência & Verbos de Ação', score: 7, rationale: 'Experiência profissional avaliada.' },
+      { key: 'keywords', label: 'Palavras-Chave & Match', score: 7, rationale: 'Palavras-chave avaliadas.' },
+      { key: 'career', label: 'Trajetória & Plano de Carreira', score: 7, rationale: 'Progressão de carreira avaliada.' },
+      { key: 'upskilling', label: 'Capacitação & Cursos', score: 7, rationale: 'Oportunidades de capacitação identificadas.' }
     ]
   }
 
@@ -430,62 +444,140 @@ export function AnalysisView() {
 
   return (
     <div className="space-y-5 max-w-5xl">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Laudo de análise</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Atualizado em {new Date(resume.updatedAt).toLocaleString('pt-BR')}</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={reanalyze} disabled={analyzing}>
-            {analyzing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
-            Reanalisar
-          </Button>
-          <Button size="sm" onClick={() => openResume(resume.id, 'rewrite')} className="bg-violet-600 hover:bg-violet-700">
-            <FileEdit className="w-4 h-4 mr-1" /> Reescrever
-          </Button>
-        </div>
+      {/* TAB NAVIGATION BAR */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none border-b border-slate-200">
+        <button
+          onClick={() => setActiveTab('all')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
+            activeTab === 'all'
+              ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Visão Completa
+        </button>
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
+            activeTab === 'overview'
+              ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+              : 'bg-white text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-700'
+          }`}
+        >
+          <BarChart3 className="w-3.5 h-3.5" /> Score & Veredito
+        </button>
+        <button
+          onClick={() => setActiveTab('social')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
+            activeTab === 'social'
+              ? 'bg-violet-600 text-white border-violet-600 shadow-2xs'
+              : 'bg-violet-50/80 text-violet-800 border-violet-200 hover:bg-violet-100'
+          }`}
+        >
+          <Share2 className="w-3.5 h-3.5" /> 🌐 Mídias & Redes Sociais
+          <Badge className="bg-violet-200 text-violet-900 border-0 text-[10px] px-1.5 py-0 h-4 font-mono font-bold">
+            {a.socialAdvice?.length || 0}
+          </Badge>
+        </button>
+        <button
+          onClick={() => setActiveTab('match')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
+            activeTab === 'match'
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+              : 'bg-indigo-50/80 text-indigo-900 border-indigo-200 hover:bg-indigo-100'
+          }`}
+        >
+          <Target className="w-3.5 h-3.5" /> 💼 Match Vaga Alvo
+          {rawAnalysis.jobMatch && (
+            <Badge className="bg-indigo-200 text-indigo-950 border-0 text-[10px] px-1.5 py-0 h-4 font-mono font-bold">
+              {rawAnalysis.jobMatch.matchPercentage}%
+            </Badge>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('career')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
+            activeTab === 'career'
+              ? 'bg-sky-600 text-white border-sky-600 shadow-2xs'
+              : 'bg-sky-50/80 text-sky-900 border-sky-200 hover:bg-sky-100'
+          }`}
+        >
+          <Compass className="w-3.5 h-3.5" /> 🧭 Agente Vocacional
+        </button>
+        <button
+          onClick={() => setActiveTab('dimensions')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
+            activeTab === 'dimensions'
+              ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+              : 'bg-white text-slate-600 border-slate-200 hover:bg-emerald-50 hover:text-emerald-700'
+          }`}
+        >
+          <Award className="w-3.5 h-3.5" /> 📐 8 Dimensões ({parsedDimensions.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('targeted')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
+            activeTab === 'targeted'
+              ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
+              : 'bg-white text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700'
+          }`}
+        >
+          <FileEdit className="w-3.5 h-3.5" /> ✏️ Ajustes STAR/XYZ
+        </button>
       </div>
 
       {error && <Alert variant="destructive"><AlertCircle className="w-4 h-4" /><AlertDescription>{error}</AlertDescription></Alert>}
 
       {/* OVERALL + RADAR */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-1">
-          <CardContent className="p-5 flex flex-col items-center justify-center text-center h-full">
-            <p className="text-xs uppercase tracking-wider text-slate-500 mb-1 font-semibold">Nota Geral do Perfil</p>
-            <p className="text-6xl font-extrabold tracking-tight" style={{ color: scoreColor }}>{score.toFixed(1)}</p>
-            <p className="text-xs font-semibold text-slate-400 mt-0.5">/ 10.0</p>
-            <Badge className="mt-2.5 px-3 py-1 font-bold text-xs" style={{ backgroundColor: `${scoreColor}15`, color: scoreColor, borderColor: `${scoreColor}30` }}>
+      {/* OVERALL + RADAR */}
+      {(activeTab === 'all' || activeTab === 'overview') && (
+        <>
+          <div className="grid lg:grid-cols-3 gap-4">
+        <Card className="lg:col-span-1 border-0 shadow-2xl relative overflow-hidden bg-gradient-to-br from-[#0B192E] via-[#10233D] to-[#0B192E]">
+          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay"></div>
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/20 blur-3xl rounded-full pointer-events-none"></div>
+          <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full relative z-10">
+            <div className="w-full flex items-center justify-between mb-4">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Score Audit</p>
+              {a.atsFriendly ? (
+                <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> ATS PASS</Badge>
+              ) : (
+                <Badge className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-black tracking-widest"><XCircle className="w-3 h-3 mr-1" /> ATS FAIL</Badge>
+              )}
+            </div>
+            
+            <div className="relative">
+              <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
+                <circle cx="50" cy="50" r="45" fill="none" stroke={scoreColor} strokeWidth="8" strokeDasharray={`${(score / 10) * 283} 283`} className="transition-all duration-1000 ease-out" />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <p className="text-4xl font-black text-white tracking-tighter" style={{ textShadow: `0 0 20px ${scoreColor}40` }}>{score.toFixed(1)}</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">/ 10</p>
+              </div>
+            </div>
+
+            <Badge className="mt-5 px-4 py-1.5 font-black text-xs uppercase tracking-widest shadow-lg" style={{ backgroundColor: scoreColor, color: '#fff', border: 'none' }}>
               {scoreLabel}
             </Badge>
 
-            <div className="mt-3 flex items-center gap-2 text-xs">
-              {a.atsFriendly ? (
-                <><CheckCircle2 className="w-4 h-4 text-emerald-600" /><span className="text-emerald-700 font-semibold">ATS OK</span></>
-              ) : (
-                <><XCircle className="w-4 h-4 text-red-600" /><span className="text-red-700 font-semibold">Rejeitado por ATS</span></>
-              )}
-            </div>
-
             {/* PAINEL TRANSPARENTE DA FÓRMULA DE CÁLCULO */}
-            <div className="mt-4 pt-3 border-t border-slate-100 text-left w-full text-[11px] text-slate-600 space-y-1 bg-slate-50/70 p-2.5 rounded-lg">
-              <p className="font-bold text-slate-800 flex items-center gap-1">
-                <Info className="w-3.5 h-3.5 text-blue-600 shrink-0" /> Transparência do Cálculo:
+            <div className="mt-6 pt-4 border-t border-slate-700/50 text-left w-full space-y-2">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <Info className="w-3.5 h-3.5 text-blue-400 shrink-0" /> Cálculo Dimensões
               </p>
-              <p className="text-[10px] leading-relaxed text-slate-600">
-                Média aritmética exata das {parsedDimensions.length} dimensões:
-              </p>
-              <div className="flex flex-wrap gap-1 pt-0.5">
+              <div className="flex flex-wrap gap-1.5 pt-1">
                 {parsedDimensions.map((d, i) => (
-                  <span key={i} className="inline-flex items-center gap-0.5 bg-white text-slate-800 px-1.5 py-0.5 rounded text-[10px] font-mono border border-slate-200 shadow-2xs">
-                    {d.label.slice(0, 14)}: <strong>{d.score.toFixed(1)}</strong>
-                  </span>
+                  <div key={i} className="flex items-center justify-between w-[48%] bg-slate-800/50 px-2 py-1.5 rounded border border-slate-700/50">
+                    <span className="text-[9px] text-slate-400 uppercase truncate max-w-[65%]">{d.label}</span>
+                    <strong className="text-[10px] text-slate-200">{d.score.toFixed(1)}</strong>
+                  </div>
                 ))}
               </div>
-              <p className="text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-200/60 mt-1">
-                ({parsedDimensions.map(d => d.score.toFixed(1)).join(' + ')}) ÷ {parsedDimensions.length} = <strong className="text-slate-900 font-bold">{score.toFixed(1)}</strong>
-              </p>
+              <div className="bg-blue-500/10 border border-blue-500/20 p-2 rounded flex justify-between items-center mt-2">
+                <span className="text-[9px] text-blue-400 font-bold uppercase tracking-wider">Média Algorítmica</span>
+                <strong className="text-xs text-white font-black">{score.toFixed(1)}</strong>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -620,28 +712,37 @@ export function AnalysisView() {
           </CardContent>
         </Card>
       )}
+        </>
+      )}
 
       {/* SOCIAL PRESENCE & ADVICE (Destaque em Redes Sociais) */}
-      {a.socialAdvice && a.socialAdvice.length > 0 && (
-        <Card className="border-violet-200 bg-gradient-to-br from-white to-violet-50/40 shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center shrink-0 border border-violet-200">
-                  <Share2 className="w-5 h-5" />
+      {(activeTab === 'all' || activeTab === 'social') && a.socialAdvice && a.socialAdvice.length > 0 && (
+        <Card className="border border-violet-500/30 bg-gradient-to-br from-violet-900 via-[#1A0B2E] to-[#0B0B2E] shadow-2xl relative overflow-hidden mt-8">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-500/10 blur-[80px] pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 blur-[80px] pointer-events-none"></div>
+          
+          <div className="absolute top-0 right-8 bg-gradient-to-b from-amber-400 to-amber-600 text-white text-[10px] font-black tracking-widest px-3 py-1 rounded-b-lg shadow-lg uppercase z-10 flex items-center gap-1">
+            <Sparkles className="w-3 h-3" /> Griffo Premium
+          </div>
+
+          <CardHeader className="pb-4 border-b border-violet-500/20 relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/30">
+                  <Share2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <CardTitle className="text-base text-violet-900 font-bold flex items-center gap-1.5">
-                    🌐 Otimização de Presença Digital & Mídias Sociais (LinkedIn, Gupy & Portfólio)
+                  <CardTitle className="text-xl text-white font-black flex items-center gap-2 mb-1 tracking-tight">
+                    🌐 Social SEO & Presença Digital
                   </CardTitle>
-                  <CardDescription className="text-xs text-slate-600">
-                    Estratégias de SEO de perfil, títulos otimizados e bios para aumentar suas exibições em algoritmos de recrutamento e plataformas globais.
+                  <CardDescription className="text-xs text-violet-200/70 font-medium max-w-xl leading-relaxed">
+                    Auditoria algorítmica do seu perfil para plataformas globais (LinkedIn, Gupy). Estratégias de palavras-chave e otimização de busca para ser encontrado por recrutadores Premium.
                   </CardDescription>
                 </div>
               </div>
 
               {/* DOWNLOAD & EXPORT SOCIAL ADVICE */}
-              <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+              <div className="flex items-center gap-2 self-start sm:self-center shrink-0 mt-2 sm:mt-0">
                 <Button
                   variant="outline"
                   size="sm"
@@ -655,87 +756,87 @@ export function AnalysisView() {
                       text += `\n`
                     }
                     navigator.clipboard.writeText(text)
-                    toast.success('Dicas de redes sociais copiadas para a área de transferência!')
+                    toast.success('Dicas de redes sociais copiadas para a área de clipboard!')
                   }}
-                  className="bg-white border-violet-200 text-violet-800 hover:bg-violet-50 text-xs font-semibold"
+                  className="bg-transparent border-violet-500/30 text-violet-300 hover:bg-violet-500/10 hover:text-white text-xs font-bold transition-all"
                 >
-                  Copiar dicas
+                  Copiar Hacks
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => openResume(resume.id, 'downloads')}
-                  className="bg-violet-600 text-white hover:bg-violet-700 text-xs font-semibold"
+                  className="bg-violet-600 border-none text-white hover:bg-violet-500 text-xs font-bold shadow-lg shadow-violet-600/20"
                 >
-                  <Download className="w-3.5 h-3.5 mr-1" /> Baixar relatórios
+                  <Download className="w-3.5 h-3.5 mr-1" /> Baixar PDF
                 </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-6 relative z-10">
             {a.socialAdvice.map((item, idx) => (
-              <div key={idx} className="p-4 rounded-xl bg-white border border-violet-100 shadow-2xs space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-violet-600 text-white font-semibold px-2.5 py-0.5">{item.platform}</Badge>
-                    <span className="text-xs text-slate-500 font-mono truncate max-w-xs">{item.url}</span>
+              <div key={idx} className="p-5 rounded-xl bg-slate-900/40 border border-violet-500/20 backdrop-blur-md space-y-4">
+                <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-violet-500 text-white font-black tracking-wider uppercase px-3 py-1 shadow-md">{item.platform}</Badge>
+                    <span className="text-xs text-slate-400 font-mono truncate max-w-xs">{item.url}</span>
                   </div>
                 </div>
 
                 {item.headline && (
-                  <div className="bg-violet-50/60 p-3 rounded-lg border border-violet-100">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-violet-800">
-                        💡 Título Otimizado Sugerido ({item.platform})
+                  <div className="bg-black/20 p-4 rounded-xl border border-white/5">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-violet-400">
+                        💡 Título Estratégico (SEO)
                       </p>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 text-[10px] px-2 text-violet-700 hover:bg-violet-100 font-semibold"
+                        className="h-6 text-[10px] px-2 text-violet-300 hover:bg-white/5 hover:text-white font-bold"
                         onClick={() => {
                           navigator.clipboard.writeText(item.headline || '')
                           toast.success('Título copiado!')
                         }}
                       >
-                        Copiar título
+                        Copiar
                       </Button>
                     </div>
-                    <p className="text-xs font-semibold text-slate-900 leading-normal">{item.headline}</p>
+                    <p className="text-sm font-bold text-white leading-relaxed">{item.headline}</p>
                   </div>
                 )}
 
                 {item.aboutSummary && (
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                        📝 Sugestão de Texto 'Sobre' / Bio
+                  <div className="bg-black/20 p-4 rounded-xl border border-white/5">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">
+                        📝 Bio Otimizada / Algoritmo
                       </p>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 text-[10px] px-2 text-slate-600 hover:bg-slate-200 font-semibold"
+                        className="h-6 text-[10px] px-2 text-blue-300 hover:bg-white/5 hover:text-white font-bold"
                         onClick={() => {
                           navigator.clipboard.writeText(item.aboutSummary || '')
                           toast.success('Texto copiado!')
                         }}
                       >
-                        Copiar texto
+                        Copiar
                       </Button>
                     </div>
-                    <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{item.aboutSummary}</p>
+                    <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">{item.aboutSummary}</p>
                   </div>
                 )}
 
                 {item.tips && item.tips.length > 0 && (
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                      🚀 Dicas de Otimização & Algoritmo
+                  <div className="pt-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                      🚀 Hacks de Crescimento
                     </p>
-                    <ul className="space-y-1.5 text-xs text-slate-700">
+                    <ul className="space-y-2 text-xs text-slate-300">
                       {item.tips.map((tip, tIdx) => (
-                        <li key={tIdx} className="flex items-start gap-1.5">
-                          <span className="text-violet-600 font-bold">•</span>
-                          <span>{tip}</span>
+                        <li key={tIdx} className="flex items-start gap-2 bg-white/5 p-2 rounded-lg border border-white/5">
+                          <span className="text-amber-400 font-bold shrink-0 mt-0.5"><Sparkles className="w-3 h-3" /></span>
+                          <span className="leading-snug">{tip}</span>
                         </li>
                       ))}
                     </ul>
@@ -748,7 +849,7 @@ export function AnalysisView() {
       )}
 
       {/* TARGET JOB MATCHING (FASE 1 - NOVO PAINEL DE COMPATIBILIDADE) */}
-      {rawAnalysis.jobMatch && (
+      {(activeTab === 'all' || activeTab === 'match') && rawAnalysis.jobMatch && (
         <Card className="border-indigo-200 bg-gradient-to-br from-indigo-50/40 via-white to-sky-50/30 shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -844,7 +945,8 @@ export function AnalysisView() {
       )}
 
       {/* CAREER ORIENTATION & VOCATIONAL AGENT (PARA CANDIDATOS INDECISOS) */}
-      <Card className="border-sky-200 bg-gradient-to-br from-sky-50/50 via-white to-indigo-50/30">
+      {(activeTab === 'all' || activeTab === 'career') && (
+        <Card className="border-sky-200 bg-gradient-to-br from-sky-50/50 via-white to-indigo-50/30">
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
@@ -917,10 +1019,12 @@ export function AnalysisView() {
             )}
           </CardContent>
         )}
-      </Card>
+        </Card>
+      )}
 
       {/* DIMENSIONS DETAIL */}
-      <Card>
+      {(activeTab === 'all' || activeTab === 'dimensions') && (
+        <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Detalhamento por dimensão</CardTitle>
           <CardDescription>Critérios de ATS, recrutamento executivo, plano de carreira e capacitação</CardDescription>
@@ -943,10 +1047,11 @@ export function AnalysisView() {
             )
           })}
         </CardContent>
-      </Card>
+        </Card>
+      )}
 
       {/* TARGETED CHANGES (ONDE E POR QUE MUDAR) */}
-      {a.targetedChanges && a.targetedChanges.length > 0 && (
+      {(activeTab === 'all' || activeTab === 'targeted') && a.targetedChanges && a.targetedChanges.length > 0 && (
         <Card className="border-sky-200 bg-sky-50/20 shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2.5">

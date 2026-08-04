@@ -31,39 +31,54 @@ export function UploadProgressModal({ isOpen, step, progress }: UploadProgressMo
   const currentDimIndex = Math.min(8, Math.max(1, Math.ceil((progress / 100) * 8)))
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200">
-      <Card className="w-full max-w-xl bg-white shadow-2xl border-slate-200 overflow-hidden relative">
-        {/* Top Decorative Banner */}
-        <div className="bg-gradient-to-r from-[#0B192E] via-[#0B63E5] to-indigo-900 p-5 text-white text-center relative overflow-hidden">
-          <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-xs flex items-center justify-center mb-2.5 border border-white/20 shadow-inner">
-              <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
-            </div>
-            <h3 className="text-lg font-extrabold tracking-tight">Auditando Currículo em 8 Dimensões</h3>
-            <p className="text-xs text-blue-100 mt-0.5 max-w-sm">
-              Nossa Inteligência Artificial está analisando seu perfil em tempo real sob critérios executivos e algoritmos ATS.
-            </p>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+      <Card className="w-full max-w-xl bg-[#090E17] border-slate-800 shadow-2xl overflow-hidden relative ring-1 ring-white/10">
+        
+        {/* Animated Background Mesh */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#0B63E5]/20 rounded-full blur-[100px] mix-blend-screen animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] mix-blend-screen" />
         </div>
 
-        <CardContent className="p-5 space-y-5">
-          {/* Main Progress Bar & Sub-Status */}
-          <div className="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-            <div className="flex justify-between items-center text-xs font-bold">
-              <span className="text-slate-700 flex items-center gap-1.5">
-                <Loader2 className="w-3.5 h-3.5 text-[#0B63E5] animate-spin" />
-                Auditando Dimensão {currentDimIndex}/8: {DIMENSIONS_LIST[currentDimIndex - 1]?.name}
-              </span>
-              <Badge variant="outline" className="bg-blue-100 text-[#0B63E5] border-blue-200 font-bold font-mono text-[11px]">
-                {Math.round(progress)}%
-              </Badge>
+        {/* Top Decorative Banner */}
+        <div className="p-6 text-center relative z-10 border-b border-white/10">
+          <div className="flex justify-center mb-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex items-center justify-center shadow-inner relative">
+              <div className="absolute inset-0 rounded-2xl border border-[#0B63E5]/50 animate-ping opacity-20" />
+              <Cpu className="w-6 h-6 text-blue-400 animate-pulse" />
             </div>
-            <Progress value={progress} className="h-2.5 bg-slate-200/70" />
+          </div>
+          <h3 className="text-xl font-black tracking-tight text-white flex items-center justify-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-400" />
+            Auditoria IA em Tempo Real
+          </h3>
+          <p className="text-xs text-slate-400 mt-2 max-w-sm mx-auto font-medium">
+            Mecanismo preditivo processando seu perfil em 8 dimensões através de métricas de recrutamento executivo e filtros ATS.
+          </p>
+        </div>
+
+        <CardContent className="p-6 space-y-6 relative z-10">
+          {/* Main Progress Bar & Sub-Status */}
+          <div className="space-y-3 bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+            <div className="flex justify-between items-center text-[11px] font-bold tracking-wider uppercase">
+              <span className="text-blue-400 flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Processando: {DIMENSIONS_LIST[currentDimIndex - 1]?.name}
+              </span>
+              <span className="text-amber-400 font-mono text-sm">{Math.round(progress)}%</span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-amber-400 transition-all duration-500 ease-out relative"
+                style={{ width: `${progress}%` }}
+              >
+                <div className="absolute top-0 right-0 bottom-0 w-10 bg-white/30 blur-[2px]" />
+              </div>
+            </div>
           </div>
 
           {/* Stepper 8-Dimensions Grid */}
-          <div className="grid sm:grid-cols-2 gap-2 max-h-[280px] overflow-y-auto pr-1">
+          <div className="grid sm:grid-cols-2 gap-3 max-h-[260px] overflow-y-auto pr-2 custom-scrollbar">
             {DIMENSIONS_LIST.map((dim) => {
               const Icon = dim.icon
               const isCompleted = progress >= (dim.id / 8) * 100 || (progress >= 98)
@@ -72,26 +87,26 @@ export function UploadProgressModal({ isOpen, step, progress }: UploadProgressMo
               return (
                 <div
                   key={dim.id}
-                  className={`flex items-start gap-2.5 p-2.5 rounded-lg transition-all duration-200 border ${
+                  className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-300 border ${
                     isCurrent
-                      ? 'bg-blue-50/90 border-blue-300 shadow-2xs ring-1 ring-blue-400/30'
+                      ? 'bg-blue-900/30 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/20'
                       : isCompleted
-                      ? 'bg-emerald-50/50 border-emerald-200 opacity-95'
-                      : 'bg-slate-50/50 border-slate-100 opacity-50'
+                      ? 'bg-emerald-900/10 border-emerald-500/30'
+                      : 'bg-white/5 border-white/5 opacity-40'
                   }`}
                 >
                   {/* Icon Indicator */}
                   <div className="shrink-0 mt-0.5">
                     {isCompleted ? (
-                      <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-2xs">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 flex items-center justify-center shadow-inner">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                       </div>
                     ) : isCurrent ? (
-                      <div className="w-5 h-5 rounded-full bg-[#0B63E5] text-white flex items-center justify-center shadow-2xs animate-pulse">
+                      <div className="w-6 h-6 rounded-full bg-blue-500/20 border border-blue-400 text-blue-400 flex items-center justify-center animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.5)]">
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       </div>
                     ) : (
-                      <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-bold">
+                      <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-500 flex items-center justify-center text-[10px] font-bold">
                         {dim.id}
                       </div>
                     )}
@@ -102,26 +117,18 @@ export function UploadProgressModal({ isOpen, step, progress }: UploadProgressMo
                     <div className="flex items-center gap-1.5">
                       <Icon
                         className={`w-3.5 h-3.5 shrink-0 ${
-                          isCompleted
-                            ? 'text-emerald-600'
-                            : isCurrent
-                            ? 'text-[#0B63E5]'
-                            : 'text-slate-400'
+                          isCompleted ? 'text-emerald-400' : isCurrent ? 'text-blue-400' : 'text-slate-500'
                         }`}
                       />
                       <p
                         className={`text-xs font-bold truncate ${
-                          isCurrent
-                            ? 'text-[#0B192E]'
-                            : isCompleted
-                            ? 'text-emerald-950'
-                            : 'text-slate-600'
+                          isCurrent ? 'text-white' : isCompleted ? 'text-slate-300' : 'text-slate-500'
                         }`}
                       >
                         {dim.name}
                       </p>
                     </div>
-                    <p className="text-[10px] text-slate-500 leading-tight mt-0.5 truncate">
+                    <p className={`text-[10px] mt-1 leading-relaxed ${isCurrent ? 'text-blue-200' : 'text-slate-500'} line-clamp-2`}>
                       {dim.desc}
                     </p>
                   </div>
@@ -130,12 +137,27 @@ export function UploadProgressModal({ isOpen, step, progress }: UploadProgressMo
             })}
           </div>
 
-          <div className="text-center text-[11px] text-slate-500 font-medium pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Processando auditoria com IA em tempo real. Por favor, aguarde...</span>
+          <div className="text-center pt-4 border-t border-white/10">
+            <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase flex items-center justify-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+              Analisando conexões semânticas e extraindo metadados
+            </p>
           </div>
         </CardContent>
       </Card>
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255,255,255,0.02);
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.1);
+          border-radius: 4px;
+        }
+      `}} />
     </div>
   )
 }

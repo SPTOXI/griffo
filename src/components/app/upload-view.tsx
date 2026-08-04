@@ -265,21 +265,49 @@ export function UploadView() {
 
   return (
     <div className="space-y-5 max-w-4xl">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Enviar currículo</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Cole o texto do seu currículo ou anexe um arquivo .pdf, .txt ou .md. A análise é gratuita.
+      <div className="bg-gradient-to-r from-[#0B192E] via-[#1A2E4B] to-[#0B192E] rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-16 bg-blue-500/10 blur-3xl rounded-full mix-blend-screen pointer-events-none" />
+        <h1 className="text-2xl font-black flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-amber-400" /> Auditoria de IA Premium
+        </h1>
+        <p className="text-sm text-slate-300 mt-2 max-w-2xl font-medium leading-relaxed">
+          Análise preditiva executiva, SEO avançado para LinkedIn/Gupy, cálculo de % Match com vagas alvo e orientações vocacionais de carreira em 8 dimensões.
         </p>
       </div>
 
-      <Alert>
-        <Info className="w-4 h-4" />
-        <AlertDescription>
-          <strong>Como obter o melhor resultado:</strong> Você pode anexar um arquivo <strong>.pdf</strong>, <strong>.txt</strong> ou <strong>.md</strong>, ou copiar e colar o texto diretamente.
-        </AlertDescription>
-      </Alert>
+      {/* FEATURE BADGES */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-white border border-slate-200/70 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:border-blue-300 transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center font-black text-xs shrink-0 shadow-inner">1</div>
+          <div>
+            <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">8 Dimensões</p>
+            <p className="text-[10px] text-slate-500 font-medium">Auditoria Executiva</p>
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200/70 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:border-violet-300 transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-violet-50 border border-violet-100 text-violet-600 flex items-center justify-center font-black text-xs shrink-0 shadow-inner">2</div>
+          <div>
+            <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">Social SEO</p>
+            <p className="text-[10px] text-slate-500 font-medium">LinkedIn & Portfólio</p>
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200/70 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:border-indigo-300 transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center font-black text-xs shrink-0 shadow-inner">3</div>
+          <div>
+            <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">Match Vaga</p>
+            <p className="text-[10px] text-slate-500 font-medium">Aderência de Perfil</p>
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200/70 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:border-emerald-300 transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-black text-xs shrink-0 shadow-inner">4</div>
+          <div>
+            <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">Fórmula STAR</p>
+            <p className="text-[10px] text-slate-500 font-medium">Correção de Escrita</p>
+          </div>
+        </div>
+      </div>
 
-      <Card>
+      <Card className="shadow-lg border-slate-200/60">
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -487,22 +515,22 @@ export function UploadView() {
             </Alert>
           )}
 
-          <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between pt-2 border-t border-slate-100">
-            <p className="text-xs text-slate-500 flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              Análise gratuita · Dados criptografados · LGPD / GDPR
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between pt-4 border-t border-slate-100">
+            <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              Ambiente Seguro · LGPD Compliance
             </p>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setView('dashboard')} disabled={loading}>Cancelar</Button>
+              <Button variant="outline" onClick={() => setView('dashboard')} disabled={loading} className="font-bold border-slate-200 hover:bg-slate-50">Cancelar</Button>
               <Button
                 onClick={submit}
                 disabled={loading || (!pdfBase64 && content.length < minChars)}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="bg-[#0B192E] hover:bg-[#1A2E4B] text-white shadow-lg shadow-slate-900/20 font-bold transition-all px-6"
               >
                 {loading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processando…</>
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Incializando IA…</>
                 ) : (
-                  <>Analisar currículo <Sparkles className="w-4 h-4 ml-2" /></>
+                  <>Iniciar Auditoria <Sparkles className="w-4 h-4 ml-2 text-amber-400" /></>
                 )}
               </Button>
             </div>

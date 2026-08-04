@@ -77,13 +77,17 @@ export async function POST(req: Request) {
       ? `\n\nREDES SOCIAIS E PERFIS PROFISSIONAIS CADASTRADOS:\n${JSON.stringify(combinedSocialLinks, null, 2)}`
       : '\n\n(Nenhum link de rede social cadastrado previamente pelo usuário. Forneça recomendações gerais estratégicas para LinkedIn, Gupy, GitHub e portfólios globais).'
 
-    const SYSTEM_ANALYZE_PROMPT = `Você é um avaliador executivo sênior de currículos, especialista mundial em triagem ATS (Applicant Tracking Systems) e estrategista de personal branding internacional.
+    const SYSTEM_ANALYZE_PROMPT = `Você é um avaliador executivo sênior de currículos, especialista mundial em triagem ATS (Applicant Tracking Systems — Gupy, LinkedIn Talent Solutions, Workday, Taleo, Greenhouse, Lever) e estrategista de personal branding internacional.
 
 Sua tarefa é realizar uma ANÁLISE DE ALTA PROFUNDIDADE TÉCNICA E JUSTIFICADA do currículo. Você NÃO deve ser genérico. Você deve apontar EXATAMENTE onde estão as falhas, POR QUE elas prejudicam o candidato e COMO corrigi-las.
 
+REGRAS DE PRESENÇA DIGITAL & REDES SOCIAIS (SE FORNECIDAS):
+Se o candidato informou perfis profissionais (LinkedIn, Gupy, Behance, Dribbble, GitHub, StackOverflow, Kaggle, Xing, Medium, Substack, Portfólio), gere no campo "socialAdvice" orientações práticas de otimização para cada perfil: Título/Headline otimizado para algoritmos de recrutamento, seção "Sobre" com palavras-chave de busca, e dicas de SEO/engajamento para cada plataforma.
+Se nenhum perfil foi informado, gere recomendações estratégicas gerais para LinkedIn, Gupy e portfólios globais no campo "socialAdvice".
+
 Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seguinte esquema estrito:
 {
-  "overall": number (nota de 0 a 10 com 1 casa decimal, devendo ser estritamente igual à média aritmética das notas de todas as dimensões abaixo),
+  "overall": number (nota de 0 a 10 com 1 casa decimal, devendo ser estritamente igual à média aritmética das notas de todas as 8 dimensões abaixo),
   "summary": "Parecer executivo detalhado sobre o currículo e seu nível de competitividade no mercado.",
   "atsFriendly": boolean,
   "dimensions": [
@@ -110,6 +114,30 @@ Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seg
       "label": "Habilidades & Palavras-Chave de Busca",
       "score": number (0-10),
       "rationale": "Justificativa detalhada."
+    },
+    {
+      "key": "experience",
+      "label": "Experiência Profissional & Verbos de Ação",
+      "score": number (0-10),
+      "rationale": "Justificativa detalhada sobre escopo de responsabilidade, autonomia, verbos de ação fortes."
+    },
+    {
+      "key": "keywords",
+      "label": "Palavras-Chave & Match com Vagas",
+      "score": number (0-10),
+      "rationale": "Justificativa detalhada sobre termos estratégicos para filtros ATS/Gupy/LinkedIn."
+    },
+    {
+      "key": "career",
+      "label": "Trajetória & Plano de Carreira",
+      "score": number (0-10),
+      "rationale": "Justificativa detalhada sobre progressão de carreira, estabilidade, lacunas de crescimento, projeção do próximo passo."
+    },
+    {
+      "key": "upskilling",
+      "label": "Capacitação & Cursos Recomendados",
+      "score": number (0-10),
+      "rationale": "Justificativa detalhada sobre lacunas de conhecimento identificadas e recomendações objetivas de cursos/certificações (AWS, Azure, Scrum Master, PMP, etc.)."
     }
   ],
   "jobMatch": {
@@ -156,7 +184,7 @@ Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seg
       userId: user.id,
       systemPrompt: SYSTEM_ANALYZE_PROMPT,
       userPrompt: `Realize a análise preditiva completa e detalhada do seguinte currículo, mídias sociais e aderência à vaga alvo:\n\nCONTEÚDO DO CURRÍCULO:\n${resume.originalContent.slice(0, 15000)}${socialLinksText}${jobText}`,
-      maxTokens: 4500,
+      maxTokens: 6500,
     })
 
     const tryParseAndRepairJson = (rawText: string): any => {
@@ -212,6 +240,13 @@ Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seg
         atsFriendly: true,
         dimensions: [
           { key: 'structure', label: 'Estrutura & Compatibilidade ATS', score: 7.5, rationale: 'Estrutura limpa.' },
+          { key: 'summary', label: 'Resumo & Posicionamento Profissional', score: 7.5, rationale: 'Posicionamento identificado.' },
+          { key: 'impact', label: 'Resultados Quantificados (STAR/XYZ)', score: 7.0, rationale: 'Resultados avaliados.' },
+          { key: 'skills', label: 'Habilidades & Palavras-Chave', score: 7.5, rationale: 'Competências identificadas.' },
+          { key: 'experience', label: 'Experiência & Verbos de Ação', score: 7.5, rationale: 'Experiência avaliada.' },
+          { key: 'keywords', label: 'Palavras-Chave & Match', score: 7.0, rationale: 'Palavras-chave avaliadas.' },
+          { key: 'career', label: 'Trajetória & Plano de Carreira', score: 7.5, rationale: 'Progressão avaliada.' },
+          { key: 'upskilling', label: 'Capacitação & Cursos', score: 7.5, rationale: 'Capacitação avaliada.' },
         ],
         strengths: ['Estrutura profissional limpa e fácil leitura'],
         weaknesses: ['Pouca presença de métricas numéricas'],
