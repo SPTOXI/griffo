@@ -80,7 +80,7 @@ Sua tarefa é realizar uma ANÁLISE DE ALTA PROFUNDIDADE TÉCNICA E JUSTIFICADA 
 
 Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seguinte esquema estrito:
 {
-  "overall": number (nota de 0 a 10 com 1 casa decimal),
+  "overall": number (nota de 0 a 10 com 1 casa decimal, devendo ser estritamente igual à média aritmética das notas de todas as dimensões abaixo),
   "summary": "Parecer executivo detalhado sobre o currículo e seu nível de competitividade no mercado.",
   "atsFriendly": boolean,
   "dimensions": [

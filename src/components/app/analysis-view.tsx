@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   FileSearch, Loader2, AlertCircle, Sparkles, Award, Target, Lightbulb, Key,
-  CheckCircle2, XCircle, FileEdit, Download, ArrowRight, RefreshCw, Share2, Globe, Linkedin, Compass
+  CheckCircle2, XCircle, FileEdit, Download, ArrowRight, RefreshCw, Share2, Globe, Linkedin, Compass, Info
 } from 'lucide-react'
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
@@ -318,10 +318,15 @@ export function AnalysisView() {
 
   const parsedDimensions = parseDimensions(rawAnalysis.dimensions)
 
+  // Math Consistency: Calculate overall score strictly as the arithmetic mean of all dimensions
+  const dimSum = parsedDimensions.reduce((acc, d) => acc + d.score, 0)
+  const computedAvg = parsedDimensions.length > 0 ? Number((dimSum / parsedDimensions.length).toFixed(1)) : normalizedOverall
+  const finalOverallScore = computedAvg
+
   const defaultSummary = rawAnalysis.summary || (rawAnalysis as any).parecer
   const computedSummary = defaultSummary && defaultSummary !== 'Análise concluída com sucesso.'
     ? defaultSummary
-    : `Perfil profissional avaliado com nota geral de ${normalizedOverall.toFixed(1)}/10. ` +
+    : `Perfil profissional avaliado com nota geral de ${finalOverallScore.toFixed(1)}/10. ` +
       (rawAnalysis.strengths?.length ? `Destaques principais do perfil: ${rawAnalysis.strengths.slice(0, 3).join('; ')}. ` : '') +
       (rawAnalysis.weaknesses?.length ? `Recomenda-se ajustar: ${rawAnalysis.weaknesses.slice(0, 3).join('; ')}.` : '')
 
@@ -373,7 +378,7 @@ export function AnalysisView() {
     : defaultTargetedChanges
 
   const a = {
-    overall: normalizedOverall,
+    overall: finalOverallScore,
     summary: computedSummary,
     atsFriendly: rawAnalysis.atsFriendly ?? true,
     dimensions: parsedDimensions,
@@ -419,17 +424,40 @@ export function AnalysisView() {
       {/* OVERALL + RADAR */}
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-1">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full">
-            <p className="text-xs uppercase tracking-wider text-slate-500 mb-1">Nota geral</p>
-            <p className="text-6xl font-bold" style={{ color: scoreColor }}>{score.toFixed(1)}</p>
-            <p className="text-sm text-slate-400">/ 10</p>
-            <Badge className="mt-3" style={{ backgroundColor: `${scoreColor}20`, color: scoreColor }}>{scoreLabel}</Badge>
-            <div className="mt-4 flex items-center gap-2 text-xs">
+          <CardContent className="p-5 flex flex-col items-center justify-center text-center h-full">
+            <p className="text-xs uppercase tracking-wider text-slate-500 mb-1 font-semibold">Nota Geral do Perfil</p>
+            <p className="text-6xl font-extrabold tracking-tight" style={{ color: scoreColor }}>{score.toFixed(1)}</p>
+            <p className="text-xs font-semibold text-slate-400 mt-0.5">/ 10.0</p>
+            <Badge className="mt-2.5 px-3 py-1 font-bold text-xs" style={{ backgroundColor: `${scoreColor}15`, color: scoreColor, borderColor: `${scoreColor}30` }}>
+              {scoreLabel}
+            </Badge>
+
+            <div className="mt-3 flex items-center gap-2 text-xs">
               {a.atsFriendly ? (
-                <><CheckCircle2 className="w-4 h-4 text-emerald-600" /><span className="text-emerald-700 font-medium">ATS OK</span></>
+                <><CheckCircle2 className="w-4 h-4 text-emerald-600" /><span className="text-emerald-700 font-semibold">ATS OK</span></>
               ) : (
-                <><XCircle className="w-4 h-4 text-red-600" /><span className="text-red-700 font-medium">Rejeitado por ATS</span></>
+                <><XCircle className="w-4 h-4 text-red-600" /><span className="text-red-700 font-semibold">Rejeitado por ATS</span></>
               )}
+            </div>
+
+            {/* PAINEL TRANSPARENTE DA FÓRMULA DE CÁLCULO */}
+            <div className="mt-4 pt-3 border-t border-slate-100 text-left w-full text-[11px] text-slate-600 space-y-1 bg-slate-50/70 p-2.5 rounded-lg">
+              <p className="font-bold text-slate-800 flex items-center gap-1">
+                <Info className="w-3.5 h-3.5 text-blue-600 shrink-0" /> Transparência do Cálculo:
+              </p>
+              <p className="text-[10px] leading-relaxed text-slate-600">
+                Média aritmética exata das {parsedDimensions.length} dimensões:
+              </p>
+              <div className="flex flex-wrap gap-1 pt-0.5">
+                {parsedDimensions.map((d, i) => (
+                  <span key={i} className="inline-flex items-center gap-0.5 bg-white text-slate-800 px-1.5 py-0.5 rounded text-[10px] font-mono border border-slate-200 shadow-2xs">
+                    {d.label.slice(0, 14)}: <strong>{d.score.toFixed(1)}</strong>
+                  </span>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-200/60 mt-1">
+                ({parsedDimensions.map(d => d.score.toFixed(1)).join(' + ')}) ÷ {parsedDimensions.length} = <strong className="text-slate-900 font-bold">{score.toFixed(1)}</strong>
+              </p>
             </div>
           </CardContent>
         </Card>
