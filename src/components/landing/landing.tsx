@@ -24,6 +24,12 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
     setOpenFaq(openFaq === index ? null : index)
   }
 
+  const appSubtitles: Record<string, string> = {
+    pt: 'Inteligência de Carreira',
+    en: 'Career Intelligence',
+    es: 'Inteligencia de Carrera',
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
       {/* NAV */}
@@ -33,7 +39,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             <img src="/logo.png" alt="GriffoWork Logo" className="h-10 w-auto object-contain rounded-md shrink-0" />
             <div className="flex flex-col leading-none">
               <span className="font-extrabold text-[#0B192E] text-xl tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-[#0B63E5] mt-0.5">Análise de Currículo por IA</span>
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#0B63E5] mt-0.5">{appSubtitles[lang] || appSubtitles.pt}</span>
             </div>
           </div>
 
@@ -466,7 +472,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               <img src="/logo.png" alt="GriffoWork Logo" className="h-9 w-auto object-contain rounded-md shrink-0" />
               <div className="flex flex-col leading-none">
                 <span className="font-extrabold text-[#0B192E] text-base tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
-                <span className="text-[8px] font-bold uppercase tracking-wider text-[#0B63E5]">Global AI Career Intelligence</span>
+                <span className="text-[8px] font-extrabold uppercase tracking-wider text-[#0B63E5]">{appSubtitles[lang] || appSubtitles.pt}</span>
               </div>
             </div>
             <p className="text-xs text-slate-500 leading-relaxed">
