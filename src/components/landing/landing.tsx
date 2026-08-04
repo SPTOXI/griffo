@@ -25,9 +25,9 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
   }
 
   const appSubtitles: Record<string, string> = {
-    pt: 'Inteligência de Carreira',
-    en: 'Career Intelligence',
-    es: 'Inteligencia de Carrera',
+    pt: 'GLOBAL AI CAREER INTELLIGENCE',
+    en: 'GLOBAL AI CAREER INTELLIGENCE',
+    es: 'GLOBAL AI CAREER INTELLIGENCE',
   }
 
   return (

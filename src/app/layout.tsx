@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GriffoWork — Inteligência de Carreira | Career Intelligence",
-  description: "Plataforma de Inteligência de Carreira e otimização de presença digital baseada nos melhores padrões de recrutamento.",
-  keywords: ["griffowork", "currículo", "resume ai", "cv audit", "inteligência de carreira", "ATS", "RH", "carreira", "griffo.work"],
+  title: "GriffoWork — Global AI Career Intelligence",
+  description: "Plataforma de Global AI Career Intelligence e otimização de presença digital baseada nos melhores padrões de recrutamento.",
+  keywords: ["griffowork", "currículo", "resume ai", "cv audit", "global ai career intelligence", "ATS", "RH", "carreira", "griffo.work"],
   authors: [{ name: "GriffoWork" }],
   icons: {
     icon: [
@@ -28,8 +28,8 @@ export const metadata: Metadata = {
     apple: '/logo.png',
   },
   openGraph: {
-    title: "GriffoWork — Inteligência de Carreira | Career Intelligence",
-    description: "Plataforma de Inteligência de Carreira e otimização de presença digital baseada nos melhores padrões de recrutamento.",
+    title: "GriffoWork — Global AI Career Intelligence",
+    description: "Plataforma de Global AI Career Intelligence e otimização de presença digital baseada nos melhores padrões de recrutamento.",
     url: "https://griffo.work",
     siteName: "GriffoWork",
     images: [
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "GriffoWork — Inteligência de Carreira",
+        alt: "GriffoWork — Global AI Career Intelligence",
       },
     ],
     type: "website",

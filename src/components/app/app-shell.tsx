@@ -44,9 +44,9 @@ export function AppShell({ onExit }: { onExit: () => void }) {
   const { view, setView } = useNav()
 
   const appSubtitles: Record<string, string> = {
-    pt: 'Inteligência de Carreira',
-    en: 'Career Intelligence',
-    es: 'Inteligencia de Carrera',
+    pt: 'GLOBAL AI CAREER INTELLIGENCE',
+    en: 'GLOBAL AI CAREER INTELLIGENCE',
+    es: 'GLOBAL AI CAREER INTELLIGENCE',
   }
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [credits, setCredits] = useState<number>(user?.credits ?? 20)
