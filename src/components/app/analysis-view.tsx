@@ -14,6 +14,7 @@ import {
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
 } from 'recharts'
+import { UploadProgressModal } from './upload-progress-modal'
 import { internalFetch } from '@/lib/internal-fetch'
 import { toast } from 'sonner'
 
@@ -134,25 +135,52 @@ export function AnalysisView() {
     }
   }
 
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalProgress, setModalProgress] = useState(0)
+  const [modalStep, setModalStep] = useState(1)
+
   const reanalyze = async () => {
     if (!resume) return
     setAnalyzing(true)
     setError(null)
+    setModalOpen(true)
+    setModalProgress(5)
+    setModalStep(1)
+
+    const interval = setInterval(() => {
+      setModalProgress(prev => {
+        if (prev >= 92) return 92
+        const next = prev + Math.floor(Math.random() * 8) + 4
+        setModalStep(Math.min(8, Math.max(1, Math.ceil((next / 100) * 8))))
+        return next
+      })
+    }, 450)
+
     try {
       const r = await internalFetch('/api/resume/analyze', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ resumeId: resume.id })
-})
-
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeId: resume.id }),
+      })
 
       const data = await r.json()
+      clearInterval(interval)
+
       if (!r.ok) {
+        setModalOpen(false)
         setError(data.error || 'Falha ao reanalisar.')
         return
       }
-      await loadResume(resume.id)
+
+      setModalProgress(100)
+      setModalStep(8)
+      setTimeout(async () => {
+        setModalOpen(false)
+        await loadResume(resume.id)
+      }, 500)
     } catch {
+      clearInterval(interval)
+      setModalOpen(false)
       setError('Erro de conexão.')
     } finally {
       setAnalyzing(false)
@@ -979,6 +1007,9 @@ export function AnalysisView() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* MODAL DE PROGRESSO ANIMADO DAS 8 DIMENSÕES */}
+      <UploadProgressModal isOpen={modalOpen} step={modalStep} progress={modalProgress} />
     </div>
   )
 }
