@@ -15,6 +15,7 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
 } from 'recharts'
 import { internalFetch } from '@/lib/internal-fetch'
+import { toast } from 'sonner'
 
 interface TargetedChange {
   section: string
@@ -208,16 +209,71 @@ export function AnalysisView() {
   }
 
   const rawAnalysis = resume.analysis || {}
-  const a = {
-    overall: typeof rawAnalysis.overall === 'number' ? rawAnalysis.overall : (rawAnalysis.scoreOverall ? rawAnalysis.scoreOverall / 10 : 7.0),
-    summary: rawAnalysis.summary || rawAnalysis.parecer || 'Análise concluída com sucesso.',
-    atsFriendly: rawAnalysis.atsFriendly ?? true,
-    dimensions: Array.isArray(rawAnalysis.dimensions) ? rawAnalysis.dimensions : [
+
+  const DIMENSION_LABELS: Record<string, string> = {
+    relevance_to_role: 'Relevância para a Vaga',
+    experience_impact: 'Impacto das Experiências',
+    clarity_formatting: 'Clareza & Formatação',
+    ats_optimization: 'Otimização ATS',
+    keyword_integration: 'Integração de Palavras-Chave',
+    structure: 'Estrutura & Organização',
+    summary: 'Resumo & Posicionamento',
+    impact: 'Resultados (STAR/XYZ)',
+    skills: 'Habilidades & Ferramentas',
+    education: 'Formação & Cursos',
+    language: 'Linguagem & Tom',
+  }
+
+  const parseDimensions = (rawDims: any): { key: string; label: string; score: number; rationale: string }[] => {
+    if (Array.isArray(rawDims)) {
+      return rawDims.map(d => ({
+        key: d.key || d.name || 'dimension',
+        label: d.label || DIMENSION_LABELS[d.key] || d.key || 'Dimensão',
+        score: typeof d.score === 'number' ? (d.score > 10 ? d.score / 10 : d.score) : 7,
+        rationale: d.rationale || '',
+      }))
+    }
+
+    if (rawDims && typeof rawDims === 'object') {
+      return Object.entries(rawDims).map(([key, val]) => {
+        const numVal = typeof val === 'number' ? val : (typeof (val as any)?.score === 'number' ? (val as any).score : 70)
+        const normalizedScore = numVal > 10 ? numVal / 10 : numVal
+        const label = DIMENSION_LABELS[key] || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+        const rationale = (val as any)?.rationale || ''
+        return {
+          key,
+          label,
+          score: Number(normalizedScore.toFixed(1)),
+          rationale,
+        }
+      })
+    }
+
+    return [
       { key: 'structure', label: 'Estrutura & ATS', score: 7, rationale: 'Estrutura padrão identificada.' },
       { key: 'summary', label: 'Resumo & Posicionamento', score: 7, rationale: 'Posicionamento claro.' },
       { key: 'impact', label: 'Resultados (STAR/XYZ)', score: 7, rationale: 'Resultados apresentados.' },
       { key: 'skills', label: 'Habilidades & Ferramentas', score: 7, rationale: 'Competências identificadas.' }
-    ],
+    ]
+  }
+
+  const rawOverall = typeof rawAnalysis.overall === 'number' ? rawAnalysis.overall : (typeof (rawAnalysis as any).scoreOverall === 'number' ? (rawAnalysis as any).scoreOverall : 70)
+  const normalizedOverall = rawOverall > 10 ? rawOverall / 10 : rawOverall
+
+  const parsedDimensions = parseDimensions(rawAnalysis.dimensions)
+
+  const defaultSummary = rawAnalysis.summary || (rawAnalysis as any).parecer
+  const computedSummary = defaultSummary && defaultSummary !== 'Análise concluída com sucesso.'
+    ? defaultSummary
+    : `Perfil profissional avaliado com nota geral de ${normalizedOverall.toFixed(1)}/10. ` +
+      (rawAnalysis.strengths?.length ? `Destaques principais do perfil: ${rawAnalysis.strengths.slice(0, 3).join('; ')}. ` : '') +
+      (rawAnalysis.weaknesses?.length ? `Recomenda-se ajustar: ${rawAnalysis.weaknesses.slice(0, 3).join('; ')}.` : '')
+
+  const a = {
+    overall: normalizedOverall,
+    summary: computedSummary,
+    atsFriendly: rawAnalysis.atsFriendly ?? true,
+    dimensions: parsedDimensions,
     strengths: Array.isArray(rawAnalysis.strengths) ? rawAnalysis.strengths : ['Estrutura profissional legível', 'Experiência estruturada'],
     weaknesses: Array.isArray(rawAnalysis.weaknesses) ? rawAnalysis.weaknesses : ['Adicionar mais métricas quantificáveis (STAR/XYZ)'],
     recommendations: Array.isArray(rawAnalysis.recommendations) ? rawAnalysis.recommendations : ['Destacar conquistas numéricas'],
@@ -291,13 +347,119 @@ export function AnalysisView() {
         </Card>
       </div>
 
-      {/* SUMMARY */}
-      <Card>
+      {/* ANÁLISE DO PERFIL & VEREDITO EXECUTIVO */}
+      <Card className="border-blue-200 bg-gradient-to-br from-white via-blue-50/20 to-slate-50 shadow-sm">
+        <CardHeader className="pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-[#0B63E5] text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+              <Sparkles className="w-5 h-5 text-amber-300" />
+            </div>
+            <div>
+              <CardTitle className="text-base text-[#0B192E] font-bold">
+                📋 Análise do Perfil Profissional & Veredito Executivo
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500">
+                Avaliação técnica consolidada com base no seu currículo e melhores práticas de RH
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
         <CardContent className="p-5">
-          <p className="text-xs uppercase tracking-wider text-slate-500 mb-2">Veredito Executivo</p>
-          <p className="text-slate-700 leading-relaxed">{a.summary}</p>
+          <p className="text-sm text-slate-700 leading-relaxed font-medium">{a.summary}</p>
         </CardContent>
       </Card>
+
+      {/* STRENGTHS / WEAKNESSES / RECOMMENDATIONS (SUGESTÕES E RECOMENDAÇÕES) */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <Card className="border-emerald-200 bg-white">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <CardTitle className="text-base text-emerald-950 font-bold">Pontos Fortes do Perfil</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {a.strengths?.length ? (
+              <ul className="space-y-2">
+                {a.strengths.map((s, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                    <span className="text-emerald-600 font-bold">•</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="text-xs text-slate-500">Nenhum ponto forte registrado.</p>}
+          </CardContent>
+        </Card>
+
+        <Card className="border-amber-200 bg-white">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-600" />
+              <CardTitle className="text-base text-amber-950 font-bold">Pontos de Atenção (Fragilidades)</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {a.weaknesses?.length ? (
+              <ul className="space-y-2">
+                {a.weaknesses.map((s, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                    <span className="text-amber-600 font-bold">•</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="text-xs text-slate-500">Nenhum ponto de atenção crítico.</p>}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* PRACTICAL RECOMMENDATIONS (SUGESTÕES PRÁTICAS) */}
+      {a.recommendations?.length > 0 && (
+        <Card className="border-sky-200 bg-sky-50/20">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Lightbulb className="w-5 h-5 text-sky-600" />
+              <div>
+                <CardTitle className="text-base text-sky-950 font-bold">💡 Sugestões Práticas de Melhoria</CardTitle>
+                <CardDescription className="text-xs text-slate-500">Ações recomendadas para aumentar suas chances de entrevista</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ol className="space-y-2.5">
+              {a.recommendations.map((rec, i) => (
+                <li key={i} className="flex items-start gap-2.5 text-xs text-slate-700 bg-white p-2.5 rounded-lg border border-sky-100 shadow-2xs">
+                  <span className="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                  <span className="leading-relaxed font-medium">{rec}</span>
+                </li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* KEYWORDS */}
+      {a.keywords?.length > 0 && (
+        <Card className="border-violet-200 bg-violet-50/20">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Key className="w-4 h-4 text-violet-600" />
+              <CardTitle className="text-base text-violet-950 font-bold">🔑 Palavras-Chave ATS Sugeridas</CardTitle>
+            </div>
+            <CardDescription className="text-xs text-slate-500">Adicione estas palavras-chave estratégicas ao seu currículo para passar pelos filtros automáticos</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {a.keywords.map((k, i) => (
+                <Badge key={i} variant="outline" className="bg-white border-violet-200 text-violet-800 text-xs px-2.5 py-1 font-semibold shadow-2xs">
+                  {k}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* TARGET JOB MATCHING (FASE 1 - NOVO PAINEL DE COMPATIBILIDADE) */}
       {rawAnalysis.jobMatch && (
@@ -669,91 +831,6 @@ export function AnalysisView() {
                 )}
               </div>
             ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* STRENGTHS / WEAKNESSES */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <Card className="border-emerald-200">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-emerald-600" />
-              <CardTitle className="text-base text-emerald-900">Pontos fortes</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {a.strengths?.length ? (
-              <ul className="space-y-2">
-                {a.strengths.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                    <CheckCircle2 className="w-4 h-4 mt-0.5 text-emerald-600 shrink-0" />
-                    <span>{s}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : <p className="text-sm text-slate-500">Nenhum ponto forte identificado.</p>}
-          </CardContent>
-        </Card>
-
-        <Card className="border-amber-200">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <Target className="w-4 h-4 text-amber-600" />
-              <CardTitle className="text-base text-amber-900">Pontos de atenção</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {a.weaknesses?.length ? (
-              <ul className="space-y-2">
-                {a.weaknesses.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                    <AlertCircle className="w-4 h-4 mt-0.5 text-amber-600 shrink-0" />
-                    <span>{s}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : <p className="text-sm text-slate-500">Sem pontos de atenção relevantes.</p>}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* RECOMMENDATIONS */}
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <Lightbulb className="w-4 h-4 text-sky-600" />
-            <CardTitle className="text-base">Recomendações</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ol className="space-y-2">
-            {a.recommendations?.map((s, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                <span className="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                <span>{s}</span>
-              </li>
-            ))}
-          </ol>
-        </CardContent>
-      </Card>
-
-      {/* KEYWORDS */}
-      {a.keywords?.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <Key className="w-4 h-4 text-violet-600" />
-              <CardTitle className="text-base">Palavras-chave ATS sugeridas</CardTitle>
-            </div>
-            <CardDescription>Adicione essas palavras-chave (quando verdadeiras) para passar filtros automáticos.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {a.keywords.map((k, i) => (
-                <Badge key={i} variant="outline" className="bg-violet-50 border-violet-200 text-violet-800 hover:bg-violet-50">{k}</Badge>
-              ))}
-            </div>
           </CardContent>
         </Card>
       )}

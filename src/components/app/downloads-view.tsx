@@ -29,6 +29,7 @@ export function DownloadsView() {
   const [downloading, setDownloading] = useState<string | null>(null)
   const [statusInfo, setStatusInfo] = useState<{ hasAnalysis: boolean; hasRewrite: boolean } | null>(null)
 
+  const planActive = (user?.plan && user.plan !== 'free') || user?.role === 'admin'
   const canDownload = planActive || (user?.credits || 0) >= 1
 
   useEffect(() => {

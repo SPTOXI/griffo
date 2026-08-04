@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { internalFetch } from '@/lib/internal-fetch'
 import { toast } from 'sonner'
+import { UploadProgressModal } from './upload-progress-modal'
 
 export interface CustomSocialField {
   id: string
@@ -45,7 +46,7 @@ export function UploadView() {
   const [targetJobDescription, setTargetJobDescription] = useState('')
   const [jobUrl, setJobUrl] = useState('')
   const [fetchingUrl, setFetchingUrl] = useState(false)
-  const [format, setFormat] = useState<'text' | 'markdown'>('text')
+  const [format, setFormat] = useState<'text' | 'markdown' | 'pdf'>('text')
 
   const handleFetchJobFromUrl = async () => {
     if (!jobUrl || !jobUrl.trim()) {
@@ -152,6 +153,8 @@ export function UploadView() {
   }
 
   const [loadingStep, setLoadingStep] = useState<string | null>(null)
+  const [modalStep, setModalStep] = useState<number>(1)
+  const [modalProgress, setModalProgress] = useState<number>(0)
 
   const submit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -165,6 +168,8 @@ export function UploadView() {
       return
     }
     setLoading(true)
+    setModalStep(1)
+    setModalProgress(10)
     setLoadingStep('Enviando arquivo e extraindo conteúdo...')
 
     // Build socialLinks dictionary from dynamic list
@@ -176,6 +181,25 @@ export function UploadView() {
         socialLinks[name] = link
       }
     }
+
+    // Interval to simulate smooth progress across the 4 steps while waiting for AI
+    const progressInterval = setInterval(() => {
+      setModalProgress((prev) => {
+        if (prev < 25) {
+          return prev + 3
+        } else if (prev < 50) {
+          setModalStep(2)
+          return prev + 2
+        } else if (prev < 75) {
+          setModalStep(3)
+          return prev + 1.5
+        } else if (prev < 92) {
+          setModalStep(4)
+          return prev + 0.8
+        }
+        return prev
+      })
+    }, 400)
 
     try {
       const r = await internalFetch('/api/resume/upload', {
@@ -194,12 +218,15 @@ export function UploadView() {
       })
       const data = await r.json().catch(() => ({}))
       if (!r.ok) {
+        clearInterval(progressInterval)
         setError(data.error || 'Erro ao salvar currículo.')
         setLoading(false)
         setLoadingStep(null)
         return
       }
 
+      setModalStep(2)
+      setModalProgress(40)
       setLoadingStep('Analisando currículo em 8 dimensões com Inteligência Artificial...')
       toast.success('Currículo salvo! Processando laudo com a IA...')
 
@@ -209,17 +236,29 @@ export function UploadView() {
         body: JSON.stringify({ resumeId: data.resume.id }),
       })
       const adata = await ar.json().catch(() => ({}))
+
+      clearInterval(progressInterval)
+      setModalStep(4)
+      setModalProgress(100)
+
       if (!ar.ok) {
-        // Even if analysis fails, redirect to resume page so user doesn't lose their upload
         toast.error(adata.error || 'A análise demorou mais que o esperado. Seu currículo foi salvo no histórico!')
-        openResume(data.resume.id, 'analysis')
+        setTimeout(() => {
+          setLoading(false)
+          openResume(data.resume.id, 'analysis')
+        }, 500)
         return
       }
-      openResume(data.resume.id, 'analysis')
+
+      setTimeout(() => {
+        setLoading(false)
+        openResume(data.resume.id, 'analysis')
+      }, 600)
     } catch (e: any) {
+      clearInterval(progressInterval)
       setError('Erro de conexão ao enviar o currículo. Verifique sua rede e tente novamente.')
-    } finally {
       setLoading(false)
+    } finally {
       setLoadingStep(null)
     }
   }
@@ -479,6 +518,8 @@ export function UploadView() {
           </div>
         </CardContent>
       </Card>
+
+      <UploadProgressModal isOpen={loading} step={modalStep} progress={modalProgress} />
     </div>
   )
 }

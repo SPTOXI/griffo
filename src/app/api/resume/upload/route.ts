@@ -82,7 +82,7 @@ export async function POST(req: Request) {
       data: {
         userId: user.id,
         originalContent: content,
-        originalFormat: format,
+        originalFormat: format || 'text',
         targetJob: targetJob || null,
         targetJobDescription: targetJobDescription || null,
         socialLinksJson: socialLinks ? JSON.stringify(socialLinks) : null,

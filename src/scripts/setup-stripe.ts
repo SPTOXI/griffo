@@ -12,7 +12,7 @@ const PACKAGES = [
 
 async function main() {
   console.log('--- Creating Products and Prices on Stripe Account ---')
-  const results = []
+  const results: any[] = []
 
   for (const pkg of PACKAGES) {
     // Create product on Stripe
