@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GriffoWork — Análise de Currículo por IA | Global Resume AI Audit",
-  description: "Análise profissional de currículo com Inteligência Artificial em Português, Inglês e Espanhol: nota 0-10 em 8 dimensões executivas, otimização para ATS e reescrita estratégica.",
-  keywords: ["griffowork", "currículo", "resume ai", "cv audit", "análise de currículo por IA", "ATS", "RH", "carreira", "griffo.work"],
+  title: "GriffoWork — Auditoria de IA Premium | Global Resume AI Audit",
+  description: "Plataforma de inteligência de carreira e Auditoria de IA Premium baseada nos melhores padrões de recrutamento.",
+  keywords: ["griffowork", "currículo", "resume ai", "cv audit", "auditoria de IA premium", "ATS", "RH", "carreira", "griffo.work"],
   authors: [{ name: "GriffoWork" }],
   icons: {
     icon: [
@@ -28,11 +28,18 @@ export const metadata: Metadata = {
     apple: '/logo.png',
   },
   openGraph: {
-    title: "GriffoWork — Análise de Currículo por IA | Global Resume AI Audit",
-    description: "Análise profissional de currículo por IA em 8 dimensões executivas. Descubra sua nota ATS e destaque-se nas seleções globais.",
-    siteName: "GriffoWork",
+    title: "GriffoWork — Auditoria de IA Premium | Global Resume AI Audit",
+    description: "Plataforma de inteligência de carreira e Auditoria de IA Premium baseada nos melhores padrões de recrutamento.",
     url: "https://griffo.work",
-    images: [{ url: '/logo.png', width: 1200, height: 1200, alt: 'GriffoWork Logo' }],
+    siteName: "GriffoWork",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "GriffoWork — Auditoria de IA Premium",
+      },
+    ],
     type: "website",
   },
   twitter: {

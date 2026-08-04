@@ -186,7 +186,7 @@ export async function generateAnalysisReportPdf(opts: {
   createdAt: Date
 }): Promise<Buffer> {
   const doc = await PDFDocument.create()
-  doc.setTitle('Laudo de Análise de Currículo')
+  doc.setTitle('Laudo de Auditoria de IA')
   doc.setAuthor('Griffo')
   const font = await doc.embedFont(StandardFonts.Helvetica)
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold)
@@ -251,7 +251,7 @@ export async function generateAnalysisReportPdf(opts: {
   const scoreColor = score >= 8 ? COLORS.emerald : score >= 5 ? COLORS.amber : COLORS.red
 
   // HEADER
-  writeParagraph('Laudo de Análise de Currículo', { font: fontBold, size: 20, color: COLORS.text, lineHeight: 24 })
+  writeParagraph('Laudo de Auditoria de IA', { font: fontBold, size: 20, color: COLORS.text, lineHeight: 24 })
   y -= 4
   writeParagraph(`Gerado em ${opts.createdAt.toLocaleString('pt-BR')}  •  ID: ${opts.resumeId}`, { font, size: 9, color: COLORS.muted, lineHeight: 11 })
   y -= 6

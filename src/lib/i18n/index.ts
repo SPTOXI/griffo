@@ -315,7 +315,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       button: 'Analisar meu currículo grátis',
     },
     footer: {
-      desc: 'Plataforma de inteligência de carreira, análise de currículo por IA e otimização de presença digital baseada nos melhores padrões de recrutamento.',
+      desc: 'Plataforma de inteligência de carreira, Auditoria de IA Premium e otimização de presença digital baseada nos melhores padrões de recrutamento.',
       navTitle: 'Navegação',
       secTitle: 'Segurança & Privacidade',
       contactTitle: 'Contato & Domínio Oficial',
