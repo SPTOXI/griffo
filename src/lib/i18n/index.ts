@@ -315,7 +315,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       button: 'Analisar meu currículo grátis',
     },
     footer: {
-      desc: 'Plataforma de inteligência de carreira, Auditoria de IA Premium e otimização de presença digital baseada nos melhores padrões de recrutamento.',
+      desc: 'Plataforma de Inteligência de Carreira e otimização de presença digital baseada nos melhores padrões de recrutamento.',
       navTitle: 'Navegação',
       secTitle: 'Segurança & Privacidade',
       contactTitle: 'Contato & Domínio Oficial',
@@ -491,7 +491,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       button: 'Analyze my resume free',
     },
     footer: {
-      desc: 'AI-powered career intelligence, resume audit, and digital presence optimization platform built on modern talent recruitment standards.',
+      desc: 'Career Intelligence and digital presence optimization platform built on modern talent recruitment standards.',
       navTitle: 'Navigation',
       secTitle: 'Security & Privacy',
       contactTitle: 'Contact & Official Domain',
@@ -667,7 +667,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       button: 'Analizar mi currículum gratis',
     },
     footer: {
-      desc: 'Plataforma de inteligencia de carrera, evaluación de currículum con IA y optimización de presencia digital basada en estándares globales de reclutamiento.',
+      desc: 'Plataforma de Inteligencia de Carrera y optimización de presencia digital basada en los mejores estándares de reclutamiento.',
       navTitle: 'Navegación',
       secTitle: 'Seguridad y Privacidad',
       contactTitle: 'Contacto y Dominio Oficial',

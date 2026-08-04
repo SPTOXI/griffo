@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GriffoWork — Auditoria de IA Premium | Global Resume AI Audit",
-  description: "Plataforma de inteligência de carreira e Auditoria de IA Premium baseada nos melhores padrões de recrutamento.",
-  keywords: ["griffowork", "currículo", "resume ai", "cv audit", "auditoria de IA premium", "ATS", "RH", "carreira", "griffo.work"],
+  title: "GriffoWork — Inteligência de Carreira | Career Intelligence",
+  description: "Plataforma de Inteligência de Carreira e otimização de presença digital baseada nos melhores padrões de recrutamento.",
+  keywords: ["griffowork", "currículo", "resume ai", "cv audit", "inteligência de carreira", "ATS", "RH", "carreira", "griffo.work"],
   authors: [{ name: "GriffoWork" }],
   icons: {
     icon: [
@@ -28,8 +28,8 @@ export const metadata: Metadata = {
     apple: '/logo.png',
   },
   openGraph: {
-    title: "GriffoWork — Auditoria de IA Premium | Global Resume AI Audit",
-    description: "Plataforma de inteligência de carreira e Auditoria de IA Premium baseada nos melhores padrões de recrutamento.",
+    title: "GriffoWork — Inteligência de Carreira | Career Intelligence",
+    description: "Plataforma de Inteligência de Carreira e otimização de presença digital baseada nos melhores padrões de recrutamento.",
     url: "https://griffo.work",
     siteName: "GriffoWork",
     images: [
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "GriffoWork — Auditoria de IA Premium",
+        alt: "GriffoWork — Inteligência de Carreira",
       },
     ],
     type: "website",
