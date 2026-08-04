@@ -269,6 +269,53 @@ export function AnalysisView() {
       (rawAnalysis.strengths?.length ? `Destaques principais do perfil: ${rawAnalysis.strengths.slice(0, 3).join('; ')}. ` : '') +
       (rawAnalysis.weaknesses?.length ? `Recomenda-se ajustar: ${rawAnalysis.weaknesses.slice(0, 3).join('; ')}.` : '')
 
+  const defaultSocialAdvice = [
+    {
+      platform: 'LinkedIn',
+      url: 'https://linkedin.com',
+      headline: 'Especialista de Carreira | Gestão de Indicadores, Processos & Alta Performance',
+      aboutSummary: 'Profissional com trajetória sólida focada em entrega de resultados, otimização de processos e eficiência operacional. Histórico comprovado na gestão de atividades estratégicas e engajamento de equipes.',
+      tips: [
+        'Insira termos técnicos e palavras-chave do seu segmento no campo Título para aparecer nas buscas de recrutadores no LinkedIn Recruiter.',
+        'Mantenha a seção "Sobre" atualizada com uma breve síntese de suas conquistas e competências fundamentais.',
+        'Solicite recomendações de antigos líderes para aumentar a relevância do seu perfil nos algoritmos.'
+      ]
+    },
+    {
+      platform: 'Gupy & Plataformas ATS',
+      url: 'https://gupy.io',
+      headline: 'Perfil Estruturado para Robôs de RH',
+      aboutSummary: 'Cadastre suas experiências com descrições objetivas, sem emojis ou formatações que dificultem o escanemento automático.',
+      tips: [
+        'Responda com atenção aos testes comportamentais para elevar a nota de compatibilidade inicial.',
+        'Mantenha a nomenclatura dos cargos alinhada às nomenclaturas padrões buscadas pelas empresas.'
+      ]
+    }
+  ]
+
+  const defaultTargetedChanges = [
+    {
+      section: 'Resumo Profissional / Perfil',
+      originalText: 'Profissional dedicado e dinâmico buscando novos desafios no mercado.',
+      rationale: 'Expressões vagas sem métricas numéricas não destacam o candidato e têm baixa pontuação em sistemas ATS.',
+      suggestedText: 'Especialista focado em otimização de processos, gestão de indicadores e entrega de metas operacionais de alta performance.'
+    },
+    {
+      section: 'Experiências Profissionais',
+      originalText: 'Responsável pelo acompanhamento diário das atividades e suporte às equipes.',
+      rationale: 'Faltam resultados quantificados (fórmula STAR/XYZ) demonstrando o impacto real gerado na função.',
+      suggestedText: 'Liderou o acompanhamento de rotinas e processos operacionais, garantindo cumprimento de 100% das metas estipuladas e aumento da eficiência.'
+    }
+  ]
+
+  const socialAdviceToDisplay = (Array.isArray(rawAnalysis.socialAdvice) && rawAnalysis.socialAdvice.length > 0)
+    ? rawAnalysis.socialAdvice
+    : defaultSocialAdvice
+
+  const targetedChangesToDisplay = (Array.isArray(rawAnalysis.targetedChanges) && rawAnalysis.targetedChanges.length > 0)
+    ? rawAnalysis.targetedChanges
+    : defaultTargetedChanges
+
   const a = {
     overall: normalizedOverall,
     summary: computedSummary,
@@ -278,7 +325,8 @@ export function AnalysisView() {
     weaknesses: Array.isArray(rawAnalysis.weaknesses) ? rawAnalysis.weaknesses : ['Adicionar mais métricas quantificáveis (STAR/XYZ)'],
     recommendations: Array.isArray(rawAnalysis.recommendations) ? rawAnalysis.recommendations : ['Destacar conquistas numéricas'],
     keywords: Array.isArray(rawAnalysis.keywords) ? rawAnalysis.keywords : [],
-    socialAdvice: Array.isArray(rawAnalysis.socialAdvice) ? rawAnalysis.socialAdvice : [],
+    socialAdvice: socialAdviceToDisplay,
+    targetedChanges: targetedChangesToDisplay,
   }
 
   const score = Number(a.overall || 0)
@@ -660,7 +708,7 @@ export function AnalysisView() {
       </Card>
 
       {/* TARGETED CHANGES (ONDE E POR QUE MUDAR) */}
-      {rawAnalysis.targetedChanges && rawAnalysis.targetedChanges.length > 0 && (
+      {a.targetedChanges && a.targetedChanges.length > 0 && (
         <Card className="border-sky-200 bg-sky-50/20 shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2.5">
@@ -678,7 +726,7 @@ export function AnalysisView() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {rawAnalysis.targetedChanges.map((tc: any, idx: number) => (
+            {a.targetedChanges.map((tc: any, idx: number) => (
               <div key={idx} className="p-4 rounded-xl bg-white border border-sky-100 shadow-2xs space-y-2.5">
                 <div className="flex items-center justify-between">
                   <Badge variant="outline" className="bg-sky-50 text-sky-900 border-sky-200 font-semibold text-[11px]">
