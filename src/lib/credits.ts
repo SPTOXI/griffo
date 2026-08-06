@@ -139,52 +139,57 @@ export async function deductCredits(
   amount: number,
   description: string
 ): Promise<{ success: boolean; currentBalance: number; error?: string }> {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { credits: true, role: true, disabled: true },
-  })
+  try {
+    const result = await db.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { credits: true, role: true, disabled: true },
+      })
 
-  if (user?.disabled) {
-    return { success: false, currentBalance: 0, error: 'Sua conta está suspensa.' }
-  }
+      if (!user) {
+        return { success: false, currentBalance: 0, error: 'Usuário não encontrado.' }
+      }
 
-  if (!user) {
-    return { success: false, currentBalance: 0, error: 'Usuário não encontrado.' }
-  }
+      if (user.disabled) {
+        return { success: false, currentBalance: 0, error: 'Sua conta está suspensa.' }
+      }
 
-  // Admins are exempt from spending credits
-  if (user.role === 'admin') {
-    return { success: true, currentBalance: user.credits }
-  }
+      // Admins are exempt from spending credits
+      if (user.role === 'admin') {
+        return { success: true, currentBalance: user.credits }
+      }
 
-  if (user.credits < amount) {
-    return {
-      success: false,
-      currentBalance: user.credits,
-      error: `Saldo insuficiente (${user.credits} créditos). Esta ação requer ${amount} créditos.`,
-    }
-  }
+      if (user.credits < amount) {
+        return {
+          success: false,
+          currentBalance: user.credits,
+          error: `Saldo insuficiente (${user.credits} créditos). Esta ação requer ${amount} créditos.`,
+        }
+      }
 
-  const updated = await db.$transaction(async (tx) => {
-    const updatedUser = await tx.user.update({
-      where: { id: userId },
-      data: { credits: { decrement: amount } },
-      select: { credits: true },
+      const updatedUser = await tx.user.update({
+        where: { id: userId, credits: { gte: amount } },
+        data: { credits: { decrement: amount } },
+        select: { credits: true },
+      })
+
+      await tx.creditTransaction.create({
+        data: {
+          userId,
+          amount: -amount,
+          type: 'spend',
+          description,
+        },
+      })
+
+      return { success: true, currentBalance: updatedUser.credits }
     })
 
-    await tx.creditTransaction.create({
-      data: {
-        userId,
-        amount: -amount,
-        type: 'spend',
-        description,
-      },
-    })
-
-    return updatedUser
-  })
-
-  return { success: true, currentBalance: updated.credits }
+    return result
+  } catch (error: unknown) {
+    // If the conditional update fails (credits went below threshold), it's a race condition
+    return { success: false, currentBalance: 0, error: 'Saldo insuficiente (operação concorrente detectada).' }
+  }
 }
 
 export async function refundCredits(

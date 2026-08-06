@@ -4,25 +4,16 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-const rawUrl =
-  process.env.POSTGRES_PRISMA_URL ||
-  process.env.DATABASE_URL ||
-  'postgresql://postgres.viqtmnhiejoacyevfjhy:711882GRiffo@aws-1-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true'
+const rawUrl = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL
 
-// Auto-repair deprecated Supabase host or user format
+if (!rawUrl) {
+  throw new Error(
+    'DATABASE_URL ou POSTGRES_PRISMA_URL não foi configurada. ' +
+    'Defina uma dessas variáveis de ambiente antes de iniciar a aplicação.'
+  )
+}
+
 let fixedUrl = rawUrl
-if (fixedUrl.includes('db.viqtmnhiejoacyevfjhy.supabase.co')) {
-  fixedUrl = fixedUrl.replace(
-    'db.viqtmnhiejoacyevfjhy.supabase.co',
-    'aws-1-sa-east-1.pooler.supabase.com'
-  )
-}
-if (fixedUrl.includes('postgres:711882GRiffo@aws-1-sa-east-1')) {
-  fixedUrl = fixedUrl.replace(
-    'postgres:711882GRiffo@aws-1-sa-east-1',
-    'postgres.viqtmnhiejoacyevfjhy:711882GRiffo@aws-1-sa-east-1'
-  )
-}
 
 export const db =
   globalForPrisma.prisma ??

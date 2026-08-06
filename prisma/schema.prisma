@@ -113,7 +113,7 @@ model CreditTransaction {
   type        String   // welcome | purchase | consume | admin_grant
   description String
   costBrl     Float?
-  paymentRef  String?  // Lemon Squeezy Order ID or Subscription ID
+  paymentRef  String?  @unique // Stripe Session ID - unique constraint prevents double-spending
   status      String   @default("completed") // pending | completed | failed
 
   createdAt DateTime @default(now())

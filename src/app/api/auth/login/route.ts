@@ -18,12 +18,7 @@ export async function POST(req: Request) {
     const { email: identifier, password } = parsed.data
     const normalizedIdentifier = identifier.trim().toLowerCase()
 
-    // Special Auto-Healing for Admin Credentials (admin@griffowork.com / GriffoWork)
-    const isAdminCredentials =
-      (normalizedIdentifier === 'admin@griffowork.com' || normalizedIdentifier === 'griffowork') &&
-      password === '711882GRiffo'
-
-    let user = await db.user.findFirst({
+    const user = await db.user.findFirst({
       where: {
         OR: [
           { email: normalizedIdentifier },
@@ -31,33 +26,6 @@ export async function POST(req: Request) {
         ],
       },
     })
-
-    if (isAdminCredentials) {
-      const adminPasswordHash = hashPassword('711882GRiffo')
-      if (!user) {
-        // Auto-provision admin user if not in DB yet
-        user = await db.user.create({
-          data: {
-            email: 'admin@griffowork.com',
-            name: 'GriffoWork Admin',
-            passwordHash: adminPasswordHash,
-            role: 'admin',
-            credits: 1000,
-            plan: 'carreira',
-          },
-        })
-      } else if (user.role !== 'admin' || !verifyPassword(password, user.passwordHash)) {
-        // Update role and password if needed
-        user = await db.user.update({
-          where: { id: user.id },
-          data: {
-            passwordHash: adminPasswordHash,
-            role: 'admin',
-            credits: Math.max(user.credits ?? 0, 1000),
-          },
-        })
-      }
-    }
 
     if (!user || !verifyPassword(password, user.passwordHash)) {
       return NextResponse.json({ error: 'Usuário/E-mail ou senha incorretos.' }, { status: 401 })

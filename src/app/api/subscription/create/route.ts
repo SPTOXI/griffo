@@ -13,6 +13,14 @@ export async function POST(req: Request) {
     const user = await getCurrentUser()
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
+    // Apenas admins podem ativar planos diretamente (sem pagamento via gateway)
+    if (user.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Acesso restrito. Utilize a página de planos para adquirir créditos.' },
+        { status: 403 }
+      )
+    }
+
     const body = await req.json()
     const parsed = schema.safeParse(body)
     if (!parsed.success) return NextResponse.json({ error: 'Plano inválido' }, { status: 400 })

@@ -53,35 +53,37 @@ export async function POST(req: Request) {
     if (!existingTx && creditAmount > 0) {
       const totalAmountBrl = (session.amount_total || 0) / 100
 
-      // Increment credits in DB
-      const updatedUser = await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          credits: { increment: creditAmount },
-          plan: metadata.package_id || 'credit_pack',
-        },
-      })
+      // Atomic transaction: credit user + record transaction + audit log
+      const updatedUser = await prisma.$transaction(async (tx) => {
+        const updated = await tx.user.update({
+          where: { id: user.id },
+          data: {
+            credits: { increment: creditAmount },
+            plan: metadata.package_id || 'credit_pack',
+          },
+        })
 
-      // Record transaction
-      await prisma.creditTransaction.create({
-        data: {
-          userId: user.id,
-          amount: creditAmount,
-          type: 'purchase',
-          description: `Compra de ${creditAmount} créditos via Stripe Checkout (Verificação Direta)`,
-          paymentRef: sessionId,
-          costBrl: totalAmountBrl,
-          status: 'completed',
-        },
-      })
+        await tx.creditTransaction.create({
+          data: {
+            userId: user.id,
+            amount: creditAmount,
+            type: 'purchase',
+            description: `Compra de ${creditAmount} créditos via Stripe Checkout (Verificação Direta)`,
+            paymentRef: sessionId,
+            costBrl: totalAmountBrl,
+            status: 'completed',
+          },
+        })
 
-      // Audit Log
-      await prisma.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'stripe_direct_verify_credit',
-          meta: JSON.stringify({ sessionId, creditAmount, totalAmountBrl }),
-        },
+        await tx.auditLog.create({
+          data: {
+            userId: user.id,
+            action: 'stripe_direct_verify_credit',
+            meta: JSON.stringify({ sessionId, creditAmount, totalAmountBrl }),
+          },
+        })
+
+        return updated
       })
 
       return NextResponse.json({

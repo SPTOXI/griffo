@@ -5,58 +5,64 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 
-export async function GET(req: Request) {
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const user = await getCurrentUser()
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-    const url = new URL(req.url)
-    const id = url.searchParams.get('id')
-    if (id) {
-      const resume = await db.resume.findFirst({
-        where: { id, userId: user.id },
+    const { id } = await params
+
+    if (!id) {
+      // If no id in route params, return all resumes for the user
+      const resumes = await db.resume.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' },
         select: {
           id: true,
           createdAt: true,
           updatedAt: true,
-          originalContent: true,
           originalFormat: true,
-          analysisJson: true,
-          rewrittenContent: true,
         },
       })
-      if (!resume) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
-      let analysis = null
-      if (resume.analysisJson) {
-        try { analysis = JSON.parse(resume.analysisJson) } catch { analysis = null }
-      }
-      return NextResponse.json({ resume: { ...resume, analysis } })
+      return NextResponse.json({ resumes })
     }
 
-    const resumes = await db.resume.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: 'desc' },
+    const resume = await db.resume.findFirst({
+      where: { id, userId: user.id },
       select: {
         id: true,
         createdAt: true,
         updatedAt: true,
+        originalContent: true,
         originalFormat: true,
+        analysisJson: true,
+        rewrittenContent: true,
       },
     })
-    return NextResponse.json({ resumes })
-  } catch (e: any) {
+    if (!resume) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
+    let analysis = null
+    if (resume.analysisJson) {
+      try { analysis = JSON.parse(resume.analysisJson) } catch { analysis = null }
+    }
+    return NextResponse.json({ resume: { ...resume, analysis } })
+  } catch (e: unknown) {
     console.error('get resume error', e)
     return NextResponse.json({ error: 'Erro ao buscar dados' }, { status: 500 })
   }
 }
 
-export async function DELETE(req: Request) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const user = await getCurrentUser()
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-    const url = new URL(req.url)
-    const id = url.searchParams.get('id')
+    const { id } = await params
     if (!id) return NextResponse.json({ error: 'ID do currículo obrigatório' }, { status: 400 })
 
     const resume = await db.resume.findFirst({ where: { id, userId: user.id } })
@@ -64,7 +70,7 @@ export async function DELETE(req: Request) {
 
     await db.resume.delete({ where: { id } })
     return NextResponse.json({ success: true })
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('delete resume error', e)
     return NextResponse.json({ error: 'Erro ao remover currículo' }, { status: 500 })
   }
