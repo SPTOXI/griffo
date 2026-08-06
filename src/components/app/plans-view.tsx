@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { CreditCard, Check, Loader2, Sparkles, Zap, CheckCircle2, ShoppingBag, FileSearch, Edit3, ArrowRight, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import { useI18n } from '@/context/i18n-context'
-import { CREDIT_PACKAGES, CREDIT_COSTS, getPackagePriceDisplay } from '@/lib/credits'
+import { CREDIT_PACKAGES, CREDIT_COSTS, getPackagePriceDisplay } from '@/lib/credits-catalog'
 
 interface CreditTx {
   id: string

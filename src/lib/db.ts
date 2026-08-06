@@ -1,3 +1,7 @@
+// Fails the build if this module is ever pulled into a Client Component graph.
+// Without it, the module-scope env check below throws in the browser instead,
+// which crashes hydration and renders Next's "This page couldn't load" screen.
+import 'server-only'
 import { PrismaClient } from '@prisma/client'
 
 const globalForPrisma = globalThis as unknown as {

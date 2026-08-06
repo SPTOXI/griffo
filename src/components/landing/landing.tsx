@@ -12,7 +12,7 @@ import {
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
 import { LanguageSelector } from '@/components/ui/language-selector'
-import { CREDIT_PACKAGES, getPackagePriceDisplay } from '@/lib/credits'
+import { CREDIT_PACKAGES, getPackagePriceDisplay } from '@/lib/credits-catalog'
 
 export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | 'app') => void }) {
   const { user } = useAuth()
