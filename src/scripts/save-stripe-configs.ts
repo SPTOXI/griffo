@@ -1,15 +1,13 @@
 import { PrismaClient } from '@prisma/client'
 
-const db = new PrismaClient({
-  datasources: {
-    db: {
-      url: 'postgresql://postgres:711882GRiffo@db.viqtmnhiejoacyevfjhy.supabase.co:5432/postgres',
-    },
-  },
-})
+const db = new PrismaClient()
 
-const secretKey = 'sk_test_51Twl2qCj91meBoFNJ99PxV9bodntxDv0BK2nfLcyZhbYgI4lXOnAsVryex8W0aWaddG6vNmATEL5na3NDj0SftMI00sxKXm9Od'
-const publishableKey = 'pk_test_51Twl2qCj91meBoFNPM3CvKk9GSu8bTh9z8UxUfs5lWfOPRJM9DYkbNxqYz3XvBe4hPxG3dWHQSum54ePTmv8sGmE00IONktykv'
+const secretKey = process.env.STRIPE_SECRET_KEY || ''
+const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
+
+if (!secretKey || !publishableKey) {
+  throw new Error('STRIPE_SECRET_KEY ou NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY não foram informadas.')
+}
 
 async function main() {
   console.log('--- Saving Stripe Keys to Supabase SystemConfig Table ---')

@@ -1,6 +1,7 @@
 import Stripe from 'stripe'
 
-const secretKey = 'sk_test_51Twl2qCj91meBoFNJ99PxV9bodntxDv0BK2nfLcyZhbYgI4lXOnAsVryex8W0aWaddG6vNmATEL5na3NDj0SftMI00sxKXm9Od'
+const secretKey = process.env.STRIPE_SECRET_KEY
+if (!secretKey) throw new Error('STRIPE_SECRET_KEY not set')
 const stripe = new Stripe(secretKey)
 
 const PACKAGES = [

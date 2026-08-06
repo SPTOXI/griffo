@@ -235,8 +235,6 @@ function AdminViewContent() {
       if (data.metrics) setMetrics(data.metrics)
       if (data.config) {
         setConfigs((prev) => ({
-          STRIPE_SECRET_KEY: 'sk_test_51Twl2qCj91meBoFNJ99PxV9bodntxDv0BK2nfLcyZhbYgI4lXOnAsVryex8W0aWaddG6vNmATEL5na3NDj0SftMI00sxKXm9Od',
-          STRIPE_PUBLISHABLE_KEY: 'pk_test_51Twl2qCj91meBoFNPM3CvKk9GSu8bTh9z8UxUfs5lWfOPRJM9DYkbNxqYz3XvBe4hPxG3dWHQSum54ePTmv8sGmE00IONktykv',
           ...prev,
           ...data.config,
         }))

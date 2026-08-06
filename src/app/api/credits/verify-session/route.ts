@@ -20,9 +20,7 @@ export async function POST(req: Request) {
     }
 
     const configs = await getGlobalSettings()
-    const defaultStripeSecretKey =
-      'sk_test_51Twl2qCj91meBoFNJ99PxV9bodntxDv0BK2nfLcyZhbYgI4lXOnAsVryex8W0aWaddG6vNmATEL5na3NDj0SftMI00sxKXm9Od'
-    const secretKey = configs.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || defaultStripeSecretKey
+    const secretKey = configs.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || ''
 
     if (!secretKey) {
       return NextResponse.json({ error: 'Stripe Secret Key não configurada.' }, { status: 400 })
