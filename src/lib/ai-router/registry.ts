@@ -16,7 +16,7 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   claude: {
     id: 'claude',
     name: 'Claude (Anthropic)',
-    defaultModel: 'claude-sonnet-5',
+    defaultModel: 'claude-sonnet-4-20250514',
     baseURL: 'https://api.anthropic.com/v1',
     apiKeyEnvVar: 'ANTHROPIC_API_KEY',
     pricing: {
@@ -153,8 +153,8 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
       trimmedModel = 'moonshot-v1-8k'
     }
   }
-  if (providerId === 'claude' && (lowerModel === 'claude-3-5-sonnet' || lowerModel === 'claude-3-5-sonnet-20241022' || !trimmedModel)) {
-    trimmedModel = 'claude-sonnet-5'
+  if (providerId === 'claude' && (lowerModel === 'claude-3-5-sonnet' || lowerModel === 'claude-3-5-sonnet-20241022' || lowerModel === 'claude-sonnet-5' || !trimmedModel)) {
+    trimmedModel = 'claude-sonnet-4-20250514'
   }
   if (providerId === 'deepseek' && (lowerModel.includes('v3') || lowerModel === 'deepseek-chat' || !trimmedModel)) {
     trimmedModel = 'deepseek-v4-pro'

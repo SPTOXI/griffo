@@ -62,6 +62,15 @@ export async function POST(req: Request) {
 
     // Server-side PDF extraction if pdfBase64 is supplied
     if (pdfBase64) {
+      // Limit PDF size to 10MB (base64 is ~33% larger than binary)
+      const MAX_PDF_BASE64_SIZE = 14 * 1024 * 1024 // ~10MB binary
+      if (pdfBase64.length > MAX_PDF_BASE64_SIZE) {
+        return NextResponse.json(
+          { error: 'O arquivo PDF é muito grande. O tamanho máximo permitido é 10MB.' },
+          { status: 400 }
+        )
+      }
+
       const cleanBase64 = pdfBase64.replace(/^data:application\/pdf;base64,/, '')
       const buffer = Buffer.from(cleanBase64, 'base64')
       const extractedText = await parsePdfBuffer(buffer)

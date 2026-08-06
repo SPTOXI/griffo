@@ -24,6 +24,26 @@ export async function POST(req: Request) {
 
     const targetUrl = parsed.data.url
 
+    // SSRF Protection: Block requests to private/internal networks
+    try {
+      const parsedUrl = new URL(targetUrl)
+      const hostname = parsedUrl.hostname.toLowerCase()
+      const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]']
+      const blockedPrefixes = ['10.', '172.16.', '172.17.', '172.18.', '172.19.', '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.', '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.', '192.168.', '169.254.']
+      
+      if (
+        blockedHosts.includes(hostname) ||
+        blockedPrefixes.some(prefix => hostname.startsWith(prefix)) ||
+        hostname.endsWith('.local') ||
+        hostname.endsWith('.internal') ||
+        !['http:', 'https:'].includes(parsedUrl.protocol)
+      ) {
+        return NextResponse.json({ error: 'URL não permitida. Utilize apenas URLs públicas.' }, { status: 400 })
+      }
+    } catch {
+      return NextResponse.json({ error: 'URL inválida.' }, { status: 400 })
+    }
+
     // Use Jina Reader API to bypass basic anti-bot blocks and extract clean markdown
     const jinaUrl = `https://r.jina.ai/${targetUrl}`
     const res = await fetch(jinaUrl, {
