@@ -1,3 +1,5 @@
+export const maxDuration = 60
+
 import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { generateDirectorBriefing } from '@/lib/agents/master-director-agent'
