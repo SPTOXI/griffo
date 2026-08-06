@@ -137,6 +137,10 @@ export function AnalysisView() {
       if (data.resume?.careerOrientation) {
         setCareerOrientation(data.resume.careerOrientation)
       }
+      // Se o currículo ainda não possui laudo de análise, inicia a análise AUTOMATICAMENTE sem exigir cliques manuais
+      if (data.resume && !data.resume.analysis) {
+        reanalyze(data.resume)
+      }
     } catch {
       setError('Erro de conexão.')
     } finally {
@@ -148,8 +152,9 @@ export function AnalysisView() {
   const [modalProgress, setModalProgress] = useState(0)
   const [modalStep, setModalStep] = useState(1)
 
-  const reanalyze = async () => {
-    if (!resume) return
+  const reanalyze = async (targetResume?: any) => {
+    const activeResume = targetResume || resume
+    if (!activeResume) return
     setAnalyzing(true)
     setError(null)
     setModalOpen(true)
@@ -169,7 +174,7 @@ export function AnalysisView() {
       const r = await internalFetch('/api/resume/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeId: resume.id }),
+        body: JSON.stringify({ resumeId: activeResume.id }),
       })
 
       const data = await r.json()
@@ -179,15 +184,13 @@ export function AnalysisView() {
 
       if (!r.ok) {
         setModalOpen(false)
-        setError(data.error || 'Falha ao reanalisar.')
+        setError(data.error || 'Falha ao analisar o currículo.')
         return
       }
 
-      setModalProgress(100)
-      setModalStep(8)
       setTimeout(async () => {
         setModalOpen(false)
-        await loadResume(resume.id)
+        await loadResume(activeResume.id)
       }, 500)
     } catch {
       clearInterval(interval)
@@ -200,22 +203,26 @@ export function AnalysisView() {
 
   if (loading) {
     return (
-      <div className="space-y-4 max-w-5xl">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-48 w-full" />
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+        <p className="text-sm text-slate-500 font-medium">Carregando análise do currículo...</p>
       </div>
+    )
+  }
+
+  if (error && !resume) {
+    return (
+      <Alert variant="destructive" className="max-w-xl">
+        <AlertCircle className="w-4 h-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     )
   }
 
   if (!resume) {
     return (
-      <div className="text-center py-16 max-w-md mx-auto">
-        <div className="w-14 h-14 rounded-full bg-slate-100 mx-auto flex items-center justify-center mb-4">
-          <FileSearch className="w-7 h-7 text-slate-400" />
-        </div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-1">Nenhum currículo para exibir</h2>
-        <p className="text-sm text-slate-500 mb-4">Envie seu currículo para ver a análise.</p>
+      <div className="text-center py-12 space-y-3">
+        <p className="text-slate-600">Nenhum currículo encontrado para exibir a análise.</p>
         <Button onClick={() => setView('upload')} className="bg-emerald-600 hover:bg-emerald-700">
           Enviar currículo
         </Button>
@@ -228,19 +235,20 @@ export function AnalysisView() {
       <div className="space-y-4 max-w-3xl">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-slate-900">Laudo de análise</h1>
-          <Button variant="outline" size="sm" onClick={() => loadResume(resume.id)}>
-            <RefreshCw className="w-4 h-4 mr-1" /> Atualizar
-          </Button>
         </div>
-        <Card>
-          <CardContent className="p-8 text-center">
-            <FileSearch className="w-10 h-10 text-slate-400 mx-auto mb-3" />
-            <p className="text-slate-700 font-medium mb-1">Currículo enviado, mas ainda não analisado.</p>
-            <p className="text-sm text-slate-500 mb-4">Clique abaixo para gerar o laudo.</p>
-            <Button onClick={reanalyze} disabled={analyzing} className="bg-emerald-600 hover:bg-emerald-700">
-              {analyzing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analisando…</> : <><Sparkles className="w-4 h-4 mr-2" /> Gerar análise</>}
-            </Button>
-            {error && <Alert variant="destructive" className="mt-4"><AlertCircle className="w-4 h-4" /><AlertDescription>{error}</AlertDescription></Alert>}
+        <Card className="border-slate-200 shadow-sm">
+          <CardContent className="p-8 text-center space-y-3">
+            <Loader2 className="w-8 h-8 text-emerald-600 animate-spin mx-auto" />
+            <p className="text-slate-800 font-semibold text-base">Iniciando análise preditiva em 8 dimensões...</p>
+            <p className="text-xs text-slate-500">Seu laudo está sendo processado automaticamente pela IA sem necessidade de novos cliques.</p>
+            {error && (
+              <div className="pt-2">
+                <Alert variant="destructive" className="mb-3"><AlertCircle className="w-4 h-4" /><AlertDescription>{error}</AlertDescription></Alert>
+                <Button onClick={() => reanalyze()} className="bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold">
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" /> Tentar novamente
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
