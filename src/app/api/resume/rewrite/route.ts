@@ -73,8 +73,18 @@ export async function POST(req: Request) {
     const routerResult = await executeAiTask({
       taskType: 'rewrite',
       userId: user.id,
-      userPrompt: `Reescreva o seguinte currículo aplicando a fórmula STAR (Situação, Tarefa, Ação, Resultado) e a fórmula Google XYZ mantendo 100% de veracidade dos fatos.${keywordsHint}\n\nIMPORTANTE: A resposta DEVE ser estruturada usando formatação Markdown (com títulos, negritos e listas em bullet points). A resposta DEVE ser estritamente no idioma Português (pt-BR) independente do idioma original.\n\nCurrículo Original:\n${resume.originalContent}`,
-      systemPrompt: 'Você é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas ATS (Gupy, LinkedIn, Workday). Responda sempre em Português e formatação estruturada em Markdown limpo e atrativo.',
+      systemPrompt: 'Você é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas ATS (Gupy, LinkedIn, Workday, Greenhouse). Sua função é reescrever o currículo COMPLETO de ponta a ponta sem cortar nada, utilizando marcações Markdown perfeitamente estruturadas (títulos H1/H2, marcadores de lista, negritos). Responda sempre em Português (pt-BR).',
+      userPrompt: `REESCREVA O CURRÍCULO COMPLETO DO INÍCIO AO FIM SEM OMITIR NEM SINTETIZAR NENHUMA SEÇÃO OU EXPERIÊNCIA.
+
+Diretrizes Obrigatórias:
+1. Reescreva TODAS as seções presentes no currículo original: Dados Pessoais/Cabeçalho, Resumo Profissional, TODAS as Experiências Profissionais completas (com empresas, cargos, datas), Formação Acadêmica, Habilidades Técnicas/Comportamentais, Idiomas e Certificações.
+2. Aplique a metodologia STAR (Situação, Tarefa, Ação, Resultado) e a fórmula Google XYZ (Conseguiu [X], medido por [Y], fazendo [Z]) em cada experiência profissional.
+3. Mantenha 100% da veracidade dos fatos originais.${keywordsHint}
+4. Estruture a resposta usando formatação Markdown rica (títulos '# ' e '## ', marcadores '- ', negritos '**').
+
+Currículo Original Completo para Reescrita:
+${resume.originalContent}`,
+      maxTokens: 8000,
     })
 
     const updated = await db.resume.update({

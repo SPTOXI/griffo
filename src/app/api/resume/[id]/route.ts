@@ -23,6 +23,7 @@ export async function GET(req: Request) {
           originalFormat: true,
           analysisJson: true,
           rewrittenContent: true,
+          careerOrientationJson: true,
         },
       })
       if (!resume) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
@@ -30,7 +31,11 @@ export async function GET(req: Request) {
       if (resume.analysisJson) {
         try { analysis = JSON.parse(resume.analysisJson) } catch { analysis = null }
       }
-      return NextResponse.json({ resume: { ...resume, analysis } })
+      let careerOrientation = null
+      if (resume.careerOrientationJson) {
+        try { careerOrientation = JSON.parse(resume.careerOrientationJson) } catch { careerOrientation = null }
+      }
+      return NextResponse.json({ resume: { ...resume, analysis, careerOrientation } })
     }
 
     const resumes = await db.resume.findMany({

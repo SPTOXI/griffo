@@ -19,25 +19,16 @@ export async function GET(req: Request) {
     const resume = await db.resume.findFirst({ where: { id: resumeId, userId: user.id } })
     if (!resume) return NextResponse.json({ error: 'Currículo não encontrado' }, { status: 404 })
 
-    // Allow download if user has active plan OR has enough credits (>= costCredits)
+    // Deduct credit if user has balance, but allow download if user created the content
     const costCredits = CREDIT_COSTS.pdf_download
-    const hasEnoughCredits = (user.credits || 0) >= costCredits
 
     if (!user.role || user.role !== 'admin') {
-      const deduction = await deductCredits(
-        user.id,
-        costCredits,
-        `Download do currículo em ${type} (${costCredits} cr)`
-      )
-
-      if (!deduction.success) {
-        return NextResponse.json(
-          {
-            error: 'Saldo de créditos insuficiente para realizar o download. Adquira créditos para continuar.',
-            code: 'INSUFFICIENT_CREDITS',
-          },
-          { status: 402 }
-        )
+      if ((user.credits || 0) >= costCredits) {
+        await deductCredits(
+          user.id,
+          costCredits,
+          `Download do currículo em ${type} (${costCredits} cr)`
+        ).catch(() => {})
       }
     }
 

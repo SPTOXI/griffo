@@ -84,6 +84,9 @@ model Resume {
   // User consent for social links evaluation
   socialConsent    Boolean  @default(false)
 
+  // Career orientation analysis JSON
+  careerOrientationJson String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 

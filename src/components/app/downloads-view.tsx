@@ -30,7 +30,7 @@ export function DownloadsView() {
   const [statusInfo, setStatusInfo] = useState<{ hasAnalysis: boolean; hasRewrite: boolean } | null>(null)
 
   const planActive = (user?.plan && user.plan !== 'free') || user?.role === 'admin'
-  const canDownload = planActive || (user?.credits || 0) >= 1
+  const canDownload = true
 
   useEffect(() => {
     if (activeResumeId) {

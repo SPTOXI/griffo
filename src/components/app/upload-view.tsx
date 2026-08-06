@@ -182,7 +182,7 @@ export function UploadView() {
       }
     }
 
-    // Interval to simulate smooth progress across the 4 steps while waiting for AI
+    // Interval to simulate smooth progress across the 8 dimensions while waiting for AI
     const progressInterval = setInterval(() => {
       setModalProgress((prev) => {
         if (prev < 25) {
@@ -196,6 +196,8 @@ export function UploadView() {
         } else if (prev < 92) {
           setModalStep(4)
           return prev + 0.8
+        } else if (prev < 98) {
+          return Math.min(98, prev + 0.3)
         }
         return prev
       })

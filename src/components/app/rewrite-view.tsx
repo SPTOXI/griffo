@@ -34,6 +34,37 @@ export function RewriteView() {
   const [rewriting, setRewriting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showOriginal, setShowOriginal] = useState(false)
+  const [downloadingType, setDownloadingType] = useState<string | null>(null)
+
+  const downloadFile = async (type: 'resume_pdf' | 'resume_txt' | 'resume_md') => {
+    if (!resume) return
+    setDownloadingType(type)
+    try {
+      const r = await internalFetch(`/api/resume/download?resumeId=${resume.id}&type=${type}`)
+      if (!r.ok) {
+        const data = await r.json().catch(() => ({}))
+        toast.error(data.error || 'Falha ao baixar arquivo.')
+        return
+      }
+      const blob = await r.blob()
+      const cd = r.headers.get('content-disposition') || ''
+      const match = cd.match(/filename="?([^"]+)"?/)
+      const filename = match?.[1] || `curriculo_reescrito.${type === 'resume_pdf' ? 'pdf' : type === 'resume_txt' ? 'txt' : 'md'}`
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      toast.success('Download realizado com sucesso!')
+    } catch {
+      toast.error('Erro de conexão ao baixar arquivo.')
+    } finally {
+      setDownloadingType(null)
+    }
+  }
 
   useEffect(() => {
     if (activeResumeId) {
@@ -219,15 +250,6 @@ export function RewriteView() {
               </span>
             </label>
 
-            {!user?.planActive && (
-              <Alert>
-                <Lock className="w-4 h-4" />
-                <AlertDescription>
-                  A reescrita requer um plano ativo. <button onClick={() => setView('plans')} className="text-emerald-700 font-semibold underline">Ver planos</button> (a partir de R$ 19,90).
-                </AlertDescription>
-              </Alert>
-            )}
-
             <Button
               onClick={requestRewrite}
               disabled={!authorized || rewriting}
@@ -301,6 +323,35 @@ export function RewriteView() {
               {rewriting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
               Gerar novamente
             </Button>
+            <Button
+              size="sm"
+              onClick={() => downloadFile('resume_pdf')}
+              disabled={!!downloadingType}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+            >
+              {downloadingType === 'resume_pdf' ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+              Baixar PDF
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => downloadFile('resume_txt')}
+              disabled={!!downloadingType}
+              variant="outline"
+              className="border-slate-300 font-medium"
+            >
+              {downloadingType === 'resume_txt' ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+              Baixar .TXT
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => downloadFile('resume_md')}
+              disabled={!!downloadingType}
+              variant="outline"
+              className="border-slate-300 font-medium"
+            >
+              {downloadingType === 'resume_md' ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+              Baixar .MD
+            </Button>
             <Badge variant="outline" className="ml-auto self-center">
               {showOriginal ? 'Original' : 'Reescrito'}
             </Badge>
@@ -308,12 +359,62 @@ export function RewriteView() {
 
           <Card>
             <CardContent className="p-0">
-              <ScrollArea className="h-[480px]">
-                <div className="p-6 prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-h1:text-2xl prose-h2:text-lg prose-h2:mt-4 prose-h2:mb-2 prose-h2:border-b prose-h2:pb-1 prose-h2:border-slate-200 prose-h3:text-base prose-li:my-0.5 prose-p:my-1">
+              <ScrollArea className="h-[520px]">
+                <div className="p-6 bg-white rounded-xl shadow-xs">
                   {showOriginal ? (
-                    <pre className="text-xs whitespace-pre-wrap font-mono text-slate-700 bg-transparent p-0 m-0">{resume.originalContent}</pre>
+                    <pre className="text-xs whitespace-pre-wrap font-mono text-slate-700 bg-transparent p-0 m-0 leading-relaxed">{resume.originalContent}</pre>
                   ) : (
-                    <ReactMarkdown>{resume.rewrittenContent || ''}</ReactMarkdown>
+                    <ReactMarkdown
+                      components={{
+                        h1: ({ children }) => (
+                          <h1 className="text-xl font-black text-slate-900 border-b border-slate-300 pb-2 mb-4 mt-2 tracking-tight uppercase">
+                            {children}
+                          </h1>
+                        ),
+                        h2: ({ children }) => (
+                          <h2 className="text-sm font-bold text-violet-900 border-b border-violet-100 pb-1 mb-2 mt-5 tracking-wide uppercase">
+                            {children}
+                          </h2>
+                        ),
+                        h3: ({ children }) => (
+                          <h3 className="text-xs font-bold text-slate-800 mb-1 mt-3">
+                            {children}
+                          </h3>
+                        ),
+                        p: ({ children }) => (
+                          <p className="text-xs text-slate-700 leading-relaxed mb-2.5">
+                            {children}
+                          </p>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="list-disc list-inside space-y-1.5 mb-4 text-xs text-slate-700 pl-1">
+                            {children}
+                          </ul>
+                        ),
+                        ol: ({ children }) => (
+                          <ol className="list-decimal list-inside space-y-1.5 mb-4 text-xs text-slate-700 pl-1">
+                            {children}
+                          </ol>
+                        ),
+                        li: ({ children }) => (
+                          <li className="leading-relaxed">
+                            {children}
+                          </li>
+                        ),
+                        strong: ({ children }) => (
+                          <strong className="font-bold text-slate-900">
+                            {children}
+                          </strong>
+                        ),
+                        blockquote: ({ children }) => (
+                          <blockquote className="border-l-4 border-violet-500 pl-3 py-1.5 bg-violet-50/50 text-xs text-slate-700 italic my-3 rounded-r-md">
+                            {children}
+                          </blockquote>
+                        ),
+                      }}
+                    >
+                      {resume.rewrittenContent || ''}
+                    </ReactMarkdown>
                   )}
                 </div>
               </ScrollArea>
