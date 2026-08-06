@@ -1,3 +1,7 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const maxDuration = 60
+
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/auth'
@@ -5,6 +9,52 @@ import { getCurrentUser } from '@/lib/auth'
 const schema = z.object({
   url: z.string().url('Informe uma URL válida.'),
 })
+
+function extractMetadataFromHtml(html: string): { title?: string; description?: string } {
+  let title: string | undefined
+  let description: string | undefined
+
+  // 1. JSON-LD JobPosting Schema (LinkedIn, Gupy, Catho, Glassdoor, Indeed, etc.)
+  const jsonLdMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)
+  if (jsonLdMatches) {
+    for (const match of jsonLdMatches) {
+      try {
+        const jsonText = match.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '').trim()
+        const parsed = JSON.parse(jsonText)
+        const items = Array.isArray(parsed) ? parsed : [parsed]
+        const job = items.find(i => i && (i['@type'] === 'JobPosting' || i['@type'] === 'JobDeclaration'))
+        if (job) {
+          if (job.title || job.name) title = String(job.title || job.name).trim()
+          let desc = job.description || job.responsibilities || job.skills
+          if (typeof desc === 'string') {
+            desc = desc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+            if (desc.length > 30) description = desc
+          }
+          if (title || description) break
+        }
+      } catch {}
+    }
+  }
+
+  // 2. OpenGraph and Twitter Meta Tags
+  if (!title) {
+    const titleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i)?.[1] ||
+                       html.match(/<meta[^>]*name=["']twitter:title["'][^>]*content=["']([^"']+)["']/i)?.[1] ||
+                       html.match(/<title[^>]*>(.*?)<\/title>/i)?.[1]
+    if (titleMatch) title = titleMatch.trim()
+  }
+
+  if (!description) {
+    const descMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i)?.[1] ||
+                      html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)?.[1] ||
+                      html.match(/<meta[^>]*name=["']twitter:description["'][^>]*content=["']([^"']+)["']/i)?.[1]
+    if (descMatch && descMatch.trim().length > 30) {
+      description = descMatch.trim()
+    }
+  }
+
+  return { title, description }
+}
 
 /**
  * Raspa e extrai o texto principal de um anúncio de vaga a partir de uma URL.
@@ -70,10 +120,10 @@ export async function POST(req: Request) {
         extractedContent = text.trim()
       }
     } catch (jinaErr) {
-      console.warn('[job-fetch] Jina reader failed, trying fallback fetch:', jinaErr)
+      console.warn('[job-fetch] Jina reader failed, trying direct fetch fallback:', jinaErr)
     }
 
-    // 2. Fallback to direct HTML fetch if Jina yielded nothing
+    // 2. Fallback to direct HTML fetch with JSON-LD and Meta Tags extraction if Jina yielded nothing
     if (!extractedContent || extractedContent.length < 50) {
       try {
         const fallbackRes = await fetch(targetUrl, {
@@ -86,17 +136,20 @@ export async function POST(req: Request) {
 
         if (fallbackRes.ok) {
           const html = await fallbackRes.text()
-          const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i)
-          if (titleMatch) pageTitle = titleMatch[1].trim()
+          const meta = extractMetadataFromHtml(html)
+          if (meta.title) pageTitle = meta.title
 
-          const cleanText = html
-            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
-            .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
-            .replace(/<[^>]+>/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim()
-
-          extractedContent = cleanText
+          if (meta.description && meta.description.length > 50) {
+            extractedContent = meta.description
+          } else {
+            const cleanText = html
+              .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+              .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+              .replace(/<[^>]+>/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim()
+            extractedContent = cleanText
+          }
         }
       } catch (fbErr) {
         console.warn('[job-fetch] Direct fallback fetch failed:', fbErr)
@@ -111,8 +164,8 @@ export async function POST(req: Request) {
       pageTitle.toLowerCase().includes('security measure') ||
       pageTitle.toLowerCase().includes('cloudflare') ||
       pageTitle.toLowerCase().includes('attention required') ||
-      extractedContent.toLowerCase().includes('please enable js') ||
-      extractedContent.toLowerCase().includes('verify you are human')
+      (extractedContent.toLowerCase().includes('please enable js') && extractedContent.length < 200) ||
+      (extractedContent.toLowerCase().includes('verify you are human') && extractedContent.length < 200)
 
     if (isBlocked) {
       return NextResponse.json({ error: 'A importação foi bloqueada pela proteção do site (ex: Cloudflare/LinkedIn). Copie e cole o texto do anúncio no campo de descrição.' }, { status: 400 })
