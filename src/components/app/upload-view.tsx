@@ -49,16 +49,20 @@ export function UploadView() {
   const [format, setFormat] = useState<'text' | 'markdown' | 'pdf'>('text')
 
   const handleFetchJobFromUrl = async () => {
-    if (!jobUrl || !jobUrl.trim()) {
+    let cleanUrl = jobUrl.trim()
+    if (!cleanUrl) {
       toast.error('Informe a URL da vaga (ex: https://linkedin.com/jobs/view/...)')
       return
+    }
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = 'https://' + cleanUrl
     }
     setFetchingUrl(true)
     try {
       const res = await internalFetch('/api/resume/job-fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: jobUrl.trim() }),
+        body: JSON.stringify({ url: cleanUrl }),
       })
       const data = await res.json()
       if (res.ok && data.description) {
@@ -66,10 +70,10 @@ export function UploadView() {
         setTargetJobDescription(data.description)
         toast.success('Conteúdo da vaga importado com sucesso via Link!')
       } else {
-        toast.error(data.error || 'Erro ao importar vaga pela URL.')
+        toast.error(data.error || 'Erro ao importar vaga pela URL. Tente copiar e colar a descrição manualmente.')
       }
     } catch {
-      toast.error('Falha ao conectar com o serviço de importação de vaga.')
+      toast.error('Falha de conexão ao importar vaga. Verifique o link e tente novamente.')
     } finally {
       setFetchingUrl(false)
     }
@@ -385,6 +389,12 @@ export function UploadView() {
                   type="url"
                   value={jobUrl}
                   onChange={(e) => setJobUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleFetchJobFromUrl()
+                    }
+                  }}
                   placeholder="https://www.linkedin.com/jobs/view/..."
                   className="text-xs h-9 bg-white"
                 />

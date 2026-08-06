@@ -17,9 +17,14 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const parsed = schema.safeParse(body)
+    let rawUrl = String(body?.url || '').trim()
+    if (rawUrl && !rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
+      rawUrl = 'https://' + rawUrl
+    }
+
+    const parsed = schema.safeParse({ url: rawUrl })
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.issues[0]?.message || 'URL inválida.' }, { status: 400 })
+      return NextResponse.json({ error: 'Informe uma URL válida (ex: https://linkedin.com/jobs/view/...)' }, { status: 400 })
     }
 
     const targetUrl = parsed.data.url
@@ -44,54 +49,62 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'URL inválida.' }, { status: 400 })
     }
 
-    // Use Jina Reader API to bypass basic anti-bot blocks and extract clean markdown
-    const jinaUrl = `https://r.jina.ai/${targetUrl}`
-    const res = await fetch(jinaUrl, {
-      headers: {
-        'Accept': 'text/plain',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
-    })
-
     let extractedContent = ''
     let pageTitle = 'Vaga Importada via Link'
 
-    if (res.ok) {
-      const text = await res.text()
-      // Jina returns markdown, usually the title is "Title: ..." at the top
-      const titleMatch = text.match(/^Title:\s*(.+)/m)
-      if (titleMatch) pageTitle = titleMatch[1].trim()
-      
-      extractedContent = text.trim()
-    } else {
-      // Fallback to direct fetch if Jina fails
-      const fallbackRes = await fetch(targetUrl, {
+    // 1. Try Jina Reader API with 10s timeout to extract clean text
+    try {
+      const jinaUrl = `https://r.jina.ai/${targetUrl}`
+      const res = await fetch(jinaUrl, {
         headers: {
+          'Accept': 'text/plain',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
         },
+        signal: AbortSignal.timeout(10000),
       })
 
-      if (!fallbackRes.ok) {
-        return NextResponse.json({ error: `Não foi possível acessar a URL fornecida (HTTP ${fallbackRes.status}).` }, { status: 400 })
+      if (res.ok) {
+        const text = await res.text()
+        const titleMatch = text.match(/^Title:\s*(.+)/m)
+        if (titleMatch) pageTitle = titleMatch[1].trim()
+        extractedContent = text.trim()
       }
-
-      const html = await fallbackRes.text()
-      let cleanText = html
-        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
-        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-
-      const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i)
-      if (titleMatch) pageTitle = titleMatch[1].trim()
-      
-      extractedContent = cleanText
+    } catch (jinaErr) {
+      console.warn('[job-fetch] Jina reader failed, trying fallback fetch:', jinaErr)
     }
 
-    if (extractedContent.length < 50) {
-      return NextResponse.json({ error: 'Não foi possível extrair o texto do anúncio desta URL. Verifique se a página exige login.' }, { status: 400 })
+    // 2. Fallback to direct HTML fetch if Jina yielded nothing
+    if (!extractedContent || extractedContent.length < 50) {
+      try {
+        const fallbackRes = await fetch(targetUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+          },
+          signal: AbortSignal.timeout(10000),
+        })
+
+        if (fallbackRes.ok) {
+          const html = await fallbackRes.text()
+          const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i)
+          if (titleMatch) pageTitle = titleMatch[1].trim()
+
+          const cleanText = html
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+            .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+
+          extractedContent = cleanText
+        }
+      } catch (fbErr) {
+        console.warn('[job-fetch] Direct fallback fetch failed:', fbErr)
+      }
+    }
+
+    if (!extractedContent || extractedContent.length < 30) {
+      return NextResponse.json({ error: 'Não foi possível extrair a vaga deste link. Verifique se o anúncio exige login ou se o link está correto.' }, { status: 400 })
     }
 
     const isBlocked = 
@@ -102,19 +115,22 @@ export async function POST(req: Request) {
       extractedContent.toLowerCase().includes('verify you are human')
 
     if (isBlocked) {
-      return NextResponse.json({ error: 'A importação foi bloqueada pelo sistema de segurança do site (ex: Glassdoor/LinkedIn). Por favor, copie e cole o texto da vaga manualmente.' }, { status: 400 })
+      return NextResponse.json({ error: 'A importação foi bloqueada pela proteção do site (ex: Cloudflare/LinkedIn). Copie e cole o texto do anúncio no campo de descrição.' }, { status: 400 })
     }
 
     // Limita tamanho a 10.000 caracteres para otimização
     extractedContent = extractedContent.slice(0, 10000)
 
+    // Clean title
+    pageTitle = pageTitle.replace(/^Title:\s*/i, '').replace(/\|\s*LinkedIn$/i, '').replace(/\|\s*Gupy$/i, '').trim()
+
     return NextResponse.json({
-      title: pageTitle,
+      title: pageTitle || 'Vaga Importada via Link',
       description: extractedContent,
       sourceUrl: targetUrl,
     })
   } catch (e: any) {
     console.error('Error fetching job URL:', e)
-    return NextResponse.json({ error: 'Erro ao processar o link da vaga. Cole o texto do anúncio diretamente.' }, { status: 500 })
+    return NextResponse.json({ error: 'Erro ao processar o link da vaga. Copie e cole o texto do anúncio no campo de descrição.' }, { status: 500 })
   }
 }
