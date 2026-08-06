@@ -157,14 +157,13 @@ export function AnalysisView() {
     setModalStep(1)
 
     const interval = setInterval(() => {
-      setModalProgress(prev => {
-        if (prev >= 98) return 98
-        const increment = prev >= 92 ? 1 : Math.floor(Math.random() * 8) + 4
-        const next = Math.min(98, prev + increment)
+      setModalProgress((prev) => {
+        if (prev >= 96) return 96
+        const next = Math.min(96, prev + 0.7)
         setModalStep(Math.min(8, Math.max(1, Math.ceil((next / 100) * 8))))
         return next
       })
-    }, 450)
+    }, 250)
 
     try {
       const r = await internalFetch('/api/resume/analyze', {
@@ -175,6 +174,8 @@ export function AnalysisView() {
 
       const data = await r.json()
       clearInterval(interval)
+      setModalStep(8)
+      setModalProgress(100)
 
       if (!r.ok) {
         setModalOpen(false)

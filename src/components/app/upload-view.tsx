@@ -186,26 +186,15 @@ export function UploadView() {
       }
     }
 
-    // Interval to simulate smooth progress across the 8 dimensions while waiting for AI
+    // Progressão fluida e uniforme distribuída entre as 8 dimensões (aprox. 3.5s por dimensão)
     const progressInterval = setInterval(() => {
       setModalProgress((prev) => {
-        if (prev < 25) {
-          return prev + 3
-        } else if (prev < 50) {
-          setModalStep(2)
-          return prev + 2
-        } else if (prev < 75) {
-          setModalStep(3)
-          return prev + 1.5
-        } else if (prev < 92) {
-          setModalStep(4)
-          return prev + 0.8
-        } else if (prev < 98) {
-          return Math.min(98, prev + 0.3)
-        }
-        return prev
+        if (prev >= 96) return 96
+        const next = Math.min(96, prev + 0.7)
+        setModalStep(Math.min(8, Math.max(1, Math.ceil((next / 100) * 8))))
+        return next
       })
-    }, 400)
+    }, 250)
 
     try {
       const r = await internalFetch('/api/resume/upload', {
@@ -231,8 +220,6 @@ export function UploadView() {
         return
       }
 
-      setModalStep(2)
-      setModalProgress(40)
       setLoadingStep('Analisando currículo em 8 dimensões com Inteligência Artificial...')
       toast.success('Currículo salvo! Processando laudo com a IA...')
 
@@ -244,7 +231,7 @@ export function UploadView() {
       const adata = await ar.json().catch(() => ({}))
 
       clearInterval(progressInterval)
-      setModalStep(4)
+      setModalStep(8)
       setModalProgress(100)
 
       if (!ar.ok) {
