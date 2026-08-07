@@ -67,12 +67,12 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
             'content-type': 'application/json',
           },
           body: JSON.stringify({
-            model: runtime.model || 'claude-sonnet-5',
+            model: runtime.model || 'claude-opus-5',
             max_tokens: req.maxTokens ?? 3500,
             system: req.systemPrompt,
             messages: [{ role: 'user', content: req.userPrompt }],
           }),
-          signal: AbortSignal.timeout(30000),
+          signal: AbortSignal.timeout(55000),
         })
 
         const data = await res.json()
@@ -100,7 +100,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         const client = new OpenAI({
           apiKey: cleanApiKey,
           baseURL: runtime.baseURL,
-          timeout: 30000, // 30s timeout per call
+          timeout: 55000, // 55s timeout per call
         })
 
         const isReasoningModel = currentProviderId === 'kimi' || runtime.model?.includes('reasoner') || runtime.model?.includes('k3')

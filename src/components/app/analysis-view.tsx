@@ -166,11 +166,11 @@ export function AnalysisView() {
     const interval = setInterval(() => {
       setModalProgress((prev) => {
         if (prev >= 96) return 96
-        const next = Math.min(96, prev + 0.7)
+        const next = Math.min(96, prev + 0.35)
         setModalStep(Math.min(8, Math.max(1, Math.ceil((next / 100) * 8))))
         return next
       })
-    }, 250)
+    }, 280)
 
     try {
       const r = await internalFetch('/api/resume/analyze', {
@@ -203,10 +203,10 @@ export function AnalysisView() {
       throw new Error(data.error || 'Recuperando laudo...')
     } catch {
       clearInterval(interval)
-      // Auto-recuperação resiliente: realiza até 8 tentativas de leitura no banco
+      // Auto-recuperação resiliente: realiza até 25 tentativas de leitura no banco (50s)
       let recovered = false
-      for (let attempt = 1; attempt <= 8; attempt++) {
-        await new Promise((res) => setTimeout(res, 1500))
+      for (let attempt = 1; attempt <= 25; attempt++) {
+        await new Promise((res) => setTimeout(res, 2000))
         try {
           const checkRes = await internalFetch(`/api/resume/${activeResume.id}?id=${activeResume.id}`, { cache: 'no-store' })
           const checkData = await checkRes.json().catch(() => ({}))

@@ -242,10 +242,10 @@ export function UploadView() {
         return
       }
 
-      // Se a resposta demorou ou a conexão oscilou, faz auto-recuperação silenciosa no banco
+      // Se a resposta demorou ou a conexão oscilou, faz auto-recuperação silenciosa no banco (até 25 tentativas de 2s = 50s)
       let recovered = false
-      for (let attempt = 1; attempt <= 8; attempt++) {
-        await new Promise((res) => setTimeout(res, 1500))
+      for (let attempt = 1; attempt <= 25; attempt++) {
+        await new Promise((res) => setTimeout(res, 2000))
         try {
           const checkRes = await internalFetch(`/api/resume/${data.resume.id}?id=${data.resume.id}`, { cache: 'no-store' })
           const checkData = await checkRes.json().catch(() => ({}))

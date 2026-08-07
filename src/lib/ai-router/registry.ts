@@ -15,13 +15,13 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   },
   claude: {
     id: 'claude',
-    name: 'Claude (Anthropic)',
-    defaultModel: 'claude-sonnet-5',
+    name: 'Claude Opus 5 (Anthropic)',
+    defaultModel: 'claude-opus-5',
     baseURL: 'https://api.anthropic.com/v1',
     apiKeyEnvVar: 'ANTHROPIC_API_KEY',
     pricing: {
-      inputPer1k: 0.003, // $3.00 / 1M (Sonnet 5)
-      outputPer1k: 0.015, // $15.00 / 1M (Sonnet 5)
+      inputPer1k: 0.015, // $15.00 / 1M (Opus 5)
+      outputPer1k: 0.075, // $75.00 / 1M (Opus 5)
     },
   },
   deepseek: {
@@ -152,8 +152,8 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
       trimmedModel = 'kimi-k3'
     }
   }
-  if (providerId === 'claude' && (!trimmedModel || trimmedModel.startsWith('claude-3') || trimmedModel.includes('opus') || trimmedModel.includes('2025') || trimmedModel.includes('2024'))) {
-    trimmedModel = 'claude-sonnet-5'
+  if (providerId === 'claude' && (!trimmedModel || trimmedModel.startsWith('claude-3') || trimmedModel.includes('sonnet') || trimmedModel.includes('2025') || trimmedModel.includes('2024'))) {
+    trimmedModel = 'claude-opus-5'
   }
   if (providerId === 'deepseek' && (!trimmedModel || trimmedModel.includes('v3') || trimmedModel.includes('v4'))) {
     trimmedModel = 'deepseek-chat'
