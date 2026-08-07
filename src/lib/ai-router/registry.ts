@@ -16,12 +16,12 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   claude: {
     id: 'claude',
     name: 'Claude (Anthropic)',
-    defaultModel: 'claude-sonnet-4-20250514',
+    defaultModel: 'claude-opus-5',
     baseURL: 'https://api.anthropic.com/v1',
     apiKeyEnvVar: 'ANTHROPIC_API_KEY',
     pricing: {
-      inputPer1k: 0.003, // $3.00 / 1M
-      outputPer1k: 0.015, // $15.00 / 1M
+      inputPer1k: 0.015, // $15.00 / 1M (Opus)
+      outputPer1k: 0.075, // $75.00 / 1M (Opus)
     },
   },
   deepseek: {
@@ -65,23 +65,23 @@ export function normalizeProviderId(raw: string): ProviderId | null {
 }
 
 // Distribution of primary models per task
-// Active providers (tested & working): DeepSeek, Kimi K3
-// Inactive providers (key expired/quota exceeded): Claude, Gemini
+// Active providers: Claude Opus 5, DeepSeek, Kimi K3
+// Inactive providers (quota exceeded): Gemini
 export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   ocr_extraction: 'deepseek',
   normalization: 'deepseek',
-  rewrite: 'kimi',
-  full_analysis: 'kimi',
-  social_advice: 'kimi',
-  cover_letter: 'kimi',
+  rewrite: 'claude',
+  full_analysis: 'claude',
+  social_advice: 'claude',
+  cover_letter: 'claude',
   support_chat: 'deepseek',
 }
 
-// Fallback sequence: working providers first, then inactive ones as last resort
+// Fallback sequence
 export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
+  claude: ['kimi', 'deepseek', 'gemini'],
   kimi: ['deepseek', 'claude', 'gemini'],
   deepseek: ['kimi', 'claude', 'gemini'],
-  claude: ['kimi', 'deepseek', 'gemini'],
   gemini: ['kimi', 'deepseek', 'claude'],
 }
 
@@ -152,8 +152,8 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
       trimmedModel = 'kimi-k3'
     }
   }
-  if (providerId === 'claude' && (lowerModel === 'claude-3-5-sonnet' || lowerModel === 'claude-3-5-sonnet-20241022' || lowerModel === 'claude-sonnet-5' || !trimmedModel)) {
-    trimmedModel = 'claude-sonnet-4-20250514'
+  if (providerId === 'claude' && (lowerModel === 'claude-3-5-sonnet' || lowerModel === 'claude-3-5-sonnet-20241022' || lowerModel === 'claude-sonnet-4-20250514' || !trimmedModel)) {
+    trimmedModel = 'claude-opus-5'
   }
   if (providerId === 'deepseek' && (lowerModel.includes('v3') || lowerModel === 'deepseek-chat' || !trimmedModel)) {
     trimmedModel = 'deepseek-v4-pro'
