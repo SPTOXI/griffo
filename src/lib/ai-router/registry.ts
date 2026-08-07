@@ -73,18 +73,18 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   ocr_extraction: 'deepseek',
   normalization: 'deepseek',
   rewrite: 'claude',
-  full_analysis: 'kimi',
+  full_analysis: 'claude',
   social_advice: 'claude',
   cover_letter: 'claude',
   support_chat: 'deepseek',
 }
 
-// Fallback sequence if primary provider fails (Gemini disabled)
+// Fallback sequence if primary provider fails
 export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
-  kimi: ['deepseek', 'claude'],
-  claude: ['kimi', 'deepseek'],
-  deepseek: ['kimi', 'claude'],
-  gemini: ['deepseek', 'kimi', 'claude'],
+  claude: ['deepseek', 'gemini', 'kimi'],
+  deepseek: ['claude', 'gemini', 'kimi'],
+  gemini: ['claude', 'deepseek', 'kimi'],
+  kimi: ['claude', 'deepseek', 'gemini'],
 }
 
 export async function getProviderRuntimeConfig(providerId: ProviderId) {
