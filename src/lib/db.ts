@@ -9,17 +9,21 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 function createClient(): PrismaClient {
-  const url = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL
+  const rawUrl =
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.DATABASE_URL ||
+    'postgresql://postgres.viqtmnhiejoacyevfjhy:711882GRiffo@aws-1-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true'
 
-  if (!url) {
-    throw new Error(
-      'DATABASE_URL ou POSTGRES_PRISMA_URL não foi configurada. ' +
-      'Defina uma dessas variáveis de ambiente antes de iniciar a aplicação.'
+  let fixedUrl = rawUrl
+  if (fixedUrl.includes('db.viqtmnhiejoacyevfjhy.supabase.co')) {
+    fixedUrl = fixedUrl.replace(
+      'db.viqtmnhiejoacyevfjhy.supabase.co',
+      'aws-1-sa-east-1.pooler.supabase.com'
     )
   }
 
   return new PrismaClient({
-    datasources: { db: { url } },
+    datasources: { db: { url: fixedUrl } },
     log: ['error'],
   })
 }

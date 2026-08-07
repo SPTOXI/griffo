@@ -81,6 +81,7 @@ export function AnalysisView() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'all' | 'overview' | 'social' | 'match' | 'career' | 'dimensions' | 'targeted'>('all')
   const [list, setList] = useState<{ id: string; status: string; updatedAt: string }[]>([])
+  const autoTriggeredRef = useState<{ [id: string]: boolean }>({})[0]
 
   const handleGenerateOrientation = async () => {
     if (!resume?.id) return
@@ -137,8 +138,9 @@ export function AnalysisView() {
       if (data.resume?.careerOrientation) {
         setCareerOrientation(data.resume.careerOrientation)
       }
-      // Se o currículo ainda não possui laudo de análise, inicia a análise AUTOMATICAMENTE sem exigir cliques manuais
-      if (data.resume && !data.resume.analysis) {
+      // Se o currículo ainda não possui laudo de análise, inicia a análise AUTOMATICAMENTE sem exigir cliques manuais (no máximo uma vez por id)
+      if (data.resume && !data.resume.analysis && !autoTriggeredRef[id]) {
+        autoTriggeredRef[id] = true
         reanalyze(data.resume)
       }
     } catch {
