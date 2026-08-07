@@ -197,7 +197,17 @@ export function AnalysisView() {
     } catch {
       clearInterval(interval)
       setModalOpen(false)
-      setError('Erro de conexão.')
+      // Se a conexão oscilou durante a chamada HTTP, verifica se o servidor salvou o laudo no banco de dados
+      try {
+        const checkRes = await internalFetch(`/api/resume/${activeResume.id}?id=${activeResume.id}`, { cache: 'no-store' })
+        const checkData = await checkRes.json()
+        if (checkRes.ok && checkData.resume?.analysis) {
+          setResume(checkData.resume)
+          setError(null)
+          return
+        }
+      } catch {}
+      setError('Erro de conexão ao processar. Se o laudo foi concluído no servidor, recarregue a página ou acesse pelo Histórico.')
     } finally {
       setAnalyzing(false)
     }
