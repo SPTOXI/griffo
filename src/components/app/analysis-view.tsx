@@ -179,35 +179,53 @@ export function AnalysisView() {
         body: JSON.stringify({ resumeId: activeResume.id }),
       })
 
-      const data = await r.json()
+      const data = await r.json().catch(() => ({}))
       clearInterval(interval)
-      setModalStep(8)
-      setModalProgress(100)
 
-      if (!r.ok) {
-        setModalOpen(false)
-        setError(data.error || 'Falha ao analisar o currículo.')
+      if (r.ok && data.resume) {
+        setModalStep(8)
+        setModalProgress(100)
+        setTimeout(async () => {
+          setModalOpen(false)
+          await loadResume(activeResume.id)
+        }, 400)
         return
       }
 
-      setTimeout(async () => {
+      // Se a resposta retornou erro de créditos insuficientes, exibe mensagem clara
+      if (r.status === 402 || data.code === 'INSUFFICIENT_CREDITS') {
         setModalOpen(false)
-        await loadResume(activeResume.id)
-      }, 500)
+        setError(data.error || 'Saldo insuficiente de créditos.')
+        return
+      }
+
+      // Caso contrário, inicia verificação de auto-recuperação no banco
+      throw new Error(data.error || 'Recuperando laudo...')
     } catch {
       clearInterval(interval)
-      setModalOpen(false)
-      // Se a conexão oscilou durante a chamada HTTP, verifica se o servidor salvou o laudo no banco de dados
-      try {
-        const checkRes = await internalFetch(`/api/resume/${activeResume.id}?id=${activeResume.id}`, { cache: 'no-store' })
-        const checkData = await checkRes.json()
-        if (checkRes.ok && checkData.resume?.analysis) {
-          setResume(checkData.resume)
-          setError(null)
-          return
-        }
-      } catch {}
-      setError('Erro de conexão ao processar. Se o laudo foi concluído no servidor, recarregue a página ou acesse pelo Histórico.')
+      // Auto-recuperação resiliente: realiza até 8 tentativas de leitura no banco
+      let recovered = false
+      for (let attempt = 1; attempt <= 8; attempt++) {
+        await new Promise((res) => setTimeout(res, 1500))
+        try {
+          const checkRes = await internalFetch(`/api/resume/${activeResume.id}?id=${activeResume.id}`, { cache: 'no-store' })
+          const checkData = await checkRes.json().catch(() => ({}))
+          if (checkRes.ok && checkData.resume?.analysis) {
+            setResume(checkData.resume)
+            setError(null)
+            setModalStep(8)
+            setModalProgress(100)
+            setTimeout(() => setModalOpen(false), 400)
+            recovered = true
+            break
+          }
+        } catch {}
+      }
+
+      if (!recovered) {
+        setModalOpen(false)
+        setError('O processamento da IA está levando alguns segundos adicionais. Atualize a página ou verifique no Histórico.')
+      }
     } finally {
       setAnalyzing(false)
     }

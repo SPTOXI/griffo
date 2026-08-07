@@ -185,7 +185,7 @@ Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seg
       userId: user.id,
       systemPrompt: SYSTEM_ANALYZE_PROMPT,
       userPrompt: `Realize a análise preditiva completa e detalhada do seguinte currículo, mídias sociais e aderência à vaga alvo:\n\nCONTEÚDO DO CURRÍCULO:\n${resume.originalContent.slice(0, 15000)}${socialLinksText}${jobText}`,
-      maxTokens: 6500,
+      maxTokens: 3800,
     })
 
     const tryParseAndRepairJson = (rawText: string): any => {

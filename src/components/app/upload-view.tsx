@@ -231,11 +231,10 @@ export function UploadView() {
       const adata = await ar.json().catch(() => ({}))
 
       clearInterval(progressInterval)
-      setModalStep(8)
-      setModalProgress(100)
 
-      if (!ar.ok) {
-        toast.error(adata.error || 'A análise demorou mais que o esperado. Seu currículo foi salvo no histórico!')
+      if (ar.ok && adata.resume?.analysis) {
+        setModalStep(8)
+        setModalProgress(100)
         setTimeout(() => {
           setLoading(false)
           openResume(data.resume.id, 'analysis')
@@ -243,10 +242,34 @@ export function UploadView() {
         return
       }
 
-      setTimeout(() => {
-        setLoading(false)
-        openResume(data.resume.id, 'analysis')
-      }, 600)
+      // Se a resposta demorou ou a conexão oscilou, faz auto-recuperação silenciosa no banco
+      let recovered = false
+      for (let attempt = 1; attempt <= 8; attempt++) {
+        await new Promise((res) => setTimeout(res, 1500))
+        try {
+          const checkRes = await internalFetch(`/api/resume/${data.resume.id}?id=${data.resume.id}`, { cache: 'no-store' })
+          const checkData = await checkRes.json().catch(() => ({}))
+          if (checkRes.ok && checkData.resume?.analysis) {
+            setModalStep(8)
+            setModalProgress(100)
+            setTimeout(() => {
+              setLoading(false)
+              openResume(data.resume.id, 'analysis')
+            }, 400)
+            recovered = true
+            break
+          }
+        } catch {}
+      }
+
+      if (!recovered) {
+        setModalStep(8)
+        setModalProgress(100)
+        setTimeout(() => {
+          setLoading(false)
+          openResume(data.resume.id, 'analysis')
+        }, 500)
+      }
     } catch (e: any) {
       clearInterval(progressInterval)
       setError('Erro de conexão ao enviar o currículo. Verifique sua rede e tente novamente.')
