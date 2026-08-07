@@ -72,7 +72,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
             system: req.systemPrompt,
             messages: [{ role: 'user', content: req.userPrompt }],
           }),
-          signal: AbortSignal.timeout(25000),
+          signal: AbortSignal.timeout(30000),
         })
 
         const data = await res.json()
@@ -100,8 +100,10 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         const client = new OpenAI({
           apiKey: cleanApiKey,
           baseURL: runtime.baseURL,
-          timeout: 25000, // 25s timeout per call
+          timeout: 30000, // 30s timeout per call
         })
+
+        const isReasoningModel = currentProviderId === 'kimi' || runtime.model?.includes('reasoner') || runtime.model?.includes('k3')
 
         const completion = await client.chat.completions.create({
           model: runtime.model,
@@ -109,7 +111,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
             { role: 'system', content: req.systemPrompt },
             { role: 'user', content: req.userPrompt },
           ],
-          temperature: req.temperature ?? 0.3,
+          temperature: isReasoningModel ? 1 : (req.temperature ?? 0.3),
           max_tokens: req.maxTokens ?? 3500,
         })
 

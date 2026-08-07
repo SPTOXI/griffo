@@ -16,12 +16,12 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   claude: {
     id: 'claude',
     name: 'Claude (Anthropic)',
-    defaultModel: 'claude-opus-5',
+    defaultModel: 'claude-sonnet-5',
     baseURL: 'https://api.anthropic.com/v1',
     apiKeyEnvVar: 'ANTHROPIC_API_KEY',
     pricing: {
-      inputPer1k: 0.015, // $15.00 / 1M (Opus)
-      outputPer1k: 0.075, // $75.00 / 1M (Opus)
+      inputPer1k: 0.003, // $3.00 / 1M (Sonnet 5)
+      outputPer1k: 0.015, // $15.00 / 1M (Sonnet 5)
     },
   },
   deepseek: {
@@ -152,11 +152,11 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
       trimmedModel = 'kimi-k3'
     }
   }
-  if (providerId === 'claude' && (lowerModel === 'claude-3-5-sonnet' || lowerModel === 'claude-3-5-sonnet-20241022' || lowerModel === 'claude-sonnet-4-20250514' || !trimmedModel)) {
-    trimmedModel = 'claude-opus-5'
+  if (providerId === 'claude' && (!trimmedModel || trimmedModel.startsWith('claude-3') || trimmedModel.includes('opus') || trimmedModel.includes('2025') || trimmedModel.includes('2024'))) {
+    trimmedModel = 'claude-sonnet-5'
   }
-  if (providerId === 'deepseek' && (lowerModel.includes('v3') || lowerModel === 'deepseek-chat' || !trimmedModel)) {
-    trimmedModel = 'deepseek-v4-pro'
+  if (providerId === 'deepseek' && (!trimmedModel || trimmedModel.includes('v3') || trimmedModel.includes('v4'))) {
+    trimmedModel = 'deepseek-chat'
   }
   if (providerId === 'gemini' && (lowerModel === 'gemini-pro' || lowerModel === 'gemini-1.5-flash' || lowerModel === 'gemini-2.5-flash' || !trimmedModel)) {
     trimmedModel = 'gemini-2.0-flash'
