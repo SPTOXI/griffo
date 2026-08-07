@@ -64,27 +64,25 @@ export function normalizeProviderId(raw: string): ProviderId | null {
   return null
 }
 
-// Distribution of primary models per task (optimized by provider specialty)
-// - Gemini: best for OCR/vision and fast extraction
-// - DeepSeek: cost-effective for normalization/structuring
-// - Claude: superior writing quality for rewrites and creative content
-// - Kimi: strong full-document analysis and reasoning
+// Distribution of primary models per task
+// Active providers (tested & working): DeepSeek, Kimi K3
+// Inactive providers (key expired/quota exceeded): Claude, Gemini
 export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   ocr_extraction: 'deepseek',
   normalization: 'deepseek',
-  rewrite: 'claude',
-  full_analysis: 'claude',
-  social_advice: 'claude',
-  cover_letter: 'claude',
+  rewrite: 'kimi',
+  full_analysis: 'kimi',
+  social_advice: 'kimi',
+  cover_letter: 'kimi',
   support_chat: 'deepseek',
 }
 
-// Fallback sequence if primary provider fails
+// Fallback sequence: working providers first, then inactive ones as last resort
 export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
-  claude: ['deepseek', 'gemini', 'kimi'],
-  deepseek: ['claude', 'gemini', 'kimi'],
-  gemini: ['claude', 'deepseek', 'kimi'],
-  kimi: ['claude', 'deepseek', 'gemini'],
+  kimi: ['deepseek', 'claude', 'gemini'],
+  deepseek: ['kimi', 'claude', 'gemini'],
+  claude: ['kimi', 'deepseek', 'gemini'],
+  gemini: ['kimi', 'deepseek', 'claude'],
 }
 
 export async function getProviderRuntimeConfig(providerId: ProviderId) {
