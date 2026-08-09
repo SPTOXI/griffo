@@ -168,18 +168,20 @@ Caminho feliz, zero failover: **13 consultas** ao Supabase, 4 delas redundantes.
 
 ### Custo financeiro do timeout
 
-Com o Opus 5 e a precificação do próprio `registry.ts:23`:
+Com o Opus 5 e o preço real da Anthropic ($5 / $25 por 1M de tokens):
 
 ```
-Entrada:  5.214 tokens × $0,015/1k = $0,078
-Saída:    3.800 tokens × $0,075/1k = $0,285
-                                     ───────
-Total por análise:                   ~$0,363 USD  ≈  R$ 1,96
+Entrada:  5.214 tokens × $5/1M  = $0,026
+Saída:    3.800 tokens × $25/1M = $0,095
+                                  ───────
+Total por análise:                ~$0,121 USD  ≈  R$ 0,65
 ```
+
+> ⚠️ **A precificação no código está errada.** `registry.ts:23-24` declara o Opus 5 a **$15/$75**, o triplo do real. Como `router.ts:139` calcula `costUsd` a partir dessa tabela, todo o custo e lucro do painel administrativo estão inflados em 3×. Ver `ANALISE-CUSTOS.md` §6.
 
 Quando a função é encerrada, os tokens já foram gerados e **são cobrados pela Anthropic** — a análise é descartada sem nunca ser gravada. Se o abort de 55 s dispara e o roteador parte para o Kimi, paga-se a geração do Claude *e* a do fallback, e mesmo assim a função morre aos 60 s.
 
-Vale registrar, de passagem, que o README declara custo de **$0,005 por ciclo**. O custo real por análise é **~73× maior**.
+O custo por ciclo completo (análise + reescrita) e a comparação entre provedores estão em `ANALISE-CUSTOS.md`.
 
 ---
 

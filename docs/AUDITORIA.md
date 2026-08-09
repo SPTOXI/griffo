@@ -16,9 +16,14 @@ Resumo dos achados:
 | Severidade | Qtd | Natureza |
 |---|---|---|
 | Crítico (P0) | 5 | Credenciais de produção no repositório, forja de sessão, débito sem entrega |
-| Alto (P1) | 8 | Segredos em texto claro no banco, SSRF, ausência de rate limiting, laudo fabricado |
-| Médio (P2) | 12 | Performance, LGPD, vazamento de erros, headers de segurança |
+| Alto (P1) | 9 | Segredos em texto claro no banco, SSRF, ausência de rate limiting, laudo fabricado, precificação errada |
+| Médio (P2) | 13 | Performance, LGPD, vazamento de erros, headers de segurança |
 | Baixo (P3) | 10 | Dívida técnica, código morto, dependências não usadas |
+
+**Documentos complementares:**
+
+- [`RELATORIO-TIMEOUT-ANALISE.md`](./RELATORIO-TIMEOUT-ANALISE.md) — causa raiz do timeout na análise de 8 dimensões (detalha o P0-4)
+- [`ANALISE-CUSTOS.md`](./ANALISE-CUSTOS.md) — custo real por ciclo, comparação entre provedores de IA, e consistência do pacote de créditos (detalha o P1-9 e o P2-10)
 
 ---
 
@@ -168,6 +173,25 @@ const totalAmountBrl = (session.amount_total || 0) / 100
 
 Relacionado: `CREDIT_PACKAGES[0].entryOnly = true` (`credits-catalog.ts:47`) declara que o Plano de Entrada é exclusivo do primeiro acesso, mas **nenhuma rota verifica isso**. A regra de negócio existe apenas como comentário.
 
+### P1-9. Preço do Opus 5 errado em 3× — custo e lucro do painel são inválidos
+
+`src/lib/ai-router/registry.ts:23-24` declara:
+
+```ts
+pricing: {
+  inputPer1k: 0.015,  // $15.00 / 1M (Opus 5)
+  outputPer1k: 0.075, // $75.00 / 1M (Opus 5)
+}
+```
+
+O preço real do Claude Opus 5 é **$5 / $25 por 1M de tokens**. A tabela está com o triplo.
+
+`router.ts:139-141` calcula `costUsd` a partir dessa tabela e grava em `AiLog.costUsd`. `admin/dashboard/route.ts:100-106` soma esse campo para exibir custo total e lucro estimado. **Todo o custo de IA e o lucro do painel administrativo estão inflados em 3×.**
+
+Combinado com o P1-7 (valores em USD/EUR gravados como BRL sem conversão, inflando a receita), o dashboard financeiro está errado nas duas pontas e não serve para decisão.
+
+Os registros históricos de `AiLog.costUsd` precisam ser recalculados ou marcados como suspeitos. Ver `ANALISE-CUSTOS.md` §6 para os três valores de custo incompatíveis que hoje coexistem no projeto.
+
 ---
 
 ## P2 — Médio
@@ -243,7 +267,9 @@ console.log('[KIMI DEBUG] key length:', runtime.apiKey?.length)
 
 ### P2-10. Preços exibidos publicamente não refletem o custo real
 
-`/api/pricing` (rota pública) usa `TOKEN_COST` de `llm.ts:47` — $3/$15 por 1M tokens. O roteamento real (`registry.ts:70`) manda `full_analysis` e `rewrite` para **Claude Opus 5**, precificado em `$15/$75` por 1M no próprio `registry.ts:23`. As margens publicadas em `computePricing()` estão calculadas com custo 5× menor que o real.
+`/api/pricing` (rota pública) usa `TOKEN_COST` de `llm.ts:47` — $3/$15 por 1M tokens — e devolve `costPerCycleUsd() = $0,0684`. O custo real de um ciclo com Opus 5 é **$0,154** (medido em `ANALISE-CUSTOS.md` §2), ou seja, 2,3× o publicado. O README, por sua vez, declara **$0,005 por ciclo** — 31× menor que o real, e incompatível com o cálculo do próprio código.
+
+São três números diferentes para a mesma grandeza, nenhum correto. As margens publicadas em `computePricing()` estão calculadas sobre a menor delas.
 
 Os planos retornados (`day`/`monthly`/`annual`, R$ 19,90/39,90/299,90) também não são o que a aplicação vende — a UI comercializa pacotes de crédito.
 
@@ -253,7 +279,13 @@ O schema mantém `plan`, `planStartsAt`, `planEndsAt`, o modelo `Subscription` e
 
 `POST /api/subscription/create` ainda ativa planos em "modo simulação Fase 1" (com `paymentRef: sim_phase1_...`), restrito a admin, sem passar por pagamento.
 
-### P2-12. Anti-padrões de React reportados pelo compilador
+### P2-12. Plano de Entrada não entrega o que a descrição promete
+
+`credits-catalog.ts:48` descreve o pacote de R$ 9,90 / 40 créditos como *"suficiente para 2 avaliações completas de currículo"*. Somando o `CREDIT_COSTS`, um ciclo completo custa **32 créditos** (análise 20 + reescrita 10 + dois downloads 1+1).
+
+Portanto 40 créditos compram **um** ciclo completo, sobrando 8 — insuficientes para uma segunda análise. As "2 avaliações" só se realizam sem reescrita e sem nenhum download. Detalhamento em `ANALISE-CUSTOS.md` §4.
+
+### P2-13. Anti-padrões de React reportados pelo compilador
 
 `eslint` acusa 17 erros reais (nenhum é falso positivo de estilo):
 
@@ -334,6 +366,9 @@ Sobre 1.6 — a correção estrutural é **debitar só na confirmação de suces
 | 3.6 | Adicionar os 7 índices listados em P2-1 | `schema.prisma` + migração |
 | 3.7 | Paginar as consultas administrativas | `admin/dashboard`, `admin/users` |
 | 3.8 | Cache em memória com TTL para a configuração de provedores | `ai-router/registry.ts` |
+| 3.9 | Corrigir o preço do Opus 5 ($15/$75 → $5/$25) e recalcular o histórico de `AiLog.costUsd` | `ai-router/registry.ts:23` |
+| 3.10 | Fazer `/api/pricing` derivar do `registry.ts` em vez do `TOKEN_COST` divergente | `lib/llm.ts`, `api/pricing` |
+| 3.11 | Alinhar a descrição do Plano de Entrada com o custo real em créditos (ou elevar para 64) | `credits-catalog.ts:48` |
 
 ### Fase 4 — LGPD · ~2 dias
 
@@ -352,7 +387,7 @@ Sobre 1.6 — a correção estrutural é **debitar só na confirmação de suces
 | 5.1 | Remover as 10 dependências não usadas (`puppeteer` primeiro) |
 | 5.2 | Escolher um gerenciador de pacotes e apagar o outro lockfile |
 | 5.3 | Apagar o código morto de `llm.ts`; consolidar os prompts em um único módulo |
-| 5.4 | Reativar as regras de ESLint que importam e corrigir os 17 erros de P2-12 |
+| 5.4 | Reativar as regras de ESLint que importam e corrigir os 17 erros de P2-13 |
 | 5.5 | Atualizar o README (banco, provedores de IA, modelo de preços) |
 | 5.6 | Testes dos caminhos de cobrança e failover + CI no GitHub Actions |
 | 5.7 | Decidir entre créditos e assinaturas; remover o modelo abandonado |
