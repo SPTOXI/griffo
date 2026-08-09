@@ -8,6 +8,14 @@ const schema = z.object({
   email: z.string().email('E-mail inválido'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres').max(128),
   profession: z.string().max(120).optional(),
+  // Consentimento de transferência internacional. Obrigatório: o currículo é
+  // processado por provedores de IA fora do país de origem, e sem base
+  // jurídica registrada esse tratamento não tem respaldo (LGPD Art. 33,
+  // GDPR Cap. V). Recusar significa não poder usar o produto — por isso a
+  // interface precisa deixar isso explícito antes do envio.
+  dataTransferConsent: z.literal(true, {
+    message: 'É necessário aceitar o processamento do currículo por serviços de IA no exterior.',
+  }),
 })
 
 export async function POST(req: Request) {
@@ -34,11 +42,19 @@ export async function POST(req: Request) {
         role: 'user',
         plan: 'free',
         credits: 0, // 0 credits on signup (free user must acquire Plano de Entrada)
+        dataTransferConsent: true,
+        dataTransferConsentAt: new Date(),
       },
     })
 
     await db.auditLog.create({
-      data: { userId: user.id, action: 'register', meta: JSON.stringify({ email: user.email, credits: 0 }) },
+      data: {
+        userId: user.id,
+        action: 'register',
+        // Registra o consentimento na trilha de auditoria: é ele que prova a
+        // base jurídica do tratamento se ela for questionada.
+        meta: JSON.stringify({ credits: 0, dataTransferConsent: true, consentVersion: 'v1' }),
+      },
     })
 
     await createSession(user.id)

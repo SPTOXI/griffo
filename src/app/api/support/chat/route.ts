@@ -7,6 +7,7 @@ import { executeAiTask } from '@/lib/ai-router/router'
 import { db } from '@/lib/db'
 import { runDiagnosticAndHealing } from '@/lib/agents/diagnostic-agent'
 import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
+import { getRequestCountry } from '@/lib/currency'
 
 const schema = z.object({
   message: z.string().min(1, 'Mensagem em branco').max(1000, 'Mensagem muito longa'),
@@ -111,6 +112,7 @@ export async function POST(req: Request) {
     const routerResult = await executeAiTask({
       taskType: 'support_chat',
       userId: user.id,
+      userCountry: getRequestCountry(req),
       systemPrompt: `${LANGUAGE_DIRECTIVE[getRequestLanguage(req)]}\n\n${SYSTEM_SUPPORT_PROMPT_BASE}`,
       userPrompt,
       maxTokens: 1000,

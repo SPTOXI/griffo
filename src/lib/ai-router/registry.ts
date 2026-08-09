@@ -116,6 +116,70 @@ export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
   gemini: ['kimi', 'deepseek', 'claude'],
 }
 
+/**
+ * Cache curto das duas tabelas que alimentam a configuração de provedores.
+ *
+ * Uma análise chegava a fazer ~13 idas ao banco, das quais 4 eram estas mesmas
+ * duas consultas repetidas: `getProviderRuntimeConfig` era chamada uma vez para
+ * o provedor primário e de novo dentro do laço de tentativas, e cada chamada
+ * lia `AiApiKey` e `SystemConfig` inteiras. Num usuário no Brasil isso custava
+ * ~60ms; num usuário na Europa, contra o Supabase em São Paulo, passava de
+ * 800ms — dentro de um orçamento de 60s que já estava apertado.
+ *
+ * O TTL é curto de propósito: uma troca de chave no painel passa a valer em no
+ * máximo 30s, e as rotas administrativas limpam o cache explicitamente ao
+ * salvar, então na prática o efeito é imediato.
+ */
+const CONFIG_CACHE_TTL_MS = 30_000
+
+type ProviderTables = {
+  keys: { id: string; provider: string; apiKey: string; baseUrl: string | null; model: string }[]
+  configs: { key: string; value: string }[]
+}
+
+let cachedTables: { data: ProviderTables; at: number } | null = null
+
+/** Invalida o cache. Chamado pelas rotas que alteram chaves ou configurações. */
+export function clearProviderConfigCache() {
+  cachedTables = null
+}
+
+async function loadProviderTables(): Promise<ProviderTables> {
+  if (cachedTables && Date.now() - cachedTables.at < CONFIG_CACHE_TTL_MS) {
+    return cachedTables.data
+  }
+
+  const empty: ProviderTables = { keys: [], configs: [] }
+  try {
+    const [keys, configs] = await Promise.all([
+      db.aiApiKey.findMany({
+        where: { status: 'active' },
+        orderBy: { updatedAt: 'desc' },
+        select: { id: true, provider: true, apiKey: true, baseUrl: true, model: true },
+      }),
+      db.systemConfig.findMany({ select: { key: true, value: true } }),
+    ])
+    const data = { keys, configs }
+    cachedTables = { data, at: Date.now() }
+    return data
+  } catch (e) {
+    console.warn('[AI Registry] Falha ao ler configuração de provedores:', e)
+    // Sem cachear a falha: a próxima chamada tenta de novo.
+    return cachedTables?.data ?? empty
+  }
+}
+
+/** Provedores com chave ativa cadastrada, sem uma consulta adicional. */
+export async function getProvidersWithActiveKeys(): Promise<ProviderId[]> {
+  const { keys } = await loadProviderTables()
+  const ids = new Set<ProviderId>()
+  for (const k of keys) {
+    const id = normalizeProviderId(k.provider)
+    if (id) ids.add(id)
+  }
+  return [...ids]
+}
+
 export async function getProviderRuntimeConfig(providerId: ProviderId) {
   const base = PROVIDER_CONFIGS[providerId]
   if (!base) {
@@ -132,48 +196,33 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
   let baseURL = base.baseURL
   let model = base.defaultModel
 
-  // 1. Check AiApiKey table for active key registered by admin
-  try {
-    const registeredKeys = await db.aiApiKey.findMany({
-      where: { status: 'active' },
-      orderBy: { updatedAt: 'desc' },
-    })
+  const { keys, configs } = await loadProviderTables()
 
-    const matchingKey = registeredKeys.find(
-      (k) => normalizeProviderId(k.provider) === providerId
-    )
-
-    if (matchingKey) {
-      // Decifra tolerando falha: se a chave não abrir, este provedor fica sem
-      // credencial e o roteador cai para o próximo, em vez de derrubar a
-      // requisição inteira.
-      if (matchingKey.apiKey) {
-        apiKey = tryDecryptSecret(matchingKey.apiKey, `AiApiKey.${matchingKey.id}`) || apiKey
-      }
-      if (matchingKey.baseUrl) baseURL = matchingKey.baseUrl
-      if (matchingKey.model) model = matchingKey.model
+  // 1. Chave ativa cadastrada pelo admin em AiApiKey
+  const matchingKey = keys.find((k) => normalizeProviderId(k.provider) === providerId)
+  if (matchingKey) {
+    // Decifra tolerando falha: se a chave não abrir, este provedor fica sem
+    // credencial e o roteador cai para o próximo, em vez de derrubar a
+    // requisição inteira.
+    if (matchingKey.apiKey) {
+      apiKey = tryDecryptSecret(matchingKey.apiKey, `AiApiKey.${matchingKey.id}`) || apiKey
     }
-  } catch (e) {
-    console.warn('Failed to fetch AiApiKey:', e)
+    if (matchingKey.baseUrl) baseURL = matchingKey.baseUrl
+    if (matchingKey.model) model = matchingKey.model
   }
 
-  // 2. Check SystemConfig table
-  try {
-    const configs = await db.systemConfig.findMany()
-    for (const c of configs) {
-      const keyPrefix = providerId === 'kimi' ? 'MOONSHOT' : providerId.toUpperCase()
-      if ((c.key === `${keyPrefix}_API_KEY` || c.key === `${providerId.toUpperCase()}_API_KEY`) && c.value) {
-        apiKey = tryDecryptSecret(c.value, `SystemConfig.${c.key}`) || apiKey
-      }
-      if ((c.key === `${keyPrefix}_MODEL` || c.key === `${providerId.toUpperCase()}_MODEL`) && c.value) {
-        model = c.value
-      }
-      if (c.key === `${providerId.toUpperCase()}_BASE_URL` && c.value) {
-        baseURL = c.value
-      }
+  // 2. SystemConfig sobrepõe
+  const keyPrefix = providerId === 'kimi' ? 'MOONSHOT' : providerId.toUpperCase()
+  for (const c of configs) {
+    if ((c.key === `${keyPrefix}_API_KEY` || c.key === `${providerId.toUpperCase()}_API_KEY`) && c.value) {
+      apiKey = tryDecryptSecret(c.value, `SystemConfig.${c.key}`) || apiKey
     }
-  } catch (e) {
-    // Fallback to env
+    if ((c.key === `${keyPrefix}_MODEL` || c.key === `${providerId.toUpperCase()}_MODEL`) && c.value) {
+      model = c.value
+    }
+    if (c.key === `${providerId.toUpperCase()}_BASE_URL` && c.value) {
+      baseURL = c.value
+    }
   }
 
   let trimmedModel = model.trim().toLowerCase()

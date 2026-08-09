@@ -36,6 +36,9 @@ export interface AiTaskRequest {
   // é só uma instrução no prompt. Nos provedores compatíveis com OpenAI vira
   // `response_format: json_object`, que garante JSON válido mas não o formato.
   jsonSchema?: Record<string, unknown>
+  /// Código de país do usuário (ISO-2), vindo da borda. Define quais provedores
+  /// podem receber o dado — ver lib/data-residency.ts.
+  userCountry?: string | null
 }
 
 export interface AiTaskResult {

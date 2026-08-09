@@ -15,6 +15,7 @@ import {
   type CreditReservation,
 } from '@/lib/credits'
 import { getRequestLanguage, LANGUAGE_DIRECTIVE, ATS_BY_MARKET, SOCIAL_PLATFORMS_BY_MARKET } from '@/lib/i18n/server'
+import { getRequestCountry } from '@/lib/currency'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório'),
@@ -339,6 +340,7 @@ NÃO calcule nota geral: ela é derivada das 8 dimensões pelo sistema.
     const routerResult = await executeAiTask({
       taskType: 'full_analysis',
       userId: user.id,
+      userCountry: getRequestCountry(req),
       systemPrompt: SYSTEM_ANALYZE_PROMPT,
       userPrompt: `Realize a análise preditiva completa e detalhada do seguinte currículo, mídias sociais e aderência à vaga alvo:\n\nCONTEÚDO DO CURRÍCULO:\n${resume.originalContent.slice(0, 15000)}${socialLinksText}${jobText}`,
       maxTokens: 3800,

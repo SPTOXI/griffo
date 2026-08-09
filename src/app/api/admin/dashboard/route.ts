@@ -7,6 +7,9 @@ import { isSensitiveConfigKey } from '@/lib/system-config'
 
 export const dynamic = 'force-dynamic'
 
+/** Amostra recente exibida no painel. Os totais vêm de `count`, não daqui. */
+const DASHBOARD_USER_LIMIT = 100
+
 export async function GET() {
   const startTime = Date.now()
   console.log('[API Admin Dashboard] Iniciando processamento da requisição GET /api/admin/dashboard')
@@ -21,8 +24,12 @@ export async function GET() {
     // painel da Vercel, e este identificava a conta administrativa em texto puro.
     console.log('[API Admin Dashboard] Administrador autenticado. Executando consultas no banco de dados...')
     const [users, totalUsers, totalResumes, activeSubscriptions, tokenStats, revenueStats, configsRaw, aiMetrics, rawKeys] = await Promise.all([
+      // Mesmo motivo da rota de usuários: sem `take`, o painel carregava a
+      // base inteira a cada abertura. Os totais vêm dos `count` abaixo, então
+      // a lista pode ser recortada sem falsear nenhuma métrica.
       db.user.findMany({
         orderBy: { createdAt: 'desc' },
+        take: DASHBOARD_USER_LIMIT,
         select: {
           id: true,
           name: true,
@@ -64,6 +71,7 @@ export async function GET() {
       }),
       db.aiApiKey.findMany({
         orderBy: { createdAt: 'desc' },
+        take: 50,
       }),
     ])
 
@@ -95,6 +103,7 @@ export async function GET() {
 
     return NextResponse.json({
       users,
+      usersTruncated: users.length >= DASHBOARD_USER_LIMIT,
       metrics: {
         totalUsers,
         totalResumes,

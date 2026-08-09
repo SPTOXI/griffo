@@ -4,10 +4,11 @@ import { AiTaskRequest, AiTaskResult, ProviderId } from './types'
 import {
   FALLBACK_CHAIN,
   getProviderRuntimeConfig,
+  getProvidersWithActiveKeys,
   INITIAL_TASK_ROUTING,
-  normalizeProviderId,
 } from './registry'
 import { auditQualityOfAiResult } from '../agents/quality-agent'
+import { filterProvidersByResidency, isEuropeanUser } from '../data-residency'
 
 // As rotas que chamam este roteador declaram maxDuration = 60. Se o orçamento
 // for consumido inteiro pelas tentativas de IA, a plataforma encerra a função
@@ -32,25 +33,25 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
     ...FALLBACK_CHAIN[primaryProviderId].filter((id) => id !== primaryProviderId),
   ]
 
-  // 2. Also check if there are any active keys registered in AiApiKey table for OTHER providers
-  try {
-    const activeDbKeys = await db.aiApiKey.findMany({
-      where: { status: 'active' },
-      select: { provider: true },
-    })
-    for (const keyObj of activeDbKeys) {
-      const pId = normalizeProviderId(keyObj.provider)
-      if (pId && !allCandidates.includes(pId)) {
-        allCandidates.push(pId)
-      }
-    }
-  } catch (e) {
-    // Ignore
+  // 2. Provedores com chave cadastrada que não estejam na cadeia padrão.
+  // Lê do mesmo cache de `getProviderRuntimeConfig`, sem consulta adicional.
+  for (const pId of await getProvidersWithActiveKeys()) {
+    if (!allCandidates.includes(pId)) allCandidates.push(pId)
+  }
+
+  // 3. Residência de dados: currículo de residente na UE não pode ir para
+  // provedor sem decisão de adequação (China). Ver lib/data-residency.ts.
+  const permitted = filterProvidersByResidency(allCandidates, req.userCountry)
+  if (permitted.length === 0) {
+    throw Object.assign(
+      new Error('Nenhum provedor de IA autorizado para a região do usuário.'),
+      { diagnostic: `Origem ${req.userCountry}: todos os candidatos são de jurisdição sem adequação.` }
+    )
   }
 
   // Só as duas primeiras tentativas cabem no orçamento: 2 x 20s deixa 20s de
   // folga. A cadeia completa de 4 provedores levaria mais de 60s sozinha.
-  const candidateProviders = allCandidates.slice(0, MAX_PROVIDER_ATTEMPTS)
+  const candidateProviders = permitted.slice(0, MAX_PROVIDER_ATTEMPTS)
 
   let lastError: any = null
   let failoverCount = 0
@@ -69,7 +70,12 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
       break
     }
 
-    const runtime = await getProviderRuntimeConfig(currentProviderId)
+    // Reaproveita a do primário quando ele sobreviveu ao filtro de residência:
+    // era a quarta consulta redundante ao banco por análise.
+    const runtime =
+      currentProviderId === primaryProviderId
+        ? primaryRuntime
+        : await getProviderRuntimeConfig(currentProviderId)
 
     // Skip provider if no API key is available
     if (!runtime.apiKey) {

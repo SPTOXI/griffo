@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
 import { encryptSecret, maskSecret } from '@/lib/crypto'
+import { clearProviderConfigCache } from '@/lib/ai-router/registry'
 import {
   isKnownConfigKey,
   isSensitiveConfigKey,
@@ -89,6 +90,10 @@ export async function POST(req: Request) {
       })
       updated.push(key)
     }
+
+    // O roteador guarda esta tabela em cache por até 30s; sem isto, a troca de
+    // chave no painel só valeria na expiração.
+    if (updated.length > 0) clearProviderConfigCache()
 
     await db.auditLog.create({
       data: {

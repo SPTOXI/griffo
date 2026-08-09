@@ -142,19 +142,20 @@ existentes só passam a ser cifrados quando forem regravados.
 | F7 | Alinhar a descrição do Plano de Entrada com o custo real (ou elevar para 64 créditos) | `credits-catalog.ts:48` | pendente |
 | F8 | Reserva de créditos em duas fases (`pending` → `completed`/`refunded`) | `lib/credits.ts`, rotas de IA | **feito** (Sessão 6) |
 | F9 | Cobrar o download de forma consistente (hoje grátis se saldo < 1) | `download/route.ts:28` | **feito** (Sessão 6) |
-| F10 | Adicionar os 7 índices ausentes no schema | `schema.prisma` + migração | pendente (Sessão 7) |
-| F11 | Paginar `admin/dashboard` e `admin/users` (hoje `findMany` sem `take`) | 2 rotas | pendente (Sessão 7) |
-| F12 | Cache com TTL da configuração de provedores + remover a chamada duplicada | `registry.ts:88`, `router.ts:16,46` | pendente (Sessão 7) |
-| G10 | Reduzir consultas ao banco por análise (13 → ~7) | `router.ts`, `registry.ts` | pendente (Sessão 7) |
+| F10 | Adicionar os 7 índices ausentes no schema | `schema.prisma` + migração | **feito** (Sessão 7) |
+| F11 | Paginar `admin/dashboard` e `admin/users` (hoje `findMany` sem `take`) | 2 rotas | **feito** (Sessão 7) |
+| F12 | Cache com TTL da configuração de provedores + remover a chamada duplicada | `registry.ts:88`, `router.ts:16,46` | **feito** (Sessão 7) |
+| G10 | Reduzir consultas ao banco por análise (13 → ~7) | `router.ts`, `registry.ts` | **feito** (Sessão 7) |
 
-> ### ⚠️ Pré-requisito das Sessões 5 e 6 — aplicar o schema
+> ### ⚠️ Pré-requisito das Sessões 5 a 7 — aplicar o schema
 >
 > O projeto **não usa `prisma migrate`**: não existe `prisma/migrations/`, e o
 > build da Vercel roda apenas `prisma generate && next build`. Nada aplica
 > mudanças de schema no deploy.
 >
 > A Sessão 5 adiciona a tabela `Session` e duas colunas em `CreditTransaction`;
-> a Sessão 6 acrescenta o índice `(userId, status)` nessa mesma tabela.
+> a Sessão 6 acrescenta o índice `(userId, status)` nessa mesma tabela; a
+> Sessão 7 acrescenta 11 índices e dois campos de consentimento em `User`.
 > Antes ou logo depois do deploy, rode contra o banco de produção:
 >
 > ```
@@ -186,16 +187,39 @@ gastar uma migração com isso.
 
 Parte é código, parte é jurídico e comercial — as duas trilhas correm em paralelo.
 
-| ID | Tarefa | Tipo |
-|---|---|---|
-| L1 | `DELETE /api/user` — exclusão de conta com cascata | Código |
-| L2 | `GET /api/user/export` — portabilidade em JSON | Código |
-| L3 | Política de retenção: expurgo automático de `Resume` e `WebhookEvent` antigos | Código |
-| L4 | Consentimento explícito de transferência internacional no cadastro e no upload | Código |
-| L5 | Expurgar PII de `WebhookEvent.body` antes de gravar | Código |
-| G8 | Roteamento de provedor por região — dado de europeu fora de provedor sem adequação | Código |
-| G6 | Habilitar e configurar Stripe Tax (IVA UE, sales tax EUA) | Configuração |
-| G9 | Representante na UE (Art. 27), base legal documentada, registro de tratamento | Jurídico |
+| ID | Tarefa | Tipo | Situação |
+|---|---|---|---|
+| L1 | `DELETE /api/user` — exclusão de conta com cascata | Código | **feito** (Sessão 7) |
+| L2 | `GET /api/user/export` — portabilidade em JSON | Código | **feito** (Sessão 7) |
+| L3 | Política de retenção: expurgo automático de `Resume` e `WebhookEvent` antigos | Código | **parcial** (Sessão 7) |
+| L4 | Consentimento explícito de transferência internacional no cadastro e no upload | Código | **parcial** (Sessão 7) |
+| L5 | Expurgar PII de `WebhookEvent.body` antes de gravar | Código | **feito** (Sessão 7) |
+| G8 | Roteamento de provedor por região — dado de europeu fora de provedor sem adequação | Código | **feito** (Sessão 7) |
+| G6 | Habilitar e configurar Stripe Tax (IVA UE, sales tax EUA) | Configuração | pendente |
+| G9 | Representante na UE (Art. 27), base legal documentada, registro de tratamento | Jurídico | pendente |
+
+**L3 está parcial:** a rotina de expurgo existe (`lib/retention.ts`) e é
+disparável por `POST /api/admin/retention`, mas o **agendamento não**. Automatizar
+exige declarar um cron no `vercel.json` e um segredo para autenticá-lo — passo
+operacional, não de código. Enquanto isso, o expurgo depende de alguém clicar.
+
+**L4 está parcial em dois pontos.** O consentimento é exigido no cadastro e
+gravado com data em `User.dataTransferConsent`, mas:
+
+1. **Contas criadas antes desta sessão ficam com `false`.** Deliberadamente não
+   bloqueei as rotas de IA nesse campo — isso deslogaria da prática todo usuário
+   existente. Falta um fluxo de reconsentimento único para a base atual, e só
+   depois dele faz sentido tornar o campo bloqueante.
+2. **Não há reconsentimento por upload**, apenas no cadastro. Para o currículo
+   isso é defensável (o consentimento é da conta, e o tratamento é o mesmo em
+   todo upload); se a assessoria jurídica exigir granularidade por documento,
+   vira um item novo.
+
+**G8 tem uma consequência de custo.** O chat de suporte roteia para DeepSeek,
+que passa a ser barrado para usuários europeus — a cadeia deles cai em Claude.
+O suporte fica **cerca de 4x mais caro por token para europeus**. É o preço da
+conformidade e não há atalho: a alternativa é assinar cláusulas contratuais
+padrão com o provedor chinês, o que é decisão jurídica (G9), não técnica.
 
 ---
 

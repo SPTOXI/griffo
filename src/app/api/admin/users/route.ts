@@ -14,6 +14,12 @@ export async function GET(req: Request) {
     const query = searchParams.get('q') || ''
     const plan = searchParams.get('plan') || ''
 
+    // Sem teto, esta rota carregava a base inteira de usuários em memória e a
+    // devolvia numa resposta só. Funciona com centenas; com dezenas de
+    // milhares, estoura o tempo da função antes de estourar a memória.
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '50', 10) || 50, 1), 200)
+    const offset = Math.max(parseInt(searchParams.get('offset') || '0', 10) || 0, 0)
+
     const where: any = {}
     if (query) {
       where.OR = [
@@ -25,9 +31,13 @@ export async function GET(req: Request) {
       where.plan = plan
     }
 
-    const users = await db.user.findMany({
+    const [total, users] = await Promise.all([
+      db.user.count({ where }),
+      db.user.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: offset,
       select: {
         id: true,
         name: true,
@@ -41,9 +51,13 @@ export async function GET(req: Request) {
           select: { resumes: true, subscriptions: true },
         },
       },
-    })
+      }),
+    ])
 
-    return NextResponse.json({ users })
+    return NextResponse.json({
+      users,
+      pagination: { total, limit, offset, hasMore: offset + users.length < total },
+    })
   } catch (e: any) {
     console.error('admin users get error', e)
     return NextResponse.json({ error: 'Erro ao buscar usuários' }, { status: 500 })

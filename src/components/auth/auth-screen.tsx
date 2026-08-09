@@ -19,6 +19,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [profession, setProfession] = useState('')
+  const [dataTransferConsent, setDataTransferConsent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const { hydrate } = useAuth()
@@ -32,7 +33,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register'
       const body = mode === 'login'
         ? { email, password }
-        : { name, email, password, profession: profession || undefined }
+        : { name, email, password, profession: profession || undefined, dataTransferConsent }
       const r = await internalFetch(endpoint, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -156,7 +157,28 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
                   </div>
                 )}
 
-                <Button type="submit" disabled={loading} className="w-full bg-[#0B63E5] hover:bg-[#0052CC] text-white font-bold h-11 shadow-md">
+                {mode === 'signup' && (
+                  <label className="flex items-start gap-2.5 text-[11px] leading-relaxed text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={dataTransferConsent}
+                      onChange={(e) => setDataTransferConsent(e.target.checked)}
+                      className="mt-0.5 shrink-0 accent-[#0B63E5]"
+                    />
+                    <span>
+                      Autorizo o processamento do meu currículo por serviços de
+                      inteligência artificial <strong>localizados no exterior</strong>,
+                      necessário para gerar a análise e a reescrita. Posso solicitar a
+                      exportação ou a exclusão dos meus dados a qualquer momento.
+                    </span>
+                  </label>
+                )}
+
+                <Button
+                  type="submit"
+                  disabled={loading || (mode === 'signup' && !dataTransferConsent)}
+                  className="w-full bg-[#0B63E5] hover:bg-[#0052CC] text-white font-bold h-11 shadow-md disabled:opacity-50"
+                >
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : mode === 'login' ? (

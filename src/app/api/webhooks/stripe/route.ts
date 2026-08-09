@@ -6,6 +6,33 @@ import { getStripe } from '@/lib/stripe'
 
 export const dynamic = 'force-dynamic'
 
+/**
+ * Reduz o evento da Stripe ao que é necessário para conciliação: identificadores,
+ * valores e estado. Tudo que identifica a pessoa fica de fora.
+ */
+function redactStripeEvent(event: any) {
+  const session = event?.data?.object || {}
+  return {
+    id: event?.id,
+    type: event?.type,
+    created: event?.created,
+    livemode: event?.livemode,
+    object: {
+      id: session.id,
+      object: session.object,
+      amount_total: session.amount_total,
+      currency: session.currency,
+      payment_status: session.payment_status,
+      status: session.status,
+      mode: session.mode,
+      client_reference_id: session.client_reference_id,
+      payment_intent: typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
+      // `metadata` é preenchida por nós em credits/purchase e não carrega PII.
+      metadata: session.metadata,
+    },
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const rawBody = await req.text()
@@ -31,11 +58,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Assinatura de webhook inválida.' }, { status: 400 })
     }
 
-    // Save webhook event for audit/debug
+    // Registro para auditoria, sem PII.
+    //
+    // Antes gravava o evento inteiro da Stripe, que traz e-mail, nome e
+    // endereço de cobrança do comprador em texto puro — uma segunda cópia de
+    // dado pessoal, guardada indefinidamente, que ninguém precisa para
+    // conciliar um pagamento e que o titular não tem como pedir para apagar.
     await prisma.webhookEvent.create({
       data: {
         eventName: event.type || 'stripe_event',
-        body: JSON.stringify(event),
+        body: JSON.stringify(redactStripeEvent(event)),
       },
     })
 

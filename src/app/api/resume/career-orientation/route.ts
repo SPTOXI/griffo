@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
 import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
+import { getRequestCountry } from '@/lib/currency'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório.'),
@@ -117,6 +118,7 @@ Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto 
     const aiResponse = await executeAiTask({
       taskType: 'full_analysis',
       userId: user.id,
+      userCountry: getRequestCountry(req),
       systemPrompt,
       userPrompt: `Realize o Diagnóstico de Orientação Vocacional para este currículo:\n\n${resume.originalContent.slice(0, 12000)}`,
       maxTokens: 3000,

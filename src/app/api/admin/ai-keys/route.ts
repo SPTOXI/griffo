@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
 import { encryptSecret, maskSecret } from '@/lib/crypto'
+import { clearProviderConfigCache } from '@/lib/ai-router/registry'
 
 export const dynamic = 'force-dynamic'
 
@@ -68,6 +69,8 @@ export async function POST(req: Request) {
       },
     })
 
+    clearProviderConfigCache()
+
     await db.auditLog.create({
       data: {
         userId: admin.id,
@@ -123,6 +126,8 @@ export async function PATCH(req: Request) {
       data: { status },
     })
 
+    clearProviderConfigCache()
+
     await db.auditLog.create({
       data: {
         userId: admin.id,
@@ -170,6 +175,8 @@ export async function DELETE(req: Request) {
     const deleted = await db.aiApiKey.delete({
       where: { id },
     })
+
+    clearProviderConfigCache()
 
     await db.auditLog.create({
       data: {

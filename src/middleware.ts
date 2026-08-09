@@ -45,6 +45,10 @@ const RULES: Rule[] = [
   { prefix: '/api/resume/job-fetch', limit: 20, windowMs: 10 * 60_000 },
   // Criação de checkout no Stripe.
   { prefix: '/api/credits/purchase', limit: 20, windowMs: 10 * 60_000 },
+  // Exportação lê todos os dados do titular de uma vez; exclusão é
+  // irreversível. Ambas são legítimas e raras — o limite é baixo de propósito.
+  { prefix: '/api/user/export', limit: 5, windowMs: 60 * 60_000 },
+  { prefix: '/api/user', limit: 20, windowMs: 10 * 60_000 },
 ]
 
 function clientIp(req: NextRequest): string {
@@ -96,5 +100,6 @@ export const config = {
     '/api/resume/:path*',
     '/api/support/:path*',
     '/api/credits/:path*',
+    '/api/user/:path*',
   ],
 }
