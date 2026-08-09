@@ -7,7 +7,13 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
-import { deductCredits, refundCredits, CREDIT_COSTS } from '@/lib/credits'
+import {
+  reserveCredits,
+  settleReservation,
+  releaseReservation,
+  CREDIT_COSTS,
+  type CreditReservation,
+} from '@/lib/credits'
 import { getRequestLanguage, LANGUAGE_DIRECTIVE, ATS_BY_MARKET } from '@/lib/i18n/server'
 
 const schema = z.object({
@@ -20,8 +26,7 @@ const schema = z.object({
 const REWRITE_INPUT_LIMIT = 20000
 
 export async function POST(req: Request) {
-  let deducted = false
-  let userId: string | undefined = undefined
+  let reservation: CreditReservation | null = null
   const costCredits = CREDIT_COSTS.rewrite_experience
 
   try {
@@ -29,7 +34,6 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 })
     }
-    userId = user.id
 
     const body = await req.json()
     const parsed = schema.safeParse(body)
@@ -48,7 +52,9 @@ export async function POST(req: Request) {
     }
 
     // Deduct 10 credits per experience rewrite
-    const deduction = await deductCredits(
+    // Reserva em vez de debitar: o crédito só vira cobrança definitiva
+    // depois que a entrega confirma. Ver lib/credits.ts.
+    const deduction = await reserveCredits(
       user.id,
       costCredits,
       `Reescrita de currículo em fórmula STAR/XYZ (${costCredits} cr)`
@@ -66,7 +72,7 @@ export async function POST(req: Request) {
       )
     }
 
-    deducted = true
+    reservation = deduction.reservation
 
     const lang = getRequestLanguage(req)
 
@@ -115,6 +121,9 @@ ${resume.originalContent.slice(0, REWRITE_INPUT_LIMIT)}`,
       },
     })
 
+    // Entrega confirmada e persistida: só agora a reserva vira cobrança.
+    await settleReservation(reservation)
+
     return NextResponse.json({
       success: true,
       rewrittenContent: routerResult.content,
@@ -124,20 +133,18 @@ ${resume.originalContent.slice(0, REWRITE_INPUT_LIMIT)}`,
     })
   } catch (e: any) {
     console.error('rewrite error:', e?.diagnostic || e?.message || e)
-    if (deducted && userId) {
-      try {
-        const refundRes = await refundCredits(userId, costCredits, 'Falha no processamento de IA')
-        return NextResponse.json(
-          {
-            error: `Ocorreu uma falha durante o processamento da IA. Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente!`,
-            refunded: true,
-            currentBalance: refundRes.currentBalance,
-          },
-          { status: 500 }
-        )
-      } catch (refundErr) {
-        console.error('Failed to refund credits:', refundErr)
-      }
+    // Liberar é idempotente: se a reserva já tiver sido liquidada ou liberada,
+    // nada é creditado. Não há mais como um retry devolver o crédito duas vezes.
+    const release = await releaseReservation(reservation, 'Falha no processamento de IA')
+    if (release.refunded) {
+      return NextResponse.json(
+        {
+          error: `Ocorreu uma falha durante o processamento da IA. Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente!`,
+          refunded: true,
+          currentBalance: release.currentBalance,
+        },
+        { status: 500 }
+      )
     }
     return NextResponse.json({ error: 'Ocorreu um erro ao reescrever o currículo. Tente novamente em instantes.' }, { status: 500 })
   }

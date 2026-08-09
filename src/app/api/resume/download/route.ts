@@ -4,7 +4,128 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { generateResumePdf, generateAnalysisReportPdf, sanitizeMarkdown } from '@/lib/pdf'
-import { deductCredits, CREDIT_COSTS } from '@/lib/credits'
+import { reserveCredits, settleReservation, releaseReservation, CREDIT_COSTS } from '@/lib/credits'
+
+interface DownloadPayload {
+  buf: Buffer
+  mime: string
+  filename: string
+}
+
+class DownloadError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message)
+  }
+}
+
+function safeBaseName(name: string | null | undefined, fallback: string): string {
+  return (name || fallback).replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()
+}
+
+function buildSocialAdviceContent(analysis: any, asPlainText: boolean): string {
+  const socialAdvice = Array.isArray(analysis.socialAdvice) ? analysis.socialAdvice : []
+  if (socialAdvice.length === 0) {
+    throw new DownloadError('Nenhum conselho de rede social disponível neste laudo', 400)
+  }
+
+  let content = `# Otimização de Presença Digital & Redes Sociais\n\n`
+  for (const item of socialAdvice) {
+    content += `## ${item.platform}\n`
+    content += `URL: ${item.url}\n\n`
+    if (item.headline) content += `### 💡 Título Sugerido\n${item.headline}\n\n`
+    if (item.aboutSummary) content += `### 📝 Texto "Sobre" / Bio\n${item.aboutSummary}\n\n`
+    if (item.tips && item.tips.length > 0) {
+      content += `### 🚀 Dicas de Otimização & Algoritmo\n`
+      for (const tip of item.tips) {
+        content += `- ${tip}\n`
+      }
+      content += `\n`
+    }
+    content += `---\n\n`
+  }
+
+  return asPlainText
+    ? content.replace(/^#+\s+/gm, '').replace(/---/g, '==============')
+    : content
+}
+
+/**
+ * Monta o arquivo pedido. Lança `DownloadError` quando o pedido não pode ser
+ * atendido — nenhuma dessas condições deve custar crédito ao usuário.
+ */
+async function buildDownload(
+  type: string,
+  resume: { id: string; rewrittenContent: string | null; analysisJson: string | null; updatedAt: Date },
+  userName: string | null
+): Promise<DownloadPayload> {
+  const requireRewritten = () => {
+    if (!resume.rewrittenContent) {
+      throw new DownloadError('Currículo ainda não foi reescrito', 400)
+    }
+    return resume.rewrittenContent
+  }
+
+  const requireAnalysis = () => {
+    if (!resume.analysisJson) {
+      throw new DownloadError('Análise não disponível', 400)
+    }
+    return JSON.parse(resume.analysisJson)
+  }
+
+  switch (type) {
+    case 'resume_pdf':
+      return {
+        buf: await generateResumePdf(requireRewritten()),
+        mime: 'application/pdf',
+        filename: `${safeBaseName(userName, 'curriculo')}_curriculo.pdf`,
+      }
+
+    case 'resume_md':
+      return {
+        buf: Buffer.from(sanitizeMarkdown(requireRewritten()), 'utf-8'),
+        mime: 'text/markdown; charset=utf-8',
+        filename: `${safeBaseName(userName, 'curriculo')}_curriculo.md`,
+      }
+
+    case 'resume_txt': {
+      const txt = requireRewritten()
+        .replace(/^#+\s+/gm, '')
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/\*(.*?)\*/g, '$1')
+      return {
+        buf: Buffer.from(txt, 'utf-8'),
+        mime: 'text/plain; charset=utf-8',
+        filename: `${safeBaseName(userName, 'curriculo')}_curriculo.txt`,
+      }
+    }
+
+    case 'social_advice_txt':
+    case 'social_advice_md': {
+      const asPlainText = type === 'social_advice_txt'
+      const content = buildSocialAdviceContent(requireAnalysis(), asPlainText)
+      return {
+        buf: Buffer.from(content, 'utf-8'),
+        mime: asPlainText ? 'text/plain; charset=utf-8' : 'text/markdown; charset=utf-8',
+        filename: `${safeBaseName(userName, 'presenca_digital')}_redes_sociais.${asPlainText ? 'txt' : 'md'}`,
+      }
+    }
+
+    case 'analysis_pdf':
+      return {
+        buf: await generateAnalysisReportPdf({
+          userName: userName || undefined,
+          resumeId: resume.id,
+          analysis: requireAnalysis(),
+          createdAt: resume.updatedAt,
+        }),
+        mime: 'application/pdf',
+        filename: `${safeBaseName(userName, 'analise')}_laudo.pdf`,
+      }
+
+    default:
+      throw new DownloadError('Tipo de download inválido', 400)
+  }
+}
 
 // GET ?resumeId=...&type=resume_pdf|resume_md|analysis_pdf
 export async function GET(req: Request) {
@@ -21,122 +142,60 @@ export async function GET(req: Request) {
     const resume = await db.resume.findFirst({ where: { id: resumeId, userId: user.id } })
     if (!resume) return NextResponse.json({ error: 'Currículo não encontrado' }, { status: 404 })
 
-    // Deduct credit if user has balance, but allow download if user created the content
+    // A cobrança acontece entre a validação e a geração, e não antes de tudo:
+    // um pedido inválido (tipo desconhecido, currículo ainda não reescrito)
+    // devolve erro sem custar nada, e uma falha na geração libera a reserva.
+    //
+    // Antes, a rota só cobrava quando já havia saldo — abaixo de 1 crédito o
+    // download saía de graça — e a falha da cobrança era engolida por
+    // `.catch(() => {})`. A isenção de administrador vive dentro de
+    // `reserveCredits`, então não é repetida aqui.
     const costCredits = CREDIT_COSTS.pdf_download
 
-    if (!user.role || user.role !== 'admin') {
-      if ((user.credits || 0) >= costCredits) {
-        await deductCredits(
-          user.id,
-          costCredits,
-          `Download do currículo em ${type} (${costCredits} cr)`
-        ).catch(() => {})
+    const reservationResult = await reserveCredits(
+      user.id,
+      costCredits,
+      `Download do currículo em ${type} (${costCredits} cr)`
+    )
+
+    if (!reservationResult.success) {
+      return NextResponse.json(
+        {
+          error: reservationResult.error || 'Saldo insuficiente para baixar o arquivo.',
+          code: 'INSUFFICIENT_CREDITS',
+          requiredCredits: costCredits,
+          currentCredits: reservationResult.currentBalance,
+        },
+        { status: 402 }
+      )
+    }
+
+    const reservation = reservationResult.reservation
+
+    let payload: DownloadPayload
+    try {
+      payload = await buildDownload(type, resume, user.name)
+    } catch (buildErr) {
+      await releaseReservation(reservation, 'Falha ao gerar o arquivo')
+      if (buildErr instanceof DownloadError) {
+        return NextResponse.json({ error: buildErr.message }, { status: buildErr.status })
       }
+      throw buildErr
     }
 
     await db.auditLog.create({
       data: { userId: user.id, resumeId: resume.id, action: 'download', meta: JSON.stringify({ type }) },
     })
 
-    if (type === 'resume_pdf') {
-      if (!resume.rewrittenContent) return NextResponse.json({ error: 'Currículo ainda não foi reescrito' }, { status: 400 })
-      const buf = await generateResumePdf(resume.rewrittenContent)
-      const safeName = (user.name || 'curriculo').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()
-      return new NextResponse(new Uint8Array(buf), {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${safeName}_curriculo.pdf"`,
-        },
-      })
-    }
+    // Arquivo pronto: só agora a reserva vira cobrança.
+    await settleReservation(reservation)
 
-    if (type === 'resume_md') {
-      if (!resume.rewrittenContent) return NextResponse.json({ error: 'Currículo ainda não foi reescrito' }, { status: 400 })
-      const md = sanitizeMarkdown(resume.rewrittenContent)
-      const buf = Buffer.from(md, 'utf-8')
-      const safeName = (user.name || 'curriculo').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()
-      return new NextResponse(new Uint8Array(buf), {
-        headers: {
-          'Content-Type': 'text/markdown; charset=utf-8',
-          'Content-Disposition': `attachment; filename="${safeName}_curriculo.md"`,
-        },
-      })
-    }
-
-    if (type === 'resume_txt') {
-      if (!resume.rewrittenContent) return NextResponse.json({ error: 'Currículo ainda não foi reescrito' }, { status: 400 })
-      // Strip basic markdown hashes and stars for clean plain text
-      const txt = resume.rewrittenContent
-        .replace(/^#+\s+/gm, '')
-        .replace(/\*\*(.*?)\*\*/g, '$1')
-        .replace(/\*(.*?)\*/g, '$1')
-      const buf = Buffer.from(txt, 'utf-8')
-      const safeName = (user.name || 'curriculo').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()
-      return new NextResponse(new Uint8Array(buf), {
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Content-Disposition': `attachment; filename="${safeName}_curriculo.txt"`,
-        },
-      })
-    }
-
-    if (type === 'social_advice_txt' || type === 'social_advice_md') {
-      if (!resume.analysisJson) return NextResponse.json({ error: 'Análise não disponível' }, { status: 400 })
-      const analysis = JSON.parse(resume.analysisJson)
-      const socialAdvice = Array.isArray(analysis.socialAdvice) ? analysis.socialAdvice : []
-      if (socialAdvice.length === 0) return NextResponse.json({ error: 'Nenhum conselho de rede social disponível neste laudo' }, { status: 400 })
-
-      let contentStr = `# Otimização de Presença Digital & Redes Sociais\n\n`
-      for (const item of socialAdvice) {
-        contentStr += `## ${item.platform}\n`
-        contentStr += `URL: ${item.url}\n\n`
-        if (item.headline) contentStr += `### 💡 Título Sugerido\n${item.headline}\n\n`
-        if (item.aboutSummary) contentStr += `### 📝 Texto "Sobre" / Bio\n${item.aboutSummary}\n\n`
-        if (item.tips && item.tips.length > 0) {
-          contentStr += `### 🚀 Dicas de Otimização & Algoritmo\n`
-          for (const tip of item.tips) {
-            contentStr += `- ${tip}\n`
-          }
-          contentStr += `\n`
-        }
-        contentStr += `---\n\n`
-      }
-
-      if (type === 'social_advice_txt') {
-        contentStr = contentStr.replace(/^#+\s+/gm, '').replace(/---/g, '==============')
-      }
-
-      const ext = type === 'social_advice_txt' ? 'txt' : 'md'
-      const mime = type === 'social_advice_txt' ? 'text/plain' : 'text/markdown'
-      const buf = Buffer.from(contentStr, 'utf-8')
-      const safeName = (user.name || 'presenca_digital').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()
-      return new NextResponse(new Uint8Array(buf), {
-        headers: {
-          'Content-Type': `${mime}; charset=utf-8`,
-          'Content-Disposition': `attachment; filename="${safeName}_redes_sociais.${ext}"`,
-        },
-      })
-    }
-
-    if (type === 'analysis_pdf') {
-      if (!resume.analysisJson) return NextResponse.json({ error: 'Análise não disponível' }, { status: 400 })
-      const analysis = JSON.parse(resume.analysisJson)
-      const buf = await generateAnalysisReportPdf({
-        userName: user.name || undefined,
-        resumeId: resume.id,
-        analysis,
-        createdAt: resume.updatedAt,
-      })
-      const safeName = (user.name || 'analise').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()
-      return new NextResponse(new Uint8Array(buf), {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${safeName}_laudo.pdf"`,
-        },
-      })
-    }
-
-    return NextResponse.json({ error: 'Tipo de download inválido' }, { status: 400 })
+    return new NextResponse(new Uint8Array(payload.buf), {
+      headers: {
+        'Content-Type': payload.mime,
+        'Content-Disposition': `attachment; filename="${payload.filename}"`,
+      },
+    })
   } catch (e: any) {
     console.error('download error', e)
     return NextResponse.json({ error: 'Erro ao gerar arquivo para download' }, { status: 500 })

@@ -138,14 +138,23 @@ existentes só passam a ser cifrados quando forem regravados.
 | F4 | Fazer `/api/pricing` derivar do `registry.ts` em vez do `TOKEN_COST` divergente | `llm.ts:47`, `api/pricing` | **feito** (Sessão 5) |
 | F5 | Gravar `currency` e `amountOriginal`; converter na leitura | `schema.prisma`, `verify-session`, `webhooks/stripe`, `admin/dashboard` | **feito** (Sessão 5) |
 | G4 | Moeda definida no servidor por geolocalização; ignorar campo do cliente | `credits/purchase/route.ts:11` | **feito** (Sessão 5) |
+| F6 | Aplicar de fato a regra `entryOnly` do Plano de Entrada | `credits/purchase/route.ts` | pendente |
+| F7 | Alinhar a descrição do Plano de Entrada com o custo real (ou elevar para 64 créditos) | `credits-catalog.ts:48` | pendente |
+| F8 | Reserva de créditos em duas fases (`pending` → `completed`/`refunded`) | `lib/credits.ts`, rotas de IA | **feito** (Sessão 6) |
+| F9 | Cobrar o download de forma consistente (hoje grátis se saldo < 1) | `download/route.ts:28` | **feito** (Sessão 6) |
+| F10 | Adicionar os 7 índices ausentes no schema | `schema.prisma` + migração | pendente (Sessão 7) |
+| F11 | Paginar `admin/dashboard` e `admin/users` (hoje `findMany` sem `take`) | 2 rotas | pendente (Sessão 7) |
+| F12 | Cache com TTL da configuração de provedores + remover a chamada duplicada | `registry.ts:88`, `router.ts:16,46` | pendente (Sessão 7) |
+| G10 | Reduzir consultas ao banco por análise (13 → ~7) | `router.ts`, `registry.ts` | pendente (Sessão 7) |
 
-> ### ⚠️ Pré-requisito da Sessão 5 — aplicar o schema
+> ### ⚠️ Pré-requisito das Sessões 5 e 6 — aplicar o schema
 >
 > O projeto **não usa `prisma migrate`**: não existe `prisma/migrations/`, e o
 > build da Vercel roda apenas `prisma generate && next build`. Nada aplica
 > mudanças de schema no deploy.
 >
-> A Sessão 5 adiciona a tabela `Session` e duas colunas em `CreditTransaction`.
+> A Sessão 5 adiciona a tabela `Session` e duas colunas em `CreditTransaction`;
+> a Sessão 6 acrescenta o índice `(userId, status)` nessa mesma tabela.
 > Antes ou logo depois do deploy, rode contra o banco de produção:
 >
 > ```
@@ -170,14 +179,6 @@ o problema para de crescer, mas o histórico segue misturado. Corrigir exige
 saber quais vendas passadas não foram em BRL; como até aqui a divulgação foi só
 no Brasil, é provável que o impacto real seja nulo — vale conferir antes de
 gastar uma migração com isso.
-| F6 | Aplicar de fato a regra `entryOnly` do Plano de Entrada | `credits/purchase/route.ts` |
-| F7 | Alinhar a descrição do Plano de Entrada com o custo real (ou elevar para 64 créditos) | `credits-catalog.ts:48` |
-| F8 | Reserva de créditos em duas fases (`pending` → `completed`/`refunded`) | `lib/credits.ts`, rotas de IA |
-| F9 | Cobrar o download de forma consistente (hoje grátis se saldo < 1) | `download/route.ts:28` |
-| F10 | Adicionar os 7 índices ausentes no schema | `schema.prisma` + migração |
-| F11 | Paginar `admin/dashboard` e `admin/users` (hoje `findMany` sem `take`) | 2 rotas |
-| F12 | Cache com TTL da configuração de provedores + remover a chamada duplicada | `registry.ts:88`, `router.ts:16,46` |
-| G10 | Reduzir consultas ao banco por análise (13 → ~7) | `router.ts`, `registry.ts` |
 
 ---
 
