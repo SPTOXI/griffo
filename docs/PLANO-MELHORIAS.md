@@ -273,6 +273,89 @@ A1 ou A2 (streaming/fila)
 
 ---
 
+## Dimensionamento e agrupamento por sessão
+
+### O que realmente limita uma sessão de trabalho
+
+O gargalo raramente é o tempo de relógio — é o **contexto acumulado**. O que consome orçamento numa sessão de implementação é: ler arquivos, escrever, rodar `build`/`lint`, e **iterar sobre falhas**.
+
+Um bloco que toca 4 arquivos pequenos e compila de primeira é leve; um que adiciona dependência, escreve um schema grande e precisa de 3 rodadas de build é pesado — mesmo tendo menos tarefas. O dimensionamento abaixo é por **peso de execução**, não por contagem de itens.
+
+### Blocos
+
+| # | Bloco | Tarefas | Arquivos | Migração | Dep. nova | Peso |
+|---|---|---|---|---|---|---|
+| **A** | Contenção | C1–C6 | — | — | — | **Não é código** |
+| **B** | Timeout ponta a ponta | T1–T7, T12, F1, F2 | 4 | não | não | **Leve** |
+| **C** | Structured outputs + integridade do laudo | T8–T11 | 3 | não | **sim** | **Pesado** |
+| **D** | Superfície exposta | S1–S5 | 5 | não | talvez¹ | **Médio** |
+| **E** | Globalização bloqueante | G1–G3 | 6 | **sim** | não | **Médio** |
+| **F** | Segredos em repouso + SSRF admin | E1–E3 | 5 | não | não | **Médio** |
+| **G** | SSRF, login, headers, erros | E4–E9 | 7 | não | não | **Médio** |
+| **H** | Sessões revogáveis | E10 | 3 | **sim** | não | **Médio** |
+| **I** | Moeda e precificação | F4–F7, G4 | 6 | **sim** | não | **Médio** |
+| **J** | Reserva de créditos em 2 fases | F8, F9, F3 | 5 | **sim** | não | **Pesado** |
+| **K** | Performance de banco | F10–F12, G10 | 4 | **sim** | não | **Leve** |
+| **L** | LGPD + GDPR (código) | L1–L5, G8 | 6 | **sim** | não | **Médio** |
+| **M** | Redes sociais reais | P1–P5 | 6+ | **sim** | talvez² | **Pesado** |
+| **N** | Orientação cobrada + OCR real | P6–P9 | 4 | não | talvez³ | **Médio** |
+| **O** | Agentes com IA amostrada | P10, P11 | 3 | não | não | **Leve** |
+| **P** | Higiene | H1–H11 | ~20 | não | remove | **Fatiar** |
+| **Q** | Arquitetura (opcional) | A1–A3, G11 | 5+ | talvez | não | **Pesado** |
+
+¹ Rate limiting: em memória (sem dependência) ou Upstash/Redis (com) — decisão de arquitetura.
+² Apenas se optar por SDK do GitHub; a API REST pura não exige.
+³ Modelo com visão para OCR já vem pelo SDK adotado no bloco C.
+
+### Agrupamento por sessão
+
+| Sessão | Blocos | Racional |
+|---|---|---|
+| 1 | **B** | Isolado. Para o sangramento em 4 arquivos; convém observar o efeito em produção antes de mexer em mais nada |
+| 2 | **C** | Sozinho. Trocar `fetch` cru pelo SDK, escrever o JSON Schema das 8 dimensões, ajustar 2 rotas. Alta chance de 2–3 iterações de build |
+| 3 | **D + E** | Áreas distintas (`env`/`middleware` vs. prompts/schema); o contexto não compete. Fecham a Fase 1 |
+| 4 | **F + G** | Ambos de segurança. F traz o módulo de cripto; G é mais mecânico e ficaria subaproveitado sozinho |
+| 5 | **H + I** | Duas migrações pequenas e independentes |
+| 6 | **J** | Sozinho. Mexe na máquina de estados de crédito e toca todas as rotas de IA — é onde um erro custa dinheiro real |
+| 7 | **K + L** | K é leve, L é médio; somam bem |
+| 8 | **M** | Sozinho. Rota nova, API do GitHub, upload de PDF do LinkedIn, Jina, ligação com créditos |
+| 9 | **N + O** | N depende de C concluído; O é leve |
+| 10–12 | **P fatiado** | Ver abaixo |
+| 13+ | **Q** | Só se a medição de qualidade justificar voltar ao Opus 5 |
+
+**Fatias da higiene** — o custo vem do volume de leitura, não da dificuldade:
+
+- **P.1** — dependências, lockfile, código morto de `llm.ts`, arquivos órfãos (H1, H2, H3, H9, H10)
+- **P.2** — ESLint reativado + os 17 erros de React (H4, H8)
+- **P.3** — README, descrição dos agentes, testes e CI (H5, H6, H11)
+
+### Sequência
+
+```
+A (paralelo, não depende de sessão)
+ └─> Sessão 1 (B) ──> deploy e observar
+      └─> Sessão 2 (C)
+           └─> Sessão 3 (D+E) ──> anúncios liberados
+                └─> Sessões 4, 5 (segurança)
+                     └─> Sessões 6, 7 (cobrança e dados)
+                          └─> Sessões 8, 9 (produto)
+                               └─> 10–12 (higiene)
+```
+
+**Depois da Sessão 3 é possível anunciar.** B corrige o que cobra sem entregar, C garante que o laudo é real, D fecha a exposição e E habilita inglês e espanhol — o mínimo defensável para tráfego pago.
+
+**Exceção na ordem:** **P.1 pode entrar a qualquer momento** e tende a acelerar as sessões seguintes — remover o `puppeteer` (~300 MB) e resolver os dois lockfiles encurta cada `npm ci` e cada build. Se quiser um ganho barato cedo, encaixe logo após a Sessão 1.
+
+### Onde este dimensionamento pode errar
+
+Os pesos assumem build passando em 1–2 tentativas. Três fatores podem inflar qualquer bloco:
+
+- **Migrações de Prisma** contra o banco de produção — divergência entre schema e banco real vira investigação.
+- **Bloco C** — depende de quantos ajustes o JSON Schema das 8 dimensões exigir até ser aceito sem reclamação.
+- **Bloco M** — depende de quão bem o PDF do perfil LinkedIn extrai com `pdf-parse`; pode exigir tratamento específico.
+
+---
+
 ## O que medir antes de decidir
 
 Duas decisões deste plano dependem de dados que ainda não existem:
