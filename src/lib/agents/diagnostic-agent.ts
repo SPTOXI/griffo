@@ -1,5 +1,6 @@
 import { db } from '@/lib/db'
 import { getProviderRuntimeConfig } from '@/lib/ai-router/registry'
+import { fetchPublicUrl, BlockedUrlError } from '@/lib/url-guard'
 import OpenAI from 'openai'
 
 export interface DiagnosticSimulationResult {
@@ -125,17 +126,30 @@ export async function sendAdminAlert(incidentId: string, summary: string, diagDa
     const alertMessage = `🚨 [ALERTA GRIFFO] Incidente Crítico Detectado!\nID: ${incidentId}\nResumo: ${summary}\nAções Automáticas: ${diagData.actionsTaken.join('; ') || 'Nenhuma'}\nVerifique o Painel Admin imediatamente.`
 
     // 1. Webhook / Mensageiro (Telegram, Discord, Slack, etc.)
+    //
+    // A URL vem do painel administrativo e o servidor a busca com a própria
+    // rede — é SSRF autenticado. `fetchPublicUrl` recusa destinos internos e
+    // revalida cada redirecionamento. Exige HTTPS: o corpo carrega o resumo do
+    // incidente, que não deve trafegar em claro.
     if (webhookConfig?.value) {
-      await fetch(webhookConfig.value, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: alertMessage,
-          content: alertMessage,
-          incidentId,
-          diagnostic: diagData,
-        }),
-      }).catch(() => {})
+      try {
+        if (!webhookConfig.value.trim().toLowerCase().startsWith('https://')) {
+          throw new BlockedUrlError('O webhook de alerta precisa usar HTTPS.')
+        }
+        await fetchPublicUrl(webhookConfig.value, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: alertMessage,
+            content: alertMessage,
+            incidentId,
+            diagnostic: diagData,
+          }),
+          timeoutMs: 8000,
+        })
+      } catch (webhookErr: any) {
+        console.warn('[Admin Alert] Envio do webhook falhou:', webhookErr?.message || webhookErr)
+      }
     }
 
     // 2. Registra log de envio do alerta

@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import { db } from './db'
 import { executeAiTask } from './ai-router/router'
+import { tryDecryptSecret } from './crypto'
 
 export async function getLlmConfig() {
   let apiKey = process.env.MOONSHOT_API_KEY || process.env.LLM_API_KEY || ''
@@ -11,7 +12,7 @@ export async function getLlmConfig() {
     const configs = await db.systemConfig.findMany()
     for (const c of configs) {
       if ((c.key === 'MOONSHOT_API_KEY' || c.key === 'LLM_API_KEY') && c.value) {
-        apiKey = c.value
+        apiKey = tryDecryptSecret(c.value, `SystemConfig.${c.key}`) || apiKey
       }
       if ((c.key === 'KIMI_MODEL' || c.key === 'LLM_MODEL') && c.value) {
         model = c.value

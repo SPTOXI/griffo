@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
+import { encryptSecret, maskSecret } from '@/lib/crypto'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     })
 
-    // Mask secret keys for safety and omit raw apiKey from response
+    // A chave em si nunca sai da rota: a resposta leva apenas uma prévia.
     const sanitizedKeys = keys.map((k) => ({
       id: k.id,
       name: k.name,
@@ -26,7 +27,7 @@ export async function GET() {
       status: k.status,
       createdAt: k.createdAt,
       updatedAt: k.updatedAt,
-      maskedKey: k.apiKey.length > 8 ? `${k.apiKey.slice(0, 4)}...${k.apiKey.slice(-4)}` : '****',
+      maskedKey: maskSecret(k.apiKey),
     }))
 
     return NextResponse.json({ keys: sanitizedKeys })
@@ -60,7 +61,7 @@ export async function POST(req: Request) {
       data: {
         name: name.trim(),
         provider: provider.toLowerCase().trim(),
-        apiKey: apiKey.trim(),
+        apiKey: encryptSecret(apiKey.trim()),
         baseUrl: baseUrl ? baseUrl.trim() : null,
         model: model.trim(),
         status: 'active',
@@ -86,12 +87,18 @@ export async function POST(req: Request) {
         status: newKey.status,
         createdAt: newKey.createdAt,
         updatedAt: newKey.updatedAt,
-        maskedKey: newKey.apiKey.length > 8 ? `${newKey.apiKey.slice(0, 4)}...${newKey.apiKey.slice(-4)}` : '****',
+        maskedKey: maskSecret(newKey.apiKey),
       },
       message: `Chave da API "${newKey.name}" para ${newKey.provider.toUpperCase()} cadastrada com sucesso!`,
     })
   } catch (e: any) {
     console.error('ai-keys post error', e)
+    // `encryptSecret` lança quando ENCRYPTION_KEY não está configurada; a
+    // mensagem diz o que fazer e não expõe nada.
+    const message = String(e?.message || '')
+    if (message.includes('ENCRYPTION_KEY')) {
+      return NextResponse.json({ error: message }, { status: 500 })
+    }
     return NextResponse.json({ error: 'Erro ao cadastrar chave de API' }, { status: 500 })
   }
 }
@@ -135,7 +142,7 @@ export async function PATCH(req: Request) {
         status: updated.status,
         createdAt: updated.createdAt,
         updatedAt: updated.updatedAt,
-        maskedKey: updated.apiKey.length > 8 ? `${updated.apiKey.slice(0, 4)}...${updated.apiKey.slice(-4)}` : '****',
+        maskedKey: maskSecret(updated.apiKey),
       },
       message: `Status da API "${updated.name}" alterado para ${status === 'active' ? 'ATIVA' : 'PAUSADA'}.`,
     })

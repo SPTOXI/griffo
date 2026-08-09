@@ -1,4 +1,5 @@
 import { db } from '../db'
+import { tryDecryptSecret } from '../crypto'
 import { ModelPricing, ProviderConfig, ProviderId, TaskType } from './types'
 
 export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
@@ -143,7 +144,12 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
     )
 
     if (matchingKey) {
-      if (matchingKey.apiKey) apiKey = matchingKey.apiKey
+      // Decifra tolerando falha: se a chave não abrir, este provedor fica sem
+      // credencial e o roteador cai para o próximo, em vez de derrubar a
+      // requisição inteira.
+      if (matchingKey.apiKey) {
+        apiKey = tryDecryptSecret(matchingKey.apiKey, `AiApiKey.${matchingKey.id}`) || apiKey
+      }
       if (matchingKey.baseUrl) baseURL = matchingKey.baseUrl
       if (matchingKey.model) model = matchingKey.model
     }
@@ -157,7 +163,7 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
     for (const c of configs) {
       const keyPrefix = providerId === 'kimi' ? 'MOONSHOT' : providerId.toUpperCase()
       if ((c.key === `${keyPrefix}_API_KEY` || c.key === `${providerId.toUpperCase()}_API_KEY`) && c.value) {
-        apiKey = c.value
+        apiKey = tryDecryptSecret(c.value, `SystemConfig.${c.key}`) || apiKey
       }
       if ((c.key === `${keyPrefix}_MODEL` || c.key === `${providerId.toUpperCase()}_MODEL`) && c.value) {
         model = c.value

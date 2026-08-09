@@ -15,6 +15,17 @@ import {
 import { toast } from 'sonner'
 import { internalFetch } from '@/lib/internal-fetch';
 
+/**
+ * O servidor devolve os segredos mascarados (`sk_l••••••••1234`). O campo fica
+ * vazio quando o que chegou é máscara, e a máscara vira placeholder: assim o
+ * administrador vê que a chave está cadastrada sem ela sair do servidor, e só
+ * digita algo quando quiser mesmo substituí-la. Reenviar a máscara é inócuo —
+ * `POST /api/admin/settings` ignora valores mascarados.
+ */
+function isMasked(value?: string): boolean {
+  return !!value && value.includes('•')
+}
+
 class AdminErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: React.ReactNode }) {
     super(props)
@@ -1245,8 +1256,8 @@ function AdminViewContent() {
                     <label className="text-xs font-semibold text-slate-700">Stripe Secret Key (sk_...)</label>
                     <Input
                       type="password"
-                      placeholder="sk_live_... ou sk_test_..."
-                      value={configs.STRIPE_SECRET_KEY || ''}
+                      placeholder={isMasked(configs.STRIPE_SECRET_KEY) ? `Cadastrada (${configs.STRIPE_SECRET_KEY}) — preencha só para substituir` : 'sk_live_... ou sk_test_...'}
+                      value={isMasked(configs.STRIPE_SECRET_KEY) ? '' : (configs.STRIPE_SECRET_KEY || '')}
                       onChange={(e) => setConfigs({ ...configs, STRIPE_SECRET_KEY: e.target.value })}
                       className="text-xs font-mono border-indigo-200 focus:border-indigo-500"
                     />
@@ -1265,8 +1276,8 @@ function AdminViewContent() {
                     <label className="text-xs font-semibold text-slate-700">Stripe Webhook Secret (whsec_...)</label>
                     <Input
                       type="password"
-                      placeholder="whsec_..."
-                      value={configs.STRIPE_WEBHOOK_SECRET || ''}
+                      placeholder={isMasked(configs.STRIPE_WEBHOOK_SECRET) ? `Cadastrado (${configs.STRIPE_WEBHOOK_SECRET}) — preencha só para substituir` : 'whsec_...'}
+                      value={isMasked(configs.STRIPE_WEBHOOK_SECRET) ? '' : (configs.STRIPE_WEBHOOK_SECRET || '')}
                       onChange={(e) => setConfigs({ ...configs, STRIPE_WEBHOOK_SECRET: e.target.value })}
                       className="text-xs font-mono border-indigo-200 focus:border-indigo-500"
                     />
@@ -1313,7 +1324,7 @@ function AdminViewContent() {
                     <tr className="hover:bg-slate-50/50">
                       <td className="px-4 py-3 font-semibold text-slate-900">Stripe Secret Key</td>
                       <td className="px-4 py-3 font-mono text-slate-700 font-bold">
-                        {configs.STRIPE_SECRET_KEY ? `${configs.STRIPE_SECRET_KEY.slice(0, 14)}••••••••` : 'Não Cadastrada'}
+                        {configs.STRIPE_SECRET_KEY || 'Não Cadastrada'}
                       </td>
                       <td className="px-4 py-3">
                         {configs.STRIPE_SECRET_KEY ? (
@@ -1349,7 +1360,7 @@ function AdminViewContent() {
                     <tr className="hover:bg-slate-50/50">
                       <td className="px-4 py-3 font-semibold text-slate-900">Stripe Webhook Secret</td>
                       <td className="px-4 py-3 font-mono text-slate-700 font-bold">
-                        {configs.STRIPE_WEBHOOK_SECRET ? `${configs.STRIPE_WEBHOOK_SECRET.slice(0, 10)}••••••••` : 'Opcional (Desmarcado)'}
+                        {configs.STRIPE_WEBHOOK_SECRET || 'Opcional (Desmarcado)'}
                       </td>
                       <td className="px-4 py-3">
                         {configs.STRIPE_WEBHOOK_SECRET ? (

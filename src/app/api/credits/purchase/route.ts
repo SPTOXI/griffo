@@ -92,9 +92,11 @@ export async function POST(req: Request) {
         checkoutUrl: session.url,
       })
     } catch (stripeErr: any) {
+      // A mensagem da Stripe pode citar a chave, o modo (test/live) e a conta.
+      // O detalhe fica no log; ao cliente vai só o que ele pode agir.
       console.error('Stripe Checkout Error:', stripeErr)
       return NextResponse.json(
-        { error: `Erro ao criar checkout no Stripe: ${stripeErr.message || stripeErr}` },
+        { error: 'Não foi possível iniciar o pagamento. Tente novamente em instantes.' },
         { status: 400 }
       )
     }

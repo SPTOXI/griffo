@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
 import { getAiMetricsData } from '@/lib/ai-router/metrics'
+import { maskSecret } from '@/lib/crypto'
+import { isSensitiveConfigKey } from '@/lib/system-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +17,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Acesso restrito a administradores.' }, { status: 403 })
     }
 
-    console.log(`[API Admin Dashboard] Administrador autenticado (${admin.email}). Executando consultas no banco de dados...`)
+    // Sem o e-mail: o log de produção é lido por qualquer pessoa com acesso ao
+    // painel da Vercel, e este identificava a conta administrativa em texto puro.
+    console.log('[API Admin Dashboard] Administrador autenticado. Executando consultas no banco de dados...')
     const [users, totalUsers, totalResumes, activeSubscriptions, tokenStats, revenueStats, configsRaw, aiMetrics, rawKeys] = await Promise.all([
       db.user.findMany({
         orderBy: { createdAt: 'desc' },
@@ -68,8 +72,9 @@ export async function GET() {
     const totalCostUsd = tokenStats._sum.costUsd || 0
     const totalRevenueBrl = revenueStats._sum.costBrl || 0
 
+    // Mesma regra de `GET /api/admin/settings`: segredos só saem mascarados.
     const configMap = configsRaw.reduce((acc, curr) => {
-      acc[curr.key] = curr.value
+      acc[curr.key] = isSensitiveConfigKey(curr.key) ? maskSecret(curr.value) : curr.value
       return acc
     }, {} as Record<string, string>)
 
@@ -82,7 +87,7 @@ export async function GET() {
       status: k.status,
       createdAt: k.createdAt,
       updatedAt: k.updatedAt,
-      maskedKey: k.apiKey.length > 8 ? `${k.apiKey.slice(0, 4)}...${k.apiKey.slice(-4)}` : '****',
+      maskedKey: maskSecret(k.apiKey),
     }))
 
     const duration = Date.now() - startTime
@@ -111,6 +116,6 @@ export async function GET() {
     })
   } catch (e: any) {
     console.error('[API Admin Dashboard ERRO FATAL]', e?.message || e, e?.stack)
-    return NextResponse.json({ error: 'Erro ao carregar dados do painel administrativo: ' + (e?.message || 'Falha desconhecida no banco') }, { status: 500 })
+    return NextResponse.json({ error: 'Erro ao carregar dados do painel administrativo.' }, { status: 500 })
   }
 }

@@ -99,16 +99,32 @@ O que hoje cobra o cliente sem entregar, e o que impede vender em inglês e espa
 
 | ID | Tarefa | Arquivo |
 |---|---|---|
-| E1 | Criptografar em repouso `AiApiKey.apiKey` e valores sensíveis de `SystemConfig` (AES-256-GCM) | novo `lib/crypto.ts`, `registry.ts`, `admin/ai-keys`, `admin/settings` |
-| E2 | Allowlist de chaves em `POST /api/admin/settings` (hoje aceita qualquer chave) | `admin/settings/route.ts` |
-| E3 | Validar URL do webhook de alerta (só HTTPS, host público) — SSRF autenticado | `diagnostic-agent.ts:129` |
-| E4 | Reforçar SSRF em `job-fetch`: `redirect: 'manual'`, resolução de DNS, IPv6, notação numérica | `job-fetch/route.ts:86-97` |
-| E5 | Login apenas por e-mail (ou tornar `name` único e normalizado) com `orderBy` determinístico | `auth/login/route.ts:21` |
-| E6 | Unificar a regra de conta desabilitada entre login e sessão | `auth/login/route.ts:34`, `auth.ts:88` |
-| E7 | Headers de segurança (CSP, HSTS, frame-ancestors, Referrer-Policy) | `next.config.ts` |
-| E8 | Padronizar erros: mensagem genérica ao cliente, detalhe só no log | `admin/dashboard`, `credits/purchase`, `verify-session`, `webhooks/stripe` |
-| E9 | Remover log do e-mail do admin | `admin/dashboard/route.ts:18` |
-| E10 | Sessões revogáveis: tabela `Session` com invalidação no logout | `schema.prisma`, `auth.ts` |
+| ID | Tarefa | Arquivo | Situação |
+|---|---|---|---|
+| E1 | Criptografar em repouso `AiApiKey.apiKey` e valores sensíveis de `SystemConfig` (AES-256-GCM) | novo `lib/crypto.ts`, `registry.ts`, `admin/ai-keys`, `admin/settings` | **feito** (Sessão 4) |
+| E2 | Allowlist de chaves em `POST /api/admin/settings` (hoje aceita qualquer chave) | `admin/settings/route.ts` | **feito** (Sessão 4) |
+| E3 | Validar URL do webhook de alerta (só HTTPS, host público) — SSRF autenticado | `diagnostic-agent.ts:129` | **feito** (Sessão 4) |
+| E4 | Reforçar SSRF em `job-fetch`: `redirect: 'manual'`, resolução de DNS, IPv6, notação numérica | `job-fetch/route.ts:86-97` | **feito** (Sessão 4) |
+| E5 | Login apenas por e-mail (ou tornar `name` único e normalizado) com `orderBy` determinístico | `auth/login/route.ts:21` | **feito** (Sessão 4) |
+| E6 | Unificar a regra de conta desabilitada entre login e sessão | `auth/login/route.ts:34`, `auth.ts:88` | **feito** (Sessão 4) |
+| E7 | Headers de segurança (CSP, HSTS, frame-ancestors, Referrer-Policy) | `next.config.ts` | **parcial** (Sessão 4) |
+| E8 | Padronizar erros: mensagem genérica ao cliente, detalhe só no log | `admin/dashboard`, `credits/purchase`, `verify-session`, `webhooks/stripe` | **feito** (Sessão 4) |
+| E9 | Remover log do e-mail do admin | `admin/dashboard/route.ts:18` | **feito** (Sessão 4) |
+| E10 | Sessões revogáveis: tabela `Session` com invalidação no logout | `schema.prisma`, `auth.ts` | pendente (Sessão 5) |
+
+**E7 ficou parcial de propósito.** Foram aplicados HSTS, `nosniff`, `X-Frame-Options`,
+`Referrer-Policy`, `Permissions-Policy` e as diretivas de CSP que restringem sem
+depender de nonce (`frame-ancestors`, `object-src`, `base-uri`, `form-action`,
+`upgrade-insecure-requests`). Falta o `script-src`: o Next injeta scripts inline
+para hidratação, então declará-lo exigiria nonce gerado no middleware — ou
+`'unsafe-inline'`, que daria aparência de proteção sem proteger. Fica para uma
+sessão com orçamento de teste no navegador.
+
+**Pré-requisito operacional do E1:** a variável `ENCRYPTION_KEY` (32 bytes,
+`openssl rand -hex 32`) precisa existir no ambiente. Sem ela a leitura segue
+funcionando — os segredos já gravados em texto puro passam intactos — mas
+gravar uma chave nova pelo painel falha com mensagem explícita. Os segredos já
+existentes só passam a ser cifrados quando forem regravados.
 
 ---
 

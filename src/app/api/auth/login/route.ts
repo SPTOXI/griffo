@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 import { hashPassword, verifyPassword, createSession } from '@/lib/auth'
 
 const schema = z.object({
-  email: z.string().min(1, 'Informe seu e-mail ou usuário'),
+  email: z.string().min(1, 'Informe seu e-mail'),
   password: z.string().min(1, 'Informe sua senha'),
 })
 
@@ -16,22 +16,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Dados inválidos' }, { status: 400 })
     }
     const { email: identifier, password } = parsed.data
-    const normalizedIdentifier = identifier.trim().toLowerCase()
+    const normalizedEmail = identifier.trim().toLowerCase()
 
-    const user = await db.user.findFirst({
-      where: {
-        OR: [
-          { email: normalizedIdentifier },
-          { name: identifier.trim() },
-        ],
-      },
+    // Autenticação apenas por e-mail. Antes o `OR` também casava por `name`,
+    // que não é único nem normalizado no schema: dois usuários com o mesmo
+    // nome faziam o `findFirst` devolver um deles em ordem indefinida — quem
+    // soubesse o nome de outra pessoa e criasse uma conta homônima podia,
+    // dependendo da ordem retornada pelo banco, autenticar contra o registro
+    // errado. `email` é `@unique`, então a busca é determinística.
+    const user = await db.user.findUnique({
+      where: { email: normalizedEmail },
     })
 
     if (!user || !verifyPassword(password, user.passwordHash)) {
-      return NextResponse.json({ error: 'Usuário/E-mail ou senha incorretos.' }, { status: 401 })
+      return NextResponse.json({ error: 'E-mail ou senha incorretos.' }, { status: 401 })
     }
 
-    if (user.disabled && user.role !== 'admin') {
+    // Mesma regra de `getCurrentUser`: conta desabilitada não entra, inclusive
+    // a de administrador. A exceção anterior deixava o admin desabilitado
+    // fazer login com sucesso e então receber 401 em toda requisição seguinte,
+    // porque `getCurrentUser` não abria a mesma exceção.
+    if (user.disabled) {
       return NextResponse.json({ error: 'Sua conta foi desabilitada pelo administrador do sistema.' }, { status: 403 })
     }
 

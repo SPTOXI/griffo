@@ -104,6 +104,6 @@ export async function POST(req: Request) {
     })
   } catch (e: any) {
     console.error('Verify session API error:', e)
-    return NextResponse.json({ error: `Erro ao verificar pagamento: ${e.message || e}` }, { status: 500 })
+    return NextResponse.json({ error: 'Erro ao verificar pagamento. Tente novamente em instantes.' }, { status: 500 })
   }
 }

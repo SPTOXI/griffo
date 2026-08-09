@@ -5,6 +5,7 @@ export const maxDuration = 60
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/auth'
+import { assertPublicUrl, fetchPublicUrl, BlockedUrlError } from '@/lib/url-guard'
 
 const schema = z.object({
   url: z.string().url('Informe uma URL válida.'),
@@ -79,23 +80,14 @@ export async function POST(req: Request) {
 
     const targetUrl = parsed.data.url
 
-    // SSRF Protection: Block requests to private/internal networks
+    // Proteção contra SSRF: resolve o hostname e confere todos os endereços
+    // contra as faixas reservadas. Ver lib/url-guard.ts.
     try {
-      const parsedUrl = new URL(targetUrl)
-      const hostname = parsedUrl.hostname.toLowerCase()
-      const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]']
-      const blockedPrefixes = ['10.', '172.16.', '172.17.', '172.18.', '172.19.', '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.', '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.', '192.168.', '169.254.']
-      
-      if (
-        blockedHosts.includes(hostname) ||
-        blockedPrefixes.some(prefix => hostname.startsWith(prefix)) ||
-        hostname.endsWith('.local') ||
-        hostname.endsWith('.internal') ||
-        !['http:', 'https:'].includes(parsedUrl.protocol)
-      ) {
-        return NextResponse.json({ error: 'URL não permitida. Utilize apenas URLs públicas.' }, { status: 400 })
+      await assertPublicUrl(targetUrl)
+    } catch (e) {
+      if (e instanceof BlockedUrlError) {
+        return NextResponse.json({ error: e.message }, { status: 400 })
       }
-    } catch {
       return NextResponse.json({ error: 'URL inválida.' }, { status: 400 })
     }
 
@@ -126,12 +118,14 @@ export async function POST(req: Request) {
     // 2. Fallback to direct HTML fetch with JSON-LD and Meta Tags extraction if Jina yielded nothing
     if (!extractedContent || extractedContent.length < 50) {
       try {
-        const fallbackRes = await fetch(targetUrl, {
+        // `fetchPublicUrl` revalida cada redirecionamento: seguir um 302 sem
+        // conferir o destino anularia a checagem feita acima.
+        const fallbackRes = await fetchPublicUrl(targetUrl, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
           },
-          signal: AbortSignal.timeout(10000),
+          timeoutMs: 10000,
         })
 
         if (fallbackRes.ok) {

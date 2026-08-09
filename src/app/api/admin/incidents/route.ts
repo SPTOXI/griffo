@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
 import { runDiagnosticAndHealing } from '@/lib/agents/diagnostic-agent'
+import { assertPublicUrl, BlockedUrlError } from '@/lib/url-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,10 +52,28 @@ export async function POST(req: Request) {
       })
     }
     if (typeof alertWebhook === 'string') {
+      // Valida já na gravação, além da validação no envio: o administrador
+      // descobre o problema aqui, e não num incidente crítico em que o alerta
+      // silenciosamente não sai.
+      const trimmed = alertWebhook.trim()
+      if (trimmed) {
+        if (!trimmed.toLowerCase().startsWith('https://')) {
+          return NextResponse.json(
+            { error: 'O webhook de alerta precisa usar HTTPS.' },
+            { status: 400 }
+          )
+        }
+        try {
+          await assertPublicUrl(trimmed)
+        } catch (e) {
+          const message = e instanceof BlockedUrlError ? e.message : 'URL de webhook inválida.'
+          return NextResponse.json({ error: message }, { status: 400 })
+        }
+      }
       await db.systemConfig.upsert({
         where: { key: 'ADMIN_ALERT_WEBHOOK_URL' },
-        create: { key: 'ADMIN_ALERT_WEBHOOK_URL', value: alertWebhook },
-        update: { value: alertWebhook },
+        create: { key: 'ADMIN_ALERT_WEBHOOK_URL', value: trimmed },
+        update: { value: trimmed },
       })
     }
     return NextResponse.json({ ok: true })
