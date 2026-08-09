@@ -114,6 +114,11 @@ model Resume {
   // Career orientation analysis JSON
   careerOrientationJson String?
 
+  /// Resultado da análise de presença digital (rota social-analysis).
+  /// Separado de `analysisJson` porque é cobrado à parte e roda numa rota
+  /// própria — juntar os dois agravaria o orçamento de tempo da análise.
+  socialAnalysisJson String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 

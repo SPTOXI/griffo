@@ -147,7 +147,7 @@ existentes só passam a ser cifrados quando forem regravados.
 | F12 | Cache com TTL da configuração de provedores + remover a chamada duplicada | `registry.ts:88`, `router.ts:16,46` | **feito** (Sessão 7) |
 | G10 | Reduzir consultas ao banco por análise (13 → ~7) | `router.ts`, `registry.ts` | **feito** (Sessão 7) |
 
-> ### ⚠️ Pré-requisito das Sessões 5 a 7 — aplicar o schema
+> ### ⚠️ Pré-requisito das Sessões 5 a 8 — aplicar o schema
 >
 > O projeto **não usa `prisma migrate`**: não existe `prisma/migrations/`, e o
 > build da Vercel roda apenas `prisma generate && next build`. Nada aplica
@@ -155,7 +155,8 @@ existentes só passam a ser cifrados quando forem regravados.
 >
 > A Sessão 5 adiciona a tabela `Session` e duas colunas em `CreditTransaction`;
 > a Sessão 6 acrescenta o índice `(userId, status)` nessa mesma tabela; a
-> Sessão 7 acrescenta 11 índices e dois campos de consentimento em `User`.
+> Sessão 7 acrescenta 11 índices e dois campos de consentimento em `User`; a
+> Sessão 8 acrescenta `Resume.socialAnalysisJson`.
 > Antes ou logo depois do deploy, rode contra o banco de produção:
 >
 > ```
@@ -242,13 +243,26 @@ As plataformas se dividem em três níveis:
 
 **Saída para o Nível C:** o LinkedIn tem botão nativo **Mais → Salvar como PDF** em todo perfil. O usuário baixa e sobe — exatamente o fluxo que o `resume/upload` já executa com `pdf-parse`. Perfil real e completo, com consentimento explícito, sem violar termos e sem risco de bloqueio de IP. Alternativa leve: campo para colar o texto do "Sobre" e o headline.
 
-| ID | Tarefa |
-|---|---|
-| P1 | Rota separada `POST /api/resume/social-analysis` (não dentro da análise, para não agravar o timeout) |
-| P2 | Integração com a API pública do GitHub |
-| P3 | Upload de PDF do perfil LinkedIn / campo de colar texto |
-| P4 | Busca de portfólio e blogs via Jina Reader |
-| P5 | Ligar o `CREDIT_COSTS.social_optimization = 20`, que já existe e nunca é cobrado |
+| ID | Tarefa | Situação |
+|---|---|---|
+| P1 | Rota separada `POST /api/resume/social-analysis` (não dentro da análise, para não agravar o timeout) | **feito** (Sessão 8) |
+| P2 | Integração com a API pública do GitHub | **feito** (Sessão 8) |
+| P3 | Upload de PDF do perfil LinkedIn / campo de colar texto | **backend feito** (Sessão 8) |
+| P4 | Busca de portfólio e blogs via Jina Reader | **feito** (Sessão 8) |
+| P5 | Ligar o `CREDIT_COSTS.social_optimization = 20`, que já existe e nunca é cobrado | **feito** (Sessão 8) |
+
+**A interface ainda não existe.** A rota está pronta e testada, mas nenhum
+componente a chama: falta o botão de solicitar a análise, o campo de upload do
+PDF do LinkedIn, a área de colar texto e a exibição do resultado
+(`Resume.socialAnalysisJson`). É trabalho de front-end, sem decisão de
+arquitetura pendente — fica para a próxima sessão.
+
+**O `socialAdvice` da análise principal continua como estava**, ou seja,
+gerado sem visitar perfil nenhum. Removê-lo de lá agora deixaria a análise de
+8 dimensões sem a seção que o usuário já vê hoje, antes de a nova interface
+existir. A ordem correta é: publicar a interface nova, e só então retirar o
+conselho fabricado da análise principal — senão há uma janela em que o produto
+perde uma seção sem ganhar a substituta.
 
 **Custo:** +2.000–4.000 tokens de entrada ≈ R$ 0,05. **Receita:** 20 créditos ≈ R$ 4,95.
 

@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { cleanAndOptimizeTextForAi } from '@/lib/ocr/extractor'
+import { parsePdfBuffer } from '@/lib/pdf-text'
 
 const schema = z.object({
   content: z.string().nullable().optional().default(''),
@@ -18,24 +19,6 @@ const schema = z.object({
   socialConsent: z.boolean().nullable().optional().default(false),
   pdfBase64: z.string().nullable().optional(),
 })
-
-async function parsePdfBuffer(buffer: Buffer): Promise<string> {
-  try {
-    const pdfParse = require('pdf-parse')
-    if (typeof pdfParse === 'function') {
-      const res = await pdfParse(buffer)
-      return res.text || ''
-    }
-    if (pdfParse.PDFParse) {
-      const parser = new pdfParse.PDFParse({ data: buffer })
-      const res = await parser.getText()
-      return typeof res === 'string' ? res : res?.text || ''
-    }
-  } catch (e: any) {
-    console.error('Failed to parse PDF buffer:', e?.message || e)
-  }
-  return ''
-}
 
 export async function OPTIONS(req: Request) {
   // Respond to preflight requests for CORS

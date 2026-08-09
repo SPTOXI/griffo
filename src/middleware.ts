@@ -40,6 +40,8 @@ const RULES: Rule[] = [
   { prefix: '/api/resume/analyze', limit: 10, windowMs: 10 * 60_000 },
   { prefix: '/api/resume/rewrite', limit: 10, windowMs: 10 * 60_000 },
   { prefix: '/api/resume/career-orientation', limit: 10, windowMs: 10 * 60_000 },
+  // Gasta tokens e ainda dispara buscas externas (GitHub, Jina) por perfil.
+  { prefix: '/api/resume/social-analysis', limit: 8, windowMs: 10 * 60_000 },
   { prefix: '/api/support/chat', limit: 30, windowMs: 10 * 60_000 },
   // Usa o servidor como cliente HTTP para buscar páginas externas.
   { prefix: '/api/resume/job-fetch', limit: 20, windowMs: 10 * 60_000 },
