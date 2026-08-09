@@ -14,9 +14,14 @@ import { fetchPublicUrl, assertPublicUrl } from '../url-guard'
  * - **GitHub** — API pública oficial. Dados estruturados e confiáveis.
  * - **Portfólio, Medium, Substack, Dev.to, Behance, Dribbble, Stack Overflow** —
  *   leitura via Jina Reader, o mesmo caminho já usado na importação de vagas.
- * - **LinkedIn e Gupy** — bloqueiam raspagem e os termos de uso proíbem. Não há
- *   caminho técnico legítimo. O usuário fornece o conteúdo: colando o texto ou
- *   subindo o PDF que o próprio LinkedIn gera em "Mais → Salvar como PDF".
+ * - **Gupy** — páginas públicas são legíveis (a importação de vagas usa o mesmo
+ *   caminho e funciona). O *perfil do candidato*, porém, fica dentro do portal
+ *   da empresa, atrás de login: é tentada a leitura e, se não vier conteúdo,
+ *   o usuário cola o texto.
+ * - **LinkedIn** — bloqueia raspagem por terceiros e os termos de uso a
+ *   proíbem. Não há caminho técnico legítimo: o usuário fornece o conteúdo,
+ *   colando o texto ou subindo o PDF que o próprio LinkedIn gera em
+ *   "Mais → Salvar como PDF".
  *
  * O que não pôde ser lido é reportado como não lido. Nada aqui inventa conteúdo
  * para preencher lacuna.
@@ -52,8 +57,17 @@ export interface SocialProfileData {
   note?: string
 }
 
-/** Plataformas que não podem ser lidas por raspagem — nem tentamos. */
-const USER_SUPPLIED_PLATFORMS: SocialPlatform[] = ['linkedin', 'gupy']
+/**
+ * Plataformas que bloqueiam raspagem por design e cujos termos de uso a
+ * proíbem. Nem tentamos: a requisição voltaria bloqueada e gastaria tempo.
+ *
+ * A Gupy NÃO está aqui. Páginas públicas dela são legíveis — a importação de
+ * vagas (`job-fetch`) faz isso e funciona. O que fica fora de alcance é o
+ * *perfil do candidato*, que vive dentro do portal da empresa
+ * (`empresa.gupy.io`) atrás de login. Por isso a Gupy é tentada como qualquer
+ * página pública, e só cai no caminho manual se a leitura não trouxer nada.
+ */
+const USER_SUPPLIED_PLATFORMS: SocialPlatform[] = ['linkedin']
 
 const HOST_MAP: [RegExp, SocialPlatform][] = [
   [/(^|\.)github\.com$/i, 'github'],
@@ -233,14 +247,32 @@ export async function fetchSocialProfile(rawUrl: string): Promise<SocialProfileD
       url,
       status: 'needs_user_input',
       note:
-        platform === 'linkedin'
-          ? 'O LinkedIn não permite leitura automática. Use "Mais → Salvar como PDF" no seu perfil e envie o arquivo, ou cole o texto do seu "Sobre" e headline.'
-          : 'A Gupy não permite leitura automática. Cole o texto do seu perfil para que ele seja analisado.',
+        'O LinkedIn bloqueia leitura automática por terceiros e seus termos de uso a proíbem. ' +
+        'Use "Mais → Salvar como PDF" no seu perfil e envie o arquivo, ou cole o texto do seu ' +
+        '"Sobre" e headline.',
     }
   }
 
   if (platform === 'github') return fetchGithub(url)
-  return fetchViaReader(url, platform)
+
+  const result = await fetchViaReader(url, platform)
+
+  // Perfil de candidato na Gupy fica atrás do login do portal da empresa, então
+  // a leitura tende a devolver a página pública de vagas — ou nada. Quando não
+  // trouxer conteúdo, o caminho manual é oferecido com o motivo correto, em vez
+  // de reportar uma falha genérica de rede.
+  if (platform === 'gupy' && result.status !== 'fetched') {
+    return {
+      platform,
+      url,
+      status: 'needs_user_input',
+      note:
+        'Não foi possível ler este endereço da Gupy. O perfil do candidato costuma ficar atrás do ' +
+        'login do portal da empresa. Cole o texto do seu perfil para que ele seja analisado.',
+    }
+  }
+
+  return result
 }
 
 /**

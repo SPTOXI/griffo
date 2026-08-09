@@ -240,7 +240,14 @@ As plataformas se dividem em três níveis:
 | **A — funciona hoje** | GitHub | API pública oficial (`api.github.com`), sem chave até 60 req/h |
 | **A — funciona hoje** | Portfólio, Medium, Substack, Dev.to | Jina Reader (já em uso no `job-fetch`) |
 | **B — com ressalva** | Behance, Dribbble, Stack Overflow | Jina Reader, com rate limiting |
-| **C — não por raspagem** | LinkedIn, Gupy | Ver abaixo |
+| **C — não por raspagem** | LinkedIn | Ver abaixo |
+
+> **Correção (Sessão 9).** A Gupy estava classificada aqui junto do LinkedIn.
+> Está errado: páginas públicas da Gupy **são** legíveis — a importação de vagas
+> (`job-fetch`) faz exatamente isso e funciona em produção. O que fica fora de
+> alcance é o *perfil do candidato*, que vive dentro do portal da empresa
+> (`empresa.gupy.io`) atrás de login. A leitura passou a ser tentada, e o
+> caminho manual só aparece se ela não trouxer conteúdo.
 
 **Saída para o Nível C:** o LinkedIn tem botão nativo **Mais → Salvar como PDF** em todo perfil. O usuário baixa e sobe — exatamente o fluxo que o `resume/upload` já executa com `pdf-parse`. Perfil real e completo, com consentimento explícito, sem violar termos e sem risco de bloqueio de IP. Alternativa leve: campo para colar o texto do "Sobre" e o headline.
 
@@ -286,8 +293,8 @@ receber a vaga de emprego que o próprio usuário importou, quando existe — da
 real de mercado, com procedência clara. O que a tarefa pedia, porém, era buscar
 vagas *para os cargos que a IA sugeriu*, e isso exige uma busca de vagas, não
 um `fetch` de URL conhecida: o `job-fetch` raspa um endereço que já se tem em
-mãos. LinkedIn e Gupy bloqueiam busca automatizada, e não há API de busca
-contratada. Fechar isso é decisão de fornecedor (API paga de agregador de
+mãos. Uma página de vaga individual é legível; varrer resultados de busca por
+cargo é outra coisa, e não há API de busca contratada. Fechar isso é decisão de fornecedor (API paga de agregador de
 vagas), não de implementação.
 
 > **Ordem obrigatória:** T8 e T10 (structured outputs + remoção do fallback fabricado) **precedem** P6. Cobrar por um resultado que pode ser inventado é pior que oferecer de graça.
