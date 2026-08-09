@@ -22,8 +22,9 @@ import { parsePdfBase64 } from '@/lib/pdf-text'
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório.'),
   /**
-   * Conteúdo que o usuário forneceu para plataformas que não permitem leitura
-   * automática (LinkedIn, Gupy). Chave = URL do perfil.
+   * Conteúdo que o usuário forneceu para perfis que não puderam ser lidos —
+   * o LinkedIn sempre, e as demais plataformas quando a leitura falha.
+   * Chave = URL do perfil.
    */
   suppliedContent: z.record(z.string(), z.string().max(20000)).optional(),
   /** Texto já extraído do perfil, quando o cliente prefere colar. */

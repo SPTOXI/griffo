@@ -179,7 +179,8 @@ export function SocialAnalysisPanel({
           </Alert>
         )}
 
-        {/* Caminho manual: LinkedIn e Gupy não permitem leitura automática. */}
+        {/* Caminho manual, aberto quando nenhum perfil pôde ser lido. Os motivos
+            variam por plataforma e vêm do servidor, listados abaixo. */}
         {needsInput && (
           <div className="space-y-4 p-5 rounded-xl bg-slate-900/50 border border-amber-500/30">
             <div className="flex items-start gap-3">
@@ -187,9 +188,10 @@ export function SocialAnalysisPanel({
               <div className="space-y-1">
                 <p className="text-sm font-bold text-white">Envie o conteúdo do seu perfil</p>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  O LinkedIn e a Gupy não permitem leitura automática por terceiros. No seu perfil
-                  do LinkedIn, use <strong className="text-slate-200">Mais → Salvar como PDF</strong> e
-                  envie o arquivo aqui, ou cole o texto do seu &ldquo;Sobre&rdquo; e headline.
+                  Nenhum dos seus perfis pôde ser lido automaticamente — o motivo de cada um está
+                  abaixo. No LinkedIn, use <strong className="text-slate-200">Mais → Salvar como PDF</strong> no
+                  seu perfil e envie o arquivo aqui; nas demais plataformas, cole o texto do seu
+                  &ldquo;Sobre&rdquo; e headline.
                 </p>
               </div>
             </div>
