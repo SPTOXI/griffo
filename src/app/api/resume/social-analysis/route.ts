@@ -14,7 +14,7 @@ import {
   CREDIT_COSTS,
   type CreditReservation,
 } from '@/lib/credits'
-import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
+import { getRequestLanguage, LANGUAGE_DIRECTIVE, SOCIAL_PLATFORMS_BY_MARKET } from '@/lib/i18n/server'
 import { getRequestCountry } from '@/lib/currency'
 import { fetchAllProfiles, detectPlatform, type SocialProfileData } from '@/lib/social/fetchers'
 import { parsePdfBase64 } from '@/lib/pdf-text'
@@ -234,6 +234,8 @@ export async function POST(req: Request) {
     const systemPrompt = `${LANGUAGE_DIRECTIVE[lang]}
 
 Você é especialista em presença digital profissional e em como recrutadores e algoritmos de busca avaliam perfis.
+
+As plataformas que mais importam no mercado deste candidato são: ${SOCIAL_PLATFORMS_BY_MARKET[lang]}.
 
 Você receberá o CONTEÚDO REAL de perfis profissionais do candidato, além do currículo dele. Analise o que está efetivamente escrito em cada perfil.
 

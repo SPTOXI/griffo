@@ -27,7 +27,7 @@ export function DownloadsView() {
   const [selected, setSelected] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState<string | null>(null)
-  const [statusInfo, setStatusInfo] = useState<{ hasAnalysis: boolean; hasRewrite: boolean } | null>(null)
+  const [statusInfo, setStatusInfo] = useState<{ hasAnalysis: boolean; hasRewrite: boolean; hasSocialAnalysis: boolean } | null>(null)
 
   const planActive = (user?.plan && user.plan !== 'free') || user?.role === 'admin'
   const canDownload = true
@@ -66,6 +66,9 @@ export function DownloadsView() {
       if (r.ok && data.resume) {
         setStatusInfo({
           hasAnalysis: !!data.resume.analysisJson,
+          // O download de presença digital passou a depender da auditoria que
+          // lê os perfis, e não mais da análise de 8 dimensões.
+          hasSocialAnalysis: !!data.resume.socialAnalysisJson,
           hasRewrite: !!data.resume.rewrittenContent,
         })
       }
@@ -274,7 +277,7 @@ export function DownloadsView() {
               </Card>
 
               {/* SOCIAL / BRANDING ADVICE EXPORTS */}
-              <Card className={!statusInfo.hasAnalysis ? 'opacity-60' : ''}>
+              <Card className={!statusInfo.hasSocialAnalysis ? 'opacity-60' : ''}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
@@ -283,16 +286,16 @@ export function DownloadsView() {
                       </div>
                       <div>
                         <CardTitle className="text-base">Presença Digital</CardTitle>
-                        <CardDescription>Otimização LinkedIn & Gupy</CardDescription>
+                        <CardDescription>Auditoria dos seus perfis profissionais</CardDescription>
                       </div>
                     </div>
-                    {statusInfo.hasAnalysis && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                    {statusInfo.hasSocialAnalysis && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {!statusInfo.hasAnalysis ? (
+                  {!statusInfo.hasSocialAnalysis ? (
                     <Button variant="outline" className="w-full" onClick={() => openResume(selected, 'analysis')}>
-                      Analisar primeiro <ArrowRight className="w-4 h-4 ml-1" />
+                      Auditar perfis primeiro <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
                   ) : (
                     <>

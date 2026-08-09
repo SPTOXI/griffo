@@ -26,14 +26,6 @@ interface TargetedChange {
   suggestedText: string
 }
 
-interface SocialAdvice {
-  platform: string
-  url: string
-  headline?: string
-  aboutSummary?: string
-  tips: string[]
-}
-
 interface JobMatch {
   targetJob?: string
   matchPercentage: number
@@ -54,7 +46,6 @@ interface Analysis {
   keywords: string[]
   atsFriendly: boolean
   summary: string
-  socialAdvice?: SocialAdvice[]
 }
 
 // Ensure rawAnalysis access is also typed
@@ -426,30 +417,6 @@ export function AnalysisView() {
       (rawAnalysis.strengths?.length ? `Destaques principais do perfil: ${rawAnalysis.strengths.slice(0, 3).join('; ')}. ` : '') +
       (rawAnalysis.weaknesses?.length ? `Recomenda-se ajustar: ${rawAnalysis.weaknesses.slice(0, 3).join('; ')}.` : '')
 
-  const defaultSocialAdvice = [
-    {
-      platform: 'LinkedIn',
-      url: 'https://linkedin.com',
-      headline: 'Especialista de Carreira | Gestão de Indicadores, Processos & Alta Performance',
-      aboutSummary: 'Profissional com trajetória sólida focada em entrega de resultados, otimização de processos e eficiência operacional. Histórico comprovado na gestão de atividades estratégicas e engajamento de equipes.',
-      tips: [
-        'Insira termos técnicos e palavras-chave do seu segmento no campo Título para aparecer nas buscas de recrutadores no LinkedIn Recruiter.',
-        'Mantenha a seção "Sobre" atualizada com uma breve síntese de suas conquistas e competências fundamentais.',
-        'Solicite recomendações de antigos líderes para aumentar a relevância do seu perfil nos algoritmos.'
-      ]
-    },
-    {
-      platform: 'Gupy & Plataformas ATS',
-      url: 'https://gupy.io',
-      headline: 'Perfil Estruturado para Robôs de RH',
-      aboutSummary: 'Cadastre suas experiências com descrições objetivas, sem emojis ou formatações que dificultem o escanemento automático.',
-      tips: [
-        'Responda com atenção aos testes comportamentais para elevar a nota de compatibilidade inicial.',
-        'Mantenha a nomenclatura dos cargos alinhada às nomenclaturas padrões buscadas pelas empresas.'
-      ]
-    }
-  ]
-
   const defaultTargetedChanges = [
     {
       section: 'Resumo Profissional / Perfil',
@@ -465,10 +432,6 @@ export function AnalysisView() {
     }
   ]
 
-  const socialAdviceToDisplay = (Array.isArray(rawAnalysis.socialAdvice) && rawAnalysis.socialAdvice.length > 0)
-    ? rawAnalysis.socialAdvice
-    : defaultSocialAdvice
-
   const targetedChangesToDisplay = (Array.isArray(rawAnalysis.targetedChanges) && rawAnalysis.targetedChanges.length > 0)
     ? rawAnalysis.targetedChanges
     : defaultTargetedChanges
@@ -482,7 +445,6 @@ export function AnalysisView() {
     weaknesses: Array.isArray(rawAnalysis.weaknesses) ? rawAnalysis.weaknesses : ['Adicionar mais métricas quantificáveis (STAR/XYZ)'],
     recommendations: Array.isArray(rawAnalysis.recommendations) ? rawAnalysis.recommendations : ['Destacar conquistas numéricas'],
     keywords: Array.isArray(rawAnalysis.keywords) ? rawAnalysis.keywords : [],
-    socialAdvice: socialAdviceToDisplay,
     targetedChanges: targetedChangesToDisplay,
   }
 
@@ -530,7 +492,7 @@ export function AnalysisView() {
         >
           <Share2 className="w-3.5 h-3.5" /> 🌐 Mídias & Redes Sociais
           <Badge className="bg-violet-200 text-violet-900 border-0 text-[10px] px-1.5 py-0 h-4 font-mono font-bold">
-            {a.socialAdvice?.length || 0}
+            {resume.socialAnalysis?.profiles?.length || 0}
           </Badge>
         </button>
         <button
@@ -776,144 +738,6 @@ export function AnalysisView() {
           initialAnalysis={resume.socialAnalysis || null}
           socialLinks={resume.socialLinks || {}}
         />
-      )}
-
-      {/* SOCIAL PRESENCE & ADVICE (Destaque em Redes Sociais) */}
-      {(activeTab === 'all' || activeTab === 'social') && a.socialAdvice && a.socialAdvice.length > 0 && (
-        <Card className="border border-violet-500/30 bg-gradient-to-br from-violet-900 via-[#1A0B2E] to-[#0B0B2E] shadow-2xl relative overflow-hidden mt-8">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-500/10 blur-[80px] pointer-events-none"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 blur-[80px] pointer-events-none"></div>
-          
-          <div className="absolute top-0 right-8 bg-gradient-to-b from-amber-400 to-amber-600 text-white text-[10px] font-black tracking-widest px-3 py-1 rounded-b-lg shadow-lg uppercase z-10 flex items-center gap-1">
-            <Sparkles className="w-3 h-3" /> Griffo Premium
-          </div>
-
-          <CardHeader className="pb-4 border-b border-violet-500/20 relative z-10">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/30">
-                  <Share2 className="w-6 h-6" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl text-white font-black flex items-center gap-2 mb-1 tracking-tight">
-                    🌐 Sugestões gerais de presença digital
-                  </CardTitle>
-                  {/* Este bloco vem da análise de 8 dimensões, que NÃO visita os
-                      perfis — o conselho é derivado do currículo. A auditoria com
-                      leitura real é o card acima. Rotular a diferença evita que o
-                      usuário tome uma coisa pela outra. */}
-                  <CardDescription className="text-xs text-violet-200/70 font-medium max-w-xl leading-relaxed">
-                    Recomendações derivadas do seu currículo, sem consultar os perfis. Para uma
-                    auditoria baseada no conteúdo real das suas páginas, use a seção acima.
-                  </CardDescription>
-                </div>
-              </div>
-
-              {/* DOWNLOAD & EXPORT SOCIAL ADVICE */}
-              <div className="flex items-center gap-2 self-start sm:self-center shrink-0 mt-2 sm:mt-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    let text = `Otimização de Presença Digital & Redes Sociais\n\n`
-                    for (const s of a.socialAdvice) {
-                      text += `[${s.platform}] ${s.url}\n`
-                      if (s.headline) text += `Título Sugerido: ${s.headline}\n`
-                      if (s.aboutSummary) text += `Texto Sobre: ${s.aboutSummary}\n`
-                      if (s.tips?.length) text += `Dicas: ${s.tips.join('; ')}\n`
-                      text += `\n`
-                    }
-                    navigator.clipboard.writeText(text)
-                    toast.success('Dicas de redes sociais copiadas para a área de clipboard!')
-                  }}
-                  className="bg-transparent border-violet-500/30 text-violet-300 hover:bg-violet-500/10 hover:text-white text-xs font-bold transition-all"
-                >
-                  Copiar Hacks
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openResume(resume.id, 'downloads')}
-                  className="bg-violet-600 border-none text-white hover:bg-violet-500 text-xs font-bold shadow-lg shadow-violet-600/20"
-                >
-                  <Download className="w-3.5 h-3.5 mr-1" /> Baixar PDF
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-6 relative z-10">
-            {a.socialAdvice.map((item, idx) => (
-              <div key={idx} className="p-5 rounded-xl bg-slate-900/40 border border-violet-500/20 backdrop-blur-md space-y-4">
-                <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-violet-500 text-white font-black tracking-wider uppercase px-3 py-1 shadow-md">{item.platform}</Badge>
-                    <span className="text-xs text-slate-400 font-mono truncate max-w-xs">{item.url}</span>
-                  </div>
-                </div>
-
-                {item.headline && (
-                  <div className="bg-black/20 p-4 rounded-xl border border-white/5">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-violet-400">
-                        💡 Título Estratégico (SEO)
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-[10px] px-2 text-violet-300 hover:bg-white/5 hover:text-white font-bold"
-                        onClick={() => {
-                          navigator.clipboard.writeText(item.headline || '')
-                          toast.success('Título copiado!')
-                        }}
-                      >
-                        Copiar
-                      </Button>
-                    </div>
-                    <p className="text-sm font-bold text-white leading-relaxed">{item.headline}</p>
-                  </div>
-                )}
-
-                {item.aboutSummary && (
-                  <div className="bg-black/20 p-4 rounded-xl border border-white/5">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">
-                        📝 Bio Otimizada / Algoritmo
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-[10px] px-2 text-blue-300 hover:bg-white/5 hover:text-white font-bold"
-                        onClick={() => {
-                          navigator.clipboard.writeText(item.aboutSummary || '')
-                          toast.success('Texto copiado!')
-                        }}
-                      >
-                        Copiar
-                      </Button>
-                    </div>
-                    <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">{item.aboutSummary}</p>
-                  </div>
-                )}
-
-                {item.tips && item.tips.length > 0 && (
-                  <div className="pt-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
-                      🚀 Hacks de Crescimento
-                    </p>
-                    <ul className="space-y-2 text-xs text-slate-300">
-                      {item.tips.map((tip, tIdx) => (
-                        <li key={tIdx} className="flex items-start gap-2 bg-white/5 p-2 rounded-lg border border-white/5">
-                          <span className="text-amber-400 font-bold shrink-0 mt-0.5"><Sparkles className="w-3 h-3" /></span>
-                          <span className="leading-snug">{tip}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
       )}
 
       {/* TARGET JOB MATCHING (FASE 1 - NOVO PAINEL DE COMPATIBILIDADE) */}

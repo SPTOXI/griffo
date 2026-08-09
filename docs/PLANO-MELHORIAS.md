@@ -257,14 +257,19 @@ LinkedIn e de colar texto — este só aparece quando o servidor responde que n�
 conseguiu ler nada —, e exibição do resultado com selo por perfil distinguindo
 **"Perfil lido"** de **"Não lido — dica geral"**.
 
-**Pendência de produto: o `socialAdvice` da análise principal continua sendo
-gerado sem visitar perfil nenhum.** Agora que existe a auditoria real, ele
-virou redundante e potencialmente confuso. Como paliativo, o card antigo foi
-rotulado de forma honesta ("Recomendações derivadas do seu currículo, sem
-consultar os perfis"), mas a decisão de removê-lo é comercial, não técnica:
-hoje ele vai junto da análise de 20 créditos, enquanto a auditoria real custa
-outros 20. Tirá-lo transforma algo incluído em algo cobrado à parte — decisão
-do dono do produto.
+**O `socialAdvice` da análise principal foi removido** por decisão do dono do
+produto. Ele era gerado sem visitar perfil nenhum, e a análise de 8 dimensões
+deixou de produzi-lo — o campo saiu do JSON Schema, do prompt e do exemplo, e
+os links de perfil não são mais enviados àquela rota, já que nenhuma parte da
+resposta os usava.
+
+Junto saiu um `defaultSocialAdvice` codificado no cliente: duas entradas de
+conselho inteiramente inventadas, com URL falsa do LinkedIn, exibidas sempre
+que a análise voltasse sem o campo. Eram indistinguíveis de conteúdo real para
+o usuário.
+
+O download de presença digital (`social_advice_txt`/`_md`) passou a ler
+`socialAnalysisJson` e carrega, por perfil, se ele foi lido ou não.
 
 **Custo:** +2.000–4.000 tokens de entrada ≈ R$ 0,05. **Receita:** 20 créditos ≈ R$ 4,95.
 

@@ -14,7 +14,7 @@ import {
   CREDIT_COSTS,
   type CreditReservation,
 } from '@/lib/credits'
-import { getRequestLanguage, LANGUAGE_DIRECTIVE, ATS_BY_MARKET, SOCIAL_PLATFORMS_BY_MARKET } from '@/lib/i18n/server'
+import { getRequestLanguage, LANGUAGE_DIRECTIVE, ATS_BY_MARKET } from '@/lib/i18n/server'
 import { getRequestCountry } from '@/lib/currency'
 
 const schema = z.object({
@@ -52,7 +52,6 @@ const ANALYSIS_JSON_SCHEMA = {
     'weaknesses',
     'recommendations',
     'keywords',
-    'socialAdvice',
   ],
   properties: {
     summary: str,
@@ -109,21 +108,6 @@ const ANALYSIS_JSON_SCHEMA = {
     weaknesses: strArray,
     recommendations: strArray,
     keywords: strArray,
-    socialAdvice: {
-      type: 'array',
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['platform', 'url', 'headline', 'aboutSummary', 'tips'],
-        properties: {
-          platform: str,
-          url: str,
-          headline: str,
-          aboutSummary: str,
-          tips: strArray,
-        },
-      },
-    },
   },
 } as const
 
@@ -214,24 +198,12 @@ export async function POST(req: Request) {
 
     const lang = getRequestLanguage(req)
     const atsList = ATS_BY_MARKET[lang]
-    const socialPlatforms = SOCIAL_PLATFORMS_BY_MARKET[lang]
 
-    // Collect all social media links (from resume upload and user profile)
-    let combinedSocialLinks: Record<string, string> = {}
-    if (user.socialLinks) {
-      try {
-        combinedSocialLinks = { ...combinedSocialLinks, ...JSON.parse(user.socialLinks) }
-      } catch {}
-    }
-    if (resume.socialLinksJson) {
-      try {
-        combinedSocialLinks = { ...combinedSocialLinks, ...JSON.parse(resume.socialLinksJson) }
-      } catch {}
-    }
-
-    const socialLinksText = Object.keys(combinedSocialLinks).length > 0
-      ? `\n\nREDES SOCIAIS E PERFIS PROFISSIONAIS CADASTRADOS:\n${JSON.stringify(combinedSocialLinks, null, 2)}`
-      : `\n\n(Nenhum link de rede social cadastrado previamente pelo usuário. Forneça recomendações gerais estratégicas para ${socialPlatforms}).`
+    // Os links de perfil não são mais enviados nesta rota. Ela produzia
+    // conselho de presença digital a partir apenas da URL, sem abrir nada — o
+    // que é atribuição da rota `social-analysis`, que lê o conteúdo real.
+    // Mandar os links para cá agora seria pagar tokens por contexto que
+    // nenhuma parte da resposta usa.
 
     const SYSTEM_ANALYZE_PROMPT = `${LANGUAGE_DIRECTIVE[lang]}
 
@@ -240,8 +212,6 @@ Você é um avaliador executivo sênior de currículos, especialista mundial em 
 Sua tarefa é realizar uma ANÁLISE DE ALTA PROFUNDIDADE TÉCNICA E JUSTIFICADA do currículo. Você NÃO deve ser genérico. Você deve apontar EXATAMENTE onde estão as falhas, POR QUE elas prejudicam o candidato e COMO corrigi-las.
 
 REGRAS DE PRESENÇA DIGITAL & REDES SOCIAIS (SE FORNECIDAS):
-Se o candidato informou perfis profissionais (${socialPlatforms}, Dribbble, StackOverflow, Kaggle, Medium, Substack), gere no campo "socialAdvice" orientações práticas de otimização para cada perfil: Título/Headline otimizado para algoritmos de recrutamento, seção "Sobre" com palavras-chave de busca, e dicas de SEO/engajamento para cada plataforma.
-Se nenhum perfil foi informado, gere recomendações estratégicas gerais para ${socialPlatforms} no campo "socialAdvice".
 
 Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seguinte esquema estrito.
 NÃO calcule nota geral: ela é derivada das 8 dimensões pelo sistema.
@@ -317,19 +287,7 @@ NÃO calcule nota geral: ela é derivada das 8 dimensões pelo sistema.
   "strengths": ["Lista de 3 a 5 pontos fortes marcantes com justificativa"],
   "weaknesses": ["Lista de 3 a 5 vulnerabilidades identificadas com impacto na triagem"],
   "recommendations": ["Plano de ação prioritário com passos claros para o candidato"],
-  "keywords": ["Lista de 10 a 15 palavras-chave estratégicas cruciais para o segmento"],
-  "socialAdvice": [
-    {
-      "platform": "Nome da Plataforma (ex: ${socialPlatforms})",
-      "url": "URL informada ou 'Geral/Plataformas de Mercado'",
-      "headline": "Título executivo altamente otimizado para o algoritmo da plataforma e atração de recrutadores",
-      "aboutSummary": "Texto persuasivo de bio/resumo otimizado com palavras-chave de busca",
-      "tips": [
-        "Dica prática 1 de SEO de perfil",
-        "Dica prática 2 de engajamento e visibilidade"
-      ]
-    }
-  ]
+  "keywords": ["Lista de 10 a 15 palavras-chave estratégicas cruciais para o segmento"]
 }`
 
     const jobText = (resume.targetJob || resume.targetJobDescription)
@@ -342,7 +300,7 @@ NÃO calcule nota geral: ela é derivada das 8 dimensões pelo sistema.
       userId: user.id,
       userCountry: getRequestCountry(req),
       systemPrompt: SYSTEM_ANALYZE_PROMPT,
-      userPrompt: `Realize a análise preditiva completa e detalhada do seguinte currículo, mídias sociais e aderência à vaga alvo:\n\nCONTEÚDO DO CURRÍCULO:\n${resume.originalContent.slice(0, 15000)}${socialLinksText}${jobText}`,
+      userPrompt: `Realize a análise preditiva completa e detalhada do seguinte currículo e da aderência à vaga alvo:\n\nCONTEÚDO DO CURRÍCULO:\n${resume.originalContent.slice(0, 15000)}${jobText}`,
       maxTokens: 3800,
       jsonSchema: ANALYSIS_JSON_SCHEMA as unknown as Record<string, unknown>,
     })
