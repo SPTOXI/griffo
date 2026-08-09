@@ -7,7 +7,9 @@ import {
   getProvidersWithActiveKeys,
   INITIAL_TASK_ROUTING,
 } from './registry'
+import { after } from 'next/server'
 import { auditQualityOfAiResult } from '../agents/quality-agent'
+import { judgeAiResult, shouldJudge } from '../agents/quality-judge'
 import { filterProvidersByResidency, isEuropeanUser } from '../data-residency'
 
 // As rotas que chamam este roteador declaram maxDuration = 60. Se o orçamento
@@ -23,20 +25,28 @@ const TASK_DEADLINE_MS = 45_000
 
 export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   const taskStartTime = Date.now()
-  // Determine primary provider for task
-  const primaryProviderId = INITIAL_TASK_ROUTING[req.taskType] || 'kimi'
+  // Entrada com documento só existe no Claude na cadeia atual: um PDF enviado
+  // ao endpoint compatível com OpenAI seria descartado silenciosamente, e o
+  // modelo responderia sobre um prompt sem o anexo. A escolha é feita aqui, e
+  // não depois de montar a lista, para que `primaryModel` no AiLog registre o
+  // modelo que de fato podia ser usado.
+  const primaryProviderId: ProviderId = req.pdfBase64
+    ? 'claude'
+    : INITIAL_TASK_ROUTING[req.taskType] || 'kimi'
   const primaryRuntime = await getProviderRuntimeConfig(primaryProviderId)
 
   // 1. Collect all candidate providers to try
-  const allCandidates: ProviderId[] = [
-    primaryProviderId,
-    ...FALLBACK_CHAIN[primaryProviderId].filter((id) => id !== primaryProviderId),
-  ]
+  const allCandidates: ProviderId[] = req.pdfBase64
+    ? ['claude']
+    : [primaryProviderId, ...FALLBACK_CHAIN[primaryProviderId].filter((id) => id !== primaryProviderId)]
 
   // 2. Provedores com chave cadastrada que não estejam na cadeia padrão.
   // Lê do mesmo cache de `getProviderRuntimeConfig`, sem consulta adicional.
-  for (const pId of await getProvidersWithActiveKeys()) {
-    if (!allCandidates.includes(pId)) allCandidates.push(pId)
+  // Não se aplica com documento anexado, pela mesma razão acima.
+  if (!req.pdfBase64) {
+    for (const pId of await getProvidersWithActiveKeys()) {
+      if (!allCandidates.includes(pId)) allCandidates.push(pId)
+    }
   }
 
   // 3. Residência de dados: currículo de residente na UE não pode ir para
@@ -102,7 +112,20 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
             model: runtime.model || 'claude-sonnet-5',
             max_tokens: req.maxTokens ?? 3500,
             system: req.systemPrompt,
-            messages: [{ role: 'user', content: req.userPrompt }],
+            messages: [
+              {
+                role: 'user',
+                content: req.pdfBase64
+                  ? [
+                      {
+                        type: 'document',
+                        source: { type: 'base64', media_type: 'application/pdf', data: req.pdfBase64 },
+                      },
+                      { type: 'text', text: req.userPrompt },
+                    ]
+                  : req.userPrompt,
+              },
+            ],
             // Structured outputs: a API restringe a geração ao schema, então a
             // resposta é sempre JSON válido no formato pedido. Elimina a classe
             // inteira de "falha de parse" que antes era mascarada com dados
@@ -184,7 +207,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
 
       // Log telemetry in background
       try {
-        await db.aiLog.create({
+        const aiLog = await db.aiLog.create({
           data: {
             userId: req.userId || null,
             taskType: req.taskType,
@@ -198,7 +221,29 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
             status,
             failoverCount,
           },
+          select: { id: true },
         })
+
+        // Juiz de qualidade por amostragem: roda DEPOIS da resposta, via
+        // `after()`, então não entra no orçamento de 60s da requisição.
+        // Chamadas internas não são julgadas — julgar um julgamento não teria
+        // fim. Ver agents/quality-judge.ts.
+        if (!req.internal && shouldJudge(req.taskType)) {
+          try {
+            after(() =>
+              judgeAiResult({
+                aiLogId: aiLog.id,
+                taskType: req.taskType,
+                content,
+                sourceExcerpt: req.userPrompt,
+              })
+            )
+          } catch (afterErr) {
+            // `after()` exige contexto de requisição. Se este roteador for
+            // chamado de fora de uma rota, o julgamento simplesmente não ocorre.
+            console.warn('[AI Router] Julgamento de qualidade não agendado:', afterErr)
+          }
+        }
 
         if (failoverCount > 0) {
           await db.auditLog.create({

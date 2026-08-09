@@ -10,6 +10,9 @@ export const CREDIT_COSTS = {
   professional_summary: 5,
   section_improvement: 5,
   rewrite_experience: 10,
+  // Mesmo patamar da reescrita: as duas produzem um documento que o usuário
+  // leva embora, com custo de IA equivalente.
+  career_orientation: 10,
   cover_letter: 15,
   social_optimization: 20,
   full_analysis: 20,

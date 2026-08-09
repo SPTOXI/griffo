@@ -11,8 +11,8 @@ import 'server-only'
  * A biblioteca `pdf-parse` mudou de formato entre versões (função direta numa,
  * classe `PDFParse` noutra); as duas formas são tratadas.
  *
- * Limitação conhecida: PDF sem camada de texto (escaneado) devolve string
- * vazia. Detectar isso e rotear para um modelo com visão é P8, ainda pendente.
+ * PDF sem camada de texto (escaneado) devolve string vazia aqui — é o caso que
+ * `extractPdfWithVision` cobre.
  */
 export async function parsePdfBuffer(buffer: Buffer): Promise<string> {
   try {
@@ -72,4 +72,33 @@ export async function parsePdfBase64(base64: string): Promise<PdfDecodeResult> {
   }
 
   return { text }
+}
+
+/**
+ * Extrai o texto de um PDF sem camada de texto, enviando o arquivo ao modelo.
+ *
+ * O "Agente de Economia & OCR" do projeto é regex: limpa e normaliza texto que
+ * já existe, mas não faz OCR. Um currículo escaneado — foto ou digitalização —
+ * chegava aqui vazio, e o upload respondia "conteúdo muito curto", que descreve
+ * o sintoma e esconde a causa: o usuário reenviava o mesmo arquivo sem entender.
+ *
+ * Só é acionada quando a extração local falha, porque custa uma chamada de IA e
+ * a esmagadora maioria dos PDFs tem camada de texto.
+ */
+export async function extractPdfWithVision(base64: string): Promise<string> {
+  const { executeAiTask } = await import('./ai-router/router')
+
+  const result = await executeAiTask({
+    taskType: 'ocr_extraction',
+    internal: true,
+    pdfBase64: base64.replace(/^data:application\/pdf;base64,/, '').trim(),
+    systemPrompt:
+      'Você transcreve currículos. Devolva TODO o texto do documento, preservando a ordem e a ' +
+      'separação entre seções. Não resuma, não comente, não reescreva: transcreva. ' +
+      'Se o documento não for um currículo, transcreva mesmo assim.',
+    userPrompt: 'Transcreva integralmente o texto deste documento.',
+    maxTokens: 8000,
+  })
+
+  return result.content.trim()
 }

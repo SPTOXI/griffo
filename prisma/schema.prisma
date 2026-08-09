@@ -214,6 +214,13 @@ model AiLog {
   errorMessage   String?
   createdAt      DateTime @default(now())
 
+  /// Veredito do juiz de qualidade (P10). Preenchido de forma assíncrona e
+  /// amostrada, DEPOIS da resposta ao usuário — nunca no caminho dela.
+  /// Nulo significa "não sorteado", não "reprovado".
+  qualityScore   Float?
+  qualityNotes   String?
+  qualityJudgedAt DateTime?
+
   @@index([createdAt])
   @@index([userId])
   @@index([provider, createdAt])

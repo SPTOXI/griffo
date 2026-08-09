@@ -147,7 +147,7 @@ existentes só passam a ser cifrados quando forem regravados.
 | F12 | Cache com TTL da configuração de provedores + remover a chamada duplicada | `registry.ts:88`, `router.ts:16,46` | **feito** (Sessão 7) |
 | G10 | Reduzir consultas ao banco por análise (13 → ~7) | `router.ts`, `registry.ts` | **feito** (Sessão 7) |
 
-> ### ⚠️ Pré-requisito das Sessões 5 a 8 — aplicar o schema
+> ### ⚠️ Pré-requisito das Sessões 5 a 9 — aplicar o schema
 >
 > O projeto **não usa `prisma migrate`**: não existe `prisma/migrations/`, e o
 > build da Vercel roda apenas `prisma generate && next build`. Nada aplica
@@ -156,7 +156,8 @@ existentes só passam a ser cifrados quando forem regravados.
 > A Sessão 5 adiciona a tabela `Session` e duas colunas em `CreditTransaction`;
 > a Sessão 6 acrescenta o índice `(userId, status)` nessa mesma tabela; a
 > Sessão 7 acrescenta 11 índices e dois campos de consentimento em `User`; a
-> Sessão 8 acrescenta `Resume.socialAnalysisJson`.
+> Sessão 8 acrescenta `Resume.socialAnalysisJson`; a Sessão 9 acrescenta três
+> campos de qualidade em `AiLog`.
 > Antes ou logo depois do deploy, rode contra o banco de produção:
 >
 > ```
@@ -275,10 +276,19 @@ O download de presença digital (`social_advice_txt`/`_md`) passou a ler
 
 ### 5.2 Orientação vocacional cobrada
 
-| ID | Tarefa |
-|---|---|
-| P6 | Ligar `deductCredits` — sugestão de 10 créditos, coerente com `rewrite_experience` |
-| P7 | Enriquecer com dados reais de mercado (reusar `job-fetch` para os cargos sugeridos) |
+| ID | Tarefa | Situação |
+|---|---|---|
+| P6 | Ligar a cobrança — 10 créditos, coerente com `rewrite_experience` | **feito** (Sessão 9) |
+| P7 | Enriquecer com dados reais de mercado (reusar `job-fetch` para os cargos sugeridos) | **parcial** (Sessão 9) |
+
+**P7 ficou parcial porque falta uma fonte, não código.** A orientação passou a
+receber a vaga de emprego que o próprio usuário importou, quando existe — dado
+real de mercado, com procedência clara. O que a tarefa pedia, porém, era buscar
+vagas *para os cargos que a IA sugeriu*, e isso exige uma busca de vagas, não
+um `fetch` de URL conhecida: o `job-fetch` raspa um endereço que já se tem em
+mãos. LinkedIn e Gupy bloqueiam busca automatizada, e não há API de busca
+contratada. Fechar isso é decisão de fornecedor (API paga de agregador de
+vagas), não de implementação.
 
 > **Ordem obrigatória:** T8 e T10 (structured outputs + remoção do fallback fabricado) **precedem** P6. Cobrar por um resultado que pode ser inventado é pior que oferecer de graça.
 
@@ -286,19 +296,32 @@ O download de presença digital (`social_advice_txt`/`_md`) passou a ler
 
 O "Agente 4 — Economia & OCR" é regex; **não há OCR**. Um PDF escaneado sem camada de texto retorna vazio e o upload rejeita com "conteúdo muito curto" — o usuário não entende o motivo.
 
-| ID | Tarefa |
-|---|---|
-| P8 | Detectar PDF sem camada de texto e rotear para modelo com visão (Claude ou Gemini) |
-| P9 | Mensagem de erro específica quando a extração falha, em vez de "conteúdo muito curto" |
+| ID | Tarefa | Situação |
+|---|---|---|
+| P8 | Detectar PDF sem camada de texto e rotear para modelo com visão (Claude ou Gemini) | **feito** (Sessão 9) |
+| P9 | Mensagem de erro específica quando a extração falha, em vez de "conteúdo muito curto" | **feito** (Sessão 9) |
+
+Só Claude, não Gemini: o Gemini está na cadeia pelo endpoint compatível com
+OpenAI, que não aceita documento. Um PDF enviado por ali seria descartado em
+silêncio e o modelo responderia sobre um prompt sem o anexo — pior que falhar.
 
 > É aqui que IA nova agrega valor ao usuário final — mais do que dar inteligência a agentes de monitoramento.
 
 ### 5.4 Agentes com inteligência onde ela agrega
 
-| ID | Tarefa | Observação |
-|---|---|---|
-| P10 | Agente de Qualidade como juiz LLM **assíncrono e amostrado** (~10%) | **Não colocar no caminho da requisição** — agravaria o timeout |
-| P11 | Análise periódica do `AiLog` para correlação de padrões de falha | Batch; DeepSeek é adequado |
+| ID | Tarefa | Observação | Situação |
+|---|---|---|---|
+| P10 | Agente de Qualidade como juiz LLM **assíncrono e amostrado** (~10%) | **Não colocar no caminho da requisição** — agravaria o timeout | **feito** (Sessão 9) |
+| P11 | Análise periódica do `AiLog` para correlação de padrões de falha | Batch; DeepSeek é adequado | **feito** (Sessão 9) |
+
+O juiz roda via `after()` do Next, que executa depois da resposta enviada — não
+soma nada à latência percebida. O agente determinístico continua no caminho da
+requisição, porque é ele que dispara o failover; o juiz LLM avalia o que o
+determinístico não sabe ver (se o texto é específico ao currículo ou serviria
+para qualquer um) e nunca altera o que o usuário já recebeu.
+
+Chamadas internas carregam `internal: true` e não são amostradas — sem isso,
+julgar um resultado dispararia o julgamento do julgamento, sem fim.
 
 Onde **não** vale: o Agente 2 (diagnóstico) faz checagem determinística — um LLM narrando o resultado adiciona prosa, não diagnóstico. O Agente 4 (limpeza) é regex, que é a ferramenta certa.
 

@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { cleanAndOptimizeTextForAi } from '@/lib/ocr/extractor'
-import { parsePdfBuffer } from '@/lib/pdf-text'
+import { parsePdfBuffer, extractPdfWithVision } from '@/lib/pdf-text'
 
 const schema = z.object({
   content: z.string().nullable().optional().default(''),
@@ -43,6 +43,8 @@ export async function POST(req: Request) {
 
     const { format, targetJob, targetJobDescription, socialLinks, socialConsent, pdfBase64 } = parsed.data
     let content = parsed.data.content
+    let pdfWasScanned = false
+    let visionUsed = false
 
     // Server-side PDF extraction if pdfBase64 is supplied
     if (pdfBase64) {
@@ -58,8 +60,23 @@ export async function POST(req: Request) {
       const cleanBase64 = pdfBase64.replace(/^data:application\/pdf;base64,/, '')
       const buffer = Buffer.from(cleanBase64, 'base64')
       const extractedText = await parsePdfBuffer(buffer)
+
       if (extractedText && extractedText.trim().length >= 30) {
         content = extractedText.trim()
+      } else if (!content || content.trim().length < 50) {
+        // PDF sem camada de texto — digitalização ou foto. A extração local
+        // devolve vazio, e antes o upload morria com "conteúdo muito curto",
+        // que descreve o sintoma e esconde a causa.
+        pdfWasScanned = true
+        try {
+          const transcribed = await extractPdfWithVision(cleanBase64)
+          if (transcribed.length >= 50) {
+            content = transcribed
+            visionUsed = true
+          }
+        } catch (visionErr: any) {
+          console.error('Vision extraction failed:', visionErr?.message || visionErr)
+        }
       }
     }
 
@@ -68,6 +85,20 @@ export async function POST(req: Request) {
     }
 
     if (!content || content.trim().length < 50) {
+      // Mensagem por causa, não por sintoma.
+      if (pdfWasScanned) {
+        return NextResponse.json(
+          {
+            error:
+              'Este PDF não tem texto selecionável — parece ser uma digitalização ou foto — e a ' +
+              'leitura automática não conseguiu recuperá-lo. Envie o arquivo original em texto, ' +
+              'exporte novamente do editor onde o currículo foi escrito, ou cole o conteúdo no ' +
+              'campo de texto.',
+            code: 'PDF_WITHOUT_TEXT_LAYER',
+          },
+          { status: 400 }
+        )
+      }
       return NextResponse.json(
         { error: 'Conteúdo do currículo muito curto. Forneça pelo menos 50 caracteres de texto.' },
         { status: 400 }
@@ -91,7 +122,7 @@ export async function POST(req: Request) {
         userId: user.id,
         resumeId: resume.id,
         action: 'upload',
-        meta: JSON.stringify({ format, length: content.length, socialConsent }),
+        meta: JSON.stringify({ format, length: content.length, socialConsent, visionUsed }),
       },
     })
 

@@ -17,6 +17,7 @@ import {
 import { UploadProgressModal } from './upload-progress-modal'
 import { SocialAnalysisPanel, type SocialAnalysis } from './social-analysis-panel'
 import { internalFetch } from '@/lib/internal-fetch'
+import { CREDIT_COSTS } from '@/lib/credits-catalog'
 import { toast } from 'sonner'
 
 interface TargetedChange {
@@ -65,6 +66,8 @@ interface Resume {
   socialLinks?: Record<string, string>
 }
 
+const ORIENTATION_COST = CREDIT_COSTS.career_orientation
+
 export function AnalysisView() {
   const { activeResumeId, setView, openResume } = useNav()
   const [resume, setResume] = useState<Resume | null>(null)
@@ -89,9 +92,15 @@ export function AnalysisView() {
       const data = await res.json()
       if (res.ok && data.careerOrientation) {
         setCareerOrientation(data.careerOrientation)
+        // Esta ação passou a cobrar sem trocar de tela; sem o aviso, o saldo no
+        // cabeçalho ficaria desatualizado.
+        window.dispatchEvent(new Event('griffo:credits-changed'))
         toast.success('Diagnóstico de Orientação Vocacional gerado com sucesso!')
+      } else if (data.code === 'INSUFFICIENT_CREDITS') {
+        toast.error(`${data.error} São necessários ${ORIENTATION_COST} créditos.`)
       } else {
         toast.error(data.error || 'Erro ao gerar orientação de carreira.')
+        if (data.refunded) window.dispatchEvent(new Event('griffo:credits-changed'))
       }
     } catch {
       toast.error('Falha de conexão ao gerar orientação vocacional.')
@@ -928,7 +937,8 @@ export function AnalysisView() {
                   Indeciso de qual vaga concorrer? Orientação Vocacional de Carreira
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-600">
-                  Nosso Agente de Carreira analisa seu perfil e descobre as 3 áreas/cargos do mercado em que você tem maior chance imediata de contratação.
+                  Nosso Agente de Carreira analisa seu perfil e descobre as 3 áreas/cargos do mercado em que você
+                  tem maior chance imediata de contratação. Consome {ORIENTATION_COST} créditos.
                 </CardDescription>
               </div>
             </div>
@@ -938,7 +948,7 @@ export function AnalysisView() {
               className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shrink-0 self-start sm:self-auto"
             >
               {orienting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1.5" />}
-              {careerOrientation ? 'Atualizar Diagnóstico' : 'Descobrir Minha Área Ideal'}
+              {careerOrientation ? 'Atualizar Diagnóstico' : 'Descobrir Minha Área Ideal'} ({ORIENTATION_COST} cr)
             </Button>
           </div>
         </CardHeader>

@@ -39,6 +39,14 @@ export interface AiTaskRequest {
   /// Código de país do usuário (ISO-2), vindo da borda. Define quais provedores
   /// podem receber o dado — ver lib/data-residency.ts.
   userCountry?: string | null
+  /// Chamada de infraestrutura (juiz de qualidade, análise de logs), não pedida
+  /// por um usuário. Não é amostrada pelo juiz — sem isto, julgar um resultado
+  /// dispararia o julgamento do próprio julgamento, sem fim.
+  internal?: boolean
+  /// PDF em base64 enviado ao modelo como documento, para currículos
+  /// escaneados sem camada de texto. Restringe a chamada ao Claude — é o único
+  /// provedor da cadeia com entrada nativa de documento.
+  pdfBase64?: string
 }
 
 export interface AiTaskResult {

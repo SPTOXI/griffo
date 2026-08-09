@@ -8,6 +8,13 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
 import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
+import {
+  reserveCredits,
+  settleReservation,
+  releaseReservation,
+  CREDIT_COSTS,
+  type CreditReservation,
+} from '@/lib/credits'
 import { getRequestCountry } from '@/lib/currency'
 
 const schema = z.object({
@@ -74,6 +81,9 @@ function parseOrientation(rawText: string): any {
  * Avalia o currículo de candidatos indecisos e indica as 3 áreas/cargos ideais e o plano de qualificação.
  */
 export async function POST(req: Request) {
+  let reservation: CreditReservation | null = null
+  const costCredits = CREDIT_COSTS.career_orientation
+
   try {
     const user = await getCurrentUser()
     if (!user) {
@@ -94,7 +104,39 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Currículo não encontrado.' }, { status: 404 })
     }
 
+    // Passou a cobrar. O pré-requisito era a Sessão 2: enquanto a rota podia
+    // devolver três áreas com percentuais fixos inventados (88%, 84%, 80%),
+    // cobrar por isso seria pior que oferecer de graça.
+    const reservationResult = await reserveCredits(
+      user.id,
+      costCredits,
+      `Diagnóstico de orientação vocacional (${costCredits} cr)`
+    )
+
+    if (!reservationResult.success) {
+      return NextResponse.json(
+        {
+          error: reservationResult.error || 'Seu saldo de créditos é insuficiente.',
+          code: 'INSUFFICIENT_CREDITS',
+          requiredCredits: costCredits,
+          currentCredits: reservationResult.currentBalance,
+        },
+        { status: 402 }
+      )
+    }
+
+    reservation = reservationResult.reservation
+
     const lang = getRequestLanguage(req)
+
+    // Vaga real que o usuário importou, quando houver. É o único dado de
+    // mercado concreto disponível hoje — melhor do que raciocinar só sobre o
+    // currículo, e honesto quanto à origem.
+    const marketContext = resume.targetJobDescription
+      ? `\n\nVAGA DE EMPREGO REAL QUE O CANDIDATO IMPORTOU (use as exigências dela como referência concreta do mercado, citando-as quando pertinente):\n${resume.targetJobDescription.slice(0, 4000)}`
+      : resume.targetJob
+        ? `\n\nCARGO ALVO INFORMADO PELO CANDIDATO: ${resume.targetJob}`
+        : ''
 
     const systemPrompt = `${LANGUAGE_DIRECTIVE[lang]}
 
@@ -120,7 +162,7 @@ Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto 
       userId: user.id,
       userCountry: getRequestCountry(req),
       systemPrompt,
-      userPrompt: `Realize o Diagnóstico de Orientação Vocacional para este currículo:\n\n${resume.originalContent.slice(0, 12000)}`,
+      userPrompt: `Realize o Diagnóstico de Orientação Vocacional para este currículo:\n\n${resume.originalContent.slice(0, 12000)}${marketContext}`,
       maxTokens: 3000,
       jsonSchema: ORIENTATION_JSON_SCHEMA as unknown as Record<string, unknown>,
     })
@@ -135,9 +177,24 @@ Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto 
       },
     })
 
+    await settleReservation(reservation)
+
     return NextResponse.json({ careerOrientation: orientationData })
   } catch (e: any) {
     console.error('Error generating career orientation:', e?.diagnostic || e?.message || e)
+
+    const release = await releaseReservation(reservation, 'Falha na orientação de carreira')
+    if (release.refunded) {
+      return NextResponse.json(
+        {
+          error: `Ocorreu uma falha durante o processamento. Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente!`,
+          refunded: true,
+          currentBalance: release.currentBalance,
+        },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json({ error: 'Erro ao gerar orientação de carreira. Tente novamente.' }, { status: 500 })
   }
 }
