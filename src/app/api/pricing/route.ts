@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { computePricing, costPerCycleUsd, TOKEN_COST } from '@/lib/llm'
+import { FX_TO_BRL } from '@/lib/currency'
 
 export async function GET() {
   const plans = computePricing()
-  const brlUsd = 5.4
+  const brlUsd = FX_TO_BRL.usd
   return NextResponse.json({
     plans,
     costPerCycleUsd: costPerCycleUsd(),

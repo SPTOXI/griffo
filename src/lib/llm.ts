@@ -2,6 +2,8 @@ import OpenAI from 'openai'
 import { db } from './db'
 import { executeAiTask } from './ai-router/router'
 import { tryDecryptSecret } from './crypto'
+import { MODEL_PRICING, PROVIDER_CONFIGS } from './ai-router/registry'
+import { FX_TO_BRL } from './currency'
 
 export async function getLlmConfig() {
   let apiKey = process.env.MOONSHOT_API_KEY || process.env.LLM_API_KEY || ''
@@ -44,11 +46,14 @@ export async function getClient(): Promise<{ client: OpenAI; model: string }> {
   }
 }
 
-// Cost estimation per token (USD)
-export const TOKEN_COST = {
-  inputPer1k: 0.003, // $3.00 / 1M tokens
-  outputPer1k: 0.015, // $15.00 / 1M tokens
-}
+// Custo por token (USD), derivado do modelo que de fato roda a análise e a
+// reescrita — ambas roteadas para `claude` em INITIAL_TASK_ROUTING.
+//
+// Antes era uma cópia literal dos números, mantida à mão. Uma tabela duplicada
+// só fica correta por coincidência: quando o preço do Opus 5 estava errado no
+// registry, esta não acompanhou, e as duas divergiram sem que nada acusasse.
+export const TOKEN_COST =
+  MODEL_PRICING[PROVIDER_CONFIGS.claude.defaultModel] ?? PROVIDER_CONFIGS.claude.pricing
 
 export function costPerCycleUsd(): number {
   const analysisIn = (1800 / 1000) * TOKEN_COST.inputPer1k
@@ -59,7 +64,7 @@ export function costPerCycleUsd(): number {
 }
 
 export function computePricing() {
-  const brlRate = 5.4
+  const brlRate = FX_TO_BRL.usd
   const cycleUsd = costPerCycleUsd()
   const cycleBrl = cycleUsd * brlRate
 

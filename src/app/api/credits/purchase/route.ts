@@ -3,12 +3,14 @@ import { z } from 'zod'
 import { getCurrentUser } from '@/lib/auth'
 import { CREDIT_PACKAGES } from '@/lib/credits'
 import { getGlobalSettings } from '@/lib/settings'
+import { resolveCurrency, getRequestCountry } from '@/lib/currency'
 
 export const dynamic = 'force-dynamic'
 
+// `currency` saiu do schema de propósito: a moeda passa a ser decidida pelo
+// servidor a partir da geolocalização da borda. Ver lib/currency.ts.
 const schema = z.object({
   packageId: z.enum(['entrada', 'starter', 'carreira', 'profissional']),
-  currency: z.enum(['brl', 'usd', 'eur']).optional(),
 })
 
 export async function POST(req: Request) {
@@ -25,23 +27,18 @@ export async function POST(req: Request) {
     }
 
     const packageId = parsed.data.packageId
-    const targetCurrency = parsed.data.currency || 'brl'
     const pkg = CREDIT_PACKAGES.find((p) => p.id === packageId)
     if (!pkg) {
       return NextResponse.json({ error: 'Pacote não encontrado.' }, { status: 400 })
     }
 
-    // Determine unit amount and currency code
-    let unitAmount = Math.round(pkg.priceBrl * 100)
-    let currencyCode = 'brl'
-
-    if (targetCurrency === 'usd') {
-      unitAmount = Math.round(pkg.priceUsd * 100)
-      currencyCode = 'usd'
-    } else if (targetCurrency === 'eur') {
-      unitAmount = Math.round(pkg.priceEur * 100)
-      currencyCode = 'eur'
+    const currencyCode = resolveCurrency(req)
+    const priceByCurrency = {
+      brl: pkg.priceBrl,
+      usd: pkg.priceUsd,
+      eur: pkg.priceEur,
     }
+    const unitAmount = Math.round(priceByCurrency[currencyCode] * 100)
 
     // Load configs
     const configs = await getGlobalSettings()
@@ -83,6 +80,7 @@ export async function POST(req: Request) {
           credit_amount: pkg.credits.toString(),
           package_id: pkg.id,
           currency: currencyCode,
+          country: getRequestCountry(req) || 'unknown',
         },
       })
 

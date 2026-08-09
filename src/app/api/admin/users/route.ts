@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
+import { revokeAllUserSessions } from '@/lib/session-store'
 
 export async function GET(req: Request) {
   try {
@@ -93,6 +94,13 @@ export async function PATCH(req: Request) {
       data,
       select: { id: true, name: true, email: true, role: true, plan: true, credits: true, disabled: true },
     })
+
+    // Desabilitar já era respeitado por `getCurrentUser`, mas agora as sessões
+    // do usuário também são revogadas — o efeito passa a ser registrado e
+    // auditável, em vez de depender só da checagem em cada requisição.
+    if (disabled === true) {
+      await revokeAllUserSessions(userId)
+    }
 
     await db.auditLog.create({
       data: {

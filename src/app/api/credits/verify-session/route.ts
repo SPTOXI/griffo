@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { db as prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { getGlobalSettings } from '@/lib/settings'
+import { normalizeCurrency, toBrl } from '@/lib/currency'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,7 +52,11 @@ export async function POST(req: Request) {
     })
 
     if (!existingTx && creditAmount > 0) {
-      const totalAmountBrl = (session.amount_total || 0) / 100
+      // `amount_total` vem na moeda do checkout. Antes ia direto para
+      // `costBrl` sem conversão, então o painel somava reais com dólares e
+      // euros como se fossem a mesma unidade.
+      const paidCurrency = normalizeCurrency(session.currency)
+      const paidAmount = (session.amount_total || 0) / 100
 
       // Atomic transaction: credit user + record transaction + audit log
       const updatedUser = await prisma.$transaction(async (tx) => {
@@ -70,7 +75,9 @@ export async function POST(req: Request) {
             type: 'purchase',
             description: `Compra de ${creditAmount} créditos via Stripe Checkout (Verificação Direta)`,
             paymentRef: sessionId,
-            costBrl: totalAmountBrl,
+            currency: paidCurrency,
+            amountOriginal: paidAmount,
+            costBrl: toBrl(paidAmount, paidCurrency),
             status: 'completed',
           },
         })
@@ -79,7 +86,7 @@ export async function POST(req: Request) {
           data: {
             userId: user.id,
             action: 'stripe_direct_verify_credit',
-            meta: JSON.stringify({ sessionId, creditAmount, totalAmountBrl }),
+            meta: JSON.stringify({ sessionId, creditAmount, paidAmount, paidCurrency }),
           },
         })
 

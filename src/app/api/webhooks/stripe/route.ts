@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db as prisma } from '@/lib/db'
 import { getGlobalSettings } from '@/lib/settings'
+import { normalizeCurrency, toBrl } from '@/lib/currency'
 import { getStripe } from '@/lib/stripe'
 
 export const dynamic = 'force-dynamic'
@@ -56,7 +57,10 @@ export async function POST(req: Request) {
       })
 
       if (!existing) {
-        const totalAmountBrl = (session.amount_total || 0) / 100
+        // Mesma correção do verify-session: a moeda do checkout é registrada,
+        // o valor fica sem conversão e a conversão passa a ser da leitura.
+        const paidCurrency = normalizeCurrency(session.currency)
+        const paidAmount = (session.amount_total || 0) / 100
 
         // Atomic transaction: credit user + record transaction + audit log
         await prisma.$transaction(async (tx) => {
@@ -75,7 +79,9 @@ export async function POST(req: Request) {
               type: 'purchase',
               description: `Compra de ${creditAmount} créditos via Stripe`,
               paymentRef: sessionId,
-              costBrl: totalAmountBrl,
+              currency: paidCurrency,
+              amountOriginal: paidAmount,
+              costBrl: toBrl(paidAmount, paidCurrency),
               status: 'completed',
             },
           })
@@ -84,7 +90,7 @@ export async function POST(req: Request) {
             data: {
               userId,
               action: 'stripe_credit_purchase',
-              meta: JSON.stringify({ sessionId, creditAmount, totalAmountBrl }),
+              meta: JSON.stringify({ sessionId, creditAmount, paidAmount, paidCurrency }),
             },
           })
         })

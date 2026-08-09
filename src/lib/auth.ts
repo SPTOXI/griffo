@@ -2,6 +2,12 @@ import { scryptSync, randomBytes, timingSafeEqual, createHmac } from 'crypto'
 import { cookies } from 'next/headers'
 import { db } from './db'
 import { getSessionSecret } from './env'
+import {
+  createSessionRecord,
+  isSessionActive,
+  revokeSession,
+  type SessionMeta,
+} from './session-store'
 
 // --- Password hashing using Node's scrypt (no extra deps) ---
 const SCRYPT_KEYLEN = 64
@@ -48,11 +54,21 @@ function verify(token: string): string | null {
   return payload
 }
 
-export async function createSession(userId: string): Promise<void> {
-  const payload = JSON.stringify({ uid: userId, iat: Date.now(), exp: Date.now() + SESSION_TTL_MS })
+export async function createSession(userId: string, meta: SessionMeta = {}): Promise<void> {
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS)
+  const sid = await createSessionRecord(userId, expiresAt, meta)
+
+  // `sid` vem nulo apenas enquanto a tabela `Session` não existe; nesse caso o
+  // cookie mantém o formato antigo e vale só pela assinatura.
+  const payload = JSON.stringify({
+    ...(sid ? { sid } : {}),
+    uid: userId,
+    iat: Date.now(),
+    exp: expiresAt.getTime(),
+  })
   const token = sign(Buffer.from(payload).toString('base64url'))
   const cookieStore = await cookies()
-  
+
   // Non-persistent Session Cookie: NO maxAge, NO expires
   // This guarantees browser deletes the session cookie automatically on browser tab/window close
   cookieStore.set(SESSION_COOKIE, token, {
@@ -65,6 +81,15 @@ export async function createSession(userId: string): Promise<void> {
 
 export async function destroySession(): Promise<void> {
   const cookieStore = await cookies()
+
+  // Revoga no servidor antes de apagar o cookie: sem isso, "sair" só removia a
+  // cópia do navegador e um token capturado continuava valendo até expirar.
+  const token = cookieStore.get(SESSION_COOKIE)?.value
+  const payload = token ? readPayload(token) : null
+  if (payload?.sid) {
+    await revokeSession(payload.sid)
+  }
+
   cookieStore.set(SESSION_COOKIE, '', {
     httpOnly: true,
     sameSite: 'lax',
@@ -75,15 +100,37 @@ export async function destroySession(): Promise<void> {
   })
 }
 
+interface SessionPayload {
+  sid?: string
+  uid: string
+  exp: number
+}
+
+/** Verifica a assinatura e decodifica o conteúdo do cookie. */
+function readPayload(token: string): SessionPayload | null {
+  const payloadB64 = verify(token)
+  if (!payloadB64) return null
+  try {
+    return JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8')) as SessionPayload
+  } catch {
+    return null
+  }
+}
+
 export async function getCurrentUser() {
   try {
     const cookieStore = await cookies()
     const token = cookieStore.get(SESSION_COOKIE)?.value
     if (!token) return null
-    const payloadB64 = verify(token)
-    if (!payloadB64) return null
-    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8')) as { uid: string; exp: number }
+    const payload = readPayload(token)
+    if (!payload) return null
     if (Date.now() > payload.exp) return null
+
+    // Cookies emitidos antes desta mudança não têm `sid`. Continuam aceitos
+    // até expirarem — no máximo 2 horas — para que o deploy não deslogue todo
+    // mundo de uma vez. Depois disso todo cookie em circulação tem `sid`.
+    if (payload.sid && !(await isSessionActive(payload.sid))) return null
+
     const user = await db.user.findUnique({ where: { id: payload.uid } })
     if (!user || user.disabled) return null
     return user

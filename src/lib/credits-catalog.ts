@@ -3,6 +3,8 @@
 // without pulling the database client (and its env-var requirements) into the
 // browser bundle. Server-side credit operations live in `@/lib/credits`.
 
+import { currencyForCountry } from './currency'
+
 export const CREDIT_COSTS = {
   pdf_download: 1,
   professional_summary: 5,
@@ -92,39 +94,44 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
   },
 ]
 
+/**
+ * Preço formatado para exibição.
+ *
+ * A moeda vem de `currencyForCountry`, a MESMA função que o servidor usa para
+ * cobrar (`credits/purchase`). Antes cada lado tinha sua própria lista de
+ * países, e elas haviam divergido: um comprador na Eslováquia via preço em
+ * dólar e era cobrado em euro.
+ *
+ * O parâmetro `lang` é ignorado — a moeda depende de onde a pessoa está, não
+ * do idioma em que ela lê o site. Mantido na assinatura para não quebrar as
+ * chamadas existentes.
+ */
 export function getPackagePriceDisplay(
   pkg: CreditPackage,
   country: string = 'BR',
-  lang: string = 'pt'
+  _lang: string = 'pt'
 ): { priceFormatted: string; perCreditFormatted: string; currencySymbol: string; code: 'BRL' | 'USD' | 'EUR' } {
-  const c = (country || 'BR').toUpperCase().trim()
-
-  // Eurozone countries
-  const euroCountries = ['ES', 'PT', 'FR', 'DE', 'IT', 'NL', 'BE', 'AT', 'IE', 'FI', 'GR']
-
-  if (c === 'BR' || (lang === 'pt' && c === 'BR')) {
-    return {
-      priceFormatted: `R$ ${pkg.priceBrl.toFixed(2).replace('.', ',')}`,
-      perCreditFormatted: `R$ ${pkg.pricePerCreditBrl.toFixed(3).replace('.', ',')}`,
-      currencySymbol: 'R$',
-      code: 'BRL',
-    }
-  }
-
-  if (euroCountries.includes(c)) {
-    return {
-      priceFormatted: `€ ${pkg.priceEur.toFixed(2).replace('.', ',')}`,
-      perCreditFormatted: `€ ${pkg.pricePerCreditEur.toFixed(3).replace('.', ',')}`,
-      currencySymbol: '€',
-      code: 'EUR',
-    }
-  }
-
-  // Default USD for rest of the world (US, LATAM, Asia, UK, etc.)
-  return {
-    priceFormatted: `$ ${pkg.priceUsd.toFixed(2)}`,
-    perCreditFormatted: `$ ${pkg.pricePerCreditUsd.toFixed(3)}`,
-    currencySymbol: '$',
-    code: 'USD',
+  switch (currencyForCountry(country || 'BR')) {
+    case 'brl':
+      return {
+        priceFormatted: `R$ ${pkg.priceBrl.toFixed(2).replace('.', ',')}`,
+        perCreditFormatted: `R$ ${pkg.pricePerCreditBrl.toFixed(3).replace('.', ',')}`,
+        currencySymbol: 'R$',
+        code: 'BRL',
+      }
+    case 'eur':
+      return {
+        priceFormatted: `€ ${pkg.priceEur.toFixed(2).replace('.', ',')}`,
+        perCreditFormatted: `€ ${pkg.pricePerCreditEur.toFixed(3).replace('.', ',')}`,
+        currencySymbol: '€',
+        code: 'EUR',
+      }
+    default:
+      return {
+        priceFormatted: `$ ${pkg.priceUsd.toFixed(2)}`,
+        perCreditFormatted: `$ ${pkg.pricePerCreditUsd.toFixed(3)}`,
+        currencySymbol: '$',
+        code: 'USD',
+      }
   }
 }

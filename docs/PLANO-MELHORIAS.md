@@ -110,7 +110,7 @@ O que hoje cobra o cliente sem entregar, e o que impede vender em inglês e espa
 | E7 | Headers de segurança (CSP, HSTS, frame-ancestors, Referrer-Policy) | `next.config.ts` | **parcial** (Sessão 4) |
 | E8 | Padronizar erros: mensagem genérica ao cliente, detalhe só no log | `admin/dashboard`, `credits/purchase`, `verify-session`, `webhooks/stripe` | **feito** (Sessão 4) |
 | E9 | Remover log do e-mail do admin | `admin/dashboard/route.ts:18` | **feito** (Sessão 4) |
-| E10 | Sessões revogáveis: tabela `Session` com invalidação no logout | `schema.prisma`, `auth.ts` | pendente (Sessão 5) |
+| E10 | Sessões revogáveis: tabela `Session` com invalidação no logout | `schema.prisma`, `auth.ts` | **feito** (Sessão 5) |
 
 **E7 ficou parcial de propósito.** Foram aplicados HSTS, `nosniff`, `X-Frame-Options`,
 `Referrer-Policy`, `Permissions-Policy` e as diretivas de CSP que restringem sem
@@ -130,14 +130,46 @@ existentes só passam a ser cifrados quando forem regravados.
 
 ## Fase 3 — Cobrança e dados corretos
 
-| ID | Tarefa | Arquivo |
-|---|---|---|
-| F1 | Corrigir o preço do Opus 5 ($15/$75 → $5/$25) | `registry.ts:23-24` |
-| F2 | Corrigir o preço do DeepSeek (V4-Flash/V4-Pro) e o auto-correct que força `deepseek-chat` | `registry.ts:33,158` |
-| F3 | Recalcular ou marcar como suspeito o histórico de `AiLog.costUsd` | migração |
-| F4 | Fazer `/api/pricing` derivar do `registry.ts` em vez do `TOKEN_COST` divergente | `llm.ts:47`, `api/pricing` |
-| F5 | Gravar `currency` e `amountOriginal`; converter na leitura | `schema.prisma`, `verify-session`, `webhooks/stripe`, `admin/dashboard` |
-| G4 | Moeda definida no servidor por geolocalização; ignorar campo do cliente | `credits/purchase/route.ts:11` |
+| ID | Tarefa | Arquivo | Situação |
+|---|---|---|---|
+| F1 | Corrigir o preço do Opus 5 ($15/$75 → $5/$25) | `registry.ts:23-24` | **feito** (Sessão 1) |
+| F2 | Corrigir o preço do DeepSeek (V4-Flash/V4-Pro) e o auto-correct que força `deepseek-chat` | `registry.ts:33,158` | **feito** (Sessão 1) |
+| F3 | Recalcular ou marcar como suspeito o histórico de `AiLog.costUsd` | migração | pendente |
+| F4 | Fazer `/api/pricing` derivar do `registry.ts` em vez do `TOKEN_COST` divergente | `llm.ts:47`, `api/pricing` | **feito** (Sessão 5) |
+| F5 | Gravar `currency` e `amountOriginal`; converter na leitura | `schema.prisma`, `verify-session`, `webhooks/stripe`, `admin/dashboard` | **feito** (Sessão 5) |
+| G4 | Moeda definida no servidor por geolocalização; ignorar campo do cliente | `credits/purchase/route.ts:11` | **feito** (Sessão 5) |
+
+> ### ⚠️ Pré-requisito da Sessão 5 — aplicar o schema
+>
+> O projeto **não usa `prisma migrate`**: não existe `prisma/migrations/`, e o
+> build da Vercel roda apenas `prisma generate && next build`. Nada aplica
+> mudanças de schema no deploy.
+>
+> A Sessão 5 adiciona a tabela `Session` e duas colunas em `CreditTransaction`.
+> Antes ou logo depois do deploy, rode contra o banco de produção:
+>
+> ```
+> npm run db:push
+> ```
+>
+> As mudanças são **puramente aditivas** — tabela nova e colunas com valor
+> padrão —, então o código antigo continua funcionando depois do `db push`.
+> Isso permite aplicar o schema **antes** do deploy, que é a ordem segura.
+>
+> Se o deploy vier primeiro, nada cai: `lib/session-store.ts` detecta a tabela
+> ausente, registra erro no log e mantém o comportamento anterior (sessão
+> validada só pela assinatura, logout sem revogação). A detecção é reavaliada a
+> cada 60s, então o recurso passa a valer sozinho assim que o `db push` rodar,
+> sem precisar de novo deploy.
+
+**F3 continua pendente e agora tem um irmão.** As linhas de `CreditTransaction`
+anteriores à Sessão 5 têm `costBrl` gravado sem conversão — em vendas fora do
+Brasil, o valor está na moeda do checkout somado como se fosse real. As novas
+gravam `currency` + `amountOriginal` e convertem na escrita de `costBrl`, então
+o problema para de crescer, mas o histórico segue misturado. Corrigir exige
+saber quais vendas passadas não foram em BRL; como até aqui a divulgação foi só
+no Brasil, é provável que o impacto real seja nulo — vale conferir antes de
+gastar uma migração com isso.
 | F6 | Aplicar de fato a regra `entryOnly` do Plano de Entrada | `credits/purchase/route.ts` |
 | F7 | Alinhar a descrição do Plano de Entrada com o custo real (ou elevar para 64 créditos) | `credits-catalog.ts:48` |
 | F8 | Reserva de créditos em duas fases (`pending` → `completed`/`refunded`) | `lib/credits.ts`, rotas de IA |

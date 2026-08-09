@@ -48,7 +48,10 @@ export async function POST(req: Request) {
       console.warn('AuditLog create failed non-critically:', e)
     }
 
-    await createSession(user.id)
+    await createSession(user.id, {
+      userAgent: req.headers.get('user-agent'),
+      ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim() || null,
+    })
 
     return NextResponse.json({
       user: {
