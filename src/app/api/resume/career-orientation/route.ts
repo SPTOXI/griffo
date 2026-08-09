@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
+import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório.'),
@@ -92,12 +93,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Currículo não encontrado.' }, { status: 404 })
     }
 
-    const systemPrompt = `Você é o Agente Especialista em Orientação de Carreira e Diagnóstico Vocacional do GriffoWork.
+    const lang = getRequestLanguage(req)
+
+    const systemPrompt = `${LANGUAGE_DIRECTIVE[lang]}
+
+Você é o Agente Especialista em Orientação de Carreira e Diagnóstico Vocacional do GriffoWork.
 Analise o histórico, hard skills, soft skills e conquistas do candidato e determine as 3 melhores áreas ou cargos do mercado atual em que ele possui maior afinidade e chances imediatas de sucesso.
 
 Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto antes ou depois do JSON:
 {
-  "profileSummary": "Resumo do perfil e vocação identificados (em Português PT-BR)",
+  "profileSummary": "Resumo do perfil e vocação identificados",
   "topMatchingAreas": [
     {
       "role": "Nome do Cargo/Área Sugerida 1",

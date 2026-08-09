@@ -8,10 +8,22 @@ export function internalFetch(input: RequestInfo | URL, init?: RequestInit): Pro
     finalInput = `${input}${sep}_t=${Date.now()}`
   }
 
+  // O idioma viaja aqui, e não em cada corpo de requisição, para que nenhum
+  // ponto de chamada possa esquecer de enviá-lo. As rotas de IA leem este
+  // cabeçalho para decidir o idioma da resposta e o mercado de referência.
+  let lang = 'pt'
+  try {
+    const stored = localStorage.getItem('griffo_lang')
+    if (stored && ['pt', 'en', 'es'].includes(stored)) lang = stored
+  } catch {
+    // localStorage indisponível (SSR ou navegador bloqueando) — mantém o padrão
+  }
+
   const defaultHeaders = {
     'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
     'Pragma': 'no-cache',
     'Expires': '0',
+    'X-Griffo-Lang': lang,
   }
 
   const defaultInit: RequestInit = isRelative

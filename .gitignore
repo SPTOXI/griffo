@@ -69,3 +69,8 @@ db/*.db-journal
 /scripts/output/
 mini-services/*/node_modules
 mini-services/*/.env*worklog.md
+
+# Scripts auxiliares com credenciais — nunca versionar
+/scratch/
+/check-config.js
+.zscripts/*.pid

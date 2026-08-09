@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
 import { deductCredits, refundCredits, CREDIT_COSTS } from '@/lib/credits'
+import { getRequestLanguage, LANGUAGE_DIRECTIVE, ATS_BY_MARKET, SOCIAL_PLATFORMS_BY_MARKET } from '@/lib/i18n/server'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório'),
@@ -204,6 +205,10 @@ export async function POST(req: Request) {
 
     deducted = true
 
+    const lang = getRequestLanguage(req)
+    const atsList = ATS_BY_MARKET[lang]
+    const socialPlatforms = SOCIAL_PLATFORMS_BY_MARKET[lang]
+
     // Collect all social media links (from resume upload and user profile)
     let combinedSocialLinks: Record<string, string> = {}
     if (user.socialLinks) {
@@ -219,15 +224,17 @@ export async function POST(req: Request) {
 
     const socialLinksText = Object.keys(combinedSocialLinks).length > 0
       ? `\n\nREDES SOCIAIS E PERFIS PROFISSIONAIS CADASTRADOS:\n${JSON.stringify(combinedSocialLinks, null, 2)}`
-      : '\n\n(Nenhum link de rede social cadastrado previamente pelo usuário. Forneça recomendações gerais estratégicas para LinkedIn, Gupy, GitHub e portfólios globais).'
+      : `\n\n(Nenhum link de rede social cadastrado previamente pelo usuário. Forneça recomendações gerais estratégicas para ${socialPlatforms}).`
 
-    const SYSTEM_ANALYZE_PROMPT = `Você é um avaliador executivo sênior de currículos, especialista mundial em triagem ATS (Applicant Tracking Systems — Gupy, LinkedIn Talent Solutions, Workday, Taleo, Greenhouse, Lever) e estrategista de personal branding internacional.
+    const SYSTEM_ANALYZE_PROMPT = `${LANGUAGE_DIRECTIVE[lang]}
+
+Você é um avaliador executivo sênior de currículos, especialista mundial em triagem ATS (Applicant Tracking Systems — ${atsList}) e estrategista de personal branding internacional.
 
 Sua tarefa é realizar uma ANÁLISE DE ALTA PROFUNDIDADE TÉCNICA E JUSTIFICADA do currículo. Você NÃO deve ser genérico. Você deve apontar EXATAMENTE onde estão as falhas, POR QUE elas prejudicam o candidato e COMO corrigi-las.
 
 REGRAS DE PRESENÇA DIGITAL & REDES SOCIAIS (SE FORNECIDAS):
-Se o candidato informou perfis profissionais (LinkedIn, Gupy, Behance, Dribbble, GitHub, StackOverflow, Kaggle, Xing, Medium, Substack, Portfólio), gere no campo "socialAdvice" orientações práticas de otimização para cada perfil: Título/Headline otimizado para algoritmos de recrutamento, seção "Sobre" com palavras-chave de busca, e dicas de SEO/engajamento para cada plataforma.
-Se nenhum perfil foi informado, gere recomendações estratégicas gerais para LinkedIn, Gupy e portfólios globais no campo "socialAdvice".
+Se o candidato informou perfis profissionais (${socialPlatforms}, Dribbble, StackOverflow, Kaggle, Medium, Substack), gere no campo "socialAdvice" orientações práticas de otimização para cada perfil: Título/Headline otimizado para algoritmos de recrutamento, seção "Sobre" com palavras-chave de busca, e dicas de SEO/engajamento para cada plataforma.
+Se nenhum perfil foi informado, gere recomendações estratégicas gerais para ${socialPlatforms} no campo "socialAdvice".
 
 Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seguinte esquema estrito.
 NÃO calcule nota geral: ela é derivada das 8 dimensões pelo sistema.
@@ -269,7 +276,7 @@ NÃO calcule nota geral: ela é derivada das 8 dimensões pelo sistema.
       "key": "keywords",
       "label": "Palavras-Chave & Match com Vagas",
       "score": number (0-10),
-      "rationale": "Justificativa detalhada sobre termos estratégicos para filtros ATS/Gupy/LinkedIn."
+      "rationale": "Justificativa detalhada sobre termos estratégicos para os filtros de ${atsList}."
     },
     {
       "key": "career",
@@ -306,7 +313,7 @@ NÃO calcule nota geral: ela é derivada das 8 dimensões pelo sistema.
   "keywords": ["Lista de 10 a 15 palavras-chave estratégicas cruciais para o segmento"],
   "socialAdvice": [
     {
-      "platform": "Nome da Plataforma (ex: LinkedIn, Gupy, GitHub, Behance, Catho, Workana, Portfólio)",
+      "platform": "Nome da Plataforma (ex: ${socialPlatforms})",
       "url": "URL informada ou 'Geral/Plataformas de Mercado'",
       "headline": "Título executivo altamente otimizado para o algoritmo da plataforma e atração de recrutadores",
       "aboutSummary": "Texto persuasivo de bio/resumo otimizado com palavras-chave de busca",

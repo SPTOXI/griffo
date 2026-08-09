@@ -1,6 +1,7 @@
 import { scryptSync, randomBytes, timingSafeEqual, createHmac } from 'crypto'
 import { cookies } from 'next/headers'
 import { db } from './db'
+import { getSessionSecret } from './env'
 
 // --- Password hashing using Node's scrypt (no extra deps) ---
 const SCRYPT_KEYLEN = 64
@@ -22,12 +23,11 @@ export function verifyPassword(password: string, stored: string): boolean {
 }
 
 // --- Session management via strictly non-persistent session cookie ---
-const SESSION_SECRET = process.env.SESSION_SECRET || 'griffo_secret_key_fallback_production_2026'
 const SESSION_COOKIE = 'ca_session'
 const SESSION_TTL_MS = 2 * 60 * 60 * 1000 // 2 hours active window max
 
 function sign(payload: string): string {
-  const sig = createHmac('sha256', SESSION_SECRET).update(payload).digest('hex')
+  const sig = createHmac('sha256', getSessionSecret()).update(payload).digest('hex')
   return `${payload}.${sig}`
 }
 
@@ -36,7 +36,7 @@ function verify(token: string): string | null {
   const lastDot = token.lastIndexOf('.')
   const payload = token.slice(0, lastDot)
   const sig = token.slice(lastDot + 1)
-  const expected = createHmac('sha256', SESSION_SECRET).update(payload).digest('hex')
+  const expected = createHmac('sha256', getSessionSecret()).update(payload).digest('hex')
   try {
     const sigBuf = Buffer.from(sig, 'hex')
     const expBuf = Buffer.from(expected, 'hex')

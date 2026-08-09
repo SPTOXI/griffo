@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
 import { deductCredits, refundCredits, CREDIT_COSTS } from '@/lib/credits'
+import { getRequestLanguage, LANGUAGE_DIRECTIVE, ATS_BY_MARKET } from '@/lib/i18n/server'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório'),
@@ -67,6 +68,8 @@ export async function POST(req: Request) {
 
     deducted = true
 
+    const lang = getRequestLanguage(req)
+
     // Extract ATS keywords from analysis if present
     let keywordsHint = ''
     if (resume.analysisJson) {
@@ -82,7 +85,7 @@ export async function POST(req: Request) {
     const routerResult = await executeAiTask({
       taskType: 'rewrite',
       userId: user.id,
-      systemPrompt: 'Você é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas ATS (Gupy, LinkedIn, Workday, Greenhouse). Sua função é reescrever o currículo COMPLETO de ponta a ponta sem cortar nada, utilizando marcações Markdown perfeitamente estruturadas (títulos H1/H2, marcadores de lista, negritos). Responda sempre em Português (pt-BR).',
+      systemPrompt: `${LANGUAGE_DIRECTIVE[lang]}\n\nVocê é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas ATS (${ATS_BY_MARKET[lang]}). Sua função é reescrever o currículo COMPLETO de ponta a ponta sem cortar nada, utilizando marcações Markdown perfeitamente estruturadas (títulos H1/H2, marcadores de lista, negritos).`,
       userPrompt: `REESCREVA O CURRÍCULO COMPLETO DO INÍCIO AO FIM SEM OMITIR NEM SINTETIZAR NENHUMA SEÇÃO OU EXPERIÊNCIA.
 
 Diretrizes Obrigatórias:

@@ -3,27 +3,17 @@
 // hydration and renders Next's "This page couldn't load" screen.
 import 'server-only'
 import { PrismaClient } from '@prisma/client'
+import { getDatabaseUrl } from './env'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
 function createClient(): PrismaClient {
-  const rawUrl =
-    process.env.POSTGRES_PRISMA_URL ||
-    process.env.DATABASE_URL ||
-    'postgresql://postgres.viqtmnhiejoacyevfjhy:711882GRiffo@aws-1-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true'
-
-  let fixedUrl = rawUrl
-  if (fixedUrl.includes('db.viqtmnhiejoacyevfjhy.supabase.co')) {
-    fixedUrl = fixedUrl.replace(
-      'db.viqtmnhiejoacyevfjhy.supabase.co',
-      'aws-1-sa-east-1.pooler.supabase.com'
-    )
-  }
-
+  // Sem fallback embutido: antes havia aqui uma connection string de produção
+  // completa, com senha, versionada no repositório.
   return new PrismaClient({
-    datasources: { db: { url: fixedUrl } },
+    datasources: { db: { url: getDatabaseUrl() } },
     log: ['error'],
   })
 }
