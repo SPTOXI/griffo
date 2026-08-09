@@ -15,6 +15,7 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
 } from 'recharts'
 import { UploadProgressModal } from './upload-progress-modal'
+import { SocialAnalysisPanel, type SocialAnalysis } from './social-analysis-panel'
 import { internalFetch } from '@/lib/internal-fetch'
 import { toast } from 'sonner'
 
@@ -69,6 +70,8 @@ interface Resume {
   originalContent: string
   analysis: Analysis | null
   rewrittenContent: string | null
+  socialAnalysis?: SocialAnalysis | null
+  socialLinks?: Record<string, string>
 }
 
 export function AnalysisView() {
@@ -766,6 +769,15 @@ export function AnalysisView() {
         </>
       )}
 
+      {/* AUDITORIA COM LEITURA REAL DOS PERFIS (rota social-analysis) */}
+      {(activeTab === 'all' || activeTab === 'social') && (
+        <SocialAnalysisPanel
+          resumeId={resume.id}
+          initialAnalysis={resume.socialAnalysis || null}
+          socialLinks={resume.socialLinks || {}}
+        />
+      )}
+
       {/* SOCIAL PRESENCE & ADVICE (Destaque em Redes Sociais) */}
       {(activeTab === 'all' || activeTab === 'social') && a.socialAdvice && a.socialAdvice.length > 0 && (
         <Card className="border border-violet-500/30 bg-gradient-to-br from-violet-900 via-[#1A0B2E] to-[#0B0B2E] shadow-2xl relative overflow-hidden mt-8">
@@ -784,10 +796,15 @@ export function AnalysisView() {
                 </div>
                 <div>
                   <CardTitle className="text-xl text-white font-black flex items-center gap-2 mb-1 tracking-tight">
-                    🌐 Social SEO & Presença Digital
+                    🌐 Sugestões gerais de presença digital
                   </CardTitle>
+                  {/* Este bloco vem da análise de 8 dimensões, que NÃO visita os
+                      perfis — o conselho é derivado do currículo. A auditoria com
+                      leitura real é o card acima. Rotular a diferença evita que o
+                      usuário tome uma coisa pela outra. */}
                   <CardDescription className="text-xs text-violet-200/70 font-medium max-w-xl leading-relaxed">
-                    Auditoria algorítmica do seu perfil para plataformas globais (LinkedIn, Gupy). Estratégias de palavras-chave e otimização de busca para ser encontrado por recrutadores Premium.
+                    Recomendações derivadas do seu currículo, sem consultar os perfis. Para uma
+                    auditoria baseada no conteúdo real das suas páginas, use a seção acima.
                   </CardDescription>
                 </div>
               </div>

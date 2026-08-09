@@ -60,14 +60,23 @@ export function AppShell({ onExit }: { onExit: () => void }) {
 
   useEffect(() => {
     if (user?.role === 'admin') return
-    internalFetch('/api/credits/balance')
-      .then((r) => r.json())
-      .then((data) => {
-        if (typeof data.credits === 'number') {
-          setCredits(data.credits)
-        }
-      })
-      .catch(() => {})
+
+    const refresh = () => {
+      internalFetch('/api/credits/balance')
+        .then((r) => r.json())
+        .then((data) => {
+          if (typeof data.credits === 'number') {
+            setCredits(data.credits)
+          }
+        })
+        .catch(() => {})
+    }
+
+    refresh()
+
+    // Ações que consomem crédito sem trocar de tela avisam por este evento.
+    window.addEventListener('griffo:credits-changed', refresh)
+    return () => window.removeEventListener('griffo:credits-changed', refresh)
   }, [view, user?.role])
 
   useEffect(() => {

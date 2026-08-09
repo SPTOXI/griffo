@@ -247,22 +247,24 @@ As plataformas se dividem em três níveis:
 |---|---|---|
 | P1 | Rota separada `POST /api/resume/social-analysis` (não dentro da análise, para não agravar o timeout) | **feito** (Sessão 8) |
 | P2 | Integração com a API pública do GitHub | **feito** (Sessão 8) |
-| P3 | Upload de PDF do perfil LinkedIn / campo de colar texto | **backend feito** (Sessão 8) |
+| P3 | Upload de PDF do perfil LinkedIn / campo de colar texto | **feito** (Sessão 8) |
 | P4 | Busca de portfólio e blogs via Jina Reader | **feito** (Sessão 8) |
 | P5 | Ligar o `CREDIT_COSTS.social_optimization = 20`, que já existe e nunca é cobrado | **feito** (Sessão 8) |
 
-**A interface ainda não existe.** A rota está pronta e testada, mas nenhum
-componente a chama: falta o botão de solicitar a análise, o campo de upload do
-PDF do LinkedIn, a área de colar texto e a exibição do resultado
-(`Resume.socialAnalysisJson`). É trabalho de front-end, sem decisão de
-arquitetura pendente — fica para a próxima sessão.
+**Interface entregue** (`components/app/social-analysis-panel.tsx`, montada na
+aba "social" da análise): botão de auditoria, caminho de upload do PDF do
+LinkedIn e de colar texto — este só aparece quando o servidor responde que não
+conseguiu ler nada —, e exibição do resultado com selo por perfil distinguindo
+**"Perfil lido"** de **"Não lido — dica geral"**.
 
-**O `socialAdvice` da análise principal continua como estava**, ou seja,
-gerado sem visitar perfil nenhum. Removê-lo de lá agora deixaria a análise de
-8 dimensões sem a seção que o usuário já vê hoje, antes de a nova interface
-existir. A ordem correta é: publicar a interface nova, e só então retirar o
-conselho fabricado da análise principal — senão há uma janela em que o produto
-perde uma seção sem ganhar a substituta.
+**Pendência de produto: o `socialAdvice` da análise principal continua sendo
+gerado sem visitar perfil nenhum.** Agora que existe a auditoria real, ele
+virou redundante e potencialmente confuso. Como paliativo, o card antigo foi
+rotulado de forma honesta ("Recomendações derivadas do seu currículo, sem
+consultar os perfis"), mas a decisão de removê-lo é comercial, não técnica:
+hoje ele vai junto da análise de 20 créditos, enquanto a auditoria real custa
+outros 20. Tirá-lo transforma algo incluído em algo cobrado à parte — decisão
+do dono do produto.
 
 **Custo:** +2.000–4.000 tokens de entrada ≈ R$ 0,05. **Receita:** 20 créditos ≈ R$ 4,95.
 
