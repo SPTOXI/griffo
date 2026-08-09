@@ -57,7 +57,7 @@ function extractMetadataFromHtml(html: string): { title?: string; description?: 
 }
 
 /**
- * Raspa e extrai o texto principal de um anúncio de vaga a partir de uma URL.
+ * Raspa e extrai o texto principal de uma vaga de emprego a partir de uma URL.
  */
 export async function POST(req: Request) {
   try {
@@ -157,7 +157,7 @@ export async function POST(req: Request) {
     }
 
     if (!extractedContent || extractedContent.length < 30) {
-      return NextResponse.json({ error: 'Não foi possível extrair a vaga deste link. Verifique se o anúncio exige login ou se o link está correto.' }, { status: 400 })
+      return NextResponse.json({ error: 'Não foi possível extrair a vaga deste link. Verifique se a vaga exige login ou se o link está correto.' }, { status: 400 })
     }
 
     const isBlocked = 
@@ -168,7 +168,7 @@ export async function POST(req: Request) {
       (extractedContent.toLowerCase().includes('verify you are human') && extractedContent.length < 200)
 
     if (isBlocked) {
-      return NextResponse.json({ error: 'A importação foi bloqueada pela proteção do site (ex: Cloudflare/LinkedIn). Copie e cole o texto do anúncio no campo de descrição.' }, { status: 400 })
+      return NextResponse.json({ error: 'A importação foi bloqueada pela proteção do site (ex: Cloudflare/LinkedIn). Copie e cole o texto da vaga no campo de descrição.' }, { status: 400 })
     }
 
     // Limita tamanho a 10.000 caracteres para otimização
@@ -184,6 +184,6 @@ export async function POST(req: Request) {
     })
   } catch (e: any) {
     console.error('Error fetching job URL:', e)
-    return NextResponse.json({ error: 'Erro ao processar o link da vaga. Copie e cole o texto do anúncio no campo de descrição.' }, { status: 500 })
+    return NextResponse.json({ error: 'Erro ao processar o link da vaga. Copie e cole o texto da vaga no campo de descrição.' }, { status: 500 })
   }
 }

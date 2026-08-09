@@ -335,14 +335,14 @@ Um bloco que toca 4 arquivos pequenos e compila de primeira é leve; um que adic
 A (paralelo, não depende de sessão)
  └─> Sessão 1 (B) ──> deploy e observar
       └─> Sessão 2 (C)
-           └─> Sessão 3 (D+E) ──> anúncios liberados
+           └─> Sessão 3 (D+E) ──> divulgação liberada
                 └─> Sessões 4, 5 (segurança)
                      └─> Sessões 6, 7 (cobrança e dados)
                           └─> Sessões 8, 9 (produto)
                                └─> 10–12 (higiene)
 ```
 
-**Depois da Sessão 3 é possível anunciar.** B corrige o que cobra sem entregar, C garante que o laudo é real, D fecha a exposição e E habilita inglês e espanhol — o mínimo defensável para tráfego pago.
+**Depois da Sessão 3 é possível divulgar.** B corrige o que cobra sem entregar, C garante que o laudo é real, D fecha a exposição e E habilita inglês e espanhol — o mínimo defensável para levar público externo à plataforma.
 
 **Exceção na ordem:** **P.1 pode entrar a qualquer momento** e tende a acelerar as sessões seguintes — remover o `puppeteer` (~300 MB) e resolver os dois lockfiles encurta cada `npm ci` e cada build. Se quiser um ganho barato cedo, encaixe logo após a Sessão 1.
 

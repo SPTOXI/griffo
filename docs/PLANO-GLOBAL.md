@@ -16,7 +16,9 @@ Na prática, hoje um usuário americano vê o site em inglês, paga em dólar, s
 
 O custo de operar em três idiomas é **praticamente zero** — os modelos Claude tratam pt/en/es nativamente pelo mesmo preço. O que falta é encanamento, não capacidade.
 
-**Os itens 1 a 3 deste plano são bloqueantes para os anúncios.** Anunciar em inglês e espanhol com a reescrita saindo em português queima a aquisição inteira, porque o usuário paga antes de descobrir.
+**Os itens 1 a 3 deste plano são bloqueantes para a divulgação.** Divulgar em inglês e espanhol com a reescrita saindo em português desperdiça a aquisição: o usuário chega, paga e só então descobre que o produto não serve para ele. Em divulgação paga isso queima também o custo por clique.
+
+> **Terminologia adotada:** *vaga de emprego* é a oferta de trabalho que o candidato quer disputar; *anúncio* e *divulgação* referem-se à publicidade da plataforma.
 
 ---
 
@@ -172,7 +174,7 @@ A camada de apresentação está resolvida. O que falta é ligá-la ao produto.
 
 ## 8. Ordem de execução
 
-| # | Tarefa | Tipo | Bloqueia anúncios? |
+| # | Tarefa | Tipo | Bloqueia divulgação? |
 |---|---|---|---|
 | G1 | Campo `language` no `User` + persistência da escolha | Código | **Sim** |
 | G2 | Passar idioma às 4 rotas de IA + diretriz dinâmica | Código | **Sim** |
@@ -186,6 +188,6 @@ A camada de apresentação está resolvida. O que falta é ligá-la ao produto.
 | G10 | Reduzir consultas ao banco por análise (13 → ~7) | Código | Não |
 | G11 | Avaliar região de execução das funções Vercel | Configuração | Não |
 
-**G1 a G3 são o mínimo para anunciar.** São pequenos e independentes entre si.
+**G1 a G3 são o mínimo para divulgar.** São pequenos e independentes entre si.
 
 **G6, G9** são decisões comerciais e jurídicas que independem de código e podem correr em paralelo.

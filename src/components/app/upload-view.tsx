@@ -384,14 +384,14 @@ export function UploadView() {
                 <Sparkles className="w-3.5 h-3.5 text-sky-600" /> Cargo ou Vaga Alvo Desejada (Opcional)
               </Label>
               <Badge variant="outline" className="text-[10px] text-sky-700 bg-sky-50 border-sky-200 self-start sm:self-auto">
-                Ou cole o Link do anúncio abaixo 🔗
+                Ou cole o Link da vaga de emprego abaixo 🔗
               </Badge>
             </div>
 
             {/* IMPORT VIA URL */}
             <div className="space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
               <Label htmlFor="jobUrl" className="text-[11px] font-medium text-slate-600 flex items-center gap-1">
-                <Globe className="w-3 h-3 text-slate-500" /> Importar Anúncio de Vaga pelo Link (LinkedIn, Gupy, Catho, etc.)
+                <Globe className="w-3 h-3 text-slate-500" /> Importar Vaga de Emprego pelo Link (LinkedIn, Gupy, Catho, etc.)
               </Label>
               <div className="flex gap-2">
                 <Input
