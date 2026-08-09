@@ -51,7 +51,7 @@ O commit `f2ac23e` ("restore safe fallback database URL") reintroduziu deliberad
 
 ```
 email:    admin@griffowork.com
-password: 711882GRiffo
+password: <redigido — ver o arquivo>
 ```
 
 É a mesma string usada como senha do banco. Com ela, qualquer um autentica como administrador e obtém: listagem completa de usuários, deleção em massa, alteração de saldo de créditos de qualquer conta, leitura/escrita da configuração do Stripe e cadastro de chaves de IA.
