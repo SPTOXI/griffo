@@ -1,23 +1,25 @@
-# Análise de Custos por Ciclo e Seleção de Modelo
+# Análise de Custos, Margem e Seleção de Modelo
 
 **Data:** 2026-08-09
-**Escopo:** custo real de IA por análise/reescrita, comparação entre provedores, e consistência do pacote de créditos
+**Escopo:** custo real de IA por módulo e por ciclo, mapa de responsabilidade dos modelos, infraestrutura, e consistência do pacote de créditos
 **Commit analisado:** `8eb051a`
-**Método:** rastreamento de todas as chamadas a `executeAiTask` no código, medição dos prompts em caracteres, e preços de tabela dos provedores.
+**Método:** rastreamento de todas as chamadas a `executeAiTask` no código, medição dos prompts em caracteres, e preços de tabela dos provedores verificados na fonte.
 
 ---
 
 ## Resumo
 
-O custo de IA por ciclo completo está entre **R$ 0,50 e R$ 1,44**, dependendo do modelo e do tamanho do currículo. Sobre a venda de R$ 9,90 do Plano de Entrada, isso deixa uma margem bruta entre **73% e 87%** — confortável em qualquer dos cenários.
+O custo de IA por ciclo completo está entre **R$ 0,50 e R$ 1,44**, dependendo do modelo e do tamanho do currículo. Sobre a venda de R$ 9,90 do Plano de Entrada, a margem bruta fica entre **73% e 87%** — confortável em qualquer cenário.
 
-Três achados relevantes surgiram na apuração:
+**Custo nunca foi o argumento decisivo entre Opus 5 e Sonnet 5** — a diferença é de 3 a 7 pontos de margem. O argumento real contra o Opus 5 é o teto de 60 s da função (ver `RELATORIO-TIMEOUT-ANALISE.md`).
+
+Cinco achados relevantes surgiram na apuração:
 
 1. **O preço do Opus 5 no código está errado em 3×** — o painel administrativo reporta custo e lucro incorretos.
 2. **O custo declarado no README subestima o real em ~31×**, e não bate nem com o cálculo do próprio código.
 3. **O Plano de Entrada não entrega o que promete** — 40 créditos não compram "2 avaliações completas".
-
-A conclusão operacional é que **custo nunca foi o argumento decisivo entre Opus 5 e Sonnet 5** — a diferença é de 3 a 7 pontos de margem. O argumento real contra o Opus 5 continua sendo o teto de 60 s da função (ver `RELATORIO-TIMEOUT-ANALISE.md`).
+4. **A análise de redes sociais não visita os perfis** — gera conselho genérico a partir da URL.
+5. **Dois dos quatro "agentes" do painel não usam IA** — são validação e regex.
 
 ---
 
@@ -25,72 +27,147 @@ A conclusão operacional é que **custo nunca foi o argumento decisivo entre Opu
 
 Rastreando todas as chamadas a `executeAiTask()`, apenas **duas** etapas do fluxo pago custam tokens:
 
-| Etapa | Chamada de IA | Créditos | Custo |
+| Etapa | Chamada de IA | Créditos | Custo (Sonnet 5) |
 |---|---|---|---|
 | Upload + extração de PDF | Não — `pdf-parse` local | — | R$ 0 |
 | Limpeza de texto | Não — regex local (`ocr/extractor.ts`) | — | R$ 0 |
 | Importação de vaga por link | Não — Jina Reader / `fetch` | — | R$ 0 |
-| **Análise 8 dimensões** | **Sim** — `full_analysis` | 20 | ver §2 |
-| **Reescrita** | **Sim** — `rewrite` | 10 | ver §2 |
-| Orientação vocacional | **Sim** — reusa `full_analysis` | **0** | ver §5 |
+| **Análise 8 dimensões** | **Sim** — `full_analysis` | 20 | R$ 0,39–0,43 |
+| **Reescrita** | **Sim** — `rewrite` | 10 | R$ 0,15–1,14 |
+| Orientação vocacional | **Sim** — reusa `full_analysis` | **0** | R$ 0,30 |
 | Geração de PDF / MD / TXT | Não — `pdf-lib` local | 1 cada | R$ 0 |
 | Chat de suporte | Sim — `support_chat` (DeepSeek) | 0 | R$ 0,008 |
 
-**Entradas mortas no roteamento:** `ocr_extraction` e `normalization` estão declaradas em `INITIAL_TASK_ROUTING` (`registry.ts:71-72`) mas **nunca são chamadas**. Não geram custo, mas sugerem no código um OCR por IA que não existe — a extração é local.
+**Entradas mortas no roteamento:** `ocr_extraction` e `normalization` estão declaradas em `INITIAL_TASK_ROUTING` (`registry.ts:71-72`) mas **nunca são chamadas**. Não geram custo, mas sugerem no código um OCR por IA que não existe — a extração é local, e um PDF escaneado sem camada de texto retorna vazio.
 
 ---
 
-## 2. Custo de IA por ciclo completo
+## 2. Custo por módulo
 
-Premissas declaradas: câmbio BRL/USD = 5,4. Entradas medidas no código (prompt de análise = 5.057 caracteres ≈ 1.264 tokens; prompt de reescrita = 1.160 caracteres ≈ 290 tokens). Saída da análise perto do teto de 3.800 tokens, porque o schema exige 8 dimensões com justificativa, `jobMatch`, `targetedChanges` e quatro arrays. Saída da reescrita estimada em ~1,6× o currículo original.
+Premissas declaradas: câmbio BRL/USD = 5,4. Entradas medidas no código (prompt de análise = 5.057 caracteres ≈ 1.264 tokens; prompt de reescrita = 1.160 caracteres ≈ 290 tokens; prompt de orientação ≈ 250 tokens). Saída da análise perto do teto de 3.800 tokens, porque o schema exige 8 dimensões com justificativa, `jobMatch`, `targetedChanges` e quatro arrays.
 
-| Cenário | Etapa | **Opus 5** | **Sonnet 5** |
-|---|---|---|---|
-| **Currículo típico**<br>(4.000 caracteres) | Análise | R$ 0,580 | R$ 0,348 |
-| | Reescrita | R$ 0,252 | R$ 0,151 |
-| | **Ciclo completo** | **R$ 0,832** | **R$ 0,499** |
-| **Currículo longo**<br>(15.000 caracteres — teto do `slice`) | Análise | R$ 0,654 | R$ 0,392 |
-| | Reescrita | R$ 0,785 | R$ 0,471 |
-| | **Ciclo completo** | **R$ 1,439** | **R$ 0,864** |
+### 2.1 Análise — praticamente custo fixo
 
-Os únicos valores estimados são o tamanho do currículo e o volume de saída da reescrita; todo o resto é medido no código ou é preço de tabela.
+| Currículo | Opus 5 | Sonnet 5 |
+|---|---|---|
+| 2.000 caracteres (1 página) | R$ 0,57 | R$ 0,34 |
+| 8.000 caracteres (3 páginas) | R$ 0,61 | R$ 0,36 |
+| 15.000 caracteres ou mais | R$ 0,65 | R$ 0,39 |
 
-Note que a reescrita fica **mais cara que a análise** em currículos longos: `rewrite/route.ts:90` envia `resume.originalContent` **inteiro, sem `slice`**, enquanto a análise corta em 15.000 caracteres. Um currículo de 40.000 caracteres torna a reescrita desproporcionalmente cara — e provavelmente estoura o tempo antes disso.
+**Não passa de R$ 0,65** por dois motivos estruturais: a entrada é cortada em 15.000 caracteres (`analyze/route.ts:187`) e a saída é fixada em 3.800 tokens pelo schema.
+
+### 2.2 Módulos que rodam dentro da mesma chamada
+
+O `socialAdvice` e o `jobMatch` **não são chamadas separadas** — estão no mesmo prompt da análise. O custo é apenas o incremento de entrada:
+
+| Componente | Opus 5 | Sonnet 5 |
+|---|---|---|
+| Análise base (currículo 15k) | R$ 0,654 | R$ 0,392 |
+| + redes sociais (URLs, ~100 tokens) | R$ 0,657 | R$ 0,394 |
+| **+ vaga completa (10.000 chars)** | **R$ 0,724** | **R$ 0,434** |
+
+**Teto real da análise com todos os módulos ativos: R$ 0,72 (Opus) / R$ 0,43 (Sonnet).**
+
+### 2.3 Reescrita — a única sem teto
+
+`rewrite/route.ts:90` envia `resume.originalContent` **inteiro, sem `slice`**, diferente da análise. O upload só valida PDF ≤ 10 MB e conteúdo ≥ 50 caracteres — **não há limite máximo de caracteres**.
+
+| Currículo | Opus 5 | Sonnet 5 |
+|---|---|---|
+| 4.000 caracteres | R$ 0,25 | R$ 0,15 |
+| 15.000 caracteres | R$ 0,92 | R$ 0,55 |
+| 60.000 caracteres | R$ 1,49 | R$ 0,90 |
+| 120.000 caracteres | R$ 1,90 | R$ 1,14 |
+
+Na prática o teto de 8.000 tokens de saída segura o crescimento, mas a entrada é ilimitada. **Correção de uma linha:** aplicar `.slice(0, 20000)` como a análise já faz. Com isso o ciclo passa a ter teto real de **R$ 1,70 (Opus) / R$ 1,02 (Sonnet)**.
+
+### 2.4 Orientação vocacional
+
+Chamada separada, `maxTokens: 3000`, entrada = `originalContent.slice(0, 12000)`.
+
+| | Opus 5 | Sonnet 5 |
+|---|---|---|
+| Custo | R$ 0,49 | **R$ 0,30** |
+| Créditos cobrados | **0** | 0 |
+
+**Base de dados:** apenas o currículo. Nenhuma fonte externa — sem base de vagas, sem dados de mercado de trabalho, sem pesquisa. É o conhecimento próprio do modelo aplicado ao CV.
 
 ---
 
-## 3. Comparação entre provedores
+## 3. Custo por ciclo completo
+
+| Cenário | **Opus 5** | **Sonnet 5** |
+|---|---|---|
+| Currículo típico (4.000 chars) | R$ 0,832 | R$ 0,499 |
+| Currículo longo (15.000 chars) | R$ 1,439 | R$ 0,864 |
+| Currículo de 30 páginas (120.000 chars) | R$ 2,55 | R$ 1,53 |
+| **Com `slice` na reescrita (teto proposto)** | **R$ 1,70** | **R$ 1,02** |
+
+---
+
+## 4. Mapa de responsabilidade das IAs
+
+| Função | IA responsável | Custo por execução |
+|---|---|---|
+| Análise 8 dimensões + redes + vaga | **Claude Opus 5** | R$ 0,72 |
+| Reescrita | **Claude Opus 5** | R$ 0,25–1,90 |
+| Orientação vocacional | **Claude Opus 5** (reusa `full_analysis`) | R$ 0,49 |
+| Chat de suporte | **DeepSeek** | R$ 0,008 |
+| Boletim do Coordenador (admin) | **Claude Opus 5** | R$ 0,074 |
+| Importar vaga | **nenhuma** — Jina Reader | R$ 0 |
+| Extração de PDF | **nenhuma** — `pdf-parse` local | R$ 0 |
+
+### Os "4 agentes" do painel — o que cada um é de fato
+
+| Agente | Realidade verificada no código |
+|---|---|
+| **1 — Suporte & Atendimento** | IA real: DeepSeek, R$ 0,008 por conversa |
+| **2 — Auto-Diagnóstico & Reparo** | **Não analisa nada com IA.** Envia `"Ping"` com `max_tokens: 5-10` para 3 provedores só para ver se respondem, testa o banco com `user.count()`, e monta um texto fixo. Custo: ~R$ 0,0002 |
+| **3 — Qualidade & Auditoria** | **JavaScript puro** (`quality-agent.ts`) — valida JSON, conta caracteres, checa se as `rationale` têm ≥ 15 chars. Zero IA, zero custo |
+| **4 — Economia & OCR** | **Regex puro** (`ocr/extractor.ts`) — remove caracteres de controle, espaços duplos, rodapés de paginação. Zero IA, zero custo. E o "OCR" não existe |
+
+Do ponto de vista de custo isso é ótimo: o "enxame" é quase todo determinístico. Do ponto de vista de comunicação, a tela do admin descreve os agentes 3 e 4 como se avaliassem qualidade e economizassem tokens por inteligência, quando são validação e regex.
+
+---
+
+## 5. Comparação entre provedores
 
 Custo da análise isolada (2.464 tokens de entrada / 3.800 de saída, currículo típico):
 
-| Modelo | $/1M in | $/1M out | USD | BRL | Adequação a esta tarefa |
-|---|---|---|---|---|---|
-| **Opus 5** (atual) | 5 | 25 | 0,1073 | R$ 0,580 | Melhor qualidade; **não cabe em 60 s** |
-| **Sonnet 5** | 3 | 15 | 0,0644 | R$ 0,348 | 1,8 s medidos; structured outputs |
-| **Kimi K3** | 3 | 15 | 0,0644 | R$ 0,348 | Ver ressalvas abaixo |
-| **Haiku 4.5** | 1 | 5 | 0,0215 | R$ 0,116 | Mais fraco em escrita avaliativa |
-| **DeepSeek** | 0,27 | 1,10 | 0,0049 | R$ 0,027 | Adequado a tarefas mecânicas |
+| Modelo | $/1M in | $/1M out | BRL | Adequação a esta tarefa |
+|---|---|---|---|---|
+| **Opus 5** (atual) | 5 | 25 | R$ 0,580 | Melhor qualidade; **não cabe em 60 s** |
+| **Sonnet 5** | 3 | 15 | R$ 0,348 | 1,8 s medidos; structured outputs |
+| **Kimi K3** | 3 | 15 | R$ 0,348 | Ver ressalvas abaixo |
+| **Haiku 4.5** | 1 | 5 | R$ 0,116 | Mais fraco em escrita avaliativa |
+| **DeepSeek V4-Flash** | 0,14 | 0,28 | R$ 0,010 | Adequado a tarefas mecânicas |
+
+> ⚠️ **A tabela de preços do código está desatualizada em dois provedores.** `registry.ts:33-35` declara `deepseek-chat` a $0,27/$1,10; os modelos atuais são V4-Flash ($0,14/$0,28) e V4-Pro ($0,435/$0,87). E `registry.ts:158` reescreve silenciosamente qualquer modelo com "v4" no nome de volta para `deepseek-chat` — o mesmo anti-padrão do Claude em `registry.ts:155`.
 
 ### Ressalvas do Kimi K3
 
 Mesmo preço do Sonnet 5, mas com dois problemas estruturais para um laudo pontuado:
 
-- **`temperature` forçado em 1** (`router.ts:114`, via `isReasoningModel`). Para uma avaliação com nota de 0 a 10, isso significa que o mesmo currículo pode receber notas diferentes a cada execução. Um candidato que reenvia o CV e vê a nota mudar sem alterar nada perde a confiança no laudo.
-- **Tokens de raciocínio consomem o orçamento de saída.** Com `maxTokens: 3800` e um schema que exige perto disso em JSON, o raciocínio corta o JSON no meio. Isso explica o `tryParseAndRepairJson` de `analyze/route.ts:191`, que conta colchetes abertos e os fecha na marra — a assinatura clássica de saída truncada.
+- **`temperature` forçado em 1** (`router.ts:114`, via `isReasoningModel`). Para uma avaliação com nota de 0 a 10, o mesmo currículo pode receber notas diferentes a cada execução. Um candidato que reenvia o CV e vê a nota mudar sem alterar nada perde a confiança no laudo.
+- **Tokens de raciocínio consomem o orçamento de saída.** Com `maxTokens: 3800` e um schema que exige perto disso em JSON, o raciocínio corta o JSON no meio. Isso explica o `tryParseAndRepairJson` de `analyze/route.ts:191` — a assinatura clássica de saída truncada.
 
-Há ainda o histórico: cinco commits brigando com a integração (`e510e87`, `a09d40a`, `c370895`, `3cec7be`, `2aefa6d`), incluindo um cujo título é *"eliminate Kimi 404 and Vercel 60s timeout"*. Os quatro `console.log('[KIMI DEBUG] ...')` que restaram em `router.ts:91-94` — e que vazam prefixo e tamanho da chave de API — são a cicatriz disso.
+Histórico: cinco commits brigando com a integração (`e510e87`, `a09d40a`, `c370895`, `3cec7be`, `2aefa6d`), incluindo um cujo título é *"eliminate Kimi 404 and Vercel 60s timeout"*.
 
 ### Ressalvas do DeepSeek
 
-13× mais barato e já adequado ao que faz hoje (chat de suporte, e as tarefas mecânicas se forem ativadas). Para o laudo, dois problemas: é o mais fraco dos quatro em escrita avaliativa com nuance em pt-BR — e o laudo *é* o produto — e enviaria o conteúdo integral do currículo (nome, telefone, histórico profissional) para fora, agravando a transferência internacional não declarada do P2-6.
+Mais barato por larga margem e adequado ao que faz hoje. Três ressalvas para ampliar o uso:
+
+- **Aumento de preço anunciado em 06/08/2026**, sem tamanho nem data divulgados, mais uma política de **pico 2×** em 09:00–12:00 e 14:00–18:00 no horário de Pequim. Convertendo: **22:00–01:00 e 03:00–07:00 BRT** — fora do horário comercial brasileiro. O fuso favorece.
+- **Qualidade em português e espanhol** é inferior à do inglês — relevante com a operação global.
+- **Transferência internacional**: enviar currículos para provedor na China sem decisão de adequação é problema concreto de GDPR (ver `PLANO-GLOBAL.md`).
 
 ### Cache de prompt não utilizado
 
-O `SYSTEM_ANALYZE_PROMPT` tem 5.057 caracteres **idênticos em toda requisição**, e nenhum provedor está com cache de prompt ativado. O Kimi cobraria $0,30/1M em vez de $3 na porção cacheada; o Claude cobra ~10% do preço de entrada. É economia disponível e não capturada, independente do modelo escolhido.
+O `SYSTEM_ANALYZE_PROMPT` tem 5.057 caracteres **idênticos em toda requisição**, e nenhum provedor está com cache de prompt ativado. O Claude cobra ~10% do preço de entrada na porção cacheada. Economia disponível e não capturada, independente do modelo.
 
 ---
 
-## 4. Consistência do Plano de Entrada
+## 6. Consistência do Plano de Entrada
 
 `credits-catalog.ts:48` descreve o Plano de Entrada (R$ 9,90 / 40 créditos) como *"suficiente para 2 avaliações completas de currículo"*.
 
@@ -100,43 +177,69 @@ Somando o `CREDIT_COSTS` para um ciclo efetivamente completo:
 análise 20 + reescrita 10 + download do laudo 1 + download do currículo 1 = 32 créditos
 ```
 
-Portanto **40 créditos compram um ciclo completo, sobrando 8** — insuficientes para uma segunda análise (20). As "2 avaliações" só existem se o usuário fizer duas análises **secas**: sem reescrita e sem nenhum download.
+**40 créditos compram um ciclo completo, sobrando 8** — insuficientes para uma segunda análise (20). As "2 avaliações" só existem se o usuário fizer duas análises **secas**: sem reescrita e sem nenhum download.
 
-Isso é uma promessa de embalagem que o produto não cumpre, e o usuário descobre quando o saldo trava em 8 créditos. Duas saídas possíveis, ambas decisão de negócio:
-
-- ajustar a descrição do pacote para refletir o que 40 créditos realmente compram; ou
-- elevar o Plano de Entrada para ~64 créditos, que é o necessário para dois ciclos completos.
+Duas saídas, ambas decisão de negócio: ajustar a descrição, ou elevar o pacote para ~64 créditos.
 
 ---
 
-## 5. Margem sobre a venda de R$ 9,90
+## 7. Infraestrutura e margem por volume
 
-| Cenário de consumo | Opus 5 | Sonnet 5 |
+### Custos fixos futuros
+
+| Item | Custo | O que inclui |
 |---|---|---|
-| 1 ciclo completo (currículo típico) | R$ 8,28 · **84%** | R$ 8,61 · **87%** |
-| 2 análises secas | R$ 7,95 · **80%** | R$ 8,41 · **85%** |
-| 1 ciclo longo + orientação vocacional | R$ 7,18 · **73%** | R$ 7,95 · **80%** |
+| Vercel Pro | $20/mês por assento | ~1.000 GB-horas de função, +$20 de crédito de uso |
+| Supabase Pro | $25/mês | 8 GB de banco, $10 de crédito de compute, 250 GB de egress |
+| **Total** | **$45/mês ≈ R$ 243/mês** | |
 
-Descontando taxa de gateway estimada em 3,99% + R$ 0,39 = R$ 0,79. **Essa é a maior incerteza destes números** — a taxa real do Stripe precisa ser confirmada, porque num ticket de R$ 9,90 ela pesa cerca de 8%.
+### Custo variável por venda (R$ 9,90)
 
-### Custos não precificados
+| Item | Sonnet 5 | Opus 5 |
+|---|---|---|
+| Gateway de pagamento¹ | R$ 0,79 | R$ 0,79 |
+| IA (análise + reescrita) | R$ 0,50 | R$ 0,83 |
+| **Margem de contribuição** | **R$ 8,62 (87%)** | **R$ 8,28 (84%)** |
 
-- **Orientação vocacional é gratuita.** `career-orientation/route.ts` não tem nenhuma chamada a `deductCredits`, mas usa `taskType: 'full_analysis'` — ou seja, roda no modelo mais caro. Custa R$ 0,49 (Opus 5) ou R$ 0,30 (Sonnet 5) por uso, sem receita associada. Pode ser intencional como isca de conversão; se for, vale registrar como tal.
-- **Downloads saem de graça abaixo de 1 crédito.** `download/route.ts:28` só cobra `if ((user.credits || 0) >= costCredits)` — exatamente no fim do pacote, quando o usuário mais baixa arquivos.
+¹ Estimado em 3,99% + R$ 0,39. **A taxa real do gateway é a maior incerteza destes números.**
+
+### Margem bruta por volume
+
+| Vendas/mês | Infra por venda | **Sonnet 5** | **Opus 5** |
+|---|---|---|---|
+| 30 | R$ 8,10 | R$ 0,52 · **5%** | R$ 0,18 · **2%** |
+| 50 | R$ 4,86 | R$ 3,76 · **38%** | R$ 3,42 · **35%** |
+| 100 | R$ 2,43 | R$ 6,19 · **62%** | R$ 5,85 · **59%** |
+| 250 | R$ 0,97 | R$ 7,64 · **77%** | R$ 7,31 · **74%** |
+| 500 | R$ 0,49 | R$ 8,13 · **82%** | R$ 7,80 · **79%** |
+| 1.000 | R$ 0,24 | R$ 8,37 · **85%** | R$ 8,04 · **81%** |
+| 2.500 | R$ 0,10 | R$ 8,52 · **86%** | R$ 8,19 · **83%** |
+
+**Break-even da infraestrutura: 29 vendas/mês** (Sonnet) ou **30** (Opus). A partir de ~250 vendas/mês a infra vira ruído e a margem converge para os 84–87% da contribuição.
+
+### Tempo de função não é gargalo
+
+| Modelo | Duração | GB-h por análise | Cabe nas 1.000 GB-h incluídas |
+|---|---|---|---|
+| Sonnet 5 | ~5 s | 0,0024 | ~423.000 análises/mês |
+| Opus 5 | ~60 s | 0,0283 | ~35.000 análises/mês |
+
+O Opus consome 12× mais tempo de função, mas 35.000 análises/mês está muito além da escala prevista. **Na prática o Opus não custa mais em infraestrutura**, só em tokens.
 
 ### Fora do escopo desta análise
 
-Não é possível fechar o custo total sem dados de infraestrutura:
+Margem **bruta** exclui, por definição: impostos (Simples Nacional Anexo III começa em ~6% sobre faturamento; IVA na UE e sales tax nos EUA — ver `PLANO-GLOBAL.md`), domínio, e-mail transacional, monitoramento e tempo de trabalho.
 
-- taxa real do gateway de pagamento;
-- plano do Vercel — invocações e tempo de função (com Opus 5 cada análise ocupa uma função por até 60 s, o que pesa bem mais que com Sonnet 5);
-- plano do Supabase — armazenamento de currículos, logs e `WebhookEvent`.
+### Custos não precificados no produto
+
+- **Orientação vocacional é gratuita** — R$ 0,30 (Sonnet) por uso, sem receita associada.
+- **Downloads saem de graça abaixo de 1 crédito** — `download/route.ts:28` só cobra `if ((user.credits || 0) >= costCredits)`, exatamente no fim do pacote.
 
 ---
 
-## 6. Três números de custo incompatíveis no projeto
+## 8. Três números de custo incompatíveis no projeto
 
-Este é o achado mais acionável desta análise. Existem hoje **três** valores diferentes para o custo por ciclo, e nenhum deles é o real:
+Existem hoje **três** valores diferentes para o custo por ciclo, e nenhum é o real:
 
 | Fonte | Valor por ciclo | Erro vs. real (Opus 5) |
 |---|---|---|
@@ -148,25 +251,18 @@ E a causa raiz do erro no painel administrativo:
 
 **`registry.ts:23-24` declara o Opus 5 a $15/$75 por 1M de tokens. O preço real é $5/$25.**
 
-Como `router.ts:139-141` calcula `costUsd` a partir dessa tabela e grava em `AiLog.costUsd`, **todo o custo e o lucro estimado do painel admin estão inflados em 3×**. Somado ao P1-7 da auditoria (valores em USD/EUR gravados como BRL sem conversão), o dashboard financeiro não é confiável em nenhuma direção.
-
-Correções:
-
-1. `registry.ts:23-24` — corrigir para `inputPer1k: 0.005` / `outputPer1k: 0.025`.
-2. `llm.ts:47` — o `TOKEN_COST` alimenta `/api/pricing`, que é **rota pública**, com números que não correspondem ao roteamento real. Deve derivar do `registry.ts` ou ser removido junto com o resto do código morto de `llm.ts` (P3-5).
-3. README — atualizar a tabela de custos e margens.
-4. Recalcular ou marcar como suspeitos os registros históricos de `AiLog.costUsd`.
+Como `router.ts:139-141` calcula `costUsd` a partir dessa tabela e grava em `AiLog.costUsd`, e `admin/dashboard/route.ts:100-106` soma esse campo, **todo o custo de IA e o lucro do painel estão inflados em 3×**. Somado ao P1-7 (valores em USD/EUR gravados como BRL), o dashboard financeiro está errado nas duas pontas.
 
 ---
 
-## 7. Recomendação
+## 9. Recomendação
 
-**Curto prazo — `claude-sonnet-5` como modelo primário de `full_analysis` e `rewrite`.** Não pelo custo (a diferença é de 3 a 7 pontos de margem), mas porque o Opus 5 não termina dentro do teto de 60 s e hoje entrega timeout ou laudo fabricado. É uma linha em `registry.ts:19`.
+**Curto prazo — `claude-sonnet-5` como modelo primário de `full_analysis` e `rewrite`.** Não pelo custo (3 a 7 pontos de margem), mas porque o Opus 5 não termina dentro do teto de 60 s e hoje entrega timeout ou laudo fabricado. É uma linha em `registry.ts:19`.
 
-**Manter `support_chat` e as tarefas mecânicas no DeepSeek.** Já é o mais barato por larga margem e não há evidência de problema de qualidade.
+**Manter `support_chat` no DeepSeek**, mas não construir nada no caminho da requisição paga que dependa dele — aumento anunciado, instabilidade admitida e preço variável por horário.
 
-**Kimi K3 como fallback, não como primário.** Mesmo preço do Sonnet 5, provedor independente — útil se a Anthropic ficar indisponível. Mas `temperature: 1` forçado o torna inadequado para gerar uma nota reproduzível.
+**Kimi K3 como fallback, não como primário.** Mesmo preço do Sonnet 5, provedor independente, útil em indisponibilidade da Anthropic. Mas `temperature: 1` forçado o torna inadequado para gerar nota reproduzível.
 
-**Médio prazo — o custo não impede o Opus 5.** A R$ 0,83 por ciclo sobre uma venda de R$ 9,90, o Opus 5 é perfeitamente pagável. O que impede é a arquitetura. Com streaming ou fila (Fase 3 do plano em `AUDITORIA.md`), o teto de 60 s desaparece e o Opus 5 passa a ser uma escolha de qualidade legítima, não um risco operacional.
+**Médio prazo — o custo não impede o Opus 5.** A R$ 0,83 por ciclo sobre venda de R$ 9,90, o Opus 5 é perfeitamente pagável. O que impede é a arquitetura. Com streaming ou fila, o teto de 60 s desaparece e o Opus 5 passa a ser escolha de qualidade legítima.
 
-**Antes de qualquer troca, meça.** Estes números são de custo, não de qualidade. Rode os mesmos 10 currículos reais em cada candidato e compare os laudos lado a lado — especialmente `targetedChanges` e as `rationale`, onde a diferença entre modelos aparece. Rode o mesmo currículo 3× em cada um para medir a variância das notas. A tabela `AiLog` já registra `responseTimeMs`, `usedModel` e `tokensOut` para sustentar essa comparação.
+**Antes de qualquer troca, meça.** Estes números são de custo, não de qualidade. Rode os mesmos 10 currículos reais em cada candidato e compare os laudos lado a lado — especialmente `targetedChanges` e as `rationale`. Rode o mesmo currículo 3× em cada um para medir a variância das notas. A tabela `AiLog` já registra `responseTimeMs`, `usedModel` e `tokensOut` para sustentar essa comparação.

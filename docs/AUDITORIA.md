@@ -23,7 +23,9 @@ Resumo dos achados:
 **Documentos complementares:**
 
 - [`RELATORIO-TIMEOUT-ANALISE.md`](./RELATORIO-TIMEOUT-ANALISE.md) — causa raiz do timeout na análise de 8 dimensões (detalha o P0-4)
-- [`ANALISE-CUSTOS.md`](./ANALISE-CUSTOS.md) — custo real por ciclo, comparação entre provedores de IA, e consistência do pacote de créditos (detalha o P1-9 e o P2-10)
+- [`ANALISE-CUSTOS.md`](./ANALISE-CUSTOS.md) — custo por módulo, margem por volume, mapa das IAs e seleção de modelo (detalha o P1-9 e o P2-10)
+- [`PLANO-GLOBAL.md`](./PLANO-GLOBAL.md) — operação em português, inglês e espanhol
+- **[`PLANO-MELHORIAS.md`](./PLANO-MELHORIAS.md) — roteiro único de execução.** O plano em 6 fases ao final deste documento cobre apenas os achados de auditoria; o roteiro consolidado, que inclui globalização e evolução de produto, está lá.
 
 ---
 
