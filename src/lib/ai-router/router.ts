@@ -93,10 +93,17 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
             'content-type': 'application/json',
           },
           body: JSON.stringify({
-            model: runtime.model || 'claude-opus-5',
+            model: runtime.model || 'claude-sonnet-5',
             max_tokens: req.maxTokens ?? 3500,
             system: req.systemPrompt,
             messages: [{ role: 'user', content: req.userPrompt }],
+            // Structured outputs: a API restringe a geração ao schema, então a
+            // resposta é sempre JSON válido no formato pedido. Elimina a classe
+            // inteira de "falha de parse" que antes era mascarada com dados
+            // fabricados.
+            ...(req.jsonSchema
+              ? { output_config: { format: { type: 'json_schema', schema: req.jsonSchema } } }
+              : {}),
           }),
           signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
         })
@@ -136,6 +143,10 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
           ],
           temperature: isReasoningModel ? 1 : (req.temperature ?? 0.3),
           max_tokens: req.maxTokens ?? 3500,
+          // Estes provedores não aceitam JSON Schema; `json_object` garante
+          // apenas que a saída é JSON válido. A conformidade com o formato é
+          // verificada pelo chamador.
+          ...(req.jsonSchema ? { response_format: { type: 'json_object' as const } } : {}),
         })
 
         const msg = completion.choices?.[0]?.message

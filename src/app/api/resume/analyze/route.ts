@@ -13,6 +13,149 @@ const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório'),
 })
 
+const DIMENSION_KEYS = [
+  'structure',
+  'summary',
+  'impact',
+  'skills',
+  'experience',
+  'keywords',
+  'career',
+  'upskilling',
+] as const
+
+const str = { type: 'string' } as const
+const strArray = { type: 'array', items: str } as const
+
+// Aplicado como restrição de geração (`output_config.format`), não como pedido
+// no prompt: a API impede o modelo de produzir qualquer coisa fora deste
+// formato. `overall` não aparece aqui de propósito — é calculado a partir das
+// dimensões, porque nenhum modelo é confiável em aritmética auto-consistente.
+const ANALYSIS_JSON_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    'summary',
+    'atsFriendly',
+    'dimensions',
+    'jobMatch',
+    'targetedChanges',
+    'strengths',
+    'weaknesses',
+    'recommendations',
+    'keywords',
+    'socialAdvice',
+  ],
+  properties: {
+    summary: str,
+    atsFriendly: { type: 'boolean' },
+    dimensions: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['key', 'label', 'score', 'rationale'],
+        properties: {
+          key: { type: 'string', enum: DIMENSION_KEYS },
+          label: str,
+          score: { type: 'number' },
+          rationale: str,
+        },
+      },
+    },
+    jobMatch: {
+      type: 'object',
+      additionalProperties: false,
+      required: [
+        'targetJob',
+        'matchPercentage',
+        'verdict',
+        'matchedRequirements',
+        'missingRequirements',
+        'actionPlan',
+      ],
+      properties: {
+        targetJob: str,
+        matchPercentage: { type: 'number' },
+        verdict: str,
+        matchedRequirements: strArray,
+        missingRequirements: strArray,
+        actionPlan: strArray,
+      },
+    },
+    targetedChanges: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['section', 'originalText', 'rationale', 'suggestedText'],
+        properties: {
+          section: str,
+          originalText: str,
+          rationale: str,
+          suggestedText: str,
+        },
+      },
+    },
+    strengths: strArray,
+    weaknesses: strArray,
+    recommendations: strArray,
+    keywords: strArray,
+    socialAdvice: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['platform', 'url', 'headline', 'aboutSummary', 'tips'],
+        properties: {
+          platform: str,
+          url: str,
+          headline: str,
+          aboutSummary: str,
+          tips: strArray,
+        },
+      },
+    },
+  },
+} as const
+
+/**
+ * Valida o laudo e calcula a nota geral.
+ *
+ * Lança em vez de devolver dados aproximados: o chamador reembolsa os créditos.
+ * A versão anterior gravava um laudo inventado — nota 7,5 em todas as dimensões
+ * com textos genéricos — e o cobrava como se fosse real.
+ */
+function parseAnalysis(rawText: string): any {
+  const cleaned = rawText.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim()
+
+  let parsed: any
+  try {
+    parsed = JSON.parse(cleaned)
+  } catch {
+    throw new Error('A IA devolveu um laudo em formato inválido.')
+  }
+
+  const dimensions = parsed?.dimensions
+  if (!Array.isArray(dimensions) || dimensions.length !== DIMENSION_KEYS.length) {
+    throw new Error('O laudo veio incompleto: faltam dimensões de avaliação.')
+  }
+
+  const scores = dimensions.map((d: any) => Number(d?.score))
+  if (scores.some((s) => !Number.isFinite(s) || s < 0 || s > 10)) {
+    throw new Error('O laudo veio com notas inválidas nas dimensões.')
+  }
+
+  if (typeof parsed.summary !== 'string' || parsed.summary.trim().length < 30) {
+    throw new Error('O laudo veio sem parecer executivo.')
+  }
+
+  // A nota geral é derivada aqui, não pedida ao modelo.
+  const overall = Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
+
+  return { ...parsed, overall }
+}
+
 export async function POST(req: Request) {
   let deducted = false
   let userId: string | undefined = undefined
@@ -86,9 +229,9 @@ REGRAS DE PRESENÇA DIGITAL & REDES SOCIAIS (SE FORNECIDAS):
 Se o candidato informou perfis profissionais (LinkedIn, Gupy, Behance, Dribbble, GitHub, StackOverflow, Kaggle, Xing, Medium, Substack, Portfólio), gere no campo "socialAdvice" orientações práticas de otimização para cada perfil: Título/Headline otimizado para algoritmos de recrutamento, seção "Sobre" com palavras-chave de busca, e dicas de SEO/engajamento para cada plataforma.
 Se nenhum perfil foi informado, gere recomendações estratégicas gerais para LinkedIn, Gupy e portfólios globais no campo "socialAdvice".
 
-Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seguinte esquema estrito:
+Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seguinte esquema estrito.
+NÃO calcule nota geral: ela é derivada das 8 dimensões pelo sistema.
 {
-  "overall": number (nota de 0 a 10 com 1 casa decimal, devendo ser estritamente igual à média aritmética das notas de todas as 8 dimensões abaixo),
   "summary": "Parecer executivo detalhado sobre o currículo e seu nível de competitividade no mercado.",
   "atsFriendly": boolean,
   "dimensions": [
@@ -186,75 +329,12 @@ Retorne EXATAMENTE um JSON válido (sem blocos de markdown adicionais) com o seg
       systemPrompt: SYSTEM_ANALYZE_PROMPT,
       userPrompt: `Realize a análise preditiva completa e detalhada do seguinte currículo, mídias sociais e aderência à vaga alvo:\n\nCONTEÚDO DO CURRÍCULO:\n${resume.originalContent.slice(0, 15000)}${socialLinksText}${jobText}`,
       maxTokens: 3800,
+      jsonSchema: ANALYSIS_JSON_SCHEMA as unknown as Record<string, unknown>,
     })
 
-    const tryParseAndRepairJson = (rawText: string): any => {
-      let cleanText = rawText.trim().replace(/```json/gi, '').replace(/```/g, '').trim()
-      try {
-        return JSON.parse(cleanText)
-      } catch {
-        try {
-          let repaired = cleanText.replace(/\\$/, '').replace(/,\s*$/, '')
-          const unescapedQuotes = (repaired.match(/(?<!\\)"/g) || []).length
-          if (unescapedQuotes % 2 !== 0) repaired += '"'
-
-          const openBrackets = (repaired.match(/\[/g) || []).length - (repaired.match(/\]/g) || []).length
-          const openBraces = (repaired.match(/\{/g) || []).length - (repaired.match(/\}/g) || []).length
-
-          for (let i = 0; i < openBrackets; i++) repaired += ']'
-          for (let i = 0; i < openBraces; i++) repaired += '}'
-
-          return JSON.parse(repaired)
-        } catch {
-          const overallMatch = cleanText.match(/"overall"\s*:\s*(\d+(\.\d+)?)/)
-          const summaryMatch = cleanText.match(/"summary"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/)
-          const atsMatch = cleanText.match(/"atsFriendly"\s*:\s*(true|false)/)
-
-          const extractArray = (key: string): string[] => {
-            const regex = new RegExp(`"${key}"\\s*:\\s*\\[([^\\]]*)\\]`, 's')
-            const match = cleanText.match(regex)
-            if (match && match[1]) {
-              const items = match[1].match(/"([^"\\]*(?:\\.[^"\\]*)*)"/g)
-              if (items) return items.map(s => s.replace(/^"|"$/g, '').replace(/\\"/g, '"'))
-            }
-            return []
-          }
-
-          return {
-            overall: overallMatch ? parseFloat(overallMatch[1]) : 7.5,
-            summary: summaryMatch ? summaryMatch[1] : 'Análise técnica concluída com sucesso.',
-            atsFriendly: atsMatch ? atsMatch[1] === 'true' : true,
-            strengths: extractArray('strengths'),
-            weaknesses: extractArray('weaknesses'),
-            recommendations: extractArray('recommendations'),
-            keywords: extractArray('keywords'),
-          }
-        }
-      }
-    }
-
-    let analysis: any = tryParseAndRepairJson(routerResult.content)
-    if (!analysis || typeof analysis !== 'object' || Array.isArray(analysis)) {
-      analysis = {
-        overall: 7.5,
-        summary: 'Análise concluída com sucesso.',
-        atsFriendly: true,
-        dimensions: [
-          { key: 'structure', label: 'Estrutura & Compatibilidade ATS', score: 7.5, rationale: 'Estrutura limpa.' },
-          { key: 'summary', label: 'Resumo & Posicionamento Profissional', score: 7.5, rationale: 'Posicionamento identificado.' },
-          { key: 'impact', label: 'Resultados Quantificados (STAR/XYZ)', score: 7.0, rationale: 'Resultados avaliados.' },
-          { key: 'skills', label: 'Habilidades & Palavras-Chave', score: 7.5, rationale: 'Competências identificadas.' },
-          { key: 'experience', label: 'Experiência & Verbos de Ação', score: 7.5, rationale: 'Experiência avaliada.' },
-          { key: 'keywords', label: 'Palavras-Chave & Match', score: 7.0, rationale: 'Palavras-chave avaliadas.' },
-          { key: 'career', label: 'Trajetória & Plano de Carreira', score: 7.5, rationale: 'Progressão avaliada.' },
-          { key: 'upskilling', label: 'Capacitação & Cursos', score: 7.5, rationale: 'Capacitação avaliada.' },
-        ],
-        strengths: ['Estrutura profissional limpa e fácil leitura'],
-        weaknesses: ['Pouca presença de métricas numéricas'],
-        recommendations: ['Aplicar metodologia STAR/XYZ'],
-        keywords: ['Gestão', 'Processos', 'Otimização'],
-      }
-    }
+    // Falha aqui cai no catch abaixo, que reembolsa os créditos. Antes, um
+    // laudo inventado era gravado e cobrado como se fosse real.
+    const analysis = parseAnalysis(routerResult.content)
 
     const updated = await db.resume.update({
       where: { id: resume.id },

@@ -31,6 +31,11 @@ export interface AiTaskRequest {
   maxTokens?: number
   userId?: string
   resumeId?: string
+  // JSON Schema da resposta esperada. No Claude, é aplicado como restrição de
+  // saída (`output_config.format`), que garante JSON válido e no formato — não
+  // é só uma instrução no prompt. Nos provedores compatíveis com OpenAI vira
+  // `response_format: json_object`, que garante JSON válido mas não o formato.
+  jsonSchema?: Record<string, unknown>
 }
 
 export interface AiTaskResult {

@@ -338,6 +338,9 @@ export function AnalysisView() {
   }
 
   let rawAnalysis = resume.analysis || {}
+  // Compatibilidade com laudos gravados antes dos structured outputs, quando o
+  // JSON inteiro podia acabar dentro do campo `summary`. Laudos novos já vêm no
+  // formato correto; isto pode sair quando os registros antigos expirarem.
   if (typeof rawAnalysis.summary === 'string' && rawAnalysis.summary.trim().startsWith('{') && rawAnalysis.summary.includes('"overall"')) {
     const repaired = tryParseAndRepairJson(rawAnalysis.summary)
     if (repaired && typeof repaired === 'object') {
