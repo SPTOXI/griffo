@@ -9,6 +9,17 @@ import {
 } from './registry'
 import { auditQualityOfAiResult } from '../agents/quality-agent'
 
+// As rotas que chamam este roteador declaram maxDuration = 60. Se o orçamento
+// for consumido inteiro pelas tentativas de IA, a plataforma encerra a função
+// antes do `catch` que devolve os créditos ao usuário — que então paga sem
+// receber. Os três limites abaixo existem para garantir que sempre sobre tempo
+// para o reembolso e a persistência.
+const PROVIDER_TIMEOUT_MS = 20_000
+const MAX_PROVIDER_ATTEMPTS = 2
+// Corta novas tentativas a partir daqui, deixando ~15s para reembolso,
+// gravação no banco e a resposta HTTP.
+const TASK_DEADLINE_MS = 45_000
+
 export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   const taskStartTime = Date.now()
   // Determine primary provider for task
@@ -16,7 +27,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   const primaryRuntime = await getProviderRuntimeConfig(primaryProviderId)
 
   // 1. Collect all candidate providers to try
-  const candidateProviders: ProviderId[] = [
+  const allCandidates: ProviderId[] = [
     primaryProviderId,
     ...FALLBACK_CHAIN[primaryProviderId].filter((id) => id !== primaryProviderId),
   ]
@@ -29,13 +40,17 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
     })
     for (const keyObj of activeDbKeys) {
       const pId = normalizeProviderId(keyObj.provider)
-      if (pId && !candidateProviders.includes(pId)) {
-        candidateProviders.push(pId)
+      if (pId && !allCandidates.includes(pId)) {
+        allCandidates.push(pId)
       }
     }
   } catch (e) {
     // Ignore
   }
+
+  // Só as duas primeiras tentativas cabem no orçamento: 2 x 20s deixa 20s de
+  // folga. A cadeia completa de 4 provedores levaria mais de 60s sozinha.
+  const candidateProviders = allCandidates.slice(0, MAX_PROVIDER_ATTEMPTS)
 
   let lastError: any = null
   let failoverCount = 0
@@ -43,6 +58,17 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
 
   for (let i = 0; i < candidateProviders.length; i++) {
     const currentProviderId = candidateProviders[i]
+
+    // Não inicia uma tentativa que não caberia no orçamento restante — é o que
+    // garante que o `catch` da rota chegue a executar e devolva os créditos.
+    const elapsed = Date.now() - taskStartTime
+    if (elapsed + PROVIDER_TIMEOUT_MS > TASK_DEADLINE_MS) {
+      attemptDiagnostics.push(
+        `${currentProviderId.toUpperCase()}: Ignorado — orçamento de tempo esgotado (${elapsed}ms decorridos)`
+      )
+      break
+    }
+
     const runtime = await getProviderRuntimeConfig(currentProviderId)
 
     // Skip provider if no API key is available
@@ -72,7 +98,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
             system: req.systemPrompt,
             messages: [{ role: 'user', content: req.userPrompt }],
           }),
-          signal: AbortSignal.timeout(55000),
+          signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
         })
 
         const data = await res.json()
@@ -87,20 +113,17 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         tokensIn = data.usage?.input_tokens || Math.ceil((req.systemPrompt.length + req.userPrompt.length) / 4)
         tokensOut = data.usage?.output_tokens || Math.ceil(content.length / 4)
       } else {
-        if (currentProviderId === 'kimi') {
-          console.log('[KIMI DEBUG] baseURL:', runtime.baseURL)
-          console.log('[KIMI DEBUG] model:', runtime.model)
-          console.log('[KIMI DEBUG] key prefix:', runtime.apiKey?.slice(0, 15) + '...')
-          console.log('[KIMI DEBUG] key length:', runtime.apiKey?.length)
-        }
-
         const cleanApiKey = runtime.apiKey?.trim().replace(/^["']|["']$/g, '')
 
         // OpenAI-compatible SDK for Kimi, DeepSeek, Gemini
         const client = new OpenAI({
           apiKey: cleanApiKey,
           baseURL: runtime.baseURL,
-          timeout: 55000, // 55s timeout per call
+          timeout: PROVIDER_TIMEOUT_MS,
+          // O SDK usa maxRetries = 2 por padrão e aplica o timeout POR
+          // tentativa, inclusive retentando em timeout. Sem esta linha um único
+          // provedor consome 3 x o timeout e estoura o limite da função sozinho.
+          maxRetries: 0,
         })
 
         const isReasoningModel = currentProviderId === 'kimi' || runtime.model?.includes('reasoner') || runtime.model?.includes('k3')

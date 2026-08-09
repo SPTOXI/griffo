@@ -13,6 +13,11 @@ const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório'),
 })
 
+// A análise já corta a entrada em 15.000 caracteres; a reescrita enviava o
+// currículo inteiro. Como o upload não impõe teto de tamanho, um documento
+// muito grande fazia o custo e o tempo desta rota crescerem sem limite.
+const REWRITE_INPUT_LIMIT = 20000
+
 export async function POST(req: Request) {
   let deducted = false
   let userId: string | undefined = undefined
@@ -87,7 +92,7 @@ Diretrizes Obrigatórias:
 4. Estruture a resposta usando formatação Markdown rica (títulos '# ' e '## ', marcadores '- ', negritos '**').
 
 Currículo Original Completo para Reescrita:
-${resume.originalContent}`,
+${resume.originalContent.slice(0, REWRITE_INPUT_LIMIT)}`,
       maxTokens: 8000,
     })
 

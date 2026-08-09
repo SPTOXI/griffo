@@ -1,5 +1,5 @@
 import { db } from '../db'
-import { ProviderConfig, ProviderId, TaskType } from './types'
+import { ModelPricing, ProviderConfig, ProviderId, TaskType } from './types'
 
 export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   kimi: {
@@ -15,13 +15,15 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   },
   claude: {
     id: 'claude',
-    name: 'Claude Opus 5 (Anthropic)',
-    defaultModel: 'claude-opus-5',
+    name: 'Claude (Anthropic)',
+    // Sonnet 5 é o primário: medido em 1,8s no commit 2aefa6d, contra o Opus 5
+    // que não termina dentro do maxDuration de 60s das rotas de análise.
+    defaultModel: 'claude-sonnet-5',
     baseURL: 'https://api.anthropic.com/v1',
     apiKeyEnvVar: 'ANTHROPIC_API_KEY',
     pricing: {
-      inputPer1k: 0.015, // $15.00 / 1M (Opus 5)
-      outputPer1k: 0.075, // $75.00 / 1M (Opus 5)
+      inputPer1k: 0.003, // $3.00 / 1M (Sonnet 5)
+      outputPer1k: 0.015, // $15.00 / 1M (Sonnet 5)
     },
   },
   deepseek: {
@@ -46,6 +48,34 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
       outputPer1k: 0.0003, // $0.30 / 1M
     },
   },
+}
+
+// O custo real depende do MODELO efetivamente usado, não do provedor: o admin
+// pode trocar o modelo no painel sem que a tabela do provedor acompanhe. Antes
+// disso o preço do Opus 5 estava declarado como $15/$75 (o triplo do real), o
+// que inflava em 3x o custo e o lucro exibidos no painel administrativo.
+//
+// Valores em USD por 1k tokens. Modelos ausentes caem no preço do provedor.
+export const MODEL_PRICING: Record<string, ModelPricing> = {
+  // Anthropic
+  'claude-opus-5': { inputPer1k: 0.005, outputPer1k: 0.025 },
+  'claude-sonnet-5': { inputPer1k: 0.003, outputPer1k: 0.015 },
+  'claude-haiku-4-5': { inputPer1k: 0.001, outputPer1k: 0.005 },
+  // Moonshot
+  'kimi-k3': { inputPer1k: 0.003, outputPer1k: 0.015 },
+  // DeepSeek — anunciou aumento em 06/08/2026 sem divulgar tamanho nem data,
+  // mais política de pico 2x. Revisar periodicamente.
+  'deepseek-v4-flash': { inputPer1k: 0.00014, outputPer1k: 0.00028 },
+  'deepseek-v4-pro': { inputPer1k: 0.000435, outputPer1k: 0.00087 },
+}
+
+// Modelos correntes por provedor. Um modelo configurado fora desta lista é
+// tratado como desatualizado e substituído pelo padrão do provedor.
+const CURRENT_MODELS: Record<ProviderId, string[]> = {
+  claude: ['claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5'],
+  kimi: ['kimi-k3'],
+  deepseek: ['deepseek-chat', 'deepseek-v4-flash', 'deepseek-v4-pro'],
+  gemini: ['gemini-2.0-flash'],
 }
 
 // Normalize provider names that may differ between DB records and PROVIDER_CONFIGS keys
@@ -140,26 +170,18 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
     // Fallback to env
   }
 
-  let trimmedModel = model.trim()
-  const lowerModel = trimmedModel.toLowerCase()
+  let trimmedModel = model.trim().toLowerCase()
 
-  // Auto-correct common model naming mismatches configured in DB/env
-  if (providerId === 'kimi') {
-    if (!baseURL || baseURL.includes('moonshot.cn')) {
-      baseURL = 'https://api.moonshot.ai/v1'
-    }
-    if (!trimmedModel || trimmedModel.startsWith('moonshot-v1')) {
-      trimmedModel = 'kimi-k3'
-    }
+  if (providerId === 'kimi' && (!baseURL || baseURL.includes('moonshot.cn'))) {
+    baseURL = 'https://api.moonshot.ai/v1'
   }
-  if (providerId === 'claude' && (!trimmedModel || trimmedModel.startsWith('claude-3') || trimmedModel.includes('sonnet') || trimmedModel.includes('2025') || trimmedModel.includes('2024'))) {
-    trimmedModel = 'claude-opus-5'
-  }
-  if (providerId === 'deepseek' && (!trimmedModel || trimmedModel.includes('v3') || trimmedModel.includes('v4'))) {
-    trimmedModel = 'deepseek-chat'
-  }
-  if (providerId === 'gemini' && (lowerModel === 'gemini-pro' || lowerModel === 'gemini-1.5-flash' || lowerModel === 'gemini-2.5-flash' || !trimmedModel)) {
-    trimmedModel = 'gemini-2.0-flash'
+
+  // Substitui apenas modelos desatualizados pelo padrão do provedor. A versão
+  // anterior reescrevia por correspondência de substring — qualquer modelo com
+  // "sonnet" no nome virava Opus 5, e qualquer "v4" do DeepSeek virava
+  // deepseek-chat — o que desfazia silenciosamente a configuração do painel.
+  if (!CURRENT_MODELS[providerId].includes(trimmedModel)) {
+    trimmedModel = base.defaultModel
   }
 
   return {
@@ -167,6 +189,6 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
     apiKey: apiKey.trim(),
     baseURL: baseURL.trim(),
     model: trimmedModel,
-    pricing: base.pricing,
+    pricing: MODEL_PRICING[trimmedModel] ?? base.pricing,
   }
 }

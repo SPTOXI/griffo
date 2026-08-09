@@ -163,14 +163,17 @@ export function AnalysisView() {
     setModalProgress(5)
     setModalStep(1)
 
+    // Calibrada para ~5s, a duração real com Sonnet 5 (1,8s de modelo mais as
+    // consultas ao banco). A calibragem anterior levava ~73s para chegar a 96%,
+    // uma expectativa que não cabia no limite de 60s da própria rota.
     const interval = setInterval(() => {
       setModalProgress((prev) => {
         if (prev >= 96) return 96
-        const next = Math.min(96, prev + 0.35)
+        const next = Math.min(96, prev + 3.5)
         setModalStep(Math.min(8, Math.max(1, Math.ceil((next / 100) * 8))))
         return next
       })
-    }, 280)
+    }, 200)
 
     try {
       const r = await internalFetch('/api/resume/analyze', {
@@ -199,33 +202,35 @@ export function AnalysisView() {
         return
       }
 
-      // Caso contrário, inicia verificação de auto-recuperação no banco
-      throw new Error(data.error || 'Recuperando laudo...')
+      // O servidor respondeu, mas com erro. A mensagem dele é a informação boa
+      // — inclusive quando os créditos foram reembolsados.
+      setModalOpen(false)
+      setError(data.error || 'Não foi possível gerar o laudo. Tente novamente.')
+      return
     } catch {
       clearInterval(interval)
-      // Auto-recuperação resiliente: realiza até 25 tentativas de leitura no banco (50s)
-      let recovered = false
-      for (let attempt = 1; attempt <= 25; attempt++) {
-        await new Promise((res) => setTimeout(res, 2000))
-        try {
-          const checkRes = await internalFetch(`/api/resume/${activeResume.id}?id=${activeResume.id}`, { cache: 'no-store' })
-          const checkData = await checkRes.json().catch(() => ({}))
-          if (checkRes.ok && checkData.resume?.analysis) {
-            setResume(checkData.resume)
-            setError(null)
-            setModalStep(8)
-            setModalProgress(100)
-            setTimeout(() => setModalOpen(false), 400)
-            recovered = true
-            break
-          }
-        } catch {}
-      }
 
-      if (!recovered) {
-        setModalOpen(false)
-        setError('O processamento da IA está levando alguns segundos adicionais. Atualize a página ou verifique no Histórico.')
-      }
+      // Só chega aqui em falha de rede: a resposta se perdeu no caminho, então
+      // não se sabe se o servidor concluiu. Uma única releitura resolve o caso
+      // real (resposta perdida, laudo gravado). O laço de 25 tentativas que
+      // existia aqui esperava 50s por um registro que, quando a função era
+      // encerrada por tempo, nunca chegava a ser escrito.
+      await new Promise((res) => setTimeout(res, 2000))
+      try {
+        const checkRes = await internalFetch(`/api/resume/${activeResume.id}?id=${activeResume.id}`, { cache: 'no-store' })
+        const checkData = await checkRes.json().catch(() => ({}))
+        if (checkRes.ok && checkData.resume?.analysis) {
+          setResume(checkData.resume)
+          setError(null)
+          setModalStep(8)
+          setModalProgress(100)
+          setTimeout(() => setModalOpen(false), 400)
+          return
+        }
+      } catch {}
+
+      setModalOpen(false)
+      setError('Falha de conexão ao gerar o laudo. Se os créditos foram debitados, eles são reembolsados automaticamente. Tente novamente.')
     } finally {
       setAnalyzing(false)
     }
