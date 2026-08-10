@@ -19,8 +19,9 @@ import {
  * de um minuto de espera. Trocar de provedor não muda isso: o mesmo volume de
  * saída custa o mesmo tempo em qualquer modelo da categoria.
  *
- * Cinco chamadas de ~800 tokens rodando ao mesmo tempo terminam no tempo da
- * mais lenta, não na soma — o que troca ~82s por ~18s sem tirar nada do laudo.
+ * Cinco chamadas de algumas centenas de tokens rodando ao mesmo tempo terminam
+ * no tempo da mais lenta, não na soma — o que troca ~82s por algo na casa dos
+ * ~20s sem tirar nada do laudo.
  *
  * O custo de repetir o currículo no input das cinco é absorvido pelo cache de
  * prompt: `buildSharedContext` produz um bloco idêntico em todos os segmentos,
@@ -30,12 +31,20 @@ import {
  * A divisão não é arbitrária: nenhum segmento depende do resultado de outro. A
  * nota geral, único valor derivado, é calculada localmente em `mergeSegments`.
  *
- * Os `maxTokens` abaixo carregam folga deliberada sobre o tamanho estimado de
- * cada resposta, por dois motivos que se somam: o tokenizador do Sonnet 5 conta
- * cerca de 30% mais tokens que o da geração anterior para o mesmo texto, e
- * `max_tokens` na API cobre raciocínio e resposta juntos. Orçamento apertado
- * aqui não produz resposta curta — produz JSON truncado, que a validação do
- * segmento reprova por inteiro.
+ * Sobre os dois controles de tamanho, que são independentes e foram confundidos
+ * numa primeira versão deste arquivo:
+ *
+ * `maxTokens` é um TETO, não um alvo. Ele não encurta a resposta e não acelera
+ * nada — a latência vem dos tokens efetivamente gerados, não do limite. O que
+ * um teto apertado faz é cortar a resposta no meio: o JSON não fecha e a
+ * validação reprova o segmento inteiro. Por isso os valores abaixo são
+ * generosos: um teto folgado é de graça, e só entra em ação para evitar
+ * truncamento quando a resposta sai maior que o previsto.
+ *
+ * Quem controla o tamanho de verdade — e portanto a latência — é a INSTRUÇÃO.
+ * Cada segmento diz explicitamente quantas frases e quantos itens quer. Sem
+ * isso o modelo calibra o tamanho pela complexidade que ele percebe na tarefa,
+ * que num pedido de "justificativa aprofundada" é bastante coisa.
  */
 
 const str = { type: 'string' } as const
@@ -123,7 +132,7 @@ function parseDimensions(segmentId: SegmentId, keys: readonly DimensionKey[], ra
 const SEGMENT_SPECS: Record<SegmentId, AnalysisSegmentSpec> = {
   dimensions_a: {
     id: 'dimensions_a',
-    maxTokens: 1600,
+    maxTokens: 3200,
     schema: dimensionsSchema(SEGMENT_DIMENSIONS.dimensions_a) as unknown as Record<string, unknown>,
     instruction: `Avalie EXATAMENTE estas 4 dimensões do currículo, nesta ordem:
 
@@ -132,13 +141,13 @@ const SEGMENT_SPECS: Record<SegmentId, AnalysisSegmentSpec> = {
 3. "impact" — Resultados Quantificados. Aplicação das fórmulas STAR/XYZ, presença de números e indicadores.
 4. "skills" — Habilidades & Palavras-Chave de Busca. Vocabulário técnico e termos que recrutadores buscam.
 
-Para cada uma: nota de 0 a 10 e uma justificativa técnica APROFUNDADA, citando trechos concretos do currículo. Nada de avaliação genérica que serviria para qualquer candidato.`,
+Para cada uma: nota de 0 a 10 e uma justificativa técnica de 2 a 4 frases, citando um trecho concreto do currículo. Densidade, não extensão: nada de avaliação genérica que serviria para qualquer candidato, e nada de repetir o que já foi dito em outra dimensão.`,
     parse: (raw) => parseDimensions('dimensions_a', SEGMENT_DIMENSIONS.dimensions_a, raw),
   },
 
   dimensions_b: {
     id: 'dimensions_b',
-    maxTokens: 1600,
+    maxTokens: 3200,
     schema: dimensionsSchema(SEGMENT_DIMENSIONS.dimensions_b) as unknown as Record<string, unknown>,
     instruction: `Avalie EXATAMENTE estas 4 dimensões do currículo, nesta ordem:
 
@@ -147,13 +156,13 @@ Para cada uma: nota de 0 a 10 e uma justificativa técnica APROFUNDADA, citando 
 3. "career" — Trajetória & Plano de Carreira. Progressão, estabilidade, lacunas, projeção do próximo passo.
 4. "upskilling" — Capacitação & Cursos Recomendados. Lacunas de conhecimento e certificações objetivas a buscar.
 
-Para cada uma: nota de 0 a 10 e uma justificativa técnica APROFUNDADA, citando trechos concretos do currículo. Nada de avaliação genérica que serviria para qualquer candidato.`,
+Para cada uma: nota de 0 a 10 e uma justificativa técnica de 2 a 4 frases, citando um trecho concreto do currículo. Densidade, não extensão: nada de avaliação genérica que serviria para qualquer candidato, e nada de repetir o que já foi dito em outra dimensão.`,
     parse: (raw) => parseDimensions('dimensions_b', SEGMENT_DIMENSIONS.dimensions_b, raw),
   },
 
   job_match: {
     id: 'job_match',
-    maxTokens: 1400,
+    maxTokens: 2600,
     schema: {
       type: 'object',
       additionalProperties: false,
@@ -183,7 +192,7 @@ Para cada uma: nota de 0 a 10 e uma justificativa técnica APROFUNDADA, citando 
     } as unknown as Record<string, unknown>,
     instruction: `Avalie a ADERÊNCIA do candidato à vaga alvo declarada no contexto.
 
-Produza: o cargo analisado, um percentual de aderência (0 a 100), um veredito curto e direto, os requisitos que o candidato JÁ atende, os que a vaga exige e ele NÃO demonstra, e um plano de ação com passos concretos para fechar as lacunas.
+Produza: o cargo analisado, um percentual de aderência (0 a 100), um veredito de 1 a 2 frases, de 3 a 5 requisitos que o candidato JÁ atende, de 3 a 5 que a vaga exige e ele NÃO demonstra, e de 3 a 5 passos concretos para fechar as lacunas. Cada item de lista em uma frase.
 
 Se nenhuma vaga alvo específica foi fornecida, avalie a aderência à área de atuação evidente no currículo e diga isso no veredito.`,
     parse: (raw: any) => {
@@ -211,7 +220,7 @@ Se nenhuma vaga alvo específica foi fornecida, avalie a aderência à área de 
 
   targeted_changes: {
     id: 'targeted_changes',
-    maxTokens: 2000,
+    maxTokens: 3400,
     schema: {
       type: 'object',
       additionalProperties: false,
@@ -233,11 +242,13 @@ Se nenhuma vaga alvo específica foi fornecida, avalie a aderência à área de 
         },
       },
     } as unknown as Record<string, unknown>,
-    instruction: `Aponte de 4 a 7 trechos ESPECÍFICOS do currículo que devem ser reescritos.
+    instruction: `Aponte de 3 a 5 trechos ESPECÍFICOS do currículo que devem ser reescritos.
 
 Para cada um: a seção onde está, o TRECHO EXATO copiado do currículo original, a justificativa técnica de por que ele prejudica o candidato (falta de dados quantificáveis, adjetivos vagos, ausência de termos buscados por recrutadores) e a reescrita otimizada aplicando STAR/XYZ.
 
-O campo "originalText" precisa ser um trecho literal do currículo fornecido — não invente texto que não está lá. Se o currículo for curto demais para 4 trechos, devolva quantos existirem de fato.`,
+O campo "originalText" precisa ser um trecho literal do currículo fornecido — não invente texto que não está lá. Se o currículo for curto demais para 3 trechos, devolva quantos existirem de fato.
+
+Tamanho: "rationale" em 1 a 2 frases; "suggestedText" com no máximo o dobro do tamanho do trecho original.`,
     parse: (raw: any) => {
       const list = raw?.targetedChanges
       if (!Array.isArray(list)) {
@@ -264,7 +275,7 @@ O campo "originalText" precisa ser um trecho literal do currículo fornecido —
 
   executive: {
     id: 'executive',
-    maxTokens: 1900,
+    maxTokens: 3000,
     schema: {
       type: 'object',
       additionalProperties: false,
@@ -287,12 +298,12 @@ O campo "originalText" precisa ser um trecho literal do currículo fornecido —
     } as unknown as Record<string, unknown>,
     instruction: `Produza o parecer executivo do currículo:
 
-- "summary": parecer detalhado sobre o currículo e o nível de competitividade do candidato no mercado. Mínimo de 3 frases substantivas.
+- "summary": parecer sobre o currículo e o nível de competitividade do candidato no mercado, em 3 a 5 frases substantivas.
 - "atsFriendly": true apenas se o currículo passaria limpo por um robô de triagem hoje.
-- "strengths": 3 a 5 pontos fortes marcantes, cada um com a justificativa do porquê é forte.
-- "weaknesses": 3 a 5 vulnerabilidades, cada uma com o impacto que tem na triagem.
-- "recommendations": plano de ação prioritário, em passos claros e executáveis.
-- "keywords": 10 a 15 palavras-chave estratégicas para o segmento do candidato.
+- "strengths": 3 a 4 pontos fortes marcantes, cada um em uma frase que diz por que é forte.
+- "weaknesses": 3 a 4 vulnerabilidades, cada uma em uma frase que diz o impacto na triagem.
+- "recommendations": 3 a 5 passos de ação prioritários, um por item, claros e executáveis.
+- "keywords": 10 a 12 palavras-chave estratégicas para o segmento do candidato, sem repetir sinônimos.
 
 NÃO calcule nota geral: ela é derivada das oito dimensões pelo sistema.`,
     parse: (raw: any) => {
