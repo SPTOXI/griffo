@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNav } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
 } from 'recharts'
 import { UploadProgressModal } from './upload-progress-modal'
+import { useAnalysisJob } from './use-analysis-job'
 import { SocialAnalysisPanel, type SocialAnalysis } from './social-analysis-panel'
 import { internalFetch } from '@/lib/internal-fetch'
 import { CREDIT_COSTS } from '@/lib/credits-catalog'
@@ -153,91 +154,43 @@ export function AnalysisView() {
     }
   }
 
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalProgress, setModalProgress] = useState(0)
-  const [modalStep, setModalStep] = useState(1)
+  // O currículo em análise fica num ref: o desfecho chega por retorno de
+  // chamada, possivelmente depois de o estado ter mudado.
+  const analyzingIdRef = useRef<string | null>(null)
+
+  const job = useAnalysisJob({
+    onCompleted: () => {
+      setAnalyzing(false)
+      // O crédito só vira cobrança quando o laudo fica pronto: o saldo no
+      // cabeçalho muda agora, não na abertura da análise.
+      window.dispatchEvent(new Event('griffo:credits-changed'))
+      const id = analyzingIdRef.current
+      if (id) void loadResume(id)
+    },
+    onFailed: (message, code) => {
+      setAnalyzing(false)
+      setError(message)
+      // Falha devolve o crédito: o saldo precisa ser relido. A exceção é saldo
+      // insuficiente, em que nada chegou a ser reservado.
+      if (code !== 'INSUFFICIENT_CREDITS') {
+        window.dispatchEvent(new Event('griffo:credits-changed'))
+      }
+    },
+  })
 
   const reanalyze = async (targetResume?: any) => {
     const activeResume = targetResume || resume
     if (!activeResume) return
+    analyzingIdRef.current = activeResume.id
     setAnalyzing(true)
     setError(null)
-    setModalOpen(true)
-    setModalProgress(5)
-    setModalStep(1)
-
-    // Calibrada para ~5s, a duração real com Sonnet 5 (1,8s de modelo mais as
-    // consultas ao banco). A calibragem anterior levava ~73s para chegar a 96%,
-    // uma expectativa que não cabia no limite de 60s da própria rota.
-    const interval = setInterval(() => {
-      setModalProgress((prev) => {
-        if (prev >= 96) return 96
-        const next = Math.min(96, prev + 3.5)
-        setModalStep(Math.min(8, Math.max(1, Math.ceil((next / 100) * 8))))
-        return next
-      })
-    }, 200)
-
-    try {
-      const r = await internalFetch('/api/resume/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeId: activeResume.id }),
-      })
-
-      const data = await r.json().catch(() => ({}))
-      clearInterval(interval)
-
-      if (r.ok && data.resume) {
-        setModalStep(8)
-        setModalProgress(100)
-        setTimeout(async () => {
-          setModalOpen(false)
-          await loadResume(activeResume.id)
-        }, 400)
-        return
-      }
-
-      // Se a resposta retornou erro de créditos insuficientes, exibe mensagem clara
-      if (r.status === 402 || data.code === 'INSUFFICIENT_CREDITS') {
-        setModalOpen(false)
-        setError(data.error || 'Saldo insuficiente de créditos.')
-        return
-      }
-
-      // O servidor respondeu, mas com erro. A mensagem dele é a informação boa
-      // — inclusive quando os créditos foram reembolsados.
-      setModalOpen(false)
-      setError(data.error || 'Não foi possível gerar o laudo. Tente novamente.')
-      return
-    } catch {
-      clearInterval(interval)
-
-      // Só chega aqui em falha de rede: a resposta se perdeu no caminho, então
-      // não se sabe se o servidor concluiu. Uma única releitura resolve o caso
-      // real (resposta perdida, laudo gravado). O laço de 25 tentativas que
-      // existia aqui esperava 50s por um registro que, quando a função era
-      // encerrada por tempo, nunca chegava a ser escrito.
-      await new Promise((res) => setTimeout(res, 2000))
-      try {
-        const checkRes = await internalFetch(`/api/resume/${activeResume.id}?id=${activeResume.id}`, { cache: 'no-store' })
-        const checkData = await checkRes.json().catch(() => ({}))
-        if (checkRes.ok && checkData.resume?.analysis) {
-          setResume(checkData.resume)
-          setError(null)
-          setModalStep(8)
-          setModalProgress(100)
-          setTimeout(() => setModalOpen(false), 400)
-          return
-        }
-      } catch {}
-
-      setModalOpen(false)
-      setError('Falha de conexão ao gerar o laudo. Se os créditos foram debitados, eles são reembolsados automaticamente. Tente novamente.')
-    } finally {
-      setAnalyzing(false)
-    }
+    // Volta em milissegundos com o id do job. O que era uma espera de até 82s
+    // segurando a conexão virou uma assinatura de progresso — e a rota devolve
+    // a análise já em andamento se houver uma, em vez de abrir outra e cobrar
+    // duas vezes.
+    await job.start(activeResume.id)
   }
+
 
   if (loading) {
     return (
@@ -1022,7 +975,12 @@ export function AnalysisView() {
       </Card>
 
       {/* MODAL DE PROGRESSO ANIMADO DAS 8 DIMENSÕES */}
-      <UploadProgressModal isOpen={modalOpen} step={modalStep} progress={modalProgress} />
+      <UploadProgressModal
+        isOpen={job.phase === 'starting' || job.phase === 'running'}
+        progress={job.progress}
+        completedSegments={job.completedSegments}
+        partial={job.partial}
+      />
     </div>
   )
 }

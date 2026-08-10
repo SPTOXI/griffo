@@ -3,6 +3,10 @@ export type TaskType =
   | 'normalization'
   | 'rewrite'
   | 'full_analysis'
+  /// Um dos cinco pedaços da análise segmentada. Separado de `full_analysis`
+  /// porque o Agente de Qualidade valida os dois de formas diferentes — ver
+  /// agents/quality-agent.ts.
+  | 'analysis_segment'
   | 'social_advice'
   | 'cover_letter'
   | 'support_chat'
@@ -47,6 +51,13 @@ export interface AiTaskRequest {
   /// escaneados sem camada de texto. Restringe a chamada ao Claude — é o único
   /// provedor da cadeia com entrada nativa de documento.
   pdfBase64?: string
+  /// Contexto grande e idêntico entre chamadas irmãs — o currículo, na análise
+  /// segmentada. Vai à frente do `systemPrompt` e é marcado como cacheável: no
+  /// Claude via `cache_control`, nos provedores compatíveis com OpenAI pelo
+  /// cache automático de prefixo, que exige apenas que o trecho comum venha
+  /// primeiro e byte a byte igual. É o que torna barato repetir o currículo nos
+  /// cinco segmentos da análise em vez de pedir tudo numa chamada só.
+  cacheableContext?: string
 }
 
 export interface AiTaskResult {
