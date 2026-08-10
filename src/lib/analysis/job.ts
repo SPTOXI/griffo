@@ -116,6 +116,11 @@ async function executeSegment(
         resumeId: ctx.resumeId,
         userCountry: ctx.userCountry,
         cacheableContext: ctx.sharedContext,
+        // Extração estruturada com schema estrito: o raciocínio do modelo não
+        // acrescenta qualidade aqui e disputa o mesmo orçamento de `max_tokens`
+        // que a resposta. Desligá-lo é o que faz os segmentos caberem no
+        // orçamento curto — e é também metade do ganho de latência.
+        disableThinking: true,
         systemPrompt: spec.instruction,
         userPrompt:
           'Produza agora, para o currículo do contexto, exatamente o que a sua tarefa pede. ' +

@@ -58,6 +58,18 @@ export interface AiTaskRequest {
   /// primeiro e byte a byte igual. É o que torna barato repetir o currículo nos
   /// cinco segmentos da análise em vez de pedir tudo numa chamada só.
   cacheableContext?: string
+  /// Desliga o raciocínio estendido do modelo nesta chamada.
+  ///
+  /// No Sonnet 5 o raciocínio é ligado por padrão quando o parâmetro `thinking`
+  /// é omitido — mudança silenciosa em relação ao Sonnet 4.6, onde omiti-lo
+  /// significava raciocínio desligado. E `max_tokens` limita raciocínio MAIS
+  /// resposta somados: numa chamada de orçamento curto, o raciocínio consome a
+  /// cota e a resposta chega truncada.
+  ///
+  /// Para extração estruturada — que é o que os segmentos da análise fazem — o
+  /// raciocínio não acrescenta nada e só disputa o orçamento. Desligá-lo também
+  /// derruba a latência, que é o objetivo de toda a divisão em segmentos.
+  disableThinking?: boolean
 }
 
 export interface AiTaskResult {

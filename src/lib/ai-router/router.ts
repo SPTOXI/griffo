@@ -153,6 +153,12 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
                   : req.userPrompt,
               },
             ],
+            // Omitir `thinking` NÃO significa raciocínio desligado no Sonnet 5:
+            // desde essa geração o padrão é ligado, e `max_tokens` cobre
+            // raciocínio e resposta somados. Numa chamada de orçamento curto o
+            // raciocínio consome a cota e a resposta chega truncada — o JSON não
+            // fecha e a validação do segmento reprova. Precisa ser explícito.
+            ...(req.disableThinking ? { thinking: { type: 'disabled' } } : {}),
             // Structured outputs: a API restringe a geração ao schema, então a
             // resposta é sempre JSON válido no formato pedido. Elimina a classe
             // inteira de "falha de parse" que antes era mascarada com dados
@@ -199,7 +205,31 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
           throw new Error(`[Claude API ${status}] ${errMsg}`)
         }
 
-        content = data.content?.[0]?.text || ''
+        // A resposta é uma LISTA de blocos, e o primeiro não é necessariamente o
+        // texto: com raciocínio ligado, `content[0]` é um bloco `thinking` e a
+        // resposta vem depois dele. Ler o índice 0 às cegas devolvia string
+        // vazia, e o roteador registrava "Resposta vazia recebida do provedor"
+        // para uma chamada que na verdade respondeu — o erro escondia a causa.
+        //
+        // Procurar o bloco pelo tipo, e concatenar quando houver mais de um,
+        // mantém a leitura correta independentemente de o raciocínio estar
+        // ligado ou desligado.
+        content = Array.isArray(data.content)
+          ? data.content
+              .filter((b: any) => b?.type === 'text' && typeof b.text === 'string')
+              .map((b: any) => b.text)
+              .join('')
+          : ''
+
+        // Truncamento por orçamento produz JSON que não fecha. Sem esta
+        // distinção o erro chega como "estrutura inválida", que manda procurar
+        // defeito no prompt em vez de no `max_tokens`.
+        if (data.stop_reason === 'max_tokens') {
+          throw new Error(
+            `[Claude API] Resposta truncada em max_tokens (${req.maxTokens ?? 3500}). ` +
+              'O orçamento não coube na resposta pedida.'
+          )
+        }
         tokensIn =
           data.usage?.input_tokens ||
           Math.ceil(
@@ -224,11 +254,32 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
 
         const isReasoningModel = currentProviderId === 'kimi' || runtime.model?.includes('reasoner') || runtime.model?.includes('k3')
 
-        const completion = await client.chat.completions.create({
+        // Os cinco segmentos da análise saem ao mesmo tempo. Quando o primário
+        // falha, os cinco caem juntos para o suplente — e o Kimi limita a 3
+        // requisições simultâneas por organização, devolvendo 429 com
+        // "try again after 1 seconds". Sem esta espera, um fallback que era
+        // perfeitamente viável é descartado por um limite de um segundo.
+        //
+        // Uma repetição só: se o segundo 429 vier, a concorrência não é
+        // passageira e insistir apenas queima o orçamento de tempo.
+        const createCompletion = async (attempt = 1): Promise<any> => {
+          try {
+            return await client.chat.completions.create(buildCompletionParams())
+          } catch (e: any) {
+            const status = e?.status ?? e?.response?.status
+            if (status === 429 && attempt === 1) {
+              await new Promise((r) => setTimeout(r, 1200))
+              return createCompletion(2)
+            }
+            throw e
+          }
+        }
+
+        const buildCompletionParams = () => ({
           model: runtime.model,
           messages: [
             {
-              role: 'system',
+              role: 'system' as const,
               // O contexto comum vai primeiro: estes provedores cacheiam por
               // prefixo automaticamente, e o prefixo só casa se o trecho
               // compartilhado abrir a mensagem e vier byte a byte igual.
@@ -236,7 +287,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
                 ? `${req.cacheableContext}\n\n${req.systemPrompt}`
                 : req.systemPrompt,
             },
-            { role: 'user', content: req.userPrompt },
+            { role: 'user' as const, content: req.userPrompt },
           ],
           temperature: isReasoningModel ? 1 : (req.temperature ?? 0.3),
           max_tokens: req.maxTokens ?? 3500,
@@ -245,6 +296,8 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
           // verificada pelo chamador.
           ...(req.jsonSchema ? { response_format: { type: 'json_object' as const } } : {}),
         })
+
+        const completion = await createCompletion()
 
         const msg = completion.choices?.[0]?.message
         content = msg?.content || (msg as any)?.reasoning_content || ''
