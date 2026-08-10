@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { PROVIDER_CONFIGS, getProviderRuntimeConfig } from '@/lib/ai-router/registry'
+import type { ProviderId } from '@/lib/ai-router/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,11 +36,24 @@ export async function GET(req: Request) {
     }
 
     // 2. Critical Environment Variables
-    const criticalKeys = [
-      'POSTGRES_PRISMA_URL',
-      'JWT_SECRET',
-    ]
-    const missingKeys = criticalKeys.filter(k => !process.env[k])
+    //
+    // A lista conferida aqui precisa ser a das variáveis que o código realmente
+    // lê. A anterior exigia `JWT_SECRET`, que não é lido em lugar nenhum — um
+    // alarme vermelho permanente por uma variável inexistente — e não conferia
+    // `SESSION_SECRET` nem `ENCRYPTION_KEY`, cuja ausência derruba o login e a
+    // decifragem das chaves de IA. O monitor acendia pelo motivo errado e ficava
+    // verde pelos certos.
+    const missingKeys: string[] = []
+
+    // `getDatabaseUrl` aceita qualquer uma das duas: exigir só a primeira
+    // acusaria falta num ambiente perfeitamente configurado.
+    if (!process.env.POSTGRES_PRISMA_URL?.trim() && !process.env.DATABASE_URL?.trim()) {
+      missingKeys.push('POSTGRES_PRISMA_URL')
+    }
+    for (const key of ['SESSION_SECRET', 'ENCRYPTION_KEY']) {
+      if (!process.env[key]?.trim()) missingKeys.push(key)
+    }
+
     healthStatus.components.env.missingKeys = missingKeys
     healthStatus.components.env.status = missingKeys.length > 0 ? 'error' : 'healthy'
 
@@ -69,17 +84,44 @@ export async function GET(req: Request) {
     }
 
     // 4. AI Providers Check
+    //
+    // Contar linhas em `AiApiKey` não diz nada sobre o roteador conseguir usar
+    // aquelas chaves. Uma chave cadastrada que não decifra — `ENCRYPTION_KEY`
+    // ausente ou trocada — some silenciosamente: `tryDecryptSecret` devolve
+    // nulo, o roteador cai para a variável de ambiente, não acha nada, e pula o
+    // provedor com "Sem chave de API". O painel, contando linhas, seguia
+    // anunciando "4 provedores disponíveis para failover" enquanto nenhuma
+    // chamada saía — e o custo de IA em $0,00 era o único sinal de que nada
+    // chegava ao modelo.
+    //
+    // Agora a conta é de provedores cuja credencial de fato se resolve.
     try {
-      const activeKeys = await db.aiApiKey.count({
-        where: { status: 'active' }
-      })
-      healthStatus.components.aiProviders.activeKeys = activeKeys
-      if (activeKeys === 0) {
+      const rows = await db.aiApiKey.count({ where: { status: 'active' } })
+
+      const resolved: string[] = []
+      const unusable: string[] = []
+      for (const providerId of Object.keys(PROVIDER_CONFIGS) as ProviderId[]) {
+        const runtime = await getProviderRuntimeConfig(providerId)
+        if (runtime.apiKey) resolved.push(providerId)
+        else unusable.push(providerId)
+      }
+
+      healthStatus.components.aiProviders.activeKeys = resolved.length
+      healthStatus.components.aiProviders.registeredRows = rows
+      healthStatus.components.aiProviders.unusable = unusable
+
+      if (resolved.length === 0) {
         healthStatus.components.aiProviders.status = 'error'
-        healthStatus.components.aiProviders.message = 'Nenhuma chave de IA ativa configurada.'
+        healthStatus.components.aiProviders.message =
+          rows > 0
+            ? `${rows} chave(s) cadastrada(s), mas nenhuma utilizável — verifique ENCRYPTION_KEY.`
+            : 'Nenhuma chave de IA ativa configurada.'
+      } else if (unusable.length > 0) {
+        healthStatus.components.aiProviders.status = 'degraded'
+        healthStatus.components.aiProviders.message = `${resolved.length} provedor(es) utilizável(is). Sem credencial: ${unusable.join(', ')}.`
       } else {
         healthStatus.components.aiProviders.status = 'healthy'
-        healthStatus.components.aiProviders.message = `${activeKeys} provedores disponíveis para failover.`
+        healthStatus.components.aiProviders.message = `${resolved.length} provedores disponíveis para failover.`
       }
     } catch {
       healthStatus.components.aiProviders.status = 'unknown'
