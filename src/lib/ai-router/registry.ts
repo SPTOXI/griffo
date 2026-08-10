@@ -95,25 +95,48 @@ export function normalizeProviderId(raw: string): ProviderId | null {
   return null
 }
 
-// Distribution of primary models per task
-// Active providers: Claude Opus 5, DeepSeek, Kimi K3
-// Inactive providers (quota exceeded): Gemini
+/**
+ * Provedor primário de cada tarefa.
+ *
+ * A divisão é por natureza do trabalho, não por preço: o que o usuário lê e
+ * leva embora — laudo, reescrita, parecer de presença digital — vai para o
+ * Claude (Sonnet 5); o que é maquinário interno — atendimento, juiz de
+ * qualidade, análise de logs — vai para o DeepSeek, que custa uma ordem de
+ * grandeza menos e não precisa da mesma profundidade.
+ *
+ * Houve uma passagem em que tudo foi para o DeepSeek, tentando resolver os 82s
+ * da análise. Não era um problema de provedor: eram 3.800 tokens de saída numa
+ * chamada só, e nenhum modelo gera isso rápido. A correção real foi dividir a
+ * análise em cinco chamadas paralelas (ver lib/analysis/segments.ts), o que
+ * liberou a escolha do modelo para voltar a ser sobre qualidade.
+ */
 export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
-  ocr_extraction: 'deepseek',
-  normalization: 'deepseek',
-  rewrite: 'deepseek',
-  full_analysis: 'deepseek',
-  social_advice: 'deepseek',
-  cover_letter: 'deepseek',
+  // Sempre desviado para o Claude quando há PDF anexado — é o único da cadeia
+  // com entrada nativa de documento. Declarado aqui pelo mesmo motivo.
+  ocr_extraction: 'claude',
+  analysis_segment: 'claude',
+  full_analysis: 'claude',
+  rewrite: 'claude',
+  social_advice: 'claude',
+  // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
+  normalization: 'deepseek',
+  cover_letter: 'deepseek',
 }
 
-// Fallback sequence (prioritizing active, high-speed providers: DeepSeek and Claude)
+/**
+ * Ordem de fallback. O Kimi é o primeiro suplente em todas as cadeias; o Gemini
+ * fica por último enquanto não se decide se entra em uso.
+ *
+ * Vale lembrar que só os dois primeiros candidatos são de fato tentados
+ * (`MAX_PROVIDER_ATTEMPTS` no router): o terceiro e o quarto existem para o
+ * caso em que o filtro de residência de dados elimina algum dos anteriores.
+ */
 export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
-  claude: ['deepseek', 'kimi', 'gemini'],
+  claude: ['kimi', 'deepseek', 'gemini'],
+  deepseek: ['kimi', 'claude', 'gemini'],
   kimi: ['deepseek', 'claude', 'gemini'],
-  deepseek: ['claude', 'kimi', 'gemini'],
-  gemini: ['deepseek', 'claude', 'kimi'],
+  gemini: ['kimi', 'deepseek', 'claude'],
 }
 
 /**

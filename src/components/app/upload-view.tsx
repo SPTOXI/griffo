@@ -15,6 +15,7 @@ import {
 import { internalFetch } from '@/lib/internal-fetch'
 import { toast } from 'sonner'
 import { UploadProgressModal } from './upload-progress-modal'
+import { useAnalysisJob } from './use-analysis-job'
 
 export interface CustomSocialField {
   id: string
@@ -157,8 +158,27 @@ export function UploadView() {
   }
 
   const [loadingStep, setLoadingStep] = useState<string | null>(null)
-  const [modalStep, setModalStep] = useState<number>(1)
-  const [modalProgress, setModalProgress] = useState<number>(0)
+  // Currículo salvo cuja análise está sendo acompanhada — a tela só navega para
+  // o laudo quando ele fica pronto. Num ref, porque o desfecho chega por
+  // retorno de chamada e não deve provocar novo render por si só.
+  const pendingResumeIdRef = useRef<string | null>(null)
+  const job = useAnalysisJob({
+    onCompleted: () => {
+      window.dispatchEvent(new Event('griffo:credits-changed'))
+      setLoading(false)
+      setLoadingStep(null)
+      const id = pendingResumeIdRef.current
+      if (id) openResume(id, 'analysis')
+    },
+    onFailed: (message) => {
+      setLoading(false)
+      setLoadingStep(null)
+      // O currículo já está salvo e os créditos foram devolvidos pelo job. Não
+      // abrimos a tela de análise: ela dispara uma análise nova sozinha quando
+      // não encontra laudo, e o usuário seria cobrado de novo sem pedir.
+      setError(`${message} Seu currículo foi salvo — abra-o na lista para tentar de novo.`)
+    },
+  })
 
   const submit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -172,8 +192,6 @@ export function UploadView() {
       return
     }
     setLoading(true)
-    setModalStep(1)
-    setModalProgress(10)
     setLoadingStep('Enviando arquivo e extraindo conteúdo...')
 
     // Build socialLinks dictionary from dynamic list
@@ -185,16 +203,6 @@ export function UploadView() {
         socialLinks[name] = link
       }
     }
-
-    // Progressão fluida e uniforme distribuída entre as 8 dimensões (aprox. 3.5s por dimensão)
-    const progressInterval = setInterval(() => {
-      setModalProgress((prev) => {
-        if (prev >= 96) return 96
-        const next = Math.min(96, prev + 0.7)
-        setModalStep(Math.min(8, Math.max(1, Math.ceil((next / 100) * 8))))
-        return next
-      })
-    }, 250)
 
     try {
       const r = await internalFetch('/api/resume/upload', {
@@ -213,71 +221,29 @@ export function UploadView() {
       })
       const data = await r.json().catch(() => ({}))
       if (!r.ok) {
-        clearInterval(progressInterval)
         setError(data.error || 'Erro ao salvar currículo.')
         setLoading(false)
         setLoadingStep(null)
         return
       }
 
+      pendingResumeIdRef.current = data.resume.id
       setLoadingStep('Analisando currículo em 8 dimensões com Inteligência Artificial...')
       toast.success('Currículo salvo! Processando laudo com a IA...')
 
-      const ar = await internalFetch('/api/resume/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeId: data.resume.id }),
-      })
-      const adata = await ar.json().catch(() => ({}))
-
-      clearInterval(progressInterval)
-
-      if (ar.ok && adata.resume?.analysis) {
-        setModalStep(8)
-        setModalProgress(100)
-        setTimeout(() => {
-          setLoading(false)
-          openResume(data.resume.id, 'analysis')
-        }, 500)
-        return
-      }
-
-      // Se a resposta demorou ou a conexão oscilou, faz auto-recuperação silenciosa no banco (até 25 tentativas de 2s = 50s)
-      let recovered = false
-      for (let attempt = 1; attempt <= 25; attempt++) {
-        await new Promise((res) => setTimeout(res, 2000))
-        try {
-          const checkRes = await internalFetch(`/api/resume/${data.resume.id}?id=${data.resume.id}`, { cache: 'no-store' })
-          const checkData = await checkRes.json().catch(() => ({}))
-          if (checkRes.ok && checkData.resume?.analysis) {
-            setModalStep(8)
-            setModalProgress(100)
-            setTimeout(() => {
-              setLoading(false)
-              openResume(data.resume.id, 'analysis')
-            }, 400)
-            recovered = true
-            break
-          }
-        } catch {}
-      }
-
-      if (!recovered) {
-        setModalStep(8)
-        setModalProgress(100)
-        setTimeout(() => {
-          setLoading(false)
-          openResume(data.resume.id, 'analysis')
-        }, 500)
-      }
-    } catch (e: any) {
-      clearInterval(progressInterval)
+      // Daqui em diante o progresso é do servidor. O laço de 25 tentativas de
+      // 2s que existia aqui era uma tentativa de sobreviver ao encerramento da
+      // função aos 60s — esperava por um laudo que, quando a execução era
+      // morta, nunca chegava a ser gravado. Com o trabalho num job, não há mais
+      // o que resgatar: ele termina sozinho.
+      await job.start(data.resume.id)
+    } catch {
       setError('Erro de conexão ao enviar o currículo. Verifique sua rede e tente novamente.')
       setLoading(false)
-    } finally {
       setLoadingStep(null)
     }
   }
+
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -569,7 +535,13 @@ export function UploadView() {
         </CardContent>
       </Card>
 
-      <UploadProgressModal isOpen={loading} step={modalStep} progress={modalProgress} />
+      <UploadProgressModal
+        isOpen={loading}
+        progress={job.progress}
+        completedSegments={job.completedSegments}
+        partial={job.partial}
+        headline={loadingStep ?? undefined}
+      />
     </div>
   )
 }

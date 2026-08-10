@@ -17,11 +17,21 @@ import { filterProvidersByResidency, isEuropeanUser } from '../data-residency'
 // antes do `catch` que devolve os créditos ao usuário — que então paga sem
 // receber. Os três limites abaixo existem para garantir que sempre sobre tempo
 // para o reembolso e a persistência.
-const PROVIDER_TIMEOUT_MS = 35_000
+// O teto por tentativa precisa caber DUAS vezes dentro do prazo da tarefa,
+// senão o fallback só funciona quando o primário falha rápido — justamente o
+// caso em que ele menos importa. Com 35s (o valor anterior), um primário que
+// travava consumia o orçamento inteiro e o segundo provedor nunca chegava a ser
+// tentado: 35 + 35 = 70 não cabe em 52. Com 25s, cabe: 25 + 25 = 50.
+const PROVIDER_TIMEOUT_MS = 25_000
 const MAX_PROVIDER_ATTEMPTS = 2
 // Corta novas tentativas a partir daqui, deixando ~8s para reembolso,
 // gravação no banco e a resposta HTTP dentro do limite de 60s.
 const TASK_DEADLINE_MS = 52_000
+
+// Multiplicadores do cache de prompt da Anthropic, relativos ao preço de
+// entrada: gravar custa 1,25x e ler custa 0,1x.
+const CACHE_WRITE_MULTIPLIER = 1.25
+const CACHE_READ_MULTIPLIER = 0.1
 
 export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   const taskStartTime = Date.now()
@@ -59,8 +69,9 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
     )
   }
 
-  // Só as duas primeiras tentativas cabem no orçamento: 2 x 20s deixa 20s de
-  // folga. A cadeia completa de 4 provedores levaria mais de 60s sozinha.
+  // Só as duas primeiras tentativas cabem no orçamento: 2 x 25s deixa 10s de
+  // folga dentro do prazo de 52s. A cadeia completa de 4 provedores levaria
+  // mais de 60s sozinha.
   const candidateProviders = permitted.slice(0, MAX_PROVIDER_ATTEMPTS)
 
   let lastError: any = null
@@ -98,6 +109,11 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
       let content = ''
       let tokensIn = 0
       let tokensOut = 0
+      // Tokens de entrada que não são cobrados ao preço cheio. Ficam de fora de
+      // `tokensIn` para não distorcer o custo, e entram no cálculo com o
+      // multiplicador de cada um.
+      let cacheWriteTokens = 0
+      let cacheReadTokens = 0
 
       if (currentProviderId === 'claude') {
         // Native Anthropic Messages API integration
@@ -111,7 +127,20 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
           body: JSON.stringify({
             model: runtime.model || 'claude-sonnet-5',
             max_tokens: req.maxTokens ?? 3500,
-            system: req.systemPrompt,
+            // Com contexto cacheável, o `system` vira dois blocos: o comum
+            // marcado para cache, e o específico da chamada depois dele. A
+            // marcação cobre tudo que vem ANTES dela, então a ordem é o que faz
+            // o cache valer — invertida, cada chamada gravaria um cache novo.
+            system: req.cacheableContext
+              ? [
+                  {
+                    type: 'text',
+                    text: req.cacheableContext,
+                    cache_control: { type: 'ephemeral' },
+                  },
+                  { type: 'text', text: req.systemPrompt },
+                ]
+              : req.systemPrompt,
             messages: [
               {
                 role: 'user',
@@ -146,8 +175,14 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         }
 
         content = data.content?.[0]?.text || ''
-        tokensIn = data.usage?.input_tokens || Math.ceil((req.systemPrompt.length + req.userPrompt.length) / 4)
+        tokensIn =
+          data.usage?.input_tokens ||
+          Math.ceil(
+            (req.systemPrompt.length + req.userPrompt.length + (req.cacheableContext?.length ?? 0)) / 4
+          )
         tokensOut = data.usage?.output_tokens || Math.ceil(content.length / 4)
+        cacheWriteTokens = data.usage?.cache_creation_input_tokens || 0
+        cacheReadTokens = data.usage?.cache_read_input_tokens || 0
       } else {
         const cleanApiKey = runtime.apiKey?.trim().replace(/^["']|["']$/g, '')
 
@@ -167,7 +202,15 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         const completion = await client.chat.completions.create({
           model: runtime.model,
           messages: [
-            { role: 'system', content: req.systemPrompt },
+            {
+              role: 'system',
+              // O contexto comum vai primeiro: estes provedores cacheiam por
+              // prefixo automaticamente, e o prefixo só casa se o trecho
+              // compartilhado abrir a mensagem e vier byte a byte igual.
+              content: req.cacheableContext
+                ? `${req.cacheableContext}\n\n${req.systemPrompt}`
+                : req.systemPrompt,
+            },
             { role: 'user', content: req.userPrompt },
           ],
           temperature: isReasoningModel ? 1 : (req.temperature ?? 0.3),
@@ -182,7 +225,13 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         content = msg?.content || (msg as any)?.reasoning_content || ''
         tokensIn =
           completion.usage?.prompt_tokens ||
-          Math.ceil((req.systemPrompt.length + req.userPrompt.length) / 4)
+          Math.ceil(
+            (req.systemPrompt.length + req.userPrompt.length + (req.cacheableContext?.length ?? 0)) / 4
+          )
+        // O cache destes provedores é automático e o desconto já vem aplicado
+        // na fatura; a API reporta o acerto apenas para conferência. Somar aqui
+        // cobraria de novo o que `prompt_tokens` já contou.
+        cacheReadTokens = 0
         tokensOut = completion.usage?.completion_tokens || Math.ceil(content.length / 4)
       }
 
@@ -199,9 +248,20 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         throw new Error(`Qualidade insuficiente (${qualityResult.feedback})`)
       }
 
-      const costIn = (tokensIn / 1000) * runtime.pricing.inputPer1k
+      // Gravar o cache custa mais que a entrada normal; lê-lo custa uma fração.
+      // Cobrar os dois ao preço cheio esconderia exatamente o efeito que o
+      // cache existe para produzir, e o painel administrativo mostraria a
+      // análise segmentada como mais cara do que ela é.
+      const costIn =
+        (tokensIn / 1000) * runtime.pricing.inputPer1k +
+        (cacheWriteTokens / 1000) * runtime.pricing.inputPer1k * CACHE_WRITE_MULTIPLIER +
+        (cacheReadTokens / 1000) * runtime.pricing.inputPer1k * CACHE_READ_MULTIPLIER
       const costOut = (tokensOut / 1000) * runtime.pricing.outputPer1k
       const costUsd = costIn + costOut
+
+      // O volume registrado inclui o que passou pelo cache: são tokens que o
+      // modelo de fato leu, e omiti-los faria o painel subestimar o uso.
+      const totalTokensIn = tokensIn + cacheWriteTokens + cacheReadTokens
 
       const status = failoverCount > 0 ? 'failover' : 'success'
 
@@ -214,7 +274,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
             primaryModel: primaryRuntime.model,
             usedModel: runtime.model,
             provider: currentProviderId,
-            tokensIn,
+            tokensIn: totalTokensIn,
             tokensOut,
             costUsd,
             responseTimeMs,
@@ -269,7 +329,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         usedProvider: currentProviderId,
         usedModel: runtime.model,
         primaryModel: primaryRuntime.model,
-        tokensIn,
+        tokensIn: totalTokensIn,
         tokensOut,
         costUsd,
         responseTimeMs,

@@ -16,6 +16,27 @@ export function auditQualityOfAiResult(taskType: string, content: string): Quali
 
   const text = content.trim()
 
+  /**
+   * Segmento da análise: cada chamada produz um pedaço do laudo, não o laudo
+   * inteiro. As regras de `full_analysis` abaixo exigem `dimensions` E
+   * `summary` no mesmo objeto — nenhum segmento tem os dois, então aplicá-las
+   * aqui reprovaria todos eles e derrubaria a análise inteira.
+   *
+   * A verificação de conteúdo de cada segmento é estrutural e vive em
+   * `lib/analysis/segments.ts`, no `parse` de cada um: contagem de dimensões,
+   * faixa das notas, tamanho das justificativas, trechos citados. O que resta
+   * para cá é o que este agente sabe fazer sem conhecer o segmento — recusar
+   * uma resposta que sequer é JSON.
+   */
+  if (taskType === 'analysis_segment') {
+    try {
+      JSON.parse(text.replace(/```json/gi, '').replace(/```/g, '').trim())
+    } catch {
+      return { approved: false, score: 3, feedback: 'Estrutura JSON inválida.' }
+    }
+    return { approved: true, score: 9.0 }
+  }
+
   if (taskType === 'full_analysis') {
     // 1. Deve ser um JSON válido
     let json: any = null

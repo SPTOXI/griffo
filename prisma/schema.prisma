@@ -47,6 +47,7 @@ model User {
   creditTransactions CreditTransaction[]
   incidents          SystemIncident[]
   sessions           Session[]
+  analysisJobs       AnalysisJob[]
 }
 
 /// Sessões ativas, para que o logout invalide de verdade.
@@ -122,7 +123,8 @@ model Resume {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  auditLogs AuditLog[]
+  auditLogs    AuditLog[]
+  analysisJobs AnalysisJob[]
 
   @@index([userId, createdAt])
 }
@@ -181,6 +183,62 @@ model WebhookEvent {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+/// Execução de uma análise, desacoplada da requisição HTTP que a pediu.
+///
+/// A análise era feita dentro do POST /api/resume/analyze, o que a prendia a
+/// três limites que não são dela: o `maxDuration` de 60s da função, a vida da
+/// conexão TCP e a permanência do usuário na página. Estourar qualquer um dos
+/// três matava o trabalho já pago — e junto com ele o `catch` que devolveria os
+/// créditos, que só eram recuperados depois pela varredura de reservas órfãs.
+///
+/// Com o trabalho numa linha própria, a rota responde na hora com o `id`, o
+/// processamento grava o progresso aqui, e fechar o navegador deixa de ser
+/// perda: o laudo continua sendo escrito e está pronto na volta.
+model AnalysisJob {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId String
+  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  status String @default("queued") // queued | running | completed | failed
+
+  /// Resultados por segmento, acumulados conforme cada um termina:
+  /// `{ "dimensions_a": {...}, "job_match": {...} }`. É o que torna o trabalho
+  /// retomável — quem reassume pula o que já está aqui — e o que alimenta a
+  /// tela com conteúdo real antes do laudo ficar completo.
+  segmentsJson String?
+  /// Laudo final montado a partir dos segmentos. Preenchido junto com
+  /// `Resume.analysisJson` no fecho.
+  resultJson   String?
+  errorMessage String?
+
+  /// Idioma e país capturados no pedido: quem retoma o trabalho numa invocação
+  /// posterior não tem mais os cabeçalhos da requisição original.
+  lang        String  @default("pt")
+  userCountry String?
+
+  /// Reserva de crédito em aberto. Nula para usuário isento (admin), que não
+  /// gera linha de transação. Liquidada no fecho, liberada na falha.
+  reservationId String?
+  creditsCost   Int     @default(0)
+
+  /// Concessão de exclusividade sobre o processamento, renovada a cada segmento
+  /// concluído. Uma execução morta pela plataforma deixa a concessão vencer, e a
+  /// próxima consulta de status reassume o trabalho de onde parou — sem isto,
+  /// um job interrompido ficaria parado para sempre esperando alguém retomá-lo.
+  leaseUntil DateTime?
+  attempts   Int       @default(0)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  finishedAt DateTime?
+
+  @@index([resumeId, createdAt])
+  @@index([userId, createdAt])
+  @@index([status, leaseUntil])
 }
 
 model AuditLog {
