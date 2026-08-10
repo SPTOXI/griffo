@@ -13,11 +13,31 @@ import 'server-only'
  * estava configurada.
  */
 
+/**
+ * Erro de configuração do ambiente — distinto de uma falha passageira.
+ *
+ * A distinção existe porque as rotas tratam os dois casos de forma oposta: uma
+ * falha passageira merece "tente novamente", e uma variável ausente nunca vai
+ * se resolver com nova tentativa. Mandar o usuário repetir nesse caso esconde
+ * o problema de quem pode corrigi-lo.
+ */
+export class ConfigError extends Error {
+  constructor(message: string, readonly variable: string) {
+    super(message)
+    this.name = 'ConfigError'
+  }
+}
+
+export function isConfigError(e: unknown): e is ConfigError {
+  return e instanceof ConfigError || (e as any)?.name === 'ConfigError'
+}
+
 function required(name: string, hint: string): string {
   const value = process.env[name]
   if (!value || !value.trim()) {
-    throw new Error(
-      `Variável de ambiente obrigatória ausente: ${name}. ${hint}`
+    throw new ConfigError(
+      `Variável de ambiente obrigatória ausente: ${name}. ${hint}`,
+      name
     )
   }
   return value.trim()
@@ -27,9 +47,10 @@ function required(name: string, hint: string): string {
 export function getDatabaseUrl(): string {
   const raw = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL
   if (!raw || !raw.trim()) {
-    throw new Error(
+    throw new ConfigError(
       'Variável de ambiente obrigatória ausente: POSTGRES_PRISMA_URL. ' +
-        'Configure a connection string do Postgres no ambiente de execução.'
+        'Configure a connection string do Postgres no ambiente de execução.',
+      'POSTGRES_PRISMA_URL'
     )
   }
   return raw.trim()

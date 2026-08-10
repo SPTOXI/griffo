@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { hashPassword, verifyPassword, createSession } from '@/lib/auth'
+import { isConfigError } from '@/lib/env'
 
 const schema = z.object({
   email: z.string().min(1, 'Informe seu e-mail'),
@@ -70,6 +71,20 @@ export async function POST(req: Request) {
     })
   } catch (e: any) {
     console.error('login error', e)
+    // Configuração ausente não se resolve tentando de novo. Dizer "tente
+    // novamente" aqui esconde o problema de quem pode corrigi-lo — o nome da
+    // variável fica só no log, mas a natureza do erro chega à tela.
+    if (isConfigError(e)) {
+      return NextResponse.json(
+        {
+          error:
+            'O servidor está com uma configuração pendente e o login não pode ser concluído. ' +
+            'Avise o administrador — o detalhe está no log da aplicação.',
+          code: 'SERVER_MISCONFIGURED',
+        },
+        { status: 503 }
+      )
+    }
     return NextResponse.json({ error: 'Erro ao entrar. Tente novamente.' }, { status: 500 })
   }
 }

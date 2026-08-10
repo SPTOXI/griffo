@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { hashPassword, createSession } from '@/lib/auth'
+import { isConfigError } from '@/lib/env'
 
 const schema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(120),
@@ -72,6 +73,19 @@ export async function POST(req: Request) {
     })
   } catch (e: any) {
     console.error('register error', e)
+    // Mesma distinção do login: o cadastro também cria sessão e depende da
+    // mesma variável.
+    if (isConfigError(e)) {
+      return NextResponse.json(
+        {
+          error:
+            'O servidor está com uma configuração pendente e o cadastro não pode ser concluído. ' +
+            'Avise o administrador — o detalhe está no log da aplicação.',
+          code: 'SERVER_MISCONFIGURED',
+        },
+        { status: 503 }
+      )
+    }
     return NextResponse.json({ error: 'Erro ao cadastrar. Tente novamente.' }, { status: 500 })
   }
 }
