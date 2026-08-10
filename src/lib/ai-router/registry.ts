@@ -101,19 +101,19 @@ export function normalizeProviderId(raw: string): ProviderId | null {
 export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   ocr_extraction: 'deepseek',
   normalization: 'deepseek',
-  rewrite: 'claude',
-  full_analysis: 'claude',
-  social_advice: 'claude',
-  cover_letter: 'claude',
+  rewrite: 'deepseek',
+  full_analysis: 'deepseek',
+  social_advice: 'deepseek',
+  cover_letter: 'deepseek',
   support_chat: 'deepseek',
 }
 
-// Fallback sequence
+// Fallback sequence (prioritizing active, high-speed providers: DeepSeek and Claude)
 export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
-  claude: ['kimi', 'deepseek', 'gemini'],
+  claude: ['deepseek', 'kimi', 'gemini'],
   kimi: ['deepseek', 'claude', 'gemini'],
-  deepseek: ['kimi', 'claude', 'gemini'],
-  gemini: ['kimi', 'deepseek', 'claude'],
+  deepseek: ['claude', 'kimi', 'gemini'],
+  gemini: ['deepseek', 'claude', 'kimi'],
 }
 
 /**

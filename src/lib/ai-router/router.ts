@@ -17,11 +17,11 @@ import { filterProvidersByResidency, isEuropeanUser } from '../data-residency'
 // antes do `catch` que devolve os créditos ao usuário — que então paga sem
 // receber. Os três limites abaixo existem para garantir que sempre sobre tempo
 // para o reembolso e a persistência.
-const PROVIDER_TIMEOUT_MS = 20_000
+const PROVIDER_TIMEOUT_MS = 35_000
 const MAX_PROVIDER_ATTEMPTS = 2
-// Corta novas tentativas a partir daqui, deixando ~15s para reembolso,
-// gravação no banco e a resposta HTTP.
-const TASK_DEADLINE_MS = 45_000
+// Corta novas tentativas a partir daqui, deixando ~8s para reembolso,
+// gravação no banco e a resposta HTTP dentro do limite de 60s.
+const TASK_DEADLINE_MS = 52_000
 
 export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   const taskStartTime = Date.now()
