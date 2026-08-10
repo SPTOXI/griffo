@@ -29,6 +29,13 @@ import {
  *
  * A divisão não é arbitrária: nenhum segmento depende do resultado de outro. A
  * nota geral, único valor derivado, é calculada localmente em `mergeSegments`.
+ *
+ * Os `maxTokens` abaixo carregam folga deliberada sobre o tamanho estimado de
+ * cada resposta, por dois motivos que se somam: o tokenizador do Sonnet 5 conta
+ * cerca de 30% mais tokens que o da geração anterior para o mesmo texto, e
+ * `max_tokens` na API cobre raciocínio e resposta juntos. Orçamento apertado
+ * aqui não produz resposta curta — produz JSON truncado, que a validação do
+ * segmento reprova por inteiro.
  */
 
 const str = { type: 'string' } as const
@@ -116,7 +123,7 @@ function parseDimensions(segmentId: SegmentId, keys: readonly DimensionKey[], ra
 const SEGMENT_SPECS: Record<SegmentId, AnalysisSegmentSpec> = {
   dimensions_a: {
     id: 'dimensions_a',
-    maxTokens: 1100,
+    maxTokens: 1600,
     schema: dimensionsSchema(SEGMENT_DIMENSIONS.dimensions_a) as unknown as Record<string, unknown>,
     instruction: `Avalie EXATAMENTE estas 4 dimensões do currículo, nesta ordem:
 
@@ -131,7 +138,7 @@ Para cada uma: nota de 0 a 10 e uma justificativa técnica APROFUNDADA, citando 
 
   dimensions_b: {
     id: 'dimensions_b',
-    maxTokens: 1100,
+    maxTokens: 1600,
     schema: dimensionsSchema(SEGMENT_DIMENSIONS.dimensions_b) as unknown as Record<string, unknown>,
     instruction: `Avalie EXATAMENTE estas 4 dimensões do currículo, nesta ordem:
 
@@ -146,7 +153,7 @@ Para cada uma: nota de 0 a 10 e uma justificativa técnica APROFUNDADA, citando 
 
   job_match: {
     id: 'job_match',
-    maxTokens: 900,
+    maxTokens: 1400,
     schema: {
       type: 'object',
       additionalProperties: false,
@@ -204,7 +211,7 @@ Se nenhuma vaga alvo específica foi fornecida, avalie a aderência à área de 
 
   targeted_changes: {
     id: 'targeted_changes',
-    maxTokens: 1400,
+    maxTokens: 2000,
     schema: {
       type: 'object',
       additionalProperties: false,
@@ -257,7 +264,7 @@ O campo "originalText" precisa ser um trecho literal do currículo fornecido —
 
   executive: {
     id: 'executive',
-    maxTokens: 1300,
+    maxTokens: 1900,
     schema: {
       type: 'object',
       additionalProperties: false,
