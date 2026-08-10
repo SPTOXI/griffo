@@ -117,29 +117,27 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
 
       if (currentProviderId === 'claude') {
         // Native Anthropic Messages API integration
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'x-api-key': runtime.apiKey,
-            'anthropic-version': '2023-06-01',
-            'content-type': 'application/json',
-          },
-          body: JSON.stringify({
+        //
+        // `useCache` decide entre marcar o contexto comum para cache — dois
+        // blocos em `system`, o cacheável primeiro — e simplesmente concatenar
+        // tudo numa string. A marcação cobre o que vem ANTES dela, então a ordem
+        // é o que faz o cache valer; invertida, cada chamada gravaria um cache
+        // novo.
+        const claudeBody = (useCache: boolean) =>
+          JSON.stringify({
             model: runtime.model || 'claude-sonnet-5',
             max_tokens: req.maxTokens ?? 3500,
-            // Com contexto cacheável, o `system` vira dois blocos: o comum
-            // marcado para cache, e o específico da chamada depois dele. A
-            // marcação cobre tudo que vem ANTES dela, então a ordem é o que faz
-            // o cache valer — invertida, cada chamada gravaria um cache novo.
             system: req.cacheableContext
-              ? [
-                  {
-                    type: 'text',
-                    text: req.cacheableContext,
-                    cache_control: { type: 'ephemeral' },
-                  },
-                  { type: 'text', text: req.systemPrompt },
-                ]
+              ? useCache
+                ? [
+                    {
+                      type: 'text',
+                      text: req.cacheableContext,
+                      cache_control: { type: 'ephemeral' },
+                    },
+                    { type: 'text', text: req.systemPrompt },
+                  ]
+                : `${req.cacheableContext}\n\n${req.systemPrompt}`
               : req.systemPrompt,
             messages: [
               {
@@ -162,11 +160,38 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
             ...(req.jsonSchema
               ? { output_config: { format: { type: 'json_schema', schema: req.jsonSchema } } }
               : {}),
-          }),
-          signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
-        })
+          })
 
-        const data = await res.json()
+        const callClaude = (useCache: boolean) =>
+          fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'x-api-key': runtime.apiKey,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json',
+            },
+            body: claudeBody(useCache),
+            signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+          })
+
+        const wantsCache = Boolean(req.cacheableContext)
+        let res = await callClaude(wantsCache)
+        let data = await res.json()
+
+        // Um 400 é erro de forma da requisição, e o bloco de cache é o elemento
+        // de forma mais recente aqui — pode não ser aceito pela versão da API ou
+        // pelo plano da conta. Em vez de derrubar a análise inteira por causa de
+        // uma otimização de custo, repete a chamada sem cache: o conteúdo é
+        // exatamente o mesmo, só deixa de ser reaproveitado entre os segmentos.
+        if (!res.ok && res.status === 400 && wantsCache) {
+          const firstError = data.error?.message || data.message || JSON.stringify(data)
+          console.warn(
+            `[AI Router] Claude recusou a requisição com cache de prompt; repetindo sem cache. Motivo: ${firstError}`
+          )
+          attemptDiagnostics.push(`CLAUDE (cache recusado): ${firstError}`)
+          res = await callClaude(false)
+          data = await res.json()
+        }
 
         if (!res.ok) {
           const status = res.status
