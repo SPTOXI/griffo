@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
 import { encryptSecret, maskSecret } from '@/lib/crypto'
-import { clearProviderConfigCache } from '@/lib/ai-router/registry'
+import { clearProviderConfigCache, effectiveModel, normalizeProviderId } from '@/lib/ai-router/registry'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,6 +25,12 @@ export async function GET() {
       provider: k.provider,
       baseUrl: k.baseUrl,
       model: k.model,
+      // O que a API vai receber de fato. Quando difere de `model`, o valor
+      // digitado no painel está sendo descartado — e sem isto o administrador
+      // não tinha como saber. Ver `effectiveModel` em ai-router/registry.ts.
+      effectiveModel: normalizeProviderId(k.provider)
+        ? effectiveModel(normalizeProviderId(k.provider)!, k.model)
+        : k.model,
       status: k.status,
       createdAt: k.createdAt,
       updatedAt: k.updatedAt,
