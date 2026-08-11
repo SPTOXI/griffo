@@ -30,7 +30,6 @@ const MAX_PROVIDER_ATTEMPTS = 2
 // quem já gastou parte do prazo antes de chamar declara o que sobrou em
 // `req.timeBudgetMs`.
 const DEFAULT_TASK_BUDGET_MS = 52_000
-const MAX_PROVIDER_TIMEOUT_MS = 25_000
 // Abaixo disto uma tentativa não tem chance real de terminar, e um teto menor
 // só produziria duas falhas rápidas em vez de uma resposta.
 const MIN_PROVIDER_TIMEOUT_MS = 12_000
@@ -43,14 +42,8 @@ const CACHE_READ_MULTIPLIER = 0.1
 export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   const taskStartTime = Date.now()
 
-  // O teto por tentativa é derivado do orçamento, e não fixo: ele precisa caber
-  // DUAS vezes no prazo, senão o fallback só funciona quando o primário falha
-  // rápido — justamente o caso em que ele menos importa.
   const taskBudgetMs = Math.max(MIN_PROVIDER_TIMEOUT_MS, req.timeBudgetMs ?? DEFAULT_TASK_BUDGET_MS)
-  const providerTimeoutMs = Math.min(
-    MAX_PROVIDER_TIMEOUT_MS,
-    Math.max(MIN_PROVIDER_TIMEOUT_MS, Math.floor(taskBudgetMs / MAX_PROVIDER_ATTEMPTS))
-  )
+
   // Entrada com documento só existe no Claude na cadeia atual: um PDF enviado
   // ao endpoint compatível com OpenAI seria descartado silenciosamente, e o
   // modelo responderia sobre um prompt sem o anexo. A escolha é feita aqui, e
@@ -89,6 +82,19 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   // folga dentro do prazo de 52s. A cadeia completa de 4 provedores levaria
   // mais de 60s sozinha.
   const candidateProviders = permitted.slice(0, MAX_PROVIDER_ATTEMPTS)
+
+  // O teto por tentativa é o orçamento dividido pelo número REAL de candidatos.
+  //
+  // Dividir sempre por dois desperdiçava metade do prazo quando só havia um
+  // provedor possível — o caso da transcrição de PDF, restrita ao Claude por ser
+  // o único com entrada de documento: ela era abortada aos 25s reservando outros
+  // 25s para uma segunda tentativa que jamais existiria. Um PDF de várias
+  // páginas não se transcreve em 25s, e a rota falhava sem ter usado metade do
+  // tempo de que dispunha.
+  const providerTimeoutMs = Math.max(
+    MIN_PROVIDER_TIMEOUT_MS,
+    Math.floor(taskBudgetMs / Math.max(1, candidateProviders.length))
+  )
 
   let lastError: any = null
   let failoverCount = 0
@@ -169,6 +175,16 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
                   : req.userPrompt,
               },
             ],
+            // `temperature` NUNCA era enviada ao Claude: existia só no ramo
+            // compatível com OpenAI, e aqui a API aplicava o padrão dela, 1.0.
+            // Era a causa de o MESMO currículo receber notas diferentes a cada
+            // análise — o `?? 0.3` do outro ramo dava a impressão de que havia
+            // um padrão baixo em vigor para todos os provedores, e não havia.
+            //
+            // Só pode ser enviada com o raciocínio desligado: a API exige
+            // temperatura 1 quando o raciocínio estendido está ativo, e mandar
+            // outro valor faz a requisição ser recusada com 400.
+            ...(req.disableThinking ? { temperature: req.temperature ?? 0.3 } : {}),
             // Omitir `thinking` NÃO significa raciocínio desligado no Sonnet 5:
             // desde essa geração o padrão é ligado, e `max_tokens` cobre
             // raciocínio e resposta somados. Numa chamada de orçamento curto o
