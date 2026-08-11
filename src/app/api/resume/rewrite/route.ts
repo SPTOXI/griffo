@@ -105,6 +105,15 @@ Diretrizes Obrigatórias:
 Currículo Original Completo para Reescrita:
 ${resume.originalContent.slice(0, REWRITE_INPUT_LIMIT)}`,
       maxTokens: 8000,
+      // Reescrever um currículo inteiro são milhares de tokens de saída, e
+      // geração é serial: esses tokens SÃO a latência. Com o raciocínio
+      // estendido ligado — o padrão do Sonnet 5 quando o parâmetro é omitido —
+      // ele ainda disputava o mesmo orçamento antes de a resposta começar.
+      disableThinking: true,
+      // Uma tentativa só, com o prazo inteiro. Duas tentativas de 25s garantiam
+      // duas falhas: nenhum provedor reescreve um currículo completo em 25s. A
+      // redundância aqui custava exatamente o recurso que faltava.
+      maxProviderAttempts: 1,
     })
 
     const updated = await db.resume.update({

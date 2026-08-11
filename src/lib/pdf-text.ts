@@ -16,18 +16,32 @@ import 'server-only'
  */
 export async function parsePdfBuffer(buffer: Buffer): Promise<string> {
   try {
-    const pdfParse = require('pdf-parse')
+    // `import()` em vez de `require()`: o pacote declara `"type": "module"` e
+    // expõe a API por named export. O `require` funcionava por acidente do
+    // interop do CommonJS e escondia a falha real — quando ela acontecia, vinha
+    // como string vazia, indistinguível de um PDF sem camada de texto.
+    //
+    // O pacote precisa estar em `serverExternalPackages` no next.config.ts,
+    // senão o empacotador quebra o binário nativo e o worker que ele carrega.
+    const mod: any = await import('pdf-parse')
+    const pdfParse: any = mod?.default ?? mod
+
+    if (mod?.PDFParse || pdfParse?.PDFParse) {
+      const PDFParse = mod.PDFParse ?? pdfParse.PDFParse
+      const parser = new PDFParse({ data: buffer })
+      const res = await parser.getText()
+      return typeof res === 'string' ? res : res?.text || ''
+    }
     if (typeof pdfParse === 'function') {
       const res = await pdfParse(buffer)
       return res.text || ''
     }
-    if (pdfParse.PDFParse) {
-      const parser = new pdfParse.PDFParse({ data: buffer })
-      const res = await parser.getText()
-      return typeof res === 'string' ? res : res?.text || ''
-    }
+
+    console.error('pdf-parse carregado sem API reconhecida:', Object.keys(mod || {}))
   } catch (e: any) {
-    console.error('Failed to parse PDF buffer:', e?.message || e)
+    // Registrado com a pilha: sem ela, uma falha de carregamento do pacote e um
+    // PDF de fato ilegível produzem exatamente o mesmo sintoma.
+    console.error('Failed to parse PDF buffer:', e?.stack || e?.message || e)
   }
   return ''
 }
