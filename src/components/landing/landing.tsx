@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  FileText, Sparkles, ShieldCheck, Download, TrendingUp, Target, CheckCircle2,
-  ArrowRight, Brain, Search, Award, Lock, Users, BarChart3, Zap, Globe, Share2,
-  Check, HelpCircle, ChevronDown, Star, MessageSquare, Menu, X, FileSearch, Edit3
+  FileText, Sparkles, ShieldCheck, Download, Target, CheckCircle2,
+  ArrowRight, Brain, Search, Lock, BarChart3, Globe, Share2,
+  ChevronDown, Menu, X, FileSearch, Edit3, Compass
 } from 'lucide-react'
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
 import { LanguageSelector } from '@/components/ui/language-selector'
-import { CREDIT_PACKAGES, getPackagePriceDisplay } from '@/lib/credits-catalog'
+import { CREDIT_COSTS, CREDIT_PACKAGES, getPackagePriceDisplay } from '@/lib/credits-catalog'
 
 export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | 'app') => void }) {
   const { user } = useAuth()
@@ -23,6 +23,9 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index)
   }
+
+  const creditsLabel = (n: number) =>
+    `${n} ${n === 1 ? t.pricing.creditUnit : t.pricing.creditsUnit}`
 
   const appSubtitles: Record<string, string> = {
     pt: 'GLOBAL AI CAREER INTELLIGENCE',
@@ -66,7 +69,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
                   {t.nav.login}
                 </Button>
                 <Button onClick={() => onNavigate('signup')} size="sm" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md font-semibold px-4">
-                  {t.nav.freeAnalysis}
+                  {t.nav.ctaStart}
                 </Button>
               </>
             )}
@@ -106,7 +109,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
                     {t.nav.login}
                   </Button>
                   <Button onClick={() => { setMobileMenuOpen(false); onNavigate('signup') }} className="w-full bg-[#0B63E5] hover:bg-[#0052CC]">
-                    {t.nav.freeAnalysis}
+                    {t.nav.ctaStart}
                   </Button>
                 </>
               )}
@@ -142,8 +145,8 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
                 </Button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-semibold text-slate-600 pt-3 border-t border-slate-100">
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeFree}</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeNoCard}</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeNoSubscription}</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeNoExpiry}</span>
                 <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeSecurity}</span>
                 <span className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeSafe}</span>
               </div>
@@ -267,18 +270,30 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               </div>
 
               <div className="space-y-2.5">
-                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1 leading-normal">{t.social.linkedInHead}</p>
-                  <p className="text-xs text-white leading-relaxed break-words">"Senior Data Engineer | Python, PySpark, Dataproc, BigQuery | High-Performance Data Pipeline Specialist"</p>
-                </div>
-                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1 leading-normal">{t.social.behanceHead}</p>
-                  <p className="text-xs text-white leading-relaxed break-words">"Highlight case studies with quantified impact (e.g. 'Redesign that boosted conversion by +35%') on portfolio covers."</p>
-                </div>
-                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1 leading-normal">{t.social.gupyHead}</p>
-                  <p className="text-xs text-white leading-relaxed break-words">"Ensure exact keyword alignment with terms like 'Scrum', 'Jest', and 'Micro-frontends'."</p>
-                </div>
+                {[
+                  { head: t.social.linkedInHead, example: t.social.linkedInExample },
+                  { head: t.social.behanceHead, example: t.social.behanceExample },
+                  { head: t.social.gupyHead, example: t.social.gupyExample },
+                ].map((item) => (
+                  <div key={item.head} className="p-3 rounded-lg bg-white/5 border border-white/10">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1 leading-normal">{item.head}</p>
+                    <p className="text-xs text-white leading-relaxed break-words">{item.example}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Como cada perfil é lido. A mesma distinção que a tela de análise
+                  mostra ao usuário: link basta em algumas plataformas, LinkedIn e
+                  Gupy dependem do conteúdo que ele envia. */}
+              <div className="space-y-2 pt-1 border-t border-white/10">
+                <p className="flex gap-2 text-[11px] text-slate-300 leading-relaxed">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5 text-emerald-400" />
+                  <span>{t.social.readingAuto}</span>
+                </p>
+                <p className="flex gap-2 text-[11px] text-slate-300 leading-relaxed">
+                  <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-400" />
+                  <span>{t.social.readingManual}</span>
+                </p>
               </div>
             </div>
           </div>
@@ -342,24 +357,31 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
           {CREDIT_PACKAGES.map((pkg) => {
             const display = getPackagePriceDisplay(pkg, detectedCountry, lang)
             const isEntry = pkg.id === 'entrada'
+            const credits = pkg.credits.toLocaleString(lang)
+            const names: Record<typeof pkg.id, string> = {
+              entrada: t.pricing.entryTitle,
+              starter: t.pricing.starterTitle,
+              carreira: t.pricing.carreiraTitle,
+              profissional: t.pricing.profTitle,
+            }
             return (
               <PlanCard
                 key={pkg.id}
-                name={isEntry ? t.pricing.entryTitle : pkg.id === 'starter' ? t.pricing.starterTitle : pkg.id === 'carreira' ? t.pricing.carreiraTitle : t.pricing.profTitle}
+                name={names[pkg.id]}
                 price={display.priceFormatted}
-                perCredit={`${display.perCreditFormatted} / ${lang === 'pt' ? 'crédito' : 'credit'}`}
-                period={`${pkg.credits} ${lang === 'pt' ? 'créditos' : 'credits'}`}
+                perCredit={`${display.perCreditFormatted} / ${t.pricing.creditUnit}`}
+                period={`${credits} ${t.pricing.creditsUnit}`}
+                note={pkg.entryOnly ? t.pricing.entryOnceBadge : undefined}
                 features={[
-                  `${pkg.credits} ${lang === 'pt' ? 'créditos no saldo' : 'credits included'}`,
-                  lang === 'pt' ? 'Uso flexível em Avaliação ou Reescrita' : 'Flexibility across Audit & AI Rewrite',
-                  lang === 'pt' ? 'Downloads em PDF e texto editável' : 'PDF & Editable text exports',
-                  lang === 'pt' ? 'Sem mensalidade ou expiração' : 'No monthly fees or credit expiration',
-                  pkg.id === 'carreira' || pkg.id === 'profissional'
-                    ? (lang === 'pt' ? 'Otimização de LinkedIn e Gupy' : 'LinkedIn & ATS optimization')
-                    : (lang === 'pt' ? 'Oferta exclusiva de entrada' : 'Welcome offer package'),
+                  t.pricing.featCredits.replace('{credits}', credits),
+                  t.pricing.featFlexible,
+                  t.pricing.featDownloads,
+                  t.pricing.featNoExpiry,
+                  isEntry ? t.pricing.featWelcome : t.pricing.featOptimization,
                 ]}
                 highlight={isEntry || !!pkg.popular}
                 popular={pkg.popular}
+                popularLabel={t.pricing.mostPopular}
                 cta={t.pricing.buyCta}
                 onCta={() => onNavigate('signup')}
               />
@@ -381,32 +403,34 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white/10 rounded-2xl p-5 border border-white/10 space-y-3 backdrop-blur-sm">
-              <div className="flex items-center gap-2.5 text-blue-400 font-bold text-base">
-                <FileSearch className="w-6 h-6 shrink-0 text-[#0B63E5]" />
-                <span>{t.pricing.tool1Title}</span>
+          {/* O custo vem de CREDIT_COSTS, a mesma fonte que o servidor cobra:
+              antes estava escrito dentro do texto traduzido, em três idiomas, e
+              qualquer mudança de preço deixaria a landing mentindo. */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+            {[
+              { icon: <FileSearch className="w-6 h-6 shrink-0" />, title: t.pricing.tool1Title, desc: t.pricing.tool1Desc, ideal: t.pricing.tool1Ideal, cost: CREDIT_COSTS.full_analysis, accent: 'text-blue-300' },
+              { icon: <Edit3 className="w-6 h-6 shrink-0" />, title: t.pricing.tool2Title, desc: t.pricing.tool2Desc, ideal: t.pricing.tool2Ideal, cost: CREDIT_COSTS.rewrite_experience, accent: 'text-indigo-300' },
+              { icon: <Share2 className="w-6 h-6 shrink-0" />, title: t.pricing.tool3Title, desc: t.pricing.tool3Desc, ideal: t.pricing.tool3Ideal, cost: CREDIT_COSTS.social_optimization, accent: 'text-sky-300' },
+              { icon: <Compass className="w-6 h-6 shrink-0" />, title: t.pricing.tool4Title, desc: t.pricing.tool4Desc, ideal: t.pricing.tool4Ideal, cost: CREDIT_COSTS.career_orientation, accent: 'text-emerald-300' },
+            ].map((tool) => (
+              <div key={tool.title} className="bg-white/10 rounded-2xl p-5 border border-white/10 space-y-3 backdrop-blur-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className={`flex items-center gap-2.5 font-bold text-base ${tool.accent}`}>
+                    {tool.icon}
+                    <span>{tool.title}</span>
+                  </div>
+                  <Badge className="bg-white/15 text-white border-none shrink-0 font-bold text-[11px] whitespace-nowrap">
+                    {creditsLabel(tool.cost)}
+                  </Badge>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                  {tool.desc}
+                </p>
+                <div className={`text-xs font-semibold pt-1 ${tool.accent}`}>
+                  {tool.ideal}
+                </div>
               </div>
-              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-                {t.pricing.tool1Desc}
-              </p>
-              <div className="text-xs text-blue-300 font-semibold pt-1">
-                {t.pricing.tool1Ideal}
-              </div>
-            </div>
-
-            <div className="bg-white/10 rounded-2xl p-5 border border-white/10 space-y-3 backdrop-blur-sm">
-              <div className="flex items-center gap-2.5 text-indigo-300 font-bold text-base">
-                <Edit3 className="w-6 h-6 shrink-0 text-indigo-400" />
-                <span>{t.pricing.tool2Title}</span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-                {t.pricing.tool2Desc}
-              </p>
-              <div className="text-xs text-indigo-300 font-semibold pt-1">
-                {t.pricing.tool2Ideal}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -427,6 +451,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               { q: t.faq.q3, a: t.faq.a3 },
               { q: t.faq.q4, a: t.faq.a4 },
               { q: t.faq.q5, a: t.faq.a5 },
+              { q: t.faq.q6, a: t.faq.a6 },
             ].map((faq, index) => (
               <div key={index} className="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
                 <button
@@ -486,6 +511,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               <li><a href="#social" className="hover:text-[#0B63E5] transition-colors">{t.nav.social}</a></li>
               <li><a href="#pricing" className="hover:text-[#0B63E5] transition-colors">{t.nav.plans}</a></li>
               <li><a href="#how" className="hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a></li>
+              <li><a href="#faq" className="hover:text-[#0B63E5] transition-colors">{t.nav.faq}</a></li>
             </ul>
           </div>
           <div>
@@ -535,14 +561,17 @@ function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; 
   )
 }
 
-function PlanCard({ name, price, perCredit, period, features, highlight, popular, cta, onCta }: {
+function PlanCard({ name, price, perCredit, period, note, features, highlight, popular, popularLabel, cta, onCta }: {
   name: string
   price: string
   perCredit?: string
   period: string
+  /** Ressalva do pacote — hoje, a compra única do plano de entrada. */
+  note?: string
   features: string[]
   highlight: boolean
   popular?: boolean
+  popularLabel: string
   cta: string
   onCta: () => void
 }) {
@@ -550,14 +579,18 @@ function PlanCard({ name, price, perCredit, period, features, highlight, popular
     <Card className={`relative border-2 transition-all flex flex-col justify-between ${popular ? 'border-[#0B63E5] shadow-xl scale-[1.02] bg-white' : highlight ? 'border-amber-400 shadow-md bg-white' : 'border-slate-200 hover:border-blue-300 bg-white'}`}>
       {popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-[#0B63E5] text-white hover:bg-[#0B63E5] shadow-sm px-3 py-0.5 text-xs font-bold">Popular</Badge>
+          <Badge className="bg-[#0B63E5] text-white hover:bg-[#0B63E5] shadow-sm px-3 py-0.5 text-xs font-bold whitespace-nowrap">{popularLabel}</Badge>
         </div>
       )}
       <CardContent className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
         <div>
           <h3 className="font-bold text-[#0B192E] text-lg">{name}</h3>
-          <p className="text-xs text-slate-500 mb-4">{period}</p>
-          <div className="mb-6">
+          <p className="text-xs text-slate-500">{period}</p>
+          {/* Slot sempre presente: sem ele, o cartão que tem ressalva empurra o
+              preço para baixo e a linha de preços deixa de alinhar entre os
+              quatro pacotes. */}
+          <p className="text-[11px] font-semibold text-amber-700 mt-1 min-h-4">{note ?? ''}</p>
+          <div className="mt-4 mb-6">
             <span className="text-3xl sm:text-4xl font-extrabold text-[#0B192E]">{price}</span>
             {perCredit && <p className="text-xs font-semibold text-[#0B63E5] mt-1">{perCredit}</p>}
           </div>

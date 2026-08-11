@@ -8,9 +8,8 @@ export interface TranslationDictionary {
     plans: string
     faq: string
     login: string
-    signup: string
     myPanel: string
-    freeAnalysis: string
+    ctaStart: string
   }
   hero: {
     badge: string
@@ -20,8 +19,8 @@ export interface TranslationDictionary {
     subtitle: string
     ctaPrimary: string
     ctaSecondary: string
-    badgeFree: string
-    badgeNoCard: string
+    badgeNoSubscription: string
+    badgeNoExpiry: string
     badgeSecurity: string
     badgeSafe: string
   }
@@ -59,8 +58,14 @@ export interface TranslationDictionary {
     lgpdBadge: string
     optInTitle: string
     linkedInHead: string
+    linkedInExample: string
     behanceHead: string
+    behanceExample: string
     gupyHead: string
+    gupyExample: string
+    /** Quais perfis são lidos automaticamente e quais dependem do envio do usuário. */
+    readingAuto: string
+    readingManual: string
   }
   features: {
     badge: string
@@ -99,15 +104,23 @@ export interface TranslationDictionary {
     title: string
     subtitle: string
     entryTitle: string
-    entryDesc: string
+    /** O pacote de entrada é compra única (`entryOnly` no catálogo). */
+    entryOnceBadge: string
     starterTitle: string
-    starterDesc: string
     carreiraTitle: string
-    carreiraDesc: string
     profTitle: string
-    profDesc: string
     mostPopular: string
     buyCta: string
+    /** Unidades de crédito, singular e plural. */
+    creditUnit: string
+    creditsUnit: string
+    /** Itens do cartão de pacote. `featCredits` recebe `{credits}`. */
+    featCredits: string
+    featFlexible: string
+    featDownloads: string
+    featNoExpiry: string
+    featOptimization: string
+    featWelcome: string
     guideTitle: string
     guideSub: string
     tool1Title: string
@@ -116,6 +129,12 @@ export interface TranslationDictionary {
     tool2Title: string
     tool2Desc: string
     tool2Ideal: string
+    tool3Title: string
+    tool3Desc: string
+    tool3Ideal: string
+    tool4Title: string
+    tool4Desc: string
+    tool4Ideal: string
   }
   faq: {
     badge: string
@@ -131,6 +150,8 @@ export interface TranslationDictionary {
     a4: string
     q5: string
     a5: string
+    q6: string
+    a6: string
   }
   ctaFinal: {
     title: string
@@ -185,20 +206,19 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       plans: 'Planos',
       faq: 'Dúvidas',
       login: 'Entrar',
-      signup: 'Analisar grátis',
       myPanel: 'Meu painel',
-      freeAnalysis: 'Analisar grátis',
+      ctaStart: 'Começar agora',
     },
     hero: {
       badge: 'IA + Padrões Gupy, LinkedIn & Recrutamento Global',
       title1: 'Destaque seu ',
       titleAccent: 'currículo',
       title2: ' e conquiste as melhores vagas.',
-      subtitle: 'Envie seu currículo em segundos e receba um laudo técnico completo em 8 dimensões. Descubra sua nota de aprovação em filtros ATS (Gupy, Workday, Taleo) e receba recomendações exclusivas para otimizar seus perfis profissionais.',
-      ctaPrimary: 'Analisar meu currículo agora',
+      subtitle: 'Envie seu currículo e receba um laudo técnico completo em 8 dimensões. Descubra sua nota de aprovação em filtros ATS (Gupy, Workday, Taleo) e receba recomendações para otimizar seus perfis profissionais. Você paga por crédito, sem mensalidade.',
+      ctaPrimary: 'Criar conta e começar',
       ctaSecondary: 'Já tenho conta',
-      badgeFree: 'Análise Gratuita',
-      badgeNoCard: 'Sem Cartão',
+      badgeNoSubscription: 'Sem Mensalidade',
+      badgeNoExpiry: 'Créditos sem Expiração',
       badgeSecurity: 'LGPD & GDPR',
       badgeSafe: '100% Seguro',
     },
@@ -230,14 +250,19 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       title: 'Sua carreira vai além do papel. Otimize seus perfis em qualquer plataforma.',
       subtitle: 'Com o GriffoWork, você não apenas melhora seu currículo em PDF — você otimiza toda a sua imagem profissional nas redes sociais e plataformas estratégicas para o mercado onde deseja atuar.',
       card1Title: 'LinkedIn & Gupy',
-      card1Sub: "Sugestões de Título (Headline), seção 'Sobre' e termos para o algoritmo de recrutadores.",
+      card1Sub: "Sugestões de Título (Headline), seção 'Sobre' e termos para o algoritmo de recrutadores, a partir do conteúdo que você envia.",
       card2Title: 'Perfis Internacionais & Tech',
-      card2Sub: 'Recomendações para Behance, GitHub, StackOverflow, Kaggle, Xing, Portfólios e redes locais.',
+      card2Sub: 'Recomendações para Behance, GitHub, Stack Overflow, Dribbble, Medium, Substack, Dev.to e portfólios próprios.',
       lgpdBadge: 'LGPD / GDPR',
       optInTitle: 'Otimização com Autorização do Usuário',
       linkedInHead: 'LinkedIn — Título Profissional Sugerido',
+      linkedInExample: '"Engenheiro de Dados Sênior | Python, PySpark, Dataproc, BigQuery | Especialista em Pipelines de Alta Performance"',
       behanceHead: 'Behance / Portfólio — Dica de Posicionamento',
+      behanceExample: '"Destaque cases com impacto quantificado (ex.: \'Redesign que elevou a conversão em +35%\') nas capas do portfólio."',
       gupyHead: 'Gupy — Palavras-chave de Triagem',
+      gupyExample: '"Garanta aderência exata a termos como \'Scrum\', \'Jest\' e \'Micro-frontends\'."',
+      readingAuto: 'Leitura automática: GitHub, Behance, Dribbble, Stack Overflow, Medium, Substack, Dev.to e portfólio próprio — basta o link cadastrado.',
+      readingManual: 'LinkedIn e Gupy não permitem leitura por terceiros: você envia o PDF do perfil ou cola o texto, e a análise é exatamente a mesma.',
     },
     features: {
       badge: 'Recursos Completos',
@@ -263,7 +288,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       s1Title: 'Envie o Currículo',
       s1Desc: 'Anexe um arquivo PDF, documento de texto ou cole diretamente o conteúdo.',
       s2Title: 'Informe seus Perfis',
-      s2Desc: 'Insira opcionalmente seus links profissionais (LinkedIn, Gupy, etc.).',
+      s2Desc: 'Cadastre seus links profissionais. LinkedIn e Gupy pedem o PDF do perfil ou o texto colado.',
       s3Title: 'Receba o Laudo',
       s3Desc: 'Confira a pontuação 0–10 em 8 dimensões, pontos fortes e fracos.',
       s4Title: 'Autorize a Reescrita',
@@ -273,26 +298,37 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
     },
     pricing: {
       badge: 'Sem Mensalidades ou Fidelidade',
-      title: 'Plano de Entrada por apenas R$ 9,90 com 2 Avaliações Completas!',
-      subtitle: 'Adquira o Plano de Entrada para começar ou escolha o pacote ideal para o seu momento profissional.',
+      title: 'Comece pelo Plano de Entrada: 40 créditos, 2 avaliações completas.',
+      subtitle: 'A conta é gratuita e os créditos são comprados uma vez, sem mensalidade e sem expiração. Escolha o pacote do seu momento profissional.',
       entryTitle: 'Plano de Entrada',
-      entryDesc: '40 créditos (2 Avaliações Completas)',
+      entryOnceBadge: 'Compra única de boas-vindas',
       starterTitle: 'Pacote Starter',
-      starterDesc: '100 créditos (R$ 0,299 / crédito)',
       carreiraTitle: 'Pacote Carreira',
-      carreiraDesc: '500 créditos (R$ 0,199 / crédito)',
       profTitle: 'Pacote Profissional',
-      profDesc: '1.500 créditos (R$ 0,166 / crédito)',
       mostPopular: 'Mais Vendido',
       buyCta: 'Adquirir Pacote',
-      guideTitle: 'Qual a diferença entre Avaliação e Reescrita do Currículo?',
-      guideSub: 'Você pode utilizar seus créditos como preferir em qualquer momento da sua busca por emprego.',
-      tool1Title: 'Avaliação do Currículo (20 créditos)',
-      tool1Desc: 'Diagnóstico Executivo em 8 Dimensões: Analisa seu currículo sob a ótica de um recrutador técnico e robô ATS. Aponta Nota Geral, pontos fortes, vulnerabilidades e palavras-chave faltantes.',
+      creditUnit: 'crédito',
+      creditsUnit: 'créditos',
+      featCredits: '{credits} créditos no saldo',
+      featFlexible: 'Uso flexível em qualquer ferramenta da plataforma',
+      featDownloads: 'Downloads em PDF e texto editável',
+      featNoExpiry: 'Sem mensalidade ou expiração',
+      featOptimization: 'Otimização de perfis e orientação de carreira',
+      featWelcome: 'Oferta exclusiva de entrada',
+      guideTitle: 'No que os seus créditos são gastos',
+      guideSub: 'Cada ferramenta tem um custo fixo em créditos. Você usa como preferir, na ordem que preferir.',
+      tool1Title: 'Avaliação do Currículo',
+      tool1Desc: 'Diagnóstico executivo em 8 dimensões: analisa seu currículo sob a ótica de um recrutador técnico e de um robô ATS. Aponta nota geral, pontos fortes, vulnerabilidades e palavras-chave faltantes.',
       tool1Ideal: '✓ Ideal para: Descobrir falhas ocultas antes de enviar para vagas.',
-      tool2Title: 'Reescrita do Currículo (10 créditos)',
-      tool2Desc: 'Reformulação Prática de Experiências: Reescreve suas experiências profissionais aplicando a Fórmula STAR e Google XYZ, garantindo 100% de veracidade dos fatos.',
+      tool2Title: 'Reescrita do Currículo',
+      tool2Desc: 'Reformulação prática de experiências: reescreve suas experiências profissionais aplicando a Fórmula STAR e Google XYZ, garantindo 100% de veracidade dos fatos.',
       tool2Ideal: '✓ Ideal para: Transformar descrições simples em realizações de alto impacto.',
+      tool3Title: 'Otimização de Presença Digital',
+      tool3Desc: 'Lê os perfis que podem ser lidos e analisa o conteúdo que você envia dos demais. Devolve Headline, seção "Sobre" e palavras-chave por plataforma.',
+      tool3Ideal: '✓ Ideal para: Ser encontrado por recrutadores fora do currículo.',
+      tool4Title: 'Orientação de Carreira',
+      tool4Desc: 'Cruza seu histórico com áreas de atuação e devolve caminhos possíveis, o percentual de aderência a cada um e o que estudar para chegar lá.',
+      tool4Ideal: '✓ Ideal para: Decidir o próximo passo quando a direção não está clara.',
     },
     faq: {
       badge: 'Perguntas Frequentes',
@@ -308,11 +344,13 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       a4: 'Totalmente. Trabalhamos em conformidade rigorosa com a LGPD e GDPR. Seus dados são criptografados e não são compartilhados nem vendidos a terceiros.',
       q5: 'Como funciona o saldo de créditos?',
       a5: 'Os créditos adquiridos não possuem expiração ou mensalidade. Você utiliza no seu tempo para realizar avaliações completas ou reescritas de currículo sempre que precisar.',
+      q6: 'Existe análise gratuita?',
+      a6: 'A criação da conta é gratuita e sem cartão. Para gerar a avaliação você adquire o Plano de Entrada — 40 créditos, suficientes para 2 avaliações completas — sem mensalidade e sem prazo para usar. O preço na sua moeda está na seção de planos.',
     },
     ctaFinal: {
       title: 'Pronto para transformar sua apresentação profissional?',
-      subtitle: 'Crie sua conta gratuita agora e receba o laudo técnico do seu currículo em menos de 30 segundos. Sem cartão de crédito.',
-      button: 'Analisar meu currículo grátis',
+      subtitle: 'Crie sua conta e comece pelo Plano de Entrada: 40 créditos, 2 avaliações completas, sem mensalidade e sem expiração.',
+      button: 'Criar minha conta',
     },
     footer: {
       desc: 'Plataforma de Inteligência de Carreira e otimização de presença digital baseada nos melhores padrões de recrutamento.',
@@ -325,7 +363,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       welcomeBack: 'Bem-vindo de volta',
       createAccount: 'Crie sua conta',
       loginSub: 'Entre para acessar seus laudos.',
-      signupSub: 'Análise gratuita. Sem cartão de crédito.',
+      signupSub: 'Cadastro gratuito. Você escolhe o pacote de créditos depois.',
       fullName: 'Nome completo',
       email: 'E-mail ou Usuário',
       password: 'Sua senha',
@@ -361,20 +399,19 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       plans: 'Pricing',
       faq: 'FAQ',
       login: 'Sign In',
-      signup: 'Analyze Free',
       myPanel: 'Dashboard',
-      freeAnalysis: 'Analyze Free',
+      ctaStart: 'Get Started',
     },
     hero: {
       badge: 'AI + Global ATS, LinkedIn & Recruiter Standards',
       title1: 'Empower your ',
       titleAccent: 'resume',
       title2: ' and land top global offers.',
-      subtitle: 'Upload your resume in seconds and receive an in-depth 8-dimension audit report. Check your pass rate on ATS screeners (Workday, Taleo, Greenhouse) and get actionable recommendations for your online profiles.',
-      ctaPrimary: 'Analyze my resume now',
+      subtitle: 'Upload your resume and receive an in-depth 8-dimension audit report. Check your pass rate on ATS screeners (Workday, Taleo, Greenhouse) and get actionable recommendations for your online profiles. You pay per credit, with no subscription.',
+      ctaPrimary: 'Create account and start',
       ctaSecondary: 'I already have an account',
-      badgeFree: 'Free Analysis',
-      badgeNoCard: 'No Credit Card',
+      badgeNoSubscription: 'No Subscription',
+      badgeNoExpiry: 'Credits Never Expire',
       badgeSecurity: 'GDPR Compliant',
       badgeSafe: '100% Secure',
     },
@@ -406,14 +443,19 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       title: 'Your career extends beyond PDF pages. Optimize your profile anywhere.',
       subtitle: 'With GriffoWork, you optimize your entire professional personal brand across social platforms and tech networks targeted to your dream industry.',
       card1Title: 'LinkedIn & Professional Portals',
-      card1Sub: "Actionable headline formulas, 'About' summary copywriting and recruiter search algorithm keywords.",
+      card1Sub: "Actionable headline formulas, 'About' summary copywriting and recruiter search keywords, based on the content you provide.",
       card2Title: 'Tech & International Networks',
-      card2Sub: 'Custom recommendations for GitHub, Behance, StackOverflow, Kaggle, Xing and personal portfolio sites.',
+      card2Sub: 'Custom recommendations for GitHub, Behance, Stack Overflow, Dribbble, Medium, Substack, Dev.to and personal portfolio sites.',
       lgpdBadge: 'GDPR & Privacy',
       optInTitle: 'Privacy-First & User-Authorized Insights',
       linkedInHead: 'LinkedIn — Suggested Professional Headline',
+      linkedInExample: '"Senior Data Engineer | Python, PySpark, Dataproc, BigQuery | High-Performance Data Pipeline Specialist"',
       behanceHead: 'Behance / Portfolio — High-Impact Positioning',
-      gupyHead: 'ATS Systems — Key Screening Keywords',
+      behanceExample: '"Highlight case studies with quantified impact (e.g. \'Redesign that boosted conversion by +35%\') on portfolio covers."',
+      gupyHead: 'ATS Portals — Key Screening Keywords',
+      gupyExample: '"Ensure exact keyword alignment with terms like \'Scrum\', \'Jest\' and \'Micro-frontends\'."',
+      readingAuto: 'Read automatically: GitHub, Behance, Dribbble, Stack Overflow, Medium, Substack, Dev.to and personal portfolios — the link is enough.',
+      readingManual: 'LinkedIn and Gupy do not allow third-party reading: you upload the profile PDF or paste the text, and the analysis is exactly the same.',
     },
     features: {
       badge: 'Full Platform Features',
@@ -421,7 +463,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       subtitle: 'Built on HR industry standards, LinkedIn Talent Solutions, and ATS parsing algorithms.',
       f1Title: '8-Dimension Executive Audit',
       f1Desc: 'Detailed evaluation of document structure, summary impact, quantified metrics, hard/soft skills, ATS keywords, and career trajectory.',
-      f2Title: 'ATS Filter Pass Guarantee',
+      f2Title: 'ATS Filter Check',
       f2Desc: 'We test if your resume parses accurately through recruitment bots (Workday, Taleo, Greenhouse, Lever) before a recruiter opens it.',
       f3Title: 'Authorized AI Rewrite',
       f3Desc: 'With your explicit confirmation, our AI rewrites your experience using the STAR and Google XYZ formulas while maintaining 100% truthfulness.',
@@ -439,7 +481,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       s1Title: 'Upload Resume',
       s1Desc: 'Attach a PDF document, text file, or paste your existing content.',
       s2Title: 'Link Profiles (Optional)',
-      s2Desc: 'Optionally provide your LinkedIn, GitHub, or portfolio links.',
+      s2Desc: 'Add your professional links. LinkedIn and Gupy need the profile PDF or pasted text.',
       s3Title: 'Receive Audit Report',
       s3Desc: 'Review your 0–10 score across 8 dimensions with strengths and weaknesses.',
       s4Title: 'Authorize AI Rewrite',
@@ -449,26 +491,37 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
     },
     pricing: {
       badge: 'No Subscription Lock-In',
-      title: 'Entry Plan for just $1.99 / R$ 9,90 with 2 Complete Audits!',
-      subtitle: 'Get started with our Entry Plan or select the credit package that fits your career goals.',
+      title: 'Start with the Entry Plan: 40 credits, 2 complete audits.',
+      subtitle: 'The account is free and credits are bought once — no subscription, no expiration. Pick the package that fits your career stage.',
       entryTitle: 'Entry Plan',
-      entryDesc: '40 credits (2 Complete Audits)',
+      entryOnceBadge: 'One-time welcome offer',
       starterTitle: 'Starter Pack',
-      starterDesc: '100 credits (Best for active job hunters)',
       carreiraTitle: 'Career Pack',
-      carreiraDesc: '500 credits (Best value for power users)',
       profTitle: 'Professional Pack',
-      profDesc: '1,500 credits (For executive coaches & agencies)',
       mostPopular: 'Most Popular',
       buyCta: 'Get Credits Package',
-      guideTitle: 'What is the difference between Audit and AI Rewrite?',
-      guideSub: 'You can use your non-expiring credits anytime across any tool in GriffoWork.',
-      tool1Title: 'Resume Audit (20 credits)',
-      tool1Desc: '8-Dimension Executive Audit: Evaluates your resume from a hiring manager and ATS bot perspective. Reveals overall score, vulnerabilities and missing keywords.',
+      creditUnit: 'credit',
+      creditsUnit: 'credits',
+      featCredits: '{credits} credits in your balance',
+      featFlexible: 'Use them on any tool in the platform',
+      featDownloads: 'PDF & editable text exports',
+      featNoExpiry: 'No monthly fees or credit expiration',
+      featOptimization: 'Profile optimization and career guidance',
+      featWelcome: 'Welcome offer package',
+      guideTitle: 'What your credits are spent on',
+      guideSub: 'Each tool has a fixed credit cost. Use them however and whenever you like.',
+      tool1Title: 'Resume Audit',
+      tool1Desc: '8-dimension executive audit: evaluates your resume from a hiring manager and ATS bot perspective. Reveals overall score, strengths, vulnerabilities and missing keywords.',
       tool1Ideal: '✓ Ideal for: Uncovering hidden deal-breakers before applying to jobs.',
-      tool2Title: 'Resume AI Rewrite (10 credits)',
-      tool2Desc: 'Experience Bullet Reformulation: Rewrites work experience bullets using the STAR and Google XYZ formulas with 100% factual accuracy.',
+      tool2Title: 'Resume AI Rewrite',
+      tool2Desc: 'Experience bullet reformulation: rewrites work experience bullets using the STAR and Google XYZ formulas with 100% factual accuracy.',
       tool2Ideal: '✓ Ideal for: Upgrading plain bullet points into high-impact achievements.',
+      tool3Title: 'Digital Presence Optimization',
+      tool3Desc: 'Reads the profiles that can be read and analyzes the content you supply for the rest. Returns a headline, "About" section and keywords per platform.',
+      tool3Ideal: '✓ Ideal for: Being found by recruiters beyond your resume.',
+      tool4Title: 'Career Guidance',
+      tool4Desc: 'Matches your history against career paths and returns the options that fit, how closely each one matches, and what to learn to get there.',
+      tool4Ideal: '✓ Ideal for: Deciding your next step when the direction is unclear.',
     },
     faq: {
       badge: 'Frequently Asked Questions',
@@ -484,11 +537,13 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       a4: 'Absolutely. We operate under strict GDPR compliance. Your data is encrypted and never shared or sold to third parties.',
       q5: 'Do my purchased credits expire?',
       a5: 'No. Purchased credits never expire and have no recurring monthly fees.',
+      q6: 'Is there a free analysis?',
+      a6: 'Creating an account is free and needs no card. To run an audit you buy the Entry Plan — 40 credits, enough for 2 complete audits — with no subscription and no deadline to use them. The price in your currency is shown in the pricing section.',
     },
     ctaFinal: {
       title: 'Ready to elevate your executive presentation?',
-      subtitle: 'Create your free account now and get your technical resume audit in under 30 seconds. No credit card required.',
-      button: 'Analyze my resume free',
+      subtitle: 'Create your account and start with the Entry Plan: 40 credits, 2 complete audits, no subscription and no expiration.',
+      button: 'Create my account',
     },
     footer: {
       desc: 'Career Intelligence and digital presence optimization platform built on modern talent recruitment standards.',
@@ -501,7 +556,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       welcomeBack: 'Welcome back',
       createAccount: 'Create your account',
       loginSub: 'Sign in to access your audit reports.',
-      signupSub: 'Free analysis. No credit card required.',
+      signupSub: 'Free sign-up. You choose your credit package afterwards.',
       fullName: 'Full Name',
       email: 'Email or Username',
       password: 'Password',
@@ -537,20 +592,19 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       plans: 'Planes',
       faq: 'Preguntas',
       login: 'Iniciar sesión',
-      signup: 'Analizar gratis',
       myPanel: 'Mi Panel',
-      freeAnalysis: 'Analizar gratis',
+      ctaStart: 'Empezar ahora',
     },
     hero: {
       badge: 'IA + Estándares Globales de Reclutamiento, LinkedIn y ATS',
       title1: 'Destaca tu ',
       titleAccent: 'currículum',
       title2: ' y consigue las mejores oportunidades.',
-      subtitle: 'Sube tu currículum en segundos y recibe un informe técnico completo en 8 dimensiones. Descubre tu puntuación en filtros ATS (Workday, Taleo, Gupy) y obtén recomendaciones para optimizar tus perfiles profesionales.',
-      ctaPrimary: 'Analizar mi currículum ahora',
+      subtitle: 'Sube tu currículum y recibe un informe técnico completo en 8 dimensiones. Descubre tu puntuación en filtros ATS (Workday, Taleo, Gupy) y obtén recomendaciones para optimizar tus perfiles profesionales. Pagas por crédito, sin mensualidad.',
+      ctaPrimary: 'Crear cuenta y empezar',
       ctaSecondary: 'Ya tengo una cuenta',
-      badgeFree: 'Análisis Gratuito',
-      badgeNoCard: 'Sin Tarjeta',
+      badgeNoSubscription: 'Sin Mensualidad',
+      badgeNoExpiry: 'Créditos sin Caducidad',
       badgeSecurity: 'Conforme a RGPD',
       badgeSafe: '100% Seguro',
     },
@@ -582,14 +636,19 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       title: 'Tu carrera va más allá del papel. Optimiza tus perfiles en cualquier plataforma.',
       subtitle: 'Con GriffoWork, no solo mejoras tu currículum en PDF: optimizas toda tu marca personal profesional en las redes estratégicas para tu sector.',
       card1Title: 'LinkedIn y Portales Profesionales',
-      card1Sub: "Titulares optimizados, redacción de la sección 'Sobre mí' y palabras clave para el algoritmo de reclutadores.",
+      card1Sub: "Titulares optimizados, redacción de la sección 'Sobre mí' y palabras clave para el algoritmo de reclutadores, a partir del contenido que envías.",
       card2Title: 'Redes Internacionales y Tech',
-      card2Sub: 'Recomendaciones personalizadas para GitHub, Behance, StackOverflow, Kaggle, Xing y portafolios personales.',
+      card2Sub: 'Recomendaciones personalizadas para GitHub, Behance, Stack Overflow, Dribbble, Medium, Substack, Dev.to y portafolios personales.',
       lgpdBadge: 'RGPD / Privacidad',
       optInTitle: 'Optimización Autorizada por el Usuario',
       linkedInHead: 'LinkedIn — Titular Profesional Sugerido',
+      linkedInExample: '"Ingeniero de Datos Senior | Python, PySpark, Dataproc, BigQuery | Especialista en Pipelines de Alto Rendimiento"',
       behanceHead: 'Behance / Portafolio — Posicionamiento de Impacto',
-      gupyHead: 'Sistemas ATS — Palabras Clave de Selección',
+      behanceExample: '"Destaca casos con impacto cuantificado (ej.: \'Rediseño que aumentó la conversión un +35%\') en las portadas del portafolio."',
+      gupyHead: 'Portales ATS — Palabras Clave de Selección',
+      gupyExample: '"Asegura coincidencia exacta con términos como \'Scrum\', \'Jest\' y \'Micro-frontends\'."',
+      readingAuto: 'Lectura automática: GitHub, Behance, Dribbble, Stack Overflow, Medium, Substack, Dev.to y portafolios propios — basta con el enlace.',
+      readingManual: 'LinkedIn y Gupy no permiten la lectura por terceros: envías el PDF del perfil o pegas el texto, y el análisis es exactamente el mismo.',
     },
     features: {
       badge: 'Funciones Completas',
@@ -615,7 +674,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       s1Title: 'Sube tu Currículum',
       s1Desc: 'Adjunta un archivo PDF, documento de texto o pega directamente el contenido.',
       s2Title: 'Enlaza tus Perfiles (Opcional)',
-      s2Desc: 'Ingresa opcionalmente tus enlaces profesionales (LinkedIn, GitHub, etc.).',
+      s2Desc: 'Registra tus enlaces profesionales. LinkedIn y Gupy piden el PDF del perfil o el texto pegado.',
       s3Title: 'Recibe el Informe',
       s3Desc: 'Revisa tu puntuación 0–10 en 8 dimensiones con fortalezas y debilidades.',
       s4Title: 'Autoriza la Reescritura',
@@ -625,26 +684,37 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
     },
     pricing: {
       badge: 'Sin Suscripciones Forzadas',
-      title: '¡Plan de Entrada por solo $1.99 / R$ 9,90 con 2 Evaluaciones Completas!',
-      subtitle: 'Comienza con nuestro Plan de Entrada o elige el paquete de créditos ideal para tu momento profesional.',
+      title: 'Empieza por el Plan de Entrada: 40 créditos, 2 evaluaciones completas.',
+      subtitle: 'La cuenta es gratuita y los créditos se compran una vez, sin mensualidad ni caducidad. Elige el paquete de tu momento profesional.',
       entryTitle: 'Plan de Entrada',
-      entryDesc: '40 créditos (2 Evaluaciones Completas)',
+      entryOnceBadge: 'Compra única de bienvenida',
       starterTitle: 'Paquete Starter',
-      starterDesc: '100 créditos (Ideal para búsqueda activa)',
       carreiraTitle: 'Paquete Carrera',
-      carreiraDesc: '500 créditos (El mejor costo-beneficio)',
       profTitle: 'Paquete Profesional',
-      profDesc: '1.500 créditos (Para profesionales y agencias)',
       mostPopular: 'Más Vendido',
       buyCta: 'Adquirir Paquete',
-      guideTitle: '¿Cuál es la diferencia entre Evaluación y Reescritura?',
-      guideSub: 'Puedes utilizar tus créditos sin caducidad en cualquier herramienta de GriffoWork.',
-      tool1Title: 'Evaluación de Currículum (20 créditos)',
-      tool1Desc: 'Diagnóstico Ejecutivo en 8 Dimensiones: Evalúa tu currículum desde la óptica de un reclutador y filtro ATS. Revela nota general y palabras clave faltantes.',
+      creditUnit: 'crédito',
+      creditsUnit: 'créditos',
+      featCredits: '{credits} créditos en tu saldo',
+      featFlexible: 'Uso flexible en cualquier herramienta de la plataforma',
+      featDownloads: 'Descargas en PDF y texto editable',
+      featNoExpiry: 'Sin mensualidad ni caducidad',
+      featOptimization: 'Optimización de perfiles y orientación de carrera',
+      featWelcome: 'Oferta exclusiva de entrada',
+      guideTitle: 'En qué se gastan tus créditos',
+      guideSub: 'Cada herramienta tiene un costo fijo en créditos. Los usas como prefieras y cuando prefieras.',
+      tool1Title: 'Evaluación de Currículum',
+      tool1Desc: 'Diagnóstico ejecutivo en 8 dimensiones: evalúa tu currículum desde la óptica de un reclutador y de un filtro ATS. Revela nota general, fortalezas, vulnerabilidades y palabras clave faltantes.',
       tool1Ideal: '✓ Ideal para: Descubrir errores ocultos antes de enviar a vacantes.',
-      tool2Title: 'Reescritura de Currículum (10 créditos)',
-      tool2Desc: 'Reformulación de Experiencias: Reescribe tus experiencias aplicando las fórmulas STAR y Google XYZ con 100% de veracidad.',
+      tool2Title: 'Reescritura de Currículum',
+      tool2Desc: 'Reformulación de experiencias: reescribe tus experiencias aplicando las fórmulas STAR y Google XYZ con 100% de veracidad.',
       tool2Ideal: '✓ Ideal para: Transformar descripciones simples en logros de alto impacto.',
+      tool3Title: 'Optimización de Presencia Digital',
+      tool3Desc: 'Lee los perfiles que se pueden leer y analiza el contenido que envías de los demás. Devuelve titular, sección "Sobre mí" y palabras clave por plataforma.',
+      tool3Ideal: '✓ Ideal para: Que los reclutadores te encuentren más allá del currículum.',
+      tool4Title: 'Orientación de Carrera',
+      tool4Desc: 'Cruza tu historial con áreas profesionales y devuelve los caminos posibles, el porcentaje de afinidad con cada uno y qué estudiar para llegar.',
+      tool4Ideal: '✓ Ideal para: Decidir el próximo paso cuando la dirección no está clara.',
     },
     faq: {
       badge: 'Preguntas Frecuentes',
@@ -660,11 +730,13 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       a4: 'Totalmente. Operamos en estricto cumplimiento del RGPD. Tus datos están encriptados y nunca se comparten ni venden a terceros.',
       q5: '¿Mis créditos adquiridos caducan?',
       a5: 'No. Los créditos no caducan nunca y no hay pagos mensuales recurrentes.',
+      q6: '¿Existe un análisis gratuito?',
+      a6: 'Crear la cuenta es gratis y sin tarjeta. Para generar la evaluación adquieres el Plan de Entrada — 40 créditos, suficientes para 2 evaluaciones completas — sin mensualidad y sin plazo para usarlos. El precio en tu moneda aparece en la sección de planes.',
     },
     ctaFinal: {
       title: '¿Listo para transformar tu presentación profesional?',
-      subtitle: 'Crea tu cuenta gratuita ahora y recibe el informe técnico de tu currículum en menos de 30 segundos. Sin tarjeta de crédito.',
-      button: 'Analizar mi currículum gratis',
+      subtitle: 'Crea tu cuenta y empieza por el Plan de Entrada: 40 créditos, 2 evaluaciones completas, sin mensualidad ni caducidad.',
+      button: 'Crear mi cuenta',
     },
     footer: {
       desc: 'Plataforma de Inteligencia de Carrera y optimización de presencia digital basada en los mejores estándares de reclutamiento.',
@@ -677,7 +749,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       welcomeBack: 'Bienvenido de nuevo',
       createAccount: 'Crea tu cuenta',
       loginSub: 'Inicia sesión para acceder a tus informes.',
-      signupSub: 'Análisis gratuito. Sin tarjeta de crédito.',
+      signupSub: 'Registro gratuito. Eliges tu paquete de créditos después.',
       fullName: 'Nombre completo',
       email: 'Correo o Usuario',
       password: 'Tu contraseña',
