@@ -26,6 +26,8 @@ interface SocialProfileResult {
   url: string
   /** `false` quando o perfil não pôde ser lido: o conselho é genérico. */
   analyzed: boolean
+  /** `true` quando a chamada de análise deste perfil falhou — refazer resolve. */
+  failed?: boolean
   findings: string
   headline: string
   aboutSummary: string
@@ -311,7 +313,11 @@ export function SocialAnalysisPanel({
                         foi lido de fato e o que é orientação genérica. Era um
                         selo de 10px que se perdia na página; agora tem o peso
                         visual da informação que carrega. */}
-                    {item.analyzed ? (
+                    {item.failed ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-rose-500/20 border border-rose-400/50 px-3 py-1.5 text-xs font-bold text-rose-200 shrink-0">
+                        <AlertCircle className="w-4 h-4" /> Parecer não gerado — refaça a auditoria
+                      </span>
+                    ) : item.analyzed ? (
                       <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/20 border border-emerald-400/50 px-3 py-1.5 text-xs font-bold text-emerald-200 shrink-0">
                         <CheckCircle2 className="w-4 h-4" /> Conteúdo real do perfil analisado
                       </span>
