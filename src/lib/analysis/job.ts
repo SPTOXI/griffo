@@ -121,16 +121,9 @@ async function executeSegment(
         // que a resposta. Desligá-lo é o que faz os segmentos caberem no
         // orçamento curto — e é também metade do ganho de latência.
         disableThinking: true,
-        // Um laudo com notas é uma medida, e a mesma medida sobre o mesmo
-        // currículo precisa dar o mesmo resultado. Com a temperatura padrão o
-        // usuário reenviava o mesmo arquivo e recebia notas diferentes, o que
-        // desqualifica o laudo inteiro: se a nota muda sozinha, ela não estava
-        // medindo o currículo.
-        //
-        // Temperatura 0 reduz drasticamente essa variação, mas não a elimina —
-        // nenhuma inferência de LLM é bit a bit determinística. O que ela
-        // remove é a variação que estávamos introduzindo por conta própria.
-        temperature: 0,
+        // Sem `temperature`: a geração Claude 5 recusa o parâmetro (ver o
+        // comentário em ai-router/router.ts). A estabilidade das notas vem dos
+        // critérios ancorados na instrução de cada segmento, não da API.
         systemPrompt: spec.instruction,
         userPrompt:
           'Produza agora, para o currículo do contexto, exatamente o que a sua tarefa pede. ' +

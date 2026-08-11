@@ -50,6 +50,25 @@ import {
 const str = { type: 'string' } as const
 const strArray = { type: 'array', items: str } as const
 
+/**
+ * Escala de notas comum aos segmentos que pontuam.
+ *
+ * É o que substitui `temperature` como controle de variação: a geração Claude 5
+ * recusa parâmetros de amostragem (ver ai-router/router.ts), então a única
+ * forma de o mesmo currículo receber a mesma nota é dizer ao modelo o que cada
+ * faixa significa. Sem âncoras, "nota de 0 a 10" é interpretada de novo a cada
+ * chamada, e a variação que o usuário via entre duas análises do mesmo arquivo
+ * vinha daí.
+ */
+const SCORING_SCALE = `ESCALA DE NOTAS — use estas âncoras, não a sua impressão geral:
+- 0 a 2: a dimensão está ausente do currículo.
+- 3 a 4: existe, mas de forma genérica, sem evidência verificável.
+- 5 a 6: presente e correta, no padrão da maioria dos currículos.
+- 7 a 8: acima da média, com evidência concreta (números, escopo, ferramentas nomeadas).
+- 9 a 10: excepcional e verificável, com resultados quantificados que sustentam a afirmação.
+
+Atribua a nota escolhendo primeiro a FAIXA pela definição acima e só depois o valor dentro dela. Use números inteiros.`
+
 function dimensionsSchema(keys: readonly DimensionKey[]) {
   return {
     type: 'object',
@@ -141,7 +160,9 @@ const SEGMENT_SPECS: Record<SegmentId, AnalysisSegmentSpec> = {
 3. "impact" — Resultados Quantificados. Aplicação das fórmulas STAR/XYZ, presença de números e indicadores.
 4. "skills" — Habilidades & Palavras-Chave de Busca. Vocabulário técnico e termos que recrutadores buscam.
 
-Para cada uma: nota de 0 a 10 e uma justificativa técnica de 2 a 4 frases, citando um trecho concreto do currículo. Densidade, não extensão: nada de avaliação genérica que serviria para qualquer candidato, e nada de repetir o que já foi dito em outra dimensão.`,
+Para cada uma: nota de 0 a 10 e uma justificativa técnica de 2 a 4 frases, citando um trecho concreto do currículo. Densidade, não extensão: nada de avaliação genérica que serviria para qualquer candidato, e nada de repetir o que já foi dito em outra dimensão.
+
+${SCORING_SCALE}`,
     parse: (raw) => parseDimensions('dimensions_a', SEGMENT_DIMENSIONS.dimensions_a, raw),
   },
 
@@ -156,7 +177,9 @@ Para cada uma: nota de 0 a 10 e uma justificativa técnica de 2 a 4 frases, cita
 3. "career" — Trajetória & Plano de Carreira. Progressão, estabilidade, lacunas, projeção do próximo passo.
 4. "upskilling" — Capacitação & Cursos Recomendados. Lacunas de conhecimento e certificações objetivas a buscar.
 
-Para cada uma: nota de 0 a 10 e uma justificativa técnica de 2 a 4 frases, citando um trecho concreto do currículo. Densidade, não extensão: nada de avaliação genérica que serviria para qualquer candidato, e nada de repetir o que já foi dito em outra dimensão.`,
+Para cada uma: nota de 0 a 10 e uma justificativa técnica de 2 a 4 frases, citando um trecho concreto do currículo. Densidade, não extensão: nada de avaliação genérica que serviria para qualquer candidato, e nada de repetir o que já foi dito em outra dimensão.
+
+${SCORING_SCALE}`,
     parse: (raw) => parseDimensions('dimensions_b', SEGMENT_DIMENSIONS.dimensions_b, raw),
   },
 
