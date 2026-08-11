@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Share2, Loader2, Sparkles, CheckCircle2, AlertCircle, Upload, FileText, Github, Globe,
+  Lock, ClipboardPaste, ChevronDown, ChevronUp, Info,
 } from 'lucide-react'
 import { internalFetch } from '@/lib/internal-fetch'
 import { toast } from 'sonner'
@@ -45,6 +46,13 @@ const PLATFORM_ICON: Record<string, typeof Github> = {
   linkedin: Share2,
 }
 
+/** Estado da leitura do PDF, que agora acontece antes e à parte da análise. */
+type PdfState =
+  | { phase: 'idle' }
+  | { phase: 'reading'; name: string }
+  | { phase: 'ok'; name: string; chars: number; method: 'text_layer' | 'ocr' }
+  | { phase: 'error'; name: string; message: string }
+
 function copy(text: string, label: string) {
   navigator.clipboard.writeText(text)
   toast.success(`${label} copiado!`)
@@ -63,21 +71,26 @@ export function SocialAnalysisPanel({
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Só aparece quando o servidor responde que não conseguiu ler nada — não
-  // adianta pedir o PDF antes de saber se ele é necessário.
-  const [needsInput, setNeedsInput] = useState<SocialSource[] | null>(null)
+  // O caminho manual deixou de depender de uma falha para aparecer. O LinkedIn
+  // NUNCA pode ser lido automaticamente — esperar o erro para só então oferecer
+  // o PDF fazia o usuário descobrir a única alternativa existente depois de uma
+  // tentativa frustrada. Pior: quem tinha um GitHub legível nunca via a opção,
+  // porque a análise "dava certo" com o LinkedIn faltando.
+  const [manualOpen, setManualOpen] = useState(false)
+  const [sourceNotes, setSourceNotes] = useState<SocialSource[] | null>(null)
   const [pastedText, setPastedText] = useState('')
-  const [pdfName, setPdfName] = useState<string | null>(null)
-  const [pdfBase64, setPdfBase64] = useState<string | null>(null)
+  const [pdf, setPdf] = useState<PdfState>({ phase: 'idle' })
 
   const hasLinks = Object.keys(socialLinks || {}).length > 0
+  const hasLinkedin = Object.entries(socialLinks || {}).some(
+    ([k, v]) => k.toLowerCase().includes('linkedin') || String(v).toLowerCase().includes('linkedin.com')
+  )
 
   const run = async () => {
     setRunning(true)
     setError(null)
     try {
       const body: Record<string, unknown> = { resumeId }
-      if (pdfBase64) body.linkedinPdfBase64 = pdfBase64
       if (pastedText.trim()) body.linkedinPdfText = pastedText.trim()
 
       const r = await internalFetch('/api/resume/social-analysis', {
@@ -90,7 +103,8 @@ export function SocialAnalysisPanel({
       if (!r.ok) {
         // 422: nada pôde ser lido. Abre o caminho manual em vez de só falhar.
         if (data.code === 'NO_PROFILE_CONTENT') {
-          setNeedsInput(data.profiles || [])
+          setSourceNotes(data.profiles || [])
+          setManualOpen(true)
           setError(data.error)
           return
         }
@@ -99,6 +113,7 @@ export function SocialAnalysisPanel({
           return
         }
         setError(data.error || 'Não foi possível concluir a análise.')
+        if (data.refunded) window.dispatchEvent(new Event('griffo:credits-changed'))
         return
       }
 
@@ -106,32 +121,70 @@ export function SocialAnalysisPanel({
       // O saldo no cabeçalho só é relido ao trocar de tela; sem este aviso ele
       // ficaria 20 créditos desatualizado logo depois da cobrança.
       window.dispatchEvent(new Event('griffo:credits-changed'))
-      setNeedsInput(null)
-      setPastedText('')
-      setPdfBase64(null)
-      setPdfName(null)
+      setSourceNotes(data.socialAnalysis?.sources || null)
       toast.success(`Análise concluída sobre ${data.analyzedCount} perfil(is).`)
     } catch {
-      setError('Falha de conexão. Tente novamente.')
+      setError('Falha de conexão. Verifique sua internet e tente novamente — nenhum crédito foi cobrado.')
     } finally {
       setRunning(false)
     }
   }
 
-  const onPickPdf = (file: File | null) => {
+  /**
+   * Lê o PDF assim que ele é escolhido, numa chamada própria.
+   *
+   * O texto extraído cai no mesmo campo em que se cola conteúdo à mão: o
+   * usuário VÊ o que foi lido antes de gastar crédito, e pode corrigir ou
+   * completar. Quando a leitura falha, a mensagem diz o que fazer em vez de
+   * apenas informar que falhou.
+   */
+  const onPickPdf = async (file: File | null) => {
     if (!file) return
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('O arquivo excede 10 MB.')
+      setPdf({ phase: 'error', name: file.name, message: 'O arquivo excede 10 MB.' })
       return
     }
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = String(reader.result || '')
-      setPdfBase64(result.replace(/^data:application\/pdf;base64,/, ''))
-      setPdfName(file.name)
+
+    setPdf({ phase: 'reading', name: file.name })
+
+    const base64 = await new Promise<string | null>((resolve) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(String(reader.result || '').split(',')[1] || null)
+      reader.onerror = () => resolve(null)
+      reader.readAsDataURL(file)
+    })
+
+    if (!base64) {
+      setPdf({ phase: 'error', name: file.name, message: 'Não foi possível abrir o arquivo no navegador.' })
+      return
     }
-    reader.onerror = () => toast.error('Não foi possível ler o arquivo.')
-    reader.readAsDataURL(file)
+
+    try {
+      const r = await internalFetch('/api/resume/profile-pdf-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pdfBase64: base64 }),
+      })
+      const data = await r.json()
+
+      if (!r.ok || !data.text) {
+        setPdf({
+          phase: 'error',
+          name: file.name,
+          message: data.error || 'Não foi possível extrair o texto deste PDF.',
+        })
+        return
+      }
+
+      setPastedText((prev) => (prev.trim() ? `${prev.trim()}\n\n${data.text}` : data.text))
+      setPdf({ phase: 'ok', name: file.name, chars: data.charCount || data.text.length, method: data.method })
+    } catch {
+      setPdf({
+        phase: 'error',
+        name: file.name,
+        message: 'Falha de conexão ao enviar o arquivo. Tente de novo ou cole o texto do perfil.',
+      })
+    }
   }
 
   return (
@@ -149,7 +202,7 @@ export function SocialAnalysisPanel({
               <CardTitle className="text-xl text-white font-black flex items-center gap-2 mb-1 tracking-tight">
                 🌐 Auditoria de Presença Digital
               </CardTitle>
-              <CardDescription className="text-xs text-violet-200/70 font-medium max-w-xl leading-relaxed">
+              <CardDescription className="text-sm text-violet-100/80 font-medium max-w-xl leading-relaxed">
                 Lemos o conteúdo real dos seus perfis — GitHub pela API oficial, portfólio e
                 blogs pela página publicada — e comparamos com o seu currículo.
               </CardDescription>
@@ -162,119 +215,78 @@ export function SocialAnalysisPanel({
               size="sm"
               disabled={running}
               onClick={run}
-              className="bg-transparent border-violet-500/30 text-violet-300 hover:bg-violet-500/10 hover:text-white text-xs font-bold shrink-0"
+              className="bg-transparent border-violet-500/40 text-violet-200 hover:bg-violet-500/10 hover:text-white text-sm font-bold shrink-0"
             >
-              {running ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : null}
+              {running ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : null}
               Refazer ({CREDIT_COST} cr)
             </Button>
           )}
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4 pt-6 relative z-10">
+      <CardContent className="space-y-5 pt-6 relative z-10">
         {error && (
-          <Alert className="bg-rose-950/40 border-rose-500/30">
-            <AlertCircle className="w-4 h-4 text-rose-400" />
-            <AlertDescription className="text-xs text-rose-200 leading-relaxed">{error}</AlertDescription>
+          <Alert className="bg-rose-950/60 border-rose-500/50">
+            <AlertCircle className="w-5 h-5 text-rose-300" />
+            <AlertDescription className="text-sm text-rose-100 leading-relaxed font-medium">
+              {error}
+            </AlertDescription>
           </Alert>
         )}
 
-        {/* Caminho manual, aberto quando nenhum perfil pôde ser lido. Os motivos
-            variam por plataforma e vêm do servidor, listados abaixo. */}
-        {needsInput && (
-          <div className="space-y-4 p-5 rounded-xl bg-slate-900/50 border border-amber-500/30">
-            <div className="flex items-start gap-3">
-              <FileText className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="text-sm font-bold text-white">Envie o conteúdo do seu perfil</p>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Nenhum dos seus perfis pôde ser lido automaticamente — o motivo de cada um está
-                  abaixo. No LinkedIn, use <strong className="text-slate-200">Mais → Salvar como PDF</strong> no
-                  seu perfil e envie o arquivo aqui; nas demais plataformas, cole o texto do seu
-                  &ldquo;Sobre&rdquo; e headline.
-                </p>
-              </div>
-            </div>
+        <HowItWorks />
 
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-xs font-semibold text-violet-300 cursor-pointer hover:text-violet-200 w-fit">
-                <Upload className="w-4 h-4" />
-                {pdfName ? `Arquivo: ${pdfName}` : 'Escolher PDF do perfil'}
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  className="hidden"
-                  onChange={(e) => onPickPdf(e.target.files?.[0] || null)}
-                />
-              </label>
-
-              <Textarea
-                value={pastedText}
-                onChange={(e) => setPastedText(e.target.value)}
-                placeholder="Ou cole aqui o texto do seu perfil (headline, Sobre, experiências)..."
-                className="bg-black/30 border-white/10 text-slate-200 text-xs min-h-[120px] placeholder:text-slate-500"
-              />
-            </div>
-
-            {needsInput.length > 0 && (
-              <div className="space-y-1 pt-1">
-                {needsInput.map((s, i) => (
-                  <p key={i} className="text-[10px] text-slate-500 leading-relaxed">
-                    <span className="font-mono text-slate-400">{s.platform}</span> — {s.note}
-                  </p>
-                ))}
-              </div>
-            )}
-
-            <Button
-              disabled={running || (!pdfBase64 && !pastedText.trim())}
-              onClick={run}
-              className="bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold w-full sm:w-auto"
-            >
-              {running ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : null}
-              Analisar com este conteúdo ({CREDIT_COST} cr)
-            </Button>
-          </div>
-        )}
+        {/* Caminho manual — sempre disponível, não só depois de um erro. */}
+        <ManualInputSection
+          open={manualOpen}
+          onToggle={() => setManualOpen((v) => !v)}
+          highlight={hasLinkedin && !analysis}
+          pdf={pdf}
+          onPickPdf={onPickPdf}
+          pastedText={pastedText}
+          onChangeText={setPastedText}
+          notes={sourceNotes}
+        />
 
         {/* Estado inicial */}
-        {!analysis && !needsInput && (
-          <div className="text-center py-8 space-y-4">
+        {!analysis && (
+          <div className="text-center py-6 space-y-4">
             {!hasLinks ? (
-              <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+              <p className="text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
                 Você ainda não cadastrou perfis profissionais. Adicione seu GitHub, portfólio ou
-                LinkedIn nas configurações da conta para habilitar a auditoria.
+                LinkedIn nas configurações da conta — ou cole o conteúdo do perfil no campo acima
+                para auditar mesmo assim.
               </p>
             ) : (
-              <>
-                <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                  {Object.keys(socialLinks).length} perfil(is) cadastrado(s). A auditoria visita
-                  cada um, compara com o seu currículo e devolve headline e bio prontos para copiar.
-                </p>
-                <Button
-                  disabled={running}
-                  onClick={run}
-                  className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold shadow-lg shadow-violet-600/20"
-                >
-                  {running ? (
-                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lendo seus perfis...</>
-                  ) : (
-                    <><Sparkles className="w-4 h-4 mr-2" /> Auditar presença digital ({CREDIT_COST} cr)</>
-                  )}
-                </Button>
-              </>
+              <p className="text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
+                <strong className="text-white">{Object.keys(socialLinks).length} perfil(is) cadastrado(s).</strong>{' '}
+                A auditoria visita cada um, compara com o seu currículo e devolve headline e bio
+                prontos para copiar.
+              </p>
             )}
+            <Button
+              disabled={running || (!hasLinks && !pastedText.trim())}
+              onClick={run}
+              size="lg"
+              className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold shadow-lg shadow-violet-600/20"
+            >
+              {running ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lendo seus perfis... (até 40s)</>
+              ) : (
+                <><Sparkles className="w-4 h-4 mr-2" /> Auditar presença digital ({CREDIT_COST} cr)</>
+              )}
+            </Button>
           </div>
         )}
 
         {/* Resultado */}
         {analysis && (
           <>
-            <div className="p-4 rounded-xl bg-black/20 border border-white/5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-violet-400 mb-2">
+            <div className="p-4 rounded-xl bg-black/20 border border-white/10">
+              <p className="text-xs font-black uppercase tracking-widest text-violet-300 mb-2">
                 Avaliação geral
               </p>
-              <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">
                 {analysis.overallAssessment}
               </p>
             </div>
@@ -286,7 +298,7 @@ export function SocialAnalysisPanel({
                   key={idx}
                   className="p-5 rounded-xl bg-slate-900/40 border border-violet-500/20 backdrop-blur-md space-y-4"
                 >
-                  <div className="flex items-center justify-between border-b border-white/5 pb-3 gap-3">
+                  <div className="flex flex-wrap items-center justify-between border-b border-white/10 pb-3 gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <Icon className="w-4 h-4 text-violet-300 shrink-0" />
                       <Badge className="bg-violet-500 text-white font-black tracking-wider uppercase px-3 py-1 shadow-md shrink-0">
@@ -296,24 +308,26 @@ export function SocialAnalysisPanel({
                     </div>
 
                     {/* A distinção que sustenta a credibilidade do laudo: o que
-                        foi lido de fato e o que é orientação genérica. */}
+                        foi lido de fato e o que é orientação genérica. Era um
+                        selo de 10px que se perdia na página; agora tem o peso
+                        visual da informação que carrega. */}
                     {item.analyzed ? (
-                      <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold shrink-0">
-                        <CheckCircle2 className="w-3 h-3 mr-1" /> Perfil lido
-                      </Badge>
+                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/20 border border-emerald-400/50 px-3 py-1.5 text-xs font-bold text-emerald-200 shrink-0">
+                        <CheckCircle2 className="w-4 h-4" /> Conteúdo real do perfil analisado
+                      </span>
                     ) : (
-                      <Badge className="bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-bold shrink-0">
-                        <AlertCircle className="w-3 h-3 mr-1" /> Não lido — dica geral
-                      </Badge>
+                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/20 border border-amber-400/50 px-3 py-1.5 text-xs font-bold text-amber-200 shrink-0">
+                        <AlertCircle className="w-4 h-4" /> Perfil não lido — orientação genérica
+                      </span>
                     )}
                   </div>
 
                   {item.findings && (
-                    <div className="bg-black/20 p-4 rounded-xl border border-white/5">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                    <div className="bg-black/20 p-4 rounded-xl border border-white/10">
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-300 mb-2">
                         O que encontramos
                       </p>
-                      <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+                      <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">
                         {item.findings}
                       </p>
                     </div>
@@ -322,8 +336,8 @@ export function SocialAnalysisPanel({
                   {item.headline && (
                     <CopyBlock
                       label="💡 Título estratégico (SEO)"
-                      accent="text-violet-400"
-                      buttonAccent="text-violet-300"
+                      accent="text-violet-300"
+                      buttonAccent="text-violet-200"
                       value={item.headline}
                       bold
                     />
@@ -332,21 +346,21 @@ export function SocialAnalysisPanel({
                   {item.aboutSummary && (
                     <CopyBlock
                       label='📝 Texto "Sobre" otimizado'
-                      accent="text-blue-400"
-                      buttonAccent="text-blue-300"
+                      accent="text-blue-300"
+                      buttonAccent="text-blue-200"
                       value={item.aboutSummary}
                     />
                   )}
 
                   {item.tips?.length > 0 && (
-                    <div className="bg-black/20 p-4 rounded-xl border border-white/5">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-fuchsia-400 mb-2">
+                    <div className="bg-black/20 p-4 rounded-xl border border-white/10">
+                      <p className="text-xs font-black uppercase tracking-widest text-fuchsia-300 mb-2">
                         🚀 Ações recomendadas
                       </p>
-                      <ul className="space-y-1.5">
+                      <ul className="space-y-2">
                         {item.tips.map((tip, i) => (
-                          <li key={i} className="text-xs text-slate-300 leading-relaxed flex gap-2">
-                            <span className="text-fuchsia-400 shrink-0">→</span>
+                          <li key={i} className="text-sm text-slate-200 leading-relaxed flex gap-2">
+                            <span className="text-fuchsia-300 shrink-0 font-bold">→</span>
                             <span>{tip}</span>
                           </li>
                         ))}
@@ -358,7 +372,7 @@ export function SocialAnalysisPanel({
             })}
 
             {analysis.analyzedAt && (
-              <p className="text-[10px] text-slate-500 text-center pt-2">
+              <p className="text-xs text-slate-400 text-center pt-2">
                 Auditoria realizada em {new Date(analysis.analyzedAt).toLocaleString('pt-BR')}
               </p>
             )}
@@ -366,6 +380,226 @@ export function SocialAnalysisPanel({
         )}
       </CardContent>
     </Card>
+  )
+}
+
+/**
+ * Explica, antes de qualquer tentativa, o que é lido sozinho e o que exige ação
+ * do usuário — e por quê.
+ *
+ * A ausência dessa explicação era lida como defeito do produto: quem via o
+ * LinkedIn marcado como "não lido" concluía que a leitura estava quebrada, e não
+ * que ela é impossível por decisão da própria plataforma.
+ */
+function HowItWorks() {
+  return (
+    <div className="rounded-xl border border-white/15 bg-black/25 p-5 space-y-4">
+      <p className="flex items-center gap-2 text-sm font-bold text-white">
+        <Info className="w-4 h-4 text-violet-300" />
+        Como cada perfil é lido
+      </p>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-lg border border-emerald-400/40 bg-emerald-500/10 p-4 space-y-2">
+          <p className="flex items-center gap-2 text-sm font-bold text-emerald-200">
+            <CheckCircle2 className="w-4 h-4" /> Leitura automática
+          </p>
+          <p className="text-sm text-emerald-50/90 leading-relaxed">
+            <strong>GitHub</strong> (API oficial), <strong>portfólio</strong>, <strong>Medium</strong>,{' '}
+            <strong>Substack</strong>, <strong>Dev.to</strong>, <strong>Behance</strong>,{' '}
+            <strong>Dribbble</strong> e <strong>Stack Overflow</strong>. Nada a fazer: basta ter o
+            link cadastrado.
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 p-4 space-y-2">
+          <p className="flex items-center gap-2 text-sm font-bold text-amber-200">
+            <Lock className="w-4 h-4" /> Exige o seu envio
+          </p>
+          <p className="text-sm text-amber-50/90 leading-relaxed">
+            <strong>LinkedIn</strong> (sempre) e <strong>Gupy</strong> (perfil atrás do login da
+            empresa). Essas plataformas bloqueiam a leitura por terceiros e seus termos de uso a
+            proíbem — não existe caminho técnico legítimo. Você mesmo fornece o conteúdo, e nós
+            analisamos.
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-lg bg-violet-500/10 border border-violet-400/30 p-4 space-y-2">
+        <p className="text-sm font-bold text-violet-100">Duas formas de enviar o LinkedIn:</p>
+        <ol className="space-y-1.5 text-sm text-violet-50/90 leading-relaxed">
+          <li className="flex gap-2">
+            <span className="font-black text-violet-300 shrink-0">1.</span>
+            <span>
+              <strong>PDF do perfil</strong> — no seu LinkedIn, clique em{' '}
+              <strong className="text-white">Mais → Salvar como PDF</strong> e envie o arquivo aqui.
+            </span>
+          </li>
+          <li className="flex gap-2">
+            <span className="font-black text-violet-300 shrink-0">2.</span>
+            <span>
+              <strong>Copiar e colar</strong> — se o PDF não puder ser lido (quando é imagem
+              digitalizada, por exemplo), selecione o texto do seu título e da seção{' '}
+              <strong>&ldquo;Sobre&rdquo;</strong> direto no perfil e cole no campo de texto. O
+              resultado da análise é exatamente o mesmo.
+            </span>
+          </li>
+        </ol>
+      </div>
+    </div>
+  )
+}
+
+function ManualInputSection({
+  open,
+  onToggle,
+  highlight,
+  pdf,
+  onPickPdf,
+  pastedText,
+  onChangeText,
+  notes,
+}: {
+  open: boolean
+  onToggle: () => void
+  highlight: boolean
+  pdf: PdfState
+  onPickPdf: (file: File | null) => void
+  pastedText: string
+  onChangeText: (v: string) => void
+  notes: SocialSource[] | null
+}) {
+  const reading = pdf.phase === 'reading'
+
+  return (
+    <div
+      className={`rounded-xl border p-5 space-y-4 ${
+        highlight ? 'border-amber-400/50 bg-amber-500/5' : 'border-white/15 bg-black/25'
+      }`}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-3 text-left"
+      >
+        <span className="flex items-center gap-2.5">
+          <FileText className="w-5 h-5 text-amber-300 shrink-0" />
+          <span className="text-sm font-bold text-white">
+            Enviar o conteúdo do LinkedIn (PDF ou texto colado)
+          </span>
+        </span>
+        <span className="flex items-center gap-2 shrink-0">
+          {pastedText.trim() && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/20 border border-emerald-400/50 px-2 py-1 text-xs font-bold text-emerald-200">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Conteúdo pronto
+            </span>
+          )}
+          {open ? (
+            <ChevronUp className="w-5 h-5 text-slate-300" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-slate-300" />
+          )}
+        </span>
+      </button>
+
+      {open && (
+        <div className="space-y-4 pt-1">
+          {/* Passo 1 — PDF */}
+          <div className="space-y-2">
+            <p className="text-sm font-bold text-slate-200">Opção 1 — enviar o PDF do perfil</p>
+            <label
+              className={`inline-flex items-center gap-2 rounded-lg border border-violet-400/40 bg-violet-500/10 px-4 py-2.5 text-sm font-bold text-violet-100 w-fit ${
+                reading ? 'opacity-60 cursor-wait' : 'cursor-pointer hover:bg-violet-500/20'
+              }`}
+            >
+              {reading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              {reading ? 'Lendo o arquivo...' : 'Escolher PDF do perfil'}
+              <input
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                disabled={reading}
+                onChange={(e) => onPickPdf(e.target.files?.[0] || null)}
+              />
+            </label>
+
+            {/* O desfecho da leitura, dito com todas as letras. Antes o arquivo
+                era apenas anexado e só se descobria se ele servia depois de
+                pagar pela análise. */}
+            {pdf.phase === 'ok' && (
+              <div className="flex items-start gap-2 rounded-lg border border-emerald-400/50 bg-emerald-500/15 p-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
+                <p className="text-sm text-emerald-100 leading-relaxed">
+                  <strong>{pdf.name}</strong> lido com sucesso — {pdf.chars.toLocaleString('pt-BR')}{' '}
+                  caracteres extraídos
+                  {pdf.method === 'ocr' && ' (por leitura de imagem)'}. O texto está no campo abaixo:
+                  confira e corrija se precisar.
+                </p>
+              </div>
+            )}
+
+            {pdf.phase === 'error' && (
+              <div className="flex items-start gap-2 rounded-lg border border-rose-400/50 bg-rose-500/15 p-3">
+                <AlertCircle className="w-5 h-5 text-rose-300 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-rose-100">Não deu para ler {pdf.name}</p>
+                  <p className="text-sm text-rose-50/90 leading-relaxed">{pdf.message}</p>
+                  <p className="text-sm text-rose-50/90 leading-relaxed">
+                    <ClipboardPaste className="w-4 h-4 inline mr-1 -mt-0.5" />
+                    Use a opção 2 abaixo: copie o texto direto do seu perfil e cole no campo. A
+                    análise fica igualmente completa.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Passo 2 — colar */}
+          <div className="space-y-2">
+            <p className="text-sm font-bold text-slate-200">
+              Opção 2 — colar o texto do perfil
+              <span className="font-normal text-slate-400"> (use se o PDF falhar)</span>
+            </p>
+            <Textarea
+              value={pastedText}
+              onChange={(e) => onChangeText(e.target.value)}
+              placeholder={
+                'Cole aqui o texto do seu perfil:\n\n• Título (headline)\n• Seção "Sobre"\n• Experiências e competências principais'
+              }
+              className="bg-black/40 border-white/20 text-slate-100 text-sm min-h-[160px] placeholder:text-slate-500 leading-relaxed"
+            />
+            <p className="text-xs text-slate-400">
+              {pastedText.trim()
+                ? `${pastedText.trim().length.toLocaleString('pt-BR')} caracteres prontos para análise.`
+                : 'Quanto mais completo o texto, mais específico o parecer.'}
+            </p>
+          </div>
+
+          {/* Motivos por perfil, quando o servidor já respondeu. */}
+          {notes && notes.length > 0 && (
+            <div className="space-y-2 rounded-lg border border-white/15 bg-black/30 p-4">
+              <p className="text-sm font-bold text-slate-200">Situação de cada perfil cadastrado</p>
+              {notes.map((s, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm leading-relaxed">
+                  <span
+                    className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold uppercase shrink-0 ${
+                      s.status === 'fetched'
+                        ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/40'
+                        : 'bg-amber-500/20 text-amber-200 border border-amber-400/40'
+                    }`}
+                  >
+                    {s.platform}
+                  </span>
+                  <span className="text-slate-300">
+                    {s.status === 'fetched' ? 'Lido automaticamente.' : s.note || 'Precisa do seu envio.'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -383,13 +617,13 @@ function CopyBlock({
   bold?: boolean
 }) {
   return (
-    <div className="bg-black/20 p-4 rounded-xl border border-white/5">
+    <div className="bg-black/20 p-4 rounded-xl border border-white/10">
       <div className="flex items-center justify-between mb-2 gap-2">
-        <p className={`text-[10px] font-black uppercase tracking-widest ${accent}`}>{label}</p>
+        <p className={`text-xs font-black uppercase tracking-widest ${accent}`}>{label}</p>
         <Button
           variant="ghost"
           size="sm"
-          className={`h-6 text-[10px] px-2 ${buttonAccent} hover:bg-white/5 hover:text-white font-bold shrink-0`}
+          className={`h-7 text-xs px-2.5 ${buttonAccent} hover:bg-white/10 hover:text-white font-bold shrink-0`}
           onClick={() => copy(value, label.replace(/^\W+\s*/, ''))}
         >
           Copiar
@@ -397,7 +631,7 @@ function CopyBlock({
       </div>
       <p
         className={`leading-relaxed whitespace-pre-wrap ${
-          bold ? 'text-sm font-bold text-white' : 'text-xs text-slate-300'
+          bold ? 'text-base font-bold text-white' : 'text-sm text-slate-200'
         }`}
       >
         {value}

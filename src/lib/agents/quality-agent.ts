@@ -67,6 +67,43 @@ export function auditQualityOfAiResult(taskType: string, content: string): Quali
     return { approved: true, score: 9.5 }
   }
 
+  /**
+   * Diagnóstico vocacional.
+   *
+   * Esta rota declarava `full_analysis`, e as regras acima exigem `dimensions`
+   * — campo do laudo de currículo, que o diagnóstico vocacional nunca produziu.
+   * O resultado: TODA resposta do Claude era reprovada com "Dimensões de
+   * análise incompletas", o roteador caía para o suplente, e a tarefa terminava
+   * em falha operacional mesmo quando o modelo havia respondido corretamente.
+   *
+   * As regras abaixo verificam o formato que esta tarefa de fato produz.
+   */
+  if (taskType === 'career_orientation') {
+    let json: any = null
+    try {
+      json = JSON.parse(text.replace(/```json/gi, '').replace(/```/g, '').trim())
+    } catch {
+      return { approved: false, score: 3, feedback: 'Estrutura JSON inválida.' }
+    }
+
+    if (typeof json.profileSummary !== 'string' || json.profileSummary.trim().length < 30) {
+      return { approved: false, score: 4, feedback: 'Resumo do perfil ausente ou superficial.' }
+    }
+
+    if (!Array.isArray(json.topMatchingAreas) || json.topMatchingAreas.length === 0) {
+      return { approved: false, score: 4, feedback: 'Nenhuma área de carreira sugerida.' }
+    }
+
+    const hasWeakArea = json.topMatchingAreas.some(
+      (a: any) => !a?.role?.trim() || !a?.whyFit || String(a.whyFit).trim().length < 20
+    )
+    if (hasWeakArea) {
+      return { approved: false, score: 5, feedback: 'Áreas sugeridas sem cargo ou sem justificativa.' }
+    }
+
+    return { approved: true, score: 9.0 }
+  }
+
   if (taskType === 'rewrite') {
     // Reescrita deve ter tamanho razoável e estrutura em markdown
     if (text.length < 100) {

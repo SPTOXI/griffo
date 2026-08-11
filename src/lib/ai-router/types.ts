@@ -8,6 +8,12 @@ export type TaskType =
   /// agents/quality-agent.ts.
   | 'analysis_segment'
   | 'social_advice'
+  /// Diagnóstico vocacional. Tem tipo próprio porque o Agente de Qualidade
+  /// valida cada tarefa pelo formato que ela produz: enquanto esta rota
+  /// declarava `full_analysis`, toda resposta era reprovada por não ter
+  /// `dimensions` — campo do laudo de currículo, que o diagnóstico vocacional
+  /// nunca produziu. Ver agents/quality-agent.ts.
+  | 'career_orientation'
   | 'cover_letter'
   | 'support_chat'
 
@@ -70,6 +76,15 @@ export interface AiTaskRequest {
   /// raciocínio não acrescenta nada e só disputa o orçamento. Desligá-lo também
   /// derruba a latência, que é o objetivo de toda a divisão em segmentos.
   disableThinking?: boolean
+  /// Tempo total que este roteador pode consumir, em milissegundos.
+  ///
+  /// O padrão (52s) supõe que a chamada de IA começa junto com a requisição
+  /// HTTP. Rotas que fazem trabalho ANTES dela — a análise de presença digital
+  /// gasta até 8s buscando os perfis e mais um tanto lendo o PDF — precisam
+  /// declarar o que sobrou, senão o roteador planeja em cima de um orçamento
+  /// que já foi parcialmente gasto e a função é encerrada pela plataforma antes
+  /// do `catch` que devolve os créditos.
+  timeBudgetMs?: number
 }
 
 export interface AiTaskResult {
