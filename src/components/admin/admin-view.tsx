@@ -13,6 +13,7 @@ import {
   BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Award
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { slowModelWarning } from '@/lib/credits-catalog'
 import { internalFetch } from '@/lib/internal-fetch';
 
 /**
@@ -959,6 +960,14 @@ function AdminViewContent() {
                       className="text-xs font-mono"
                       required
                     />
+                    {/* A consequência aparece durante a escolha, não depois,
+                        como falha operacional sem causa aparente. */}
+                    {slowModelWarning(newKeyModel) && (
+                      <p className="flex items-start gap-1.5 rounded-md border border-amber-300 bg-amber-50 p-2 text-[11px] leading-relaxed text-amber-900">
+                        <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0 text-amber-600" />
+                        <span>{slowModelWarning(newKeyModel)}</span>
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-700">Chave Secreta (API Key)</label>
@@ -1091,7 +1100,22 @@ function AdminViewContent() {
                               {key.provider}
                             </Badge>
                           </td>
-                          <td className="px-4 py-3 font-mono font-bold text-slate-700">{key.model}</td>
+                          {/* O ponto mais importante: a chave problemática já
+                              está salva. Um aviso só no formulário de criação
+                              nunca seria visto por quem já configurou. */}
+                          <td className="px-4 py-3 font-mono font-bold text-slate-700">
+                            <span className="flex items-center gap-1.5">
+                              {key.model}
+                              {slowModelWarning(key.model) && (
+                                <span
+                                  title={slowModelWarning(key.model) || ''}
+                                  className="inline-flex items-center gap-1 rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 font-sans text-[10px] font-bold text-amber-800"
+                                >
+                                  <AlertCircle className="h-3 w-3" /> LENTO
+                                </span>
+                              )}
+                            </span>
+                          </td>
                           <td className="px-4 py-3 font-mono text-slate-500">{key.maskedKey}</td>
                           <td className="px-4 py-3">
                             {key.status === 'active' ? (
@@ -1577,11 +1601,33 @@ function AdminViewContent() {
                     {aiMetrics?.benchmarks && aiMetrics.benchmarks.length > 0 ? (
                       aiMetrics.benchmarks.map((b) => (
                         <tr key={b.model} className="hover:bg-slate-50/50">
-                          <td className="px-4 py-3 font-semibold text-slate-900 font-mono">{b.model}</td>
+                          <td className="px-4 py-3 font-semibold text-slate-900 font-mono">
+                            <span className="flex items-center gap-1.5">
+                              {b.model}
+                              {slowModelWarning(b.model) && (
+                                <span
+                                  title={slowModelWarning(b.model) || ''}
+                                  className="inline-flex items-center gap-1 rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 font-sans text-[10px] font-bold text-amber-800"
+                                >
+                                  <AlertCircle className="h-3 w-3" /> LENTO
+                                </span>
+                              )}
+                            </span>
+                          </td>
                           <td className="px-4 py-3 uppercase text-[10px] font-bold text-slate-500">{b.provider}</td>
                           <td className="px-4 py-3">{b.callsCount}</td>
                           <td className="px-4 py-3 font-mono">{b.tokensTotal.toLocaleString()}</td>
-                          <td className="px-4 py-3 font-mono">{b.avgLatencyMs} ms</td>
+                          {/* A latência média é o dado que confirma ou refuta a
+                              suspeita do selo ao lado do modelo. Destacada
+                              quando passa de 25s, que é o teto por tentativa
+                              do roteador: acima disso, o failover não cabe. */}
+                          <td
+                            className={`px-4 py-3 font-mono ${
+                              b.avgLatencyMs > 25000 ? 'font-bold text-rose-700' : ''
+                            }`}
+                          >
+                            {b.avgLatencyMs} ms
+                          </td>
                           <td className="px-4 py-3 font-mono text-emerald-700 font-medium">
                             R$ {(b.avgCostUsd * 5.4).toFixed(4)}
                           </td>
