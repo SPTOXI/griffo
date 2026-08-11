@@ -98,9 +98,12 @@ export async function POST(req: Request) {
 
 Diretrizes Obrigatórias:
 1. Reescreva TODAS as seções presentes no currículo original: Dados Pessoais/Cabeçalho, Resumo Profissional, TODAS as Experiências Profissionais completas (com empresas, cargos, datas), Formação Acadêmica, Habilidades Técnicas/Comportamentais, Idiomas e Certificações.
-2. Aplique a metodologia STAR (Situação, Tarefa, Ação, Resultado) e a fórmula Google XYZ (Conseguiu [X], medido por [Y], fazendo [Z]) em cada experiência profissional.
-3. Mantenha 100% da veracidade dos fatos originais.${keywordsHint}
+2. Em cada experiência, escreva realizações que tragam o RESULTADO alcançado, a EVIDÊNCIA desse resultado e a AÇÃO que o produziu — é o conteúdo das metodologias STAR e XYZ.
+   NÃO reproduza a fórmula como texto. As construções "medido por ..." e "fazendo ..." estão PROIBIDAS: repetidas em vinte itens seguidos, elas produzem um currículo de sintaxe idêntica do começo ao fim, que é exatamente o oposto do efeito pretendido. Varie a construção entre os itens e escreva em português natural, como um profissional sênior escreveria.
+3. Mantenha 100% da veracidade dos fatos originais. Só cite número, percentual ou indicador que exista no currículo original — quando não houver métrica, descreva o escopo real (tamanho da equipe, número de unidades, sistemas operados, porte da operação). Inventar métrica é falsificar o currículo do candidato.${keywordsHint}
 4. Estruture a resposta usando formatação Markdown rica (títulos '# ' e '## ', marcadores '- ', negritos '**').
+5. NÃO invente dados de contato. Se o currículo original não traz e-mail, telefone ou LinkedIn, omita o campo — nunca escreva marcadores como "[seu e-mail]" ou "[link]", que chegam ao recrutador exatamente assim, como se fossem o conteúdo.
+6. NÃO use emojis, ícones ou símbolos decorativos em nenhuma parte do documento. Ele é lido por sistemas de triagem (ATS), que os descartam ou corrompem, e a exportação em PDF não possui glifo para eles.
 
 Currículo Original Completo para Reescrita:
 ${resume.originalContent.slice(0, REWRITE_INPUT_LIMIT)}`,
