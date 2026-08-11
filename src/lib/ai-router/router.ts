@@ -189,16 +189,21 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
                   : req.userPrompt,
               },
             ],
-            // `temperature` NUNCA era enviada ao Claude: existia só no ramo
-            // compatível com OpenAI, e aqui a API aplicava o padrão dela, 1.0.
-            // Era a causa de o MESMO currículo receber notas diferentes a cada
-            // análise — o `?? 0.3` do outro ramo dava a impressão de que havia
-            // um padrão baixo em vigor para todos os provedores, e não havia.
+            // `temperature` NÃO é enviada ao Claude, de propósito.
             //
-            // Só pode ser enviada com o raciocínio desligado: a API exige
-            // temperatura 1 quando o raciocínio estendido está ativo, e mandar
-            // outro valor faz a requisição ser recusada com 400.
-            ...(req.disableThinking ? { temperature: req.temperature ?? 0.3 } : {}),
+            // A geração Claude 5 REMOVEU os parâmetros de amostragem: no
+            // claude-sonnet-5 um `temperature` com valor não-padrão é recusado
+            // com 400, e no claude-opus-5 o parâmetro não existe mais. Uma
+            // tentativa anterior de mandá-lo daqui — para tornar as notas do
+            // laudo reproduzíveis — derrubou a análise inteira por esse motivo.
+            //
+            // A consequência precisa ser dita com clareza: nestes modelos não
+            // há como pedir determinismo pela API. O controle de variação passa
+            // a ser do PROMPT — critérios de nota explícitos e ancorados, que é
+            // o que `lib/analysis/segments.ts` faz.
+            //
+            // `req.temperature` continua valendo para os provedores compatíveis
+            // com OpenAI, que ainda aceitam o parâmetro.
             // Omitir `thinking` NÃO significa raciocínio desligado no Sonnet 5:
             // desde essa geração o padrão é ligado, e `max_tokens` cobre
             // raciocínio e resposta somados. Numa chamada de orçamento curto o
