@@ -137,6 +137,12 @@ export async function extractPdfWithVision(base64: string): Promise<string> {
       'Se o documento não for um currículo, transcreva mesmo assim.',
     userPrompt: 'Transcreva integralmente o texto deste documento.',
     maxTokens: 8000,
+    // Transcrever não é raciocinar, e `max_tokens` limita raciocínio MAIS
+    // resposta somados. Com o raciocínio ligado — o padrão do Sonnet 5 quando o
+    // parâmetro é omitido — parte dos 8.000 tokens ia para deliberação sobre um
+    // trabalho puramente mecânico, e a transcrição de um documento longo era
+    // cortada no meio pelo que sobrava.
+    disableThinking: true,
   })
 
   return result.content.trim()
