@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/auth'
-import { CREDIT_PACKAGES } from '@/lib/credits'
+import { CREDIT_PACKAGES, hasCompletedPurchase } from '@/lib/credits'
 import { getGlobalSettings } from '@/lib/settings'
 import { resolveCurrency, getRequestCountry } from '@/lib/currency'
 
@@ -30,6 +30,29 @@ export async function POST(req: Request) {
     const pkg = CREDIT_PACKAGES.find((p) => p.id === packageId)
     if (!pkg) {
       return NextResponse.json({ error: 'Pacote não encontrado.' }, { status: 400 })
+    }
+
+    // O Plano de Entrada é oferta de boas-vindas: preço promocional, uma vez
+    // por conta. A marca `entryOnly` existia no catálogo e era anunciada na
+    // página inicial, mas nada a aplicava — quem já havia comprado podia
+    // recomprar o pacote promocional indefinidamente.
+    //
+    // A conferência fica aqui, antes do checkout, e não no momento de creditar:
+    // recusar crédito a quem já pagou seria pior do que o problema que isso
+    // corrige. Duas sessões de checkout abertas em paralelo ainda passariam
+    // pelas duas — para fechar essa fresta seria preciso uma restrição no
+    // banco, e o custo dela não se justifica diante de uma corrida que exige
+    // ser deliberada.
+    if (pkg.entryOnly && (await hasCompletedPurchase(user.id))) {
+      return NextResponse.json(
+        {
+          error:
+            'O Plano de Entrada é uma oferta de boas-vindas e só pode ser adquirido uma vez. ' +
+            'Escolha um dos pacotes de recarga.',
+          code: 'ENTRY_OFFER_USED',
+        },
+        { status: 409 }
+      )
     }
 
     const currencyCode = resolveCurrency(req)

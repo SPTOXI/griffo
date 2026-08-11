@@ -29,6 +29,10 @@ export function PlansView() {
   const [transactions, setTransactions] = useState<CreditTx[]>([])
   const [loading, setLoading] = useState(true)
   const [buyingId, setBuyingId] = useState<string | null>(null)
+  // Quem já comprou não vê mais a oferta de entrada: o servidor recusa a
+  // compra (`ENTRY_OFFER_USED`), e oferecer um botão que só devolve erro é
+  // pior do que não oferecer.
+  const [entryOfferAvailable, setEntryOfferAvailable] = useState(true)
 
   useEffect(() => {
     loadCreditsData()
@@ -41,6 +45,7 @@ export function PlansView() {
       const data = await r.json();
       if (typeof data.credits === 'number') setCredits(data.credits);
       if (Array.isArray(data.transactions)) setTransactions(data.transactions);
+      if (typeof data.entryOfferAvailable === 'boolean') setEntryOfferAvailable(data.entryOfferAvailable);
     } catch {
       toast.error('Erro ao carregar saldo de créditos.');
     } finally {
@@ -80,6 +85,8 @@ export function PlansView() {
     }
   }
 
+  const visiblePackages = CREDIT_PACKAGES.filter((pkg) => !pkg.entryOnly || entryOfferAvailable)
+
   if (loading) {
     return (
       <div className="space-y-4 max-w-5xl">
@@ -97,7 +104,9 @@ export function PlansView() {
             <Zap className="w-6 h-6 text-amber-500 fill-amber-500" /> Saldo & Pacotes de Créditos
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Adquira o Plano de Entrada (R$ 9,90) ou recarregue seu saldo para utilizar as ferramentas de IA do Griffo.
+            {entryOfferAvailable
+              ? 'Adquira o Plano de Entrada ou escolha um pacote maior para utilizar as ferramentas de IA do Griffo.'
+              : 'Recarregue seu saldo para continuar utilizando as ferramentas de IA do Griffo.'}
           </p>
         </div>
 
@@ -115,7 +124,7 @@ export function PlansView() {
 
       {/* CREDIT PACKAGES GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 pt-2">
-        {CREDIT_PACKAGES.map((pkg) => {
+        {visiblePackages.map((pkg) => {
           const isBuying = buyingId === pkg.id
           const isEntry = pkg.id === 'entrada'
           const display = getPackagePriceDisplay(pkg, detectedCountry, lang)
@@ -263,6 +272,7 @@ export function PlansView() {
                   { name: 'Reescrever Experiência Profissional (STAR/XYZ)', cost: CREDIT_COSTS.rewrite_experience },
                   { name: 'Carta de Apresentação Personalizada', cost: CREDIT_COSTS.cover_letter },
                   { name: 'Avaliação Completa do Currículo em 8 Dimensões', cost: CREDIT_COSTS.full_analysis },
+                  { name: 'Orientação de Carreira (áreas, aderência e capacitação)', cost: CREDIT_COSTS.career_orientation },
                   { name: 'Otimização de Perfil (LinkedIn, Gupy, etc.)', cost: CREDIT_COSTS.social_optimization },
                   { name: 'Comparar Currículo com Vaga Alvo', cost: CREDIT_COSTS.resume_comparison },
                 ].map((item) => (

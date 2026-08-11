@@ -10,6 +10,27 @@ export {
 } from './credits-catalog'
 export type { CreditPackage } from './credits-catalog'
 
+/**
+ * O usuário já pagou por créditos alguma vez?
+ *
+ * É o que decide se a oferta de entrada ainda está disponível. O catálogo marca
+ * o Plano de Entrada como `entryOnly` — e essa marca não era conferida em lugar
+ * nenhum: a rota de compra aceitava `entrada` como qualquer outro pacote,
+ * quantas vezes o usuário quisesse, pelo preço promocional.
+ *
+ * A leitura é `type: 'purchase'`, que só nasce quando o pagamento confirma
+ * (webhook da Stripe ou verificação direta). Checkout abandonado não gasta a
+ * oferta. `welcome` e `admin_gift` também não: nenhum dos dois é dinheiro que a
+ * pessoa pôs.
+ */
+export async function hasCompletedPurchase(userId: string): Promise<boolean> {
+  const purchase = await db.creditTransaction.findFirst({
+    where: { userId, type: 'purchase' },
+    select: { id: true },
+  })
+  return purchase !== null
+}
+
 export async function getUserCredits(userId: string): Promise<number> {
   const user = await db.user.findUnique({
     where: { id: userId },

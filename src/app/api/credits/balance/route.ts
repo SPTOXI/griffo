@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { hasCompletedPurchase } from '@/lib/credits'
 
 export async function GET() {
   try {
@@ -9,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
     }
 
-    const [userData, transactions] = await Promise.all([
+    const [userData, transactions, purchased] = await Promise.all([
       db.user.findUnique({
         where: { id: user.id },
         select: { credits: true, plan: true },
@@ -19,12 +20,17 @@ export async function GET() {
         orderBy: { createdAt: 'desc' },
         take: 30,
       }),
+      hasCompletedPurchase(user.id),
     ])
 
     return NextResponse.json({
       credits: userData?.credits ?? 0,
       plan: userData?.plan ?? 'free',
       transactions,
+      // A tela precisa saber disso do servidor: `transactions` traz só as 30
+      // mais recentes, então deduzir pela lista erraria justamente para quem
+      // mais usa a plataforma.
+      entryOfferAvailable: !purchased,
     })
   } catch (e: any) {
     console.error('credit balance API error:', e)
