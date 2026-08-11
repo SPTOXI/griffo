@@ -84,6 +84,8 @@ interface AiApiKeyItem {
   maskedKey: string
   baseUrl?: string | null
   model: string
+  /** O que a API recebe de fato. Difere de `model` quando o ID configurado saiu de linha. */
+  effectiveModel?: string
   status: 'active' | 'paused'
   createdAt: string
 }
@@ -1104,14 +1106,28 @@ function AdminViewContent() {
                               está salva. Um aviso só no formulário de criação
                               nunca seria visto por quem já configurou. */}
                           <td className="px-4 py-3 font-mono font-bold text-slate-700">
-                            <span className="flex items-center gap-1.5">
-                              {key.model}
-                              {slowModelWarning(key.model) && (
+                            <span className="flex flex-col gap-1">
+                              <span className="flex items-center gap-1.5">
+                                {key.model}
+                                {slowModelWarning(key.effectiveModel || key.model) && (
+                                  <span
+                                    title={slowModelWarning(key.effectiveModel || key.model) || ''}
+                                    className="inline-flex items-center gap-1 rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 font-sans text-[10px] font-bold text-amber-800"
+                                  >
+                                    <AlertCircle className="h-3 w-3" /> LENTO
+                                  </span>
+                                )}
+                              </span>
+                              {/* O painel mostrava um modelo e a API recebia
+                                  outro. Quem investigasse latência ou custo
+                                  raciocinava sobre um modelo que nunca rodou. */}
+                              {key.effectiveModel && key.effectiveModel !== key.model && (
                                 <span
-                                  title={slowModelWarning(key.model) || ''}
-                                  className="inline-flex items-center gap-1 rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 font-sans text-[10px] font-bold text-amber-800"
+                                  title={`O ID "${key.model}" não está na lista de modelos correntes e foi substituído. Edite a chave para usar um ID válido.`}
+                                  className="inline-flex w-fit items-center gap-1 rounded border border-rose-300 bg-rose-50 px-1.5 py-0.5 font-sans text-[10px] font-bold text-rose-800"
                                 >
-                                  <AlertCircle className="h-3 w-3" /> LENTO
+                                  <AlertCircle className="h-3 w-3" />
+                                  EM USO: {key.effectiveModel}
                                 </span>
                               )}
                             </span>

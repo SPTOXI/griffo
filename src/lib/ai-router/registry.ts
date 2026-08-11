@@ -88,6 +88,25 @@ const PROVIDER_ALIASES: Record<string, ProviderId> = {
   'google-gemini': 'gemini',
 }
 
+/**
+ * O modelo que será REALMENTE usado para um modelo configurado no painel.
+ *
+ * A substituição de um modelo fora da lista de correntes é deliberada — mantém
+ * o produto no ar quando um ID envelhece —, mas era invisível. O painel exibia
+ * `claude-3-5-sonnet` e a API recebia `claude-sonnet-5`: um administrador
+ * investigando latência ou custo raciocinava sobre um modelo que nunca rodou, e
+ * trocar a configuração não produzia efeito nenhum, porque o valor digitado era
+ * descartado de qualquer forma.
+ *
+ * Exportada para que o painel possa mostrar as duas coisas.
+ */
+export function effectiveModel(providerId: ProviderId, storedModel: string | null | undefined): string {
+  const base = PROVIDER_CONFIGS[providerId]
+  if (!base) return storedModel?.trim() || ''
+  const trimmed = (storedModel || '').trim().toLowerCase()
+  return CURRENT_MODELS[providerId].includes(trimmed) ? trimmed : base.defaultModel
+}
+
 export function normalizeProviderId(raw: string): ProviderId | null {
   const lower = raw.toLowerCase().trim()
   if (lower in PROVIDER_CONFIGS) return lower as ProviderId
