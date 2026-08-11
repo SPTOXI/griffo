@@ -51,6 +51,23 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  /**
+   * Pacotes que o servidor carrega do disco, sem passar pelo empacotador.
+   *
+   * `pdf-parse` depende de `@napi-rs/canvas` — um binário nativo `.node` — e
+   * carrega um worker do próprio pacote. Nenhum dos dois sobrevive ao webpack:
+   * ele os reescreve como módulos empacotados, o `require` falha em tempo de
+   * execução, e `parsePdfBuffer` cai no `catch` que devolve string vazia.
+   *
+   * O efeito era invisível em desenvolvimento e sistemático em produção: o PDF
+   * era declarado "sem texto selecionável", caía na transcrição por imagem —
+   * cara e lenta — e essa, por sua vez, estourava o tempo. Um PDF do LinkedIn
+   * com 8.130 caracteres de texto perfeitamente extraível chegava ao usuário
+   * como ilegível.
+   *
+   * `pdfkit` está aqui pelo mesmo motivo: lê arquivos de fonte do disco.
+   */
+  serverExternalPackages: ['pdf-parse', 'pdfjs-dist', '@napi-rs/canvas', 'pdfkit'],
   typescript: {
     ignoreBuildErrors: false,
   },

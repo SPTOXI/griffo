@@ -85,6 +85,15 @@ export interface AiTaskRequest {
   /// que já foi parcialmente gasto e a função é encerrada pela plataforma antes
   /// do `catch` que devolve os créditos.
   timeBudgetMs?: number
+  /// Quantos provedores tentar, no máximo. Padrão 2.
+  ///
+  /// O orçamento é dividido entre as tentativas, então duas tentativas valem
+  /// metade do prazo cada. Para tarefas de GERAÇÃO LONGA — a reescrita produz
+  /// um currículo inteiro — meio prazo não basta para nenhum provedor, e
+  /// reservá-lo para um suplente que também não caberia garante duas falhas em
+  /// vez de um sucesso. Nesses casos, declarar 1 troca a redundância por tempo,
+  /// que é o recurso de que a tarefa realmente precisa.
+  maxProviderAttempts?: number
 }
 
 export interface AiTaskResult {

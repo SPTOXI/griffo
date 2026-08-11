@@ -33,6 +33,10 @@ const DEFAULT_TASK_BUDGET_MS = 52_000
 // Abaixo disto uma tentativa não tem chance real de terminar, e um teto menor
 // só produziria duas falhas rápidas em vez de uma resposta.
 const MIN_PROVIDER_TIMEOUT_MS = 12_000
+// Folga descontada do orçamento antes de fatiá-lo entre as tentativas, para
+// cobrir o custo de abrir a conexão, abortar e registrar cada uma. Ver o
+// comentário no cálculo de `providerTimeoutMs`.
+const ATTEMPT_OVERHEAD_RESERVE_MS = 3_000
 
 // Multiplicadores do cache de prompt da Anthropic, relativos ao preço de
 // entrada: gravar custa 1,25x e ler custa 0,1x.
@@ -81,7 +85,8 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   // Só as duas primeiras tentativas cabem no orçamento: 2 x 25s deixa 10s de
   // folga dentro do prazo de 52s. A cadeia completa de 4 provedores levaria
   // mais de 60s sozinha.
-  const candidateProviders = permitted.slice(0, MAX_PROVIDER_ATTEMPTS)
+  const maxAttempts = Math.max(1, Math.min(req.maxProviderAttempts ?? MAX_PROVIDER_ATTEMPTS, permitted.length))
+  const candidateProviders = permitted.slice(0, maxAttempts)
 
   // O teto por tentativa é o orçamento dividido pelo número REAL de candidatos.
   //
@@ -91,9 +96,18 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   // 25s para uma segunda tentativa que jamais existiria. Um PDF de várias
   // páginas não se transcreve em 25s, e a rota falhava sem ter usado metade do
   // tempo de que dispunha.
+  //
+  // A reserva de sobrecarga não é detalhe: sem ela, dividir o orçamento
+  // exatamente em duas fatias fazia o suplente ser SEMPRE descartado. O
+  // primário consumia a sua fatia inteira mais o custo de abrir a conexão e
+  // abortar — algumas centenas de milissegundos —, e a verificação seguinte
+  // encontrava um resto menor do que a segunda fatia. No log:
+  // "KIMI: Ignorado — orçamento esgotado (25102ms decorridos)", com o
+  // orçamento em 25s. O failover existia no código e nunca acontecia na
+  // prática: a cadeia de suplentes inteira era decorativa.
   const providerTimeoutMs = Math.max(
     MIN_PROVIDER_TIMEOUT_MS,
-    Math.floor(taskBudgetMs / Math.max(1, candidateProviders.length))
+    Math.floor((taskBudgetMs - ATTEMPT_OVERHEAD_RESERVE_MS) / Math.max(1, candidateProviders.length))
   )
 
   let lastError: any = null
@@ -449,7 +463,16 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
     } catch (err: any) {
       lastError = err
       failoverCount++
-      const diagStr = `${currentProviderId.toUpperCase()}: ${err?.status || err?.code || 'ERR'} (${err?.message || 'Falha'})`
+      // O MODELO entra no diagnóstico, não só o provedor. O painel administrativo
+      // permite trocar o modelo de cada provedor, e "CLAUDE: timeout" não
+      // distingue um Sonnet momentaneamente lento de um Opus configurado à mão,
+      // que não termina dentro do prazo destas rotas por construção. Sem o nome
+      // do modelo a mesma linha de log admite as duas leituras, e a investigação
+      // recomeça do zero a cada ocorrência.
+      const diagStr =
+        `${currentProviderId.toUpperCase()} (${runtime.model}): ` +
+        `${err?.status || err?.code || 'ERR'} (${err?.message || 'Falha'}) ` +
+        `após ${Date.now() - startCallTime}ms`
       attemptDiagnostics.push(diagStr)
       console.warn(
         `[AI Router] Provedor '${currentProviderId}' falhou: ${diagStr}. Tentando próximo na fila...`
