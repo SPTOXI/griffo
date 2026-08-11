@@ -32,7 +32,7 @@ import { executeAiTask } from '../ai-router/router'
 const SAMPLE_RATE = 0.1
 
 /** Só vale a pena julgar o que o usuário lê como laudo. */
-const JUDGED_TASKS = ['full_analysis', 'rewrite', 'social_advice']
+const JUDGED_TASKS = ['full_analysis', 'rewrite', 'social_advice', 'career_orientation']
 
 const JUDGE_SCHEMA = {
   type: 'object',

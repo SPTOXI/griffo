@@ -118,6 +118,7 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   full_analysis: 'claude',
   rewrite: 'claude',
   social_advice: 'claude',
+  career_orientation: 'claude',
   // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
   normalization: 'deepseek',

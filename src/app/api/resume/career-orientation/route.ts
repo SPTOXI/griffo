@@ -143,6 +143,12 @@ export async function POST(req: Request) {
 Você é o Agente Especialista em Orientação de Carreira e Diagnóstico Vocacional do GriffoWork.
 Analise o histórico, hard skills, soft skills e conquistas do candidato e determine as 3 melhores áreas ou cargos do mercado atual em que ele possui maior afinidade e chances imediatas de sucesso.
 
+TAMANHO DA RESPOSTA (o que controla a latência — respeite):
+- "profileSummary": 2 a 3 frases.
+- "topMatchingAreas": exatamente 3 itens; cada "whyFit" com 2 frases; "requiredSkillsToLearn" com 3 a 4 itens curtos.
+- "careerAdvice": 3 a 4 frases.
+- "matchPercentage": número inteiro entre 0 e 100, derivado do currículo — não use valores de exemplo.
+
 Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto antes ou depois do JSON:
 {
   "profileSummary": "Resumo do perfil e vocação identificados",
@@ -158,12 +164,22 @@ Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto 
 }`
 
     const aiResponse = await executeAiTask({
-      taskType: 'full_analysis',
+      // Tipo próprio, e não `full_analysis`: o Agente de Qualidade valida cada
+      // tarefa pelo formato que ela produz, e as regras de `full_analysis`
+      // exigem `dimensions` — que este diagnóstico nunca gerou. Enquanto os dois
+      // compartilharam o tipo, toda resposta correta era reprovada como
+      // "Dimensões de análise incompletas" e a rota terminava em falha
+      // operacional depois de esgotar os provedores.
+      taskType: 'career_orientation',
       userId: user.id,
       userCountry: getRequestCountry(req),
       systemPrompt,
       userPrompt: `Realize o Diagnóstico de Orientação Vocacional para este currículo:\n\n${resume.originalContent.slice(0, 12000)}${marketContext}`,
       maxTokens: 3000,
+      // Extração estruturada não ganha nada com raciocínio estendido, e no
+      // Sonnet 5 ele vem LIGADO por padrão: consumia parte do orçamento de
+      // tokens e empurrava a chamada para além do teto de 25s por provedor.
+      disableThinking: true,
       jsonSchema: ORIENTATION_JSON_SCHEMA as unknown as Record<string, unknown>,
     })
 
@@ -184,17 +200,22 @@ Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto 
     console.error('Error generating career orientation:', e?.diagnostic || e?.message || e)
 
     const release = await releaseReservation(reservation, 'Falha na orientação de carreira')
-    if (release.refunded) {
-      return NextResponse.json(
-        {
-          error: `Ocorreu uma falha durante o processamento. Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente!`,
-          refunded: true,
-          currentBalance: release.currentBalance,
-        },
-        { status: 500 }
-      )
-    }
 
-    return NextResponse.json({ error: 'Erro ao gerar orientação de carreira. Tente novamente.' }, { status: 500 })
+    const isProviderFailure = Boolean(e?.diagnostic)
+    const base = isProviderFailure
+      ? 'Os provedores de IA não responderam a tempo nesta tentativa. Clique em gerar novamente.'
+      : 'Ocorreu uma falha ao montar o diagnóstico vocacional.'
+
+    return NextResponse.json(
+      {
+        error: release.refunded
+          ? `${base} Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente.`
+          : `${base} Nenhum crédito foi cobrado.`,
+        refunded: release.refunded,
+        currentBalance: release.currentBalance,
+        code: isProviderFailure ? 'AI_PROVIDERS_UNAVAILABLE' : 'ORIENTATION_FAILED',
+      },
+      { status: 500 }
+    )
   }
 }

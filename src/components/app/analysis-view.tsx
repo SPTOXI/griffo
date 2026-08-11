@@ -76,6 +76,10 @@ export function AnalysisView() {
   const [analyzing, setAnalyzing] = useState(false)
   const [orienting, setOrienting] = useState(false)
   const [careerOrientation, setCareerOrientation] = useState<any>(null)
+  // O desfecho da orientação vivia só num toast, que some sozinho em segundos.
+  // Quando a chamada falhava, o card voltava ao estado inicial sem explicação
+  // nenhuma — o spinner girava, parava, e nada aparecia no lugar.
+  const [orientationError, setOrientationError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'all' | 'overview' | 'social' | 'match' | 'career' | 'dimensions' | 'targeted'>('all')
   const [list, setList] = useState<{ id: string; status: string; updatedAt: string }[]>([])
@@ -84,27 +88,41 @@ export function AnalysisView() {
   const handleGenerateOrientation = async () => {
     if (!resume?.id) return
     setOrienting(true)
+    setOrientationError(null)
     try {
       const res = await internalFetch('/api/resume/career-orientation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resumeId: resume.id }),
       })
-      const data = await res.json()
-      if (res.ok && data.careerOrientation) {
+
+      // Um encerramento pelo limite de tempo da plataforma devolve HTML, não
+      // JSON. Sem este tratamento a exceção do `json()` caía no `catch` e virava
+      // "falha de conexão", que descreve a causa errada.
+      const data = await res.json().catch(() => null)
+
+      if (res.ok && data?.careerOrientation) {
         setCareerOrientation(data.careerOrientation)
         // Esta ação passou a cobrar sem trocar de tela; sem o aviso, o saldo no
         // cabeçalho ficaria desatualizado.
         window.dispatchEvent(new Event('griffo:credits-changed'))
         toast.success('Diagnóstico de Orientação Vocacional gerado com sucesso!')
-      } else if (data.code === 'INSUFFICIENT_CREDITS') {
-        toast.error(`${data.error} São necessários ${ORIENTATION_COST} créditos.`)
+      } else if (data?.code === 'INSUFFICIENT_CREDITS') {
+        const msg = `${data.error} São necessários ${ORIENTATION_COST} créditos.`
+        setOrientationError(msg)
+        toast.error(msg)
       } else {
-        toast.error(data.error || 'Erro ao gerar orientação de carreira.')
-        if (data.refunded) window.dispatchEvent(new Event('griffo:credits-changed'))
+        const msg =
+          data?.error ||
+          'O diagnóstico não pôde ser concluído nesta tentativa. Nenhum crédito foi cobrado — tente novamente.'
+        setOrientationError(msg)
+        toast.error(msg)
+        if (data?.refunded) window.dispatchEvent(new Event('griffo:credits-changed'))
       }
     } catch {
-      toast.error('Falha de conexão ao gerar orientação vocacional.')
+      const msg = 'Falha de conexão ao gerar a orientação vocacional. Verifique sua internet e tente de novo.'
+      setOrientationError(msg)
+      toast.error(msg)
     } finally {
       setOrienting(false)
     }
@@ -906,9 +924,27 @@ export function AnalysisView() {
           </div>
         </CardHeader>
         {orienting && (
-          <CardContent className="py-6 text-center text-xs text-sky-700 font-medium animate-pulse flex flex-col items-center gap-2">
+          <CardContent className="py-6 flex flex-col items-center gap-2 text-center">
             <Loader2 className="w-6 h-6 animate-spin text-sky-600" />
-            Mapeando tendências de mercado e descobrindo as 3 áreas com maior % de match para o seu perfil...
+            <p className="text-sm text-sky-800 font-semibold">
+              Mapeando as 3 áreas com maior aderência ao seu perfil...
+            </p>
+            {/* O tempo esperado, dito de antemão: sem ele, uma espera normal de
+                meio minuto é lida como travamento. */}
+            <p className="text-xs text-slate-500">
+              Costuma levar de 15 a 40 segundos. Não feche esta página.
+            </p>
+          </CardContent>
+        )}
+
+        {!orienting && orientationError && (
+          <CardContent className="pt-0 pb-5">
+            <Alert variant="destructive" className="bg-rose-50 border-rose-300">
+              <AlertCircle className="w-4 h-4" />
+              <AlertDescription className="text-sm text-rose-900 leading-relaxed font-medium">
+                {orientationError}
+              </AlertDescription>
+            </Alert>
           </CardContent>
         )}
         {!orienting && careerOrientation && (

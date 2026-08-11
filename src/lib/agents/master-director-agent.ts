@@ -73,7 +73,18 @@ export async function generateDirectorBriefing(): Promise<OperationalBriefing> {
   let executiveSummary = ''
   try {
     const aiResponse = await executeAiTask({
-      taskType: 'full_analysis',
+      // `support_chat`, e não `full_analysis`: este boletim é texto corrido, e
+      // as regras de `full_analysis` no Agente de Qualidade exigem um JSON com
+      // `dimensions`. Enquanto declarou aquele tipo, TODA resposta era
+      // reprovada, os dois provedores eram queimados em sequência e o resumo
+      // caía sempre no texto fixo do `catch` abaixo — que dizia "operação
+      // estável" sem que nenhuma IA tivesse olhado os números.
+      //
+      // O tipo também é o que roteia para o DeepSeek, como a seção acima já
+      // dizia que era a intenção: maquinário interno não precisa do Sonnet.
+      taskType: 'support_chat',
+      // Custo operacional, não de usuário — e não deve ser amostrado pelo juiz.
+      internal: true,
       systemPrompt: 'Você é o Coordenador Mestre Operacional (Diretor de IA 24h) do GriffoWork. Elabore um boletim executivo sucinto, profissional e direto em 1 parágrafo com marcadores dos pontos principais, avaliando a saúde financeira e operacional do sistema.',
       userPrompt: `Dados da operação nas últimas 24h:\n${JSON.stringify(statsPayload, null, 2)}`,
       maxTokens: 500,

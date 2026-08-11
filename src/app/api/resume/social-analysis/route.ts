@@ -93,7 +93,20 @@ function buildProfilesContext(profiles: SocialProfileData[]): string {
   return blocks.join('\n\n')
 }
 
+/**
+ * Prazo total da rota, em milissegundos, deixando folga dentro do
+ * `maxDuration` de 60s para o reembolso e a resposta HTTP.
+ *
+ * Esta rota trabalha ANTES de chamar a IA — lê o PDF e busca os perfis, o que
+ * pode levar 10s — e o roteador, sozinho, planejava em cima dos 52s cheios como
+ * se a chamada começasse junto com a requisição. Somados, os dois estouravam o
+ * limite da plataforma, que encerrava a função antes do `catch`: o usuário
+ * pagava e não recebia nem o resultado nem a mensagem de erro.
+ */
+const ROUTE_BUDGET_MS = 52_000
+
 export async function POST(req: Request) {
+  const routeStart = Date.now()
   let reservation: CreditReservation | null = null
   const costCredits = CREDIT_COSTS.social_optimization
 
@@ -246,6 +259,13 @@ REGRAS CRÍTICAS DE HONESTIDADE:
 3. Aponte incoerências entre o currículo e os perfis quando existirem — é um dos maiores riscos de triagem.
 4. "headline" e "aboutSummary" devem ser textos prontos para o candidato copiar, escritos a partir da experiência real dele.
 
+TAMANHO DA RESPOSTA (o que controla a latência — respeite):
+- "overallAssessment": 3 a 4 frases.
+- "findings": 2 a 3 frases por perfil.
+- "headline": uma linha, até 220 caracteres.
+- "aboutSummary": até 6 linhas.
+- "tips": 3 a 4 itens curtos por perfil.
+
 Responda APENAS um JSON válido, sem texto antes ou depois.`
 
     const aiResponse = await executeAiTask({
@@ -259,6 +279,14 @@ ${resume.originalContent.slice(0, 8000)}
 PERFIS PROFISSIONAIS:
 ${buildProfilesContext(profiles)}`,
       maxTokens: 4000,
+      // Parecer estruturado não ganha nada com raciocínio estendido, e no
+      // Sonnet 5 ele vem LIGADO por padrão. Era a causa direta dos
+      // "The operation was aborted due to timeout" registrados para
+      // `social_advice`: o raciocínio consumia o orçamento e a chamada passava
+      // dos 25s de teto por provedor.
+      disableThinking: true,
+      // O que sobrou do prazo depois da leitura do PDF e da busca dos perfis.
+      timeBudgetMs: ROUTE_BUDGET_MS - (Date.now() - routeStart),
       jsonSchema: SOCIAL_JSON_SCHEMA as unknown as Record<string, unknown>,
     })
 
@@ -308,19 +336,27 @@ ${buildProfilesContext(profiles)}`,
     console.error('social-analysis error:', e?.diagnostic || e?.message || e)
 
     const release = await releaseReservation(reservation, 'Falha na análise de presença digital')
-    if (release.refunded) {
-      return NextResponse.json(
-        {
-          error: `Ocorreu uma falha durante o processamento. Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente!`,
-          refunded: true,
-          currentBalance: release.currentBalance,
-        },
-        { status: 500 }
-      )
-    }
+
+    // Diz o que aconteceu e o que fazer. "Tente novamente em instantes" era o
+    // mesmo texto para toda causa possível, e o usuário repetia a operação sem
+    // saber se o problema era o conteúdo que ele enviou ou o provedor de IA.
+    const isProviderFailure = Boolean(e?.diagnostic)
+    const base = isProviderFailure
+      ? 'Os provedores de IA não responderam a tempo nesta tentativa. Nada do que você enviou foi perdido — ' +
+        'basta clicar em analisar de novo.'
+      : e?.message && typeof e.message === 'string' && e.message.length < 200
+        ? e.message
+        : 'Ocorreu uma falha durante o processamento da análise.'
 
     return NextResponse.json(
-      { error: 'Erro ao analisar a presença digital. Tente novamente em instantes.' },
+      {
+        error: release.refunded
+          ? `${base} Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente.`
+          : `${base} Nenhum crédito foi cobrado.`,
+        refunded: release.refunded,
+        currentBalance: release.currentBalance,
+        code: isProviderFailure ? 'AI_PROVIDERS_UNAVAILABLE' : 'ANALYSIS_FAILED',
+      },
       { status: 500 }
     )
   }

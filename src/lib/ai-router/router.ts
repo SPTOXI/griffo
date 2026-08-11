@@ -15,18 +15,25 @@ import { filterProvidersByResidency, isEuropeanUser } from '../data-residency'
 // As rotas que chamam este roteador declaram maxDuration = 60. Se o orçamento
 // for consumido inteiro pelas tentativas de IA, a plataforma encerra a função
 // antes do `catch` que devolve os créditos ao usuário — que então paga sem
-// receber. Os três limites abaixo existem para garantir que sempre sobre tempo
+// receber. Os limites abaixo existem para garantir que sempre sobre tempo
 // para o reembolso e a persistência.
-// O teto por tentativa precisa caber DUAS vezes dentro do prazo da tarefa,
-// senão o fallback só funciona quando o primário falha rápido — justamente o
-// caso em que ele menos importa. Com 35s (o valor anterior), um primário que
-// travava consumia o orçamento inteiro e o segundo provedor nunca chegava a ser
-// tentado: 35 + 35 = 70 não cabe em 52. Com 25s, cabe: 25 + 25 = 50.
-const PROVIDER_TIMEOUT_MS = 25_000
+//
+// O teto por tentativa é DERIVADO do orçamento (metade dele, respeitando o
+// máximo), porque precisa caber DUAS vezes dentro do prazo: senão o fallback só
+// funciona quando o primário falha rápido — justamente o caso em que ele menos
+// importa. Com 35s fixos (dois valores atrás), um primário que travava consumia
+// o orçamento inteiro e o segundo provedor nunca era tentado: 35 + 35 = 70 não
+// cabe em 52.
 const MAX_PROVIDER_ATTEMPTS = 2
 // Corta novas tentativas a partir daqui, deixando ~8s para reembolso,
-// gravação no banco e a resposta HTTP dentro do limite de 60s.
-const TASK_DEADLINE_MS = 52_000
+// gravação no banco e a resposta HTTP dentro do limite de 60s. É o padrão:
+// quem já gastou parte do prazo antes de chamar declara o que sobrou em
+// `req.timeBudgetMs`.
+const DEFAULT_TASK_BUDGET_MS = 52_000
+const MAX_PROVIDER_TIMEOUT_MS = 25_000
+// Abaixo disto uma tentativa não tem chance real de terminar, e um teto menor
+// só produziria duas falhas rápidas em vez de uma resposta.
+const MIN_PROVIDER_TIMEOUT_MS = 12_000
 
 // Multiplicadores do cache de prompt da Anthropic, relativos ao preço de
 // entrada: gravar custa 1,25x e ler custa 0,1x.
@@ -35,6 +42,15 @@ const CACHE_READ_MULTIPLIER = 0.1
 
 export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   const taskStartTime = Date.now()
+
+  // O teto por tentativa é derivado do orçamento, e não fixo: ele precisa caber
+  // DUAS vezes no prazo, senão o fallback só funciona quando o primário falha
+  // rápido — justamente o caso em que ele menos importa.
+  const taskBudgetMs = Math.max(MIN_PROVIDER_TIMEOUT_MS, req.timeBudgetMs ?? DEFAULT_TASK_BUDGET_MS)
+  const providerTimeoutMs = Math.min(
+    MAX_PROVIDER_TIMEOUT_MS,
+    Math.max(MIN_PROVIDER_TIMEOUT_MS, Math.floor(taskBudgetMs / MAX_PROVIDER_ATTEMPTS))
+  )
   // Entrada com documento só existe no Claude na cadeia atual: um PDF enviado
   // ao endpoint compatível com OpenAI seria descartado silenciosamente, e o
   // modelo responderia sobre um prompt sem o anexo. A escolha é feita aqui, e
@@ -84,7 +100,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
     // Não inicia uma tentativa que não caberia no orçamento restante — é o que
     // garante que o `catch` da rota chegue a executar e devolva os créditos.
     const elapsed = Date.now() - taskStartTime
-    if (elapsed + PROVIDER_TIMEOUT_MS > TASK_DEADLINE_MS) {
+    if (elapsed + providerTimeoutMs > taskBudgetMs) {
       attemptDiagnostics.push(
         `${currentProviderId.toUpperCase()}: Ignorado — orçamento de tempo esgotado (${elapsed}ms decorridos)`
       )
@@ -177,7 +193,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
               'content-type': 'application/json',
             },
             body: claudeBody(useCache),
-            signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+            signal: AbortSignal.timeout(providerTimeoutMs),
           })
 
         const wantsCache = Boolean(req.cacheableContext)
@@ -245,7 +261,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         const client = new OpenAI({
           apiKey: cleanApiKey,
           baseURL: runtime.baseURL,
-          timeout: PROVIDER_TIMEOUT_MS,
+          timeout: providerTimeoutMs,
           // O SDK usa maxRetries = 2 por padrão e aplica o timeout POR
           // tentativa, inclusive retentando em timeout. Sem esta linha um único
           // provedor consome 3 x o timeout e estoura o limite da função sozinho.

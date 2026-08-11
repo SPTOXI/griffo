@@ -38,6 +38,13 @@ export const MAX_PDF_BYTES = 10 * 1024 * 1024
 export interface PdfDecodeResult {
   text: string
   error?: string
+  /**
+   * Causa da falha, para que o chamador possa reagir a cada uma de um jeito
+   * diferente. `NO_TEXT_LAYER` é a única recuperável: é o PDF que existe e está
+   * íntegro, mas cujo conteúdo é imagem — o caso que `extractPdfWithVision`
+   * resolve. As demais não adianta reprocessar.
+   */
+  code?: 'EMPTY' | 'TOO_LARGE' | 'INVALID' | 'NO_TEXT_LAYER'
 }
 
 /**
@@ -45,20 +52,37 @@ export interface PdfDecodeResult {
  * demais antes de gastar CPU com elas.
  */
 export async function parsePdfBase64(base64: string): Promise<PdfDecodeResult> {
-  const cleaned = base64.replace(/^data:application\/pdf;base64,/, '').trim()
-  if (!cleaned) return { text: '', error: 'Arquivo vazio.' }
+  // O prefixo `data:` pode vir com qualquer tipo MIME: o navegador nem sempre
+  // rotula o arquivo como `application/pdf`. Recortar só o prefixo exato
+  // deixava `data:application/octet-stream;base64,` dentro da string, e o
+  // decodificador produzia lixo — um PDF perfeitamente válido chegava aqui como
+  // "não foi possível extrair texto".
+  const cleaned = base64.replace(/^data:[^;,]*;base64,/i, '').replace(/\s/g, '').trim()
+  if (!cleaned) return { text: '', error: 'Arquivo vazio.', code: 'EMPTY' }
 
   // 4 caracteres de base64 codificam 3 bytes; evita alocar o buffer para saber.
   const approxBytes = Math.floor((cleaned.length * 3) / 4)
   if (approxBytes > MAX_PDF_BYTES) {
-    return { text: '', error: 'O arquivo excede o limite de 10 MB.' }
+    return { text: '', error: 'O arquivo excede o limite de 10 MB.', code: 'TOO_LARGE' }
   }
 
   let buffer: Buffer
   try {
     buffer = Buffer.from(cleaned, 'base64')
   } catch {
-    return { text: '', error: 'Arquivo PDF inválido.' }
+    return { text: '', error: 'Arquivo PDF inválido.', code: 'INVALID' }
+  }
+
+  // Todo PDF começa com `%PDF`. Sem esta checagem, um arquivo que não é PDF —
+  // ou um base64 truncado no caminho — chegava ao fim com a mensagem genérica
+  // de "não foi possível extrair texto", que manda o usuário procurar defeito
+  // no lugar errado.
+  if (buffer.subarray(0, 5).toString('latin1') !== '%PDF-') {
+    return {
+      text: '',
+      error: 'O arquivo enviado não é um PDF válido. Envie o arquivo gerado pelo próprio LinkedIn.',
+      code: 'INVALID',
+    }
   }
 
   const text = await parsePdfBuffer(buffer)
@@ -66,8 +90,9 @@ export async function parsePdfBase64(base64: string): Promise<PdfDecodeResult> {
     return {
       text: '',
       error:
-        'Não foi possível extrair texto deste PDF. Se ele for uma imagem escaneada, ' +
-        'cole o texto do perfil manualmente.',
+        'Este PDF não tem texto selecionável — provavelmente é uma imagem ou digitalização. ' +
+        'Copie e cole o texto do perfil no campo abaixo.',
+      code: 'NO_TEXT_LAYER',
     }
   }
 
