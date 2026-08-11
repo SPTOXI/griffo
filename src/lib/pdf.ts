@@ -22,6 +22,17 @@ function sanitizeText(s: string): string {
     .replace(/→/g, '->')
     .replace(/•/g, '-')
     .replace(/●/g, '-')
+    // Emojis e pictogramas somem, em vez de virarem '?'.
+    //
+    // A Helvetica do PDF é codificada em WinAnsi e não tem glifo para eles, e a
+    // regra final desta função troca por '?' tudo que está fora do Latin-1. Um
+    // emoji ocupa DUAS unidades UTF-16, então cada um virava '??' no currículo
+    // entregue ao usuário: "?? RESUMO PROFISSIONAL", "?? São Paulo - SP".
+    //
+    // Remover é o comportamento certo, não substituir: o emoji era decoração e
+    // o '?' vira sujeira que o leitor interpreta como defeito. O `split(/\s+/)`
+    // do chamador descarta o espaço que sobra.
+    .replace(/[\p{Extended_Pictographic}️‍]/gu, '')
     .replace(/[^\x20-\x7E\xA0-\xFF]/g, '?') // keep ASCII + Latin-1 only
 }
 
