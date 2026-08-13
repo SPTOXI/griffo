@@ -13,8 +13,8 @@ export const maxDuration = 60
  * alguma.
  *
  * O JSON sai como anexo, com tudo que a plataforma guarda sobre a pessoa:
- * cadastro, currículos (originais, reescritos e laudos), transações de crédito,
- * assinaturas e a trilha de auditoria. Segredos e hashes ficam de fora — não
+ * cadastro, currículos (originais, reescritos e laudos), o ledger de análises,
+ * o histórico do modelo antigo, assinaturas e a trilha de auditoria. Segredos e hashes ficam de fora — não
  * são dados do titular, são credenciais do sistema.
  */
 export async function GET() {
@@ -24,11 +24,17 @@ export async function GET() {
       return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 })
     }
 
-    const [resumes, creditTransactions, subscriptions, auditLogs] = await Promise.all([
+    const [resumes, analysisLedger, creditTransactions, subscriptions, auditLogs] = await Promise.all([
       db.resume.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
       }),
+      db.analysisLedger.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+      }),
+      // Histórico do modelo de créditos, encerrado. Continua exportado porque
+      // é dado do titular: a mudança de modelo não apaga o que ele comprou.
       db.creditTransaction.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
@@ -55,7 +61,8 @@ export async function GET() {
         profession: user.profession,
         socialLinks: user.socialLinks ? safeParse(user.socialLinks) : null,
         role: user.role,
-        credits: user.credits,
+        analysisBalance: user.analysisBalance,
+        paymentCountry: user.paymentCountry,
         plan: user.plan,
         planStartsAt: user.planStartsAt,
         planEndsAt: user.planEndsAt,
@@ -80,6 +87,7 @@ export async function GET() {
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
       })),
+      analysisLedger,
       creditTransactions,
       subscriptions,
       auditLogs: auditLogs.map((a) => ({

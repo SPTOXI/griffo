@@ -46,7 +46,10 @@ const RULES: Rule[] = [
   // Usa o servidor como cliente HTTP para buscar páginas externas.
   { prefix: '/api/resume/job-fetch', limit: 20, windowMs: 10 * 60_000 },
   // Criação de checkout no Stripe.
-  { prefix: '/api/credits/purchase', limit: 20, windowMs: 10 * 60_000 },
+  { prefix: '/api/checkout', limit: 20, windowMs: 10 * 60_000 },
+  // Prévia gratuita: uma por conta, mas o limite fecha a porta de tentar
+  // repetidamente antes que a cota do banco seja consultada.
+  { prefix: '/api/resume/preview', limit: 10, windowMs: 10 * 60_000 },
   // Exportação lê todos os dados do titular de uma vez; exclusão é
   // irreversível. Ambas são legítimas e raras — o limite é baixo de propósito.
   { prefix: '/api/user/export', limit: 5, windowMs: 60 * 60_000 },
@@ -101,7 +104,8 @@ export const config = {
     '/api/auth/:path*',
     '/api/resume/:path*',
     '/api/support/:path*',
-    '/api/credits/:path*',
+    '/api/checkout/:path*',
+    '/api/analyses/:path*',
     '/api/user/:path*',
   ],
 }

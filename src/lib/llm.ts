@@ -2,8 +2,6 @@ import OpenAI from 'openai'
 import { db } from './db'
 import { executeAiTask } from './ai-router/router'
 import { tryDecryptSecret } from './crypto'
-import { MODEL_PRICING, PROVIDER_CONFIGS } from './ai-router/registry'
-import { FX_TO_BRL } from './currency'
 
 export async function getLlmConfig() {
   let apiKey = process.env.MOONSHOT_API_KEY || process.env.LLM_API_KEY || ''
@@ -46,52 +44,16 @@ export async function getClient(): Promise<{ client: OpenAI; model: string }> {
   }
 }
 
-// Custo por token (USD), derivado do modelo que de fato roda a análise e a
-// reescrita — ambas roteadas para `claude` em INITIAL_TASK_ROUTING.
+// `TOKEN_COST`, `costPerCycleUsd`, `computePricing` e `PRICING_PLANS` viviam
+// aqui: o custo de um "ciclo" (análise + reescrita) e, em cima dele, o passe
+// diário, a assinatura mensal e a anual, com "análises ilimitadas" e "histórico
+// vitalício".
 //
-// Antes era uma cópia literal dos números, mantida à mão. Uma tabela duplicada
-// só fica correta por coincidência: quando o preço do Opus 5 estava errado no
-// registry, esta não acompanhou, e as duas divergiram sem que nada acusasse.
-export const TOKEN_COST =
-  MODEL_PRICING[PROVIDER_CONFIGS.claude.defaultModel] ?? PROVIDER_CONFIGS.claude.pricing
-
-export function costPerCycleUsd(): number {
-  const analysisIn = (1800 / 1000) * TOKEN_COST.inputPer1k
-  const analysisOut = (1500 / 1000) * TOKEN_COST.outputPer1k
-  const rewriteIn = (2500 / 1000) * TOKEN_COST.inputPer1k
-  const rewriteOut = (2200 / 1000) * TOKEN_COST.outputPer1k
-  return analysisIn + analysisOut + rewriteIn + rewriteOut
-}
-
-export function computePricing() {
-  const brlRate = FX_TO_BRL.usd
-  const cycleUsd = costPerCycleUsd()
-  const cycleBrl = cycleUsd * brlRate
-
-  return {
-    day: {
-      priceBrl: 19.90,
-      estimatedCycles: 5,
-      estimatedAiCostBrl: cycleBrl * 5,
-      marginBrl: 19.90 - cycleBrl * 5,
-      marginPercent: Math.round(((19.90 - cycleBrl * 5) / 19.90) * 100),
-    },
-    monthly: {
-      priceBrl: 39.90,
-      estimatedCycles: 15,
-      estimatedAiCostBrl: cycleBrl * 15,
-      marginBrl: 39.90 - cycleBrl * 15,
-      marginPercent: Math.round(((39.90 - cycleBrl * 15) / 39.90) * 100),
-    },
-    annual: {
-      priceBrl: 299.90,
-      estimatedCycles: 100,
-      estimatedAiCostBrl: cycleBrl * 100,
-      marginBrl: 299.90 - cycleBrl * 100,
-      marginPercent: Math.round(((299.90 - cycleBrl * 100) / 299.90) * 100),
-    },
-  }
-}
+// Saíram na reprecificação — não há assinatura, plano ilimitado nem vitalício,
+// e o produto deixou de ser vendido por ciclo estimado. O preço, agora único e
+// regionalizado, vive em `lib/pricing/catalog.ts`; o custo real por análise é o
+// medido em `ANALYSIS_DIRECT_COST_USD`, e o custo por chamada é o que o
+// roteador já grava em `AiLog.costUsd`, a partir do modelo que de fato rodou.
 
 export interface AnalysisDimension {
   key: string
@@ -295,57 +257,4 @@ export async function rewriteResume(
   })
 
   return { content: res.content.trim(), tokensIn: res.tokensIn, tokensOut: res.tokensOut }
-}
-
-// Pricing model
-export interface PlanPricing {
-  id: string
-  name: string
-  priceBrl: number
-  period: string
-  features: string[]
-}
-
-export const PRICING_PLANS: Record<string, PlanPricing> = {
-  day: {
-    id: 'day',
-    name: 'Passe Diário',
-    priceBrl: 19.90,
-    period: '24 horas',
-    features: [
-      '5 análises completas de currículo',
-      '3 reescritas profissionais',
-      'Downloads ilimitados (PDF & Texto Editável)',
-      'Otimização para LinkedIn & Gupy',
-      'Verificação de aprovação em ATS',
-    ],
-  },
-  monthly: {
-    id: 'monthly',
-    name: 'Assinatura Mensal',
-    priceBrl: 39.90,
-    period: 'por mês',
-    features: [
-      '30 análises de currículo / mês',
-      '20 reescritas profissionais / mês',
-      'Otimização contínua de Redes Sociais',
-      'Histórico completo de laudos',
-      'Downloads ilimitados em PDF & Texto Editável',
-      'Suporte prioritário por e-mail',
-    ],
-  },
-  annual: {
-    id: 'annual',
-    name: 'Assinatura Anual',
-    priceBrl: 299.90,
-    period: 'por ano (equivalente a R$ 24,99/mês)',
-    features: [
-      '365 análises de currículo / ano',
-      '240 reescritas profissionais / ano',
-      'Otimização ilimitada de Presença Digital',
-      'Economize +37% em relação ao mensal',
-      'Histórico vitalício durante a assinatura',
-      'Suporte prioritário via canal direto',
-    ],
-  },
 }

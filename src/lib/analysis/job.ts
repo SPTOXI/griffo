@@ -2,7 +2,6 @@ import 'server-only'
 import { after } from 'next/server'
 import { db } from '../db'
 import { executeAiTask } from '../ai-router/router'
-import { settleReservation, releaseReservation, type CreditReservation } from '../credits'
 import type { Language } from '../i18n'
 import {
   ANALYSIS_SEGMENTS,
@@ -35,7 +34,7 @@ import { SEGMENT_IDS, type SegmentId } from './stages'
  */
 const LEASE_MS = 60_000
 
-/** Tentativas de retomada antes de desistir e devolver os créditos. */
+/** Tentativas de retomada antes de desistir e marcar o job como falho. */
 const MAX_JOB_ATTEMPTS = 3
 
 /** Uma repetição por segmento cobre a falha esporádica sem dobrar o custo. */
@@ -43,16 +42,12 @@ const SEGMENT_ATTEMPTS = 2
 
 export type JobStatus = 'queued' | 'running' | 'completed' | 'failed'
 
-function reservationOf(job: {
-  reservationId: string | null
-  userId: string
-  creditsCost: number
-}): CreditReservation | null {
-  // Sem `reservationId` o usuário é isento (admin): não há linha a liquidar nem
-  // a estornar, e `settle`/`release` já tratam `id` nulo como no-op.
-  if (!job.reservationId) return null
-  return { id: job.reservationId, userId: job.userId, amount: job.creditsCost, exempt: false }
-}
+// `reservationOf`, `settleReservation` e `releaseReservation` viviam aqui: o
+// job carregava uma reserva de crédito e precisava liquidá-la no fecho ou
+// estorná-la na falha. Nada disso existe mais. O que se compra é o destrave do
+// currículo, feito na rota que abre a análise, e ele não é desfeito por uma
+// falha de processamento — o currículo continua liberado e a análise pode ser
+// repetida sem custo. Um job que falha não deve nada a ninguém.
 
 function parseJsonLoose(raw: string): any {
   const cleaned = raw
@@ -171,12 +166,11 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
   if (!job || !job.resume) return
   if (job.status === 'completed' || job.status === 'failed') return
 
-  const reservation = reservationOf(job)
 
   // Desistir depois de esgotar as retomadas evita que um job que falha sempre
-  // fique preso em `running` para sempre, com o crédito do usuário retido.
+  // fique preso em `running` para sempre, com a tela do usuário esperando.
   if (job.attempts > MAX_JOB_ATTEMPTS) {
-    await failJob(jobId, reservation, 'A análise não pôde ser concluída após várias tentativas.')
+    await failJob(jobId, 'A análise não pôde ser concluída após várias tentativas.')
     return
   }
 
@@ -231,7 +225,7 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
   } catch (e: any) {
     const message = e?.diagnostic || e?.message || String(e)
     console.error(`[Analysis] Job ${jobId} falhou:`, message)
-    await failJob(jobId, reservation, 'Falha ao gerar o laudo com a IA.', message)
+    await failJob(jobId, 'Falha ao gerar o laudo com a IA.', message)
     return
   }
 
@@ -241,7 +235,7 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
   try {
     analysis = mergeSegments(done)
   } catch (e: any) {
-    await failJob(jobId, reservation, e?.message || 'Laudo incompleto.', e?.message)
+    await failJob(jobId, e?.message || 'Laudo incompleto.', e?.message)
     return
   }
 
@@ -264,9 +258,6 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
     },
   })
 
-  // Entrega confirmada e persistida: só agora a reserva vira cobrança.
-  await settleReservation(reservation)
-
   try {
     await db.auditLog.create({
       data: {
@@ -283,7 +274,6 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
 
 async function failJob(
   jobId: string,
-  reservation: CreditReservation | null,
   userMessage: string,
   diagnostic?: string
 ): Promise<void> {
@@ -297,9 +287,7 @@ async function failJob(
     },
   })
 
-  // O crédito volta aqui, no desfecho do trabalho — não mais no `catch` de uma
-  // rota que podia ser encerrada antes de chegar nele.
-  await releaseReservation(reservation, diagnostic ? `IA: ${diagnostic}` : userMessage)
+  if (diagnostic) console.warn(`[Analysis] Job ${jobId} encerrado:`, diagnostic)
 }
 
 /**

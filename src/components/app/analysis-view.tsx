@@ -18,7 +18,9 @@ import { UploadProgressModal } from './upload-progress-modal'
 import { useAnalysisJob } from './use-analysis-job'
 import { SocialAnalysisPanel, type SocialAnalysis } from './social-analysis-panel'
 import { internalFetch } from '@/lib/internal-fetch'
-import { CREDIT_COSTS } from '@/lib/credits-catalog'
+import { notifyBalanceChanged } from '@/hooks/use-analyses'
+import { AnalysisPaywall } from './analysis-paywall'
+import { RepurchaseUpsell } from './repurchase-upsell'
 import { toast } from 'sonner'
 
 interface TargetedChange {
@@ -65,9 +67,12 @@ interface Resume {
   rewrittenContent: string | null
   socialAnalysis?: SocialAnalysis | null
   socialLinks?: Record<string, string>
+  /// Este currículo já consumiu uma análise do saldo? É o que separa o laudo
+  /// do paywall.
+  unlocked?: boolean
+  /// Prévia gratuita: só as notas.
+  preview?: { overall: number; dimensions: { key: string; label: string; score: number }[] } | null
 }
-
-const ORIENTATION_COST = CREDIT_COSTS.career_orientation
 
 export function AnalysisView() {
   const { activeResumeId, setView, openResume } = useNav()
@@ -103,21 +108,19 @@ export function AnalysisView() {
 
       if (res.ok && data?.careerOrientation) {
         setCareerOrientation(data.careerOrientation)
-        // Esta ação passou a cobrar sem trocar de tela; sem o aviso, o saldo no
-        // cabeçalho ficaria desatualizado.
-        window.dispatchEvent(new Event('griffo:credits-changed'))
         toast.success('Diagnóstico de Orientação Vocacional gerado com sucesso!')
-      } else if (data?.code === 'INSUFFICIENT_CREDITS') {
-        const msg = `${data.error} São necessários ${ORIENTATION_COST} créditos.`
+      } else if (data?.code === 'ANALYSIS_REQUIRED') {
+        // Este currículo ainda não foi liberado. A orientação não tem preço
+        // próprio: o que falta é a Análise Completa dele.
+        const msg = data.error
         setOrientationError(msg)
         toast.error(msg)
       } else {
         const msg =
           data?.error ||
-          'O diagnóstico não pôde ser concluído nesta tentativa. Nenhum crédito foi cobrado — tente novamente.'
+          'O diagnóstico não pôde ser concluído nesta tentativa. Nada foi cobrado — tente novamente.'
         setOrientationError(msg)
         toast.error(msg)
-        if (data?.refunded) window.dispatchEvent(new Event('griffo:credits-changed'))
       }
     } catch {
       const msg = 'Falha de conexão ao gerar a orientação vocacional. Verifique sua internet e tente de novo.'
@@ -160,8 +163,11 @@ export function AnalysisView() {
       if (data.resume?.careerOrientation) {
         setCareerOrientation(data.resume.careerOrientation)
       }
-      // Se o currículo ainda não possui laudo de análise, inicia a análise AUTOMATICAMENTE sem exigir cliques manuais (no máximo uma vez por id)
-      if (data.resume && !data.resume.analysis && !autoTriggeredRef[id]) {
+      // A análise dispara sozinha só depois que o currículo foi liberado. Antes
+      // disso o disparo automático consumiria uma análise do saldo sem que
+      // ninguém tivesse pedido — e a decisão de gastar é do usuário, na tela do
+      // paywall.
+      if (data.resume?.unlocked && !data.resume.analysis && !autoTriggeredRef[id]) {
         autoTriggeredRef[id] = true
         reanalyze(data.resume)
       }
@@ -179,20 +185,16 @@ export function AnalysisView() {
   const job = useAnalysisJob({
     onCompleted: () => {
       setAnalyzing(false)
-      // O crédito só vira cobrança quando o laudo fica pronto: o saldo no
-      // cabeçalho muda agora, não na abertura da análise.
-      window.dispatchEvent(new Event('griffo:credits-changed'))
       const id = analyzingIdRef.current
       if (id) void loadResume(id)
     },
     onFailed: (message, code) => {
       setAnalyzing(false)
       setError(message)
-      // Falha devolve o crédito: o saldo precisa ser relido. A exceção é saldo
-      // insuficiente, em que nada chegou a ser reservado.
-      if (code !== 'INSUFFICIENT_CREDITS') {
-        window.dispatchEvent(new Event('griffo:credits-changed'))
-      }
+      // Uma falha de processamento não desfaz o destrave: o currículo continua
+      // liberado e a análise pode ser repetida sem nova cobrança. O saldo só
+      // muda quando um currículo NOVO é destravado.
+      if (code === 'ANALYSIS_REQUIRED') notifyBalanceChanged()
     },
   })
 
@@ -236,6 +238,23 @@ export function AnalysisView() {
           Enviar currículo
         </Button>
       </div>
+    )
+  }
+
+  // Currículo não liberado: a nota sai de graça, o laudo não.
+  if (!resume.unlocked && !resume.analysis) {
+    return (
+      <AnalysisPaywall
+        resumeId={resume.id}
+        preview={resume.preview ?? null}
+        onUnlocked={() => {
+          autoTriggeredRef[resume.id] = true
+          setResume({ ...resume, unlocked: true })
+          // O saldo é debitado dentro deste POST; só depois dele o número novo
+          // existe para ser lido.
+          void reanalyze(resume).then(notifyBalanceChanged)
+        }}
+      />
     )
   }
 
@@ -523,6 +542,9 @@ export function AnalysisView() {
       </div>
 
       {error && <Alert variant="destructive"><AlertCircle className="w-4 h-4" /><AlertDescription>{error}</AlertDescription></Alert>}
+
+      {/* UPSELL — dentro do resultado, e só depois da primeira compra */}
+      <RepurchaseUpsell resumeId={resume.id} />
 
       {/* OVERALL + RADAR */}
       {/* OVERALL + RADAR */}
@@ -909,7 +931,7 @@ export function AnalysisView() {
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-600">
                   Nosso Agente de Carreira analisa seu perfil e descobre as 3 áreas/cargos do mercado em que você
-                  tem maior chance imediata de contratação. Consome {ORIENTATION_COST} créditos.
+                  tem maior chance imediata de contratação. Já incluída na Análise Completa deste currículo.
                 </CardDescription>
               </div>
             </div>
@@ -919,7 +941,7 @@ export function AnalysisView() {
               className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shrink-0 self-start sm:self-auto"
             >
               {orienting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1.5" />}
-              {careerOrientation ? 'Atualizar Diagnóstico' : 'Descobrir Minha Área Ideal'} ({ORIENTATION_COST} cr)
+              {careerOrientation ? 'Atualizar Diagnóstico' : 'Descobrir Minha Área Ideal'}
             </Button>
           </div>
         </CardHeader>

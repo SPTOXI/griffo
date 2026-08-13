@@ -12,11 +12,17 @@ import {
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
 import { LanguageSelector } from '@/components/ui/language-selector'
-import { CREDIT_PACKAGES, getPackagePriceDisplay } from '@/lib/credits-catalog'
+import { priceFor } from '@/lib/pricing/catalog'
+import { localMethodLabels } from '@/lib/pricing/payment-methods'
 
 export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | 'app') => void }) {
   const { user } = useAuth()
   const { t, lang, detectedCountry } = useI18n()
+  // O país da borda serve para ESCOLHER A MOEDA que a landing exibe, e para
+  // nada além disso. Quem decide o que será cobrado é o país do meio de
+  // pagamento, resolvido no servidor — ver lib/pricing/resolve.ts.
+  const price = priceFor(detectedCountry || 'US', 'single')
+  const paymentMethods = localMethodLabels(detectedCountry || 'US')
   const [openFaq, setOpenFaq] = useState<number | null>(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -338,76 +344,44 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
           <p className="text-sm sm:text-base text-slate-600">{t.pricing.subtitle}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-7xl mx-auto items-stretch mb-12">
-          {CREDIT_PACKAGES.map((pkg) => {
-            const display = getPackagePriceDisplay(pkg, detectedCountry, lang)
-            const isEntry = pkg.id === 'entrada'
-            return (
-              <PlanCard
-                key={pkg.id}
-                name={isEntry ? t.pricing.entryTitle : pkg.id === 'starter' ? t.pricing.starterTitle : pkg.id === 'carreira' ? t.pricing.carreiraTitle : t.pricing.profTitle}
-                price={display.priceFormatted}
-                perCredit={`${display.perCreditFormatted} / ${lang === 'pt' ? 'crédito' : 'credit'}`}
-                period={`${pkg.credits} ${lang === 'pt' ? 'créditos' : 'credits'}`}
-                features={[
-                  `${pkg.credits} ${lang === 'pt' ? 'créditos no saldo' : 'credits included'}`,
-                  lang === 'pt' ? 'Uso flexível em Avaliação ou Reescrita' : 'Flexibility across Audit & AI Rewrite',
-                  lang === 'pt' ? 'Downloads em PDF e texto editável' : 'PDF & Editable text exports',
-                  lang === 'pt' ? 'Sem mensalidade ou expiração' : 'No monthly fees or credit expiration',
-                  pkg.id === 'carreira' || pkg.id === 'profissional'
-                    ? (lang === 'pt' ? 'Otimização de LinkedIn e Gupy' : 'LinkedIn & ATS optimization')
-                    : (lang === 'pt' ? 'Oferta exclusiva de entrada' : 'Welcome offer package'),
-                ]}
-                highlight={isEntry || !!pkg.popular}
-                popular={pkg.popular}
-                cta={t.pricing.buyCta}
-                onCta={() => onNavigate('signup')}
-              />
-            )
-          })}
+        <div className="max-w-3xl mx-auto">
+          <PlanCard
+            name={t.pricing.productTitle}
+            price={price.formatted}
+            period={t.pricing.oneTime}
+            features={t.pricing.items}
+            cta={t.pricing.buyCta}
+            onCta={() => onNavigate('signup')}
+            footnote={t.pricing.localPayment
+              .replace('{currency}', price.currency)
+              .replace('{methods}', paymentMethods.join(' / '))}
+          />
         </div>
 
-        {/* GUIA EXPLICATIVO: AVALIAÇÃO VS REESCRITA */}
-        <div className="bg-gradient-to-br from-[#0B192E] via-slate-900 to-[#0B192E] text-white rounded-3xl p-6 sm:p-8 shadow-xl max-w-5xl mx-auto border border-blue-900/40">
-          <div className="text-center max-w-2xl mx-auto mb-6">
-            <Badge variant="outline" className="border-blue-400 text-blue-300 bg-blue-950/60 text-xs mb-2 font-bold">
-              GriffoWork
-            </Badge>
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
-              {t.pricing.guideTitle}
-            </h3>
-            <p className="text-slate-300 text-xs sm:text-sm">
-              {t.pricing.guideSub}
-            </p>
-          </div>
+        {/* PRÉVIA GRATUITA — o que traz a pessoa para dentro */}
+        <div className="mt-10 bg-gradient-to-br from-[#0B192E] via-slate-900 to-[#0B192E] text-white rounded-3xl p-6 sm:p-8 shadow-xl max-w-3xl mx-auto border border-blue-900/40 text-center space-y-3">
+          <Badge variant="outline" className="border-emerald-400 text-emerald-300 bg-emerald-950/50 text-xs font-bold">
+            {t.pricing.previewTitle}
+          </Badge>
+          <h3 className="text-xl sm:text-2xl font-bold text-white">{t.pricing.previewTitle}</h3>
+          <p className="text-slate-300 text-xs sm:text-sm max-w-xl mx-auto">{t.pricing.previewDesc}</p>
+          <Button
+            onClick={() => onNavigate('signup')}
+            className="bg-white text-[#0B192E] hover:bg-blue-50 font-extrabold h-11 px-6"
+          >
+            {t.pricing.previewCta} <ArrowRight className="w-4 h-4 ml-2 text-[#0B63E5]" />
+          </Button>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white/10 rounded-2xl p-5 border border-white/10 space-y-3 backdrop-blur-sm">
-              <div className="flex items-center gap-2.5 text-blue-400 font-bold text-base">
-                <FileSearch className="w-6 h-6 shrink-0 text-[#0B63E5]" />
-                <span>{t.pricing.tool1Title}</span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-                {t.pricing.tool1Desc}
-              </p>
-              <div className="text-xs text-blue-300 font-semibold pt-1">
-                {t.pricing.tool1Ideal}
-              </div>
-            </div>
-
-            <div className="bg-white/10 rounded-2xl p-5 border border-white/10 space-y-3 backdrop-blur-sm">
-              <div className="flex items-center gap-2.5 text-indigo-300 font-bold text-base">
-                <Edit3 className="w-6 h-6 shrink-0 text-indigo-400" />
-                <span>{t.pricing.tool2Title}</span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-                {t.pricing.tool2Desc}
-              </p>
-              <div className="text-xs text-indigo-300 font-semibold pt-1">
-                {t.pricing.tool2Ideal}
-              </div>
-            </div>
+        {/* EMPRESAS E RH — sem autosserviço, por decisão */}
+        <div className="mt-6 max-w-3xl mx-auto rounded-2xl border border-slate-200 bg-slate-50 p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+          <div>
+            <p className="font-bold text-[#0B192E] text-sm">{t.pricing.businessTitle}</p>
+            <p className="text-xs text-slate-600 mt-0.5">{t.pricing.businessDesc}</p>
           </div>
+          <Button asChild variant="outline" className="border-slate-300 text-[#0B192E] font-bold text-xs h-10 shrink-0">
+            <a href="mailto:comercial@griffo.work?subject=Griffo%20para%20empresas">{t.pricing.businessCta}</a>
+          </Button>
         </div>
       </section>
 
@@ -535,33 +509,32 @@ function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; 
   )
 }
 
-function PlanCard({ name, price, perCredit, period, features, highlight, popular, cta, onCta }: {
+/**
+ * O cartão do produto. Um só.
+ *
+ * Recebia `perCredit` e `popular` porque havia quatro cartões lado a lado e um
+ * deles precisava ser marcado como o mais vendido. Com um produto só não há
+ * comparação a fazer nem preço unitário a exibir — o preço É o preço.
+ */
+function PlanCard({ name, price, period, features, cta, onCta, footnote }: {
   name: string
   price: string
-  perCredit?: string
   period: string
   features: string[]
-  highlight: boolean
-  popular?: boolean
   cta: string
   onCta: () => void
+  footnote?: string
 }) {
   return (
-    <Card className={`relative border-2 transition-all flex flex-col justify-between ${popular ? 'border-[#0B63E5] shadow-xl scale-[1.02] bg-white' : highlight ? 'border-amber-400 shadow-md bg-white' : 'border-slate-200 hover:border-blue-300 bg-white'}`}>
-      {popular && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-[#0B63E5] text-white hover:bg-[#0B63E5] shadow-sm px-3 py-0.5 text-xs font-bold">Popular</Badge>
-        </div>
-      )}
-      <CardContent className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+    <Card className="relative border-2 border-[#0B63E5] shadow-xl bg-white flex flex-col justify-between">
+      <CardContent className="p-6 sm:p-8 flex-1 flex flex-col justify-between">
         <div>
-          <h3 className="font-bold text-[#0B192E] text-lg">{name}</h3>
+          <h3 className="font-bold text-[#0B192E] text-xl">{name}</h3>
           <p className="text-xs text-slate-500 mb-4">{period}</p>
           <div className="mb-6">
-            <span className="text-3xl sm:text-4xl font-extrabold text-[#0B192E]">{price}</span>
-            {perCredit && <p className="text-xs font-semibold text-[#0B63E5] mt-1">{perCredit}</p>}
+            <span className="text-4xl sm:text-5xl font-extrabold text-[#0B192E]">{price}</span>
           </div>
-          <ul className="space-y-2.5 mb-6">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2.5 mb-6">
             {features.map((f) => (
               <li key={f} className="flex items-start gap-2 text-xs text-slate-700">
                 <CheckCircle2 className="w-4 h-4 mt-0.5 text-[#0B63E5] shrink-0" /> {f}
@@ -569,9 +542,12 @@ function PlanCard({ name, price, perCredit, period, features, highlight, popular
             ))}
           </ul>
         </div>
-        <Button onClick={onCta} className={`w-full h-11 font-bold ${popular ? 'bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md' : 'bg-[#0B192E] hover:bg-slate-800 text-white'}`}>
-          {cta}
-        </Button>
+        <div className="space-y-2">
+          <Button onClick={onCta} className="w-full h-12 font-bold bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md">
+            {cta}
+          </Button>
+          {footnote && <p className="text-[11px] text-slate-500 text-center">{footnote}</p>}
+        </div>
       </CardContent>
     </Card>
   )

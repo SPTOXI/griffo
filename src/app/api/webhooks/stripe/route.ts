@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { db as prisma } from '@/lib/db'
 import { getGlobalSettings } from '@/lib/settings'
-import { normalizeCurrency, toBrl } from '@/lib/currency'
 import { getStripe } from '@/lib/stripe'
+import { fulfillCheckoutSession } from '@/lib/payments/fulfill'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +27,7 @@ function redactStripeEvent(event: any) {
       mode: session.mode,
       client_reference_id: session.client_reference_id,
       payment_intent: typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
-      // `metadata` é preenchida por nós em credits/purchase e não carrega PII.
+      // `metadata` é preenchida por nós em /api/checkout e não carrega PII.
       metadata: session.metadata,
     },
   }
@@ -49,83 +49,48 @@ export async function POST(req: Request) {
       )
     }
 
+    const stripe = getStripe(secretKey)
+
     let event: any
     try {
-      const stripe = getStripe(secretKey)
+      // Verificação HMAC do corpo cru. Sem isto, qualquer um que conheça a URL
+      // credita análises para qualquer conta.
       event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret)
     } catch (err: any) {
       console.error('Stripe Webhook Signature Verification Failed:', err.message)
       return NextResponse.json({ error: 'Assinatura de webhook inválida.' }, { status: 400 })
     }
 
-    // Registro para auditoria, sem PII.
+    // Idempotência por `event.id`, garantida pelo índice único da coluna.
     //
-    // Antes gravava o evento inteiro da Stripe, que traz e-mail, nome e
-    // endereço de cobrança do comprador em texto puro — uma segunda cópia de
-    // dado pessoal, guardada indefinidamente, que ninguém precisa para
-    // conciliar um pagamento e que o titular não tem como pedir para apagar.
-    await prisma.webhookEvent.create({
-      data: {
-        eventName: event.type || 'stripe_event',
-        body: JSON.stringify(redactStripeEvent(event)),
-      },
-    })
+    // A Stripe reentrega eventos: por retry, por reprocessamento manual, ou
+    // simplesmente por entregar duas vezes. Fazer a verificação com uma
+    // consulta ANTES da escrita não resolve — duas entregas simultâneas leem
+    // "não existe" antes de qualquer uma gravar. Deixar a inserção falhar é o
+    // que de fato serializa.
+    //
+    // O registro é sem PII: o evento da Stripe traz e-mail, nome e endereço de
+    // cobrança do comprador em texto puro, uma segunda cópia de dado pessoal
+    // que ninguém precisa para conciliar um pagamento.
+    try {
+      await prisma.webhookEvent.create({
+        data: {
+          eventName: event.type || 'stripe_event',
+          eventId: event.id,
+          body: JSON.stringify(redactStripeEvent(event)),
+        },
+      })
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        return NextResponse.json({ received: true, duplicate: true })
+      }
+      throw e
+    }
 
     if (event.type === 'checkout.session.completed') {
-      const session = event.data?.object || {}
-      const metadata = session.metadata || {}
-      const userId = metadata.user_id || session.client_reference_id
-      const creditAmount = parseInt(metadata.credit_amount, 10)
-      const sessionId = session.id
-
-      if (!userId || isNaN(creditAmount)) {
-        console.error('Stripe webhook missing user_id or credit_amount:', session)
+      const result = await fulfillCheckoutSession(stripe, event.data?.object || {}, event.id)
+      if (result.reason === 'missing_metadata') {
         return NextResponse.json({ error: 'Missing metadata in session' }, { status: 400 })
-      }
-
-      // Idempotency check
-      const existing = await prisma.creditTransaction.findFirst({
-        where: { paymentRef: sessionId },
-      })
-
-      if (!existing) {
-        // Mesma correção do verify-session: a moeda do checkout é registrada,
-        // o valor fica sem conversão e a conversão passa a ser da leitura.
-        const paidCurrency = normalizeCurrency(session.currency)
-        const paidAmount = (session.amount_total || 0) / 100
-
-        // Atomic transaction: credit user + record transaction + audit log
-        await prisma.$transaction(async (tx) => {
-          await tx.user.update({
-            where: { id: userId },
-            data: {
-              credits: { increment: creditAmount },
-              plan: metadata.package_id || 'credit_pack',
-            },
-          })
-
-          await tx.creditTransaction.create({
-            data: {
-              userId,
-              amount: creditAmount,
-              type: 'purchase',
-              description: `Compra de ${creditAmount} créditos via Stripe`,
-              paymentRef: sessionId,
-              currency: paidCurrency,
-              amountOriginal: paidAmount,
-              costBrl: toBrl(paidAmount, paidCurrency),
-              status: 'completed',
-            },
-          })
-
-          await tx.auditLog.create({
-            data: {
-              userId,
-              action: 'stripe_credit_purchase',
-              meta: JSON.stringify({ sessionId, creditAmount, paidAmount, paidCurrency }),
-            },
-          })
-        })
       }
     }
 

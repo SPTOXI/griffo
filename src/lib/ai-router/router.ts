@@ -14,9 +14,10 @@ import { filterProvidersByResidency, isEuropeanUser } from '../data-residency'
 
 // As rotas que chamam este roteador declaram maxDuration = 60. Se o orçamento
 // for consumido inteiro pelas tentativas de IA, a plataforma encerra a função
-// antes do `catch` que devolve os créditos ao usuário — que então paga sem
-// receber. Os limites abaixo existem para garantir que sempre sobre tempo
-// para o reembolso e a persistência.
+// antes do `catch` que trata a falha e do `update` que grava o resultado — o
+// trabalho é perdido sem que nada explique por quê. Os limites abaixo existem
+// para garantir que sempre sobre tempo para a persistência e para a mensagem
+// de erro.
 //
 // O teto por tentativa é DERIVADO do orçamento (metade dele, respeitando o
 // máximo), porque precisa caber DUAS vezes dentro do prazo: senão o fallback só
@@ -118,7 +119,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
     const currentProviderId = candidateProviders[i]
 
     // Não inicia uma tentativa que não caberia no orçamento restante — é o que
-    // garante que o `catch` da rota chegue a executar e devolva os créditos.
+    // garante que o `catch` da rota chegue a executar e responda algo.
     const elapsed = Date.now() - taskStartTime
     if (elapsed + providerTimeoutMs > taskBudgetMs) {
       attemptDiagnostics.push(

@@ -1,30 +1,40 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { CheckCircle2, Loader2, AlertTriangle, ShieldCheck, Sparkles, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { internalFetch } from '@/lib/internal-fetch'
 import { Badge } from '@/components/ui/badge'
+import { notifyBalanceChanged } from '@/hooks/use-analyses'
 
 interface PaymentStatusModalProps {
   sessionId: string
-  expectedCredits?: number
-  onComplete: (newBalance: number) => void
+  /// Disparado quando o pagamento é confirmado, com o currículo que originou a
+  /// compra (quando houve um).
+  onConfirmed?: (resumeId: string | null) => void
   onClose: () => void
 }
 
 type StepStatus = 'pending' | 'loading' | 'success' | 'error'
 
-export function PaymentStatusModal({ sessionId, expectedCredits, onComplete, onClose }: PaymentStatusModalProps) {
+export function PaymentStatusModal({ sessionId, onConfirmed, onClose }: PaymentStatusModalProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [step1Status, setStep1Status] = useState<StepStatus>('success')
   const [step2Status, setStep2Status] = useState<StepStatus>('loading')
   const [step3Status, setStep3Status] = useState<StepStatus>('pending')
 
   const [overallStatus, setOverallStatus] = useState<'validating' | 'success' | 'failed'>('validating')
-  const [creditsAdded, setCreditsAdded] = useState<number>(expectedCredits || 0)
+  const [analysesAdded, setAnalysesAdded] = useState<number>(0)
   const [newBalance, setNewBalance] = useState<number | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>('')
+
+  // Num ref para que trocar a função não reinicie a verificação — que
+  // consultaria a mesma sessão de novo na Stripe. A escrita vive num efeito
+  // próprio: mexer em `.current` durante o render não é seguro.
+  const onConfirmedRef = useRef(onConfirmed)
+  useEffect(() => {
+    onConfirmedRef.current = onConfirmed
+  }, [onConfirmed])
 
   useEffect(() => {
     let isMounted = true
@@ -39,7 +49,7 @@ export function PaymentStatusModal({ sessionId, expectedCredits, onComplete, onC
       setStep2Status('loading')
 
       try {
-        const res = await internalFetch('/api/credits/verify-session', {
+        const res = await internalFetch('/api/checkout/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId }),
@@ -60,7 +70,7 @@ export function PaymentStatusModal({ sessionId, expectedCredits, onComplete, onC
         await new Promise((r) => setTimeout(r, 600))
         if (!isMounted) return
 
-        // Step 3: Inject credits into account
+        // Step 3: creditar as análises na conta
         setStep(3)
         setStep3Status('loading')
 
@@ -69,13 +79,16 @@ export function PaymentStatusModal({ sessionId, expectedCredits, onComplete, onC
 
         setStep3Status('success')
         setOverallStatus('success')
-        if (typeof data.creditsAdded === 'number' && data.creditsAdded > 0) {
-          setCreditsAdded(data.creditsAdded)
+        if (typeof data.analysesAdded === 'number' && data.analysesAdded > 0) {
+          setAnalysesAdded(data.analysesAdded)
         }
-        if (typeof data.totalCredits === 'number') {
-          setNewBalance(data.totalCredits)
-          onComplete(data.totalCredits)
+        if (typeof data.balance === 'number') {
+          setNewBalance(data.balance)
         }
+        // O saldo mudou: quem o exibe (cabeçalho, barra lateral, laudo) escuta
+        // este evento em vez de receber o número por propriedade.
+        notifyBalanceChanged()
+        onConfirmedRef.current?.(data.resumeId ?? null)
       } catch (err: any) {
         if (!isMounted) return
         setStep2Status('error')
@@ -89,7 +102,7 @@ export function PaymentStatusModal({ sessionId, expectedCredits, onComplete, onC
     return () => {
       isMounted = false
     }
-  }, [sessionId, onComplete])
+  }, [sessionId])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -127,7 +140,7 @@ export function PaymentStatusModal({ sessionId, expectedCredits, onComplete, onC
           </h3>
           <p className="text-xs text-white/80 mt-1">
             {overallStatus === 'validating' && 'Acompanhe as etapas de verificação em tempo real'}
-            {overallStatus === 'success' && 'Seus créditos já estão disponíveis para uso'}
+            {overallStatus === 'success' && 'Sua Análise Completa já está disponível'}
             {overallStatus === 'failed' && (errorMessage || 'Verifique seus dados ou tente novamente')}
           </p>
         </div>
@@ -231,12 +244,12 @@ export function PaymentStatusModal({ sessionId, expectedCredits, onComplete, onC
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-800">3. Injeção de Créditos no Banco</p>
-              <p className="text-[11px] text-slate-500">Lançamento na conta do usuário</p>
+              <p className="text-xs font-semibold text-slate-800">3. Liberação da Análise</p>
+              <p className="text-[11px] text-slate-500">Lançamento no saldo da conta</p>
             </div>
             {step3Status === 'success' && (
               <Badge className="bg-emerald-600 text-white border-none font-bold text-[10px]">
-                + {creditsAdded} CRÉDITOS
+                + {analysesAdded} {analysesAdded === 1 ? 'ANÁLISE' : 'ANÁLISES'}
               </Badge>
             )}
           </div>
@@ -244,9 +257,9 @@ export function PaymentStatusModal({ sessionId, expectedCredits, onComplete, onC
           {/* Success summary box */}
           {overallStatus === 'success' && (
             <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-xl text-center space-y-1 animate-in zoom-in-95 duration-200">
-              <p className="text-xs text-emerald-800 font-medium">Novo Saldo Disponível</p>
+              <p className="text-xs text-emerald-800 font-medium">Análises disponíveis</p>
               <p className="text-2xl font-black text-emerald-700 font-mono">
-                {newBalance !== null ? `${newBalance} Créditos` : `+${creditsAdded} Créditos`}
+                {newBalance !== null ? newBalance : `+${analysesAdded}`}
               </p>
             </div>
           )}
@@ -259,7 +272,7 @@ export function PaymentStatusModal({ sessionId, expectedCredits, onComplete, onC
               onClick={onClose}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs w-full sm:w-auto"
             >
-              Começar a Usar Meus Créditos <ArrowRight className="w-4 h-4 ml-1.5" />
+              Começar minha análise <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           ) : overallStatus === 'failed' ? (
             <Button

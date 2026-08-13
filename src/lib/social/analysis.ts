@@ -11,9 +11,9 @@ import type { SocialProfileData } from './fetchers'
  * headline, texto "Sobre" e ações para CADA perfil — numa única chamada de até
  * 4.000 tokens de saída. Geração é serial, um token por vez, então esses tokens
  * *eram* a latência: a chamada estourava o teto de 25s por provedor, caía para
- * o suplente, e a análise terminava em falha operacional com o crédito
- * devolvido. Desligar o raciocínio estendido ajudou e não bastou — o volume de
- * saída continuava o mesmo.
+ * o suplente, e a análise terminava em falha operacional. Desligar o
+ * raciocínio estendido ajudou e não bastou — o volume de saída continuava o
+ * mesmo.
  *
  * É exatamente o problema que a análise do currículo já havia enfrentado e
  * resolvido em `lib/analysis/segments.ts`: N chamadas pequenas rodando ao mesmo

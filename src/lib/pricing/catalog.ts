@@ -1,0 +1,421 @@
+/**
+ * Catálogo de preços — ponto único de verdade.
+ *
+ * O produto é UM: a Análise Completa. Uma compra entrega todos os itens de
+ * `ANALYSIS_DELIVERABLES`, sem contagem e sem escolha. O que varia é o preço,
+ * por faixa de renda do país, e a moeda, que é sempre a local.
+ *
+ * Nenhum preço pode existir fora deste arquivo. O modelo anterior tinha preço
+ * no catálogo de créditos, no script de setup da Stripe, na landing e na tabela
+ * de consumo da tela de planos — quatro lugares que divergiram entre si.
+ *
+ * Client-safe de propósito: sem Prisma, sem `server-only`, sem segredo. A
+ * landing e o paywall importam daqui.
+ */
+
+export type Tier = 1 | 2 | 3 | 4
+
+/** O que se compra. Não há mais nada à venda. */
+export type Sku = 'single' | 'pack5'
+
+/** Quantas análises o pacote entrega. */
+export const PACK_SIZE = 5
+
+/**
+ * Piso absoluto por análise, em USD.
+ *
+ * Custo direto medido: US$ 1,04 por análise (API com overrun de 1,6x e 8% de
+ * retry, mais suporte e infra rateada). Abaixo de US$ 2,60 a venda não paga o
+ * custo direto somado aos percentuais sobre a receita — imposto, reserva de
+ * chargeback e taxa do meio de pagamento.
+ *
+ * Nenhum preço, cupom ou promoção pode ficar abaixo disto. `catalog.test.ts`
+ * falha se algum preço do catálogo violar o piso, incluindo o unitário dentro
+ * do pacote de 5.
+ */
+export const ANALYSIS_FLOOR_USD = 2.6
+
+/** Custo direto total por análise, da planilha `Custo_por_Analise`. */
+export const ANALYSIS_DIRECT_COST_USD = 1.0449
+
+export interface RegionalPrice {
+  tier: Tier
+  countries: string[] // ISO-3166 alpha-2
+  displayCurrency: string
+  unitPriceUSD: number
+  packOf5PriceUSD: number
+  localPaymentMethods: string[]
+}
+
+/**
+ * As quatro faixas.
+ *
+ * `displayCurrency` é a moeda de referência da faixa — a que vale para um país
+ * da faixa sem entrada própria em `COUNTRY_CURRENCY`. Na prática só a Faixa 1
+ * cai nesse caso: ela é também o preço do resto do mundo. Fora da Faixa 1 todo
+ * país listado tem moeda própria declarada, porque exibir dólar fora da Faixa 1
+ * é proibido (regra 3).
+ *
+ * `unitPriceUSD` e `packOf5PriceUSD` são a âncora. O valor efetivamente cobrado
+ * é o de `LOCAL_PRICES`, arredondado para o formato de preço da moeda — e
+ * validado contra a âncora e contra o piso pelo teste do catálogo.
+ */
+export const TIERS: RegionalPrice[] = [
+  {
+    tier: 1,
+    countries: ['US', 'CA', 'GB', 'DE', 'FR', 'AU', 'JP', 'SG', 'NL', 'IE'],
+    displayCurrency: 'USD',
+    unitPriceUSD: 12.9,
+    packOf5PriceUSD: 49.9,
+    localPaymentMethods: ['card'],
+  },
+  {
+    tier: 2,
+    countries: ['PT', 'ES', 'IT', 'PL', 'CZ', 'CL', 'MY', 'TR', 'ZA', 'AE'],
+    displayCurrency: 'EUR',
+    unitPriceUSD: 8.9,
+    packOf5PriceUSD: 34.9,
+    localPaymentMethods: ['card'],
+  },
+  {
+    tier: 3,
+    countries: ['BR', 'MX', 'CO', 'AR', 'TH', 'RO', 'BG'],
+    displayCurrency: 'BRL',
+    unitPriceUSD: 5.9,
+    packOf5PriceUSD: 22.9,
+    localPaymentMethods: ['card', 'pix'],
+  },
+  {
+    tier: 4,
+    countries: ['IN', 'ID', 'PH', 'VN', 'NG', 'EG', 'PK', 'BD', 'KE'],
+    displayCurrency: 'INR',
+    unitPriceUSD: 3.9,
+    packOf5PriceUSD: 16.9,
+    localPaymentMethods: ['card', 'upi', 'gopay', 'ovo'],
+  },
+]
+
+/**
+ * Faixa de quem não está em nenhuma lista.
+ *
+ * Faixa 1 não é punição: é o preço de tabela, e a Faixa 1 é a única que pode
+ * ser cobrada em dólar. Rebaixar o desconhecido para uma faixa barata
+ * transformaria "país não mapeado" na forma mais fácil de pagar menos.
+ */
+export const DEFAULT_TIER: Tier = 1
+
+/** Moeda de cobrança por país. Fora da Faixa 1, nenhum país pode faltar aqui. */
+export const COUNTRY_CURRENCY: Record<string, string> = {
+  // Faixa 1
+  US: 'USD',
+  CA: 'CAD',
+  GB: 'GBP',
+  DE: 'EUR',
+  FR: 'EUR',
+  NL: 'EUR',
+  IE: 'EUR',
+  AU: 'AUD',
+  JP: 'JPY',
+  SG: 'SGD',
+  // Faixa 2
+  PT: 'EUR',
+  ES: 'EUR',
+  IT: 'EUR',
+  PL: 'PLN',
+  CZ: 'CZK',
+  CL: 'CLP',
+  MY: 'MYR',
+  TR: 'TRY',
+  ZA: 'ZAR',
+  AE: 'AED',
+  // Faixa 3
+  BR: 'BRL',
+  MX: 'MXN',
+  CO: 'COP',
+  AR: 'ARS',
+  TH: 'THB',
+  RO: 'RON',
+  BG: 'BGN',
+  // Faixa 4
+  IN: 'INR',
+  ID: 'IDR',
+  PH: 'PHP',
+  VN: 'VND',
+  NG: 'NGN',
+  EG: 'EGP',
+  PK: 'PKR',
+  BD: 'BDT',
+  KE: 'KES',
+}
+
+/**
+ * Cotações de referência (USD → moeda local).
+ *
+ * Servem para DUAS coisas e nenhuma terceira: arredondar o preço local na hora
+ * de defini-lo, e converter de volta para dólar no teste do piso. O valor
+ * cobrado é o de `LOCAL_PRICES`, fixo — nada aqui é consultado em tempo de
+ * cobrança, então uma cotação desatualizada não muda o que o cliente paga.
+ *
+ * Moedas voláteis (ARS, TRY, NGN, EGP) merecem revisão trimestral: quando a
+ * cotação anda, é o preço local que precisa ser reescrito, e o teste do piso é
+ * quem avisa que ele ficou para trás.
+ */
+export const USD_TO_LOCAL: Record<string, number> = {
+  USD: 1,
+  EUR: 0.92,
+  GBP: 0.78,
+  CAD: 1.36,
+  AUD: 1.5,
+  JPY: 150,
+  SGD: 1.34,
+  PLN: 3.95,
+  CZK: 23,
+  CLP: 950,
+  MYR: 4.5,
+  TRY: 34,
+  ZAR: 18.5,
+  AED: 3.67,
+  BRL: 5.4,
+  MXN: 18.5,
+  COP: 4000,
+  ARS: 1300,
+  THB: 35,
+  RON: 4.6,
+  BGN: 1.8,
+  INR: 84,
+  IDR: 16000,
+  PHP: 57,
+  VND: 25000,
+  NGN: 1600,
+  EGP: 48,
+  PKR: 278,
+  BDT: 120,
+  KES: 129,
+}
+
+/**
+ * Moedas sem subunidade. A Stripe recebe o valor inteiro, não centavos —
+ * multiplicar por 100 aqui cobraria cem vezes o preço.
+ */
+export const ZERO_DECIMAL_CURRENCIES = new Set(['JPY', 'CLP', 'VND', 'KRW', 'XOF', 'XAF', 'PYG', 'UGX'])
+
+export interface LocalPrice {
+  /** Preço de uma análise, na unidade principal da moeda. */
+  single: number
+  /** Preço do pacote de 5, na unidade principal da moeda. */
+  pack5: number
+}
+
+/**
+ * O preço que o cliente vê e paga, por moeda.
+ *
+ * Não é conversão em tempo real: é preço de tabela, arredondado para o formato
+ * a que cada mercado está acostumado. R$ 29,90 é o preço do Brasil, decidido
+ * assim — não `5.90 × cotação do dia`.
+ */
+export const LOCAL_PRICES: Record<string, LocalPrice> = {
+  // Faixa 1 — âncora $12,90 / $49,90
+  USD: { single: 12.9, pack5: 49.9 },
+  CAD: { single: 17.9, pack5: 67.9 },
+  GBP: { single: 10.9, pack5: 42.9 },
+  AUD: { single: 19.9, pack5: 74.9 },
+  JPY: { single: 1980, pack5: 7480 },
+  SGD: { single: 17.9, pack5: 66.9 },
+  // Faixa 2 — âncora $8,90 / $34,90. EUR vive aqui: os países de euro da
+  // Faixa 1 (DE, FR, NL, IE) usam `EUR_TIER1`, resolvido por país.
+  EUR: { single: 7.9, pack5: 31.9 },
+  PLN: { single: 34.9, pack5: 137.9 },
+  CZK: { single: 199, pack5: 799 },
+  CLP: { single: 7990, pack5: 32990 },
+  MYR: { single: 39.9, pack5: 156.9 },
+  TRY: { single: 299, pack5: 1179 },
+  ZAR: { single: 159.9, pack5: 639.9 },
+  AED: { single: 32.9, pack5: 127.9 },
+  // Faixa 3 — âncora $5,90 / $22,90
+  BRL: { single: 29.9, pack5: 119.9 },
+  MXN: { single: 109, pack5: 419 },
+  COP: { single: 23900, pack5: 89900 },
+  ARS: { single: 7590, pack5: 28990 },
+  THB: { single: 199, pack5: 799 },
+  RON: { single: 26.9, pack5: 104.9 },
+  BGN: { single: 10.9, pack5: 39.9 },
+  // Faixa 4 — âncora $3,90 / $16,90
+  INR: { single: 329, pack5: 1399 },
+  IDR: { single: 59000, pack5: 259000 },
+  PHP: { single: 219, pack5: 949 },
+  VND: { single: 99000, pack5: 419000 },
+  NGN: { single: 5900, pack5: 25900 },
+  EGP: { single: 189, pack5: 799 },
+  PKR: { single: 1090, pack5: 4690 },
+  BDT: { single: 469, pack5: 1999 },
+  KES: { single: 499, pack5: 2199 },
+}
+
+/**
+ * Euro na Faixa 1.
+ *
+ * Alemanha e Portugal usam a mesma moeda e faixas diferentes. A moeda não pode
+ * decidir o preço sozinha — quem decide é o par (país, faixa). Esta tabela
+ * cobre a única sobreposição real do catálogo.
+ */
+const EUR_TIER1: LocalPrice = { single: 11.9, pack5: 45.9 }
+
+/** Locale de formatação por país. Separador e posição do símbolo são locais. */
+const COUNTRY_LOCALE: Record<string, string> = {
+  US: 'en-US', CA: 'en-CA', GB: 'en-GB', IE: 'en-IE', AU: 'en-AU', SG: 'en-SG',
+  DE: 'de-DE', FR: 'fr-FR', NL: 'nl-NL', JP: 'ja-JP',
+  PT: 'pt-PT', ES: 'es-ES', IT: 'it-IT', PL: 'pl-PL', CZ: 'cs-CZ', CL: 'es-CL',
+  MY: 'ms-MY', TR: 'tr-TR', ZA: 'en-ZA', AE: 'ar-AE',
+  BR: 'pt-BR', MX: 'es-MX', CO: 'es-CO', AR: 'es-AR', TH: 'th-TH', RO: 'ro-RO', BG: 'bg-BG',
+  IN: 'en-IN', ID: 'id-ID', PH: 'en-PH', VN: 'vi-VN', NG: 'en-NG', EG: 'ar-EG',
+  PK: 'en-PK', BD: 'bn-BD', KE: 'en-KE',
+}
+
+/** Os nove itens que UMA compra entrega. Sem contagem, sem escolha. */
+export const ANALYSIS_DELIVERABLES = [
+  'dimensions',
+  'job_match',
+  'rewrite',
+  'career_orientation',
+  'profile_optimization',
+  'social_analysis',
+  'cover_letter',
+  'professional_summary',
+  'pdf_download',
+] as const
+
+export type AnalysisDeliverable = (typeof ANALYSIS_DELIVERABLES)[number]
+
+export function normalizeCountry(country: string | null | undefined): string {
+  return (country || '').toUpperCase().trim()
+}
+
+/** Faixa do país. Desconhecido cai na Faixa 1 — ver `DEFAULT_TIER`. */
+export function tierForCountry(country: string | null | undefined): Tier {
+  const code = normalizeCountry(country)
+  if (!code) return DEFAULT_TIER
+  const found = TIERS.find((t) => t.countries.includes(code))
+  return found ? found.tier : DEFAULT_TIER
+}
+
+export function tierConfig(tier: Tier): RegionalPrice {
+  const found = TIERS.find((t) => t.tier === tier)
+  if (!found) throw new Error(`Faixa de preço inexistente: ${tier}`)
+  return found
+}
+
+/** Moeda de cobrança do país. Fora do mapa, dólar — e isso só ocorre na Faixa 1. */
+export function currencyForCountry(country: string | null | undefined): string {
+  const code = normalizeCountry(country)
+  return COUNTRY_CURRENCY[code] || tierConfig(tierForCountry(code)).displayCurrency
+}
+
+function localPriceFor(country: string, currency: string, tier: Tier): LocalPrice {
+  if (currency === 'EUR' && tier === 1) return EUR_TIER1
+  const table = LOCAL_PRICES[currency]
+  if (!table) throw new Error(`Sem preço local declarado para ${currency} (país ${country})`)
+  return table
+}
+
+export interface ResolvedPrice {
+  sku: Sku
+  tier: Tier
+  country: string
+  currency: string
+  /** Valor na unidade principal da moeda (29.9 em BRL, 1980 em JPY). */
+  amount: number
+  /** Valor em centavos — ou em unidades inteiras, nas moedas sem subunidade. */
+  amountMinor: number
+  /** Quantas análises esta compra entrega. */
+  analyses: number
+  /** Equivalente em dólar pela cotação de referência. Telemetria e piso. */
+  amountUsd: number
+  /** Preço por análise em dólar. É este valor que o piso limita. */
+  perAnalysisUsd: number
+  /** Preço já formatado no padrão do país. */
+  formatted: string
+  /** Métodos de pagamento locais declarados para a faixa. */
+  localPaymentMethods: string[]
+}
+
+/** Converte para a menor unidade que a Stripe cobra. */
+export function toMinorUnits(amount: number, currency: string): number {
+  return ZERO_DECIMAL_CURRENCIES.has(currency.toUpperCase())
+    ? Math.round(amount)
+    : Math.round(amount * 100)
+}
+
+export function formatPrice(amount: number, currency: string, country: string): string {
+  const locale = COUNTRY_LOCALE[normalizeCountry(country)] || 'en-US'
+  const zeroDecimal = ZERO_DECIMAL_CURRENCIES.has(currency)
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: zeroDecimal ? 0 : 2,
+      maximumFractionDigits: zeroDecimal ? 0 : 2,
+    }).format(amount)
+  } catch {
+    // Locale ou moeda que o runtime não conhece: melhor um preço legível que
+    // uma exceção no meio do paywall.
+    return `${currency} ${amount.toFixed(zeroDecimal ? 0 : 2)}`
+  }
+}
+
+/**
+ * O preço de um país.
+ *
+ * `country` tem que ser o país do MEIO DE PAGAMENTO sempre que ele for
+ * conhecido. IP e locale do navegador só entram como palpite inicial, antes de
+ * existir um pagamento — ver `lib/pricing/resolve.ts`, que é quem aplica essa
+ * regra.
+ */
+export function priceFor(country: string | null | undefined, sku: Sku = 'single'): ResolvedPrice {
+  const code = normalizeCountry(country) || 'US'
+  const tier = tierForCountry(code)
+  const currency = currencyForCountry(code)
+  const local = localPriceFor(code, currency, tier)
+  const amount = sku === 'pack5' ? local.pack5 : local.single
+  const analyses = sku === 'pack5' ? PACK_SIZE : 1
+  const rate = USD_TO_LOCAL[currency] ?? 1
+  const amountUsd = Math.round((amount / rate) * 100) / 100
+
+  return {
+    sku,
+    tier,
+    country: code,
+    currency,
+    amount,
+    amountMinor: toMinorUnits(amount, currency),
+    analyses,
+    amountUsd,
+    perAnalysisUsd: Math.round((amountUsd / analyses) * 100) / 100,
+    formatted: formatPrice(amount, currency, code),
+    localPaymentMethods: tierConfig(tier).localPaymentMethods,
+  }
+}
+
+/** Violação do piso, ou `null`. É o que o teste do catálogo verifica. */
+export function floorViolation(price: ResolvedPrice): string | null {
+  if (price.perAnalysisUsd < ANALYSIS_FLOOR_USD) {
+    return `${price.country}/${price.currency} ${price.sku}: US$ ${price.perAnalysisUsd.toFixed(2)} por análise, abaixo do piso de US$ ${ANALYSIS_FLOOR_USD.toFixed(2)}`
+  }
+  return null
+}
+
+/**
+ * Lança se o preço violar o piso.
+ *
+ * Chamado no caminho da criação do checkout, não só no teste: um preço abaixo
+ * do custo tem que falhar antes de virar cobrança, e não depois, num relatório.
+ */
+export function assertAboveFloor(price: ResolvedPrice): ResolvedPrice {
+  const violation = floorViolation(price)
+  if (violation) throw new Error(`Piso de preço violado — ${violation}`)
+  return price
+}
+
+/** Todos os países com preço declarado. Usado pelo teste e pelo setup da Stripe. */
+export function allPricedCountries(): string[] {
+  return TIERS.flatMap((t) => t.countries)
+}

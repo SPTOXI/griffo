@@ -8,14 +8,8 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
 import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
-import {
-  reserveCredits,
-  settleReservation,
-  releaseReservation,
-  CREDIT_COSTS,
-  type CreditReservation,
-} from '@/lib/credits'
-import { getRequestCountry } from '@/lib/currency'
+import { requireUnlockedResume } from '@/lib/entitlements'
+import { edgeCountry } from '@/lib/pricing/resolve'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório.'),
@@ -81,9 +75,6 @@ function parseOrientation(rawText: string): any {
  * Avalia o currículo de candidatos indecisos e indica as 3 áreas/cargos ideais e o plano de qualificação.
  */
 export async function POST(req: Request) {
-  let reservation: CreditReservation | null = null
-  const costCredits = CREDIT_COSTS.career_orientation
-
   try {
     const user = await getCurrentUser()
     if (!user) {
@@ -104,28 +95,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Currículo não encontrado.' }, { status: 404 })
     }
 
-    // Passou a cobrar. O pré-requisito era a Sessão 2: enquanto a rota podia
-    // devolver três áreas com percentuais fixos inventados (88%, 84%, 80%),
-    // cobrar por isso seria pior que oferecer de graça.
-    const reservationResult = await reserveCredits(
-      user.id,
-      costCredits,
-      `Diagnóstico de orientação vocacional (${costCredits} cr)`
-    )
-
-    if (!reservationResult.success) {
+    // A orientação profissional é um dos nove itens da Análise Completa, e não
+    // um produto à parte com preço próprio.
+    const entitlement = await requireUnlockedResume(user.id, resume.id)
+    if (!entitlement.ok) {
       return NextResponse.json(
-        {
-          error: reservationResult.error || 'Seu saldo de créditos é insuficiente.',
-          code: 'INSUFFICIENT_CREDITS',
-          requiredCredits: costCredits,
-          currentCredits: reservationResult.currentBalance,
-        },
-        { status: 402 }
+        { error: entitlement.error, code: entitlement.code, balance: entitlement.balance },
+        { status: entitlement.status }
       )
     }
-
-    reservation = reservationResult.reservation
 
     const lang = getRequestLanguage(req)
 
@@ -172,7 +150,7 @@ Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto 
       // operacional depois de esgotar os provedores.
       taskType: 'career_orientation',
       userId: user.id,
-      userCountry: getRequestCountry(req),
+      userCountry: edgeCountry(req),
       systemPrompt,
       userPrompt: `Realize o Diagnóstico de Orientação Vocacional para este currículo:\n\n${resume.originalContent.slice(0, 12000)}${marketContext}`,
       maxTokens: 3000,
@@ -193,26 +171,20 @@ Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto 
       },
     })
 
-    await settleReservation(reservation)
-
     return NextResponse.json({ careerOrientation: orientationData })
   } catch (e: any) {
     console.error('Error generating career orientation:', e?.diagnostic || e?.message || e)
-
-    const release = await releaseReservation(reservation, 'Falha na orientação de carreira')
 
     const isProviderFailure = Boolean(e?.diagnostic)
     const base = isProviderFailure
       ? 'Os provedores de IA não responderam a tempo nesta tentativa. Clique em gerar novamente.'
       : 'Ocorreu uma falha ao montar o diagnóstico vocacional.'
 
+    // Nada a estornar: a falha não custou nada. O currículo segue liberado e a
+    // orientação pode ser pedida de novo sem nova cobrança.
     return NextResponse.json(
       {
-        error: release.refunded
-          ? `${base} Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente.`
-          : `${base} Nenhum crédito foi cobrado.`,
-        refunded: release.refunded,
-        currentBalance: release.currentBalance,
+        error: base,
         code: isProviderFailure ? 'AI_PROVIDERS_UNAVAILABLE' : 'ORIENTATION_FAILED',
       },
       { status: 500 }

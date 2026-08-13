@@ -36,7 +36,7 @@ export async function GET() {
           email: true,
           role: true,
           plan: true,
-          credits: true,
+          analysisBalance: true,
           disabled: true,
           createdAt: true,
           _count: {
@@ -54,9 +54,10 @@ export async function GET() {
           costUsd: true,
         },
       }),
-      db.creditTransaction.aggregate({
+      db.analysisLedger.aggregate({
         where: { type: 'purchase' },
-        _sum: { costBrl: true },
+        _sum: { priceUsd: true },
+        _count: true,
       }),
       db.systemConfig.findMany(),
       getAiMetricsData().catch((e) => {
@@ -78,7 +79,9 @@ export async function GET() {
     const totalTokensIn = tokenStats._sum.tokensIn || 0
     const totalTokensOut = tokenStats._sum.tokensOut || 0
     const totalCostUsd = tokenStats._sum.costUsd || 0
-    const totalRevenueBrl = revenueStats._sum.costBrl || 0
+    // Receita em dólar, a moeda base do catálogo — `priceUsd` já vem
+    // normalizada no ledger, então somar linhas de países diferentes é válido.
+    const totalRevenueUsd = revenueStats._sum.priceUsd || 0
 
     // Mesma regra de `GET /api/admin/settings`: segredos só saem mascarados.
     const configMap = configsRaw.reduce((acc, curr) => {
@@ -115,8 +118,9 @@ export async function GET() {
           totalCostBrl: totalCostUsd * 5.4,
         },
         financial: {
-          totalRevenueBrl,
-          estimatedProfitBrl: totalRevenueBrl - totalCostUsd * 5.4,
+          totalRevenueUsd,
+          purchaseCount: revenueStats._count || 0,
+          estimatedProfitUsd: totalRevenueUsd - totalCostUsd,
         },
       },
       config: configMap,

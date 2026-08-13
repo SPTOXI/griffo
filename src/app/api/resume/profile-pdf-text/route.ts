@@ -17,13 +17,11 @@ import { parsePdfBase64, extractPdfWithVision } from '@/lib/pdf-text'
  * misturada com uma falha da análise — o mesmo erro genérico para causas
  * completamente diferentes.
  *
- * Separadas, cada uma tem o prazo inteiro para si, o usuário VÊ o texto extraído
- * antes de gastar crédito, e pode corrigi-lo ou completá-lo à mão.
+ * Separadas, cada uma tem o prazo inteiro para si, e o usuário VÊ o texto
+ * extraído antes de rodar a auditoria, podendo corrigi-lo ou completá-lo à mão.
  *
- * Não cobra crédito: é leitura de um arquivo que o próprio usuário enviou, e
- * cobrar por ela puniria justamente quem está contornando um bloqueio da
- * plataforma de origem. A transcrição por visão só é acionada quando a extração
- * local falha, que é o caso raro.
+ * A transcrição por visão só é acionada quando a extração local falha, que é o
+ * caso raro.
  */
 
 const schema = z.object({

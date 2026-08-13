@@ -22,8 +22,26 @@ model User {
   // Role & Permissions
   role         String   @default("user") // user | admin
   disabled     Boolean  @default(false) // Account status: false = active, true = disabled
-  // Plan / Credit Balance (Phase 1 Monetização por Créditos)
-  credits      Int      @default(0)      // 0 credits on signup (free user must acquire Plano de Entrada)
+  /// Análises completas disponíveis. Uma delas destrava TODOS os itens de um
+  /// currículo — laudo, comparação com a vaga, reescrita, orientação,
+  /// otimização de perfil, mídias sociais, carta, resumo e PDF. Não há mais
+  /// consumo por ação.
+  analysisBalance Int @default(0)
+  /// País do meio de pagamento da última compra confirmada.
+  ///
+  /// É ELE que define a faixa de preço nas compras seguintes. O IP serve para
+  /// sugerir a moeda de exibição antes da primeira compra e para nada além
+  /// disso: um usuário atrás de VPN não escolhe a própria faixa.
+  paymentCountry String?
+  /// Prévia gratuita já usada. Uma por conta — é o que evita que a análise
+  /// paga seja obtida de graça abrindo currículos novos.
+  freePreviewAt DateTime?
+  /// Saldo do modelo antigo de créditos, mantido apenas como rastro da
+  /// migração (25 créditos = 1 análise, arredondando a favor do usuário). Nada
+  /// no produto lê ou escreve este campo depois da conversão; ele existe para
+  /// que a conversão seja auditável e reversível.
+  credits           Int       @default(0)
+  creditsMigratedAt DateTime?
   plan         String   @default("free") // free | day | monthly | annual
   planStartsAt DateTime?
   planEndsAt   DateTime?
@@ -45,6 +63,7 @@ model User {
   auditLogs          AuditLog[]
   aiLogs             AiLog[]
   creditTransactions CreditTransaction[]
+  analysisLedger     AnalysisLedger[]
   incidents          SystemIncident[]
   sessions           Session[]
   analysisJobs       AnalysisJob[]
@@ -116,9 +135,19 @@ model Resume {
   careerOrientationJson String?
 
   /// Resultado da análise de presença digital (rota social-analysis).
-  /// Separado de `analysisJson` porque é cobrado à parte e roda numa rota
-  /// própria — juntar os dois agravaria o orçamento de tempo da análise.
+  /// Roda numa rota própria porque juntá-la ao laudo agravaria o orçamento de
+  /// tempo da análise — não porque seja cobrada à parte: desde a
+  /// reprecificação nada é cobrado à parte.
   socialAnalysisJson String?
+
+  /// Prévia gratuita: só as notas de 0 a 10 das 8 dimensões, sem diagnóstico e
+  /// sem texto. É o que a pessoa vê antes de pagar.
+  previewJson String?
+
+  /// Momento em que uma análise do saldo foi consumida para destravar ESTE
+  /// currículo. A partir daqui todos os nove itens ficam disponíveis, quantas
+  /// vezes o usuário quiser, sem nova cobrança.
+  unlockedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -147,6 +176,12 @@ model Subscription {
   @@index([status])
 }
 
+/// Histórico do modelo de créditos, encerrado na reprecificação.
+///
+/// Nada escreve mais aqui: o saldo virou análises completas e o movimento novo
+/// vive em `AnalysisLedger`. A tabela permanece porque é o comprovante das
+/// compras já feitas — apagá-la destruiria o rastro fiscal de quem comprou
+/// antes da mudança.
 model CreditTransaction {
   id          String   @id @default(cuid())
   userId      String
@@ -175,9 +210,55 @@ model CreditTransaction {
   @@index([userId, status])
 }
 
+/// Ledger auditável das análises.
+///
+/// Cada linha explica um movimento de saldo e carrega o que é preciso para
+/// conferir a cobrança depois: a faixa aplicada, o preço em dólar e o país do
+/// meio de pagamento que decidiu a faixa. Sem essas três colunas não há como
+/// verificar, meses depois, se um comprador pagou o preço da região certa.
+model AnalysisLedger {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// purchase | unlock | migration | admin_grant | refund
+  type        String
+  /// +N em compra e migração, -1 no destrave de um currículo.
+  delta       Int
+  description String
+
+  /// Faixa de preço aplicada (1..4). Nula em movimentos sem cobrança.
+  tier           Int?
+  /// Preço pago convertido para dólar pela cotação de referência do catálogo.
+  priceUsd       Float?
+  /// País do meio de pagamento — o que definiu a faixa.
+  paymentCountry String?
+  /// Moeda e valor efetivamente cobrados, sem conversão.
+  currency       String?
+  amountLocal    Float?
+
+  /// Currículo destravado, nos movimentos de tipo `unlock`.
+  resumeId String?
+
+  /// `checkout.session.id`. O índice único é o que impede creditar duas vezes
+  /// o mesmo pagamento, venha ele pelo webhook ou pela verificação direta.
+  paymentRef    String? @unique
+  /// `event.id` da Stripe, para rastrear qual entrega gerou a linha.
+  stripeEventId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+}
+
 model WebhookEvent {
   id        String   @id @default(cuid())
   eventName String
+  /// `event.id` da Stripe. Único: a idempotência do webhook é a falha desta
+  /// inserção, não uma consulta anterior — duas entregas simultâneas do mesmo
+  /// evento passariam por qualquer verificação feita antes da escrita.
+  eventId   String?  @unique
   processed Boolean  @default(false)
   body      String   // JSON stringified payload
   createdAt DateTime @default(now())
@@ -219,11 +300,6 @@ model AnalysisJob {
   /// posterior não tem mais os cabeçalhos da requisição original.
   lang        String  @default("pt")
   userCountry String?
-
-  /// Reserva de crédito em aberto. Nula para usuário isento (admin), que não
-  /// gera linha de transação. Liquidada no fecho, liberada na falha.
-  reservationId String?
-  creditsCost   Int     @default(0)
 
   /// Concessão de exclusividade sobre o processamento, renovada a cada segmento
   /// concluído. Uma execução morta pela plataforma deixa a concessão vencer, e a

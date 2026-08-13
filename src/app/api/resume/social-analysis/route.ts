@@ -6,15 +6,9 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import {
-  reserveCredits,
-  settleReservation,
-  releaseReservation,
-  CREDIT_COSTS,
-  type CreditReservation,
-} from '@/lib/credits'
+import { requireUnlockedResume } from '@/lib/entitlements'
 import { getRequestLanguage } from '@/lib/i18n/server'
-import { getRequestCountry } from '@/lib/currency'
+import { edgeCountry } from '@/lib/pricing/resolve'
 import { fetchAllProfiles, detectPlatform, type SocialProfileData } from '@/lib/social/fetchers'
 import { analyzeSocialPresence } from '@/lib/social/analysis'
 import { parsePdfBase64 } from '@/lib/pdf-text'
@@ -47,8 +41,6 @@ const ROUTE_BUDGET_MS = 52_000
 
 export async function POST(req: Request) {
   const routeStart = Date.now()
-  let reservation: CreditReservation | null = null
-  const costCredits = CREDIT_COSTS.social_optimization
 
   try {
     const user = await getCurrentUser()
@@ -163,25 +155,15 @@ export async function POST(req: Request) {
       )
     }
 
-    const reservationResult = await reserveCredits(
-      user.id,
-      costCredits,
-      `Análise de presença digital em ${analyzedCount} perfil(is) (${costCredits} cr)`
-    )
-
-    if (!reservationResult.success) {
+    // Mídias sociais e otimização de perfil são dois dos nove itens da Análise
+    // Completa. Nada aqui é cobrado por perfil analisado.
+    const entitlement = await requireUnlockedResume(user.id, resume.id)
+    if (!entitlement.ok) {
       return NextResponse.json(
-        {
-          error: reservationResult.error || 'Seu saldo de créditos é insuficiente.',
-          code: 'INSUFFICIENT_CREDITS',
-          requiredCredits: costCredits,
-          currentCredits: reservationResult.currentBalance,
-        },
-        { status: 402 }
+        { error: entitlement.error, code: entitlement.code, balance: entitlement.balance },
+        { status: entitlement.status }
       )
     }
-
-    reservation = reservationResult.reservation
 
     const lang = getRequestLanguage(req)
 
@@ -194,7 +176,7 @@ export async function POST(req: Request) {
       lang,
       userId: user.id,
       resumeId: resume.id,
-      userCountry: getRequestCountry(req),
+      userCountry: edgeCountry(req),
       // O que sobrou do prazo depois da leitura do PDF e da busca dos perfis.
       // As chamadas são simultâneas, então cada uma pode usá-lo por inteiro.
       timeBudgetMs: ROUTE_BUDGET_MS - (Date.now() - routeStart),
@@ -236,8 +218,6 @@ export async function POST(req: Request) {
       },
     })
 
-    await settleReservation(reservation)
-
     return NextResponse.json({
       success: true,
       socialAnalysis: stored,
@@ -245,8 +225,6 @@ export async function POST(req: Request) {
     })
   } catch (e: any) {
     console.error('social-analysis error:', e?.diagnostic || e?.message || e)
-
-    const release = await releaseReservation(reservation, 'Falha na análise de presença digital')
 
     // Diz o que aconteceu e o que fazer. "Tente novamente em instantes" era o
     // mesmo texto para toda causa possível, e o usuário repetia a operação sem
@@ -259,13 +237,10 @@ export async function POST(req: Request) {
         ? e.message
         : 'Ocorreu uma falha durante o processamento da análise.'
 
+    // Nada a estornar: a falha não custou nada ao usuário.
     return NextResponse.json(
       {
-        error: release.refunded
-          ? `${base} Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente.`
-          : `${base} Nenhum crédito foi cobrado.`,
-        refunded: release.refunded,
-        currentBalance: release.currentBalance,
+        error: base,
         code: isProviderFailure ? 'AI_PROVIDERS_UNAVAILABLE' : 'ANALYSIS_FAILED',
       },
       { status: 500 }

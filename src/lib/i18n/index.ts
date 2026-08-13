@@ -98,24 +98,30 @@ export interface TranslationDictionary {
     badge: string
     title: string
     subtitle: string
-    entryTitle: string
-    entryDesc: string
-    starterTitle: string
-    starterDesc: string
-    carreiraTitle: string
-    carreiraDesc: string
-    profTitle: string
-    profDesc: string
-    mostPopular: string
+    /// Um produto só. As chaves dos quatro pacotes de crédito
+    /// (`entryTitle`/`entryDesc`, `starterTitle`/`starterDesc`,
+    /// `carreiraTitle`/`carreiraDesc`, `profTitle`/`profDesc`) saíram junto com
+    /// os pacotes: não há mais o que comparar numa tabela.
+    productTitle: string
+    productDesc: string
+    oneTime: string
+    includesTitle: string
+    /// Os nove itens que UMA compra entrega.
+    items: string[]
     buyCta: string
-    guideTitle: string
-    guideSub: string
-    tool1Title: string
-    tool1Desc: string
-    tool1Ideal: string
-    tool2Title: string
-    tool2Desc: string
-    tool2Ideal: string
+    previewTitle: string
+    previewDesc: string
+    previewCta: string
+    localPayment: string
+    /// Upsell — só renderizado depois da primeira compra.
+    packTitle: string
+    packDesc: string
+    packCta: string
+    packPerAnalysis: string
+    /// Empresas e RH não têm autosserviço.
+    businessTitle: string
+    businessDesc: string
+    businessCta: string
   }
   faq: {
     badge: string
@@ -168,8 +174,10 @@ export interface TranslationDictionary {
     plans: string
     settings: string
     admin: string
-    credits: string
-    addCredits: string
+    /// Saldo de análises completas. Era `credits`/`addCredits`.
+    balance: string
+    balanceUnit: string
+    buyMore: string
     greeting: string
     greetingSub: string
     newResume: string
@@ -272,27 +280,36 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       s5Desc: 'Baixe a versão final pronta para aplicar em vagas imediatamente.',
     },
     pricing: {
-      badge: 'Sem Mensalidades ou Fidelidade',
-      title: 'Plano de Entrada por apenas R$ 9,90 com 2 Avaliações Completas!',
-      subtitle: 'Adquira o Plano de Entrada para começar ou escolha o pacote ideal para o seu momento profissional.',
-      entryTitle: 'Plano de Entrada',
-      entryDesc: '40 créditos (2 Avaliações Completas)',
-      starterTitle: 'Pacote Starter',
-      starterDesc: '100 créditos (R$ 0,299 / crédito)',
-      carreiraTitle: 'Pacote Carreira',
-      carreiraDesc: '500 créditos (R$ 0,199 / crédito)',
-      profTitle: 'Pacote Profissional',
-      profDesc: '1.500 créditos (R$ 0,166 / crédito)',
-      mostPopular: 'Mais Vendido',
-      buyCta: 'Adquirir Pacote',
-      guideTitle: 'Qual a diferença entre Avaliação e Reescrita do Currículo?',
-      guideSub: 'Você pode utilizar seus créditos como preferir em qualquer momento da sua busca por emprego.',
-      tool1Title: 'Avaliação do Currículo (20 créditos)',
-      tool1Desc: 'Diagnóstico Executivo em 8 Dimensões: Analisa seu currículo sob a ótica de um recrutador técnico e robô ATS. Aponta Nota Geral, pontos fortes, vulnerabilidades e palavras-chave faltantes.',
-      tool1Ideal: '✓ Ideal para: Descobrir falhas ocultas antes de enviar para vagas.',
-      tool2Title: 'Reescrita do Currículo (10 créditos)',
-      tool2Desc: 'Reformulação Prática de Experiências: Reescreve suas experiências profissionais aplicando a Fórmula STAR e Google XYZ, garantindo 100% de veracidade dos fatos.',
-      tool2Ideal: '✓ Ideal para: Transformar descrições simples em realizações de alto impacto.',
+      badge: 'Pagamento único, sem assinatura',
+      title: 'Uma compra. O laudo inteiro.',
+      subtitle: 'Envie o currículo, veja sua nota de graça e pague uma vez para receber tudo. Sem mensalidade, sem fidelidade, sem saldo para administrar.',
+      productTitle: 'Análise Completa',
+      productDesc: 'Nove entregas em uma compra só, para o currículo que você escolher.',
+      oneTime: 'Pagamento único. Sem assinatura e sem renovação automática.',
+      includesTitle: 'O que você recebe',
+      items: [
+        'Laudo das 8 Dimensões',
+        'Comparação com a Vaga Alvo',
+        'Reescrita de Experiências (STAR/XYZ)',
+        'Orientação Profissional',
+        'Otimização de Perfil (LinkedIn/Gupy)',
+        'Análise de Mídias Sociais',
+        'Carta de Apresentação',
+        'Resumo Profissional',
+        'Download em PDF',
+      ],
+      buyCta: 'Comprar Análise Completa',
+      previewTitle: 'Veja sua nota de graça',
+      previewDesc: 'Envie o currículo e receba as notas de 0 a 10 nas 8 dimensões, sem pagar nada. Uma prévia por conta.',
+      previewCta: 'Ver minha nota grátis',
+      localPayment: 'Pague em {currency} com {methods}.',
+      packTitle: 'Vai se candidatar a mais vagas?',
+      packDesc: '5 Análises Completas, uma para cada currículo ou vaga que você quiser trabalhar.',
+      packCta: 'Comprar 5 análises por {price}',
+      packPerAnalysis: '{price} por análise',
+      businessTitle: 'Empresas e RH',
+      businessDesc: 'Volume, faturamento e integração com o seu processo seletivo.',
+      businessCta: 'Falar com vendas',
     },
     faq: {
       badge: 'Perguntas Frequentes',
@@ -306,8 +323,8 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       a3: 'Se você fornecer os links dos seus perfis com autorização, a IA gera títulos otimizados (Headlines), resumos para a seção "Sobre" e dicas de algoritmo para atrair mais recrutadores no seu mercado.',
       q4: 'Meus dados e meu currículo estão seguros?',
       a4: 'Totalmente. Trabalhamos em conformidade rigorosa com a LGPD e GDPR. Seus dados são criptografados e não são compartilhados nem vendidos a terceiros.',
-      q5: 'Como funciona o saldo de créditos?',
-      a5: 'Os créditos adquiridos não possuem expiração ou mensalidade. Você utiliza no seu tempo para realizar avaliações completas ou reescritas de currículo sempre que precisar.',
+      q5: 'Preciso assinar alguma coisa?',
+      a5: 'Não. Você paga uma vez pela Análise Completa daquele currículo e recebe as nove entregas. Não há mensalidade, renovação automática nem saldo para administrar — se quiser analisar outro currículo depois, é só comprar outra análise.',
     },
     ctaFinal: {
       title: 'Pronto para transformar sua apresentação profissional?',
@@ -342,11 +359,12 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       rewrite: 'Reescrita',
       downloads: 'Downloads',
       history: 'Histórico',
-      plans: 'Comprar Créditos',
+      plans: 'Comprar Análise',
       settings: 'Configurações',
       admin: 'Área Admin',
-      credits: 'Créditos',
-      addCredits: '+ Adicionar',
+      balance: 'Análises',
+      balanceUnit: 'análises disponíveis',
+      buyMore: '+ Comprar',
       greeting: 'Olá',
       greetingSub: 'Aqui está o resumo da sua atividade no GriffoWork.',
       newResume: 'Novo currículo',
@@ -448,27 +466,36 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       s5Desc: 'Download your finalized resume ready for immediate job applications.',
     },
     pricing: {
-      badge: 'No Subscription Lock-In',
-      title: 'Entry Plan for just $1.99 / R$ 9,90 with 2 Complete Audits!',
-      subtitle: 'Get started with our Entry Plan or select the credit package that fits your career goals.',
-      entryTitle: 'Entry Plan',
-      entryDesc: '40 credits (2 Complete Audits)',
-      starterTitle: 'Starter Pack',
-      starterDesc: '100 credits (Best for active job hunters)',
-      carreiraTitle: 'Career Pack',
-      carreiraDesc: '500 credits (Best value for power users)',
-      profTitle: 'Professional Pack',
-      profDesc: '1,500 credits (For executive coaches & agencies)',
-      mostPopular: 'Most Popular',
-      buyCta: 'Get Credits Package',
-      guideTitle: 'What is the difference between Audit and AI Rewrite?',
-      guideSub: 'You can use your non-expiring credits anytime across any tool in GriffoWork.',
-      tool1Title: 'Resume Audit (20 credits)',
-      tool1Desc: '8-Dimension Executive Audit: Evaluates your resume from a hiring manager and ATS bot perspective. Reveals overall score, vulnerabilities and missing keywords.',
-      tool1Ideal: '✓ Ideal for: Uncovering hidden deal-breakers before applying to jobs.',
-      tool2Title: 'Resume AI Rewrite (10 credits)',
-      tool2Desc: 'Experience Bullet Reformulation: Rewrites work experience bullets using the STAR and Google XYZ formulas with 100% factual accuracy.',
-      tool2Ideal: '✓ Ideal for: Upgrading plain bullet points into high-impact achievements.',
+      badge: 'One-time payment, no subscription',
+      title: 'One purchase. The whole report.',
+      subtitle: 'Upload your resume, see your score for free, and pay once to get everything. No monthly fee, no lock-in, no balance to manage.',
+      productTitle: 'Complete Analysis',
+      productDesc: 'Nine deliverables in a single purchase, for the resume you choose.',
+      oneTime: 'One-time payment. No subscription and no auto-renewal.',
+      includesTitle: 'What you get',
+      items: [
+        '8-Dimension Audit Report',
+        'Target Job Comparison',
+        'Experience Rewrite (STAR/XYZ)',
+        'Career Guidance Report',
+        'Profile Optimization (LinkedIn/ATS)',
+        'Social Media Review',
+        'Cover Letter',
+        'Professional Summary',
+        'PDF Download',
+      ],
+      buyCta: 'Buy Complete Analysis',
+      previewTitle: 'See your score for free',
+      previewDesc: 'Upload your resume and get 0-10 scores across the 8 dimensions at no cost. One preview per account.',
+      previewCta: 'See my free score',
+      localPayment: 'Pay in {currency} with {methods}.',
+      packTitle: 'Applying to more roles?',
+      packDesc: '5 Complete Analyses, one for each resume or role you want to work on.',
+      packCta: 'Get 5 analyses for {price}',
+      packPerAnalysis: '{price} per analysis',
+      businessTitle: 'Companies & HR teams',
+      businessDesc: 'Volume, invoicing and integration with your hiring process.',
+      businessCta: 'Talk to sales',
     },
     faq: {
       badge: 'Frequently Asked Questions',
@@ -482,8 +509,8 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       a3: 'With your consent, our AI generates optimized headlines, "About" bios, and keyword positioning recommendations tailored to recruiter searches.',
       q4: 'Is my resume data safe and private?',
       a4: 'Absolutely. We operate under strict GDPR compliance. Your data is encrypted and never shared or sold to third parties.',
-      q5: 'Do my purchased credits expire?',
-      a5: 'No. Purchased credits never expire and have no recurring monthly fees.',
+      q5: 'Do I need a subscription?',
+      a5: 'No. You pay once for the Complete Analysis of that resume and receive all nine deliverables. No monthly fee, no auto-renewal and no balance to manage — if you want to analyze another resume later, you simply buy another analysis.',
     },
     ctaFinal: {
       title: 'Ready to elevate your executive presentation?',
@@ -518,11 +545,12 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       rewrite: 'AI Rewrite',
       downloads: 'Downloads',
       history: 'History',
-      plans: 'Buy Credits',
+      plans: 'Buy Analysis',
       settings: 'Settings',
       admin: 'Admin Area',
-      credits: 'Credits',
-      addCredits: '+ Add',
+      balance: 'Analyses',
+      balanceUnit: 'analyses available',
+      buyMore: '+ Buy',
       greeting: 'Hello',
       greetingSub: 'Here is an overview of your GriffoWork activity.',
       newResume: 'New Resume',
@@ -624,27 +652,36 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       s5Desc: 'Descarga la versión final lista para postular a empleos de inmediato.',
     },
     pricing: {
-      badge: 'Sin Suscripciones Forzadas',
-      title: '¡Plan de Entrada por solo $1.99 / R$ 9,90 con 2 Evaluaciones Completas!',
-      subtitle: 'Comienza con nuestro Plan de Entrada o elige el paquete de créditos ideal para tu momento profesional.',
-      entryTitle: 'Plan de Entrada',
-      entryDesc: '40 créditos (2 Evaluaciones Completas)',
-      starterTitle: 'Paquete Starter',
-      starterDesc: '100 créditos (Ideal para búsqueda activa)',
-      carreiraTitle: 'Paquete Carrera',
-      carreiraDesc: '500 créditos (El mejor costo-beneficio)',
-      profTitle: 'Paquete Profesional',
-      profDesc: '1.500 créditos (Para profesionales y agencias)',
-      mostPopular: 'Más Vendido',
-      buyCta: 'Adquirir Paquete',
-      guideTitle: '¿Cuál es la diferencia entre Evaluación y Reescritura?',
-      guideSub: 'Puedes utilizar tus créditos sin caducidad en cualquier herramienta de GriffoWork.',
-      tool1Title: 'Evaluación de Currículum (20 créditos)',
-      tool1Desc: 'Diagnóstico Ejecutivo en 8 Dimensiones: Evalúa tu currículum desde la óptica de un reclutador y filtro ATS. Revela nota general y palabras clave faltantes.',
-      tool1Ideal: '✓ Ideal para: Descubrir errores ocultos antes de enviar a vacantes.',
-      tool2Title: 'Reescritura de Currículum (10 créditos)',
-      tool2Desc: 'Reformulación de Experiencias: Reescribe tus experiencias aplicando las fórmulas STAR y Google XYZ con 100% de veracidad.',
-      tool2Ideal: '✓ Ideal para: Transformar descripciones simples en logros de alto impacto.',
+      badge: 'Pago único, sin suscripción',
+      title: 'Una compra. El informe completo.',
+      subtitle: 'Sube tu currículum, mira tu nota gratis y paga una vez para recibirlo todo. Sin mensualidad, sin permanencia, sin saldo que administrar.',
+      productTitle: 'Análisis Completo',
+      productDesc: 'Nueve entregas en una sola compra, para el currículum que elijas.',
+      oneTime: 'Pago único. Sin suscripción ni renovación automática.',
+      includesTitle: 'Lo que recibes',
+      items: [
+        'Informe de 8 Dimensiones',
+        'Comparación con la Vacante',
+        'Reescritura de Experiencias (STAR/XYZ)',
+        'Orientación Profesional',
+        'Optimización de Perfil (LinkedIn/ATS)',
+        'Análisis de Redes Sociales',
+        'Carta de Presentación',
+        'Resumen Profesional',
+        'Descarga en PDF',
+      ],
+      buyCta: 'Comprar Análisis Completo',
+      previewTitle: 'Mira tu nota gratis',
+      previewDesc: 'Sube tu currículum y recibe las notas de 0 a 10 en las 8 dimensiones, sin pagar nada. Una vista previa por cuenta.',
+      previewCta: 'Ver mi nota gratis',
+      localPayment: 'Paga en {currency} con {methods}.',
+      packTitle: '¿Vas a postular a más vacantes?',
+      packDesc: '5 Análisis Completos, uno para cada currículum o vacante que quieras trabajar.',
+      packCta: 'Comprar 5 análisis por {price}',
+      packPerAnalysis: '{price} por análisis',
+      businessTitle: 'Empresas y RR. HH.',
+      businessDesc: 'Volumen, facturación e integración con tu proceso de selección.',
+      businessCta: 'Hablar con ventas',
     },
     faq: {
       badge: 'Preguntas Frecuentes',
@@ -658,8 +695,8 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       a3: 'Con tu autorización, la IA genera titulares optimizados, resúmenes "Sobre mí" y posicionamiento de palabras clave para reclutadores.',
       q4: '¿Mis datos están seguros?',
       a4: 'Totalmente. Operamos en estricto cumplimiento del RGPD. Tus datos están encriptados y nunca se comparten ni venden a terceros.',
-      q5: '¿Mis créditos adquiridos caducan?',
-      a5: 'No. Los créditos no caducan nunca y no hay pagos mensuales recurrentes.',
+      q5: '¿Necesito una suscripción?',
+      a5: 'No. Pagas una vez por el Análisis Completo de ese currículum y recibes las nueve entregas. Sin mensualidad, sin renovación automática y sin saldo que administrar: si luego quieres analizar otro currículum, solo compras otro análisis.',
     },
     ctaFinal: {
       title: '¿Listo para transformar tu presentación profesional?',
@@ -694,11 +731,12 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       rewrite: 'Reescritura',
       downloads: 'Descargas',
       history: 'Historial',
-      plans: 'Comprar Créditos',
+      plans: 'Comprar Análisis',
       settings: 'Configuración',
       admin: 'Área Admin',
-      credits: 'Créditos',
-      addCredits: '+ Añadir',
+      balance: 'Análisis',
+      balanceUnit: 'análisis disponibles',
+      buyMore: '+ Comprar',
       greeting: 'Hola',
       greetingSub: 'Aquí tienes el resumen de tu actividad en GriffoWork.',
       newResume: 'Nuevo currículum',

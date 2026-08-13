@@ -25,11 +25,23 @@ export async function GET() {
     const totalTokensOut = tokenStats._sum.tokensOut || 0
     const totalCostUsd = tokenStats._sum.costUsd || 0
 
-    const revenueStats = await db.creditTransaction.aggregate({
+    // A receita passa a ser lida em dólar, a moeda base do catálogo. Somar
+    // valores locais seria somar reais com rúpias; `priceUsd` é justamente a
+    // coluna que o ledger grava já normalizada.
+    const revenueStats = await db.analysisLedger.aggregate({
+      where: { type: 'purchase' },
+      _sum: { priceUsd: true },
+      _count: true,
+    })
+    const totalRevenueUsd = revenueStats._sum.priceUsd || 0
+    const purchaseCount = revenueStats._count || 0
+
+    // Receita do modelo antigo de créditos, encerrado. Fica separada em vez de
+    // somada: são preços de outro produto, e juntá-las esconderia a virada.
+    const legacyRevenue = await db.creditTransaction.aggregate({
       where: { type: 'purchase' },
       _sum: { costBrl: true },
     })
-    const totalRevenueBrl = revenueStats._sum.costBrl || 0
 
     return NextResponse.json({
       metrics: {
@@ -43,8 +55,10 @@ export async function GET() {
           totalCostBrl: totalCostUsd * 5.4,
         },
         financial: {
-          totalRevenueBrl,
-          estimatedProfitBrl: totalRevenueBrl - totalCostUsd * 5.4,
+          totalRevenueUsd,
+          purchaseCount,
+          estimatedProfitUsd: totalRevenueUsd - totalCostUsd,
+          legacyCreditRevenueBrl: legacyRevenue._sum.costBrl || 0,
         },
       },
     })

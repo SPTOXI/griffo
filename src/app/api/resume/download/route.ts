@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { generateResumePdf, generateAnalysisReportPdf, sanitizeMarkdown } from '@/lib/pdf'
-import { reserveCredits, settleReservation, releaseReservation, CREDIT_COSTS } from '@/lib/credits'
+import { requireUnlockedResume } from '@/lib/entitlements'
 
 interface DownloadPayload {
   buf: Buffer
@@ -77,7 +77,7 @@ function buildSocialAdviceContent(socialAnalysis: any, asPlainText: boolean): st
 
 /**
  * Monta o arquivo pedido. Lança `DownloadError` quando o pedido não pode ser
- * atendido — nenhuma dessas condições deve custar crédito ao usuário.
+ * atendido.
  */
 async function buildDownload(
   type: string,
@@ -184,41 +184,20 @@ export async function GET(req: Request) {
     const resume = await db.resume.findFirst({ where: { id: resumeId, userId: user.id } })
     if (!resume) return NextResponse.json({ error: 'Currículo não encontrado' }, { status: 404 })
 
-    // A cobrança acontece entre a validação e a geração, e não antes de tudo:
-    // um pedido inválido (tipo desconhecido, currículo ainda não reescrito)
-    // devolve erro sem custar nada, e uma falha na geração libera a reserva.
-    //
-    // Antes, a rota só cobrava quando já havia saldo — abaixo de 1 crédito o
-    // download saía de graça — e a falha da cobrança era engolida por
-    // `.catch(() => {})`. A isenção de administrador vive dentro de
-    // `reserveCredits`, então não é repetida aqui.
-    const costCredits = CREDIT_COSTS.pdf_download
-
-    const reservationResult = await reserveCredits(
-      user.id,
-      costCredits,
-      `Download do currículo em ${type} (${costCredits} cr)`
-    )
-
-    if (!reservationResult.success) {
+    // O download é o nono item da Análise Completa. Baixar o mesmo currículo
+    // dez vezes não custa nada — o que se comprou foi a análise, não o arquivo.
+    const entitlement = await requireUnlockedResume(user.id, resume.id)
+    if (!entitlement.ok) {
       return NextResponse.json(
-        {
-          error: reservationResult.error || 'Saldo insuficiente para baixar o arquivo.',
-          code: 'INSUFFICIENT_CREDITS',
-          requiredCredits: costCredits,
-          currentCredits: reservationResult.currentBalance,
-        },
-        { status: 402 }
+        { error: entitlement.error, code: entitlement.code, balance: entitlement.balance },
+        { status: entitlement.status }
       )
     }
-
-    const reservation = reservationResult.reservation
 
     let payload: DownloadPayload
     try {
       payload = await buildDownload(type, resume, user.name)
     } catch (buildErr) {
-      await releaseReservation(reservation, 'Falha ao gerar o arquivo')
       if (buildErr instanceof DownloadError) {
         return NextResponse.json({ error: buildErr.message }, { status: buildErr.status })
       }
@@ -228,9 +207,6 @@ export async function GET(req: Request) {
     await db.auditLog.create({
       data: { userId: user.id, resumeId: resume.id, action: 'download', meta: JSON.stringify({ type }) },
     })
-
-    // Arquivo pronto: só agora a reserva vira cobrança.
-    await settleReservation(reservation)
 
     return new NextResponse(new Uint8Array(payload.buf), {
       headers: {

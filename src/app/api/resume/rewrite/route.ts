@@ -7,15 +7,9 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
-import {
-  reserveCredits,
-  settleReservation,
-  releaseReservation,
-  CREDIT_COSTS,
-  type CreditReservation,
-} from '@/lib/credits'
+import { requireUnlockedResume } from '@/lib/entitlements'
 import { getRequestLanguage, LANGUAGE_DIRECTIVE, ATS_BY_MARKET } from '@/lib/i18n/server'
-import { getRequestCountry } from '@/lib/currency'
+import { edgeCountry } from '@/lib/pricing/resolve'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório'),
@@ -27,9 +21,6 @@ const schema = z.object({
 const REWRITE_INPUT_LIMIT = 20000
 
 export async function POST(req: Request) {
-  let reservation: CreditReservation | null = null
-  const costCredits = CREDIT_COSTS.rewrite_experience
-
   try {
     const user = await getCurrentUser()
     if (!user) {
@@ -52,28 +43,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Currículo não encontrado' }, { status: 404 })
     }
 
-    // Deduct 10 credits per experience rewrite
-    // Reserva em vez de debitar: o crédito só vira cobrança definitiva
-    // depois que a entrega confirma. Ver lib/credits.ts.
-    const deduction = await reserveCredits(
-      user.id,
-      costCredits,
-      `Reescrita de currículo em fórmula STAR/XYZ (${costCredits} cr)`
-    )
-
-    if (!deduction.success) {
+    // A reescrita não é cobrada à parte: ela é um dos nove itens da Análise
+    // Completa. A única pergunta é se este currículo já foi liberado.
+    const entitlement = await requireUnlockedResume(user.id, resume.id)
+    if (!entitlement.ok) {
       return NextResponse.json(
-        {
-          error: deduction.error || 'Seu saldo de créditos é insuficiente. Adquira o Plano de Entrada (R$ 9,90) ou recarregue seu saldo para continuar utilizando a IA.',
-          code: 'INSUFFICIENT_CREDITS',
-          requiredCredits: costCredits,
-          currentCredits: deduction.currentBalance,
-        },
-        { status: 402 }
+        { error: entitlement.error, code: entitlement.code, balance: entitlement.balance },
+        { status: entitlement.status }
       )
     }
-
-    reservation = deduction.reservation
 
     const lang = getRequestLanguage(req)
 
@@ -92,7 +70,7 @@ export async function POST(req: Request) {
     const routerResult = await executeAiTask({
       taskType: 'rewrite',
       userId: user.id,
-      userCountry: getRequestCountry(req),
+      userCountry: edgeCountry(req),
       systemPrompt: `${LANGUAGE_DIRECTIVE[lang]}\n\nVocê é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas ATS (${ATS_BY_MARKET[lang]}). Sua função é reescrever o currículo COMPLETO de ponta a ponta sem cortar nada, utilizando marcações Markdown perfeitamente estruturadas (títulos H1/H2, marcadores de lista, negritos).`,
       userPrompt: `REESCREVA O CURRÍCULO COMPLETO DO INÍCIO AO FIM SEM OMITIR NEM SINTETIZAR NENHUMA SEÇÃO OU EXPERIÊNCIA.
 
@@ -135,9 +113,6 @@ ${resume.originalContent.slice(0, REWRITE_INPUT_LIMIT)}`,
       },
     })
 
-    // Entrega confirmada e persistida: só agora a reserva vira cobrança.
-    await settleReservation(reservation)
-
     return NextResponse.json({
       success: true,
       rewrittenContent: routerResult.content,
@@ -147,20 +122,12 @@ ${resume.originalContent.slice(0, REWRITE_INPUT_LIMIT)}`,
     })
   } catch (e: any) {
     console.error('rewrite error:', e?.diagnostic || e?.message || e)
-    // Liberar é idempotente: se a reserva já tiver sido liquidada ou liberada,
-    // nada é creditado. Não há mais como um retry devolver o crédito duas vezes.
-    const release = await releaseReservation(reservation, 'Falha no processamento de IA')
-    if (release.refunded) {
-      return NextResponse.json(
-        {
-          error: `Ocorreu uma falha durante o processamento da IA. Seus ${costCredits} créditos foram REEMBOLSADOS automaticamente!`,
-          refunded: true,
-          currentBalance: release.currentBalance,
-        },
-        { status: 500 }
-      )
-    }
-    return NextResponse.json({ error: 'Ocorreu um erro ao reescrever o currículo. Tente novamente em instantes.' }, { status: 500 })
+    // Não há estorno a fazer: a falha não custou nada ao usuário. O currículo
+    // continua liberado e ele pode pedir a reescrita de novo.
+    return NextResponse.json(
+      { error: 'Ocorreu um erro ao reescrever o currículo. Tente novamente em instantes.' },
+      { status: 500 }
+    )
   }
 }
 

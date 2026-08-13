@@ -41,7 +41,6 @@ export interface SocialAnalysis {
   analyzedAt?: string
 }
 
-const CREDIT_COST = 20
 
 const PLATFORM_ICON: Record<string, typeof Github> = {
   github: Github,
@@ -110,23 +109,21 @@ export function SocialAnalysisPanel({
           setError(data.error)
           return
         }
-        if (data.code === 'INSUFFICIENT_CREDITS') {
-          setError(`${data.error} São necessários ${CREDIT_COST} créditos.`)
+        if (data.code === 'ANALYSIS_REQUIRED') {
+          // A auditoria de perfis não tem preço próprio: ela é um dos itens da
+          // Análise Completa deste currículo.
+          setError(data.error)
           return
         }
         setError(data.error || 'Não foi possível concluir a análise.')
-        if (data.refunded) window.dispatchEvent(new Event('griffo:credits-changed'))
         return
       }
 
       setAnalysis(data.socialAnalysis)
-      // O saldo no cabeçalho só é relido ao trocar de tela; sem este aviso ele
-      // ficaria 20 créditos desatualizado logo depois da cobrança.
-      window.dispatchEvent(new Event('griffo:credits-changed'))
       setSourceNotes(data.socialAnalysis?.sources || null)
       toast.success(`Análise concluída sobre ${data.analyzedCount} perfil(is).`)
     } catch {
-      setError('Falha de conexão. Verifique sua internet e tente novamente — nenhum crédito foi cobrado.')
+      setError('Falha de conexão. Verifique sua internet e tente novamente — nada foi cobrado.')
     } finally {
       setRunning(false)
     }
@@ -136,7 +133,7 @@ export function SocialAnalysisPanel({
    * Lê o PDF assim que ele é escolhido, numa chamada própria.
    *
    * O texto extraído cai no mesmo campo em que se cola conteúdo à mão: o
-   * usuário VÊ o que foi lido antes de gastar crédito, e pode corrigir ou
+   * usuário VÊ o que foi lido antes de rodar a auditoria, e pode corrigir ou
    * completar. Quando a leitura falha, a mensagem diz o que fazer em vez de
    * apenas informar que falhou.
    */
@@ -220,7 +217,7 @@ export function SocialAnalysisPanel({
               className="bg-transparent border-violet-500/40 text-violet-200 hover:bg-violet-500/10 hover:text-white text-sm font-bold shrink-0"
             >
               {running ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : null}
-              Refazer ({CREDIT_COST} cr)
+              Refazer
             </Button>
           )}
         </div>
@@ -275,7 +272,7 @@ export function SocialAnalysisPanel({
               {running ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lendo seus perfis... (até 40s)</>
               ) : (
-                <><Sparkles className="w-4 h-4 mr-2" /> Auditar presença digital ({CREDIT_COST} cr)</>
+                <><Sparkles className="w-4 h-4 mr-2" /> Auditar presença digital</>
               )}
             </Button>
           </div>

@@ -6,9 +6,9 @@ import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { reserveCredits, CREDIT_COSTS } from '@/lib/credits'
+import { unlockAnalysis } from '@/lib/entitlements'
 import { getRequestLanguage } from '@/lib/i18n/server'
-import { getRequestCountry } from '@/lib/currency'
+import { edgeCountry } from '@/lib/pricing/resolve'
 import { processAnalysisJob, resumeIfStalled } from '@/lib/analysis/job'
 import { SEGMENT_IDS } from '@/lib/analysis/stages'
 
@@ -17,15 +17,17 @@ import { SEGMENT_IDS } from '@/lib/analysis/stages'
  *
  * Esta rota fazia a análise inteira antes de responder: uma chamada de IA de
  * ~3.800 tokens de saída, medida em 82s, dentro de uma função com
- * `maxDuration = 60`. A plataforma encerrava a execução aos 60s, o navegador
- * mostrava "erro de conexão" depois de mais de um minuto de espera, e o `catch`
- * que devolvia os créditos morria junto — o estorno só acontecia depois, na
- * varredura de reservas órfãs.
+ * `maxDuration = 60`. A plataforma encerrava a execução aos 60s e o navegador
+ * mostrava "erro de conexão" depois de mais de um minuto de espera.
  *
- * Agora ela reserva o crédito, cria o job e devolve o `id`. O processamento
+ * Agora ela destrava o currículo, cria o job e devolve o `id`. O processamento
  * roda fora do caminho da resposta e grava o progresso no banco; a tela
  * acompanha por `GET /api/resume/analyze/status`. Fechar o navegador no meio
  * deixou de custar o laudo.
+ *
+ * O destrave é o ÚNICO movimento cobrável do produto: ele consome uma análise
+ * do saldo e libera os nove itens deste currículo para sempre — reescrita,
+ * carta, orientação, mídias sociais e download deixaram de ter preço próprio.
  */
 
 const schema = z.object({
@@ -75,21 +77,17 @@ export async function POST(req: Request) {
       )
     }
 
-    const costCredits = CREDIT_COSTS.full_analysis
-    const deduction = await reserveCredits(
-      user.id,
-      costCredits,
-      `Análise completa em 8 Dimensões (${costCredits} cr)`
-    )
+    // Idempotente: um currículo já destravado não é cobrado de novo. Repetir a
+    // análise do mesmo currículo — porque o usuário mudou a vaga alvo, ou
+    // porque um segmento falhou — não custa uma segunda análise do saldo.
+    const unlock = await unlockAnalysis(user.id, resume.id)
 
-    if (!deduction.success) {
+    if (!unlock.ok) {
       return NextResponse.json(
         {
-          error:
-            deduction.error ||
-            'Seu saldo de créditos é insuficiente. Adquira o Plano de Entrada (R$ 9,90) ou recarregue seu saldo para continuar utilizando a IA.',
-          code: 'INSUFFICIENT_CREDITS',
-          currentBalance: deduction.currentBalance,
+          error: unlock.error || 'Você ainda não tem uma análise disponível.',
+          code: 'ANALYSIS_REQUIRED',
+          balance: unlock.balance,
         },
         { status: 402 }
       )
@@ -103,9 +101,7 @@ export async function POST(req: Request) {
         resumeId: resume.id,
         status: 'queued',
         lang: getRequestLanguage(req),
-        userCountry: getRequestCountry(req),
-        reservationId: deduction.reservation.id,
-        creditsCost: costCredits,
+        userCountry: edgeCountry(req),
       },
       select: { id: true },
     })
@@ -123,14 +119,14 @@ export async function POST(req: Request) {
         jobId: job.id,
         status: 'queued',
         totalSegments: SEGMENT_IDS.length,
-        currentBalance: deduction.currentBalance,
+        balance: unlock.balance,
       },
       { status: 202 }
     )
   } catch (e: any) {
-    // Nenhum crédito a estornar aqui: uma falha nesta rota ou é anterior à
-    // reserva, ou é posterior à criação do job — e a partir daí o desfecho do
-    // crédito pertence ao job, que libera a reserva se não conseguir concluir.
+    // Nada a estornar: o destrave é do currículo, não da execução. Se o
+    // processamento falhar, o currículo continua liberado e a análise pode ser
+    // repetida sem nova cobrança.
     console.error('analyze error:', e?.message || e)
     return NextResponse.json(
       { error: 'Não foi possível iniciar a análise. Tente novamente em instantes.' },
