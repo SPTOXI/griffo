@@ -17,9 +17,23 @@ import { normalizeCountry, tierConfig, tierForCountry } from './catalog'
  * queda de conversão.
  */
 
-/** Métodos locais que a Stripe aceita, por país, quando a moeda bate. */
+/**
+ * Métodos locais que a Stripe aceita, por país, quando a moeda bate.
+ *
+ * Habilitar um método aqui só faz sentido se ele estiver ATIVO na conta Stripe.
+ * A Stripe recusa a sessão inteira quando recebe um método desabilitado; o
+ * checkout se recupera repetindo só com cartão, mas isso custa uma ida e volta
+ * perdida em cada compra — no caminho quente, com o comprador esperando.
+ *
+ * `STRIPE_PIX_ENABLED=true` liga o Pix. Fica desligado por padrão porque o Pix
+ * exige conta Stripe registrada no Brasil: contas de outros países cobram em
+ * reais normalmente, mas não têm acesso a ele. Ligar sem ter a conta certa não
+ * quebra a venda — a recuperação continua lá —, só desperdiça a chamada.
+ */
+const PIX_ENABLED = process.env.STRIPE_PIX_ENABLED === 'true'
+
 const STRIPE_LOCAL_METHODS: Record<string, { methods: string[]; currency: string }> = {
-  BR: { methods: ['pix'], currency: 'BRL' },
+  ...(PIX_ENABLED ? { BR: { methods: ['pix'], currency: 'BRL' } } : {}),
 }
 
 /** Métodos declarados no catálogo que a Stripe não cobre. */

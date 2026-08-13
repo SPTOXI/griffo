@@ -84,8 +84,15 @@ recobrar retroativamente; dá para não repetir.
 `src/lib/pricing/payment-methods.ts`. A regra é econômica: nas Faixas 3 e 4 a
 taxa fixa do cartão internacional come ~10% da receita.
 
-- **Pix (BR)** — `payment_method_type` da Stripe, ativo quando a cobrança é em
-  BRL.
+- **Pix (BR)** — `payment_method_type` da Stripe, disponível apenas para conta
+  registrada no Brasil. Controlado por `STRIPE_PIX_ENABLED`, **desligado por
+  padrão**: a conta em uso não tem acesso a ele. Contas de outros países cobram
+  em reais normalmente, mas não oferecem Pix.
+
+  Quando ligado sem estar ativo na conta, a Stripe recusa a sessão inteira — o
+  checkout se recupera repetindo só com cartão (`api/checkout`), mas ao custo de
+  uma ida e volta perdida em cada compra. Ligar só depois de ativar no painel da
+  Stripe.
 - **UPI (IN), GoPay/OVO (ID)** — declarados no catálogo como requisito do
   mercado, mas **a Stripe não os serve** para contas fora daqueles países.
   `pendingLocalMethods(country)` reporta a lacuna. Fechá-la exige adquirente
