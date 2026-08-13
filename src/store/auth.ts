@@ -10,7 +10,12 @@ export interface AuthUser {
   role?: string
   profession?: string | null
   plan: string
-  credits?: number
+  /// Análises completas disponíveis. Substituiu o saldo de créditos.
+  analysisBalance?: number
+  /// País do meio de pagamento, quando já houve compra. É ele que define a
+  /// faixa de preço — nunca o IP.
+  paymentCountry?: string | null
+  freePreviewUsed?: boolean
   planStartsAt?: string | null
   planEndsAt?: string | null
   planActive?: boolean

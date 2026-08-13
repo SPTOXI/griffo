@@ -31,6 +31,8 @@ export async function GET(
           careerOrientationJson: true,
           socialAnalysisJson: true,
           socialLinksJson: true,
+          previewJson: true,
+          unlockedAt: true,
         },
       })
       if (!resume) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
@@ -50,8 +52,16 @@ export async function GET(
       if (resume.socialLinksJson) {
         try { socialLinks = JSON.parse(resume.socialLinksJson) } catch { socialLinks = {} }
       }
+      let preview = null
+      if (resume.previewJson) {
+        try { preview = JSON.parse(resume.previewJson) } catch { preview = null }
+      }
+      // A tela precisa saber se este currículo já foi liberado: é isso que
+      // separa mostrar o laudo de mostrar o paywall, e é o que impede a análise
+      // de disparar sozinha sem que ninguém tenha pago por ela.
+      const unlocked = Boolean(resume.unlockedAt) || user.role === 'admin'
       return NextResponse.json({
-        resume: { ...resume, analysis, careerOrientation, socialAnalysis, socialLinks },
+        resume: { ...resume, analysis, careerOrientation, socialAnalysis, socialLinks, preview, unlocked },
       })
     }
 

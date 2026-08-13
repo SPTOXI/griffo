@@ -15,7 +15,6 @@ import {
 import { internalFetch } from '@/lib/internal-fetch'
 import { toast } from 'sonner'
 import { UploadProgressModal } from './upload-progress-modal'
-import { useAnalysisJob } from './use-analysis-job'
 
 export interface CustomSocialField {
   id: string
@@ -158,27 +157,6 @@ export function UploadView() {
   }
 
   const [loadingStep, setLoadingStep] = useState<string | null>(null)
-  // Currículo salvo cuja análise está sendo acompanhada — a tela só navega para
-  // o laudo quando ele fica pronto. Num ref, porque o desfecho chega por
-  // retorno de chamada e não deve provocar novo render por si só.
-  const pendingResumeIdRef = useRef<string | null>(null)
-  const job = useAnalysisJob({
-    onCompleted: () => {
-      window.dispatchEvent(new Event('griffo:credits-changed'))
-      setLoading(false)
-      setLoadingStep(null)
-      const id = pendingResumeIdRef.current
-      if (id) openResume(id, 'analysis')
-    },
-    onFailed: (message) => {
-      setLoading(false)
-      setLoadingStep(null)
-      // O currículo já está salvo e os créditos foram devolvidos pelo job. Não
-      // abrimos a tela de análise: ela dispara uma análise nova sozinha quando
-      // não encontra laudo, e o usuário seria cobrado de novo sem pedir.
-      setError(`${message} Seu currículo foi salvo — abra-o na lista para tentar de novo.`)
-    },
-  })
 
   const submit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -227,16 +205,17 @@ export function UploadView() {
         return
       }
 
-      pendingResumeIdRef.current = data.resume.id
-      setLoadingStep('Analisando currículo em 8 dimensões com Inteligência Artificial...')
-      toast.success('Currículo salvo! Processando laudo com a IA...')
-
-      // Daqui em diante o progresso é do servidor. O laço de 25 tentativas de
-      // 2s que existia aqui era uma tentativa de sobreviver ao encerramento da
-      // função aos 60s — esperava por um laudo que, quando a execução era
-      // morta, nunca chegava a ser gravado. Com o trabalho num job, não há mais
-      // o que resgatar: ele termina sozinho.
-      await job.start(data.resume.id)
+      // O envio NÃO dispara mais a análise paga.
+      //
+      // Antes, salvar o currículo abria a análise completa na sequência — o que
+      // agora consumiria uma análise do saldo sem que ninguém tivesse pedido. A
+      // tela de laudo recebe o currículo e mostra a prévia gratuita com as oito
+      // notas; a decisão de liberar o laudo inteiro é do usuário, com o preço à
+      // vista.
+      setLoading(false)
+      setLoadingStep(null)
+      toast.success('Currículo salvo! Veja sua nota nas 8 dimensões.')
+      openResume(data.resume.id, 'analysis')
     } catch {
       setError('Erro de conexão ao enviar o currículo. Verifique sua rede e tente novamente.')
       setLoading(false)
@@ -537,9 +516,8 @@ export function UploadView() {
 
       <UploadProgressModal
         isOpen={loading}
-        progress={job.progress}
-        completedSegments={job.completedSegments}
-        partial={job.partial}
+        progress={0}
+        completedSegments={[]}
         headline={loadingStep ?? undefined}
       />
     </div>

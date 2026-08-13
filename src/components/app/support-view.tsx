@@ -22,7 +22,7 @@ interface ChatMessage {
 }
 
 const FAQ_SUGGESTIONS = [
-  'Como funcionam os créditos e preços?',
+  'Quanto custa e o que vem incluso?',
   'O que é analisado no laudo do currículo?',
   'Como funciona a reescrita em STAR e XYZ?',
   'Como posso baixar meu laudo e currículo?',
@@ -35,7 +35,7 @@ export function SupportView() {
     {
       id: 'welcome',
       sender: 'bot',
-      text: 'Olá! Sou o Assistente Virtual Oficial do Griffo. Estou aqui para ajudar com qualquer dúvida sobre as funcionalidades do sistema, laudos, reescritas e pacotes de créditos. Como posso te ajudar hoje?',
+      text: 'Olá! Sou o Assistente Virtual Oficial do Griffo. Estou aqui para ajudar com qualquer dúvida sobre as funcionalidades do sistema, laudos, reescritas e a Análise Completa. Como posso te ajudar hoje?',
       timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     },
   ])

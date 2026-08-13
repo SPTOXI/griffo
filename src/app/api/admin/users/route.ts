@@ -44,7 +44,7 @@ export async function GET(req: Request) {
         email: true,
         role: true,
         plan: true,
-        credits: true,
+        analysisBalance: true,
         disabled: true,
         createdAt: true,
         _count: {
@@ -72,11 +72,11 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json()
-    const { userId, role, plan, credits, disabled } = body as {
+    const { userId, role, plan, analysisBalance, disabled } = body as {
       userId: string
       role?: string
       plan?: string
-      credits?: number
+      analysisBalance?: number
       disabled?: boolean
     }
 
@@ -100,13 +100,15 @@ export async function PATCH(req: Request) {
     const data: any = {}
     if (role && ['user', 'admin'].includes(role)) data.role = role
     if (plan) data.plan = plan
-    if (typeof credits === 'number' && credits >= 0) data.credits = credits
+    if (typeof analysisBalance === 'number' && analysisBalance >= 0) {
+      data.analysisBalance = analysisBalance
+    }
     if (typeof disabled === 'boolean') data.disabled = disabled
 
     const updated = await db.user.update({
       where: { id: userId },
       data,
-      select: { id: true, name: true, email: true, role: true, plan: true, credits: true, disabled: true },
+      select: { id: true, name: true, email: true, role: true, plan: true, analysisBalance: true, disabled: true },
     })
 
     // Desabilitar já era respeitado por `getCurrentUser`, mas agora as sessões

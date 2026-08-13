@@ -78,7 +78,7 @@ export function DownloadsView() {
   const download = async (type: 'resume_pdf' | 'resume_md' | 'resume_txt' | 'analysis_pdf' | 'social_advice_txt' | 'social_advice_md') => {
     if (!selected) return
     if (!canDownload) {
-      toast.error('Adquira um pacote de créditos ou assine um plano para realizar downloads.')
+      toast.error('Libere a Análise Completa deste currículo para baixar os arquivos.')
       setView('plans')
       return
     }
@@ -87,8 +87,8 @@ export function DownloadsView() {
       const r = await internalFetch(`/api/resume/download?resumeId=${selected}&type=${type}`)
       if (!r.ok) {
         const data = await r.json().catch(() => ({}))
-        if (data.code === 'INSUFFICIENT_CREDITS' || data.code === 'PLAN_REQUIRED') {
-          toast.error('Saldo de créditos insuficiente.')
+        if (data.code === 'ANALYSIS_REQUIRED') {
+          toast.error(data.error || 'Este currículo ainda não tem uma Análise Completa.')
           setView('plans')
           return
         }
@@ -136,7 +136,7 @@ export function DownloadsView() {
         <Alert className="border-amber-200 bg-amber-50">
           <Lock className="w-4 h-4 text-amber-600" />
           <AlertDescription className="text-amber-900">
-            Os downloads exigem saldo de créditos ou plano ativo. <button onClick={() => setView('plans')} className="font-semibold underline">Adquirir créditos</button> a partir de R$ 9,90.
+            Os downloads fazem parte da Análise Completa. <button onClick={() => setView('plans')} className="font-semibold underline">Comprar análise</button>.
           </AlertDescription>
         </Alert>
       )}

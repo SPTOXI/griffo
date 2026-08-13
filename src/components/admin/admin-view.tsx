@@ -13,7 +13,13 @@ import {
   BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Award
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { slowModelWarning } from '@/lib/credits-catalog'
+import { slowModelWarning } from '@/lib/model-warnings'
+import {
+  ANALYSIS_DIRECT_COST_USD,
+  ANALYSIS_FLOOR_USD,
+  TIERS,
+  priceFor,
+} from '@/lib/pricing/catalog'
 import { internalFetch } from '@/lib/internal-fetch';
 
 /**
@@ -71,7 +77,7 @@ interface AdminUser {
   email: string
   role: string
   plan: string
-  credits?: number
+  analysisBalance?: number
   disabled?: boolean
   createdAt: string
   _count: { resumes: number; subscriptions: number }
@@ -101,8 +107,11 @@ interface Metrics {
     totalCostBrl: number
   }
   financial: {
-    totalRevenueBrl: number
-    estimatedProfitBrl: number
+    /// Receita em dólar: é a moeda base do catálogo, e a única em que somar
+    /// vendas de países diferentes significa alguma coisa.
+    totalRevenueUsd: number
+    purchaseCount: number
+    estimatedProfitUsd: number
   }
 }
 
@@ -170,8 +179,9 @@ function AdminViewContent() {
   const [aiKeys, setAiKeys] = useState<AiApiKeyItem[]>([])
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [aiMetrics, setAiMetrics] = useState<AiMetricsData | null>(null)
+  // `CREDIT_PRICE_BRL` saiu: preço não é mais parâmetro editável no painel. O
+  // catálogo é o ponto único de verdade, e um campo aqui seria um segundo.
   const [configs, setConfigs] = useState<Record<string, string>>({
-    CREDIT_PRICE_BRL: '0.20',
     AI_AVG_COST_BRL: '0.05',
   })
   const [loading, setLoading] = useState(true)
@@ -352,7 +362,7 @@ function AdminViewContent() {
   }
 
   // User Management Actions
-  const updateUser = async (userId: string, updates: { role?: string; plan?: string; credits?: number; disabled?: boolean }) => {
+  const updateUser = async (userId: string, updates: { role?: string; analysisBalance?: number; disabled?: boolean }) => {
     try {
       const r = await internalFetch('/api/admin/users', {
         method: 'PATCH',
@@ -554,16 +564,22 @@ function AdminViewContent() {
     }
   }
 
-  // Credit Finance Stats Calculation
-  const totalRevenueBrl = metrics?.financial?.totalRevenueBrl || 0
-  const purchasingUsersCount = safeUsers.filter((u) => u && u.plan !== 'free').length
+  // Monetização — tudo em dólar, a moeda base do catálogo.
+  const totalRevenueUsd = metrics?.financial?.totalRevenueUsd || 0
+  const purchaseCount = metrics?.financial?.purchaseCount || 0
+  const purchasingUsersCount = safeUsers.filter((u) => u && (u.analysisBalance ?? 0) > 0).length
   const freeUsersCount = Math.max(0, safeUsers.length - purchasingUsersCount)
   const conversionRate = safeUsers.length > 0 ? (purchasingUsersCount / safeUsers.length) * 100 : 0
-  const ticketMédioBrl = purchasingUsersCount > 0 ? totalRevenueBrl / purchasingUsersCount : 0
+  const avgOrderUsd = purchaseCount > 0 ? totalRevenueUsd / purchaseCount : 0
 
-  const creditPriceBrl = parseFloat(configs?.CREDIT_PRICE_BRL || '0.20') || 0.20
   const aiAvgCostBrl = parseFloat(configs?.AI_AVG_COST_BRL || '0.05') || 0.05
-  const baselineMarginPercent = aiAvgCostBrl > 0 ? Math.round(((creditPriceBrl - aiAvgCostBrl) / aiAvgCostBrl) * 100) : 300
+  // Margem sobre o preço, não sobre o custo: é assim que a planilha do modelo
+  // calcula, e comparar as duas contas como se fossem a mesma inflaria o
+  // número por um fator de dez.
+  const marginPercent =
+    avgOrderUsd > 0
+      ? Math.round(((avgOrderUsd - ANALYSIS_DIRECT_COST_USD) / avgOrderUsd) * 100)
+      : 0
 
   if (loading) {
     console.log('[AdminView:Render] Modo Loading em exibição...')
@@ -608,8 +624,8 @@ function AdminViewContent() {
             <CardContent className="pt-4 flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-slate-500">Receita Gerada</p>
-                <p className="text-2xl font-bold text-slate-900">R$ {totalRevenueBrl.toFixed(2)}</p>
-                <p className="text-[10px] text-slate-400">Ticket Médio: R$ {ticketMédioBrl.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-slate-900">US$ {totalRevenueUsd.toFixed(2)}</p>
+                <p className="text-[10px] text-slate-400">Ticket Médio: US$ {avgOrderUsd.toFixed(2)}</p>
               </div>
               <DollarSign className="w-8 h-8 text-emerald-500 opacity-80" />
             </CardContent>
@@ -627,9 +643,11 @@ function AdminViewContent() {
           <Card>
             <CardContent className="pt-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-500">Margem por Crédito</p>
-                <p className="text-2xl font-bold text-slate-900">{baselineMarginPercent}%</p>
-                <p className="text-[10px] text-slate-400">R$ {creditPriceBrl} / Custo R$ {aiAvgCostBrl}</p>
+                <p className="text-xs font-medium text-slate-500">Margem por Análise</p>
+                <p className="text-2xl font-bold text-slate-900">{marginPercent}%</p>
+                <p className="text-[10px] text-slate-400">
+                  Custo direto US$ {ANALYSIS_DIRECT_COST_USD.toFixed(2)} / Piso US$ {ANALYSIS_FLOOR_USD.toFixed(2)}
+                </p>
               </div>
               <Percent className="w-8 h-8 text-violet-500 opacity-80" />
             </CardContent>
@@ -645,8 +663,8 @@ function AdminViewContent() {
           <TabsTrigger value="ai-keys" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
             <Key className="w-5 h-5 text-indigo-600" /> <span className="font-semibold text-sm">Cadastrar APIs de IA (4 IAs)</span>
           </TabsTrigger>
-          <TabsTrigger value="credits-finance" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
-            <Zap className="w-5 h-5 text-yellow-600" /> <span className="font-semibold text-sm">Monetização & Créditos</span>
+          <TabsTrigger value="pricing" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
+            <Zap className="w-5 h-5 text-yellow-600" /> <span className="font-semibold text-sm">Monetização & Preços</span>
           </TabsTrigger>
           <TabsTrigger value="ai-router" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
             <Cpu className="w-5 h-5 text-slate-600" /> <span className="font-semibold text-sm">Telemetria de IA</span>
@@ -690,12 +708,8 @@ function AdminViewContent() {
                       <SelectValue placeholder="Plano" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos Planos</SelectItem>
-                      <SelectItem value="free">Free</SelectItem>
-                      <SelectItem value="entrada">Entrada</SelectItem>
-                      <SelectItem value="starter">Starter</SelectItem>
-                      <SelectItem value="carreira">Carreira</SelectItem>
-                      <SelectItem value="profissional">Profissional</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="free">Sem compra</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -759,7 +773,7 @@ function AdminViewContent() {
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Função (Role)</th>
                       <th className="px-4 py-3">Pacote</th>
-                      <th className="px-4 py-3">Créditos</th>
+                      <th className="px-4 py-3">Análises</th>
                       <th className="px-4 py-3 text-right">Ações Individuais</th>
                     </tr>
                   </thead>
@@ -826,23 +840,6 @@ function AdminViewContent() {
                               </Select>
                             )}
                           </td>
-                          <td className="px-4 py-3">
-                            <Select
-                              value={u.plan || 'free'}
-                              onValueChange={(v) => updateUser(u.id, { plan: v })}
-                            >
-                              <SelectTrigger className="h-7 text-[11px] w-28">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="free">Free (0 cr)</SelectItem>
-                                <SelectItem value="entrada">Entrada (40 cr)</SelectItem>
-                                <SelectItem value="starter">Starter (100 cr)</SelectItem>
-                                <SelectItem value="carreira">Carreira (500 cr)</SelectItem>
-                                <SelectItem value="profissional">Profissional (1.500 cr)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </td>
                           <td className="px-4 py-3 font-mono font-bold">
                             {isAdmin ? (
                               <span className="text-violet-700">♾️ Ilimitado</span>
@@ -851,25 +848,24 @@ function AdminViewContent() {
                                 <Input
                                   type="number"
                                   min={0}
-                                  defaultValue={u.credits ?? 0}
-                                  key={`credits-${u.id}-${u.credits}`}
+                                  defaultValue={u.analysisBalance ?? 0}
+                                  key={`balance-${u.id}-${u.analysisBalance}`}
                                   className="h-7 w-20 text-[11px] font-mono font-bold px-2 border-slate-300 focus:border-emerald-500"
                                   onBlur={(e) => {
                                     const val = parseInt(e.target.value, 10)
-                                    if (!isNaN(val) && val >= 0 && val !== u.credits) {
-                                      updateUser(u.id, { credits: val })
+                                    if (!isNaN(val) && val >= 0 && val !== u.analysisBalance) {
+                                      updateUser(u.id, { analysisBalance: val })
                                     }
                                   }}
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                       const val = parseInt((e.target as HTMLInputElement).value, 10)
-                                      if (!isNaN(val) && val >= 0 && val !== u.credits) {
-                                        updateUser(u.id, { credits: val })
+                                      if (!isNaN(val) && val >= 0 && val !== u.analysisBalance) {
+                                        updateUser(u.id, { analysisBalance: val })
                                       }
                                     }
                                   }}
                                 />
-                                <span className="text-[10px] text-slate-500 font-sans font-semibold">cr</span>
                               </div>
                             )}
                           </td>
@@ -1184,39 +1180,43 @@ function AdminViewContent() {
         </TabsContent>
 
         {/* CREDITS FINANCE TAB */}
-        <TabsContent value="credits-finance" className="space-y-6">
+        <TabsContent value="pricing" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-emerald-600" /> Dashboard Financeiro de Créditos
+                  <DollarSign className="w-5 h-5 text-emerald-600" /> Dashboard Financeiro
                 </CardTitle>
-                <CardDescription>Resumo de vendas, consumo, receita e margens de IA.</CardDescription>
+                <CardDescription>Vendas, custo de IA e margem por análise completa.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 text-xs">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-slate-600">Receita Bruta Gerada</span>
-                  <span className="font-bold text-slate-900 text-sm font-mono">R$ {totalRevenueBrl.toFixed(2)}</span>
+                  <span className="font-bold text-slate-900 text-sm font-mono">US$ {totalRevenueUsd.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Custo Estimado de IA (Consumo)</span>
+                  <span className="text-slate-600">Compras Confirmadas</span>
+                  <span className="font-mono text-slate-900 font-semibold">{purchaseCount}</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span className="text-slate-600">Custo Real de IA (medido)</span>
                   <span className="font-mono text-slate-700 font-semibold">
-                    R$ {((aiMetrics?.costs?.totalAiCostUsd || 0) * 5.4).toFixed(2)}
+                    US$ {(aiMetrics?.costs?.totalAiCostUsd || 0).toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Margem Bruta Operacional</span>
+                  <span className="text-slate-600">Margem sobre o Preço</span>
                   <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold">
-                    {baselineMarginPercent}%
+                    {marginPercent}%
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Preço do Crédito</span>
-                  <span className="font-mono text-slate-900 font-semibold">R$ {creditPriceBrl.toFixed(2)}</span>
+                  <span className="text-slate-600">Custo Direto por Análise (modelo)</span>
+                  <span className="font-mono text-slate-900 font-semibold">US$ {ANALYSIS_DIRECT_COST_USD.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-600">Custo Operacional Médio da IA</span>
-                  <span className="font-mono text-slate-700 font-semibold">R$ {aiAvgCostBrl.toFixed(2)}</span>
+                  <span className="text-slate-600">Piso Absoluto por Análise</span>
+                  <span className="font-mono text-rose-700 font-bold">US$ {ANALYSIS_FLOOR_USD.toFixed(2)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -1234,7 +1234,7 @@ function AdminViewContent() {
                   <span className="font-bold text-slate-900 font-mono">{freeUsersCount}</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Usuários Compradores de Pacotes</span>
+                  <span className="text-slate-600">Usuários com Análise Disponível</span>
                   <span className="font-bold text-emerald-700 font-mono">{purchasingUsersCount}</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -1242,8 +1242,8 @@ function AdminViewContent() {
                   <span className="font-mono font-bold text-slate-900">{conversionRate.toFixed(1)}%</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Ticket Médio por Comprador</span>
-                  <span className="font-mono text-emerald-700 font-semibold">R$ {ticketMédioBrl.toFixed(2)}</span>
+                  <span className="text-slate-600">Ticket Médio por Compra</span>
+                  <span className="font-mono text-emerald-700 font-semibold">US$ {avgOrderUsd.toFixed(2)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -1251,39 +1251,67 @@ function AdminViewContent() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Regra Financeira & Parâmetros de Créditos</CardTitle>
+              <CardTitle className="text-base">Tabela de Preços por Faixa</CardTitle>
               <CardDescription>
-                Ajuste o preço por crédito, o custo operacional médio da IA e os valores dos pacotes comerciais.
+                Somente leitura. O preço vive em <code className="font-mono text-[11px]">lib/pricing/catalog.ts</code>,
+                que é o ponto único de verdade — mudar preço é mudar código, com o teste do piso como guarda.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-b border-slate-200">
+                    <tr>
+                      <th className="px-3 py-2">Faixa</th>
+                      <th className="px-3 py-2">Países</th>
+                      <th className="px-3 py-2">Análise (USD)</th>
+                      <th className="px-3 py-2">Pacote de 5 (USD)</th>
+                      <th className="px-3 py-2">Exemplo local</th>
+                      <th className="px-3 py-2 text-right">Margem</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {TIERS.map((tier) => {
+                      const sample = priceFor(tier.countries[0], 'single')
+                      const margin = Math.round(
+                        ((tier.unitPriceUSD - ANALYSIS_DIRECT_COST_USD) / tier.unitPriceUSD) * 100
+                      )
+                      return (
+                        <tr key={tier.tier} className="hover:bg-slate-50/50">
+                          <td className="px-3 py-2 font-bold text-slate-900">Faixa {tier.tier}</td>
+                          <td className="px-3 py-2 text-slate-600 font-mono text-[10px]">
+                            {tier.countries.join(', ')}
+                          </td>
+                          <td className="px-3 py-2 font-mono text-slate-900">
+                            ${tier.unitPriceUSD.toFixed(2)}
+                          </td>
+                          <td className="px-3 py-2 font-mono text-slate-700">
+                            ${tier.packOf5PriceUSD.toFixed(2)}
+                          </td>
+                          <td className="px-3 py-2 font-mono text-slate-700">
+                            {sample.country} {sample.formatted}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
+                              {margin}%
+                            </Badge>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Preço do Crédito (R$)</label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={configs.CREDIT_PRICE_BRL || '0.20'}
-                    onChange={(e) => setConfigs({ ...configs, CREDIT_PRICE_BRL: e.target.value })}
-                    className="text-xs font-mono"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Custo Médio da IA (R$)</label>
+                  <label className="text-xs font-semibold text-slate-700">Custo Médio da IA (R$) — referência</label>
                   <Input
                     type="number"
                     step="0.01"
                     value={configs.AI_AVG_COST_BRL || '0.05'}
                     onChange={(e) => setConfigs({ ...configs, AI_AVG_COST_BRL: e.target.value })}
                     className="text-xs font-mono"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Margem Calculada</label>
-                  <Input
-                    readOnly
-                    value={`${baselineMarginPercent}%`}
-                    className="text-xs font-mono bg-slate-50 font-bold text-emerald-700"
                   />
                 </div>
               </div>
@@ -1416,62 +1444,28 @@ function AdminViewContent() {
                       <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Assinatura de Webhook</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-semibold text-slate-900">Plano de Entrada (R$ 9,90)</td>
-                      <td className="px-4 py-3 font-mono text-slate-700">40 Créditos (30+10 Bônus)</td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">Análise Completa</td>
+                      <td className="px-4 py-3 font-mono text-slate-700">
+                        {TIERS.length} faixas — preço montado no checkout
+                      </td>
                       <td className="px-4 py-3">
                         <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
-                          PRONTO NO STRIPE
+                          CATÁLOGO ATIVO
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Catalogo & Dynamic Checkout</td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">lib/pricing/catalog.ts</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-semibold text-slate-900">Pacote Starter (R$ 29,90)</td>
-                      <td className="px-4 py-3 font-mono text-slate-700">100 Créditos</td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">Pacote de 5 Análises</td>
+                      <td className="px-4 py-3 font-mono text-slate-700">
+                        Upsell — só depois da primeira compra
+                      </td>
                       <td className="px-4 py-3">
                         <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
-                          PRONTO NO STRIPE
+                          CATÁLOGO ATIVO
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Catalogo & Dynamic Checkout</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-semibold text-slate-900">Pacote Carreira (R$ 99,90)</td>
-                      <td className="px-4 py-3 font-mono text-slate-700">500 Créditos</td>
-                      <td className="px-4 py-3">
-                        <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
-                          PRONTO NO STRIPE
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Catalogo & Dynamic Checkout</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-semibold text-slate-900">Pacote Profissional (R$ 249,90)</td>
-                      <td className="px-4 py-3 font-mono text-slate-700">1.500 Créditos</td>
-                      <td className="px-4 py-3">
-                        <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
-                          PRONTO NO STRIPE
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">Catalogo & Dynamic Checkout</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-semibold text-slate-900">Pacote Profissional (R$ 249,90)</td>
-                      <td className="px-4 py-3 font-mono text-slate-700 font-medium">
-                        {configs.LEMON_VARIANT_PROFISSIONAL ? `Variant ID: ${configs.LEMON_VARIANT_PROFISSIONAL}` : 'Não Configurado'}
-                      </td>
-                      <td className="px-4 py-3">
-                        {configs.LEMON_VARIANT_PROFISSIONAL ? (
-                          <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
-                            PRONTO PARA VENDA
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-amber-100 text-amber-800 border-none font-bold text-[10px]">
-                            PENDENTE
-                          </Badge>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">1.500 Créditos</td>
+                      <td className="px-4 py-3 text-right text-slate-500 text-[11px]">lib/pricing/catalog.ts</td>
                     </tr>
                   </tbody>
                 </table>

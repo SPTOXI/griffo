@@ -7,6 +7,10 @@ export type TaskType =
   /// porque o Agente de Qualidade valida os dois de formas diferentes — ver
   /// agents/quality-agent.ts.
   | 'analysis_segment'
+  /// Prévia gratuita: só as oito notas, sem diagnóstico e sem texto. Roda num
+  /// modelo barato porque é servida a quem ainda não pagou nada — a conversão
+  /// vem de a pessoa ver a nota e não ver o porquê.
+  | 'free_preview'
   | 'social_advice'
   /// Diagnóstico vocacional. Tem tipo próprio porque o Agente de Qualidade
   /// valida cada tarefa pelo formato que ela produz: enquanto esta rota
@@ -83,7 +87,7 @@ export interface AiTaskRequest {
   /// gasta até 8s buscando os perfis e mais um tanto lendo o PDF — precisam
   /// declarar o que sobrou, senão o roteador planeja em cima de um orçamento
   /// que já foi parcialmente gasto e a função é encerrada pela plataforma antes
-  /// do `catch` que devolve os créditos.
+  /// do `catch` que responde ao usuário.
   timeBudgetMs?: number
   /// Quantos provedores tentar, no máximo. Padrão 2.
   ///

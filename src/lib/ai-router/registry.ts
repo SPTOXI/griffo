@@ -138,10 +138,16 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   rewrite: 'claude',
   social_advice: 'claude',
   career_orientation: 'claude',
+  // A carta é um dos nove itens que a Análise Completa entrega, e o custo por
+  // análise foi calculado com ela no Sonnet. Estava no DeepSeek — mais barata,
+  // mas fora do padrão de qualidade do que a pessoa leva embora.
+  cover_letter: 'claude',
+  // Prévia gratuita: servida a quem ainda não pagou, ao custo de US$ 0,0017 por
+  // conta. É o único item do produto que roda deliberadamente no modelo barato.
+  free_preview: 'deepseek',
   // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
   normalization: 'deepseek',
-  cover_letter: 'deepseek',
 }
 
 /**

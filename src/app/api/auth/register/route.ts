@@ -42,7 +42,9 @@ export async function POST(req: Request) {
         profession: profession || null,
         role: 'user',
         plan: 'free',
-        credits: 0, // 0 credits on signup (free user must acquire Plano de Entrada)
+        // Cadastro não dá análise nenhuma. O que é gratuito é a PRÉVIA — as
+        // oito notas, sem diagnóstico —, e ela não consome saldo.
+        analysisBalance: 0,
         dataTransferConsent: true,
         dataTransferConsentAt: new Date(),
       },
@@ -54,7 +56,7 @@ export async function POST(req: Request) {
         action: 'register',
         // Registra o consentimento na trilha de auditoria: é ele que prova a
         // base jurídica do tratamento se ela for questionada.
-        meta: JSON.stringify({ credits: 0, dataTransferConsent: true, consentVersion: 'v1' }),
+        meta: JSON.stringify({ analysisBalance: 0, dataTransferConsent: true, consentVersion: 'v1' }),
       },
     })
 
@@ -67,7 +69,7 @@ export async function POST(req: Request) {
         name: user.name,
         profession: user.profession,
         plan: user.plan,
-        credits: 0,
+        analysisBalance: 0,
         planEndsAt: user.planEndsAt,
       },
     })

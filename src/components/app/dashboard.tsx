@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Upload, FileSearch, FileEdit, Download, CreditCard, ArrowRight, Sparkles, TrendingUp, Clock, AlertCircle, Loader2 } from 'lucide-react'
 import { internalFetch } from '@/lib/internal-fetch'
+import { useAnalyses } from '@/hooks/use-analyses'
 
 interface ResumeListItem {
   id: string
@@ -18,6 +19,7 @@ interface ResumeListItem {
 
 export function Dashboard() {
   const { user } = useAuth()
+  const { balance } = useAnalyses()
   const { setView, openResume } = useNav()
   const [resumes, setResumes] = useState<ResumeListItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,14 +31,9 @@ export function Dashboard() {
       .catch(() => setLoading(false))
   }, [])
 
-  const planLabel = (plan: string) => {
-    if (plan === 'free') return 'Gratuito'
-    if (plan === 'entrada') return 'Plano de Entrada'
-    if (plan === 'starter') return 'Pacote Starter'
-    if (plan === 'carreira') return 'Pacote Carreira'
-    if (plan === 'profissional') return 'Pacote Profissional'
-    return plan
-  }
+  // Não há mais plano nenhum a nomear — nem pacote, nem assinatura. O que
+  // existe é ter, ou não ter, análise disponível.
+  const accountLabel = balance > 0 ? 'Análise Completa disponível' : 'Conta Griffo'
 
   const recent = resumes.slice(0, 3)
 
@@ -63,18 +60,20 @@ export function Dashboard() {
             </div>
             <div>
               <CardTitle className="text-lg font-extrabold text-white flex items-center gap-2">
-                {planLabel(user?.plan || 'free')}
-                <Badge className="bg-amber-400 text-amber-950 font-bold border-0 text-[10px] tracking-wider uppercase px-2 py-0.5">Ativo</Badge>
+                {accountLabel}
+                {balance > 0 && (
+                  <Badge className="bg-amber-400 text-amber-950 font-bold border-0 text-[10px] tracking-wider uppercase px-2 py-0.5">Ativo</Badge>
+                )}
               </CardTitle>
               <CardDescription className="text-indigo-200 mt-1 text-xs max-w-lg leading-relaxed font-medium">
-                Sua conta possui acesso à inteligência artificial avançada. Utilize seus créditos para auditorias completas e destaque-se para os recrutadores.
+                Uma compra libera a Análise Completa de um currículo: laudo das 8 dimensões, comparação com a vaga, reescrita, orientação, otimização de perfil, mídias sociais, carta, resumo e PDF.
               </CardDescription>
             </div>
           </div>
           <div className="flex flex-col sm:items-end gap-2 shrink-0">
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-4 py-2 flex items-center gap-3">
-              <span className="text-xs font-semibold text-indigo-200 uppercase tracking-wider">Créditos Restantes</span>
-              <span className="text-2xl font-black text-amber-400 drop-shadow-sm">{user?.credits ?? 0}</span>
+              <span className="text-xs font-semibold text-indigo-200 uppercase tracking-wider">Análises Disponíveis</span>
+              <span className="text-2xl font-black text-amber-400 drop-shadow-sm">{balance}</span>
             </div>
           </div>
         </CardContent>
@@ -118,11 +117,13 @@ export function Dashboard() {
               <div className="p-2 bg-amber-50 rounded-lg">
                 <Sparkles className="w-4 h-4 text-amber-600" />
               </div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Potencial de Análise</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Análises Disponíveis</p>
             </div>
             <div className="flex items-end gap-2">
-              <p className="text-3xl font-black text-amber-600">{user?.credits ?? 0}</p>
-              <p className="text-sm text-slate-500 font-medium mb-1">créditos</p>
+              <p className="text-3xl font-black text-amber-600">{balance}</p>
+              <p className="text-sm text-slate-500 font-medium mb-1">
+                {balance === 1 ? 'análise' : 'análises'}
+              </p>
             </div>
           </CardContent>
         </Card>

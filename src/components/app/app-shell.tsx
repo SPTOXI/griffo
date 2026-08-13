@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { internalFetch } from '@/lib/internal-fetch';
 import { useAuth, useNav, AppView } from '@/store/auth'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -25,6 +24,7 @@ import { AdminView } from '../admin/admin-view'
 import { PaymentStatusModal } from './payment-status-modal'
 import { LanguageSelector } from '../ui/language-selector'
 import { useI18n } from '@/context/i18n-context'
+import { useAnalyses } from '@/hooks/use-analyses'
 
 const NAV_ITEMS: { view: AppView; label: string; icon: any }[] = [
   { view: 'dashboard', label: 'Painel', icon: LayoutDashboard },
@@ -33,15 +33,15 @@ const NAV_ITEMS: { view: AppView; label: string; icon: any }[] = [
   { view: 'rewrite', label: 'Reescrita', icon: FileEdit },
   { view: 'downloads', label: 'Downloads', icon: Download },
   { view: 'history', label: 'Histórico', icon: History },
-  { view: 'plans', label: 'Comprar Créditos', icon: CreditCard },
+  { view: 'plans', label: 'Comprar Análise', icon: CreditCard },
   { view: 'support', label: 'Suporte & Dúvidas', icon: HelpCircle },
   { view: 'settings', label: 'Configurações', icon: Settings },
 ]
 
 export function AppShell({ onExit }: { onExit: () => void }) {
-  const { lang } = useI18n()
+  const { lang, t } = useI18n()
   const { user, logout, hydrated } = useAuth()
-  const { view, setView } = useNav()
+  const { view, setView, openResume } = useNav()
 
   const appSubtitles: Record<string, string> = {
     pt: 'GLOBAL AI CAREER INTELLIGENCE',
@@ -49,8 +49,8 @@ export function AppShell({ onExit }: { onExit: () => void }) {
     es: 'GLOBAL AI CAREER INTELLIGENCE',
   }
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [credits, setCredits] = useState<number>(user?.credits ?? 20)
-  const [activePaymentSession, setActivePaymentSession] = useState<{ sessionId: string; expectedCredits?: number } | null>(null)
+  const { balance, refresh: refreshBalance } = useAnalyses()
+  const [activePaymentSession, setActivePaymentSession] = useState<{ sessionId: string; resumeId: string | null } | null>(null)
 
   useEffect(() => {
     if (hydrated && user && user.role !== 'admin' && view === 'admin') {
@@ -59,54 +59,27 @@ export function AppShell({ onExit }: { onExit: () => void }) {
   }, [hydrated, user, view, setView])
 
   useEffect(() => {
-    if (user?.role === 'admin') return
+    if (typeof window === 'undefined') return
 
-    const refresh = () => {
-      internalFetch('/api/credits/balance')
-        .then((r) => r.json())
-        .then((data) => {
-          if (typeof data.credits === 'number') {
-            setCredits(data.credits)
-          }
-        })
-        .catch(() => {})
+    const params = new URLSearchParams(window.location.search)
+    const paymentStatus = params.get('payment')
+    const sessionId = params.get('session_id')
+    // O currículo que originou a compra volta na URL: é o que faz a recompra
+    // terminar no laudo em vez de na página de preço.
+    const resumeId = params.get('resume')
+
+    if (paymentStatus === 'success' && sessionId) {
+      setActivePaymentSession({ sessionId, resumeId })
+      window.history.replaceState({}, document.title, window.location.pathname)
+    } else if (paymentStatus === 'success' && !sessionId) {
+      toast.success('🎉 Pagamento confirmado!')
+      window.history.replaceState({}, document.title, window.location.pathname)
+      refreshBalance()
+    } else if (paymentStatus === 'cancelled') {
+      toast.error('Pagamento cancelado.')
+      window.history.replaceState({}, document.title, window.location.pathname)
     }
-
-    refresh()
-
-    // Ações que consomem crédito sem trocar de tela avisam por este evento.
-    window.addEventListener('griffo:credits-changed', refresh)
-    return () => window.removeEventListener('griffo:credits-changed', refresh)
-  }, [view, user?.role])
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      const paymentStatus = params.get('payment')
-      const sessionId = params.get('session_id')
-      const credits = params.get('credits')
-
-      if (paymentStatus === 'success' && sessionId) {
-        setActivePaymentSession({
-          sessionId,
-          expectedCredits: credits ? parseInt(credits, 10) : undefined,
-        })
-        window.history.replaceState({}, document.title, window.location.pathname)
-      } else if (paymentStatus === 'success' && !sessionId) {
-        toast.success(`🎉 Pagamento confirmado! Créditos adicionados.`)
-        window.history.replaceState({}, document.title, window.location.pathname)
-        internalFetch('/api/credits/balance')
-          .then((r) => r.json())
-          .then((data) => {
-            if (typeof data.credits === 'number') setCredits(data.credits)
-          })
-          .catch(() => {})
-      } else if (paymentStatus === 'cancelled') {
-        toast.error('Pagamento cancelado.')
-        window.history.replaceState({}, document.title, window.location.pathname)
-      }
-    }
-  }, [])
+  }, [openResume, refreshBalance])
 
   const initials = (user?.name || user?.email || '?')
     .split(' ')
@@ -149,7 +122,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
 
         <div className="ml-auto flex items-center gap-2">
           <LanguageSelector />
-          {/* CREDITS BADGE */}
+          {/* SALDO DE ANÁLISES */}
           {user?.role === 'admin' ? (
             <Button
               size="sm"
@@ -157,7 +130,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
               className="bg-violet-700 hover:bg-violet-800 h-8 text-xs font-semibold gap-1 px-2 sm:px-3 shadow-xs"
             >
               <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300 shrink-0" />
-              <span><span className="hidden sm:inline">Créditos Ilimitados (</span>Admin<span className="hidden sm:inline">)</span></span>
+              <span><span className="hidden sm:inline">Análises Ilimitadas (</span>Admin<span className="hidden sm:inline">)</span></span>
             </Button>
           ) : (
             <Button
@@ -165,9 +138,9 @@ export function AppShell({ onExit }: { onExit: () => void }) {
               onClick={() => setView('plans')}
               className="bg-[#0B63E5] hover:bg-[#0052CC] text-white h-8 text-xs font-semibold gap-1 px-2 sm:px-3 shadow-xs"
             >
-              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300 shrink-0" />
-              <span>{credits} <span className="hidden sm:inline">Créditos</span><span className="sm:hidden">cr</span></span>
-              <span className="hidden md:inline text-[10px] text-blue-100 ml-1 bg-blue-700/60 px-1.5 py-0.5 rounded-full">+ Adicionar</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+              <span>{balance} <span className="hidden sm:inline">{t.app.balance}</span></span>
+              <span className="hidden md:inline text-[10px] text-blue-100 ml-1 bg-blue-700/60 px-1.5 py-0.5 rounded-full">{t.app.buyMore}</span>
             </Button>
           )}
 
@@ -195,7 +168,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
                 <Settings className="w-4 h-4 mr-2" /> Configurações
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setView('plans')} className="cursor-pointer">
-                <CreditCard className="w-4 h-4 mr-2" /> Comprar Créditos ({credits} cr)
+                <CreditCard className="w-4 h-4 mr-2" /> {t.app.plans} ({balance})
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-700 cursor-pointer">
@@ -274,7 +247,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
                 <div className="flex items-center gap-1.5 text-xs font-bold text-violet-200">
                   <Shield className="w-4 h-4 text-amber-300" /> Modo Administrador
                 </div>
-                <p className="text-xl font-extrabold text-white">♾️ Créditos Ilimitados</p>
+                <p className="text-xl font-extrabold text-white">♾️ Análises Ilimitadas</p>
                 <Button onClick={() => { setView('admin'); setSidebarOpen(false) }} size="sm" className="w-full bg-white text-violet-950 hover:bg-slate-100 font-bold text-xs h-8">
                   Acessar Área Admin
                 </Button>
@@ -282,11 +255,11 @@ export function AppShell({ onExit }: { onExit: () => void }) {
             ) : (
               <div className="rounded-xl bg-gradient-to-br from-[#0B192E] to-[#0B63E5] p-3.5 text-white space-y-2 shadow-md">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-blue-200">
-                  <Zap className="w-4 h-4 text-amber-300 fill-amber-300" /> Saldo Atual
+                  <Sparkles className="w-4 h-4 text-amber-300" /> {t.app.balance}
                 </div>
-                <p className="text-2xl font-extrabold">{credits} <span className="text-xs font-normal text-blue-100">créditos</span></p>
+                <p className="text-2xl font-extrabold">{balance} <span className="text-xs font-normal text-blue-100">{t.app.balanceUnit}</span></p>
                 <Button onClick={() => { setView('plans'); setSidebarOpen(false) }} size="sm" className="w-full bg-white text-[#0B192E] hover:bg-blue-50 font-bold text-xs h-8">
-                  Adicionar Créditos
+                  {t.pricing.buyCta}
                 </Button>
               </div>
             )}
@@ -311,8 +284,11 @@ export function AppShell({ onExit }: { onExit: () => void }) {
       {activePaymentSession && (
         <PaymentStatusModal
           sessionId={activePaymentSession.sessionId}
-          expectedCredits={activePaymentSession.expectedCredits}
-          onComplete={(newBalance) => setCredits(newBalance)}
+          // Só depois da confirmação: é ela que destrava o currículo no
+          // servidor. Abrir antes mostraria o paywall de algo já pago.
+          onConfirmed={(resumeId) => {
+            if (resumeId) openResume(resumeId, 'analysis')
+          }}
           onClose={() => setActivePaymentSession(null)}
         />
       )}
