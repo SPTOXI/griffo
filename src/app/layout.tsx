@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
+// Sonner, e não `ui/toaster`. Os dois existem no projeto, mas o montado era o
+// do Radix — cujo estado vem de `useToast()`, que NENHUM arquivo chama. As doze
+// telas que avisam algo importam `toast` do sonner, e o sonner só renderiza se
+// o `<Toaster />` dele estiver na árvore.
+//
+// O efeito era um aplicativo mudo: erro de pagamento, falha de upload, saldo
+// insuficiente — tudo era reportado por uma chamada que não tinha onde
+// aparecer. Para o usuário, clicar simplesmente não fazia nada.
+import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/context/i18n-context";
 
 const geistSans = Geist({
@@ -62,7 +70,7 @@ export default function RootLayout({
       >
         <I18nProvider>
           {children}
-          <Toaster />
+          <Toaster position="top-center" richColors closeButton />
         </I18nProvider>
       </body>
     </html>

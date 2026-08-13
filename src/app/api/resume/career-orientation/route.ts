@@ -158,6 +158,19 @@ Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto 
       // Sonnet 5 ele vem LIGADO por padrão: consumia parte do orçamento de
       // tokens e empurrava a chamada para além do teto de 25s por provedor.
       disableThinking: true,
+      // Uma tentativa só, com o prazo inteiro.
+      //
+      // O roteador divide o orçamento de 52s entre as tentativas: com o padrão
+      // de duas, cada provedor recebe ~26s. Três mil tokens de saída não saem
+      // nesse prazo de forma confiável, e o log de produção mostrou o desfecho
+      // exato disso — Claude e Kimi encerrados com 1ms de diferença entre si,
+      // aos 24,5s cada, porque não eram duas falhas diferentes: era o mesmo
+      // prazo curto, gasto duas vezes.
+      //
+      // Guardar metade do tempo para um suplente que também não caberia troca
+      // um sucesso por duas falhas. Mesma conclusão, mesmo remédio da reescrita
+      // em resume/rewrite/route.ts.
+      maxProviderAttempts: 1,
       jsonSchema: ORIENTATION_JSON_SCHEMA as unknown as Record<string, unknown>,
     })
 
