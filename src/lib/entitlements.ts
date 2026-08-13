@@ -1,6 +1,7 @@
 import 'server-only'
 import { db } from './db'
 import { PACK_SIZE, type Tier } from './pricing/catalog'
+import { CREDITS_PER_ANALYSIS, analysesForCredits } from './pricing/migration'
 
 /**
  * Direito de uso, no lugar do saldo de créditos.
@@ -20,9 +21,6 @@ import { PACK_SIZE, type Tier } from './pricing/catalog'
  * saldo do nada. Agora uma falha na carta de apresentação não custa nada ao
  * usuário: o currículo continua destravado e ele pede de novo.
  */
-
-/** Taxa de conversão do saldo antigo, arredondando a favor do usuário. */
-export const CREDITS_PER_ANALYSIS = 25
 
 export interface PurchaseGrant {
   userId: string
@@ -253,20 +251,12 @@ export async function requireUnlockedResume(
 }
 
 /**
- * Converte o saldo antigo de créditos em análises completas.
+ * Converte o saldo antigo de créditos de UM usuário.
  *
- * 25 créditos = 1 análise, arredondando PARA CIMA. Quem tinha 40 créditos —
- * o antigo Plano de Entrada — recebe 2 análises, não 1: o arredondamento é a
- * favor do usuário por decisão, porque ninguém pode sair perdendo numa mudança
- * de modelo que ele não pediu.
- *
- * Idempotente por `creditsMigratedAt`: rodar duas vezes não converte de novo.
+ * A regra de conversão vive em `pricing/migration.ts`, que é puro e pode ser
+ * importado por scripts de linha de comando. Esta função é a parte que toca o
+ * banco. Idempotente por `creditsMigratedAt`.
  */
-export function analysesForCredits(credits: number): number {
-  if (credits <= 0) return 0
-  return Math.ceil(credits / CREDITS_PER_ANALYSIS)
-}
-
 export async function migrateCreditBalance(userId: string): Promise<{
   migrated: boolean
   credits: number
@@ -307,3 +297,4 @@ export async function migrateCreditBalance(userId: string): Promise<{
 }
 
 export { PACK_SIZE }
+export { CREDITS_PER_ANALYSIS, analysesForCredits }

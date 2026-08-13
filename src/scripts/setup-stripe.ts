@@ -1,4 +1,5 @@
 import Stripe from 'stripe'
+import { loadEnvFile } from './load-env'
 import {
   LOCAL_PRICES,
   PACK_SIZE,
@@ -26,12 +27,22 @@ import {
  * existem para o relatório da Stripe, não para a cobrança. É por isso que o
  * script pode rodar quantas vezes for preciso: ele reconcilia, não duplica.
  *
- *   STRIPE_SECRET_KEY=sk_... bun run src/scripts/setup-stripe.ts
- *   STRIPE_SECRET_KEY=sk_... bun run src/scripts/setup-stripe.ts --dry-run
+ * A chave sai do `.env` da raiz — ver `load-env.ts`, que existe porque o `bun`
+ * lê esse arquivo sozinho e o `node`/`tsx` não.
+ *
+ *   npm run stripe:setup -- --dry-run
+ *   npm run stripe:setup
  */
 
+loadEnvFile()
+
 const secretKey = process.env.STRIPE_SECRET_KEY
-if (!secretKey) throw new Error('STRIPE_SECRET_KEY not set')
+if (!secretKey) {
+  throw new Error(
+    'STRIPE_SECRET_KEY não encontrada. Defina-a no arquivo .env da raiz do projeto ' +
+      '(ou no ambiente) antes de rodar este script.'
+  )
+}
 const stripe = new Stripe(secretKey)
 
 const DRY_RUN = process.argv.includes('--dry-run')

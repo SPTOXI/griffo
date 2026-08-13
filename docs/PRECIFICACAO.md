@@ -107,13 +107,25 @@ da escrita, que perde a corrida entre o webhook e a verificação direta:
 ## Operação
 
 ```bash
-bun run test                 # o teste do piso; falha se algum preço violar
-bun run db:push              # aplica o schema (analysisBalance, ledger, etc.)
-bun run stripe:setup -- --dry-run   # simula: arquiva pacotes antigos, cria preços
-bun run stripe:setup         # aplica na conta Stripe
-bun run migrate:analyses -- --dry-run  # simula a conversão de saldos
-bun run migrate:analyses     # converte 25 créditos = 1 análise, arredondando a favor
+npm install
+npm run db:push                        # schema (analysisBalance, ledger, etc.)
+npm run stripe:setup -- --dry-run      # simula: arquiva pacotes antigos, cria preços
+npm run stripe:setup                   # aplica na conta Stripe
+npm run migrate:analyses -- --dry-run  # simula a conversão de saldos
+npm run migrate:analyses               # 25 créditos = 1 análise, arredondando a favor
+
+bun test src                           # o teste do piso (requer bun)
 ```
+
+Os comandos de operação rodam com `npm` ou com `bun`: `stripe:setup` e
+`migrate:analyses` usam `npx tsx`, e carregam o `.env` da raiz por
+`scripts/load-env.ts` — o `bun` lê esse arquivo sozinho, o `node` não. Só a
+suíte de testes é específica do bun, porque usa `bun:test`.
+
+O `db:push` vai pedir confirmação para remover `AnalysisJob.reservationId` e
+`AnalysisJob.creditsCost`: são resquícios do modelo de reservas, sem dado de
+usuário. Todo o resto é aditivo, então o código que está no ar continua
+funcionando entre o `db:push` e o merge.
 
 O script da Stripe **arquiva** (`active: false`) os pacotes de crédito em vez de
 deletá-los: um `Price` deletado quebra o histórico dos pagamentos que o
@@ -129,7 +141,9 @@ mudança de modelo que não pediu.
 `User.credits` e `User.creditsMigratedAt` permanecem no schema como rastro
 auditável da conversão. Nada no produto lê ou escreve `credits` depois dela.
 
-**Comunicar por e-mail** faz parte da migração e não está automatizado aqui.
+**Comunicar por e-mail** faz parte da migração. O texto está pronto em
+`docs/comunicado-migracao.md`, nos três idiomas do produto; o disparo é manual e
+deve acontecer DEPOIS da conversão, para os e-mails que o script listar.
 
 ## Critérios de aceite
 

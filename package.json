@@ -12,8 +12,8 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "test": "bun test src",
-    "stripe:setup": "bun run src/scripts/setup-stripe.ts",
-    "migrate:analyses": "bun run src/scripts/migrate-credits-to-analyses.ts"
+    "stripe:setup": "npx --yes tsx src/scripts/setup-stripe.ts",
+    "migrate:analyses": "npx --yes tsx src/scripts/migrate-credits-to-analyses.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
