@@ -96,16 +96,27 @@ async function archiveLegacyCreditProducts(): Promise<number> {
   return archived
 }
 
-async function findOrCreateProduct(sku: Sku): Promise<Stripe.Product> {
+/**
+ * O produto, e se ele já existe na conta.
+ *
+ * O `exists` não é detalhe: na simulação, um produto que ainda não foi criado
+ * não tem id de verdade, e perguntar os preços de um id inventado faz a Stripe
+ * responder `resource_missing` — que foi exatamente o que a primeira versão
+ * fez. Quem chama precisa saber que não há nada a consultar.
+ */
+async function findOrCreateProduct(
+  sku: Sku
+): Promise<{ product: Stripe.Product; exists: boolean }> {
   const key = PRODUCT_KEYS[sku]
   const existing = await stripe.products.search({ query: `metadata['griffo_sku']:'${key}'` })
-  if (existing.data.length > 0) return existing.data[0]
+  if (existing.data.length > 0) return { product: existing.data[0], exists: true }
 
   if (DRY_RUN) {
-    return { id: `(dry-run:${key})`, name: PRODUCT_NAMES[sku] } as Stripe.Product
+    console.log(`\n(simulação) produto a criar: ${PRODUCT_NAMES[sku]}`)
+    return { product: { id: '', name: PRODUCT_NAMES[sku] } as Stripe.Product, exists: false }
   }
 
-  return stripe.products.create({
+  const product = await stripe.products.create({
     name: PRODUCT_NAMES[sku],
     description: PRODUCT_DESCRIPTIONS[sku],
     metadata: {
@@ -114,6 +125,7 @@ async function findOrCreateProduct(sku: Sku): Promise<Stripe.Product> {
       analyses: (sku === 'pack5' ? PACK_SIZE : 1).toString(),
     },
   })
+  return { product, exists: true }
 }
 
 /**
@@ -138,17 +150,26 @@ function currencyTierPairs(): Array<{ currency: string; tier: number; country: s
   return pairs
 }
 
-async function syncPrices(sku: Sku, product: Stripe.Product): Promise<number> {
-  console.log(`\n--- ${PRODUCT_NAMES[sku]} (${product.id}) ---`)
+async function syncPrices(
+  sku: Sku,
+  product: Stripe.Product,
+  productExists: boolean
+): Promise<number> {
+  console.log(`\n--- ${PRODUCT_NAMES[sku]}${productExists ? ` (${product.id})` : ' (a criar)'} ---`)
   let created = 0
+
+  // Uma consulta só, fora do laço. A versão anterior listava os preços do
+  // produto a cada moeda-faixa — trinta requisições idênticas à Stripe para
+  // responder à mesma pergunta.
+  const currentPrices = productExists
+    ? (await stripe.prices.list({ product: product.id, active: true, limit: 100 })).data
+    : []
 
   for (const pair of currencyTierPairs()) {
     const price = assertAboveFloor(priceFor(pair.country, sku))
     const lookupKey = `${PRODUCT_KEYS[sku]}_${price.currency.toLowerCase()}_t${price.tier}`
 
-    const existing = await stripe.prices
-      .list({ product: product.id, active: true, limit: 100 })
-      .then((r) => r.data.find((p) => p.lookup_key === lookupKey))
+    const existing = currentPrices.find((p) => p.lookup_key === lookupKey)
 
     if (existing && existing.unit_amount === price.amountMinor) {
       console.log(`  = ${lookupKey} já correto (${price.formatted})`)
@@ -206,8 +227,8 @@ async function main() {
 
   let createdPrices = 0
   for (const sku of ['single', 'pack5'] as Sku[]) {
-    const product = await findOrCreateProduct(sku)
-    createdPrices += await syncPrices(sku, product)
+    const { product, exists } = await findOrCreateProduct(sku)
+    createdPrices += await syncPrices(sku, product, exists)
   }
 
   console.log(
@@ -216,7 +237,13 @@ async function main() {
   if (DRY_RUN) console.log('Nada foi alterado. Rode sem --dry-run para aplicar.')
 }
 
-main().catch((err) => {
-  console.error('Erro ao configurar a Stripe:', err)
+main().catch((err: any) => {
+  // Só o que é acionável. O objeto de erro da Stripe traz a resposta HTTP
+  // inteira — cabeçalhos, política de CSP, endpoints de telemetria — e despejá-lo
+  // enterra a única linha que importa em duzentas que não importam.
+  console.error(`\nErro ao configurar a Stripe: ${err?.raw?.message || err?.message || err}`)
+  if (err?.raw?.code) console.error(`Código: ${err.raw.code}`)
+  if (err?.requestId) console.error(`Requisição: ${err.requestId}`)
+  console.error('\nNada foi alterado além do que já apareceu acima.')
   process.exit(1)
 })
