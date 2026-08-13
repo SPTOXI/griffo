@@ -114,13 +114,13 @@ npm run stripe:setup                   # aplica na conta Stripe
 npm run migrate:analyses -- --dry-run  # simula a conversão de saldos
 npm run migrate:analyses               # 25 créditos = 1 análise, arredondando a favor
 
-bun test src                           # o teste do piso (requer bun)
+npm test                               # o teste do piso
 ```
 
-Os comandos de operação rodam com `npm` ou com `bun`: `stripe:setup` e
-`migrate:analyses` usam `npx tsx`, e carregam o `.env` da raiz por
-`scripts/load-env.ts` — o `bun` lê esse arquivo sozinho, o `node` não. Só a
-suíte de testes é específica do bun, porque usa `bun:test`.
+Tudo roda com `npm` ou com `bun`. Nada aqui exige bun: `test`, `stripe:setup` e
+`migrate:analyses` usam `npx tsx`, a suíte usa `node:test` e os scripts carregam
+o `.env` da raiz por `scripts/load-env.ts` — o `bun` lê esse arquivo sozinho, o
+`node` não.
 
 O `db:push` vai pedir confirmação para remover `AnalysisJob.reservationId` e
 `AnalysisJob.creditsCost`: são resquícios do modelo de reservas, sem dado de
