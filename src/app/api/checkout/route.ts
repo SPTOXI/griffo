@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import type Stripe from 'stripe'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
@@ -88,8 +89,12 @@ export async function POST(req: Request) {
     try {
       const { getStripe } = await import('@/lib/stripe')
       const stripe = getStripe(stripeSecretKey)
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: stripePaymentMethodTypes(context.country, price.currency) as any,
+
+      const buildSession = (
+        paymentMethodTypes: string[]
+      ): Stripe.Checkout.SessionCreateParams => ({
+        payment_method_types:
+          paymentMethodTypes as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
         line_items: [
           {
             price_data: {
@@ -124,6 +129,32 @@ export async function POST(req: Request) {
         },
       })
 
+      // O método local é uma vantagem, não um requisito de funcionamento.
+      //
+      // A Stripe recusa a sessão INTEIRA quando recebe um `payment_method_type`
+      // que a conta não tem habilitado. Com o Pix fixo para o Brasil, uma conta
+      // sem Pix ativado não deixava de vender por Pix: deixava de vender —
+      // nem cartão passava. Um recurso opcional não pode derrubar a compra.
+      //
+      // A segunda tentativa usa uma lista estritamente menor e sempre válida.
+      // Se ela funcionar, o registro no log diz o que habilitar para recuperar
+      // o método local.
+      const desired = stripePaymentMethodTypes(context.country, price.currency)
+      let session
+      try {
+        session = await stripe.checkout.sessions.create(buildSession(desired))
+      } catch (methodErr: any) {
+        const localOnly = desired.filter((m) => m !== 'card')
+        if (localOnly.length === 0) throw methodErr
+
+        console.error(
+          `[checkout] Sessão recusada com ${desired.join('+')} em ${context.country} ` +
+            `(${methodErr?.raw?.code || methodErr?.code || 'erro'}: ${methodErr?.raw?.message || methodErr?.message}). ` +
+            `Repetindo só com cartão — habilite ${localOnly.join(', ')} no painel da Stripe para recuperá-lo.`
+        )
+        session = await stripe.checkout.sessions.create(buildSession(['card']))
+      }
+
       return NextResponse.json({
         success: true,
         gateway: 'stripe',
@@ -142,7 +173,13 @@ export async function POST(req: Request) {
       // O detalhe fica no log; ao cliente vai só o que ele pode agir.
       console.error('Stripe Checkout Error:', stripeErr)
       return NextResponse.json(
-        { error: 'Não foi possível iniciar o pagamento. Tente novamente em instantes.' },
+        {
+          error: 'Não foi possível iniciar o pagamento. Tente novamente em instantes.',
+          // O código da Stripe não é segredo — é o que transforma "não funciona"
+          // em algo diagnosticável sem acesso ao log do servidor. A mensagem
+          // completa continua fora da resposta.
+          stripeCode: stripeErr?.raw?.code || stripeErr?.code || null,
+        },
         { status: 400 }
       )
     }
