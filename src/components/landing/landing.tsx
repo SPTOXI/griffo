@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
 import { LanguageSelector } from '@/components/ui/language-selector'
+import { contactEmail, contactMailto, salesMailto } from '@/lib/i18n/contact'
 import { priceFor } from '@/lib/pricing/catalog'
 import { localMethodLabels } from '@/lib/pricing/payment-methods'
 
@@ -380,7 +381,7 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             <p className="text-xs text-slate-600 mt-0.5">{t.pricing.businessDesc}</p>
           </div>
           <Button asChild variant="outline" className="border-slate-300 text-[#0B192E] font-bold text-xs h-10 shrink-0">
-            <a href="mailto:comercial@griffo.work?subject=Griffo%20para%20empresas">{t.pricing.businessCta}</a>
+            <a href={salesMailto(lang)}>{t.pricing.businessCta}</a>
           </Button>
         </div>
       </section>
@@ -473,7 +474,10 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
           <div>
             <h4 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">{t.footer.contactTitle}</h4>
             <p className="text-xs text-slate-600 leading-relaxed font-medium">
-              contato@griffo.work<br/>
+              {/* O endereço acompanha o idioma da página — ver lib/i18n/contact.ts. */}
+              <a href={contactMailto(lang)} className="hover:text-[#0B63E5] transition-colors">
+                {contactEmail(lang)}
+              </a><br/>
               <strong>https://griffo.work</strong><br/>
               São Paulo, SP · Brasil
             </p>
