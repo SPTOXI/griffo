@@ -1,6 +1,7 @@
 import { db } from '../db'
 import { tryDecryptSecret } from '../crypto'
-import { ModelPricing, ProviderConfig, ProviderId, TaskType } from './types'
+import { ProviderConfig, ProviderId, TaskType } from './types'
+import { resolveModelPricing } from './pricing'
 
 export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   kimi: {
@@ -30,12 +31,18 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   deepseek: {
     id: 'deepseek',
     name: 'DeepSeek',
-    defaultModel: 'deepseek-chat',
+    // `deepseek-chat` era o padrão daqui, mas foi RETIRADO em 24/07/2026 15:59
+    // UTC — era apelido do V4-Flash em modo não-pensante. Um ID retirado não
+    // responde: enquanto ele era o padrão, toda chamada ao DeepSeek que não
+    // tivesse modelo configurado no painel falhava e caía para o suplente.
+    defaultModel: 'deepseek-v4-flash',
     baseURL: 'https://api.deepseek.com/v1',
     apiKeyEnvVar: 'DEEPSEEK_API_KEY',
+    // Fallback de preço, usado só se o modelo efetivo sair de MODEL_PRICING.
+    // Fora de pico do V4-Flash, que é o padrão do provedor.
     pricing: {
-      inputPer1k: 0.00027, // $0.27 / 1M
-      outputPer1k: 0.0011, // $1.10 / 1M
+      inputPer1k: 0.00022, // $0.22 / 1M
+      outputPer1k: 0.00066, // $0.66 / 1M
     },
   },
   gemini: {
@@ -51,31 +58,22 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   },
 }
 
-// O custo real depende do MODELO efetivamente usado, não do provedor: o admin
-// pode trocar o modelo no painel sem que a tabela do provedor acompanhe. Antes
-// disso o preço do Opus 5 estava declarado como $15/$75 (o triplo do real), o
-// que inflava em 3x o custo e o lucro exibidos no painel administrativo.
-//
-// Valores em USD por 1k tokens. Modelos ausentes caem no preço do provedor.
-export const MODEL_PRICING: Record<string, ModelPricing> = {
-  // Anthropic
-  'claude-opus-5': { inputPer1k: 0.005, outputPer1k: 0.025 },
-  'claude-sonnet-5': { inputPer1k: 0.003, outputPer1k: 0.015 },
-  'claude-haiku-4-5': { inputPer1k: 0.001, outputPer1k: 0.005 },
-  // Moonshot
-  'kimi-k3': { inputPer1k: 0.003, outputPer1k: 0.015 },
-  // DeepSeek — anunciou aumento em 06/08/2026 sem divulgar tamanho nem data,
-  // mais política de pico 2x. Revisar periodicamente.
-  'deepseek-v4-flash': { inputPer1k: 0.00014, outputPer1k: 0.00028 },
-  'deepseek-v4-pro': { inputPer1k: 0.000435, outputPer1k: 0.00087 },
-}
+// A tabela de preços vive em ./pricing (sem dependência de banco, para poder
+// ser testada). Reexportada aqui porque este é o módulo que o resto do
+// roteador importa.
+export { MODEL_PRICING, TIERED_MODEL_PRICING, resolveModelPricing } from './pricing'
 
 // Modelos correntes por provedor. Um modelo configurado fora desta lista é
 // tratado como desatualizado e substituído pelo padrão do provedor.
 const CURRENT_MODELS: Record<ProviderId, string[]> = {
   claude: ['claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5'],
   kimi: ['kimi-k3'],
-  deepseek: ['deepseek-chat', 'deepseek-v4-flash', 'deepseek-v4-pro'],
+  // `deepseek-chat` saiu da lista porque foi retirado pelo provedor em
+  // 24/07/2026. Mantê-lo aqui faria uma configuração antiga do painel continuar
+  // valendo e chamando um ID que não existe mais; fora da lista, ela é
+  // substituída pelo padrão do provedor — que é exatamente para o que esta
+  // substituição existe.
+  deepseek: ['deepseek-v4-flash', 'deepseek-v4-pro'],
   gemini: ['gemini-2.0-flash'],
 }
 
@@ -142,8 +140,10 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   // análise foi calculado com ela no Sonnet. Estava no DeepSeek — mais barata,
   // mas fora do padrão de qualidade do que a pessoa leva embora.
   cover_letter: 'claude',
-  // Prévia gratuita: servida a quem ainda não pagou, ao custo de US$ 0,0017 por
-  // conta. É o único item do produto que roda deliberadamente no modelo barato.
+  // Prévia gratuita: servida a quem ainda não pagou, ao custo de US$ 0,0011 por
+  // conta fora de pico e US$ 0,0022 no pico, pela tabela do DeepSeek que vale a
+  // partir de 16/08/2026 (antes dela era US$ 0,0017). É o único item do produto
+  // que roda deliberadamente no modelo barato.
   free_preview: 'deepseek',
   // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
@@ -293,6 +293,8 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
     apiKey: apiKey.trim(),
     baseURL: baseURL.trim(),
     model: trimmedModel,
-    pricing: MODEL_PRICING[trimmedModel] ?? base.pricing,
+    // Resolvido agora, não na carga do módulo: o preço do DeepSeek depende da
+    // hora UTC da chamada.
+    pricing: resolveModelPricing(trimmedModel) ?? base.pricing,
   }
 }

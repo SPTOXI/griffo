@@ -289,7 +289,7 @@ function AdminViewContent() {
     setNewKeyProvider(provider)
     if (provider === 'moonshot') setNewKeyModel('kimi-k3')
     else if (provider === 'anthropic') setNewKeyModel('claude-sonnet-5')
-    else if (provider === 'deepseek') setNewKeyModel('deepseek-chat')
+    else if (provider === 'deepseek') setNewKeyModel('deepseek-v4-flash')
     else if (provider === 'gemini') setNewKeyModel('gemini-2.0-flash')
   }
 
