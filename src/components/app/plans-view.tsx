@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { CheckCircle2, Loader2, ShoppingBag, Sparkles, Building2, Layers } from 'lucide-react'
 import { toast } from 'sonner'
 import { useI18n } from '@/context/i18n-context'
+import { salesMailto } from '@/lib/i18n/contact'
 import { useAnalyses, startCheckout } from '@/hooks/use-analyses'
 
 /**
@@ -22,7 +23,7 @@ import { useAnalyses, startCheckout } from '@/hooks/use-analyses'
  * decisão que a mudança de modelo eliminou.
  */
 export function PlansView() {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const { balance, hasPurchased, pricing, ledger, loading, refresh } = useAnalyses()
   const [buying, setBuying] = useState<string | null>(null)
 
@@ -175,7 +176,7 @@ export function PlansView() {
                 variant="outline"
                 className="w-full h-10 text-xs font-bold bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
               >
-                <a href="mailto:comercial@griffo.work?subject=Griffo%20para%20empresas">
+                <a href={salesMailto(lang)}>
                   {t.pricing.businessCta}
                 </a>
               </Button>
