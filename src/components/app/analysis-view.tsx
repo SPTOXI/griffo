@@ -460,7 +460,10 @@ export function AnalysisView() {
   return (
     <div className="space-y-5 max-w-5xl">
       {/* TAB NAVIGATION BAR */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none border-b border-slate-200">
+      {/* As abas quebram em várias linhas em vez de rolarem: a fila inteira é
+          mais larga que o painel, e a rolagem escondia o fim do rótulo da aba
+          que cai na borda direita ("8 Dimensões" virava "8 Dimensõ"). */}
+      <div className="flex flex-wrap items-center gap-1.5 pb-2 border-b border-slate-200">
         <button
           onClick={() => setActiveTab('all')}
           className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
