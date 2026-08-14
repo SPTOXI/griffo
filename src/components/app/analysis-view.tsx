@@ -101,7 +101,18 @@ export function AnalysisView() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'all' | 'overview' | 'social' | 'match' | 'career' | 'dimensions' | 'targeted' | 'letter'>('all')
   const [list, setList] = useState<{ id: string; status: string; updatedAt: string }[]>([])
-  const autoTriggeredRef = useState<{ [id: string]: boolean }>({})[0]
+  /**
+   * Currículos cuja análise já foi disparada automaticamente nesta sessão.
+   *
+   * É um `useRef` porque é exatamente o que o React chama de ref: valor mutável
+   * que atravessa renderizações e cujo conteúdo NÃO deve provocar nova
+   * renderização — marcar um disparo não muda nada na tela. Estava escrito como
+   * `useState({})[0]`, guardando o valor inicial e mutando o objeto por dentro,
+   * o que produz o mesmo efeito por acidente e viola a regra de imutabilidade
+   * do estado: o React não garante identidade do valor inicial entre
+   * renderizações, e a mutação é invisível para ele.
+   */
+  const autoTriggeredRef = useRef<Record<string, boolean>>({})
 
   const handleGenerateOrientation = async () => {
     if (!resume?.id) return
@@ -187,24 +198,19 @@ export function AnalysisView() {
     }
   }
 
-  useEffect(() => {
-    if (activeResumeId) {
-      loadResume(activeResumeId)
-    } else {
-      internalFetch('/api/resume/upload')
-        .then(r => r.json())
-        .then(d => {
-          if (d.resumes?.length) {
-            setList(d.resumes)
-            loadResume(d.resumes[0].id)
-          } else {
-            setLoading(false)
-          }
-        })
-        .catch(() => setLoading(false))
-    }
-  }, [activeResumeId])
-
+  /**
+   * Carrega o currículo e nada mais.
+   *
+   * Ela chamava `reanalyze` no fim, o que fechava um ciclo entre as duas: a
+   * carga disparava a análise, a análise avisava o fim pelo `onCompleted` do
+   * `useAnalysisJob`, e o `onCompleted` chamava a carga de novo. Num ciclo não
+   * existe ordem de declaração possível — uma das duas sempre seria usada antes
+   * de existir, e uma referência assim não acompanha as mudanças de valor ao
+   * longo do tempo.
+   *
+   * A decisão de disparar saiu daqui e virou um efeito próprio, depois de
+   * `reanalyze` estar declarada. A carga volta a ser só carga.
+   */
   const loadResume = async (id: string) => {
     setLoading(true)
     setError(null)
@@ -222,20 +228,30 @@ export function AnalysisView() {
       if (data.resume?.coverLetter) {
         setCoverLetter(data.resume.coverLetter)
       }
-      // A análise dispara sozinha só depois que o currículo foi liberado. Antes
-      // disso o disparo automático consumiria uma análise do saldo sem que
-      // ninguém tivesse pedido — e a decisão de gastar é do usuário, na tela do
-      // paywall.
-      if (data.resume?.unlocked && !data.resume.analysis && !autoTriggeredRef[id]) {
-        autoTriggeredRef[id] = true
-        reanalyze(data.resume)
-      }
     } catch {
       setError('Erro de conexão.')
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (activeResumeId) {
+      loadResume(activeResumeId)
+    } else {
+      internalFetch('/api/resume/upload')
+        .then(r => r.json())
+        .then(d => {
+          if (d.resumes?.length) {
+            setList(d.resumes)
+            loadResume(d.resumes[0].id)
+          } else {
+            setLoading(false)
+          }
+        })
+        .catch(() => setLoading(false))
+    }
+  }, [activeResumeId])
 
   // O currículo em análise fica num ref: o desfecho chega por retorno de
   // chamada, possivelmente depois de o estado ter mudado.
@@ -269,6 +285,24 @@ export function AnalysisView() {
     // duas vezes.
     await job.start(activeResume.id)
   }
+
+  /**
+   * Disparo automático da análise.
+   *
+   * Só depois de o currículo estar liberado: antes disso, disparar sozinho
+   * consumiria uma análise do saldo sem que ninguém tivesse pedido — e a decisão
+   * de gastar é do usuário, na tela do paywall.
+   *
+   * `autoTriggeredRef` guarda quais currículos já foram disparados nesta sessão.
+   * Sem ele, uma segunda carga do mesmo currículo (a que o `onCompleted` faz,
+   * por exemplo) dispararia a análise de novo.
+   */
+  useEffect(() => {
+    if (!resume?.unlocked || resume.analysis) return
+    if (autoTriggeredRef.current[resume.id]) return
+    autoTriggeredRef.current[resume.id] = true
+    void reanalyze(resume)
+  }, [resume])
 
 
   if (loading) {
@@ -307,7 +341,7 @@ export function AnalysisView() {
         resumeId={resume.id}
         preview={resume.preview ?? null}
         onUnlocked={() => {
-          autoTriggeredRef[resume.id] = true
+          autoTriggeredRef.current[resume.id] = true
           setResume({ ...resume, unlocked: true })
           // O saldo é debitado dentro deste POST; só depois dele o número novo
           // existe para ser lido.

@@ -32,15 +32,6 @@ export function DownloadsView() {
   const planActive = (user?.plan && user.plan !== 'free') || user?.role === 'admin'
   const canDownload = true
 
-  useEffect(() => {
-    if (activeResumeId) {
-      setSelected(activeResumeId)
-      loadList(activeResumeId)
-    } else {
-      loadList()
-    }
-  }, [activeResumeId])
-
   const loadList = async (preferId?: string) => {
     setLoading(true)
     try {
@@ -58,6 +49,16 @@ export function DownloadsView() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (activeResumeId) {
+      setSelected(activeResumeId)
+      loadList(activeResumeId)
+    } else {
+      loadList()
+    }
+  }, [activeResumeId])
+
 
   const loadStatus = async (id: string) => {
     try {

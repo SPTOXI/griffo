@@ -66,6 +66,17 @@ export function RewriteView() {
     }
   }
 
+  const loadResume = async (id: string) => {
+    setLoading(true)
+    try {
+      const r = await internalFetch(`/api/resume/${id}?id=${id}`, { cache: 'no-store' })
+      const data = await r.json()
+      if (r.ok) setResume(data.resume)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (activeResumeId) {
       loadResume(activeResumeId);
@@ -86,16 +97,6 @@ export function RewriteView() {
     }
   }, [activeResumeId])
 
-  const loadResume = async (id: string) => {
-    setLoading(true)
-    try {
-      const r = await internalFetch(`/api/resume/${id}?id=${id}`, { cache: 'no-store' })
-      const data = await r.json()
-      if (r.ok) setResume(data.resume)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const requestRewrite = async () => {
     if (!resume) return

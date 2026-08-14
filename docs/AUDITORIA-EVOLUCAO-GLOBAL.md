@@ -98,11 +98,7 @@ tipo. **Corrigido para `cover_letter`**; os tipos futuros (`job_matching`,
   `paymentCountry` como entrada.
 - **Residência de dados está implementada** (`lib/data-residency.ts`) e cobre
   §25: DeepSeek e Kimi são removidos da cadeia para usuários do EEE.
-- **4 erros de lint pré-existentes** em `analysis-view.tsx`
-  (`react-hooks/immutability`: um `useState` usado como `ref` mutável). Existem
-  antes destas alterações e não foram introduzidos por elas. Corrigi-los é
-  mexer na gestão de estado da tela — fora do escopo desta etapa, registrado
-  aqui para não se perder.
+- **Lint pré-existente, corrigido** — ver 2.6.
 - **Não há migrações versionadas** (`prisma/migrations/` não existe; o fluxo é
   `prisma db push`). A coluna nova desta etapa é anulável e aditiva, então o
   `db push` é seguro. Para as etapas seguintes, que mexem em relacionamentos,
@@ -207,7 +203,45 @@ digital, não um produto à parte.
   dizendo o que mede e o que **não** mede: *"Não é probabilidade de contratação
   nem medição do mercado de trabalho."*
 
-### 2.6 Testes
+### 2.6 Lint pré-existente (`npm run lint` voltou a passar)
+
+O `eslint-config-next` do Next 16 trouxe o conjunto de regras do React Compiler,
+e o repositório ficou com 14 erros em 9 arquivos. Nenhum deles foi introduzido
+por esta etapa. Divididos em duas famílias, com desfechos opostos:
+
+**`react-hooks/immutability` — 4 erros, todos corrigidos como defeito real.**
+
+- `analysis-view.tsx` guardava `useState<Record<string, boolean>>({})[0]` e
+  mutava o objeto por dentro para lembrar quais currículos já haviam disparado
+  a análise. Funciona por acidente: o React não garante identidade do valor
+  inicial entre renderizações, e a mutação é invisível para ele. Virou
+  `useRef`, que é exatamente o que a estrutura é.
+- A mesma tela tinha um ciclo entre `loadResume` e `reanalyze`: a carga
+  disparava a análise, a análise avisava o fim pelo `onCompleted` do
+  `useAnalysisJob`, e o `onCompleted` chamava a carga de novo. Num ciclo não
+  existe ordem de declaração possível. A decisão de disparar saiu da carga e
+  virou um efeito próprio; `loadResume` voltou a ser só carga.
+- `admin-view.tsx`, `downloads-view.tsx` e `rewrite-view.tsx` tinham a variante
+  simples do mesmo problema — o efeito declarado acima da função que ele chama.
+  Resolvido por reordenação.
+
+**`react-hooks/set-state-in-effect` — 12 pontos, regra desligada.**
+
+É a busca de dados no `useEffect` de montagem, com `setLoading(true)` antes do
+primeiro `await`. Aparece em 9 arquivos, incluindo `ui/carousel.tsx` e
+`hooks/use-mobile.ts`, que são código de terceiros (shadcn).
+
+Desligada no `eslint.config.mjs`, junto das irmãs que o projeto já havia
+desligado (`purity`, `exhaustive-deps`, `react-compiler`), **com a correção real
+registrada no próprio comentário**: mover a carga de dados para o React Query,
+que já é dependência do projeto e não é usado em nenhuma dessas telas. Um
+`eslint-disable` por arquivo espalharia a dívida sem registrá-la; desligar com
+justificativa a mantém em um lugar só.
+
+`react-hooks/immutability` **continua ligada** — foi ela que encontrou o defeito
+de verdade.
+
+### 2.7 Testes
 
 | Arquivo | Testes | Cobre |
 |---|---|---|
