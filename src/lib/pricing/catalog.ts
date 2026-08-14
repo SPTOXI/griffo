@@ -271,13 +271,29 @@ const COUNTRY_LOCALE: Record<string, string> = {
   PK: 'en-PK', BD: 'bn-BD', KE: 'en-KE',
 }
 
-/** Os nove itens que UMA compra entrega. Sem contagem, sem escolha. */
+/**
+ * Os nove itens que UMA compra entrega. Sem contagem, sem escolha.
+ *
+ * A lista é a promessa comercial do produto, e por isso cada item precisa
+ * apontar para uma função que existe. Duas correções foram necessárias:
+ *
+ * - `profile_optimization` saiu. Ele era o mesmo trabalho que
+ *   `social_analysis` já entrega: a auditoria de presença digital produz
+ *   headline, texto "Sobre" e ações por perfil (ver `lib/social/analysis.ts`).
+ *   Vender os dois contava o mesmo benefício duas vezes para inflar a lista.
+ * - `targeted_changes` entrou. Ele é produzido de verdade — é o segmento
+ *   homônimo da análise, que devolve trechos reais do currículo com a
+ *   substituição sugerida — e não era anunciado em lugar nenhum.
+ *
+ * A troca é deliberada: um item real que ninguém sabia que existia no lugar de
+ * um item duplicado. `catalog.test.ts` verifica que a lista continua com nove.
+ */
 export const ANALYSIS_DELIVERABLES = [
   'dimensions',
   'job_match',
+  'targeted_changes',
   'rewrite',
   'career_orientation',
-  'profile_optimization',
   'social_analysis',
   'cover_letter',
   'professional_summary',
@@ -285,6 +301,26 @@ export const ANALYSIS_DELIVERABLES = [
 ] as const
 
 export type AnalysisDeliverable = (typeof ANALYSIS_DELIVERABLES)[number]
+
+/**
+ * Onde cada entrega é produzida.
+ *
+ * Existe para que a promessa possa ser conferida contra o código, e não apenas
+ * lida. Um item sem produtor aqui é um item que a landing vende e o produto não
+ * entrega — foi exatamente o caso de `cover_letter` e `professional_summary`
+ * antes de `app/api/resume/cover-letter/route.ts` existir.
+ */
+export const DELIVERABLE_PRODUCERS: Record<AnalysisDeliverable, string> = {
+  dimensions: 'lib/analysis/segments.ts (segmentos dimensions_a e dimensions_b)',
+  job_match: 'lib/analysis/segments.ts (segmento job_match)',
+  targeted_changes: 'lib/analysis/segments.ts (segmento targeted_changes)',
+  rewrite: 'app/api/resume/rewrite/route.ts',
+  career_orientation: 'app/api/resume/career-orientation/route.ts',
+  social_analysis: 'app/api/resume/social-analysis/route.ts + lib/social/analysis.ts',
+  cover_letter: 'app/api/resume/cover-letter/route.ts',
+  professional_summary: 'app/api/resume/cover-letter/route.ts (mesma chamada da carta)',
+  pdf_download: 'app/api/resume/download/route.ts + lib/pdf.ts',
+}
 
 export function normalizeCountry(country: string | null | undefined): string {
   return (country || '').toUpperCase().trim()

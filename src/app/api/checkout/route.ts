@@ -83,8 +83,8 @@ export async function POST(req: Request) {
       sku === 'pack5' ? `Griffo — ${PACK_SIZE} Análises Completas` : 'Griffo — Análise Completa'
     const productDesc =
       sku === 'pack5'
-        ? `${PACK_SIZE} análises completas de currículo. Cada uma entrega laudo das 8 dimensões, comparação com a vaga, reescrita, orientação, otimização de perfil, mídias sociais, carta, resumo e PDF.`
-        : 'Uma análise completa de currículo: laudo das 8 dimensões, comparação com a vaga, reescrita, orientação, otimização de perfil, mídias sociais, carta, resumo e PDF.'
+        ? `${PACK_SIZE} análises completas de currículo. Cada uma entrega laudo das 8 dimensões, comparação com a vaga, trechos a ajustar, reescrita, orientação, presença digital, carta, resumo e PDF.`
+        : 'Uma análise completa de currículo: laudo das 8 dimensões, comparação com a vaga, trechos a ajustar, reescrita, orientação, presença digital, carta, resumo e PDF.'
 
     try {
       const { getStripe } = await import('@/lib/stripe')

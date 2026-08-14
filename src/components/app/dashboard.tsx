@@ -66,7 +66,7 @@ export function Dashboard() {
                 )}
               </CardTitle>
               <CardDescription className="text-indigo-200 mt-1 text-xs max-w-lg leading-relaxed font-medium">
-                Uma compra libera a Análise Completa de um currículo: laudo das 8 dimensões, comparação com a vaga, reescrita, orientação, otimização de perfil, mídias sociais, carta, resumo e PDF.
+                Uma compra libera a Análise Completa de um currículo: laudo das 8 dimensões, comparação com a vaga, trechos a ajustar, reescrita, orientação, presença digital, carta, resumo e PDF.
               </CardDescription>
             </div>
           </div>

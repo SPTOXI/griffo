@@ -28,7 +28,7 @@ export const SYSTEM_CONFIG_KEYS = {
   CREDIT_PRICE_BRL: { sensitive: false },
   AI_AVG_COST_BRL: { sensitive: false },
 
-  // --- Provedores de IA (lidos por ai-router/registry.ts e lib/llm.ts) ---
+  // --- Provedores de IA (lidos por ai-router/registry.ts) ---
   MOONSHOT_API_KEY: { sensitive: true },
   MOONSHOT_BASE_URL: { sensitive: false },
   KIMI_API_KEY: { sensitive: true },

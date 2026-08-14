@@ -107,6 +107,13 @@ export interface TranslationDictionary {
     oneTime: string
     includesTitle: string
     /// Os nove itens que UMA compra entrega.
+    ///
+    /// Espelham `ANALYSIS_DELIVERABLES` em `lib/pricing/catalog.ts`, que é a
+    /// fonte de verdade e declara onde cada item é produzido. Duas correções
+    /// vieram de lá: a otimização de perfil deixou de ser vendida à parte da
+    /// análise de presença digital — é o mesmo trabalho, contado uma vez só — e
+    /// os trechos a ajustar no currículo, que a análise sempre produziu e
+    /// ninguém anunciava, entraram no lugar.
     items: string[]
     buyCta: string
     previewTitle: string
@@ -290,10 +297,10 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       items: [
         'Laudo das 8 Dimensões',
         'Comparação com a Vaga Alvo',
+        'Trechos a Ajustar no Currículo',
         'Reescrita de Experiências (STAR/XYZ)',
         'Orientação Profissional',
-        'Otimização de Perfil (LinkedIn/Gupy)',
-        'Análise de Mídias Sociais',
+        'Presença Digital e Otimização de Perfil',
         'Carta de Apresentação',
         'Resumo Profissional',
         'Download em PDF',
@@ -476,10 +483,10 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       items: [
         '8-Dimension Audit Report',
         'Target Job Comparison',
+        'Line-by-Line Resume Fixes',
         'Experience Rewrite (STAR/XYZ)',
         'Career Guidance Report',
-        'Profile Optimization (LinkedIn/ATS)',
-        'Social Media Review',
+        'Online Presence & Profile Optimization',
         'Cover Letter',
         'Professional Summary',
         'PDF Download',
@@ -662,10 +669,10 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       items: [
         'Informe de 8 Dimensiones',
         'Comparación con la Vacante',
+        'Fragmentos a Corregir en el CV',
         'Reescritura de Experiencias (STAR/XYZ)',
         'Orientación Profesional',
-        'Optimización de Perfil (LinkedIn/ATS)',
-        'Análisis de Redes Sociales',
+        'Presencia Digital y Optimización de Perfil',
         'Carta de Presentación',
         'Resumen Profesional',
         'Descarga en PDF',

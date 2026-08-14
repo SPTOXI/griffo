@@ -27,7 +27,7 @@ import { SEGMENT_IDS } from '@/lib/analysis/stages'
  *
  * O destrave é o ÚNICO movimento cobrável do produto: ele consome uma análise
  * do saldo e libera os nove itens deste currículo para sempre — reescrita,
- * carta, orientação, mídias sociais e download deixaram de ter preço próprio.
+ * carta, orientação, presença digital e download deixaram de ter preço próprio.
  */
 
 const schema = z.object({

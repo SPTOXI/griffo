@@ -144,6 +144,18 @@ model Resume {
   /// sem texto. É o que a pessoa vê antes de pagar.
   previewJson String?
 
+  /// Carta de apresentação e resumo profissional direcionado.
+  ///
+  /// Os dois eram anunciados na landing, no catálogo e no prompt do suporte
+  /// desde a reprecificação, e não existiam no código: `cover_letter` tinha
+  /// tipo de tarefa, roteamento para o Claude e custo orçado, mas nenhuma rota
+  /// que o produzisse. Uma compra entregava sete dos nove itens vendidos.
+  ///
+  /// Guardados juntos porque saem da mesma chamada: os dois textos derivam do
+  /// par (currículo, vaga alvo) e pedi-los separadamente dobraria o custo sem
+  /// melhorar nenhum dos dois.
+  coverLetterJson String?
+
   /// Momento em que uma análise do saldo foi consumida para destravar ESTE
   /// currículo. A partir daqui todos os nove itens ficam disponíveis, quantas
   /// vezes o usuário quiser, sem nova cobrança.

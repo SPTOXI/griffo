@@ -30,6 +30,7 @@ export async function GET(
           rewrittenContent: true,
           careerOrientationJson: true,
           socialAnalysisJson: true,
+          coverLetterJson: true,
           socialLinksJson: true,
           previewJson: true,
           unlockedAt: true,
@@ -48,6 +49,10 @@ export async function GET(
       if (resume.socialAnalysisJson) {
         try { socialAnalysis = JSON.parse(resume.socialAnalysisJson) } catch { socialAnalysis = null }
       }
+      let coverLetter = null
+      if (resume.coverLetterJson) {
+        try { coverLetter = JSON.parse(resume.coverLetterJson) } catch { coverLetter = null }
+      }
       let socialLinks: Record<string, string> = {}
       if (resume.socialLinksJson) {
         try { socialLinks = JSON.parse(resume.socialLinksJson) } catch { socialLinks = {} }
@@ -61,7 +66,7 @@ export async function GET(
       // de disparar sozinha sem que ninguém tenha pago por ela.
       const unlocked = Boolean(resume.unlockedAt) || user.role === 'admin'
       return NextResponse.json({
-        resume: { ...resume, analysis, careerOrientation, socialAnalysis, socialLinks, preview, unlocked },
+        resume: { ...resume, analysis, careerOrientation, socialAnalysis, coverLetter, socialLinks, preview, unlocked },
       })
     }
 

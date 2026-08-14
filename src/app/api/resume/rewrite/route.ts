@@ -8,7 +8,8 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
 import { requireUnlockedResume } from '@/lib/entitlements'
-import { getRequestLanguage, LANGUAGE_DIRECTIVE, ATS_BY_MARKET } from '@/lib/i18n/server'
+import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
+import { marketPromptContext, resolveMarket } from '@/lib/market'
 import { edgeCountry } from '@/lib/pricing/resolve'
 
 const schema = z.object({
@@ -55,6 +56,11 @@ export async function POST(req: Request) {
 
     const lang = getRequestLanguage(req)
 
+    // O formato de currículo é a decisão mais dependente de mercado do produto:
+    // uma página nos EUA, foto no Lebenslauf alemão, CLT/PJ no Brasil. Antes o
+    // prompt recebia apenas uma lista de ATS indexada pelo idioma da interface.
+    const { market } = resolveMarket({ residenceCountry: edgeCountry(req), language: lang })
+
     // Extract ATS keywords from analysis if present
     let keywordsHint = ''
     if (resume.analysisJson) {
@@ -71,7 +77,7 @@ export async function POST(req: Request) {
       taskType: 'rewrite',
       userId: user.id,
       userCountry: edgeCountry(req),
-      systemPrompt: `${LANGUAGE_DIRECTIVE[lang]}\n\nVocê é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas ATS (${ATS_BY_MARKET[lang]}). Sua função é reescrever o currículo COMPLETO de ponta a ponta sem cortar nada, utilizando marcações Markdown perfeitamente estruturadas (títulos H1/H2, marcadores de lista, negritos).`,
+      systemPrompt: `${LANGUAGE_DIRECTIVE[lang]}\n\nVocê é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas de triagem (ATS).\n\n${marketPromptContext(market)}\n\nSua função é reescrever o currículo COMPLETO de ponta a ponta sem cortar nada, utilizando marcações Markdown perfeitamente estruturadas (títulos H1/H2, marcadores de lista, negritos), respeitando as convenções do mercado acima.`,
       userPrompt: `REESCREVA O CURRÍCULO COMPLETO DO INÍCIO AO FIM SEM OMITIR NEM SINTETIZAR NENHUMA SEÇÃO OU EXPERIÊNCIA.
 
 Diretrizes Obrigatórias:

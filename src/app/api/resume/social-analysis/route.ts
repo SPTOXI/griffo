@@ -11,6 +11,7 @@ import { getRequestLanguage } from '@/lib/i18n/server'
 import { edgeCountry } from '@/lib/pricing/resolve'
 import { fetchAllProfiles, detectPlatform, type SocialProfileData } from '@/lib/social/fetchers'
 import { analyzeSocialPresence } from '@/lib/social/analysis'
+import { resolveMarket } from '@/lib/market'
 import { parsePdfBase64 } from '@/lib/pdf-text'
 
 const schema = z.object({
@@ -167,6 +168,11 @@ export async function POST(req: Request) {
 
     const lang = getRequestLanguage(req)
 
+    // Mercado profissional do candidato. A residência é o melhor sinal enquanto
+    // o Perfil Profissional (Etapa 2) não guardar um alvo declarado; o idioma da
+    // interface entra apenas como último recurso, dentro de `resolveMarket`.
+    const { market } = resolveMarket({ residenceCountry: edgeCountry(req), language: lang })
+
     // Uma chamada por perfil, em paralelo, mais a avaliação geral. O parecer
     // inteiro numa chamada só estourava o teto de tempo por provedor — mesmo
     // problema, e mesma solução, da análise do currículo. Ver lib/social/analysis.ts.
@@ -174,6 +180,7 @@ export async function POST(req: Request) {
       profiles,
       resumeExcerpt: resume.originalContent.slice(0, 8000),
       lang,
+      market,
       userId: user.id,
       resumeId: resume.id,
       userCountry: edgeCountry(req),
