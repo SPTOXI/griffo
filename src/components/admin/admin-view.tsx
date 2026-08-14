@@ -7,10 +7,20 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Shield, Users, CreditCard, Cpu, Search, Loader2, Save, RefreshCw, Activity,
-  BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Award
+  BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Award, UserPlus, Minus
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { slowModelWarning } from '@/lib/model-warnings'
@@ -362,7 +372,46 @@ function AdminViewContent() {
   }
 
   // User Management Actions
-  const updateUser = async (userId: string, updates: { role?: string; analysisBalance?: number; disabled?: boolean }) => {
+  // Criação de conta pelo administrador. Existe para os casos em que a pessoa
+  // não passa pelo cadastro público: cortesia, suporte, conta de teste.
+  const [newUser, setNewUser] = useState({
+    email: '',
+    name: '',
+    password: '',
+    role: 'user',
+    analysisBalance: 0,
+  })
+  const [creatingUser, setCreatingUser] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+
+  const createUser = async () => {
+    setCreatingUser(true)
+    try {
+      const r = await internalFetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser),
+      })
+      const data = await r.json()
+      if (!r.ok) {
+        toast.error(data.error || 'Erro ao criar usuário.')
+        return
+      }
+      toast.success(data.message || 'Usuário criado.')
+      setCreateOpen(false)
+      setNewUser({ email: '', name: '', password: '', role: 'user', analysisBalance: 0 })
+      await loadData()
+    } catch {
+      toast.error('Falha ao conectar com o servidor.')
+    } finally {
+      setCreatingUser(false)
+    }
+  }
+
+  const updateUser = async (
+    userId: string,
+    updates: { role?: string; analysisBalance?: number; analysisDelta?: number; disabled?: boolean }
+  ) => {
     try {
       const r = await internalFetch('/api/admin/users', {
         method: 'PATCH',
@@ -694,6 +743,99 @@ function AdminViewContent() {
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
+                  <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" className="h-9 bg-emerald-600 hover:bg-emerald-700 text-xs font-bold">
+                        <UserPlus className="w-4 h-4 mr-1.5" /> Novo usuário
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Criar conta</DialogTitle>
+                        <DialogDescription className="text-xs">
+                          A conta é criada já ativa. A senha definida aqui é a que a pessoa usará
+                          para entrar — combine com ela por um canal seguro.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold">Nome</Label>
+                          <Input
+                            value={newUser.name}
+                            onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                            placeholder="Maria Silva"
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold">E-mail</Label>
+                          <Input
+                            type="email"
+                            value={newUser.email}
+                            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                            placeholder="maria@exemplo.com"
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold">Senha (mínimo 8 caracteres)</Label>
+                          <Input
+                            type="text"
+                            value={newUser.password}
+                            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                            placeholder="senha-inicial"
+                            className="text-sm font-mono"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold">Perfil</Label>
+                            <Select
+                              value={newUser.role}
+                              onValueChange={(v) => setNewUser({ ...newUser, role: v })}
+                            >
+                              <SelectTrigger className="text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="user">Usuário</SelectItem>
+                                <SelectItem value="admin">Administrador</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold">Análises iniciais</Label>
+                            <Input
+                              type="number"
+                              min={0}
+                              value={newUser.analysisBalance}
+                              onChange={(e) =>
+                                setNewUser({
+                                  ...newUser,
+                                  analysisBalance: Math.max(0, parseInt(e.target.value, 10) || 0),
+                                })
+                              }
+                              className="text-sm font-mono"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          onClick={createUser}
+                          disabled={creatingUser || !newUser.email || !newUser.name || newUser.password.length < 8}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-xs font-bold w-full"
+                        >
+                          {creatingUser ? (
+                            <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                          ) : (
+                            <UserPlus className="w-4 h-4 mr-1.5" />
+                          )}
+                          Criar conta
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                   <div className="relative">
                     <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-slate-400" />
                     <Input
@@ -845,12 +987,29 @@ function AdminViewContent() {
                               <span className="text-violet-700">♾️ Ilimitado</span>
                             ) : (
                               <div className="flex items-center gap-1">
+                                {/* Crédito e redução usam `analysisDelta`, que
+                                    é incremento no banco: não perde a análise
+                                    que o usuário gastou entre o carregamento
+                                    da tela e o clique. O campo ao lado atribui
+                                    um valor absoluto, para corrigir um saldo
+                                    errado. Os dois geram linha no ledger. */}
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  title="Reduzir uma análise"
+                                  disabled={(u.analysisBalance ?? 0) <= 0}
+                                  onClick={() => updateUser(u.id, { analysisDelta: -1 })}
+                                  className="h-7 w-7 border-slate-300 shrink-0"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </Button>
                                 <Input
                                   type="number"
                                   min={0}
                                   defaultValue={u.analysisBalance ?? 0}
                                   key={`balance-${u.id}-${u.analysisBalance}`}
-                                  className="h-7 w-20 text-[11px] font-mono font-bold px-2 border-slate-300 focus:border-emerald-500"
+                                  title="Definir o saldo exato"
+                                  className="h-7 w-16 text-[11px] font-mono font-bold px-2 border-slate-300 focus:border-emerald-500"
                                   onBlur={(e) => {
                                     const val = parseInt(e.target.value, 10)
                                     if (!isNaN(val) && val >= 0 && val !== u.analysisBalance) {
@@ -866,6 +1025,15 @@ function AdminViewContent() {
                                     }
                                   }}
                                 />
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  title="Creditar uma análise"
+                                  onClick={() => updateUser(u.id, { analysisDelta: 1 })}
+                                  className="h-7 w-7 border-slate-300 shrink-0"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </Button>
                               </div>
                             )}
                           </td>
