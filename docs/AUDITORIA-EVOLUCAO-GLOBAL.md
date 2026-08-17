@@ -252,6 +252,70 @@ de verdade.
 
 ---
 
+## 2.8 Etapa 3 concluída — taxonomia profissional (§8)
+
+`lib/market/taxonomy.ts` resolve o exemplo literal do §8: o mesmo candidato é
+"Analista de Dados" no Brasil, "Data Analyst" nos Estados Unidos e "Data Analyst
+/ Datenanalyst" na Alemanha. Doze conceitos declarados, cada um com rótulo por
+mercado e aliases em vários idiomas.
+
+Duas decisões que valem registro:
+
+- **Título desconhecido devolve `null`**, nunca o conceito mais parecido. Forçar
+  um desconhecido no vizinho mais próximo é a mesma classe de invenção que a
+  Etapa 1 arrancou do laudo.
+- **Senioridade desconhecida não elimina ninguém.** `seniorityMeets` devolve
+  `true` quando qualquer lado é desconhecido: um filtro duro que descarta por
+  falta de informação transforma silêncio em rejeição.
+
+Um teste percorre todos os aliases declarados e falha se algum resolver para
+outro conceito — colisão silenciosa aqui viraria cargo errado no matching. Ele
+encontrou um defeito real durante a implementação: `staff nurse` perdia o
+"staff" na remoção de ruído de senioridade (que existe por causa de "Staff
+Engineer") e ficava irreconhecível.
+
+## 2.9 Etapa 4 concluída — Job Intelligence (§13, §14) e a regra do §12
+
+**`JobSource` e `Job`** no schema, com a vaga normalizada nos campos do §13.
+
+**Ausência com motivo.** O §13 exige suportar *desconhecido*, *não informado* e
+*não aplicável*. Os três vivem em `Job.unknownFields`, e não colapsam em `null`:
+o filtro duro precisa distinguir "não sei o salário" de "a empresa não divulga
+salário" para não eliminar uma vaga de quem declarou pretensão mínima.
+
+**Deduplicação (§14)** em três níveis, na ordem que o prompt pede: `company +
+sourceJobId`, depois URL canônica (sem parâmetros de rastreamento), e só então
+combinação controlada. A composta inclui localização e cargo normalizado de
+propósito — dois "Data Analyst" na mesma empresa e cidade para times diferentes
+são duas vagas, e agrupá-las esconderia uma oportunidade de forma invisível.
+
+O teste da canonização de empresa encontrou outro defeito real: `S.A.` perde a
+pontuação e vira dois tokens (`s` e `a`), escapando da lista de sufixos — a
+mesma vaga vinda de duas fontes que escrevem o nome de formas diferentes entrava
+duas vezes.
+
+**A regra do §12** vive em `decideCollection`, função pura e por isso testável
+sem infraestrutura. Ela recusa encerramento em cinco situações:
+
+| Situação | Encerra? |
+|---|---|
+| Coleta falhou (timeout, 4xx/5xx, bloqueio) | Não |
+| Coleta parcial (paginação truncada) | Só o que a fonte declarou encerrado |
+| **HTTP 200 com lista vazia, havendo vagas abertas** | **Não** |
+| Desaparecimento em massa (>50% de uma vez, com volume) | Não |
+| Coleta completa, com resultados, perda pequena | Sim |
+
+O raciocínio por trás de todas: **o erro é assimétrico**. Fechar uma vaga aberta
+por engano tira do usuário uma oportunidade real e é invisível — ele nunca fica
+sabendo, e não há como distinguir depois o que encerrou de verdade do que foi
+apagado por erro. Manter aberta uma vaga encerrada custa um clique numa página
+que diz "vaga não disponível". Todo o arquivo escolhe o clique.
+
+`lastSuccessfulCollection` só avança em coleta confiável, e é ela — não
+`lastCollectionAt` — que autoriza encerramentos futuros. Uma fonte que responde
+há semanas sempre vazia tem as duas datas distantes, e é essa distância que o
+painel deve mostrar como problema.
+
 ## 3. O que **não** foi feito — e por quê
 
 O prompt mestre é explícito: *"Não tente implementar tudo de uma vez"*. Esta
@@ -260,11 +324,11 @@ da Etapa 3 (Market Adapter)**. O resto está mapeado abaixo, não implementado.
 
 | Etapa | Situação | Primeiro passo concreto |
 |---|---|---|
-| **1 — Auditoria e estabilização** | ✅ Feita | — |
-| **2 — Professional Profile** (§7, §8) | ⬜ Não iniciada | Modelo `ProfessionalProfile` no Prisma com identidade, objetivos, preferências e **mobilidade separada da residência**; `targetCountry` daí passa a alimentar `resolveMarket`, que já o aceita |
-| **3 — Market Adapter** (§2, §10) | 🟡 Fundação pronta | Falta `MarketRules` por vínculo, `SalaryContext` e taxonomia profissional (`Analista de Dados` ↔ `Data Analyst` ↔ `Datenanalyst`) |
-| **4 — Job Intelligence** (§13, §14) | ⬜ Não iniciada | Modelo `Job` normalizado com os campos de §13, suportando *desconhecido* / *não informado* / *não aplicável*; deduplicação por `company + sourceJobId` com fallback por similaridade |
-| **5 — Job Sources** (§11, §12) | ⬜ Não iniciada | Interface `JobSourceAdapter` + o primeiro adapter. **Regra crítica de §12:** lista vazia com HTTP 200 **nunca** fecha vagas — gravar `collectionStatus`, `collectionError`, `lastSuccessfulCollection` e exigir evidência para encerrar |
+| **1 — Auditoria e estabilização** | ✅ Feita, em produção | — |
+| **2 — Professional Profile** (§7, §8) | ✅ Feita, em produção | — |
+| **3 — Market Adapter** (§2, §10) | ✅ Feita | Falta apenas `SalaryContext`, que depende de dados de mercado que ainda não coletamos |
+| **4 — Job Intelligence** (§13, §14) | ✅ Feita | — |
+| **5 — Job Sources** (§11, §12) | 🟡 Regra pronta, adapters não | `decideCollection` já implementa e testa o §12. Falta a interface `JobSourceAdapter` e os adapters concretos — **bloqueado neste ambiente**, que não tem saída de rede para os ATS |
 | **6 — Matching** (§9, §16) | ⬜ Não iniciada | Filtro duro antes da IA; separar compatibilidade profissional / com a vaga / contextual; lacunas e evidências. Aposenta o `matchPercentage` como número único |
 | **7 — Radar** (§15, §22, §23) | ⬜ Não iniciada | Cron + fila + leases + idempotência. **Silêncio por padrão**: sem oportunidade relevante, sem alerta |
 | **8 — Ação** (§18, §19, §20) | ⬜ Não iniciada | Job Fit; currículo direcionado à vaga. A rota de carta desta etapa já é metade do caminho — falta recebê-la a partir de uma vaga do Radar, e não só da vaga alvo digitada |

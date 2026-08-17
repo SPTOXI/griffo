@@ -499,3 +499,140 @@ model SystemIncident {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @default(now()) @updatedAt
 }
+
+/// Uma fonte de vagas — um ATS, um portal, a página de carreiras de uma empresa.
+///
+/// A tabela existe principalmente por causa do §12 do prompt mestre, que é a
+/// regra mais importante de toda a coleta:
+///
+/// > NUNCA marcar vagas como encerradas simplesmente porque uma coleta
+/// > retornou zero resultados.
+///
+/// HTTP 200 com lista vazia pode ser manutenção, mudança de endpoint, falha do
+/// adapter, bloqueio, erro de paginação ou indisponibilidade temporária. Fechar
+/// as vagas nesse momento apaga oportunidades reais dos usuários e não há como
+/// distinguir depois o que foi encerrado de verdade do que foi apagado por
+/// engano. Por isso o estado da coleta é gravado, e o encerramento exige
+/// evidência — ver `lib/jobs/collection.ts`.
+model JobSource {
+  id   String @id @default(cuid())
+  /// Identificador estável do adapter: `greenhouse`, `lever`, `gupy`...
+  slug String @unique
+  name String
+
+  /// Mercados em que esta fonte é relevante. JSON array de MarketId.
+  markets String?
+  /// ats | job_board | company_careers | api | feed
+  kind    String @default("ats")
+
+  enabled Boolean @default(true)
+
+  /// ok | empty_unexpected | error | never_collected
+  ///
+  /// `empty_unexpected` é o estado que o §12 criou: a coleta respondeu, veio
+  /// vazia, e havia vagas abertas antes. Não é sucesso nem erro de transporte —
+  /// é suspeita, e suspeita não fecha vaga.
+  collectionStatus String  @default("never_collected")
+  collectionError  String?
+
+  lastCollectionAt DateTime?
+  /// Última coleta que foi considerada CONFIÁVEL. É esta data, e não a de
+  /// cima, que autoriza encerrar vagas ausentes.
+  lastSuccessfulCollection DateTime?
+
+  /// Coletas consecutivas com resultado suspeito. Alimenta o alerta do painel.
+  consecutiveFailures Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobs Job[]
+
+  @@index([enabled, collectionStatus])
+}
+
+/// Uma vaga, normalizada (§13).
+///
+/// O formato interno é comum a todas as fontes: o adapter converte, e daqui
+/// para a frente ninguém precisa saber de onde a vaga veio.
+///
+/// **Campo ausente não é campo vazio.** O §13 é explícito: nem todo mercado
+/// preenche tudo, e os campos precisam suportar *desconhecido*, *não informado*
+/// e *não aplicável*. Aqui isso é `null` na coluna mais o registro do motivo em
+/// `unknownFields` — sem essa distinção, "salário não divulgado" e "salário
+/// zero" viram a mesma coisa no filtro.
+model Job {
+  id String @id @default(cuid())
+
+  sourceId String
+  source   JobSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  /// Identificador da vaga NA FONTE. Junto de `company`, é a chave de
+  /// deduplicação preferida (§14).
+  sourceJobId String?
+
+  company         String
+  /// Empresa em forma canônica (sem acento, sem Ltda/Inc), para deduplicar.
+  companyKey      String
+  title           String
+  /// Conceito da taxonomia (`data_analyst`), quando reconhecido. `null` é uma
+  /// resposta válida: título desconhecido não vira o vizinho mais próximo.
+  normalizedTitle String?
+
+  country String?
+  region  String?
+  city    String?
+  /// remote | hybrid | onsite | unknown
+  remoteType String @default("unknown")
+  /// Mercado a que esta vaga pertence, resolvido pela camada de mercado.
+  market  String?
+
+  /// Vínculo, no vocabulário do mercado da vaga.
+  employmentType String?
+  /// intern | junior | mid | senior | lead | principal | director | executive
+  seniority      String?
+
+  salaryMin      Float?
+  salaryMax      Float?
+  currency       String?
+  /// year | month | hour
+  salaryPeriod   String?
+
+  description  String?
+  /// JSON array de requisitos extraídos.
+  requirements String?
+  /// JSON array de competências extraídas.
+  skills       String?
+  /// Idioma em que a vaga está escrita.
+  language     String?
+
+  applicationUrl String
+  /// Chave de deduplicação efetivamente usada. Única: é ela que impede a mesma
+  /// vaga entrar duas vezes vinda de duas fontes.
+  dedupeKey      String @unique
+
+  publishedAt DateTime?
+  /// Quando esta vaga foi vista pela última vez numa coleta CONFIÁVEL.
+  lastSeenAt  DateTime  @default(now())
+  /// Preenchido só com evidência suficiente — ver §12 e lib/jobs/collection.ts.
+  closedAt    DateTime?
+  /// Por que foi encerrada: absent_from_reliable_collection | source_reported |
+  /// expired_by_age | manual. Sem isto não há como auditar um fechamento errado.
+  closedReason String?
+
+  /// Campos que a fonte não trouxe, e por quê. JSON:
+  /// `{ "salaryMin": "not_disclosed", "seniority": "unknown" }`.
+  /// Distingue "não informado" de "não aplicável" e de "zero".
+  unknownFields String?
+
+  /// Inteligência da vaga, gerada UMA vez por vaga e reaproveitada entre
+  /// usuários (§27). Separada da compatibilidade, que é por usuário.
+  intelligenceJson String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sourceId, lastSeenAt])
+  @@index([market, closedAt])
+  @@index([companyKey, normalizedTitle])
+  @@index([closedAt, publishedAt])
+}
