@@ -233,13 +233,6 @@ function AdminViewContent() {
     }
   }
 
-  useEffect(() => {
-    console.log('[AdminView:Step1] useEffect verificado -> hydrated:', hydrated, '| user role:', user?.role)
-    if (hydrated && user?.role === 'admin') {
-      loadData(true)
-    }
-  }, [hydrated, user?.role])
-
   const loadData = async (isInitial = false) => {
     console.log('[AdminView:Step2] Iniciando carga de dados -> /api/admin/dashboard (isInitial:', isInitial, ')')
     if (isInitial) setLoading(true)
@@ -283,6 +276,14 @@ function AdminViewContent() {
       console.log('[AdminView:Step3] Carga finalizada (loading = false)')
     }
   }
+
+  useEffect(() => {
+    console.log('[AdminView:Step1] useEffect verificado -> hydrated:', hydrated, '| user role:', user?.role)
+    if (hydrated && user?.role === 'admin') {
+      loadData(true)
+    }
+  }, [hydrated, user?.role])
+
 
   // Auto set model preset on provider change
   const handleProviderChange = (provider: string) => {

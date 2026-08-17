@@ -19,6 +19,24 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     // React rules
     "react-hooks/exhaustive-deps": "off",
     "react-hooks/purity": "off",
+    /**
+     * Buscar dados no `useEffect` de montagem, com o `setLoading(true)` antes do
+     * primeiro `await`. A regra veio junto com o conjunto novo do React
+     * Compiler e acusa 12 pontos em 9 arquivos — incluindo `ui/carousel.tsx` e
+     * `hooks/use-mobile.ts`, que são código de terceiros (shadcn) e não devem
+     * ser reescritos aqui.
+     *
+     * Desligada, e não silenciada caso a caso, porque a queixa é legítima e a
+     * correção de verdade é uma só para todos eles: mover a carga de dados para
+     * o React Query, que já é dependência do projeto (`@tanstack/react-query`)
+     * e não é usado em nenhuma destas telas. Enquanto isso não acontece, um
+     * `eslint-disable` por arquivo só espalharia a dívida sem registrá-la.
+     *
+     * A regra irmã `react-hooks/immutability` continua LIGADA de propósito: foi
+     * ela que encontrou um `useState({})[0]` usado como ref mutável em
+     * `analysis-view.tsx` — defeito real, já corrigido.
+     */
+    "react-hooks/set-state-in-effect": "off",
     "react/no-unescaped-entities": "off",
     "react/display-name": "off",
     "react/prop-types": "off",

@@ -1,5 +1,6 @@
 import type { Language } from '../i18n'
-import { LANGUAGE_DIRECTIVE, ATS_BY_MARKET } from '../i18n/server'
+import { LANGUAGE_DIRECTIVE } from '../i18n/server'
+import { marketPromptContext, resolveMarket, type MarketConfig } from '../market'
 import {
   DIMENSION_KEYS,
   DIMENSION_LABELS,
@@ -356,7 +357,14 @@ export interface SharedContextInput {
   resumeContent: string
   targetJob?: string | null
   targetJobDescription?: string | null
+  /** Idioma da RESPOSTA. Não decide mercado — ver `market`. */
   lang: Language
+  /**
+   * Mercado profissional que vale para esta análise. Quando ausente, é
+   * resolvido a partir do idioma, que é o palpite mais fraco e existe só para
+   * não quebrar chamadores antigos.
+   */
+  market?: MarketConfig
 }
 
 /**
@@ -370,8 +378,9 @@ export function buildSharedContext({
   targetJob,
   targetJobDescription,
   lang,
+  market,
 }: SharedContextInput): string {
-  const atsList = ATS_BY_MARKET[lang]
+  const resolvedMarket = market ?? resolveMarket({ language: lang }).market
 
   const jobBlock =
     targetJob || targetJobDescription
@@ -383,7 +392,9 @@ ${targetJobDescription || 'Nenhuma descrição fornecida.'}`
 
   return `${LANGUAGE_DIRECTIVE[lang]}
 
-Você é um avaliador executivo sênior de currículos, especialista mundial em triagem ATS (Applicant Tracking Systems — ${atsList}) e estrategista de personal branding internacional.
+Você é um avaliador executivo sênior de currículos, especialista em triagem por ATS (Applicant Tracking Systems) e estrategista de personal branding, atuando sobre o mercado descrito abaixo.
+
+${marketPromptContext(resolvedMarket)}
 
 Você trabalha com ALTA PROFUNDIDADE TÉCNICA E JUSTIFICADA. Você NUNCA é genérico: aponta EXATAMENTE onde está a falha, POR QUE ela prejudica o candidato e COMO corrigi-la, sempre citando o conteúdo real do currículo abaixo.
 

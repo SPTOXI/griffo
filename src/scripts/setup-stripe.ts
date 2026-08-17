@@ -62,7 +62,7 @@ const PRODUCT_NAMES: Record<Sku, string> = {
 
 const PRODUCT_DESCRIPTIONS: Record<Sku, string> = {
   single:
-    'Uma análise completa de currículo: laudo das 8 dimensões, comparação com a vaga, reescrita STAR/XYZ, orientação profissional, otimização de perfil, análise de mídias sociais, carta de apresentação, resumo profissional e PDF.',
+    'Uma análise completa de currículo: laudo das 8 dimensões, comparação com a vaga, trechos a ajustar no currículo, reescrita STAR/XYZ, orientação profissional, presença digital e otimização de perfil, carta de apresentação, resumo profissional e PDF.',
   pack5: `${PACK_SIZE} análises completas de currículo. Oferta de recompra, disponível depois da primeira compra.`,
 }
 

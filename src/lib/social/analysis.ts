@@ -1,7 +1,8 @@
 import 'server-only'
 import { executeAiTask } from '../ai-router/router'
 import type { Language } from '../i18n'
-import { LANGUAGE_DIRECTIVE, SOCIAL_PLATFORMS_BY_MARKET } from '../i18n/server'
+import { LANGUAGE_DIRECTIVE } from '../i18n/server'
+import { marketPromptContext, type MarketConfig } from '../market'
 import type { SocialProfileData } from './fetchers'
 
 /**
@@ -82,12 +83,12 @@ function parseJsonLoose(raw: string): any {
 }
 
 /** Regras que valem para toda chamada desta auditoria. */
-function baseRules(lang: Language): string {
+function baseRules(lang: Language, market: MarketConfig): string {
   return `${LANGUAGE_DIRECTIVE[lang]}
 
 Você é especialista em presença digital profissional e em como recrutadores e algoritmos de busca avaliam perfis.
 
-As plataformas que mais importam no mercado deste candidato são: ${SOCIAL_PLATFORMS_BY_MARKET[lang]}.
+${marketPromptContext(market)}
 
 REGRAS CRÍTICAS DE HONESTIDADE:
 1. Baseie cada observação no conteúdo real fornecido. Cite o que viu — o texto do "Sobre", os repositórios, a bio.
@@ -112,6 +113,7 @@ async function analyzeOneProfile(
   profile: SocialProfileData,
   ctx: {
     lang: Language
+    market: MarketConfig
     sharedContext: string
     userId: string
     resumeId: string
@@ -127,7 +129,7 @@ async function analyzeOneProfile(
     cacheableContext: ctx.sharedContext,
     disableThinking: true,
     timeBudgetMs: ctx.timeBudgetMs,
-    systemPrompt: `${baseRules(ctx.lang)}
+    systemPrompt: `${baseRules(ctx.lang, ctx.market)}
 
 Analise UM único perfil, o que vier na mensagem, e produza:
 
@@ -164,6 +166,7 @@ async function buildOverallAssessment(
   profiles: SocialProfileData[],
   ctx: {
     lang: Language
+    market: MarketConfig
     sharedContext: string
     userId: string
     resumeId: string
@@ -185,7 +188,7 @@ async function buildOverallAssessment(
     cacheableContext: ctx.sharedContext,
     disableThinking: true,
     timeBudgetMs: ctx.timeBudgetMs,
-    systemPrompt: `${baseRules(ctx.lang)}
+    systemPrompt: `${baseRules(ctx.lang, ctx.market)}
 
 Produza APENAS a avaliação geral da presença digital do candidato, em 3 a 4 frases: o que o conjunto dos perfis comunica hoje, a maior incoerência com o currículo (se houver) e a prioridade número um.
 
@@ -229,6 +232,8 @@ export async function analyzeSocialPresence(params: {
   profiles: SocialProfileData[]
   resumeExcerpt: string
   lang: Language
+  /** Mercado profissional do candidato — ver lib/market/. */
+  market: MarketConfig
   userId: string
   resumeId: string
   userCountry: string | null
@@ -239,6 +244,7 @@ export async function analyzeSocialPresence(params: {
 
   const ctx = {
     lang: rest.lang,
+    market: rest.market,
     userId: rest.userId,
     resumeId: rest.resumeId,
     userCountry: rest.userCountry,

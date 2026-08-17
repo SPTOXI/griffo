@@ -3,6 +3,7 @@ import { after } from 'next/server'
 import { db } from '../db'
 import { executeAiTask } from '../ai-router/router'
 import type { Language } from '../i18n'
+import { resolveMarket } from '../market'
 import {
   ANALYSIS_SEGMENTS,
   buildSharedContext,
@@ -174,11 +175,21 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
     return
   }
 
+  // Mercado profissional da análise. Enquanto o Perfil Profissional (Etapa 2)
+  // não guardar um país-alvo declarado, o melhor sinal disponível é onde a
+  // pessoa está — nunca o país de pagamento, que responde por preço e não por
+  // carreira. O idioma entra por último, dentro de `resolveMarket`.
+  const { market } = resolveMarket({
+    residenceCountry: job.userCountry,
+    language: job.lang as Language,
+  })
+
   const sharedContext = buildSharedContext({
     resumeContent: job.resume.originalContent.slice(0, 15000),
     targetJob: job.resume.targetJob,
     targetJobDescription: job.resume.targetJobDescription,
     lang: job.lang as Language,
+    market,
   })
 
   const done = readSegments(job.segmentsJson)

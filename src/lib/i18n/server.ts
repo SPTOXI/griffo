@@ -30,22 +30,15 @@ export const LANGUAGE_DIRECTIVE: Record<Language, string> = {
 }
 
 /**
- * ATS relevantes por mercado.
+ * ATS e plataformas por mercado saíram daqui.
  *
- * A lista era fixa e brasileira — a Gupy aparecia cinco vezes no prompt de
- * análise. Recomendar palavras-chave otimizadas para os filtros da Gupy a um
- * candidato nos EUA não é apenas inútil: é conselho errado, que pode piorar a
- * triagem dele.
+ * Estavam indexados por `Language`, o que fazia o IDIOMA DA INTERFACE decidir
+ * qual mercado de trabalho o produto descrevia. No caso mais comum de um
+ * produto global — pessoa no Brasil, interface em português, mirando vaga nos
+ * Estados Unidos — isso devolvia palavra-chave otimizada para a Gupy a quem
+ * será triado pelo Workday.
+ *
+ * Agora quem responde por isso é `lib/market/`, que resolve o mercado a partir
+ * do alvo profissional declarado, depois da residência, e só então do idioma.
+ * Ver `resolveMarket` e `marketPromptContext`.
  */
-export const ATS_BY_MARKET: Record<Language, string> = {
-  pt: 'Gupy, Catho, Vagas.com, InfoJobs Brasil, LinkedIn Talent Solutions, Workday, Greenhouse',
-  en: 'Workday, Taleo, Greenhouse, Lever, iCIMS, SmartRecruiters, Ashby, LinkedIn Talent Solutions',
-  es: 'InfoJobs, Bumeran, Computrabajo, Tecnoempleo, LinkedIn Talent Solutions, Workday, Greenhouse',
-}
-
-/** Plataformas de presença digital relevantes por mercado. */
-export const SOCIAL_PLATFORMS_BY_MARKET: Record<Language, string> = {
-  pt: 'LinkedIn, Gupy, GitHub, Behance, Portfólio próprio',
-  en: 'LinkedIn, GitHub, Behance, Dribbble, Stack Overflow, personal portfolio',
-  es: 'LinkedIn, InfoJobs, GitHub, Behance, portafolio propio',
-}

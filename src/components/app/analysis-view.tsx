@@ -57,6 +57,15 @@ interface RawAnalysis extends Partial<Analysis> {
   [key: string]: unknown
 }
 
+/** Carta e resumo profissional direcionado, produzidos por /api/resume/cover-letter. */
+interface CoverLetter {
+  coverLetter: string
+  professionalSummary: string
+  keywords: string[]
+  targetJob: string | null
+  generatedAt: string
+}
+
 interface Resume {
   id: string
   status: string
@@ -66,6 +75,7 @@ interface Resume {
   analysis: Analysis | null
   rewrittenContent: string | null
   socialAnalysis?: SocialAnalysis | null
+  coverLetter?: CoverLetter | null
   socialLinks?: Record<string, string>
   /// Este currículo já consumiu uma análise do saldo? É o que separa o laudo
   /// do paywall.
@@ -85,10 +95,24 @@ export function AnalysisView() {
   // Quando a chamada falhava, o card voltava ao estado inicial sem explicação
   // nenhuma — o spinner girava, parava, e nada aparecia no lugar.
   const [orientationError, setOrientationError] = useState<string | null>(null)
+  const [writingLetter, setWritingLetter] = useState(false)
+  const [coverLetter, setCoverLetter] = useState<CoverLetter | null>(null)
+  const [letterError, setLetterError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'all' | 'overview' | 'social' | 'match' | 'career' | 'dimensions' | 'targeted'>('all')
+  const [activeTab, setActiveTab] = useState<'all' | 'overview' | 'social' | 'match' | 'career' | 'dimensions' | 'targeted' | 'letter'>('all')
   const [list, setList] = useState<{ id: string; status: string; updatedAt: string }[]>([])
-  const autoTriggeredRef = useState<{ [id: string]: boolean }>({})[0]
+  /**
+   * Currículos cuja análise já foi disparada automaticamente nesta sessão.
+   *
+   * É um `useRef` porque é exatamente o que o React chama de ref: valor mutável
+   * que atravessa renderizações e cujo conteúdo NÃO deve provocar nova
+   * renderização — marcar um disparo não muda nada na tela. Estava escrito como
+   * `useState({})[0]`, guardando o valor inicial e mutando o objeto por dentro,
+   * o que produz o mesmo efeito por acidente e viola a regra de imutabilidade
+   * do estado: o React não garante identidade do valor inicial entre
+   * renderizações, e a mutação é invisível para ele.
+   */
+  const autoTriggeredRef = useRef<Record<string, boolean>>({})
 
   const handleGenerateOrientation = async () => {
     if (!resume?.id) return
@@ -131,6 +155,86 @@ export function AnalysisView() {
     }
   }
 
+  const handleGenerateCoverLetter = async () => {
+    if (!resume?.id) return
+    setWritingLetter(true)
+    setLetterError(null)
+    try {
+      const res = await internalFetch('/api/resume/cover-letter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeId: resume.id }),
+      })
+      // Mesmo tratamento da orientação: um encerramento por limite de tempo da
+      // plataforma devolve HTML, e deixar a exceção do `json()` cair no `catch`
+      // faria o erro ser descrito como falha de conexão, que é causa errada.
+      const data = await res.json().catch(() => null)
+
+      if (res.ok && data?.coverLetter) {
+        setCoverLetter(data.coverLetter)
+        toast.success('Carta de apresentação e resumo profissional gerados.')
+      } else {
+        const msg =
+          data?.error ||
+          'A carta não pôde ser redigida nesta tentativa. Nada foi cobrado — tente novamente.'
+        setLetterError(msg)
+        toast.error(msg)
+      }
+    } catch {
+      const msg = 'Falha de conexão ao gerar a carta. Verifique sua internet e tente de novo.'
+      setLetterError(msg)
+      toast.error(msg)
+    } finally {
+      setWritingLetter(false)
+    }
+  }
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.success(`${label} copiado.`)
+    } catch {
+      toast.error('Não foi possível copiar. Selecione o texto e copie manualmente.')
+    }
+  }
+
+  /**
+   * Carrega o currículo e nada mais.
+   *
+   * Ela chamava `reanalyze` no fim, o que fechava um ciclo entre as duas: a
+   * carga disparava a análise, a análise avisava o fim pelo `onCompleted` do
+   * `useAnalysisJob`, e o `onCompleted` chamava a carga de novo. Num ciclo não
+   * existe ordem de declaração possível — uma das duas sempre seria usada antes
+   * de existir, e uma referência assim não acompanha as mudanças de valor ao
+   * longo do tempo.
+   *
+   * A decisão de disparar saiu daqui e virou um efeito próprio, depois de
+   * `reanalyze` estar declarada. A carga volta a ser só carga.
+   */
+  const loadResume = async (id: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const r = await internalFetch(`/api/resume/${id}?id=${id}`, { cache: 'no-store' })
+      const data = await r.json()
+      if (!r.ok) {
+        setError(data.error || 'Erro ao carregar.')
+        return
+      }
+      setResume(data.resume)
+      if (data.resume?.careerOrientation) {
+        setCareerOrientation(data.resume.careerOrientation)
+      }
+      if (data.resume?.coverLetter) {
+        setCoverLetter(data.resume.coverLetter)
+      }
+    } catch {
+      setError('Erro de conexão.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (activeResumeId) {
       loadResume(activeResumeId)
@@ -148,35 +252,6 @@ export function AnalysisView() {
         .catch(() => setLoading(false))
     }
   }, [activeResumeId])
-
-  const loadResume = async (id: string) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const r = await internalFetch(`/api/resume/${id}?id=${id}`, { cache: 'no-store' })
-      const data = await r.json()
-      if (!r.ok) {
-        setError(data.error || 'Erro ao carregar.')
-        return
-      }
-      setResume(data.resume)
-      if (data.resume?.careerOrientation) {
-        setCareerOrientation(data.resume.careerOrientation)
-      }
-      // A análise dispara sozinha só depois que o currículo foi liberado. Antes
-      // disso o disparo automático consumiria uma análise do saldo sem que
-      // ninguém tivesse pedido — e a decisão de gastar é do usuário, na tela do
-      // paywall.
-      if (data.resume?.unlocked && !data.resume.analysis && !autoTriggeredRef[id]) {
-        autoTriggeredRef[id] = true
-        reanalyze(data.resume)
-      }
-    } catch {
-      setError('Erro de conexão.')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   // O currículo em análise fica num ref: o desfecho chega por retorno de
   // chamada, possivelmente depois de o estado ter mudado.
@@ -210,6 +285,24 @@ export function AnalysisView() {
     // duas vezes.
     await job.start(activeResume.id)
   }
+
+  /**
+   * Disparo automático da análise.
+   *
+   * Só depois de o currículo estar liberado: antes disso, disparar sozinho
+   * consumiria uma análise do saldo sem que ninguém tivesse pedido — e a decisão
+   * de gastar é do usuário, na tela do paywall.
+   *
+   * `autoTriggeredRef` guarda quais currículos já foram disparados nesta sessão.
+   * Sem ele, uma segunda carga do mesmo currículo (a que o `onCompleted` faz,
+   * por exemplo) dispararia a análise de novo.
+   */
+  useEffect(() => {
+    if (!resume?.unlocked || resume.analysis) return
+    if (autoTriggeredRef.current[resume.id]) return
+    autoTriggeredRef.current[resume.id] = true
+    void reanalyze(resume)
+  }, [resume])
 
 
   if (loading) {
@@ -248,7 +341,7 @@ export function AnalysisView() {
         resumeId={resume.id}
         preview={resume.preview ?? null}
         onUnlocked={() => {
-          autoTriggeredRef[resume.id] = true
+          autoTriggeredRef.current[resume.id] = true
           setResume({ ...resume, unlocked: true })
           // O saldo é debitado dentro deste POST; só depois dele o número novo
           // existe para ser lido.
@@ -359,97 +452,113 @@ export function AnalysisView() {
     language: 'Linguagem & Tom',
   }
 
+  /**
+   * Dimensões realmente presentes no laudo — nunca uma lista de reserva.
+   *
+   * A versão anterior devolvia oito dimensões com nota 7 e justificativas
+   * genéricas ("Estrutura padrão identificada.") quando o laudo não trazia
+   * dimensão nenhuma, e substituía por 7 qualquer nota que não fosse número.
+   * Num produto de inteligência de carreira isso é o defeito mais caro que
+   * existe: a pessoa pagou por um diagnóstico do currículo DELA e recebia um
+   * número inventado, indistinguível de um número medido.
+   *
+   * Uma dimensão sem nota utilizável é descartada. Zero dimensões utilizáveis
+   * devolve lista vazia, e quem renderiza avisa a ausência.
+   */
   const parseDimensions = (rawDims: any): { key: string; label: string; score: number; rationale: string }[] => {
+    const usableScore = (v: unknown): number | null => {
+      const n = typeof v === 'number' ? v : typeof v === 'string' ? parseFloat(v) : NaN
+      if (!Number.isFinite(n) || n < 0) return null
+      // Laudos antigos gravavam a escala em 0–100.
+      return Number((n > 10 ? n / 10 : n).toFixed(1))
+    }
+
     if (Array.isArray(rawDims)) {
-      return rawDims.map(d => ({
-        key: d.key || d.name || 'dimension',
-        label: d.label || DIMENSION_LABELS[d.key] || d.key || 'Dimensão',
-        score: typeof d.score === 'number' ? (d.score > 10 ? d.score / 10 : d.score) : 7,
-        rationale: d.rationale || '',
-      }))
+      return rawDims
+        .map((d) => ({ d, score: usableScore(d?.score) }))
+        .filter((x): x is { d: any; score: number } => x.score !== null)
+        .map(({ d, score }) => ({
+          key: d.key || d.name || 'dimension',
+          label: d.label || DIMENSION_LABELS[d.key] || d.key || 'Dimensão',
+          score,
+          rationale: d.rationale || '',
+        }))
     }
 
     if (rawDims && typeof rawDims === 'object') {
-      return Object.entries(rawDims).map(([key, val]) => {
-        const numVal = typeof val === 'number' ? val : (typeof (val as any)?.score === 'number' ? (val as any).score : 70)
-        const normalizedScore = numVal > 10 ? numVal / 10 : numVal
-        const label = DIMENSION_LABELS[key] || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-        const rationale = (val as any)?.rationale || ''
-        return {
+      return Object.entries(rawDims)
+        .map(([key, val]) => ({
           key,
-          label,
-          score: Number(normalizedScore.toFixed(1)),
-          rationale,
-        }
-      })
+          val,
+          score: usableScore(typeof val === 'number' ? val : (val as any)?.score),
+        }))
+        .filter((x): x is { key: string; val: any; score: number } => x.score !== null)
+        .map(({ key, val, score }) => ({
+          key,
+          label: DIMENSION_LABELS[key] || key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+          score,
+          rationale: (val as any)?.rationale || '',
+        }))
     }
 
-    return [
-      { key: 'structure', label: 'Estrutura & Compatibilidade ATS', score: 7, rationale: 'Estrutura padrão identificada.' },
-      { key: 'summary', label: 'Resumo & Posicionamento', score: 7, rationale: 'Posicionamento claro.' },
-      { key: 'impact', label: 'Resultados (STAR/XYZ)', score: 7, rationale: 'Resultados apresentados.' },
-      { key: 'skills', label: 'Habilidades & Ferramentas', score: 7, rationale: 'Competências identificadas.' },
-      { key: 'experience', label: 'Experiência & Verbos de Ação', score: 7, rationale: 'Experiência profissional avaliada.' },
-      { key: 'keywords', label: 'Palavras-Chave & Match', score: 7, rationale: 'Palavras-chave avaliadas.' },
-      { key: 'career', label: 'Trajetória & Plano de Carreira', score: 7, rationale: 'Progressão de carreira avaliada.' },
-      { key: 'upskilling', label: 'Capacitação & Cursos', score: 7, rationale: 'Oportunidades de capacitação identificadas.' }
-    ]
+    return []
   }
-
-  const numOverall = typeof rawAnalysis.overall === 'number'
-    ? rawAnalysis.overall
-    : (typeof rawAnalysis.overall === 'string' ? parseFloat(rawAnalysis.overall) : (typeof (rawAnalysis as any).scoreOverall === 'number' ? (rawAnalysis as any).scoreOverall : 70))
-
-  const normalizedOverall = isNaN(numOverall) ? 7.0 : (numOverall > 10 ? numOverall / 10 : numOverall)
 
   const parsedDimensions = parseDimensions(rawAnalysis.dimensions)
 
-  // Math Consistency: Calculate overall score strictly as the arithmetic mean of all dimensions
-  const dimSum = parsedDimensions.reduce((acc, d) => acc + d.score, 0)
-  const computedAvg = parsedDimensions.length > 0 ? Number((dimSum / parsedDimensions.length).toFixed(1)) : normalizedOverall
-  const finalOverallScore = computedAvg
+  /**
+   * Nota geral: média aritmética das dimensões medidas, e nada além disso.
+   *
+   * Sem dimensão utilizável não existe nota — antes o código caía para 7,0, um
+   * "Bom" com selo verde que ninguém mediu. `null` percorre daqui até a tela,
+   * onde vira aviso de ausência em vez de número.
+   *
+   * O `overall` gravado no laudo só é aceito como segunda opção porque laudos
+   * antigos foram escritos antes de a média passar a ser derivada aqui.
+   */
+  const recordedOverall = (() => {
+    const raw = rawAnalysis.overall ?? (rawAnalysis as any).scoreOverall
+    const n = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseFloat(raw) : NaN
+    if (!Number.isFinite(n) || n <= 0) return null
+    return Number((n > 10 ? n / 10 : n).toFixed(1))
+  })()
 
-  const defaultSummary = rawAnalysis.summary || (rawAnalysis as any).parecer
-  const computedSummary = defaultSummary && defaultSummary !== 'Análise concluída com sucesso.'
-    ? defaultSummary
-    : `Perfil profissional avaliado com nota geral de ${finalOverallScore.toFixed(1)}/10. ` +
-      (rawAnalysis.strengths?.length ? `Destaques principais do perfil: ${rawAnalysis.strengths.slice(0, 3).join('; ')}. ` : '') +
-      (rawAnalysis.weaknesses?.length ? `Recomenda-se ajustar: ${rawAnalysis.weaknesses.slice(0, 3).join('; ')}.` : '')
+  const finalOverallScore: number | null = parsedDimensions.length > 0
+    ? Number((parsedDimensions.reduce((acc, d) => acc + d.score, 0) / parsedDimensions.length).toFixed(1))
+    : recordedOverall
 
-  const defaultTargetedChanges = [
-    {
-      section: 'Resumo Profissional / Perfil',
-      originalText: 'Profissional dedicado e dinâmico buscando novos desafios no mercado.',
-      rationale: 'Expressões vagas sem métricas numéricas não destacam o candidato e têm baixa pontuação em sistemas ATS.',
-      suggestedText: 'Especialista focado em otimização de processos, gestão de indicadores e entrega de metas operacionais de alta performance.'
-    },
-    {
-      section: 'Experiências Profissionais',
-      originalText: 'Responsável pelo acompanhamento diário das atividades e suporte às equipes.',
-      rationale: 'Faltam resultados quantificados (fórmula STAR/XYZ) demonstrando o impacto real gerado na função.',
-      suggestedText: 'Liderou o acompanhamento de rotinas e processos operacionais, garantindo cumprimento de 100% das metas estipuladas e aumento da eficiência.'
-    }
-  ]
-
-  const targetedChangesToDisplay = (Array.isArray(rawAnalysis.targetedChanges) && rawAnalysis.targetedChanges.length > 0)
-    ? rawAnalysis.targetedChanges
-    : defaultTargetedChanges
+  // O texto do parecer é do modelo ou não existe. A versão anterior montava um
+  // parágrafo com a nota e as três primeiras forças quando o parecer faltava, e
+  // o apresentava no mesmo lugar, com a mesma tipografia, do parecer real.
+  const rawSummary = rawAnalysis.summary || (rawAnalysis as any).parecer
+  const computedSummary: string | null =
+    typeof rawSummary === 'string' && rawSummary.trim() && rawSummary.trim() !== 'Análise concluída com sucesso.'
+      ? rawSummary
+      : null
 
   const a = {
     overall: finalOverallScore,
     summary: computedSummary,
-    atsFriendly: rawAnalysis.atsFriendly ?? true,
+    // `undefined` não é "passa no ATS": é "não avaliado". Tratá-lo como `true`
+    // dava ao usuário um atestado que a análise não emitiu.
+    atsFriendly: typeof rawAnalysis.atsFriendly === 'boolean' ? rawAnalysis.atsFriendly : null,
     dimensions: parsedDimensions,
-    strengths: Array.isArray(rawAnalysis.strengths) ? rawAnalysis.strengths : ['Estrutura profissional legível', 'Experiência estruturada'],
-    weaknesses: Array.isArray(rawAnalysis.weaknesses) ? rawAnalysis.weaknesses : ['Adicionar mais métricas quantificáveis (STAR/XYZ)'],
-    recommendations: Array.isArray(rawAnalysis.recommendations) ? rawAnalysis.recommendations : ['Destacar conquistas numéricas'],
+    strengths: Array.isArray(rawAnalysis.strengths) ? rawAnalysis.strengths : [],
+    weaknesses: Array.isArray(rawAnalysis.weaknesses) ? rawAnalysis.weaknesses : [],
+    recommendations: Array.isArray(rawAnalysis.recommendations) ? rawAnalysis.recommendations : [],
     keywords: Array.isArray(rawAnalysis.keywords) ? rawAnalysis.keywords : [],
-    targetedChanges: targetedChangesToDisplay,
+    // Sem exemplos de reserva. Um currículo sem alterações pontuais sugeridas
+    // mostrava dois trechos fictícios — "Responsável pelo acompanhamento diário
+    // das atividades" — como se tivessem sido lidos do currículo do usuário.
+    targetedChanges: Array.isArray(rawAnalysis.targetedChanges) ? rawAnalysis.targetedChanges : [],
   }
 
-  const score = Number(a.overall || 0)
-  const scoreColor = score >= 8 ? '#16a34a' : score >= 5 ? '#d97706' : '#dc2626'
-  const scoreLabel = score >= 8 ? 'Excelente' : score >= 6.5 ? 'Bom' : score >= 5 ? 'Regular' : 'Precisa melhorar'
+  const score = a.overall
+  const hasScore = score !== null
+  const scoreColor = !hasScore ? '#64748b' : score >= 8 ? '#16a34a' : score >= 5 ? '#d97706' : '#dc2626'
+  const scoreLabel = !hasScore
+    ? 'Não avaliado'
+    : score >= 8 ? 'Excelente' : score >= 6.5 ? 'Bom' : score >= 5 ? 'Regular' : 'Precisa melhorar'
 
   const chartData = a.dimensions.map(d => ({
     dimension: (d.label || '').length > 20 ? (d.label || '').slice(0, 18) + '…' : (d.label || ''),
@@ -523,6 +632,16 @@ export function AnalysisView() {
           <Compass className="w-3.5 h-3.5" /> 🧭 Agente Vocacional
         </button>
         <button
+          onClick={() => setActiveTab('letter')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
+            activeTab === 'letter'
+              ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
+              : 'bg-amber-50/80 text-amber-900 border-amber-200 hover:bg-amber-100'
+          }`}
+        >
+          <FileEdit className="w-3.5 h-3.5" /> ✉️ Carta & Resumo
+        </button>
+        <button
           onClick={() => setActiveTab('dimensions')}
           className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
             activeTab === 'dimensions'
@@ -560,21 +679,31 @@ export function AnalysisView() {
           <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full relative z-10">
             <div className="w-full flex items-center justify-between mb-4">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Score Audit</p>
-              {a.atsFriendly ? (
+              {a.atsFriendly === true ? (
                 <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> ATS PASS</Badge>
-              ) : (
+              ) : a.atsFriendly === false ? (
                 <Badge className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-black tracking-widest"><XCircle className="w-3 h-3 mr-1" /> ATS FAIL</Badge>
+              ) : (
+                <Badge className="bg-slate-500/10 text-slate-400 border border-slate-500/20 text-[10px] font-black tracking-widest">ATS NÃO AVALIADO</Badge>
               )}
             </div>
-            
+
             <div className="relative">
               <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-                <circle cx="50" cy="50" r="45" fill="none" stroke={scoreColor} strokeWidth="8" strokeDasharray={`${(score / 10) * 283} 283`} className="transition-all duration-1000 ease-out" />
+                {hasScore && (
+                  <circle cx="50" cy="50" r="45" fill="none" stroke={scoreColor} strokeWidth="8" strokeDasharray={`${(score / 10) * 283} 283`} className="transition-all duration-1000 ease-out" />
+                )}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-4xl font-black text-white tracking-tighter" style={{ textShadow: `0 0 20px ${scoreColor}40` }}>{score.toFixed(1)}</p>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">/ 10</p>
+                {hasScore ? (
+                  <>
+                    <p className="text-4xl font-black text-white tracking-tighter" style={{ textShadow: `0 0 20px ${scoreColor}40` }}>{score.toFixed(1)}</p>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">/ 10</p>
+                  </>
+                ) : (
+                  <p className="text-2xl font-black text-slate-500 tracking-tighter">—</p>
+                )}
               </div>
             </div>
 
@@ -587,18 +716,26 @@ export function AnalysisView() {
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                 <Info className="w-3.5 h-3.5 text-blue-400 shrink-0" /> Cálculo Dimensões
               </p>
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {parsedDimensions.map((d, i) => (
-                  <div key={i} className="flex items-center justify-between w-[48%] bg-slate-800/50 px-2 py-1.5 rounded border border-slate-700/50">
-                    <span className="text-[9px] text-slate-400 uppercase truncate max-w-[65%]">{d.label}</span>
-                    <strong className="text-[10px] text-slate-200">{d.score.toFixed(1)}</strong>
+              {parsedDimensions.length > 0 ? (
+                <>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {parsedDimensions.map((d, i) => (
+                      <div key={i} className="flex items-center justify-between w-[48%] bg-slate-800/50 px-2 py-1.5 rounded border border-slate-700/50">
+                        <span className="text-[9px] text-slate-400 uppercase truncate max-w-[65%]">{d.label}</span>
+                        <strong className="text-[10px] text-slate-200">{d.score.toFixed(1)}</strong>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div className="bg-blue-500/10 border border-blue-500/20 p-2 rounded flex justify-between items-center mt-2">
-                <span className="text-[9px] text-blue-400 font-bold uppercase tracking-wider">Média Algorítmica</span>
-                <strong className="text-xs text-white font-black">{score.toFixed(1)}</strong>
-              </div>
+                  <div className="bg-blue-500/10 border border-blue-500/20 p-2 rounded flex justify-between items-center mt-2">
+                    <span className="text-[9px] text-blue-400 font-bold uppercase tracking-wider">Média Algorítmica</span>
+                    <strong className="text-xs text-white font-black">{hasScore ? score.toFixed(1) : '—'}</strong>
+                  </div>
+                </>
+              ) : (
+                <p className="text-[10px] text-slate-400 leading-relaxed">
+                  Este laudo não trouxe as notas por dimensão. Reprocesse a análise para obtê-las.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -607,14 +744,22 @@ export function AnalysisView() {
           <CardContent className="p-4 sm:p-6">
             <p className="text-xs uppercase tracking-wider text-slate-500 mb-2">Desempenho por dimensão</p>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={chartData}>
-                  <PolarGrid stroke="#e2e8f0" />
-                  <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 10, fill: '#475569' }} />
-                  <PolarRadiusAxis domain={[0, 10]} tick={{ fontSize: 9, fill: '#94a3b8' }} stroke="#cbd5e1" />
-                  <Radar dataKey="score" stroke="#10b981" fill="#10b981" fillOpacity={0.4} />
-                </RadarChart>
-              </ResponsiveContainer>
+              {chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={chartData}>
+                    <PolarGrid stroke="#e2e8f0" />
+                    <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 10, fill: '#475569' }} />
+                    <PolarRadiusAxis domain={[0, 10]} tick={{ fontSize: 9, fill: '#94a3b8' }} stroke="#cbd5e1" />
+                    <Radar dataKey="score" stroke="#10b981" fill="#10b981" fillOpacity={0.4} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-center px-6">
+                  <p className="text-sm text-slate-500">
+                    Sem notas por dimensão neste laudo — não há o que representar no gráfico.
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -638,7 +783,14 @@ export function AnalysisView() {
           </div>
         </CardHeader>
         <CardContent className="p-5">
-          <p className="text-sm text-slate-700 leading-relaxed font-medium">{a.summary}</p>
+          {a.summary ? (
+            <p className="text-sm text-slate-700 leading-relaxed font-medium">{a.summary}</p>
+          ) : (
+            <p className="text-sm text-slate-500 leading-relaxed">
+              O parecer executivo não foi produzido nesta análise. Reprocesse o currículo para gerá-lo — não há
+              cobrança nova.
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -869,6 +1021,20 @@ export function AnalysisView() {
         </Card>
       )}
 
+      {/* Aba de alterações pontuais aberta sem alterações no laudo: a ausência é
+          dita, não preenchida com exemplos. */}
+      {activeTab === 'targeted' && a.targetedChanges.length === 0 && (
+        <Card className="border-slate-200">
+          <CardContent className="p-6 text-center space-y-1">
+            <p className="text-sm font-semibold text-slate-700">Sem alterações pontuais neste laudo</p>
+            <p className="text-xs text-slate-500">
+              Esta análise não devolveu trechos específicos do seu currículo para ajustar. Reprocessar o currículo
+              costuma resolver — e não há cobrança nova.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* TARGETED CHANGES (ONDE E POR QUE MUDAR) */}
       {(activeTab === 'all' || activeTab === 'targeted') && a.targetedChanges && a.targetedChanges.length > 0 && (
         <Card className="border-sky-200 bg-sky-50/20 shadow-sm">
@@ -932,9 +1098,13 @@ export function AnalysisView() {
                 <CardTitle className="text-base text-sky-950 font-bold">
                   Indeciso de qual vaga concorrer? Orientação Vocacional de Carreira
                 </CardTitle>
+                {/* Não prometemos contratação. O texto anterior — "maior chance
+                    imediata de contratação" — transformava uma leitura do
+                    currículo em previsão de resultado de processo seletivo, que
+                    o produto não tem dados para sustentar. */}
                 <CardDescription className="text-xs text-slate-600">
-                  Nosso Agente de Carreira analisa seu perfil e descobre as 3 áreas/cargos do mercado em que você
-                  tem maior chance imediata de contratação. Já incluída na Análise Completa deste currículo.
+                  Nosso Agente de Carreira lê seu perfil e aponta as 3 áreas/cargos com maior aderência ao que você
+                  já construiu. Já incluída na Análise Completa deste currículo.
                 </CardDescription>
               </div>
             </div>
@@ -988,7 +1158,9 @@ export function AnalysisView() {
                     <Badge variant="outline" className="bg-sky-100 text-sky-900 border-sky-300 font-bold text-[10px]">
                       Opção #{idx + 1}
                     </Badge>
-                    <span className="font-extrabold text-sky-600 text-sm">{area.matchPercentage}% Match</span>
+                    {typeof area.matchPercentage === 'number' && (
+                      <span className="font-extrabold text-sky-600 text-sm">{area.matchPercentage}% aderência</span>
+                    )}
                   </div>
                   <h4 className="font-bold text-slate-900 text-sm">{area.role}</h4>
                   <p className="text-slate-600 leading-relaxed text-[11px]">{area.whyFit}</p>
@@ -1009,6 +1181,14 @@ export function AnalysisView() {
               ))}
             </div>
 
+            {/* O percentual é leitura do currículo pelo modelo, não medição de
+                mercado. Dizer isso onde ele aparece evita que seja lido como
+                probabilidade de contratação — que o produto não calcula. */}
+            <p className="text-[10px] text-slate-500 leading-relaxed">
+              A aderência mede o quanto sua trajetória se aproxima do que essas áreas costumam exigir. Não é
+              probabilidade de contratação nem medição do mercado de trabalho.
+            </p>
+
             {careerOrientation.careerAdvice && (
               <div className="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-200/80 text-xs text-indigo-950 space-y-1">
                 <p className="font-bold flex items-center gap-1.5">
@@ -1019,6 +1199,130 @@ export function AnalysisView() {
             )}
           </CardContent>
         )}
+        </Card>
+      )}
+
+      {/* CARTA DE APRESENTAÇÃO & RESUMO PROFISSIONAL DIRECIONADO
+          Dois dos nove itens vendidos que não existiam no código até aqui:
+          `cover_letter` tinha tipo de tarefa e provedor declarados sem rota que
+          o produzisse, e `professional_summary` só existia no catálogo. */}
+      {(activeTab === 'all' || activeTab === 'letter') && (
+        <Card className="border-amber-200 bg-gradient-to-br from-amber-50/40 via-white to-orange-50/20">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                  <FileEdit className="w-5 h-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base text-amber-950 font-bold">
+                    ✉️ Carta de Apresentação & Resumo Profissional
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-600">
+                    Escritos a partir do seu currículo real e direcionados à vaga alvo, no formato de candidatura do
+                    seu mercado. Já incluídos na Análise Completa deste currículo.
+                  </CardDescription>
+                </div>
+              </div>
+              <Button
+                onClick={handleGenerateCoverLetter}
+                disabled={writingLetter}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shrink-0 self-start sm:self-auto"
+              >
+                {writingLetter ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1.5" />}
+                {coverLetter ? 'Gerar novamente' : 'Escrever minha carta'}
+              </Button>
+            </div>
+          </CardHeader>
+
+          {writingLetter && (
+            <CardContent className="py-6 flex flex-col items-center gap-2 text-center">
+              <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
+              <p className="text-sm text-amber-900 font-semibold">Redigindo a carta e o resumo direcionados...</p>
+              <p className="text-xs text-slate-500">Costuma levar de 20 a 45 segundos. Não feche esta página.</p>
+            </CardContent>
+          )}
+
+          {!writingLetter && letterError && (
+            <CardContent className="pt-0 pb-5">
+              <Alert variant="destructive" className="bg-rose-50 border-rose-300">
+                <AlertCircle className="w-4 h-4" />
+                <AlertDescription className="text-sm text-rose-900 leading-relaxed font-medium">
+                  {letterError}
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          )}
+
+          {!writingLetter && !letterError && !coverLetter && (
+            <CardContent className="pt-0 pb-5">
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Ainda não gerada para este currículo. Ela usa a vaga alvo que você informou no envio — quanto mais
+                completa a descrição da vaga, mais direcionados ficam os dois textos.
+              </p>
+            </CardContent>
+          )}
+
+          {!writingLetter && coverLetter && (
+            <CardContent className="space-y-4 pt-0">
+              {coverLetter.targetJob && (
+                <Badge variant="outline" className="bg-amber-50 text-amber-900 border-amber-300 font-semibold text-[11px]">
+                  🎯 Direcionada a: {coverLetter.targetJob}
+                </Badge>
+              )}
+
+              <div className="p-4 rounded-xl bg-white border border-amber-100 space-y-2 shadow-2xs">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-bold text-amber-950 text-xs uppercase tracking-wider">Resumo profissional</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    onClick={() => copyToClipboard(coverLetter.professionalSummary, 'Resumo profissional')}
+                  >
+                    Copiar
+                  </Button>
+                </div>
+                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
+                  {coverLetter.professionalSummary}
+                </p>
+                <p className="text-[10px] text-slate-500">
+                  Este é o parágrafo de abertura do currículo. O texto “Sobre” do LinkedIn é outro, e sai na aba de
+                  Mídias & Redes Sociais.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white border border-amber-100 space-y-2 shadow-2xs">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-bold text-amber-950 text-xs uppercase tracking-wider">Carta de apresentação</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    onClick={() => copyToClipboard(coverLetter.coverLetter, 'Carta de apresentação')}
+                  >
+                    Copiar
+                  </Button>
+                </div>
+                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{coverLetter.coverLetter}</p>
+              </div>
+
+              {coverLetter.keywords.length > 0 && (
+                <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-2">
+                  <p className="font-bold text-amber-950 text-[10px] uppercase tracking-wider flex items-center gap-1.5">
+                    <Key className="w-3.5 h-3.5" /> Termos da vaga incorporados aos textos
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {coverLetter.keywords.map((k, i) => (
+                      <Badge key={i} variant="outline" className="bg-white text-amber-900 border-amber-300 text-[10px]">
+                        {k}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          )}
         </Card>
       )}
 

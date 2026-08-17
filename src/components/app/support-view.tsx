@@ -26,7 +26,7 @@ const FAQ_SUGGESTIONS = [
   'O que é analisado no laudo do currículo?',
   'Como funciona a reescrita em STAR e XYZ?',
   'Como posso baixar meu laudo e currículo?',
-  'O que é a Otimização de Presença Digital (LinkedIn/Gupy)?',
+  'O que é a análise de Presença Digital e otimização de perfil?',
 ]
 
 export function SupportView() {

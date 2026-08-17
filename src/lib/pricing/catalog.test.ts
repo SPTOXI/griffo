@@ -12,9 +12,11 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  ANALYSIS_DELIVERABLES,
   ANALYSIS_FLOOR_USD,
   ANALYSIS_DIRECT_COST_USD,
   COUNTRY_CURRENCY,
+  DELIVERABLE_PRODUCERS,
   LOCAL_PRICES,
   PACK_SIZE,
   TIERS,
@@ -32,6 +34,50 @@ const SKUS = ['single', 'pack5'] as const
 
 /** Quanto o preço local pode se afastar da âncora em dólar da faixa. */
 const ANCHOR_TOLERANCE = 0.15
+
+/**
+ * A promessa comercial conferida contra o código.
+ *
+ * A landing, o checkout, o prompt do suporte e a descrição do produto na Stripe
+ * anunciam nove entregas. Duas delas — carta de apresentação e resumo
+ * profissional — foram vendidas por meses sem existir no código, e uma terceira
+ * era o mesmo trabalho da análise de presença digital anunciado duas vezes.
+ * Nada disso aparecia num teste, porque não havia teste que perguntasse.
+ */
+describe('entregas da Análise Completa', () => {
+  test('a compra entrega exatamente nove itens', () => {
+    assert.equal(
+      ANALYSIS_DELIVERABLES.length,
+      9,
+      'a lista de entregas mudou de tamanho — a landing, o checkout, o suporte e o setup da Stripe dizem nove'
+    )
+  })
+
+  test('nenhuma entrega é anunciada duas vezes', () => {
+    assert.equal(new Set(ANALYSIS_DELIVERABLES).size, ANALYSIS_DELIVERABLES.length)
+  })
+
+  test('toda entrega vendida aponta para o código que a produz', () => {
+    for (const deliverable of ANALYSIS_DELIVERABLES) {
+      const producer = DELIVERABLE_PRODUCERS[deliverable]
+      assert.ok(
+        producer && producer.trim().length > 0,
+        `"${deliverable}" é vendido sem produtor declarado — ou implemente, ou tire do catálogo`
+      )
+    }
+  })
+
+  test('não há produtor declarado para item que não é vendido', () => {
+    // A direção oposta importa tanto quanto: um produtor órfão é sinal de que
+    // um item saiu do catálogo e o código dele ficou para trás.
+    for (const key of Object.keys(DELIVERABLE_PRODUCERS)) {
+      assert.ok(
+        (ANALYSIS_DELIVERABLES as readonly string[]).includes(key),
+        `"${key}" tem produtor declarado mas não está entre as entregas`
+      )
+    }
+  })
+})
 
 describe('piso de preço', () => {
   test('o piso cobre o custo direto medido', () => {

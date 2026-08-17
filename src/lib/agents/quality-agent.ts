@@ -104,6 +104,42 @@ export function auditQualityOfAiResult(taskType: string, content: string): Quali
     return { approved: true, score: 9.0 }
   }
 
+  /**
+   * Carta de apresentação e resumo profissional direcionado.
+   *
+   * Regra própria, e não a de `rewrite` — que também produz texto longo e
+   * passaria qualquer coisa acima de 100 caracteres. O risco desta tarefa não é
+   * tamanho: é devolver um dos dois artefatos e não o outro, ou devolver um
+   * texto com espaços reservados que o candidato enviaria com "[empresa]"
+   * dentro.
+   */
+  if (taskType === 'cover_letter') {
+    let json: any = null
+    try {
+      json = JSON.parse(text.replace(/```json/gi, '').replace(/```/g, '').trim())
+    } catch {
+      return { approved: false, score: 3, feedback: 'Estrutura JSON inválida.' }
+    }
+
+    const letter = typeof json.coverLetter === 'string' ? json.coverLetter.trim() : ''
+    if (letter.length < 400) {
+      return { approved: false, score: 4, feedback: 'Carta de apresentação ausente ou curta demais.' }
+    }
+
+    const summary = typeof json.professionalSummary === 'string' ? json.professionalSummary.trim() : ''
+    if (summary.length < 120) {
+      return { approved: false, score: 5, feedback: 'Resumo profissional ausente ou curto demais.' }
+    }
+
+    // Espaço reservado não preenchido: o modelo não encontrou o dado e deixou o
+    // buraco. Entregar isso ao usuário é entregar um rascunho como produto.
+    if (/\[[^\]]{2,40}\]/.test(letter) || /\[[^\]]{2,40}\]/.test(summary)) {
+      return { approved: false, score: 4, feedback: 'Texto contém espaços reservados não preenchidos.' }
+    }
+
+    return { approved: true, score: 9.0 }
+  }
+
   if (taskType === 'rewrite') {
     // Reescrita deve ter tamanho razoável e estrutura em markdown
     if (text.length < 100) {

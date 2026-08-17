@@ -10,6 +10,7 @@ import { executeAiTask } from '@/lib/ai-router/router'
 import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
 import { requireUnlockedResume } from '@/lib/entitlements'
 import { edgeCountry } from '@/lib/pricing/resolve'
+import { marketPromptContext, resolveMarket } from '@/lib/market'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório.'),
@@ -107,6 +108,12 @@ export async function POST(req: Request) {
 
     const lang = getRequestLanguage(req)
 
+    // Nomenclatura de cargo é local: "Analista de Dados" no Brasil e em
+    // Portugal, "Data Analyst" nos EUA, ambos na Alemanha. Sem contexto de
+    // mercado o diagnóstico sugeria cargos com o nome de um mercado e a
+    // realidade de outro.
+    const { market } = resolveMarket({ residenceCountry: edgeCountry(req), language: lang })
+
     // Vaga real que o usuário importou, quando houver. É o único dado de
     // mercado concreto disponível hoje — melhor do que raciocinar só sobre o
     // currículo, e honesto quanto à origem.
@@ -119,6 +126,11 @@ export async function POST(req: Request) {
     const systemPrompt = `${LANGUAGE_DIRECTIVE[lang]}
 
 Você é o Agente Especialista em Orientação de Carreira e Diagnóstico Vocacional do GriffoWork.
+
+${marketPromptContext(market)}
+
+Use a nomenclatura de cargo praticada NESTE mercado — o mesmo trabalho tem nomes diferentes em mercados diferentes.
+
 Analise o histórico, hard skills, soft skills e conquistas do candidato e determine as 3 melhores áreas ou cargos do mercado atual em que ele possui maior afinidade e chances imediatas de sucesso.
 
 TAMANHO DA RESPOSTA (o que controla a latência — respeite):
