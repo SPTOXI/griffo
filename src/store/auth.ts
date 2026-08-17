@@ -59,6 +59,7 @@ export type AppView =
   | 'dashboard'
   | 'upload'
   | 'analysis'
+  | 'profile'
   | 'rewrite'
   | 'downloads'
   | 'plans'

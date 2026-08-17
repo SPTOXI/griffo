@@ -10,7 +10,8 @@ import { executeAiTask } from '@/lib/ai-router/router'
 import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
 import { requireUnlockedResume } from '@/lib/entitlements'
 import { edgeCountry } from '@/lib/pricing/resolve'
-import { marketPromptContext, resolveMarket } from '@/lib/market'
+import { marketPromptContext } from '@/lib/market'
+import { loadProfileContext } from '@/lib/profile/server'
 
 /**
  * Carta de apresentação e resumo profissional direcionado.
@@ -143,9 +144,12 @@ export async function POST(req: Request) {
     const lang = getRequestLanguage(req)
 
     // Convenção de candidatura é local: nos Estados Unidos a carta é opcional e
-    // curta, na Alemanha o Anschreiben é formal e esperado. Sem isto a carta
-    // sairia com a etiqueta de um mercado e seria lida em outro.
-    const { market } = resolveMarket({ residenceCountry: edgeCountry(req), language: lang })
+    // curta, na Alemanha o Anschreiben é formal e esperado. O mercado sai do
+    // Perfil Profissional quando declarado; sem ele, do país de acesso.
+    const { market, promptContext: profileContext } = await loadProfileContext(user.id, {
+      edgeCountry: edgeCountry(req),
+      language: lang,
+    })
 
     const jobBlock = resume.targetJobDescription
       ? `VAGA ALVO (direcione a carta e o resumo a ELA, citando exigências concretas):
@@ -163,7 +167,7 @@ Escreva uma carta e um resumo direcionados à área de atuação evidente no cur
 Você é redator sênior de candidaturas: escreve cartas de apresentação e resumos profissionais que passam por triagem automática e convencem um recrutador humano.
 
 ${marketPromptContext(market)}
-
+${profileContext ? `\n${profileContext}\n` : ''}
 REGRAS DE HONESTIDADE — inegociáveis:
 1. Use APENAS o que está no currículo. NÃO invente empregador, cargo, período, formação, certificação, número ou resultado.
 2. Se a vaga exige algo que o candidato não tem, NÃO afirme que ele tem. Ou omita, ou trate como disposição a desenvolver.
