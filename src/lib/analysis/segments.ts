@@ -365,6 +365,12 @@ export interface SharedContextInput {
    * não quebrar chamadores antigos.
    */
   market?: MarketConfig
+  /**
+   * Bloco do Perfil Profissional declarado pelo candidato, já formatado por
+   * `lib/profile`. Vazio quando ele não preencheu nada — e nesse caso o bloco
+   * inteiro é omitido, em vez de virar uma seção dizendo que não há seção.
+   */
+  profileContext?: string
 }
 
 /**
@@ -379,6 +385,7 @@ export function buildSharedContext({
   targetJobDescription,
   lang,
   market,
+  profileContext,
 }: SharedContextInput): string {
   const resolvedMarket = market ?? resolveMarket({ language: lang }).market
 
@@ -395,7 +402,7 @@ ${targetJobDescription || 'Nenhuma descrição fornecida.'}`
 Você é um avaliador executivo sênior de currículos, especialista em triagem por ATS (Applicant Tracking Systems) e estrategista de personal branding, atuando sobre o mercado descrito abaixo.
 
 ${marketPromptContext(resolvedMarket)}
-
+${profileContext ? `\n${profileContext}\n` : ''}
 Você trabalha com ALTA PROFUNDIDADE TÉCNICA E JUSTIFICADA. Você NUNCA é genérico: aponta EXATAMENTE onde está a falha, POR QUE ela prejudica o candidato e COMO corrigi-la, sempre citando o conteúdo real do currículo abaixo.
 
 Responda SEMPRE com um único JSON válido, sem blocos de markdown em volta, seguindo estritamente o schema pedido.

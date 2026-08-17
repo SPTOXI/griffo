@@ -67,6 +67,119 @@ model User {
   incidents          SystemIncident[]
   sessions           Session[]
   analysisJobs       AnalysisJob[]
+  professionalProfile ProfessionalProfile?
+}
+
+/// Quem a pessoa é profissionalmente, e onde ela quer trabalhar.
+///
+/// ## Por que é uma tabela e não campos no `User`
+///
+/// `User` responde por conta, cobrança e permissão. Este modelo responde por
+/// carreira. Misturá-los foi justamente o que produziu o defeito que esta
+/// tabela existe para não repetir: `paymentCountry` — o país do cartão — era o
+/// único país que o sistema conhecia, e por isso acabava usado como se fosse o
+/// país onde a pessoa quer trabalhar. São coisas diferentes. Um brasileiro
+/// pagando em real e mirando Lisboa tem `paymentCountry = BR` e mercado-alvo
+/// `PT`, e nenhum dos dois valores substitui o outro.
+///
+/// ## Três eixos que não se confundem
+///
+/// **Residência** é onde a pessoa está. **Mercado-alvo** é onde ela quer
+/// trabalhar. **País de pagamento** é de onde vem o dinheiro, e vive em `User`
+/// porque é assunto de cobrança. Os três podem divergir ao mesmo tempo, e é o
+/// caso normal de quem procura trabalho no exterior.
+///
+/// ## Campos JSON
+///
+/// Listas são gravadas como JSON em `String`, seguindo o que o resto do schema
+/// já faz (`socialLinks`, `analysisJson`, `segmentsJson`). A leitura e a
+/// escrita passam por `lib/profile/`, que valida — nenhuma rota deve fazer
+/// `JSON.parse` destes campos por conta própria.
+///
+/// ## Tudo anulável
+///
+/// O perfil é preenchido aos poucos, e um perfil vazio precisa ser um estado
+/// válido: ninguém deve ser barrado de usar o produto por não ter declarado a
+/// pretensão salarial. O que estiver preenchido é usado; o que faltar cai nas
+/// origens anteriores — ver `resolveMarket` em `lib/market/`.
+model ProfessionalProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // --- Identidade profissional ---
+  /// Cargo atual, no vocabulário do mercado da pessoa.
+  currentTitle    String?
+  /// intern | junior | mid | senior | lead | principal | director | executive
+  seniority       String?
+  /// Área de atuação (Dados, Marketing, Enfermagem...).
+  field           String?
+  /// JSON array de especializações.
+  specializations String?
+  /// JSON array de competências.
+  skills          String?
+  yearsExperience Int?
+  /// none | high_school | technical | bachelor | postgrad | master | phd
+  educationLevel  String?
+
+  // --- Objetivos ---
+  /// JSON array de cargos-alvo.
+  targetRoles      String?
+  /// JSON array de áreas-alvo.
+  targetFields     String?
+  /// JSON array de setores de interesse.
+  targetIndustries String?
+  /// Trajetória desejada, em texto livre.
+  careerGoal       String?
+
+  // --- Mobilidade (§7: residência e destino são coisas separadas) ---
+  /// Onde a pessoa está hoje. ISO-3166 alpha-2.
+  residenceCountry String?
+  residenceRegion  String?
+  residenceCity    String?
+  /// Mercado principal onde quer trabalhar. É o `targetCountry` que
+  /// `resolveMarket` consome, e a razão de ser desta tabela.
+  primaryMarket    String?
+  /// JSON array de mercados alternativos (§8: uma pessoa pode ter vários).
+  alternativeMarkets String?
+  openToRelocation          Boolean @default(false)
+  /// Trabalho remoto para empresa de outro país. Não é o mesmo que mudar de
+  /// país, e por isso é uma pergunta própria.
+  openToInternationalRemote Boolean @default(false)
+
+  // --- Preferências de trabalho ---
+  /// JSON array: remote | hybrid | onsite
+  workModes     String?
+  /// JSON array de tipos de contrato aceitos, no vocabulário do mercado.
+  contractTypes String?
+  /// full_time | part_time | flexible
+  weeklyHours   String?
+
+  // --- Pretensão salarial (§33: moeda de salário ≠ moeda de cobrança) ---
+  salaryMin      Float?
+  salaryMax      Float?
+  /// Moeda da PRETENSÃO. A moeda em que o usuário paga pelo produto é decidida
+  /// pelo país do meio de pagamento, em `lib/pricing/`, e não tem relação com
+  /// esta. Quem mira Londres pensa o salário em GBP e paga em BRL.
+  salaryCurrency String?
+  /// year | month | hour
+  salaryPeriod   String?
+
+  // --- Idiomas (§32: cinco idiomas diferentes, três guardados aqui) ---
+  /// Idioma em que o currículo deve ser produzido. Não é o idioma da
+  /// interface: quem mora no Brasil e busca vaga nos EUA lê a tela em
+  /// português e precisa do currículo em inglês.
+  resumeLanguage        String?
+  /// Idioma dos e-mails e avisos.
+  communicationLanguage String?
+  /// JSON array de idiomas falados: [{ "code": "en", "level": "advanced" }].
+  spokenLanguages       String?
+
+  /// Moeda preferida para EXIBIR valores de salário. Não cobra nada.
+  displayCurrency String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 /// Sessões ativas, para que o logout invalide de verdade.

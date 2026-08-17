@@ -3,7 +3,7 @@ import { after } from 'next/server'
 import { db } from '../db'
 import { executeAiTask } from '../ai-router/router'
 import type { Language } from '../i18n'
-import { resolveMarket } from '../market'
+import { loadProfileContext } from '../profile/server'
 import {
   ANALYSIS_SEGMENTS,
   buildSharedContext,
@@ -175,12 +175,15 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
     return
   }
 
-  // Mercado profissional da análise. Enquanto o Perfil Profissional (Etapa 2)
-  // não guardar um país-alvo declarado, o melhor sinal disponível é onde a
-  // pessoa está — nunca o país de pagamento, que responde por preço e não por
-  // carreira. O idioma entra por último, dentro de `resolveMarket`.
-  const { market } = resolveMarket({
-    residenceCountry: job.userCountry,
+  // Mercado profissional da análise: o alvo declarado no Perfil Profissional
+  // manda; sem ele, o país onde a pessoa está, capturado no pedido. Nunca o
+  // país de pagamento, que responde por preço e não por carreira.
+  //
+  // A leitura acontece aqui, e não na rota que enfileirou o trabalho, porque
+  // esta função também roda ao RETOMAR um job numa invocação posterior, onde
+  // não existe requisição nenhuma para consultar.
+  const { market, promptContext: profileContext } = await loadProfileContext(job.userId, {
+    edgeCountry: job.userCountry,
     language: job.lang as Language,
   })
 
@@ -190,6 +193,7 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
     targetJobDescription: job.resume.targetJobDescription,
     lang: job.lang as Language,
     market,
+    profileContext,
   })
 
   const done = readSegments(job.segmentsJson)
