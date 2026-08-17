@@ -316,6 +316,43 @@ que diz "vaga não disponível". Todo o arquivo escolhe o clique.
 há semanas sempre vazia tem as duas datas distantes, e é essa distância que o
 painel deve mostrar como problema.
 
+## 2.10 Etapas 5 a 8 — do filtro duro ao Job Fit
+
+**Filtro duro (§16).** Elimina antes da IA o que é obviamente incompatível. A
+regra que governa todos os filtros é a do §12 vista do outro lado do sistema:
+**desconhecido nunca elimina**. Uma vaga que não diz o modelo de trabalho não é
+uma vaga presencial — é uma vaga que não disse. Descartar por ausência de
+informação transforma silêncio da fonte em rejeição ao candidato, e ele nunca
+fica sabendo que a vaga existiu.
+
+**Três eixos (§9).** O problema do número único não é a imprecisão: é que ele
+apaga a informação necessária para decidir. "78%" não diz se falta uma
+competência que se aprende num fim de semana ou se falta autorização de trabalho
+no país — as duas produzem o mesmo 78 e pedem decisões opostas.
+
+O **impedimento tem veto estrutural**, não desconto numérico. Foi um teste que
+forçou essa correção: com o veto ligado ao nível do eixo, um candidato perfeito
+para uma vaga presencial num país onde não pode morar recebia "forte
+compatibilidade". Impedimento é porta fechada, não pontuação baixa.
+
+**Silêncio por padrão (§15).** `curate` recusa alertar em cinco situações: Radar
+desligado, nenhuma oportunidade, todas abaixo do mínimo do usuário, todas com
+impedimento, e todas já avisadas. O padrão de fábrica é exigente de propósito —
+um alerta ruim custa mais que o minuto que toma: custa a confiança de que vale
+abrir o próximo. Três alertas ruins e o quarto, que era bom, não é aberto.
+
+**Job Fit (§18).** Três blocos — por que recomendamos, atenção, prepare-se — e
+`jobPromptContext`, que leva os requisitos e **as lacunas** para os prompts de
+currículo direcionado e carta. Uma carta escrita sabendo o que falta pode tratar
+a ausência com honestidade em vez de contorná-la.
+
+**Adapters (§11).** O contrato deixa claro o que o adapter **não** decide:
+`CollectResult` não tem campo para "feche estas vagas". Quem decide é
+`decideCollection`. Se cada adapter decidisse por conta, a regra mais importante
+do sistema estaria replicada em N implementações, e bastaria uma esquecer.
+`safeCollect` envelopa qualquer adapter para que ele nunca lance — a regra "não
+lance" é fácil de escrever no contrato e fácil de violar na implementação.
+
 ## 3. O que **não** foi feito — e por quê
 
 O prompt mestre é explícito: *"Não tente implementar tudo de uma vez"*. Esta
@@ -328,10 +365,10 @@ da Etapa 3 (Market Adapter)**. O resto está mapeado abaixo, não implementado.
 | **2 — Professional Profile** (§7, §8) | ✅ Feita, em produção | — |
 | **3 — Market Adapter** (§2, §10) | ✅ Feita | Falta apenas `SalaryContext`, que depende de dados de mercado que ainda não coletamos |
 | **4 — Job Intelligence** (§13, §14) | ✅ Feita | — |
-| **5 — Job Sources** (§11, §12) | 🟡 Regra pronta, adapters não | `decideCollection` já implementa e testa o §12. Falta a interface `JobSourceAdapter` e os adapters concretos — **bloqueado neste ambiente**, que não tem saída de rede para os ATS |
-| **6 — Matching** (§9, §16) | ⬜ Não iniciada | Filtro duro antes da IA; separar compatibilidade profissional / com a vaga / contextual; lacunas e evidências. Aposenta o `matchPercentage` como número único |
-| **7 — Radar** (§15, §22, §23) | ⬜ Não iniciada | Cron + fila + leases + idempotência. **Silêncio por padrão**: sem oportunidade relevante, sem alerta |
-| **8 — Ação** (§18, §19, §20) | ⬜ Não iniciada | Job Fit; currículo direcionado à vaga. A rota de carta desta etapa já é metade do caminho — falta recebê-la a partir de uma vaga do Radar, e não só da vaga alvo digitada |
+| **5 — Job Sources** (§11, §12) | 🟡 Contrato e 1 adapter | Interface `JobSourceAdapter` e adapter do Greenhouse escritos, com a conversão testada por injeção de `fetch`. **A API real NÃO foi verificada** — este ambiente não tem saída de rede. Ligar a fonte exige uma coleta real antes |
+| **6 — Matching** (§9, §16) | ✅ Feita | — |
+| **7 — Radar** (§15, §22, §23) | 🟡 Curadoria pronta, agendamento não | `curate` e `summarizeDigest` decidem e resumem. Falta o cron, a fila e o envio de e-mail |
+| **8 — Ação** (§18, §19, §20) | 🟡 Job Fit pronto, interface não | `buildJobFit` e `jobPromptContext` montam a visão e a ponte para as rotas de currículo e carta. Falta a tela |
 | **9 — Assinatura** (§21) | ⬜ Não iniciada | Só depois do Radar provar valor. Compra única continua funcionando |
 | **10 — Escala global** (§34) | ⬜ Não iniciada | Novos mercados são entradas em `MARKETS`; painel administrativo por mercado/fonte/adapter |
 
