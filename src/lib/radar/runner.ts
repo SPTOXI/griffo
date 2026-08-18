@@ -526,3 +526,23 @@ export async function runRadar(options: {
     ranOutOfTime,
   }
 }
+
+/**
+ * Roda o Radar para um usuário sem deixar a falha vazar.
+ *
+ * Existe para as rotas que disparam o Radar como **efeito colateral** de outra
+ * coisa: salvar o perfil, gerar o diagnóstico. Nessas, a entrega principal é a
+ * outra — derrubá-la porque a avaliação de vagas não deu certo trocaria o que a
+ * pessoa pediu pelo que ela nem sabe que está acontecendo.
+ *
+ * Quem chama o Radar de propósito (a rota `/api/radar/run`) NÃO usa isto: lá a
+ * falha é a resposta, e precisa ser dita.
+ */
+export async function runForUserQuietly(userId: string): Promise<UserRunResult | null> {
+  try {
+    return await runForUser(userId)
+  } catch (e: any) {
+    console.warn(`[radar] rodada oportunista do usuário ${userId} falhou:`, e?.message || e)
+    return null
+  }
+}

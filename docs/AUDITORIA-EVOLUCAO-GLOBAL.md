@@ -859,3 +859,69 @@ que essa estratégia ganha um caso de uso real.
 | Adzuna | Descoberta ampla | Público | Não |
 
 O Brasil deixou de depender de uma fonte só.
+
+---
+
+## 2.20 O primeiro alerta, e o defeito que ele expôs
+
+O Radar produziu **4 alertas** a partir de 277 vagas coletadas de três fontes —
+Gupy (100), Adzuna BR (92) e Greenhouse (85). Quatro é exatamente o teto por
+envio: ele achou candidatas e parou onde devia, em vez de despejar tudo.
+
+A coleta da Adzuna voltou `partial`, e isso é correto: ela tem mais resultados
+do que o teto de páginas por termo permite ler numa rodada. O registro dela no
+banco diz *"Coleta incompleta. Nenhuma vaga encerrada"* — o §12 funcionando pela
+primeira vez com dados reais.
+
+### O defeito que só apareceu ao pensar em testadores
+
+Com o pipeline funcionando, a pergunta virou: como outra pessoa testa isso? E a
+resposta era ruim. Alguém se cadastra, gera o diagnóstico, abre o Radar — e vê
+tela vazia **até as 6h UTC do dia seguinte**, porque a única coisa que dispara o
+Radar era o cron diário.
+
+Uma tela vazia por 24 horas é indistinguível de produto quebrado. Nenhum
+testador chegaria ao segundo dia.
+
+### Separar o que é caro do que não é
+
+Coletar varre a internet: cinco fontes, dezenas de idas à rede, orçamento de
+tempo apertado. **Avaliar** um perfil contra as vagas já coletadas são quatro
+consultas e cálculo em memória, sem rede nenhuma.
+
+Só a primeira precisa ser diária. A segunda passou a rodar:
+
+- ao **salvar o perfil** — quem acabou de declarar o que procura vê o resultado
+  na mesma tela, junto do aviso de que salvou;
+- ao **gerar o diagnóstico vocacional**, logo depois da semeadura do perfil;
+- sob demanda, no botão **"Procurar agora"** da tela do Radar.
+
+Nos dois primeiros casos a rodada é *oportunista*: `runForUserQuietly` engole a
+falha, porque a entrega principal é outra — derrubar o diagnóstico porque a
+avaliação de vagas não deu certo trocaria o que a pessoa pediu pelo que ela nem
+sabe que está acontecendo. Na rota `/api/radar/run`, que existe só para isso, a
+falha é a resposta e precisa ser dita.
+
+### O botão não coleta, e o texto não promete que coleta
+
+`/api/radar/run` **não** dispara coleta. Deixar cada usuário coletar
+multiplicaria por N as idas às fontes e daria a qualquer visitante um botão que
+faz o servidor chamar cinco APIs externas.
+
+O efeito prático é que uma vaga publicada hoje só aparece depois da coleta da
+madrugada. O estado vazio da tela diz isso com todas as letras, em vez de deixar
+a pessoa concluir que o botão está quebrado.
+
+Há intervalo mínimo de 30 segundos: avaliar é barato, mas o resultado não muda
+entre dois cliques seguidos — as mesmas vagas contra o mesmo perfil dão o mesmo
+veredito.
+
+### O que ainda piora com o tempo
+
+Gupy e Adzuna nunca fecham vaga por ausência, por desenho — sumir de uma busca
+não prova encerramento. Mas isso significa que vaga delas **não fecha por nada**.
+Em alguns meses o banco terá vaga encerrada há muito tempo, e o Radar pode
+alertar sobre ela.
+
+Falta encerramento por idade ou por `applicationDeadline` (a Gupy manda esse
+campo). É o único problema conhecido que piora sozinho, e o próximo da fila.

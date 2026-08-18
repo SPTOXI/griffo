@@ -12,6 +12,7 @@ import { requireUnlockedResume } from '@/lib/entitlements'
 import { edgeCountry } from '@/lib/pricing/resolve'
 import { marketPromptContext } from '@/lib/market'
 import { loadProfileContext, seedProfileFromOrientation } from '@/lib/profile/server'
+import { runForUserQuietly } from '@/lib/radar/runner'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório.'),
@@ -216,6 +217,10 @@ Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto 
     const seededFields = await seedProfileFromOrientation(user.id, orientationJson, {
       fallbackCountry: edgeCountry(req),
     })
+
+    // Perfil recém-semeado: avaliar agora evita que a pessoa abra o Radar logo
+    // depois do diagnóstico e encontre tela vazia até a madrugada.
+    if (seededFields.length > 0) await runForUserQuietly(user.id)
 
     return NextResponse.json({ careerOrientation: orientationData, profileSeeded: seededFields })
   } catch (e: any) {
