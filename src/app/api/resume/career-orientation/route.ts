@@ -11,7 +11,7 @@ import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
 import { requireUnlockedResume } from '@/lib/entitlements'
 import { edgeCountry } from '@/lib/pricing/resolve'
 import { marketPromptContext } from '@/lib/market'
-import { loadProfileContext } from '@/lib/profile/server'
+import { loadProfileContext, seedProfileFromOrientation } from '@/lib/profile/server'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório.'),
@@ -191,15 +191,33 @@ Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto 
 
     const orientationData = parseOrientation(aiResponse.content)
 
+    const orientationJson = JSON.stringify(orientationData)
+
     // Persist to database so orientation is preserved across page refreshes
     await db.resume.update({
       where: { id: resume.id },
       data: {
-        careerOrientationJson: JSON.stringify(orientationData),
+        careerOrientationJson: orientationJson,
       },
     })
 
-    return NextResponse.json({ careerOrientation: orientationData })
+    /**
+     * O diagnóstico abre a porta do Radar.
+     *
+     * O Radar nasceu para buscar vagas DAS ÁREAS QUE ESTE DIAGNÓSTICO
+     * RECOMENDOU, no país da pessoa. Mas `runRadar` só avalia quem tem
+     * `ProfessionalProfile` gravado, e o único jeito de ter era preencher trinta
+     * campos à mão. Quem rodava o diagnóstico, lia as três áreas e fechava a
+     * tela ficava de fora — tendo dito ao produto exatamente o que queria.
+     *
+     * Só preenche o que está vazio, e o que preencheu volta na resposta: perfil
+     * que muda sozinho e em silêncio é o que o §30 proíbe.
+     */
+    const seededFields = await seedProfileFromOrientation(user.id, orientationJson, {
+      fallbackCountry: edgeCountry(req),
+    })
+
+    return NextResponse.json({ careerOrientation: orientationData, profileSeeded: seededFields })
   } catch (e: any) {
     console.error('Error generating career orientation:', e?.diagnostic || e?.message || e)
 

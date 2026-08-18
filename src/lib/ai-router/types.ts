@@ -19,6 +19,11 @@ export type TaskType =
   /// nunca produziu. Ver agents/quality-agent.ts.
   | 'career_orientation'
   | 'cover_letter'
+  /// Leitura do currículo para sugerir o Perfil Profissional. Tipo próprio
+  /// porque é EXTRAÇÃO, não redação: a validação certa aqui é "veio JSON com
+  /// as chaves do perfil", e reaproveitar a regra de outra tarefa reprovaria
+  /// respostas corretas — o defeito que já derrubou o diagnóstico vocacional.
+  | 'profile_extraction'
   | 'support_chat'
 
 export type ProviderId = 'gemini' | 'deepseek' | 'claude' | 'kimi'

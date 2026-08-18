@@ -1,6 +1,11 @@
 import 'server-only'
 import { db } from '../db'
-import { safeCollect, sourceservesMarkets, type JobSourceAdapter } from '../jobs/adapter'
+// `sourceservesMarkets` NÃO entra aqui de propósito, e estava importado sem uso.
+// Coletar é por FONTE e serve a todo mundo: filtrar a coleta pelo mercado de
+// quem está na fila desta rodada faria a mesma fonte ser coletada ou não
+// conforme quem calhou de ser atendido, e a vaga sumiria do banco por acaso.
+// O lugar de filtrar por mercado é o filtro duro, por usuário.
+import { safeCollect, type JobSourceAdapter } from '../jobs/adapter'
 import { decideCollection, sourceStateAfter } from '../jobs/collection'
 import { dedupeBatch } from '../jobs/dedup'
 import { normalizeJob } from '../jobs/normalize'

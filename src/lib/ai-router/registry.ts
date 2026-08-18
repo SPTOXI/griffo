@@ -145,6 +145,10 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   // Prévia gratuita: servida a quem ainda não pagou, ao custo de US$ 0,0017 por
   // conta. É o único item do produto que roda deliberadamente no modelo barato.
   free_preview: 'deepseek',
+  // Extração estruturada de campos que já estão escritos no currículo. Não é
+  // redação nem julgamento: o modelo barato faz isso bem, e a rota é chamada
+  // uma vez por pessoa.
+  profile_extraction: 'deepseek',
   // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
   normalization: 'deepseek',
