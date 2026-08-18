@@ -7,6 +7,7 @@ import { db } from '../db'
 // O lugar de filtrar por mercado é o filtro duro, por usuário.
 import { safeCollect, type JobSourceAdapter } from '../jobs/adapter'
 import { decideCollection, sourceStateAfter } from '../jobs/collection'
+import { closeStaleJobs, type StaleCloseReport } from '../jobs/lifecycle.server'
 import { dedupeBatch } from '../jobs/dedup'
 import { normalizeJob } from '../jobs/normalize'
 import { JobNormalizationError, type NormalizedJob } from '../jobs/types'
@@ -437,6 +438,8 @@ export interface RadarRunSummary {
   totalSilenced: number
   /** A rodada parou por falta de tempo, não por ter terminado. */
   ranOutOfTime: boolean
+  /** Vagas encerradas por terem parado de aparecer. */
+  staleClosed: StaleCloseReport
 }
 
 /**
@@ -483,6 +486,16 @@ export async function runRadar(options: {
     }
   }
 
+  /**
+   * Encerrar por tempo vem DEPOIS de coletar e ANTES de avaliar.
+   *
+   * Depois de coletar porque uma vaga que reapareceu nesta rodada teve o
+   * `lastSeenAt` atualizado e não deve ser dada como parada. Antes de avaliar
+   * porque avaliar uma vaga que acabou de ser encerrada geraria alerta para
+   * algo que já não existe — o erro que este mecanismo veio corrigir.
+   */
+  const staleClosed = await closeStaleJobs({ now: new Date() })
+
   // Quem esperou mais vem primeiro. Usuários sem preferência ainda registrada
   // entram na frente — nunca rodaram.
   const candidates = await db.user.findMany({
@@ -524,6 +537,7 @@ export async function runRadar(options: {
     // Declarado, e não escondido: uma rodada truncada que se apresenta como
     // completa faz a fila parecer girar quando ela parou.
     ranOutOfTime,
+    staleClosed,
   }
 }
 

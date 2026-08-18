@@ -925,3 +925,68 @@ alertar sobre ela.
 
 Falta encerramento por idade ou por `applicationDeadline` (a Gupy manda esse
 campo). É o único problema conhecido que piora sozinho, e o próximo da fila.
+
+---
+
+## 2.21 Vaga também acaba
+
+A pergunta era simples — quanto tempo a vaga fica no banco — e a resposta era
+**para sempre**. O expurgo de retenção cobria eventos de webhook, logs de IA,
+auditoria e currículos de contas inativas; `Job` não estava lá. E o
+encerramento era desigual: boards fecham por ausência, Gupy e Adzuna
+declaram `closesByAbsence: false` e portanto **não fechavam por nada**.
+
+Duas consequências, e a segunda é comercial:
+
+1. Em alguns meses o Radar estaria avisando sobre vaga encerrada há muito
+   tempo. Numa ferramenta que promete só interromper quando vale a pena, isso é
+   o oposto exato do prometido — e, num produto em que se paga por resultado,
+   é entregar o contrário do que foi vendido.
+2. O banco cresce sem teto. Cada vaga guarda a descrição inteira.
+
+### Encerrar por tempo, não por ausência pontual
+
+Sumir de UMA coleta não diz nada. Não aparecer em coleta NENHUMA por 45 dias
+diz. A janela é longa de propósito: o custo de fechar cedo (esconder vaga viva)
+é maior que o de fechar tarde (mostrar vaga velha por mais uns dias), e vaga
+real reaparece em toda coleta.
+
+### A trava que herda o §12
+
+Se a **fonte** está quebrada há mais tempo que a janela, o silêncio é nosso e
+não da vaga. Fechar aí seria exatamente o erro do §12 — apagar vaga viva porque
+a coleta falhou — só que em câmera lenta, e por isso mais difícil de perceber.
+
+A decisão exige que a fonte tenha tido coleta confiável **dentro da janela**. É
+por isso que o encerramento roda por fonte e não numa consulta só: a pergunta
+"esta coleta está saudável?" só tem resposta olhando cada uma.
+
+### Onde ele roda na rodada
+
+Depois de coletar e antes de avaliar. Depois de coletar porque vaga que
+reapareceu teve o `lastSeenAt` atualizado e não deve ser dada como parada. Antes
+de avaliar porque avaliar uma vaga recém-encerrada geraria alerta para algo que
+já não existe — o erro que este mecanismo veio corrigir.
+
+### Apagar é outra coisa, com outro critério
+
+Encerrada há mais de 90 dias, a vaga pode ser apagada — e o prazo maior existe
+para que ela sobreviva ao arrependimento: enquanto a linha existe, um
+fechamento errado se desfaz sozinho quando a vaga reaparece numa coleta.
+Depois de apagada, ela voltaria como vaga nova e quem já a viu seria avisado de
+novo.
+
+**Vaga com alerta nunca é apagada.** `RadarAlert` tem `onDelete: Cascade`:
+apagar a vaga levaria junto o registro de que alguém foi avisado sobre ela,
+destruindo o histórico da pessoa para economizar espaço. São poucas linhas; não
+vale a troca.
+
+### O modelo de cobrança que isto sustenta
+
+Ficou decidido, para começar: **busca inicial gratuita** logo após a orientação
+vocacional (entregue em `#33`), **Radar diário gratuito**, e busca imediata com
+termos novos como produto pago mais adiante — quando os custos forem estudados.
+
+O que se vende ali é **imediatismo, não acesso**: a varredura diária pega os
+termos novos de qualquer forma no dia seguinte. A tela precisa dizer isso, e
+nunca insinuar que sem pagar não se recebe nada.
