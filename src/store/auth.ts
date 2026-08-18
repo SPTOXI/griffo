@@ -60,6 +60,7 @@ export type AppView =
   | 'upload'
   | 'analysis'
   | 'profile'
+  | 'radar'
   | 'rewrite'
   | 'downloads'
   | 'plans'

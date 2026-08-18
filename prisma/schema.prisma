@@ -68,6 +68,8 @@ model User {
   sessions           Session[]
   analysisJobs       AnalysisJob[]
   professionalProfile ProfessionalProfile?
+  radarPreference     RadarPreference?
+  radarAlerts         RadarAlert[]
 }
 
 /// Quem a pessoa é profissionalmente, e onde ela quer trabalhar.
@@ -631,8 +633,88 @@ model Job {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  radarAlerts RadarAlert[]
+
   @@index([sourceId, lastSeenAt])
   @@index([market, closedAt])
   @@index([companyKey, normalizedTitle])
   @@index([closedAt, publishedAt])
+}
+
+/// Como o usuário quer ser interrompido pelo Radar (§22).
+///
+/// Tabela própria, e não campos no `User`, pela mesma razão do
+/// `ProfessionalProfile`: `User` responde por conta e cobrança. Isto responde
+/// por atenção — quanto dela a pessoa autoriza o produto a consumir.
+///
+/// O padrão de fábrica é exigente de propósito. Ver `DEFAULT_RADAR_PREFERENCES`
+/// em `lib/radar/curation.ts`: um Radar que avisa demais se desliga sozinho na
+/// cabeça do usuário.
+model RadarPreference {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// immediate | daily | weekly | off
+  frequency  String @default("daily")
+  /// strong | good | partial — relevância mínima para interromper.
+  minimumFit String @default("good")
+  /// Teto de oportunidades por envio. Acima disto vira lista, não curadoria.
+  maxPerDigest Int  @default(4)
+
+  /// Última vez que o Radar rodou para este usuário. É por este campo que a
+  /// rodada escolhe quem atender primeiro, o que dá rotação justa quando há
+  /// mais usuários do que cabe numa invocação.
+  lastRunAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([frequency, lastRunAt])
+}
+
+/// Uma oportunidade que o Radar decidiu mostrar a alguém.
+///
+/// Guarda o veredito COMO ELE ERA no momento do alerta. Recalcular na leitura
+/// mudaria o que a pessoa viu — o perfil dela pode ter mudado desde então — e
+/// tornaria impossível auditar por que aquele alerta foi enviado.
+///
+/// É também onde vive o feedback do §30. O prompt é explícito: o feedback pode
+/// melhorar o perfil e o matching, mas NÃO pode alterar o perfil silenciosamente
+/// — por isso ele fica aqui, junto do alerta que o motivou, e não escrito de
+/// volta no `ProfessionalProfile`.
+model RadarAlert {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId  String
+  job    Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  /// strong | good | partial | weak, no momento do alerta.
+  overallFit     String
+  /// apply | consider | stretch | skip
+  recommendation String
+  /// `MatchResult` inteiro, serializado. É o que a tela do Job Fit lê.
+  matchJson      String
+
+  /// Sinal interno de ordenação. NUNCA exibido — ver §9 e §17.
+  signalScore Int @default(0)
+
+  seenAt    DateTime?
+  clickedAt DateTime?
+
+  /// §30: 👍 interessante | 👎 não serve. Nulo = ainda não respondeu.
+  feedback       String?
+  /// wrong_role | location | salary | seniority | skills | company | work_mode | other
+  feedbackReason String?
+  feedbackAt     DateTime?
+
+  createdAt DateTime @default(now())
+
+  /// Um alerta por usuário e vaga. É o que garante o "não se avisa duas vezes"
+  /// do §15 mesmo quando duas rodadas correm em paralelo: a segunda colide com
+  /// o índice em vez de duplicar o aviso.
+  @@unique([userId, jobId])
+  @@index([userId, createdAt])
+  @@index([userId, seenAt])
 }
