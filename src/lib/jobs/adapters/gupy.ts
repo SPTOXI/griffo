@@ -50,7 +50,9 @@
 
 import type { CollectContext, CollectResult, JobSourceAdapter, JobSourceDescriptor } from '../adapter'
 import type { RawJob } from '../types'
-import { COUNTRIES } from '../../market/countries'
+import { countryCodeFromName } from '../../market/countries'
+
+export { countryCodeFromName }
 
 export const GUPY_DESCRIPTOR: JobSourceDescriptor = {
   slug: 'gupy',
@@ -81,32 +83,6 @@ interface GupyJob {
   country?: string
   type?: string
   skills?: unknown
-}
-
-/**
- * Nome de país por extenso vira ISO2.
- *
- * A lista de países já existe para a tela do perfil, com os nomes em
- * português — reusá-la aqui evita uma segunda tabela que um dia divergiria da
- * primeira. Nome desconhecido devolve `null`: um país errado é pior que país
- * nenhum, porque o filtro duro age sobre ele.
- */
-const CODE_BY_NAME = new Map<string, string>([
-  ...COUNTRIES.map((c) => [c.name.toLowerCase(), c.code] as [string, string]),
-  // A Gupy escreve em português; "Brazil" aparece em dados vindos de fora.
-  ['brazil', 'BR'],
-])
-
-export function countryCodeFromName(value: unknown): string | null {
-  if (typeof value !== 'string') return null
-  const key = value.trim().toLowerCase()
-  if (!key) return null
-  // Já veio em ISO2? Aceita, mas só o que a lista conhece.
-  if (/^[a-z]{2}$/.test(key)) {
-    const upper = key.toUpperCase()
-    return COUNTRIES.some((c) => c.code === upper) ? upper : null
-  }
-  return CODE_BY_NAME.get(key) ?? null
 }
 
 /** Converte o payload de uma página em vagas cruas. */

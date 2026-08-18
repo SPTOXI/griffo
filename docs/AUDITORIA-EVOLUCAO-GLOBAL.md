@@ -411,7 +411,7 @@ da Etapa 3 (Market Adapter)**. O resto está mapeado abaixo, não implementado.
 | **2 — Professional Profile** (§7, §8) | ✅ Feita, em produção | — |
 | **3 — Market Adapter** (§2, §10) | ✅ Feita | Falta apenas `SalaryContext`, que depende de dados de mercado que ainda não coletamos |
 | **4 — Job Intelligence** (§13, §14) | ✅ Feita | — |
-| **5 — Job Sources** (§11, §12) | ✅ Greenhouse, Lever e Gupy | A Gupy é API interna, com risco declarado; o caminho estável é parceria oficial. Boards do Greenhouse/Lever saem de variável de ambiente |
+| **5 — Job Sources** (§11, §12) | ✅ Cinco fontes | Greenhouse, Lever, Gupy, páginas de carreira (schema.org) e Adzuna. Só a Gupy é API interna; as demais têm contrato público |
 | **6 — Matching** (§9, §16) | ✅ Feita | — |
 | **7 — Radar** (§15, §22, §23) | ✅ Roda por cron, entrega no produto | Falta o e-mail — não há provedor configurado no projeto |
 | **8 — Ação** (§18, §19, §20) | ✅ Job Fit na tela do Radar | Falta o currículo direcionado partir da vaga encontrada, e não só da vaga digitada |
@@ -740,3 +740,122 @@ onde quem mexer vai ler. **O caminho que não quebra é a API oficial de
 parceria** — enquanto ela não existir, a cobertura brasileira do Radar depende
 de uma dependência frágil, e isso é fato do produto, não detalhe de
 implementação.
+
+---
+
+## 2.18 Não ficar na mão de uma fonte só
+
+A pergunta era direta: dependemos da Gupy, ou dá para buscar e mostrar o que se
+acha — por exemplo no Google?
+
+**Pelo Google, não.** O Google for Jobs não tem API pública, e raspar página de
+resultado viola os termos e é bloqueado por robô. Ficaria mais frágil que a
+Gupy, não menos. A Custom Search API é oficial mas busca a web: devolve link e
+trecho, não vaga estruturada.
+
+**O que o Google esconde, sim.** O motivo de ele conseguir mostrar vagas é que
+os empregadores publicam `schema.org/JobPosting` em JSON-LD nas próprias
+páginas. É padrão aberto, publicado justamente para consumo automatizado, e
+está no site de quem contrata — sem chave, sem API interna, sem zona cinzenta.
+
+### O que o adapter de JSON-LD resolve, e o que não
+
+**Resolve ler**: qualquer página que publique os dados estruturados vira fonte.
+
+**Não resolve descobrir**: ele precisa saber quais páginas visitar. Descoberta
+ampla continua dependendo de agregador ou de fonte de busca. Dizer o contrário
+seria vender cobertura que não existe.
+
+Por isso ele é uma fonte de **páginas escolhidas**: a instalação lista os
+empregadores que interessa acompanhar em `CAREER_PAGES`. Para os empregadores
+escolhidos, o Brasil deixa de depender só da Gupy.
+
+### Diferente das outras três, foi escrito contra a especificação
+
+Greenhouse, Lever e Gupy tiveram o formato observado antes do código. Este não:
+a especificação do schema.org é pública e estável, e foi ela a referência.
+
+O risco disso está tratado onde dá: o parser tolera as três variações que
+páginas reais usam — objeto embrulhado em `@graph`, vários blocos na mesma
+página, array no lugar de valor único — e há teste para cada uma. O que continua
+sem verificação é o comportamento diante de uma página específica de verdade,
+e por isso conferir antes de acrescentar uma página é obrigatório.
+
+### Ausência aqui É encerramento
+
+Ao contrário da Gupy, esta fonte lê cada página por inteiro toda rodada. Se a
+vaga saiu da página de carreiras da empresa, saiu de verdade — então
+`closesByAbsence` fica no padrão. É o mesmo raciocínio que fez a Gupy declarar o
+contrário, aplicado a uma fonte de natureza diferente.
+
+### Adzuna ficou pendente
+
+O agregador com API oficial e cobertura do Brasil seria a resposta para
+descoberta ampla. A tentativa parou em `AUTH_FAIL` com credenciais de tamanho
+plausível, o que aponta para app ainda não ativo na conta. Continua sendo o
+próximo candidato — e, com o contrato `JobSourceAdapter`, acrescentá-lo é um
+arquivo.
+
+### Uma proteção que a configuração precisava
+
+`CAREER_PAGES` aceita **só `http` e `https`**. Sem isso, uma entrada malformada
+viraria requisição a `file://` ou a um host interno, feita pelo servidor em nome
+de quem escreveu a variável.
+
+---
+
+## 2.19 A Adzuna, e o salário que quase entrou inventado
+
+A Adzuna é a primeira fonte que resolve **descoberta ampla com contrato
+público**: API documentada, chave própria, e cadastro em que o uso é declarado.
+Greenhouse e Lever só acham vaga de quem já se conhece; a Gupy resolve o Brasil
+por API interna, com o risco escrito no cabeçalho dela.
+
+Verificada em 18/08/2026 contra
+`api.adzuna.com/v1/api/jobs/br/search/1?what=enfermeiro`.
+
+### A armadilha
+
+O payload traz `salary_is_predicted`. Quando vale `"1"`, o salário foi
+**estimado pela Adzuna** — não informado pela empresa. Gravá-lo como salário da
+vaga poria no produto um número que ninguém prometeu, e o usuário o leria como
+promessa.
+
+Quando a estimativa está ligada, o salário é descartado. Vaga sem salário é o
+estado normal do mercado brasileiro; vaga com salário inventado é o que o §43
+proíbe. Este é o tipo de campo que só aparece olhando o payload — nenhuma
+documentação lida de memória teria avisado.
+
+### Duas coisas menores que também vieram do payload
+
+O país está em `location.area`, uma hierarquia do mais geral para o mais
+específico (`["Brasil", "Sul", "Paraná", "Curitiba"]`), por extenso e em
+português. É a mesma conversão que a Gupy precisa — e por isso
+`countryCodeFromName` saiu do adapter da Gupy e passou a morar em
+`lib/market/countries.ts`, junto dos nomes. Duas tabelas divergiriam no primeiro
+país acrescentado a uma só.
+
+E a Adzuna responde **200 com um campo `exception`** quando a credencial não
+vale. Ler isso como "nenhuma vaga" faria uma chave expirada parecer um mercado
+vazio — e mercado vazio, numa fonte que fechasse por ausência, apagaria vaga
+viva. O adapter trata `exception` como falha.
+
+### `redirect_url` e a deduplicação
+
+A URL de candidatura passa pelo domínio da Adzuna: é como a API funciona e como
+a atribuição é contada. O efeito colateral é que a mesma vaga vinda da Gupy e da
+Adzuna tem URLs diferentes — quem as junta é a deduplicação por empresa + cargo,
+não a por URL. A camada de dedup da Etapa 4 já cobre isso, e é a primeira vez
+que essa estratégia ganha um caso de uso real.
+
+### As cinco fontes, e o que cada uma resolve
+
+| Fonte | Resolve | Contrato | Fecha por ausência |
+|---|---|---|---|
+| Greenhouse | Empresas conhecidas (EUA, GB, CA) | Público | Sim |
+| Lever | Empresas conhecidas (variado) | Público | Sim |
+| Páginas de carreira | Empregadores escolhidos | Padrão aberto | Sim |
+| Gupy | Descoberta no Brasil | **Interno** | Não |
+| Adzuna | Descoberta ampla | Público | Não |
+
+O Brasil deixou de depender de uma fonte só.
