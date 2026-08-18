@@ -411,7 +411,7 @@ da Etapa 3 (Market Adapter)**. O resto está mapeado abaixo, não implementado.
 | **2 — Professional Profile** (§7, §8) | ✅ Feita, em produção | — |
 | **3 — Market Adapter** (§2, §10) | ✅ Feita | Falta apenas `SalaryContext`, que depende de dados de mercado que ainda não coletamos |
 | **4 — Job Intelligence** (§13, §14) | ✅ Feita | — |
-| **5 — Job Sources** (§11, §12) | 🟡 Contrato e 1 adapter, DESLIGADO | O Greenhouse tem a conversão testada e a API real não verificada. `ACTIVE_ADAPTERS` está vazio de propósito — ligar exige uma coleta real antes |
+| **5 — Job Sources** (§11, §12) | ✅ Greenhouse conferido e LIGADO | Falta o segundo ATS (Lever, Gupy). Boards saem de `GREENHOUSE_BOARDS`; conferir cada novo board antes de acrescentar |
 | **6 — Matching** (§9, §16) | ✅ Feita | — |
 | **7 — Radar** (§15, §22, §23) | ✅ Roda por cron, entrega no produto | Falta o e-mail — não há provedor configurado no projeto |
 | **8 — Ação** (§18, §19, §20) | ✅ Job Fit na tela do Radar | Falta o currículo direcionado partir da vaga encontrada, e não só da vaga digitada |
@@ -444,3 +444,61 @@ da Etapa 3 (Market Adapter)**. O resto está mapeado abaixo, não implementado.
 6. Nunca enviar notificação inútil — silêncio por padrão.
 7. Nunca sacrificar segurança por velocidade.
 8. Coleta que volta vazia é falha até prova em contrário, nunca vaga encerrada.
+
+---
+
+## 2.12 O Greenhouse sai do papel (Etapa 5)
+
+O adapter existia desde a Etapa 5 com a conversão testada e o contrato não
+verificado — testes com `fetch` injetado provam que, *dada* uma resposta no
+formato esperado, a conversão está certa; não provam que a API responde nesse
+formato. A diferença importa: uma fonte cujo comportamento ninguém observou,
+rodando sem ninguém olhando, é o cenário que o §12 existe para conter.
+
+Em 18/08/2026 a verificação foi feita contra `boards-api.greenhouse.io`,
+board `vercel`. Três perguntas, porque são as três que decidem se a fonte pode
+rodar sozinha:
+
+| Pergunta | Resposta observada | Por que decide |
+|---|---|---|
+| Os campos são os esperados? | Sim — `title`, `absolute_url`, `id`, `location.name`, `updated_at`, `content` | Campo errado vira vaga descartada ou, pior, vaga com dado trocado |
+| Há paginação a truncar? | Não — `meta.total` 84 e `jobs` com 84 | Declarar `complete` sobre resposta truncada faria o §12 fechar vaga viva |
+| Board inexistente responde o quê? | **404** | Se respondesse 200 com lista vazia, um token errado apagaria as vagas da empresa |
+
+O 404 é o achado que mais importa, e é o que autoriza ligar a fonte: o
+`!response.ok` do adapter já converte isso em `outcome: 'failed'`, e o decisor
+de coleta não fecha nada diante de falha.
+
+### O que a verificação mudou no código
+
+**A data passou a ser a de publicação.** O payload real traz `first_published`
+*e* `updated_at`. O adapter usava `updated_at`, que é a última edição do
+anúncio. Como o Radar prioriza vaga nova, uma vaga antiga reeditada furaria a
+fila a cada edição. Agora usa `first_published`, com recuo para `updated_at`
+nos boards que não o preenchem, e `null` quando não há nenhuma — nunca "hoje".
+
+**O nome da empresa ganhou recuo.** O payload traz `company_name`. O nome
+configurado continua vencendo — é o que o operador escolheu e o que fica
+estável entre coletas —, mas quando não há configuração o payload serve.
+
+### O que continua sem observação
+
+O comportamento sob instabilidade: 5xx intermitente, resposta parcial,
+conexão caindo no meio. O tratamento existe e está testado com `fetch`
+injetado, mas nunca foi visto acontecendo de verdade. É a diferença entre
+"sabemos o que o código faz" e "sabemos o que a API faz" — a primeira metade
+está resolvida, a segunda só o tempo em produção resolve.
+
+### Acrescentar boards não é mais um deploy
+
+A lista sai de `GREENHOUSE_BOARDS`, no formato `token:Nome,outro:Outro Nome`.
+Vazia, valem os boards já conferidos. Entrada malformada é **descartada**, não
+remendada: um token adivinhado a partir de lixo produziria uma fonte que falha
+toda rodada, gastando o orçamento de tempo das fontes que funcionam.
+
+A variável **substitui** a lista conferida em vez de somar a ela. Quem declara
+os boards está dizendo quais quer; receber junto um que não pediu seria
+surpresa.
+
+Conferir o board antes continua obrigatório — a variável de ambiente removeu o
+deploy, não a verificação.
