@@ -411,7 +411,7 @@ da Etapa 3 (Market Adapter)**. O resto está mapeado abaixo, não implementado.
 | **2 — Professional Profile** (§7, §8) | ✅ Feita, em produção | — |
 | **3 — Market Adapter** (§2, §10) | ✅ Feita | Falta apenas `SalaryContext`, que depende de dados de mercado que ainda não coletamos |
 | **4 — Job Intelligence** (§13, §14) | ✅ Feita | — |
-| **5 — Job Sources** (§11, §12) | ✅ Greenhouse conferido e LIGADO | Falta o segundo ATS (Lever, Gupy). Boards saem de `GREENHOUSE_BOARDS`; conferir cada novo board antes de acrescentar |
+| **5 — Job Sources** (§11, §12) | ✅ Greenhouse e Lever conferidos | Falta um ATS que cubra o Brasil — Gupy ou Vagas.com. Boards saem de `GREENHOUSE_BOARDS` e `LEVER_BOARDS`; conferir cada token antes de acrescentar |
 | **6 — Matching** (§9, §16) | ✅ Feita | — |
 | **7 — Radar** (§15, §22, §23) | ✅ Roda por cron, entrega no produto | Falta o e-mail — não há provedor configurado no projeto |
 | **8 — Ação** (§18, §19, §20) | ✅ Job Fit na tela do Radar | Falta o currículo direcionado partir da vaga encontrada, e não só da vaga digitada |
@@ -623,3 +623,57 @@ global. O que se guarda continua sendo o código ISO; o nome é para ler.
 
 Os mercados alternativos viraram caixas de seleção, e o mercado principal some
 da lista: um "alternativo" igual ao principal não significa nada.
+
+---
+
+## 2.16 O segundo ATS, e o que ele não resolve
+
+O Lever entrou pelo mesmo caminho do Greenhouse: formato observado primeiro,
+código depois. Verificado em 18/08/2026 contra
+`api.lever.co/v0/postings/leverdemo?mode=json`, 388 vagas, array puro sem
+envelope nem paginação, e token inexistente respondendo 404 — a garantia de que
+um erro de configuração não vira "empresa sem vagas".
+
+### Duas vantagens sobre o Greenhouse
+
+O Lever entrega **`country` em ISO2** já pronto. O Greenhouse manda só um texto
+livre de localização ("Hybrid - London"), e o país precisa ser inferido. E
+entrega `descriptionPlain`, texto já sem marcação, dispensando a limpeza de HTML
+que no Greenhouse tem uma ordem certa e frágil.
+
+### Três armadilhas que só o payload real mostrou
+
+**O cargo está em `text`, não em `title`.** Ler `title` devolveria vazio, a vaga
+seria descartada, e a fonte pareceria não ter vaga nenhuma — falhando do jeito
+mais silencioso possível.
+
+**`createdAt` vem em milissegundos desde a época**, não em texto ISO. Passá-lo
+adiante faria o normalizador ler um número onde espera data, e vaga sem data
+some da priorização do Radar, que ordena por vaga nova.
+
+**O payload não traz o nome da empresa.** Diferente do Greenhouse, não há de
+onde tirar — e `company` é obrigatório na normalização. Sem nome declarado, as
+vagas seriam descartadas uma a uma e a coleta terminaria "bem-sucedida" com zero
+resultados. O token do board vira o nome nesse caso: é o identificador da
+própria empresa no Lever, então é dado feio, não dado inventado.
+
+### Uma resposta 200 que é falha
+
+O adapter recusa payload que não seja array, mesmo com HTTP 200. Um erro
+embrulhado em 200 seria lido como coleta vazia bem-sucedida, e o §12 fecharia as
+vagas da empresa. Verificação barata, consequência cara.
+
+### O que isto NÃO resolve
+
+**O mercado brasileiro.** Nubank e Loft foram testados e responderam 404 — não
+usam Lever. Greenhouse e Lever são ATS dominantes nos Estados Unidos e no
+Reino Unido; no Brasil quem concentra vaga é Gupy e Vagas.com, e nenhum dos dois
+tem board público documentado como estes.
+
+Enquanto isso não for resolvido, um perfil brasileiro que não aceite trabalho
+remoto internacional continua sem fonte — e o Radar continua calado, o que é o
+comportamento correto do §15, não uma falha. Vale dizer claramente em vez de
+deixar parecer que a cobertura existe.
+
+A lista do Lever começa **vazia**: o único board conferido é o `leverdemo`, de
+demonstração, e encher o Radar de vaga de mentira é pior que silêncio.
