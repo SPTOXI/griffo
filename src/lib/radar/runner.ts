@@ -36,8 +36,8 @@ import { curate, DEFAULT_RADAR_PREFERENCES, type EvaluatedOpportunity, type Rada
  * Uma função serverless tem teto de tempo. Em vez de tentar atender todo mundo
  * e ser interrompida no meio — deixando metade dos usuários sem rodada e sem
  * registro disso —, cada invocação atende um número fixo, escolhendo sempre
- * quem esperou mais (`lastRunAt` mais antigo). Com o cron rodando de hora em
- * hora, a fila gira sozinha e ninguém fica para trás indefinidamente.
+ * quem esperou mais (`lastRunAt` mais antigo). A fila gira sozinha e ninguém
+ * fica para trás indefinidamente.
  *
  * ## Sobre o matching não usar IA
  *
@@ -55,8 +55,15 @@ import { curate, DEFAULT_RADAR_PREFERENCES, type EvaluatedOpportunity, type Rada
  * auditoria.
  */
 
-/** Quantos usuários uma invocação atende. Mantém a rodada dentro do teto. */
-const USERS_PER_RUN = 25
+/**
+ * Quantos usuários uma invocação atende.
+ *
+ * Dimensionado para caber no teto de 60s da função no plano Hobby da Vercel,
+ * que é o que também limita o cron a uma vez por dia. Não é o número certo do
+ * produto: é o número que o plano permite. No Pro, sobe junto com `maxDuration`
+ * e com a frequência do cron.
+ */
+const USERS_PER_RUN = 10
 
 /** Vagas consideradas por usuário. Teto de segurança, não meta. */
 const MAX_JOBS_PER_USER = 500

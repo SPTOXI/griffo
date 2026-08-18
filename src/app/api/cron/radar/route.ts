@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-export const maxDuration = 300
+export const maxDuration = 60
 
 import { NextResponse } from 'next/server'
 import { runRadar } from '@/lib/radar/runner'
@@ -32,11 +32,23 @@ import type { JobSourceAdapter } from '@/lib/jobs/adapter'
  * A rodada roda assim mesmo: sem fontes ela não coleta nada, mas continua
  * avaliando as vagas já existentes e decidindo alertas. Acrescentar a primeira
  * fonte é acrescentar uma entrada em `ACTIVE_ADAPTERS`.
+ *
+ * ## Limites do plano, não do desenho
+ *
+ * O agendamento é DIÁRIO e o teto da função é 60s porque a conta Vercel é
+ * Hobby, que não aceita mais que um cron por dia nem função além de um minuto.
+ * A primeira tentativa usava `0 * * * *` e 300s, e o deploy foi recusado com
+ * essa mensagem.
+ *
+ * Isso tem custo real e visível: com uma rodada por dia e `USERS_PER_RUN`
+ * usuários por rodada, a fila gira devagar. No plano Pro basta trocar o cron
+ * para de hora em hora, subir `maxDuration` e aumentar `USERS_PER_RUN` — nada
+ * na lógica muda.
  */
 const ACTIVE_ADAPTERS: JobSourceAdapter[] = []
 
-/** Prazo de cada fonte. O teto da função é 300s; sobra tempo para avaliar. */
-const COLLECTION_BUDGET_MS = 20_000
+/** Prazo de cada fonte. Precisa deixar folga dentro dos 60s para a avaliação. */
+const COLLECTION_BUDGET_MS = 12_000
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET
