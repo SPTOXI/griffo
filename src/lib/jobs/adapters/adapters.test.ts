@@ -2,14 +2,25 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { safeCollect, sourceservesMarkets } from '../adapter'
 import { decideCollection } from '../collection'
-import { GREENHOUSE_DESCRIPTOR, createGreenhouseAdapter, parseGreenhousePayload } from './greenhouse'
+import {
+  GREENHOUSE_DESCRIPTOR,
+  VERIFIED_BOARDS,
+  createGreenhouseAdapter,
+  greenhouseAdapters,
+  parseBoardSpec,
+  parseGreenhousePayload,
+} from './greenhouse'
 import type { JobSourceAdapter } from '../adapter'
 
 /**
  * Estes testes exercitam a CONVERSÃO e o TRATAMENTO DE ERRO dos adapters, com
- * `fetch` injetado. Eles não verificam que a API do Greenhouse responde no
- * formato esperado — isso exige rede, e está declarado como pendência no
- * cabeçalho de `greenhouse.ts`.
+ * `fetch` injetado. Que a API do Greenhouse responde neste formato foi
+ * conferido à mão contra o board real — o registro dessa conferência, e o que
+ * ela não cobre, está no cabeçalho de `greenhouse.ts`.
+ *
+ * O `payloadValido` abaixo é um recorte do payload REAL observado, e não uma
+ * invenção: os nomes de campo, o escapamento do `content` e a convivência de
+ * `first_published` com `updated_at` vieram de lá.
  */
 
 const payloadValido = {
@@ -18,7 +29,9 @@ const payloadValido = {
       id: 4001,
       title: 'Data Analyst',
       absolute_url: 'https://boards.greenhouse.io/empresa/jobs/4001',
-      updated_at: '2026-08-01T10:00:00Z',
+      updated_at: '2026-08-13T17:38:18-04:00',
+      first_published: '2026-08-06T12:50:10-04:00',
+      company_name: 'Empresa do Payload',
       location: { name: 'Remote - US' },
       content: '&lt;p&gt;Trabalhe com &amp;lt;dados&amp;gt;&lt;/p&gt;',
     },
@@ -151,4 +164,88 @@ test('usuário sem mercado declarado vê todas as fontes', () => {
 test('fonte global atende qualquer mercado', () => {
   const global = { ...GREENHOUSE_DESCRIPTOR, markets: [] }
   assert.ok(sourceservesMarkets(global, ['JP']))
+})
+
+test('a data usada é a de publicação, não a da última edição', () => {
+  // `updated_at` faria uma vaga antiga reeditada parecer recém-publicada. Como
+  // o Radar prioriza vaga nova, ela furaria a fila a cada edição do anúncio.
+  const jobs = parseGreenhousePayload(payloadValido, 'Empresa X')
+  assert.equal(jobs[0].publishedAt, '2026-08-06T12:50:10-04:00')
+})
+
+test('sem `first_published`, cai para `updated_at`', () => {
+  // Nem todo board preenche. Uma data aproximada é melhor que nenhuma.
+  const jobs = parseGreenhousePayload(
+    { jobs: [{ id: 9, title: 'T', absolute_url: 'u', updated_at: '2026-01-01T00:00:00Z' }] },
+    'Empresa X'
+  )
+  assert.equal(jobs[0].publishedAt, '2026-01-01T00:00:00Z')
+})
+
+test('sem data nenhuma, publishedAt é nulo — não é hoje', () => {
+  const jobs = parseGreenhousePayload({ jobs: [{ id: 9, title: 'T', absolute_url: 'u' }] }, 'X')
+  assert.equal(jobs[0].publishedAt, null)
+})
+
+test('o nome configurado vence o do payload', () => {
+  const jobs = parseGreenhousePayload(payloadValido, 'Empresa X')
+  assert.equal(jobs[0].company, 'Empresa X')
+})
+
+test('sem nome configurado, usa o `company_name` do payload', () => {
+  const jobs = parseGreenhousePayload(payloadValido, '')
+  assert.equal(jobs[0].company, 'Empresa do Payload')
+})
+
+test('a lista de boards sai da variável de ambiente', () => {
+  const boards = parseBoardSpec('vercel:Vercel, stripe:Stripe')
+  assert.deepEqual(boards, [
+    { token: 'vercel', company: 'Vercel' },
+    { token: 'stripe', company: 'Stripe' },
+  ])
+})
+
+test('token sem nome é aceito; o nome vem do payload', () => {
+  assert.deepEqual(parseBoardSpec('vercel'), [{ token: 'vercel', company: '' }])
+})
+
+test('entrada malformada é descartada, nunca adivinhada', () => {
+  // Um token remendado a partir de lixo viraria uma fonte que falha toda
+  // rodada, gastando o orçamento de tempo das fontes que funcionam.
+  assert.deepEqual(parseBoardSpec('  , :Sem Token, /../etc:Ruim, ok:Bom'), [
+    { token: 'ok', company: 'Bom' },
+  ])
+  assert.deepEqual(parseBoardSpec(''), [])
+  assert.deepEqual(parseBoardSpec(null), [])
+  assert.deepEqual(parseBoardSpec(undefined), [])
+})
+
+test('board repetido entra uma vez só', () => {
+  // Duas entradas para o mesmo board coletariam as mesmas vagas duas vezes.
+  assert.deepEqual(parseBoardSpec('vercel:Vercel,VERCEL:Outro'), [
+    { token: 'vercel', company: 'Vercel' },
+  ])
+})
+
+test('sem variável de ambiente, valem os boards conferidos', () => {
+  const adapters = greenhouseAdapters(undefined)
+  assert.equal(adapters.length, VERIFIED_BOARDS.length)
+  assert.ok(adapters.length > 0, 'a lista conferida não pode estar vazia')
+  assert.match(adapters[0].descriptor.slug, /^greenhouse:/)
+})
+
+test('a variável SUBSTITUI a lista conferida, não soma a ela', () => {
+  // Quem declara os boards está dizendo quais quer; receber junto um que não
+  // pediu seria surpresa.
+  const adapters = greenhouseAdapters('outra-empresa:Outra')
+  assert.equal(adapters.length, 1)
+  assert.equal(adapters[0].descriptor.slug, 'greenhouse:outra-empresa')
+})
+
+test('cada board vira uma fonte com slug próprio', () => {
+  // Slugs iguais fariam duas fontes compartilharem o mesmo estado de coleta —
+  // e o §12 decide fechamento a partir desse estado.
+  const adapters = greenhouseAdapters('a:A,b:B')
+  const slugs = adapters.map((x) => x.descriptor.slug)
+  assert.equal(new Set(slugs).size, slugs.length)
 })

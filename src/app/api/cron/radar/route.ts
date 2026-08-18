@@ -4,7 +4,7 @@ export const maxDuration = 60
 
 import { NextResponse } from 'next/server'
 import { runRadar } from '@/lib/radar/runner'
-import type { JobSourceAdapter } from '@/lib/jobs/adapter'
+import { greenhouseAdapters } from '@/lib/jobs/adapters/greenhouse'
 
 /**
  * O gatilho do Radar (§28).
@@ -22,16 +22,19 @@ import type { JobSourceAdapter } from '@/lib/jobs/adapter'
  * dispara coleta e escreve no banco não pode ficar aberta porque alguém
  * esqueceu de definir uma variável de ambiente.
  *
- * ## Por que a lista de fontes está vazia
+ * ## As fontes
  *
- * O único adapter escrito — Greenhouse — nunca foi verificado contra a API
- * real (ver o cabeçalho de `lib/jobs/adapters/greenhouse.ts`). Ligá-lo aqui
- * antes dessa verificação colocaria em produção uma coleta cujo comportamento
- * ninguém observou, que é exatamente o cenário que o §12 existe para conter.
+ * O Greenhouse foi conferido contra a API real e está ligado — o que foi
+ * observado, e o que continua sem observação, está no cabeçalho de
+ * `lib/jobs/adapters/greenhouse.ts`.
  *
- * A rodada roda assim mesmo: sem fontes ela não coleta nada, mas continua
- * avaliando as vagas já existentes e decidindo alertas. Acrescentar a primeira
- * fonte é acrescentar uma entrada em `ACTIVE_ADAPTERS`.
+ * Quais boards a instalação varre sai de `GREENHOUSE_BOARDS`; sem essa
+ * variável valem os boards já conferidos. Acrescentar um board é mudar a
+ * variável, não o código — mas conferir o board antes continua sendo
+ * obrigatório, pelo motivo descrito lá.
+ *
+ * A lista é montada **dentro** do handler, e não no módulo: assim ela lê o
+ * ambiente de execução, e não o do build.
  *
  * ## Limites do plano, não do desenho
  *
@@ -45,8 +48,6 @@ import type { JobSourceAdapter } from '@/lib/jobs/adapter'
  * para de hora em hora, subir `maxDuration` e aumentar `USERS_PER_RUN` — nada
  * na lógica muda.
  */
-const ACTIVE_ADAPTERS: JobSourceAdapter[] = []
-
 /** Prazo de cada fonte. Precisa deixar folga dentro dos 60s para a avaliação. */
 const COLLECTION_BUDGET_MS = 12_000
 
@@ -65,17 +66,19 @@ export async function GET(req: Request) {
   }
 
   const startedAt = Date.now()
+  const adapters = greenhouseAdapters(process.env.GREENHOUSE_BOARDS)
 
   try {
     const summary = await runRadar({
-      adapters: ACTIVE_ADAPTERS,
+      adapters,
       collectionBudgetMs: COLLECTION_BUDGET_MS,
     })
 
     return NextResponse.json({
       ok: true,
       durationMs: Date.now() - startedAt,
-      sourcesConfigured: ACTIVE_ADAPTERS.length,
+      sourcesConfigured: adapters.length,
+      sources: adapters.map((a) => a.descriptor.slug),
       ...summary,
     })
   } catch (e: any) {
