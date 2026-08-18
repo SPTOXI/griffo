@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNav } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Radar as RadarIcon, Loader2, CheckCircle2, AlertTriangle, XCircle, ExternalLink,
-  ThumbsUp, ThumbsDown, Sliders, Info, Briefcase,
+  ThumbsUp, ThumbsDown, Sliders, Info, Briefcase, RefreshCw,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { internalFetch } from '@/lib/internal-fetch'
@@ -111,29 +111,35 @@ export function RadarView() {
   const [showSettings, setShowSettings] = useState(false)
   const [rejecting, setRejecting] = useState<string | null>(null)
 
+  const [running, setRunning] = useState(false)
+
+  const load = useCallback(async () => {
+    const [radarRes, prefsRes] = await Promise.all([
+      internalFetch('/api/radar', { cache: 'no-store' }),
+      internalFetch('/api/user/radar-preferences', { cache: 'no-store' }),
+    ])
+    const radar = await radarRes.json().catch(() => null)
+    const prefs = await prefsRes.json().catch(() => null)
+
+    if (radarRes.ok && radar) {
+      setOpportunities(radar.opportunities || [])
+      setDigest(radar.digest || null)
+      setHasProfile(Boolean(radar.hasProfile))
+      setError(null)
+    } else {
+      setError(radar?.error || 'Não foi possível carregar o Radar.')
+    }
+    if (prefsRes.ok && prefs?.preferences) {
+      setPreferences(prefs.preferences)
+      setLastRunAt(prefs.lastRunAt ?? null)
+    }
+  }, [])
+
   useEffect(() => {
     let cancelled = false
     void (async () => {
       try {
-        const [radarRes, prefsRes] = await Promise.all([
-          internalFetch('/api/radar', { cache: 'no-store' }),
-          internalFetch('/api/user/radar-preferences', { cache: 'no-store' }),
-        ])
-        const radar = await radarRes.json().catch(() => null)
-        const prefs = await prefsRes.json().catch(() => null)
-        if (cancelled) return
-
-        if (radarRes.ok && radar) {
-          setOpportunities(radar.opportunities || [])
-          setDigest(radar.digest || null)
-          setHasProfile(Boolean(radar.hasProfile))
-        } else {
-          setError(radar?.error || 'Não foi possível carregar o Radar.')
-        }
-        if (prefsRes.ok && prefs?.preferences) {
-          setPreferences(prefs.preferences)
-          setLastRunAt(prefs.lastRunAt ?? null)
-        }
+        await load()
       } catch {
         if (!cancelled) setError('Falha de conexão ao carregar o Radar.')
       } finally {
@@ -141,7 +147,39 @@ export function RadarView() {
       }
     })()
     return () => { cancelled = true }
-  }, [])
+  }, [load])
+
+  /**
+   * Procura agora, sem esperar a rodada da madrugada.
+   *
+   * Avalia as vagas que JÁ estão no banco contra o perfil — não coleta. Uma
+   * vaga publicada hoje só aparece depois da coleta diária, e o texto do botão
+   * evita prometer o contrário.
+   */
+  const runNow = async () => {
+    setRunning(true)
+    try {
+      const res = await internalFetch('/api/radar/run', { method: 'POST' })
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok) {
+        toast.error(data?.error || 'Não foi possível atualizar o Radar agora.')
+        return
+      }
+
+      await load()
+
+      if (data?.alerted > 0) {
+        toast.success(`${data.alerted} ${data.alerted === 1 ? 'oportunidade nova' : 'oportunidades novas'}.`)
+      } else {
+        toast.info('Nada novo que justifique um aviso. O Radar continua monitorando.')
+      }
+    } catch {
+      toast.error('Falha de conexão ao atualizar o Radar.')
+    } finally {
+      setRunning(false)
+    }
+  }
 
   const savePreferences = async (patch: Partial<Preferences>) => {
     const next = { ...(preferences ?? { frequency: 'daily', minimumFit: 'good', maxPerDigest: 4 }), ...patch } as Preferences
@@ -211,9 +249,22 @@ export function RadarView() {
                 </CardDescription>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setShowSettings((v) => !v)} className="shrink-0 self-start sm:self-auto">
-              <Sliders className="w-4 h-4 mr-1.5" /> Preferências
-            </Button>
+            <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={runNow}
+                disabled={running || !hasProfile}
+                className="bg-white border-indigo-300 text-indigo-800 hover:bg-indigo-50"
+                title="Reavalia as vagas já coletadas contra o seu perfil"
+              >
+                {running ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1.5" />}
+                Procurar agora
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowSettings((v) => !v)}>
+                <Sliders className="w-4 h-4 mr-1.5" /> Preferências
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -283,6 +334,10 @@ export function RadarView() {
             <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
               O Radar está monitorando e não encontrou oportunidade que justifique interromper você. Silêncio aqui
               é o comportamento correto — quando aparecer algo relevante, ele aparece nesta tela.
+            </p>
+            <p className="text-[11px] text-slate-400 max-w-md mx-auto leading-relaxed pt-1">
+              A busca por vagas novas acontece uma vez por dia. <strong>Procurar agora</strong> reavalia as vagas já
+              encontradas contra o seu perfil — útil logo depois de mudar alguma coisa nele.
             </p>
           </CardContent>
         </Card>

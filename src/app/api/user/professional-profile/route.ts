@@ -3,6 +3,7 @@ export const revalidate = 0
 
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { runForUserQuietly } from '@/lib/radar/runner'
 import { getCurrentUser } from '@/lib/auth'
 import {
   EMPTY_PROFILE,
@@ -122,7 +123,24 @@ export async function PUT(req: Request) {
       },
     })
 
-    return NextResponse.json({ profile: fromRecord(row), exists: true, updatedAt: row.updatedAt })
+    /**
+     * Perfil salvo, Radar avaliado na hora.
+     *
+     * A coleta continua sendo diária — ela varre a internet e é cara. Avaliar as
+     * vagas que JÁ estão no banco contra este perfil não é: são quatro consultas
+     * e cálculo em memória, sem rede.
+     *
+     * Sem isto, quem acabou de preencher o perfil abre o Radar e vê tela vazia
+     * até a madrugada seguinte — indistinguível de produto quebrado.
+     */
+    const radar = await runForUserQuietly(user.id)
+
+    return NextResponse.json({
+      profile: fromRecord(row),
+      exists: true,
+      updatedAt: row.updatedAt,
+      radar: radar ? { alerted: radar.alerted, evaluated: radar.evaluated } : null,
+    })
   } catch (e: any) {
     console.error('[professional-profile] PUT falhou:', e?.message || e)
     return NextResponse.json({ error: 'Não foi possível salvar o perfil.' }, { status: 500 })

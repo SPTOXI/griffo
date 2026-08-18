@@ -328,7 +328,14 @@ export function ProfessionalProfileView() {
       const data = await res.json().catch(() => null)
       if (res.ok && data?.profile) {
         setProfile(data.profile)
-        toast.success('Perfil profissional salvo.')
+        // O Radar roda junto com a gravação; dizer o que ele achou fecha o
+        // ciclo na mesma tela, em vez de mandar a pessoa procurar noutra.
+        const alerted = data?.radar?.alerted ?? 0
+        toast.success(
+          alerted > 0
+            ? `Perfil salvo. O Radar encontrou ${alerted} ${alerted === 1 ? 'oportunidade' : 'oportunidades'} — veja na tela Radar.`
+            : 'Perfil profissional salvo.'
+        )
       } else {
         toast.error(data?.error || 'Não foi possível salvar o perfil.')
       }
