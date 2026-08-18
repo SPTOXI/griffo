@@ -505,6 +505,57 @@ deploy, não a verificação.
 
 ---
 
+## 2.13 A primeira coleta real estourou o teto, e o que ela ensinou
+
+A rodada seguinte ao #27 devolveu **504**: a função foi morta pelo teto de 60s
+da Vercel. A causa não estava na coleta nem no matching — estava na gravação.
+
+O laço fazia **duas consultas por vaga**: uma para saber se ela já existia,
+outra para gravar. Com 84 vagas, 168 idas ao banco. Isso passou despercebido
+porque em teste é instantâneo e porque, até então, `ACTIVE_ADAPTERS` estava
+vazio e nenhuma vaga era gravada.
+
+O que tornou o custo intolerável é geográfico: a função roda em `iad1`
+(Washington) e o banco está em `sa-east-1` (São Paulo). Cada ida custa mais de
+cem milissegundos. 168 × 120ms ≈ 20 a 30 segundos só de espera de rede, antes
+de qualquer trabalho.
+
+### A correção
+
+Gravação em lote: uma consulta para descobrir o que já existe, um `createMany`
+para o que é novo, uma transação para as atualizações — que o Prisma manda numa
+ida só. De 168 viagens para três.
+
+E um **prazo declarado**. A rodada agora recebe um instante-limite (45s dos 60
+disponíveis) e para sozinha ao alcançá-lo, entre fontes ou entre usuários,
+nunca no meio de um. A diferença entre parar e ser morto é o que a resposta
+carrega: um 504 não diz o que rodou; uma resposta com `ranOutOfTime: true` diz
+o que foi feito e o que faltou.
+
+**Gravação incompleta é tratada como coleta parcial**, mesmo quando a fonte
+respondeu inteira. O retrato do que está aberto ficou pela metade, e decidir
+fechamento a partir dele é precisamente o que o §12 proíbe. O decisor já
+recusava fechar diante de `partial`; bastou passar o estado certo.
+
+### O que continua valendo a pena arrumar
+
+A distância entre função e banco não é problema do Radar — é de todo o
+produto. Toda rota de IA, toda página que lê do banco paga o mesmo pedágio de
+ida e volta até São Paulo. O Radar apenas foi o primeiro lugar onde o custo
+ficou grande o bastante para matar a requisição.
+
+Por isso a região das funções passou a ser declarada no `vercel.json`:
+`"regions": ["gru1"]`, São Paulo — ao lado do banco. Fica no repositório, e não
+numa configuração de painel, porque é uma decisão de arquitetura: o produto
+inteiro depende de um banco em `sa-east-1`, e essa dependência merece estar
+escrita junto do código que a tem.
+
+O plano Hobby aceita **uma** região; declarar várias é recurso do Pro. Se
+algum dia a lista crescer sem que o plano acompanhe, o deploy é recusado —
+como já aconteceu com a frequência do cron.
+
+---
+
 ## 2.14 O Radar estava pendurado no formulário errado
 
 O Radar nasceu para buscar vagas **das áreas que a orientação profissional

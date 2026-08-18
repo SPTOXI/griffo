@@ -51,6 +51,16 @@ import { greenhouseAdapters } from '@/lib/jobs/adapters/greenhouse'
 /** Prazo de cada fonte. Precisa deixar folga dentro dos 60s para a avaliação. */
 const COLLECTION_BUDGET_MS = 12_000
 
+/**
+ * Quanto da janela de 60s a rodada pode usar antes de parar por conta própria.
+ *
+ * A margem existe para que a função **responda** em vez de ser morta pela
+ * plataforma. Um 504 não diz o que rodou nem o que faltou; uma resposta com
+ * `ranOutOfTime: true` diz as duas coisas — e é ela que permite saber se a
+ * fila está girando.
+ */
+const RUN_BUDGET_MS = 45_000
+
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET
 
@@ -72,6 +82,7 @@ export async function GET(req: Request) {
     const summary = await runRadar({
       adapters,
       collectionBudgetMs: COLLECTION_BUDGET_MS,
+      deadlineAt: startedAt + RUN_BUDGET_MS,
     })
 
     return NextResponse.json({
