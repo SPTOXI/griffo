@@ -68,6 +68,26 @@ const USERS_PER_RUN = 10
 /** Vagas consideradas por usuário. Teto de segurança, não meta. */
 const MAX_JOBS_PER_USER = 500
 
+/**
+ * Vagas por ida ao banco na gravação.
+ *
+ * O laço antigo fazia duas consultas por vaga — uma para saber se ela já
+ * existia, outra para gravar. Com a função em `iad1` e o banco em `sa-east-1`,
+ * cada ida custa mais de cem milissegundos, e 84 vagas viravam meio minuto de
+ * espera de rede. Em lote, o mesmo trabalho são três idas: descobrir o que já
+ * existe, criar o que é novo, atualizar o resto.
+ *
+ * O tamanho existe para fontes grandes: uma consulta com dez mil chaves no
+ * `IN` deixa de ser barata do lado do banco.
+ */
+const WRITE_CHUNK = 250
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = []
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size))
+  return out
+}
+
 export interface CollectionRunResult {
   sourceSlug: string
   collected: number
@@ -87,8 +107,11 @@ export interface CollectionRunResult {
  */
 export async function runCollection(
   adapter: JobSourceAdapter,
-  options: { timeBudgetMs: number }
+  options: { timeBudgetMs: number; deadlineAt?: number }
 ): Promise<CollectionRunResult> {
+  // Sem prazo declarado, não há prazo. Quem chama de um cron passa um; quem
+  // chama de um teste não precisa.
+  const deadlineAt = options.deadlineAt ?? Number.POSITIVE_INFINITY
   const slug = adapter.descriptor.slug
 
   const source = await db.jobSource.upsert({
@@ -117,48 +140,87 @@ export async function runCollection(
 
   const { unique, duplicates } = dedupeBatch(normalized)
 
-  let inserted = 0
-  let updated = 0
   const now = new Date()
 
-  for (const job of unique) {
-    const data = {
-      sourceId: source.id,
-      sourceJobId: job.sourceJobId,
-      company: job.company,
-      companyKey: job.companyKey,
-      title: job.title,
-      normalizedTitle: job.normalizedTitle,
-      country: job.country,
-      region: job.region,
-      city: job.city,
-      remoteType: job.remoteType,
-      market: job.market,
-      employmentType: job.employmentType,
-      seniority: job.seniority,
-      salaryMin: job.salaryMin,
-      salaryMax: job.salaryMax,
-      currency: job.currency,
-      salaryPeriod: job.salaryPeriod,
-      description: job.description,
-      requirements: JSON.stringify(job.requirements),
-      skills: JSON.stringify(job.skills),
-      language: job.language,
-      applicationUrl: job.applicationUrl,
-      publishedAt: job.publishedAt,
-      unknownFields: JSON.stringify(job.unknownFields),
-      lastSeenAt: now,
+  const rowFor = (job: NormalizedJob) => ({
+    sourceId: source.id,
+    sourceJobId: job.sourceJobId,
+    company: job.company,
+    companyKey: job.companyKey,
+    title: job.title,
+    normalizedTitle: job.normalizedTitle,
+    country: job.country,
+    region: job.region,
+    city: job.city,
+    remoteType: job.remoteType,
+    market: job.market,
+    employmentType: job.employmentType,
+    seniority: job.seniority,
+    salaryMin: job.salaryMin,
+    salaryMax: job.salaryMax,
+    currency: job.currency,
+    salaryPeriod: job.salaryPeriod,
+    description: job.description,
+    requirements: JSON.stringify(job.requirements),
+    skills: JSON.stringify(job.skills),
+    language: job.language,
+    applicationUrl: job.applicationUrl,
+    publishedAt: job.publishedAt,
+    unknownFields: JSON.stringify(job.unknownFields),
+    lastSeenAt: now,
+  })
+
+  let inserted = 0
+  let updated = 0
+
+  // Verdadeiro enquanto TODAS as vagas coletadas foram gravadas. Se o prazo
+  // acabar no meio, vira falso — e aí a coleta é tratada como parcial, porque
+  // decidir fechamento a partir de uma gravação incompleta é exatamente o que
+  // o §12 proíbe.
+  let writeComplete = true
+
+  for (const batch of chunk(unique, WRITE_CHUNK)) {
+    if (Date.now() >= deadlineAt) {
+      writeComplete = false
+      break
     }
 
-    const existing = await db.job.findUnique({ where: { dedupeKey: job.dedupeKey }, select: { id: true } })
-    if (existing) {
+    const keys = batch.map((j) => j.dedupeKey)
+
+    const existing = await db.job.findMany({
+      where: { dedupeKey: { in: keys } },
+      select: { dedupeKey: true },
+    })
+    const existingKeys = new Set(existing.map((r) => r.dedupeKey))
+
+    const toCreate = batch.filter((j) => !existingKeys.has(j.dedupeKey))
+    const toUpdate = batch.filter((j) => existingKeys.has(j.dedupeKey))
+
+    if (toCreate.length > 0) {
+      // `skipDuplicates` cobre a corrida com outra rodada da mesma fonte: a
+      // vaga aparecer duas vezes é benigno, derrubar a coleta inteira não é.
+      const created = await db.job.createMany({
+        data: toCreate.map((j) => ({ ...rowFor(j), dedupeKey: j.dedupeKey })),
+        skipDuplicates: true,
+      })
+      inserted += created.count
+    }
+
+    if (toUpdate.length > 0) {
       // Reaparecer numa coleta REABRE a vaga: se ela voltou, não estava
       // encerrada — e um fechamento anterior pode ter sido engano.
-      await db.job.update({ where: { dedupeKey: job.dedupeKey }, data: { ...data, closedAt: null, closedReason: null } })
-      updated++
-    } else {
-      await db.job.create({ data: { ...data, dedupeKey: job.dedupeKey } })
-      inserted++
+      //
+      // As atualizações vão numa transação porque o Prisma as manda numa ida
+      // só. Uma a uma seriam 84 viagens até São Paulo.
+      await db.$transaction(
+        toUpdate.map((j) =>
+          db.job.update({
+            where: { dedupeKey: j.dedupeKey },
+            data: { ...rowFor(j), closedAt: null, closedReason: null },
+          })
+        )
+      )
+      updated += toUpdate.length
     }
   }
 
@@ -169,7 +231,9 @@ export async function runCollection(
   })
 
   const decision = decideCollection({
-    outcome: result.outcome,
+    // Gravação incompleta é coleta parcial, mesmo que a fonte tenha respondido
+    // inteira: o retrato do que está aberto ficou pela metade.
+    outcome: writeComplete ? result.outcome : 'partial',
     seenKeys: unique.map((j) => j.dedupeKey),
     previouslyOpenKeys: previouslyOpen.map((j) => j.dedupeKey),
     error: result.error,
@@ -355,6 +419,8 @@ export interface RadarRunSummary {
   users: UserRunResult[]
   totalAlerted: number
   totalSilenced: number
+  /** A rodada parou por falta de tempo, não por ter terminado. */
+  ranOutOfTime: boolean
 }
 
 /**
@@ -366,14 +432,27 @@ export interface RadarRunSummary {
 export async function runRadar(options: {
   adapters: JobSourceAdapter[]
   collectionBudgetMs: number
+  /** Instante em que a rodada tem de ter acabado. */
+  deadlineAt?: number
 }): Promise<RadarRunSummary> {
+  const deadlineAt = options.deadlineAt ?? Number.POSITIVE_INFINITY
   const collections: CollectionRunResult[] = []
+  let ranOutOfTime = false
 
   for (const adapter of options.adapters) {
+    if (Date.now() >= deadlineAt) {
+      ranOutOfTime = true
+      break
+    }
     // Uma fonte que falha não impede as outras: `safeCollect` já contém a
     // exceção, e aqui contemos a falha de gravação pelo mesmo motivo.
     try {
-      collections.push(await runCollection(adapter, { timeBudgetMs: options.collectionBudgetMs }))
+      collections.push(
+        await runCollection(adapter, {
+          timeBudgetMs: Math.max(1000, Math.min(options.collectionBudgetMs, deadlineAt - Date.now())),
+          deadlineAt,
+        })
+      )
     } catch (e: any) {
       collections.push({
         sourceSlug: adapter.descriptor.slug,
@@ -406,6 +485,14 @@ export async function runRadar(options: {
 
   const users: UserRunResult[] = []
   for (const candidate of ordered) {
+    // Parar entre usuários, e não no meio de um. Um usuário atendido pela
+    // metade grava alertas sem registrar a rodada — na próxima ele seria
+    // escolhido de novo e receberia os mesmos avisos.
+    if (Date.now() >= deadlineAt) {
+      ranOutOfTime = true
+      break
+    }
+
     try {
       users.push(await runForUser(candidate.id))
     } catch (e: any) {
@@ -418,5 +505,8 @@ export async function runRadar(options: {
     users,
     totalAlerted: users.reduce((sum, u) => sum + u.alerted, 0),
     totalSilenced: users.filter((u) => u.alerted === 0).length,
+    // Declarado, e não escondido: uma rodada truncada que se apresenta como
+    // completa faz a fila parecer girar quando ela parou.
+    ranOutOfTime,
   }
 }
