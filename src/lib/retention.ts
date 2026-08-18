@@ -1,5 +1,7 @@
 import 'server-only'
 import { db } from './db'
+import { purgeClosedJobs } from './jobs/lifecycle.server'
+import { PURGE_CLOSED_AFTER_DAYS } from './jobs/lifecycle'
 
 /**
  * Política de retenção.
@@ -27,6 +29,15 @@ export const RETENTION_DAYS = {
    * valor que ela adquiriu.
    */
   inactiveResume: 730,
+  /**
+   * Vagas encerradas. Não são dado pessoal — são anúncio público que já saiu
+   * do ar, e guardá-los para sempre faz o banco crescer sem teto.
+   *
+   * Vaga sobre a qual alguém foi avisado NUNCA é apagada, independente do
+   * prazo: `RadarAlert` cai junto por cascata, e isso destruiria o histórico da
+   * pessoa. Ver `jobs/lifecycle.server.ts`.
+   */
+  closedJob: PURGE_CLOSED_AFTER_DAYS,
 }
 
 function cutoff(days: number): Date {
@@ -38,6 +49,8 @@ export interface PurgeReport {
   aiLogs: number
   auditLogs: number
   resumes: number
+  /** Vagas encerradas há tempo e sem alerta nenhum apontando para elas. */
+  closedJobs: number
   errors: string[]
 }
 
@@ -53,6 +66,7 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
     aiLogs: 0,
     auditLogs: 0,
     resumes: 0,
+    closedJobs: 0,
     errors: [],
   }
 
@@ -94,6 +108,13 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
     })
     return r.count
   })
+
+  /**
+   * Vagas encerradas não são dado pessoal — são anúncio público fora do ar. O
+   * motivo de apagá-las é espaço, não conformidade, e por isso o critério é
+   * diferente: vaga sobre a qual alguém foi avisado fica, sempre.
+   */
+  report.closedJobs = await step('closedJob', () => purgeClosedJobs())
 
   return report
 }
