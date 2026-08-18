@@ -6,6 +6,8 @@ import { NextResponse } from 'next/server'
 import { runRadar } from '@/lib/radar/runner'
 import { greenhouseAdapters } from '@/lib/jobs/adapters/greenhouse'
 import { leverAdapters } from '@/lib/jobs/adapters/lever'
+import { createGupyAdapter } from '@/lib/jobs/adapters/gupy'
+import { searchTermsFromProfiles } from '@/lib/jobs/search-terms.server'
 
 /**
  * O gatilho do Radar (§28).
@@ -81,9 +83,18 @@ export async function GET(req: Request) {
   }
 
   const startedAt = Date.now()
+  /**
+   * A Gupy é fonte de BUSCA: precisa de termos, e eles saem dos cargos que a
+   * orientação profissional recomendou aos usuários brasileiros. Sem nenhum
+   * cargo declarado a fonte simplesmente não roda — buscar por palavra chutada
+   * encheria o banco de vaga que ninguém pediu.
+   */
+  const gupyTerms = await searchTermsFromProfiles({ country: 'BR', limit: 6 })
+
   const adapters = [
     ...greenhouseAdapters(process.env.GREENHOUSE_BOARDS),
     ...leverAdapters(process.env.LEVER_BOARDS),
+    ...(gupyTerms.length > 0 ? [createGupyAdapter({ terms: gupyTerms })] : []),
   ]
 
   try {
@@ -98,6 +109,9 @@ export async function GET(req: Request) {
       durationMs: Date.now() - startedAt,
       sourcesConfigured: adapters.length,
       sources: adapters.map((a) => a.descriptor.slug),
+      // Declarado para que uma rodada sem resultado na Gupy possa ser
+      // explicada: nenhum termo é diferente de nenhuma vaga.
+      gupyTerms,
       ...summary,
     })
   } catch (e: any) {

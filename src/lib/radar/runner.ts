@@ -235,12 +235,23 @@ export async function runCollection(
     select: { dedupeKey: true },
   })
 
+  /**
+   * Numa fonte de BUSCA, sumir dos resultados não é prova de encerramento: a
+   * vaga pode ter caído fora do termo, da página ou da ordenação e continuar
+   * aberta. Passar a lista de abertas para o decisor faria cada mudança de
+   * ranking encerrar vaga viva.
+   *
+   * Zerar a lista aqui, em vez de dentro do decisor, mantém o §12 num lugar só:
+   * o decisor continua sem saber que existem fontes de busca.
+   */
+  const closesByAbsence = adapter.descriptor.closesByAbsence !== false
+
   const decision = decideCollection({
     // Gravação incompleta é coleta parcial, mesmo que a fonte tenha respondido
     // inteira: o retrato do que está aberto ficou pela metade.
     outcome: writeComplete ? result.outcome : 'partial',
     seenKeys: unique.map((j) => j.dedupeKey),
-    previouslyOpenKeys: previouslyOpen.map((j) => j.dedupeKey),
+    previouslyOpenKeys: closesByAbsence ? previouslyOpen.map((j) => j.dedupeKey) : [],
     error: result.error,
   })
 
