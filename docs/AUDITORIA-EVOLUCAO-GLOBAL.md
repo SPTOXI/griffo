@@ -553,3 +553,73 @@ escrita junto do código que a tem.
 O plano Hobby aceita **uma** região; declarar várias é recurso do Pro. Se
 algum dia a lista crescer sem que o plano acompanhe, o deploy é recusado —
 como já aconteceu com a frequência do cron.
+
+---
+
+## 2.14 O Radar estava pendurado no formulário errado
+
+O Radar nasceu para buscar vagas **das áreas que a orientação profissional
+recomendou**, no país da pessoa. Não foi isso que ele virou.
+
+`runRadar` só avalia usuários com `ProfessionalProfile` gravado, e o único jeito
+de ter um era preencher trinta campos à mão. Quem rodava o diagnóstico
+vocacional, lia as três áreas recomendadas e fechava a tela ficava **fora do
+Radar** — tendo dito ao produto, com todas as letras, o que queria. A informação
+estava gravada em `careerOrientationJson` e não chegava a quem precisava dela.
+
+### O diagnóstico passou a abrir a porta
+
+A rota da orientação agora semeia o perfil: os `role` de `topMatchingAreas`
+viram `targetRoles`, e o país de acesso vira `residenceCountry` quando não há
+um. Só preenche o que está vazio, e devolve na resposta o que preencheu —
+perfil que muda sozinho e em silêncio é o que o §30 proíbe.
+
+Duas coisas da orientação ficam **deliberadamente de fora**:
+
+- **`matchPercentage`**, que ordena a lista para leitura humana e não tem
+  relação com os três eixos do `lib/matching`. Deixá-lo viajar faria um número
+  virar outro pelo caminho.
+- **`requiredSkillsToLearn`**, que são as competências que a pessoa **não tem**.
+  Gravá-las em `skills` faria o matching acreditar que ela as domina —
+  inventando qualificação, que é o que o §43 proíbe.
+
+### O formulário detalhado vira refinamento
+
+Preencher os trinta campos à mão continua existindo, para quem quer discordar da
+recomendação ou detalhar o que ela não cobre. Deixa de ser a porta de entrada.
+
+Decisão de produto registrada: **esse formulário detalhado é candidato a plano
+Plus**. Não implementado — o §21 trava a assinatura até o Radar provar valor, e
+implementar a cobrança antes disso seria cobrar por algo cujo valor ainda não
+foi demonstrado.
+
+### E um botão para quem já tem currículo
+
+`POST /api/user/professional-profile/suggest` lê o último currículo com uma
+chamada de IA barata e devolve **sugestão**, que a tela usa para preencher os
+campos vazios do formulário. A pessoa revisa e salva. Os cargos-alvo dessa
+resposta vêm do diagnóstico, não da IA: o diagnóstico é a recomendação do
+próprio produto, já vista pela pessoa, e uma leitura de currículo competindo
+com ela às vezes ganharia — dizendo algo diferente do que a tela do diagnóstico
+disse.
+
+O que a extração **não** deduz, de propósito: país, mercado-alvo, pretensão
+salarial e disponibilidade para mudança. Um endereço no cabeçalho do currículo
+diz onde a pessoa morava quando o escreveu, não onde quer trabalhar — e essas
+quatro respostas mudam o produto inteiro.
+
+## 2.15 Países por extenso
+
+A tela pedia "código de 2 letras (BR, PT, US...)" num campo de texto, e os
+mercados alternativos pediam "os mesmos códigos". Isso presume que a pessoa
+conheça a tabela ISO de cor. Quem não conhece erra, desiste, ou escreve algo que
+o normalizador descarta em silêncio.
+
+Agora são listas com o nome do país escrito. `lib/market/countries.ts` traz
+mais de 160 países em português, em dois grupos: os que têm adaptação própria
+primeiro — porque escolher um deles muda o comportamento do produto — e os
+demais depois, que existem porque as pessoas moram neles e caem no perfil
+global. O que se guarda continua sendo o código ISO; o nome é para ler.
+
+Os mercados alternativos viraram caixas de seleção, e o mercado principal some
+da lista: um "alternativo" igual ao principal não significa nada.

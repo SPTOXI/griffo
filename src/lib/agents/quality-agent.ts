@@ -148,6 +148,26 @@ export function auditQualityOfAiResult(taskType: string, content: string): Quali
     return { approved: true, score: 9.0 }
   }
 
+  /**
+   * Extração de perfil: a única exigência é ser JSON com as chaves do perfil.
+   *
+   * Nada de mínimo de conteúdo aqui. Um currículo de primeiro emprego produz,
+   * legitimamente, quase tudo nulo — e reprovar isso faria o roteador tentar
+   * outro provedor atrás de uma resposta mais cheia, que só poderia ser mais
+   * cheia inventando. Quem descarta campo ruim é `lib/profile/extract.ts`.
+   */
+  if (taskType === 'profile_extraction') {
+    try {
+      const json = JSON.parse(text.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim())
+      if (!json || typeof json !== 'object' || Array.isArray(json)) {
+        return { approved: false, score: 3, feedback: 'A leitura do currículo não veio como objeto JSON.' }
+      }
+      return { approved: true, score: 9.0 }
+    } catch {
+      return { approved: false, score: 2, feedback: 'A leitura do currículo não veio em JSON válido.' }
+    }
+  }
+
   // Padrão para outros tipos de tarefas
   return { approved: true, score: 8.5 }
 }

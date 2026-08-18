@@ -10,11 +10,13 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
-  Briefcase, Target, Globe2, Sliders, Languages, Loader2, Save, Info, X, Plus,
+  Briefcase, Target, Globe2, Sliders, Languages, Loader2, Save, Info, X, Plus, Wand2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { internalFetch } from '@/lib/internal-fetch'
 import { MARKETS, GLOBAL_MARKET } from '@/lib/market'
+import { groupedCountries } from '@/lib/market/countries'
+import { applySuggestion } from '@/lib/profile/extract'
 import {
   EDUCATION_LEVELS, SENIORITY_LEVELS, WEEKLY_HOURS, WORK_MODES, SALARY_PERIODS,
   EMPTY_PROFILE, type ProfessionalProfile,
@@ -150,6 +152,102 @@ function TagInput({
   )
 }
 
+/**
+ * Escolha de país pelo nome.
+ *
+ * Dois grupos: os que mudam o comportamento do produto vêm primeiro, porque
+ * quem mora num deles precisa achá-lo sem rolar cento e tantas linhas. O que se
+ * guarda continua sendo o código ISO — o nome é só para ler.
+ */
+function CountrySelect({
+  value, onChange,
+}: {
+  value: string | null
+  onChange: (next: string | null) => void
+}) {
+  const { adapted, others } = groupedCountries()
+
+  return (
+    <select
+      value={value ?? ''}
+      onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}
+      className="w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+    >
+      <option value="">Não informado</option>
+      <optgroup label="Com adaptação própria">
+        {adapted.map((c) => (
+          <option key={c.code} value={c.code}>{c.name}</option>
+        ))}
+      </optgroup>
+      <optgroup label="Demais países">
+        {others.map((c) => (
+          <option key={c.code} value={c.code}>{c.name}</option>
+        ))}
+      </optgroup>
+    </select>
+  )
+}
+
+/**
+ * Mercados alternativos como caixas de seleção.
+ *
+ * Antes era um campo de texto pedindo "os mesmos códigos (PT, ES, US...)" —
+ * que só funciona para quem já sabe a tabela ISO de cor. Os mercados são doze e
+ * cabem na tela; escolher de uma lista não tem como dar errado.
+ *
+ * O mercado principal some da lista: marcá-lo aqui seria dizer duas vezes a
+ * mesma coisa, e um "alternativo" igual ao principal não significa nada.
+ */
+function MarketChecklist({
+  label, hint, values, exclude, onChange,
+}: {
+  label: string
+  hint: string
+  values: string[]
+  exclude: string | null
+  onChange: (next: string[]) => void
+}) {
+  const options = MARKET_OPTIONS.filter((m) => m.id !== exclude)
+
+  const toggle = (id: string) => {
+    onChange(values.includes(id) ? values.filter((v) => v !== id) : [...values, id])
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-semibold text-slate-700">{label}</Label>
+      <p className="text-[10px] text-slate-500">{hint}</p>
+      <div className="grid sm:grid-cols-3 gap-1.5 pt-1">
+        {options.map((m) => {
+          const checked = values.includes(m.id)
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => toggle(m.id)}
+              aria-pressed={checked}
+              className={`flex items-center gap-2 text-left text-xs rounded-md border px-2.5 py-1.5 transition ${
+                checked
+                  ? 'border-emerald-400 bg-emerald-50 text-emerald-900 font-semibold'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <span
+                className={`w-3.5 h-3.5 shrink-0 rounded-sm border flex items-center justify-center ${
+                  checked ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300 bg-white'
+                }`}
+              >
+                {checked && <span className="w-1.5 h-1.5 rounded-[1px] bg-white" />}
+              </span>
+              {m.name}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function Choice({
   label, options, value, onChange, allowEmpty = true,
 }: {
@@ -180,6 +278,7 @@ export function ProfessionalProfileView() {
   const [profile, setProfile] = useState<ProfessionalProfile>({ ...EMPTY_PROFILE })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [filling, setFilling] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -240,6 +339,45 @@ export function ProfessionalProfileView() {
     }
   }
 
+  /**
+   * Preenche o formulário a partir do currículo e do diagnóstico vocacional.
+   *
+   * Não salva. Os campos aparecem preenchidos e a pessoa revisa antes de
+   * gravar — o §30 proíbe mudar o perfil sem que ela saiba, e um formulário que
+   * se altera e se salva sozinho é a definição disso.
+   *
+   * Também não sobrescreve o que já está escrito: `applySuggestion` só entra em
+   * campo vazio. Quem digitou tem razão sobre si.
+   */
+  const fillFromResume = async () => {
+    setFilling(true)
+    try {
+      const res = await internalFetch('/api/user/professional-profile/suggest', { method: 'POST' })
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok) {
+        toast.error(data?.error || 'Não foi possível ler seu currículo agora.')
+        return
+      }
+
+      const { profile: next, filled } = applySuggestion(profile, data?.suggestion || {})
+
+      if (filled.length === 0) {
+        toast.info('Nada a preencher: os campos que eu saberia responder já estão preenchidos.')
+        return
+      }
+
+      setProfile(next)
+      toast.success(
+        `${filled.length} ${filled.length === 1 ? 'campo preenchido' : 'campos preenchidos'}. Revise e salve.`
+      )
+    } catch {
+      toast.error('Falha de conexão ao ler seu currículo.')
+    } finally {
+      setFilling(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
@@ -275,7 +413,24 @@ export function ProfessionalProfileView() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-sky-200 bg-sky-50/70 p-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={fillFromResume}
+              disabled={filling}
+              className="bg-white border-sky-300 text-sky-800 hover:bg-sky-50 h-9 text-xs font-semibold"
+            >
+              {filling ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5 mr-1.5" />}
+              Preencher com o que já sei sobre você
+            </Button>
+            <p className="text-[11px] text-slate-600 leading-relaxed flex-1 min-w-[220px]">
+              Lê seu último currículo e seu diagnóstico vocacional e preenche só os campos vazios.
+              Nada é salvo até você conferir e clicar em salvar.
+            </p>
+          </div>
+
           <div className="flex items-start gap-2 text-[11px] text-slate-600 bg-white border border-emerald-100 rounded-lg p-3 leading-relaxed">
             <Info className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             <p>
@@ -410,14 +565,14 @@ export function ProfessionalProfileView() {
           <div className="grid sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-slate-700">País onde mora</Label>
-              <Input
-                value={profile.residenceCountry ?? ''}
-                onChange={(e) => set('residenceCountry', e.target.value.toUpperCase().slice(0, 2) || null)}
-                placeholder="BR"
-                maxLength={2}
-                className="text-sm uppercase"
+              <CountrySelect
+                value={profile.residenceCountry}
+                onChange={(v) => set('residenceCountry', v)}
               />
-              <p className="text-[10px] text-slate-500">Código de 2 letras (BR, PT, US...)</p>
+              <p className="text-[10px] text-slate-500">
+                Os países do primeiro grupo têm adaptação própria — formato de currículo, tipos de
+                contrato, sistemas de triagem. Os demais usam o padrão internacional.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-slate-700">Estado / região</Label>
@@ -438,18 +593,18 @@ export function ProfessionalProfileView() {
           </div>
 
           <Choice
-            label="Mercado principal onde quer trabalhar"
+            label="País onde quer trabalhar"
             value={profile.primaryMarket}
             onChange={(v) => set('primaryMarket', v)}
             options={MARKET_OPTIONS.map((m) => ({ value: m.id, label: m.name }))}
           />
 
-          <TagInput
-            label="Mercados alternativos"
-            hint="Outros mercados que você também consideraria. Use os mesmos códigos (PT, ES, US...)."
+          <MarketChecklist
+            label="Outros países onde você também aceitaria trabalhar"
+            hint="Marque quantos quiser. Deixe tudo desmarcado se só quer o país principal."
             values={profile.alternativeMarkets}
-            onChange={(v) => set('alternativeMarkets', v.map((x) => x.toUpperCase()))}
-            placeholder="Ex: PT"
+            exclude={profile.primaryMarket}
+            onChange={(v) => set('alternativeMarkets', v)}
           />
 
           <div className="space-y-3 pt-1">

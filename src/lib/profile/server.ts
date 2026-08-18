@@ -2,7 +2,15 @@ import 'server-only'
 import { db } from '../db'
 import { resolveMarket, type MarketConfig } from '../market'
 import type { Language } from '../i18n'
-import { fromRecord, marketInputFrom, profilePromptContext, type ProfessionalProfile } from './index'
+import {
+  EMPTY_PROFILE,
+  fromRecord,
+  marketInputFrom,
+  profilePromptContext,
+  toRecordData,
+  type ProfessionalProfile,
+} from './index'
+import { deriveFromOrientation, parseStoredOrientation } from './from-orientation'
 
 /**
  * Leitura do perfil no servidor, e o mercado que ele determina.
@@ -63,5 +71,51 @@ export async function loadProfileContext(
     market,
     marketSource: source,
     promptContext: profilePromptContext(profile),
+  }
+}
+
+/**
+ * Cria ou completa o perfil a partir do diagnóstico vocacional.
+ *
+ * Chamada pela rota da orientação, logo depois de ela gravar o resultado. É o
+ * que faz o Radar funcionar para quem nunca abriu a tela de perfil: o
+ * diagnóstico já respondeu "quais áreas", e a pessoa não deveria ter de
+ * responder de novo num formulário.
+ *
+ * **Só preenche o que está vazio**, e devolve o que preencheu. O §30 proíbe
+ * alterar o perfil sem que a pessoa saiba — quem escreveu tem razão sobre si, e
+ * o que foi preenchido aqui é dito de volta na resposta da rota.
+ *
+ * Falha em silêncio de propósito: o diagnóstico vocacional é a entrega que a
+ * pessoa pediu e pagou. Derrubá-lo porque a gravação de um efeito colateral não
+ * deu certo troca a entrega principal pela acessória.
+ */
+export async function seedProfileFromOrientation(
+  userId: string,
+  orientationJson: string | null,
+  options: { fallbackCountry?: string | null } = {}
+): Promise<string[]> {
+  try {
+    const orientation = parseStoredOrientation(orientationJson)
+    const existing = await db.professionalProfile.findUnique({ where: { userId } })
+    const current = existing ? fromRecord(existing) : EMPTY_PROFILE
+
+    const { data, filled } = deriveFromOrientation(current, orientation, {
+      fallbackCountry: options.fallbackCountry,
+    })
+
+    if (filled.length === 0) return []
+
+    const record = toRecordData(data)
+    await db.professionalProfile.upsert({
+      where: { userId },
+      create: { userId, ...record },
+      update: record,
+    })
+
+    return filled
+  } catch (e: any) {
+    console.warn('[profile] semeadura a partir da orientação falhou:', e?.message || e)
+    return []
   }
 }
