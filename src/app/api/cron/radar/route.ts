@@ -8,6 +8,7 @@ import { greenhouseAdapters } from '@/lib/jobs/adapters/greenhouse'
 import { leverAdapters } from '@/lib/jobs/adapters/lever'
 import { createGupyAdapter } from '@/lib/jobs/adapters/gupy'
 import { searchTermsFromProfiles } from '@/lib/jobs/search-terms.server'
+import { careerPageAdapters } from '@/lib/jobs/adapters/jsonld'
 
 /**
  * O gatilho do Radar (§28).
@@ -95,6 +96,7 @@ export async function GET(req: Request) {
     ...greenhouseAdapters(process.env.GREENHOUSE_BOARDS),
     ...leverAdapters(process.env.LEVER_BOARDS),
     ...(gupyTerms.length > 0 ? [createGupyAdapter({ terms: gupyTerms })] : []),
+    ...careerPageAdapters(process.env.CAREER_PAGES),
   ]
 
   try {

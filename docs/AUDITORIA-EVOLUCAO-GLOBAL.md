@@ -740,3 +740,64 @@ onde quem mexer vai ler. **O caminho que não quebra é a API oficial de
 parceria** — enquanto ela não existir, a cobertura brasileira do Radar depende
 de uma dependência frágil, e isso é fato do produto, não detalhe de
 implementação.
+
+---
+
+## 2.18 Não ficar na mão de uma fonte só
+
+A pergunta era direta: dependemos da Gupy, ou dá para buscar e mostrar o que se
+acha — por exemplo no Google?
+
+**Pelo Google, não.** O Google for Jobs não tem API pública, e raspar página de
+resultado viola os termos e é bloqueado por robô. Ficaria mais frágil que a
+Gupy, não menos. A Custom Search API é oficial mas busca a web: devolve link e
+trecho, não vaga estruturada.
+
+**O que o Google esconde, sim.** O motivo de ele conseguir mostrar vagas é que
+os empregadores publicam `schema.org/JobPosting` em JSON-LD nas próprias
+páginas. É padrão aberto, publicado justamente para consumo automatizado, e
+está no site de quem contrata — sem chave, sem API interna, sem zona cinzenta.
+
+### O que o adapter de JSON-LD resolve, e o que não
+
+**Resolve ler**: qualquer página que publique os dados estruturados vira fonte.
+
+**Não resolve descobrir**: ele precisa saber quais páginas visitar. Descoberta
+ampla continua dependendo de agregador ou de fonte de busca. Dizer o contrário
+seria vender cobertura que não existe.
+
+Por isso ele é uma fonte de **páginas escolhidas**: a instalação lista os
+empregadores que interessa acompanhar em `CAREER_PAGES`. Para os empregadores
+escolhidos, o Brasil deixa de depender só da Gupy.
+
+### Diferente das outras três, foi escrito contra a especificação
+
+Greenhouse, Lever e Gupy tiveram o formato observado antes do código. Este não:
+a especificação do schema.org é pública e estável, e foi ela a referência.
+
+O risco disso está tratado onde dá: o parser tolera as três variações que
+páginas reais usam — objeto embrulhado em `@graph`, vários blocos na mesma
+página, array no lugar de valor único — e há teste para cada uma. O que continua
+sem verificação é o comportamento diante de uma página específica de verdade,
+e por isso conferir antes de acrescentar uma página é obrigatório.
+
+### Ausência aqui É encerramento
+
+Ao contrário da Gupy, esta fonte lê cada página por inteiro toda rodada. Se a
+vaga saiu da página de carreiras da empresa, saiu de verdade — então
+`closesByAbsence` fica no padrão. É o mesmo raciocínio que fez a Gupy declarar o
+contrário, aplicado a uma fonte de natureza diferente.
+
+### Adzuna ficou pendente
+
+O agregador com API oficial e cobertura do Brasil seria a resposta para
+descoberta ampla. A tentativa parou em `AUTH_FAIL` com credenciais de tamanho
+plausível, o que aponta para app ainda não ativo na conta. Continua sendo o
+próximo candidato — e, com o contrato `JobSourceAdapter`, acrescentá-lo é um
+arquivo.
+
+### Uma proteção que a configuração precisava
+
+`CAREER_PAGES` aceita **só `http` e `https`**. Sem isso, uma entrada malformada
+viraria requisição a `file://` ou a um host interno, feita pelo servidor em nome
+de quem escreveu a variável.
