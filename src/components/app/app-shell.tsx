@@ -9,12 +9,13 @@ import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import {
   LayoutDashboard, Upload, FileSearch, FileEdit, Download, CreditCard, Settings, History,
-  LogOut, FileText, Sparkles, ChevronRight, Menu, X, Shield, Zap, HelpCircle, Briefcase
+  LogOut, FileText, Sparkles, ChevronRight, Menu, X, Shield, Zap, HelpCircle, Briefcase, Radar as RadarIcon
 } from 'lucide-react'
 import { Dashboard } from './dashboard'
 import { UploadView } from './upload-view'
 import { AnalysisView } from './analysis-view'
 import { ProfessionalProfileView } from './professional-profile-view'
+import { RadarView } from './radar-view'
 import { RewriteView } from './rewrite-view'
 import { DownloadsView } from './downloads-view'
 import { PlansView } from './plans-view'
@@ -32,6 +33,7 @@ const NAV_ITEMS: { view: AppView; label: string; icon: any }[] = [
   { view: 'upload', label: 'Enviar currículo', icon: Upload },
   { view: 'analysis', label: 'Laudo', icon: FileSearch },
   { view: 'profile', label: 'Perfil Profissional', icon: Briefcase },
+  { view: 'radar', label: 'Radar', icon: RadarIcon },
   { view: 'rewrite', label: 'Reescrita', icon: FileEdit },
   { view: 'downloads', label: 'Downloads', icon: Download },
   { view: 'history', label: 'Histórico', icon: History },
@@ -274,6 +276,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           {view === 'upload' && <UploadView />}
           {view === 'analysis' && <AnalysisView />}
           {view === 'profile' && <ProfessionalProfileView />}
+          {view === 'radar' && <RadarView />}
           {view === 'rewrite' && <RewriteView />}
           {view === 'downloads' && <DownloadsView />}
           {view === 'history' && <HistoryView />}

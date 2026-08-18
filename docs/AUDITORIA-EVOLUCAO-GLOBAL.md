@@ -353,6 +353,52 @@ do sistema estaria replicada em N implementações, e bastaria uma esquecer.
 `safeCollect` envelopa qualquer adapter para que ele nunca lance — a regra "não
 lance" é fácil de escrever no contrato e fácil de violar na implementação.
 
+## 2.11 O Radar passa a rodar (§28, §29, §30)
+
+**Cron, não requisição.** O §28 separa o Radar da análise de currículo: ele
+"precisa funcionar mesmo quando ninguém estiver olhando a tela". Entrada em
+`GET /api/cron/radar`, agendada de hora em hora no `vercel.json`, autenticada
+por `CRON_SECRET`. **Sem o segredo configurado a rota responde 503 e não roda** —
+uma rota que dispara coleta e escreve no banco não pode ficar aberta porque
+alguém esqueceu uma variável de ambiente.
+
+**Duas metades independentes.** Coletar é por fonte e serve a todo mundo;
+avaliar é por usuário. Separá-las evita coletar a mesma vaga uma vez por pessoa,
+e é a base da economia do §27.
+
+**Rotação justa.** Cada invocação atende 25 usuários, escolhendo sempre quem
+esperou mais (`lastRunAt` mais antigo). Tentar atender todos e ser interrompida
+pelo teto de tempo deixaria metade sem rodada e sem registro disso.
+
+**Reaparecer reabre.** Uma vaga que volta numa coleta tem `closedAt` limpo: se
+ela voltou, não estava encerrada — e um fechamento anterior pode ter sido
+engano. É a contrapartida do §12 do outro lado.
+
+**A leitura não recalcula.** `GET /api/radar` devolve o veredito **gravado no
+alerta**. Recalcular mostraria um resultado diferente do que motivou o aviso — o
+perfil pode ter mudado no meio — e tornaria impossível auditar por que aquele
+alerta saiu.
+
+**Feedback sem alterar o perfil às escondidas (§30).** O 👍/👎 e o motivo ficam
+no `RadarAlert`, nunca escritos de volta no `ProfessionalProfile`. Quando o
+produto for sugerir um ajuste a partir de rejeições repetidas — o §31 —, a
+sugestão é feita ao usuário e quem altera é ele.
+
+**A tela trata silêncio como acerto.** Sem oportunidade, ela diz que o Radar
+está monitorando e que não encontrou nada que justifique interromper. Uma tela
+que trata silêncio como erro desfaz a promessa do §15.
+
+### Um desvio deliberado do §16
+
+O fluxo do §16 prevê "Matching IA" depois do filtro duro. A implementação usa o
+matcher determinístico de `lib/matching/`.
+
+É escolha, não esquecimento: numa rodada que avalia milhares de pares sem
+ninguém olhando, ser barato, reprodutível e **incapaz de inventar uma evidência
+que não existe** vale mais que a profundidade de leitura que a IA acrescentaria.
+A camada de IA cabe depois, sobre as poucas vagas que já passaram por aqui —
+onde custa pouco e acrescenta muito.
+
 ## 3. O que **não** foi feito — e por quê
 
 O prompt mestre é explícito: *"Não tente implementar tudo de uma vez"*. Esta
@@ -365,10 +411,10 @@ da Etapa 3 (Market Adapter)**. O resto está mapeado abaixo, não implementado.
 | **2 — Professional Profile** (§7, §8) | ✅ Feita, em produção | — |
 | **3 — Market Adapter** (§2, §10) | ✅ Feita | Falta apenas `SalaryContext`, que depende de dados de mercado que ainda não coletamos |
 | **4 — Job Intelligence** (§13, §14) | ✅ Feita | — |
-| **5 — Job Sources** (§11, §12) | 🟡 Contrato e 1 adapter | Interface `JobSourceAdapter` e adapter do Greenhouse escritos, com a conversão testada por injeção de `fetch`. **A API real NÃO foi verificada** — este ambiente não tem saída de rede. Ligar a fonte exige uma coleta real antes |
+| **5 — Job Sources** (§11, §12) | 🟡 Contrato e 1 adapter, DESLIGADO | O Greenhouse tem a conversão testada e a API real não verificada. `ACTIVE_ADAPTERS` está vazio de propósito — ligar exige uma coleta real antes |
 | **6 — Matching** (§9, §16) | ✅ Feita | — |
-| **7 — Radar** (§15, §22, §23) | 🟡 Curadoria pronta, agendamento não | `curate` e `summarizeDigest` decidem e resumem. Falta o cron, a fila e o envio de e-mail |
-| **8 — Ação** (§18, §19, §20) | 🟡 Job Fit pronto, interface não | `buildJobFit` e `jobPromptContext` montam a visão e a ponte para as rotas de currículo e carta. Falta a tela |
+| **7 — Radar** (§15, §22, §23) | ✅ Roda por cron, entrega no produto | Falta o e-mail — não há provedor configurado no projeto |
+| **8 — Ação** (§18, §19, §20) | ✅ Job Fit na tela do Radar | Falta o currículo direcionado partir da vaga encontrada, e não só da vaga digitada |
 | **9 — Assinatura** (§21) | ⬜ Não iniciada | Só depois do Radar provar valor. Compra única continua funcionando |
 | **10 — Escala global** (§34) | ⬜ Não iniciada | Novos mercados são entradas em `MARKETS`; painel administrativo por mercado/fonte/adapter |
 
