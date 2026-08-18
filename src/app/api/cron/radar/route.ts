@@ -5,6 +5,7 @@ export const maxDuration = 60
 import { NextResponse } from 'next/server'
 import { runRadar } from '@/lib/radar/runner'
 import { greenhouseAdapters } from '@/lib/jobs/adapters/greenhouse'
+import { leverAdapters } from '@/lib/jobs/adapters/lever'
 
 /**
  * O gatilho do Radar (§28).
@@ -28,10 +29,14 @@ import { greenhouseAdapters } from '@/lib/jobs/adapters/greenhouse'
  * observado, e o que continua sem observação, está no cabeçalho de
  * `lib/jobs/adapters/greenhouse.ts`.
  *
- * Quais boards a instalação varre sai de `GREENHOUSE_BOARDS`; sem essa
- * variável valem os boards já conferidos. Acrescentar um board é mudar a
- * variável, não o código — mas conferir o board antes continua sendo
+ * Quais boards a instalação varre sai de `GREENHOUSE_BOARDS` e `LEVER_BOARDS`;
+ * sem essas variáveis valem os boards já conferidos. Acrescentar um board é
+ * mudar a variável, não o código — mas conferir o board antes continua sendo
  * obrigatório, pelo motivo descrito lá.
+ *
+ * O Lever começa SEM board nenhum: o único conferido é o `leverdemo`, board de
+ * demonstração do próprio Lever, e encher o Radar de vaga de mentira é pior que
+ * silêncio. A fonte fica pronta esperando o primeiro token real.
  *
  * A lista é montada **dentro** do handler, e não no módulo: assim ela lê o
  * ambiente de execução, e não o do build.
@@ -76,7 +81,10 @@ export async function GET(req: Request) {
   }
 
   const startedAt = Date.now()
-  const adapters = greenhouseAdapters(process.env.GREENHOUSE_BOARDS)
+  const adapters = [
+    ...greenhouseAdapters(process.env.GREENHOUSE_BOARDS),
+    ...leverAdapters(process.env.LEVER_BOARDS),
+  ]
 
   try {
     const summary = await runRadar({
