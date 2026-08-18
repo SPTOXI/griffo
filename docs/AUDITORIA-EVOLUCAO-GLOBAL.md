@@ -541,7 +541,15 @@ recusava fechar diante de `partial`; bastou passar o estado certo.
 
 A distância entre função e banco não é problema do Radar — é de todo o
 produto. Toda rota de IA, toda página que lê do banco paga o mesmo pedágio de
-ida e volta até São Paulo. Mudar a região das funções para `gru1` em
-Project Settings → Functions é uma troca de configuração, sem código, e
-melhora tudo de uma vez. O Radar apenas foi o primeiro lugar onde o custo ficou
-grande o bastante para matar a requisição.
+ida e volta até São Paulo. O Radar apenas foi o primeiro lugar onde o custo
+ficou grande o bastante para matar a requisição.
+
+Por isso a região das funções passou a ser declarada no `vercel.json`:
+`"regions": ["gru1"]`, São Paulo — ao lado do banco. Fica no repositório, e não
+numa configuração de painel, porque é uma decisão de arquitetura: o produto
+inteiro depende de um banco em `sa-east-1`, e essa dependência merece estar
+escrita junto do código que a tem.
+
+O plano Hobby aceita **uma** região; declarar várias é recurso do Pro. Se
+algum dia a lista crescer sem que o plano acompanhe, o deploy é recusado —
+como já aconteceu com a frequência do cron.
