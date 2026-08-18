@@ -411,7 +411,7 @@ da Etapa 3 (Market Adapter)**. O resto está mapeado abaixo, não implementado.
 | **2 — Professional Profile** (§7, §8) | ✅ Feita, em produção | — |
 | **3 — Market Adapter** (§2, §10) | ✅ Feita | Falta apenas `SalaryContext`, que depende de dados de mercado que ainda não coletamos |
 | **4 — Job Intelligence** (§13, §14) | ✅ Feita | — |
-| **5 — Job Sources** (§11, §12) | ✅ Greenhouse e Lever conferidos | Falta um ATS que cubra o Brasil — Gupy ou Vagas.com. Boards saem de `GREENHOUSE_BOARDS` e `LEVER_BOARDS`; conferir cada token antes de acrescentar |
+| **5 — Job Sources** (§11, §12) | ✅ Greenhouse, Lever e Gupy | A Gupy é API interna, com risco declarado; o caminho estável é parceria oficial. Boards do Greenhouse/Lever saem de variável de ambiente |
 | **6 — Matching** (§9, §16) | ✅ Feita | — |
 | **7 — Radar** (§15, §22, §23) | ✅ Roda por cron, entrega no produto | Falta o e-mail — não há provedor configurado no projeto |
 | **8 — Ação** (§18, §19, §20) | ✅ Job Fit na tela do Radar | Falta o currículo direcionado partir da vaga encontrada, e não só da vaga digitada |
@@ -677,3 +677,66 @@ deixar parecer que a cobertura existe.
 
 A lista do Lever começa **vazia**: o único board conferido é o `leverdemo`, de
 demonstração, e encher o Radar de vaga de mentira é pior que silêncio.
+
+---
+
+## 2.17 O Brasil entra, e a fonte de busca muda o contrato
+
+A Gupy é quem concentra vaga no Brasil, e entrar nela obrigou a rever duas
+coisas que Greenhouse e Lever nunca puseram à prova.
+
+### É busca, não board
+
+Os dois primeiros são boards por empresa: pede-se o board, vem o que está
+aberto. A Gupy é busca por termo — não existe "todas as vagas", existe "as
+vagas que casam com esta palavra". **Alguém precisa dizer qual palavra.**
+
+A resposta é o próprio produto: os cargos que a **orientação profissional
+recomendou** aos usuários. É isto que o Radar sempre foi para ser — buscar vaga
+das áreas sugeridas, no país da pessoa — e é a única origem de termos que não é
+chute de quem escreveu o código.
+
+Buscar pela união dos cargos-alvo não transforma a coleta em algo por usuário: a
+vaga achada pelo termo de um entra no banco e serve ao matching de todos. Muda só
+de onde saem as palavras.
+
+Os termos são ordenados por **quantas pessoas** querem aquele cargo, e não por
+quantas vezes a palavra aparece. O orçamento de tempo não cobre todos, e o corte
+por frequência atende mais gente por segundo gasto.
+
+### Ausência deixou de significar encerramento
+
+`JobSourceDescriptor` ganhou `closesByAbsence`. Num board de empresa, sumir da
+lista é encerramento — o board lista o que está aberto. Numa fonte de busca,
+não: a vaga pode ter caído fora do termo, da página ou da ordenação e continuar
+perfeitamente aberta.
+
+Fechar por ausência numa fonte de busca encerraria vaga viva a cada mudança de
+ranking. A Gupy declara `false`, e `runCollection` passa uma lista de abertas
+vazia ao decisor nesse caso — mantendo o §12 num lugar só, sem que o decisor
+precise saber que existem fontes de busca.
+
+### Duas armadilhas do payload
+
+`country` vem por extenso e em português ("Brasil"), não em ISO2 como no Lever.
+Guardá-lo cru faria o filtro duro comparar "Brasil" com "BR" e eliminar toda
+vaga brasileira de um perfil brasileiro. A conversão reusa a lista de países da
+tela do perfil, em vez de criar uma segunda tabela que um dia divergiria.
+
+`pagination.total` é do termo pesquisado. Interromper antes de alcançá-lo é
+coleta parcial, e dizer `complete` ali seria a mentira que o §12 existe para
+impedir — ainda que aqui ela não feche nada.
+
+### O risco, declarado
+
+Greenhouse e Lever publicam seus endpoints **para consumo de terceiros**. A Gupy
+não: o que se usa aqui é a API interna do portal dela. Pode mudar sem aviso,
+pode ser bloqueada, e os termos de uso provavelmente vedam o consumo
+programático.
+
+A decisão de usar assim mesmo foi tomada com os riscos à vista, para uma coleta
+por dia. Está escrita no `accessNote` do descritor e no cabeçalho do adapter,
+onde quem mexer vai ler. **O caminho que não quebra é a API oficial de
+parceria** — enquanto ela não existir, a cobertura brasileira do Radar depende
+de uma dependência frágil, e isso é fato do produto, não detalhe de
+implementação.

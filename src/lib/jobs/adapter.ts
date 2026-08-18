@@ -50,6 +50,21 @@ export interface JobSourceDescriptor {
    * base — não é verificação automática, é registro de decisão humana.
    */
   accessNote: string
+  /**
+   * Sumir dos resultados significa que a vaga foi encerrada?
+   *
+   * Num board de empresa, sim: o board lista o que está aberto, e o que saiu
+   * dele saiu porque fechou. Numa **fonte de busca**, não — a vaga pode ter
+   * caído fora do termo pesquisado, do recorte de página ou da ordenação, e
+   * continuar perfeitamente aberta.
+   *
+   * Fechar por ausência numa fonte de busca encerraria vaga viva a cada vez que
+   * o ranking mudasse. Quem declara `false` aqui só tem vaga encerrada quando a
+   * própria fonte disser que encerrou.
+   *
+   * Ausente = `true`, que é o comportamento dos boards por empresa.
+   */
+  closesByAbsence?: boolean
 }
 
 export interface CollectContext {
