@@ -9,6 +9,7 @@ import { leverAdapters } from '@/lib/jobs/adapters/lever'
 import { createGupyAdapter } from '@/lib/jobs/adapters/gupy'
 import { searchTermsFromProfiles } from '@/lib/jobs/search-terms.server'
 import { careerPageAdapters } from '@/lib/jobs/adapters/jsonld'
+import { adzunaCredentials, createAdzunaAdapter } from '@/lib/jobs/adapters/adzuna'
 
 /**
  * O gatilho do Radar (§28).
@@ -91,12 +92,18 @@ export async function GET(req: Request) {
    * encheria o banco de vaga que ninguém pediu.
    */
   const gupyTerms = await searchTermsFromProfiles({ country: 'BR', limit: 6 })
+  const adzuna = adzunaCredentials(process.env.ADZUNA_APP_ID, process.env.ADZUNA_APP_KEY)
 
   const adapters = [
     ...greenhouseAdapters(process.env.GREENHOUSE_BOARDS),
     ...leverAdapters(process.env.LEVER_BOARDS),
     ...(gupyTerms.length > 0 ? [createGupyAdapter({ terms: gupyTerms })] : []),
     ...careerPageAdapters(process.env.CAREER_PAGES),
+    // A Adzuna é a única fonte de descoberta ampla com contrato público. Como a
+    // Gupy, busca pelos cargos que a orientação recomendou.
+    ...(adzuna && gupyTerms.length > 0
+      ? [createAdzunaAdapter({ credentials: adzuna, country: 'br', terms: gupyTerms })]
+      : []),
   ]
 
   try {

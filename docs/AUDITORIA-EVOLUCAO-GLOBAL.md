@@ -411,7 +411,7 @@ da Etapa 3 (Market Adapter)**. O resto está mapeado abaixo, não implementado.
 | **2 — Professional Profile** (§7, §8) | ✅ Feita, em produção | — |
 | **3 — Market Adapter** (§2, §10) | ✅ Feita | Falta apenas `SalaryContext`, que depende de dados de mercado que ainda não coletamos |
 | **4 — Job Intelligence** (§13, §14) | ✅ Feita | — |
-| **5 — Job Sources** (§11, §12) | ✅ Greenhouse, Lever e Gupy | A Gupy é API interna, com risco declarado; o caminho estável é parceria oficial. Boards do Greenhouse/Lever saem de variável de ambiente |
+| **5 — Job Sources** (§11, §12) | ✅ Cinco fontes | Greenhouse, Lever, Gupy, páginas de carreira (schema.org) e Adzuna. Só a Gupy é API interna; as demais têm contrato público |
 | **6 — Matching** (§9, §16) | ✅ Feita | — |
 | **7 — Radar** (§15, §22, §23) | ✅ Roda por cron, entrega no produto | Falta o e-mail — não há provedor configurado no projeto |
 | **8 — Ação** (§18, §19, §20) | ✅ Job Fit na tela do Radar | Falta o currículo direcionado partir da vaga encontrada, e não só da vaga digitada |
@@ -801,3 +801,61 @@ arquivo.
 `CAREER_PAGES` aceita **só `http` e `https`**. Sem isso, uma entrada malformada
 viraria requisição a `file://` ou a um host interno, feita pelo servidor em nome
 de quem escreveu a variável.
+
+---
+
+## 2.19 A Adzuna, e o salário que quase entrou inventado
+
+A Adzuna é a primeira fonte que resolve **descoberta ampla com contrato
+público**: API documentada, chave própria, e cadastro em que o uso é declarado.
+Greenhouse e Lever só acham vaga de quem já se conhece; a Gupy resolve o Brasil
+por API interna, com o risco escrito no cabeçalho dela.
+
+Verificada em 18/08/2026 contra
+`api.adzuna.com/v1/api/jobs/br/search/1?what=enfermeiro`.
+
+### A armadilha
+
+O payload traz `salary_is_predicted`. Quando vale `"1"`, o salário foi
+**estimado pela Adzuna** — não informado pela empresa. Gravá-lo como salário da
+vaga poria no produto um número que ninguém prometeu, e o usuário o leria como
+promessa.
+
+Quando a estimativa está ligada, o salário é descartado. Vaga sem salário é o
+estado normal do mercado brasileiro; vaga com salário inventado é o que o §43
+proíbe. Este é o tipo de campo que só aparece olhando o payload — nenhuma
+documentação lida de memória teria avisado.
+
+### Duas coisas menores que também vieram do payload
+
+O país está em `location.area`, uma hierarquia do mais geral para o mais
+específico (`["Brasil", "Sul", "Paraná", "Curitiba"]`), por extenso e em
+português. É a mesma conversão que a Gupy precisa — e por isso
+`countryCodeFromName` saiu do adapter da Gupy e passou a morar em
+`lib/market/countries.ts`, junto dos nomes. Duas tabelas divergiriam no primeiro
+país acrescentado a uma só.
+
+E a Adzuna responde **200 com um campo `exception`** quando a credencial não
+vale. Ler isso como "nenhuma vaga" faria uma chave expirada parecer um mercado
+vazio — e mercado vazio, numa fonte que fechasse por ausência, apagaria vaga
+viva. O adapter trata `exception` como falha.
+
+### `redirect_url` e a deduplicação
+
+A URL de candidatura passa pelo domínio da Adzuna: é como a API funciona e como
+a atribuição é contada. O efeito colateral é que a mesma vaga vinda da Gupy e da
+Adzuna tem URLs diferentes — quem as junta é a deduplicação por empresa + cargo,
+não a por URL. A camada de dedup da Etapa 4 já cobre isso, e é a primeira vez
+que essa estratégia ganha um caso de uso real.
+
+### As cinco fontes, e o que cada uma resolve
+
+| Fonte | Resolve | Contrato | Fecha por ausência |
+|---|---|---|---|
+| Greenhouse | Empresas conhecidas (EUA, GB, CA) | Público | Sim |
+| Lever | Empresas conhecidas (variado) | Público | Sim |
+| Páginas de carreira | Empregadores escolhidos | Padrão aberto | Sim |
+| Gupy | Descoberta no Brasil | **Interno** | Não |
+| Adzuna | Descoberta ampla | Público | Não |
+
+O Brasil deixou de depender de uma fonte só.

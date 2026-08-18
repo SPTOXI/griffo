@@ -116,3 +116,32 @@ export function groupedCountries(): { adapted: CountryOption[]; others: CountryO
     others: COUNTRIES.filter((c) => !ADAPTED_COUNTRY_CODES.has(c.code)),
   }
 }
+
+const CODE_BY_NAME = new Map<string, string>([
+  ...COUNTRIES.map((c) => [c.name.toLowerCase(), c.code] as [string, string]),
+  // Fontes brasileiras escrevem "Brasil"; dados vindos de fora escrevem "Brazil".
+  ['brazil', 'BR'],
+  ['united states', 'US'],
+  ['united kingdom', 'GB'],
+])
+
+/**
+ * Nome de país por extenso vira ISO2.
+ *
+ * Mora aqui, junto dos nomes, e não em cada adapter: a Gupy manda "Brasil" e a
+ * Adzuna manda "Brasil" dentro de uma hierarquia — duas tabelas separadas
+ * divergiriam no primeiro país acrescentado a uma só.
+ *
+ * Nome desconhecido devolve `null`. Um país errado é pior que país nenhum,
+ * porque o filtro duro age sobre ele.
+ */
+export function countryCodeFromName(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const key = value.trim().toLowerCase()
+  if (!key) return null
+  if (/^[a-z]{2}$/.test(key)) {
+    const upper = key.toUpperCase()
+    return BY_CODE.has(upper) ? upper : null
+  }
+  return CODE_BY_NAME.get(key) ?? null
+}
