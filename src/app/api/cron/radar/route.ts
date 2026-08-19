@@ -10,6 +10,7 @@ import { createGupyAdapter } from '@/lib/jobs/adapters/gupy'
 import { adzunaLastCollections, searchTermsByCountry, searchTermsFromProfiles } from '@/lib/jobs/search-terms.server'
 import { estimatedRequests, planAdzunaRound } from '@/lib/jobs/adzuna-plan'
 import { careerPageAdapters } from '@/lib/jobs/adapters/jsonld'
+import { remoteBoardAdapters } from '@/lib/jobs/adapters/remote-boards'
 import { adzunaCredentials, createAdzunaAdapter } from '@/lib/jobs/adapters/adzuna'
 
 /**
@@ -136,6 +137,9 @@ export async function GET(req: Request) {
     ...leverAdapters(process.env.LEVER_BOARDS),
     ...(gupyTerms.length > 0 ? [createGupyAdapter({ terms: gupyTerms })] : []),
     ...careerPageAdapters(process.env.CAREER_PAGES),
+    // Vaga remota internacional: sem chave, sem cota, e a ÚNICA fonte de quem
+    // mora em Portugal ou no Japão — que a Adzuna não atende.
+    ...remoteBoardAdapters(process.env.REMOTE_BOARDS),
     // A Adzuna atende dez mercados, mas a cota gratuita não cabe todos toda
     // noite. O rodízio escolhe quem esperou mais — ver `adzuna-plan.ts`.
     ...adzunaPlans.map((plan) =>

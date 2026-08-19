@@ -41,6 +41,7 @@
 
 import type { CollectContext, CollectResult, JobSourceAdapter, JobSourceDescriptor } from '../adapter'
 import type { RawJob } from '../types'
+import { decodeBasicEntities, stripHtml } from '../text'
 
 export const GREENHOUSE_DESCRIPTOR: JobSourceDescriptor = {
   slug: 'greenhouse',
@@ -124,31 +125,6 @@ function pickDate(...candidates: unknown[]): string | null {
     if (typeof c === 'string' && c.trim()) return c
   }
   return null
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-}
-
-const ENTITIES: Record<string, string> = {
-  '&amp;': '&',
-  '&lt;': '<',
-  '&gt;': '>',
-  '&quot;': '"',
-  '&#39;': "'",
-  '&nbsp;': ' ',
-}
-
-/**
- * Uma passada só, de propósito.
- *
- * Substituições encadeadas decodificam duas vezes: `&amp;lt;` — que representa
- * o texto literal `&lt;` — vira `&lt;` na primeira troca e depois `<` na
- * segunda, transformando texto do anúncio em marcação. Uma varredura única não
- * reexamina o que acabou de escrever.
- */
-function decodeBasicEntities(text: string): string {
-  return text.replace(/&(?:amp|lt|gt|quot|#39|nbsp);/g, (m) => ENTITIES[m] ?? m)
 }
 
 /**

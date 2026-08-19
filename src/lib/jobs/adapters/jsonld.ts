@@ -46,6 +46,7 @@
 
 import type { CollectContext, CollectResult, JobSourceAdapter, JobSourceDescriptor } from '../adapter'
 import type { RawJob } from '../types'
+import { stripHtml } from '../text'
 
 export const JSONLD_DESCRIPTOR: JobSourceDescriptor = {
   slug: 'career-page',
@@ -134,10 +135,6 @@ function text(value: unknown): string | null {
 function first(value: unknown): Record<string, unknown> | null {
   if (Array.isArray(value)) return first(value[0])
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : null
-}
-
-function stripHtml(value: string): string {
-  return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
 function number(value: unknown): number | null {
