@@ -168,7 +168,7 @@ o ambiente de desenvolvimento não tem acesso ao banco. Toda migração precisa 
 
 ```
 npx tsc --noEmit
-npm test          # 418 testes hoje
+npm test          # ver a nota sobre a contagem na seção 8
 npm run lint
 npm run build
 ```
@@ -306,9 +306,13 @@ chute.
    explicando uma decisão e o que ela evita.
 2. Leia `src/lib/jobs/collection.ts` e seus testes. É a regra mais importante do
    sistema.
-3. Rode `npm test` e confirme **423 passando** antes de mudar qualquer linha.
-   Se o número não bater, o problema é o seu ambiente — resolva isso antes de
-   escrever código, não depois.
+3. Rode `npm test` antes de mudar qualquer linha, e guarde o resultado.
+
+   **O que importa é `fail 0`, e não a contagem.** Na data desta revisão eram
+   432, mas o número sobe a cada PR e este documento vai ficar para trás — se
+   ele não bater, olhe o último PR mesclado antes de concluir que quebrou
+   alguma coisa. O que nunca muda é a regra: se havia zero falhas antes de você
+   mexer e há falha depois, o problema é a sua mudança, não o teste.
 4. Ao acrescentar fonte de vaga: peça o `curl` ao operador primeiro. Sempre.
 
 ---
