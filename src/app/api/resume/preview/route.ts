@@ -135,6 +135,20 @@ export async function POST(req: Request) {
       // Extração numérica pura: o raciocínio não acrescenta nada e disputa o
       // mesmo orçamento de tokens da resposta.
       disableThinking: true,
+      /**
+       * Prazo curto, de propósito — metade do padrão do roteador.
+       *
+       * Esta é a PRIMEIRA coisa que alguém vê do produto, e são oito números de
+       * um modelo barato: se demorar, não é porque o trabalho é grande, é
+       * porque algo travou. O orçamento padrão de 52s deixaria um provedor
+       * pendurado quase até o teto da função antes de tentar o suplente — a
+       * pessoa esperaria quase um minuto para ver um erro.
+       *
+       * Com 25s o roteador troca de provedor rápido, e ainda cabe a segunda
+       * tentativa que a tela faz por conta própria. Duas esperas de 25s com
+       * chance de acertar valem mais que uma de 52s que termina em nada.
+       */
+      timeBudgetMs: 25_000,
       systemPrompt:
         `${LANGUAGE_DIRECTIVE[lang]}\n\n` +
         'Você avalia currículos e devolve NOTAS, nada além disso.\n\n' +

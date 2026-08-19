@@ -37,6 +37,56 @@ const PRESET_PLATFORMS = [
   'Instagram / Redes',
 ]
 
+/**
+ * Calcula a prévia gratuita antes de trocar de tela.
+ *
+ * ## Por que nunca lança, e nunca bloqueia a navegação
+ *
+ * A prévia é a primeira entrega que a pessoa vê, e é o momento em que ela
+ * decide se o produto funciona. Mas ela é uma chamada de IA, e chamada de IA
+ * às vezes demora ou falha.
+ *
+ * Segurar a pessoa numa tela de espera até uma chamada externa se resolver
+ * troca "demorou um pouco" por "quebrou". Por isso: tenta, tenta de novo uma
+ * vez, e desiste em silêncio — a tela de laudo pega o resultado quando ele
+ * chegar, e oferece "tentar de novo" se não chegou.
+ *
+ * ## O prazo é do cliente, não do servidor
+ *
+ * O `AbortController` desiste ANTES do teto da função. Sem isso, a espera
+ * terminaria num 504 do navegador — que é indistinguível de queda de rede para
+ * quem está olhando.
+ */
+const PREVIEW_ATTEMPT_MS = 55_000
+
+async function warmPreview(resumeId: string): Promise<boolean> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), PREVIEW_ATTEMPT_MS)
+
+    try {
+      const res = await internalFetch('/api/resume/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeId }),
+        signal: controller.signal,
+      })
+
+      if (res.ok) return true
+
+      // 4xx é recusa com motivo — repetir daria o mesmo. Só 5xx e falha de rede
+      // merecem segunda tentativa.
+      if (res.status < 500) return false
+    } catch {
+      // Rede caiu ou o prazo estourou. Vale uma segunda tentativa.
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  return false
+}
+
 export function UploadView() {
   const { openResume, setView } = useNav()
   const { user } = useAuth()
@@ -205,13 +255,20 @@ export function UploadView() {
         return
       }
 
-      // O envio NÃO dispara mais a análise paga.
+      // O envio NÃO dispara a análise paga: isso consumiria uma análise do saldo
+      // sem que ninguém tivesse pedido. O que roda aqui é a PRÉVIA gratuita, e a
+      // decisão de liberar o laudo inteiro continua sendo do usuário.
       //
-      // Antes, salvar o currículo abria a análise completa na sequência — o que
-      // agora consumiria uma análise do saldo sem que ninguém tivesse pedido. A
-      // tela de laudo recebe o currículo e mostra a prévia gratuita com as oito
-      // notas; a decisão de liberar o laudo inteiro é do usuário, com o preço à
-      // vista.
+      // Ela roda AQUI, com a animação ainda na tela, e não depois de trocar de
+      // página. Antes o fluxo era: animação do envio termina → tela muda →
+      // começa outra espera, com um giro sem número e sem etapa. A pessoa via
+      // duas esperas onde só existe uma entrega, e a segunda parecia travada.
+      //
+      // Agora é uma espera só, com relógio à vista, e a tela seguinte já abre
+      // com a nota pronta.
+      setLoadingStep('Avaliando seu currículo nas 8 dimensões...')
+      await warmPreview(data.resume.id)
+
       setLoading(false)
       setLoadingStep(null)
       toast.success('Currículo salvo! Veja sua nota nas 8 dimensões.')
