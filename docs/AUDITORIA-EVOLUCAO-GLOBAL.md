@@ -414,7 +414,7 @@ da Etapa 3 (Market Adapter)**. O resto está mapeado abaixo, não implementado.
 | **5 — Job Sources** (§11, §12) | ✅ Sete fontes | Greenhouse, Lever, Gupy, páginas de carreira, Adzuna, Remotive e RemoteOK. Só a Gupy é API interna; as demais têm contrato público |
 | **6 — Matching** (§9, §16) | ✅ Feita | — |
 | **7 — Radar** (§15, §22, §23) | ✅ Roda por cron, entrega no produto | Falta o e-mail — não há provedor configurado no projeto |
-| **8 — Ação** (§18, §19, §20) | ✅ Job Fit na tela do Radar | Falta o currículo direcionado partir da vaga encontrada, e não só da vaga digitada |
+| **8 — Ação** (§18, §19, §20) | ✅ Completa | Job Fit na tela e currículo direcionado a partir da vaga do Radar, sem colar nada |
 | **9 — Assinatura** (§21) | ⬜ Não iniciada | Só depois do Radar provar valor. Compra única continua funcionando |
 | **10 — Escala global** (§34) | ⬜ Não iniciada | Novos mercados são entradas em `MARKETS`; painel administrativo por mercado/fonte/adapter |
 
@@ -1113,3 +1113,71 @@ A limpeza de HTML estava copiada em três adapters, e as três deixavam
 `"Construir sistemas ."` — a tag no meio da frase vira espaço, e o espaço
 encosta na pontuação. Três cópias são três lugares para corrigir o mesmo
 defeito; agora é uma, em `jobs/text.ts`.
+
+---
+
+## 2.24 A ponte que faltava, e o painel que não existia
+
+### O Radar levava a lugar nenhum
+
+O Griffo sabe adaptar um currículo a uma vaga específica. Mas a vaga só entrava
+no sistema de um jeito: **colada à mão** no formulário de envio.
+
+Então o Radar encontrava a vaga certa, mostrava na tela — e a pessoa precisava
+copiar a descrição, trocar de tela e colar. Quase ninguém faz. A fricção mata
+exatamente no momento em que ela estava disposta a agir, e é o momento em que o
+produto ganharia dinheiro.
+
+Pior: já **havia** um botão ali chamando `setView('rewrite')`. Ele navegava sem
+levar a vaga. A pessoa chegava na tela de reescrita e encontrava o mesmo campo
+vazio de sempre — parecia funcionar e não funcionava.
+
+Agora `POST /api/radar/prepare` grava a vaga no currículo e a tela abre já
+direcionada.
+
+**Direciona o currículo que existe, e não cria outro.** Criar um por vaga
+pareceria mais limpo, mas as permissões de uso são por currículo: um currículo
+novo exigiria destravá-lo de novo, e a pessoa receberia uma cobrança que não
+pediu ao clicar em "preparar".
+
+**E diz o que sobrescreveu.** Se o currículo estava direcionado a outra vaga, a
+resposta devolve qual era, e a tela conta. Trocar o alvo em silêncio faria a
+próxima análise sair diferente sem que ninguém soubesse por quê.
+
+As ações do Job Fit deixaram de ser botões. Eram três botões que faziam a mesma
+coisa — prometiam escolhas que não existiam. Viraram o que sempre foram:
+recomendações escritas.
+
+### Cota estourada era invisível
+
+Uma fonte pode parar de responder por limite de plano, e isso **não aparece**
+como erro. A Adzuna devolve 200 com um campo `exception` quando o mês acaba, o
+que sem alguém olhando se parece com "não há vaga". O Radar continuaria rodando,
+entregando menos, e ninguém saberia por quê.
+
+`ApiQuotaUsage` conta requisições por provedor e por mês — uma linha por mês, não
+uma por chamada: o que interessa é o total, e uma linha por requisição seriam
+milhares de registros para responder uma pergunta de um número só.
+
+O incremento é atômico (`increment`), e não leitura-e-escrita: duas rodadas
+simultâneas somariam errado, e a soma é a única coisa que o registro existe para
+saber.
+
+### A regra que protege o compartilhado
+
+**20% da cota é reserva da rodada agendada, intocável pela busca sob demanda.**
+
+A rodada serve todos os usuários; a busca sob demanda serve um. Quando a cota
+aperta, quem cede é o individual. Com a Adzuna, a reserva são 500 requisições —
+bem acima das ~372 que a rodada consome no mês, com folga para um dia atípico.
+
+O painel acende em dois níveis: **atenção aos 70%**, para decidir sem pressa, e
+**crítico aos 90%**, para reagir antes de a fonte parar.
+
+E `unknown` não é `ok`: provedor sem teto declarado não autoriza consumo
+ilimitado — só significa que a decisão vem de outro lugar (o orçamento de tempo
+da coleta). Confundir os dois faria a Gupy virar barra livre.
+
+`GET /api/admin/quotas` devolve as cotas **e** o estado de cada fonte: cota é só
+uma das formas de uma fonte parar, e uma que responde 500 há três dias precisa
+aparecer no mesmo lugar.

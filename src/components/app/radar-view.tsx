@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Radar as RadarIcon, Loader2, CheckCircle2, AlertTriangle, XCircle, ExternalLink,
-  ThumbsUp, ThumbsDown, Sliders, Info, Briefcase, RefreshCw,
+  ThumbsUp, ThumbsDown, Sliders, Info, Briefcase, RefreshCw, Wand2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { internalFetch } from '@/lib/internal-fetch'
@@ -100,7 +100,7 @@ const FEEDBACK_REASONS: { id: string; label: string }[] = [
 ]
 
 export function RadarView() {
-  const { setView } = useNav()
+  const { setView, openResume } = useNav()
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [digest, setDigest] = useState<Digest | null>(null)
   const [hasProfile, setHasProfile] = useState(true)
@@ -148,6 +148,47 @@ export function RadarView() {
     })()
     return () => { cancelled = true }
   }, [load])
+
+  const [preparing, setPreparing] = useState<string | null>(null)
+
+  /**
+   * Leva a vaga para o currículo.
+   *
+   * Até aqui o botão navegava para a reescrita sem levar a vaga junto — a
+   * pessoa chegava lá e tinha que colar a descrição à mão, que é justamente a
+   * fricção que faz desistir. Agora a vaga vai junto, e a tela abre já
+   * direcionada a ela.
+   */
+  const prepareResume = async (opportunity: Opportunity) => {
+    setPreparing(opportunity.alertId)
+    try {
+      const res = await internalFetch('/api/radar/prepare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alertId: opportunity.alertId }),
+      })
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok) {
+        toast.error(data?.error || 'Não foi possível preparar seu currículo para esta vaga.')
+        return
+      }
+
+      // Dizer o que foi trocado, em vez de trocar o alvo em silêncio: a próxima
+      // análise sairia diferente e ninguém saberia por quê.
+      if (data?.previousTarget) {
+        toast.info(`Seu currículo estava direcionado a "${data.previousTarget}". Agora aponta para esta vaga.`)
+      } else {
+        toast.success('Currículo direcionado a esta vaga.')
+      }
+
+      openResume(data.resumeId, 'rewrite')
+    } catch {
+      toast.error('Falha de conexão ao preparar seu currículo.')
+    } finally {
+      setPreparing(null)
+    }
+  }
 
   /**
    * Procura agora, sem esperar a rodada da madrugada.
@@ -434,12 +475,33 @@ export function RadarView() {
                 <Button size="sm" onClick={() => openJob(opportunity)} className="bg-indigo-600 hover:bg-indigo-700">
                   <ExternalLink className="w-4 h-4 mr-1.5" /> Ver a vaga
                 </Button>
-                {fit.actions.filter((a) => a.primary).map((action) => (
-                  <Button key={action.id} size="sm" variant="outline" onClick={() => setView('rewrite')} title={action.rationale}>
-                    {action.label}
-                  </Button>
-                ))}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => prepareResume(opportunity)}
+                  disabled={preparing === opportunity.alertId}
+                  className="border-emerald-300 text-emerald-800 hover:bg-emerald-50"
+                >
+                  {preparing === opportunity.alertId
+                    ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    : <Wand2 className="w-4 h-4 mr-1.5" />}
+                  Preparar meu currículo
+                </Button>
               </div>
+
+              {/* As ações do Job Fit são recomendações, não botões: cada uma
+                  descreve o que fazer, e transformá-las em botões que fazem
+                  todos a MESMA coisa prometeria escolhas que não existem. */}
+              {fit.actions.filter((a) => a.primary).length > 0 && (
+                <ul className="text-[11px] text-slate-600 space-y-1 pl-1">
+                  {fit.actions.filter((a) => a.primary).map((action) => (
+                    <li key={action.id} className="flex gap-1.5">
+                      <span className="text-emerald-600 shrink-0">→</span>
+                      <span><strong className="text-slate-800">{action.label}.</strong> {action.rationale}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {/* §30 — o retorno humano. Registrado no alerta, nunca escrito
                   de volta no perfil sem que a pessoa decida. */}
