@@ -8,8 +8,8 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
 import { requireUnlockedResume } from '@/lib/entitlements'
-import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
-import { marketPromptContext } from '@/lib/market'
+import { getRequestLanguage } from '@/lib/i18n/server'
+import { buildResumeContext } from '@/lib/analysis/resume-context'
 import { loadProfileContext } from '@/lib/profile/server'
 import { edgeCountry } from '@/lib/pricing/resolve'
 
@@ -81,7 +81,23 @@ export async function POST(req: Request) {
       taskType: 'rewrite',
       userId: user.id,
       userCountry: edgeCountry(req),
-      systemPrompt: `${LANGUAGE_DIRECTIVE[lang]}\n\nVocê é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas de triagem (ATS).\n\n${marketPromptContext(market)}\n${profileContext ? `\\n${profileContext}\\n` : ''}\nSua função é reescrever o currículo COMPLETO de ponta a ponta sem cortar nada, utilizando marcações Markdown perfeitamente estruturadas (títulos H1/H2, marcadores de lista, negritos), respeitando as convenções do mercado acima.`,
+      /**
+       * Currículo, mercado e perfil vão no bloco cacheável — o mesmo que a
+       * carta de apresentação e a orientação vocacional montam. Quando a pessoa
+       * pede duas dessas entregas seguidas, a segunda lê o prefixo do cache.
+       *
+       * O papel e as diretrizes de reescrita ficam fora dele: variam por tarefa
+       * e, depois do marcador, variar não custa nada.
+       */
+      cacheableContext: buildResumeContext({
+        resumeContent: resume.originalContent.slice(0, REWRITE_INPUT_LIMIT),
+        targetJob: resume.targetJob,
+        targetJobDescription: resume.targetJobDescription,
+        lang,
+        market,
+        profileContext,
+      }),
+      systemPrompt: `Você é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas de triagem (ATS).\n\nSua função é reescrever o currículo COMPLETO de ponta a ponta sem cortar nada, utilizando marcações Markdown perfeitamente estruturadas (títulos H1/H2, marcadores de lista, negritos), respeitando as convenções do mercado descrito no contexto.`,
       userPrompt: `REESCREVA O CURRÍCULO COMPLETO DO INÍCIO AO FIM SEM OMITIR NEM SINTETIZAR NENHUMA SEÇÃO OU EXPERIÊNCIA.
 
 Diretrizes Obrigatórias:
@@ -93,8 +109,7 @@ Diretrizes Obrigatórias:
 5. NÃO invente dados de contato. Se o currículo original não traz e-mail, telefone ou LinkedIn, omita o campo — nunca escreva marcadores como "[seu e-mail]" ou "[link]", que chegam ao recrutador exatamente assim, como se fossem o conteúdo.
 6. NÃO use emojis, ícones ou símbolos decorativos em nenhuma parte do documento. Ele é lido por sistemas de triagem (ATS), que os descartam ou corrompem, e a exportação em PDF não possui glifo para eles.
 
-Currículo Original Completo para Reescrita:
-${resume.originalContent.slice(0, REWRITE_INPUT_LIMIT)}`,
+O currículo original completo está no contexto acima. Reescreva-o.`,
       maxTokens: 8000,
       // Reescrever um currículo inteiro são milhares de tokens de saída, e
       // geração é serial: esses tokens SÃO a latência. Com o raciocínio

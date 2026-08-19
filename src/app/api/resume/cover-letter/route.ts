@@ -7,10 +7,10 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
-import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
+import { getRequestLanguage } from '@/lib/i18n/server'
 import { requireUnlockedResume } from '@/lib/entitlements'
 import { edgeCountry } from '@/lib/pricing/resolve'
-import { marketPromptContext } from '@/lib/market'
+import { buildResumeContext } from '@/lib/analysis/resume-context'
 import { loadProfileContext } from '@/lib/profile/server'
 
 /**
@@ -151,23 +151,35 @@ export async function POST(req: Request) {
       language: lang,
     })
 
+    /**
+     * Currículo, mercado, perfil e vaga vão no bloco CACHEÁVEL, que o roteador
+     * coloca antes do marcador de cache. É material idêntico ao que a reescrita
+     * e a orientação vocacional usam — quando a pessoa pede duas dessas
+     * entregas seguidas, a segunda lê o prefixo do cache em vez de reenviá-lo.
+     *
+     * O que muda por tarefa — o papel de redator, as regras de honestidade, o
+     * que produzir — fica no `systemPrompt`, DEPOIS do marcador. Variar ali não
+     * invalida nada.
+     */
+    const cacheableContext = buildResumeContext({
+      resumeContent: resume.originalContent.slice(0, 15000),
+      targetJob: resume.targetJob,
+      targetJobDescription: resume.targetJobDescription,
+      lang,
+      market,
+      profileContext,
+    })
+
     const jobBlock = resume.targetJobDescription
-      ? `VAGA ALVO (direcione a carta e o resumo a ELA, citando exigências concretas):
-Cargo: ${resume.targetJob || 'não informado'}
-Descrição/Requisitos:
-${resume.targetJobDescription.slice(0, 4000)}`
+      ? 'A vaga alvo está no contexto acima. Direcione a carta e o resumo a ELA, citando exigências concretas.'
       : resume.targetJob
-        ? `CARGO ALVO INFORMADO PELO CANDIDATO: ${resume.targetJob}
-Não há descrição da vaga. Direcione ao cargo, sem inventar exigências que não foram informadas.`
-        : `NENHUMA VAGA ALVO FOI INFORMADA.
-Escreva uma carta e um resumo direcionados à área de atuação evidente no currículo. NÃO invente empresa, vaga ou processo seletivo.`
+        ? 'O cargo alvo está no contexto acima, mas não há descrição da vaga. Direcione ao cargo, sem inventar exigências que não foram informadas.'
+        : 'NENHUMA VAGA ALVO FOI INFORMADA. Escreva uma carta e um resumo direcionados à área de atuação evidente no currículo. NÃO invente empresa, vaga ou processo seletivo.'
 
-    const systemPrompt = `${LANGUAGE_DIRECTIVE[lang]}
+    const systemPrompt = `Você é redator sênior de candidaturas: escreve cartas de apresentação e resumos profissionais que passam por triagem automática e convencem um recrutador humano.
 
-Você é redator sênior de candidaturas: escreve cartas de apresentação e resumos profissionais que passam por triagem automática e convencem um recrutador humano.
+${jobBlock}
 
-${marketPromptContext(market)}
-${profileContext ? `\n${profileContext}\n` : ''}
 REGRAS DE HONESTIDADE — inegociáveis:
 1. Use APENAS o que está no currículo. NÃO invente empregador, cargo, período, formação, certificação, número ou resultado.
 2. Se a vaga exige algo que o candidato não tem, NÃO afirme que ele tem. Ou omita, ou trate como disposição a desenvolver.
@@ -187,8 +199,11 @@ Responda APENAS o JSON do schema, sem texto antes ou depois.`
       userId: user.id,
       resumeId: resume.id,
       userCountry: edgeCountry(req),
+      cacheableContext,
       systemPrompt,
-      userPrompt: `CURRÍCULO DO CANDIDATO:\n${resume.originalContent.slice(0, 12000)}\n\n${jobBlock}`,
+      // O currículo NÃO se repete aqui: ele já está no bloco cacheável. Mandá-lo
+      // duas vezes dobraria o custo de entrada e não acrescentaria nada.
+      userPrompt: 'Produza a carta de apresentação e o resumo profissional para o candidato do contexto acima.',
       maxTokens: 2600,
       // Redação direcionada não ganha com raciocínio estendido, e no Sonnet 5 ele
       // vem ligado por padrão — consumindo parte do mesmo orçamento de tokens da

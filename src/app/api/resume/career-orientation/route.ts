@@ -7,10 +7,10 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
-import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
+import { getRequestLanguage } from '@/lib/i18n/server'
 import { requireUnlockedResume } from '@/lib/entitlements'
 import { edgeCountry } from '@/lib/pricing/resolve'
-import { marketPromptContext } from '@/lib/market'
+import { buildResumeContext } from '@/lib/analysis/resume-context'
 import { loadProfileContext, seedProfileFromOrientation } from '@/lib/profile/server'
 import { runForUserQuietly } from '@/lib/radar/runner'
 
@@ -121,18 +121,22 @@ export async function POST(req: Request) {
     // Vaga real que o usuário importou, quando houver. É o único dado de
     // mercado concreto disponível hoje — melhor do que raciocinar só sobre o
     // currículo, e honesto quanto à origem.
-    const marketContext = resume.targetJobDescription
-      ? `\n\nVAGA DE EMPREGO REAL QUE O CANDIDATO IMPORTOU (use as exigências dela como referência concreta do mercado, citando-as quando pertinente):\n${resume.targetJobDescription.slice(0, 4000)}`
-      : resume.targetJob
-        ? `\n\nCARGO ALVO INFORMADO PELO CANDIDATO: ${resume.targetJob}`
-        : ''
+    /**
+     * Currículo, mercado, perfil e vaga vão no bloco cacheável — idêntico ao que
+     * a reescrita e a carta montam. Quem pede duas dessas entregas seguidas paga
+     * o prefixo uma vez só.
+     */
+    const cacheableContext = buildResumeContext({
+      resumeContent: resume.originalContent.slice(0, 12000),
+      targetJob: resume.targetJob,
+      targetJobDescription: resume.targetJobDescription,
+      lang,
+      market,
+      profileContext,
+    })
 
-    const systemPrompt = `${LANGUAGE_DIRECTIVE[lang]}
+    const systemPrompt = `Você é o Agente Especialista em Orientação de Carreira e Diagnóstico Vocacional do GriffoWork.
 
-Você é o Agente Especialista em Orientação de Carreira e Diagnóstico Vocacional do GriffoWork.
-
-${marketPromptContext(market)}
-${profileContext ? `\n${profileContext}\n` : ''}
 Use a nomenclatura de cargo praticada NESTE mercado — o mesmo trabalho tem nomes diferentes em mercados diferentes.
 
 Analise o histórico, hard skills, soft skills e conquistas do candidato e determine as 3 melhores áreas ou cargos do mercado atual em que ele possui maior afinidade e chances imediatas de sucesso.
@@ -167,8 +171,11 @@ Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto 
       taskType: 'career_orientation',
       userId: user.id,
       userCountry: edgeCountry(req),
+      cacheableContext,
       systemPrompt,
-      userPrompt: `Realize o Diagnóstico de Orientação Vocacional para este currículo:\n\n${resume.originalContent.slice(0, 12000)}${marketContext}`,
+      // O currículo já está no bloco cacheável; repeti-lo aqui dobraria o custo
+      // de entrada sem acrescentar informação.
+      userPrompt: 'Realize o Diagnóstico de Orientação Vocacional para o candidato do contexto acima.',
       maxTokens: 3000,
       // Extração estruturada não ganha nada com raciocínio estendido, e no
       // Sonnet 5 ele vem LIGADO por padrão: consumia parte do orçamento de
