@@ -7,7 +7,8 @@ import { runRadar } from '@/lib/radar/runner'
 import { greenhouseAdapters } from '@/lib/jobs/adapters/greenhouse'
 import { leverAdapters } from '@/lib/jobs/adapters/lever'
 import { createGupyAdapter } from '@/lib/jobs/adapters/gupy'
-import { searchTermsFromProfiles } from '@/lib/jobs/search-terms.server'
+import { adzunaLastCollections, searchTermsByCountry, searchTermsFromProfiles } from '@/lib/jobs/search-terms.server'
+import { estimatedRequests, planAdzunaRound } from '@/lib/jobs/adzuna-plan'
 import { careerPageAdapters } from '@/lib/jobs/adapters/jsonld'
 import { adzunaCredentials, createAdzunaAdapter } from '@/lib/jobs/adapters/adzuna'
 
@@ -70,6 +71,21 @@ const COLLECTION_BUDGET_MS = 12_000
  */
 const RUN_BUDGET_MS = 45_000
 
+/**
+ * O orçamento da Adzuna, em três números.
+ *
+ * A cota gratuita é de 2.500 requisições por mês, ~83 por dia. Multiplicados,
+ * estes três dão **12 requisições por rodada** — folga proposital, porque o que
+ * sobra é o que sustenta a busca sob demanda de quem não quer esperar a
+ * madrugada.
+ *
+ * Mexer em qualquer um deles mexe direto na conta do mês. O teste de
+ * `adzuna-plan.ts` trava o resultado para que a mudança seja consciente.
+ */
+const ADZUNA_COUNTRIES_PER_RUN = 4
+const ADZUNA_TERMS_PER_COUNTRY = 3
+const ADZUNA_PAGES_PER_TERM = 1
+
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET
 
@@ -94,16 +110,42 @@ export async function GET(req: Request) {
   const gupyTerms = await searchTermsFromProfiles({ country: 'BR', limit: 6 })
   const adzuna = adzunaCredentials(process.env.ADZUNA_APP_ID, process.env.ADZUNA_APP_KEY)
 
+  /**
+   * O rodízio da Adzuna.
+   *
+   * Uma página por termo, três termos por país, quatro países por rodada — doze
+   * requisições, contra as ~83 diárias que a cota mensal permite. A folga é
+   * deliberada: ela é o que sobra para a busca sob demanda, que serve uma pessoa
+   * enquanto esta rodada serve todas.
+   */
+  const [termsByCountry, lastCollections] = adzuna
+    ? await Promise.all([searchTermsByCountry(), adzunaLastCollections()])
+    : [new Map<string, string[]>(), new Map<string, Date | null>()]
+
+  const adzunaPlans = planAdzunaRound(
+    [...termsByCountry.entries()].map(([country, terms]) => ({
+      country: country.toLowerCase(),
+      terms,
+      lastCollectionAt: lastCollections.get(country.toLowerCase()) ?? null,
+    })),
+    { maxCountries: ADZUNA_COUNTRIES_PER_RUN, maxTermsPerCountry: ADZUNA_TERMS_PER_COUNTRY }
+  )
+
   const adapters = [
     ...greenhouseAdapters(process.env.GREENHOUSE_BOARDS),
     ...leverAdapters(process.env.LEVER_BOARDS),
     ...(gupyTerms.length > 0 ? [createGupyAdapter({ terms: gupyTerms })] : []),
     ...careerPageAdapters(process.env.CAREER_PAGES),
-    // A Adzuna é a única fonte de descoberta ampla com contrato público. Como a
-    // Gupy, busca pelos cargos que a orientação recomendou.
-    ...(adzuna && gupyTerms.length > 0
-      ? [createAdzunaAdapter({ credentials: adzuna, country: 'br', terms: gupyTerms })]
-      : []),
+    // A Adzuna atende dez mercados, mas a cota gratuita não cabe todos toda
+    // noite. O rodízio escolhe quem esperou mais — ver `adzuna-plan.ts`.
+    ...adzunaPlans.map((plan) =>
+      createAdzunaAdapter({
+        credentials: adzuna!,
+        country: plan.country,
+        terms: plan.terms,
+        maxPagesPerTerm: ADZUNA_PAGES_PER_TERM,
+      })
+    ),
   ]
 
   try {
@@ -121,6 +163,10 @@ export async function GET(req: Request) {
       // Declarado para que uma rodada sem resultado na Gupy possa ser
       // explicada: nenhum termo é diferente de nenhuma vaga.
       gupyTerms,
+      // O mesmo para a Adzuna, mais o consumo de cota da rodada — sem isso,
+      // saber quanto do mês já foi gasto exigiria adivinhação.
+      adzunaPlans,
+      adzunaRequests: estimatedRequests(adzunaPlans, ADZUNA_PAGES_PER_TERM),
       ...summary,
     })
   } catch (e: any) {
