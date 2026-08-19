@@ -27,8 +27,9 @@
  * contexto.
  */
 
+import { resolveMarket } from '../market'
 import { seniorityMeets, type SeniorityLevel } from '../market/taxonomy'
-import type { ProfessionalProfile } from '../profile'
+import { marketInputFrom, type ProfessionalProfile } from '../profile'
 import type { NormalizedJob } from '../jobs/types'
 
 /** Por que uma vaga foi eliminada antes da IA. */
@@ -66,6 +67,34 @@ export function targetMarketsOf(profile: ProfessionalProfile): string[] {
   // fixo. Sem isto, declarar abertura ao mundo excluiria as vagas do mundo.
   if (profile.openToInternationalRemote) markets.add('GLOBAL')
   return [...markets]
+}
+
+/**
+ * Os mercados desta pessoa, na ordem em que um orçamento limitado deve ser gasto.
+ *
+ * `targetMarketsOf` responde "o que ela declarou". Esta função responde a
+ * pergunta seguinte, que é a que o Radar precisa: **quais vagas ler primeiro
+ * quando não dá para ler todas**.
+ *
+ * A diferença aparece em quem ainda não declarou nada. Para o filtro duro,
+ * perfil sem alvo vê tudo — e está certo, porque filtrar seria eliminar por
+ * ausência de informação. Mas "vê tudo" só é uma resposta útil enquanto o banco
+ * cabe numa leitura. Quando não cabe, "tudo" na prática vira "as mais recentes
+ * do mundo", e alguém no Brasil passa a receber silêncio enquanto existem vagas
+ * brasileiras abertas — o mesmo silêncio que receberia se não houvesse nenhuma.
+ *
+ * Por isso, sem alvo declarado, o mercado sai de onde ele já sai no resto do
+ * produto: residência, e depois idioma (`resolveMarket`). É palpite, e é por
+ * isso que ele governa a ORDEM e nunca a exclusão — quem lê esta lista deve
+ * continuar depois dela, não parar nela.
+ */
+export function marketScopeOf(profile: ProfessionalProfile): string[] {
+  const declared = targetMarketsOf(profile)
+  if (declared.length > 0) return declared
+
+  // `marketInputFrom` sem fallback: aqui não há requisição, não há país de
+  // borda e não há idioma de interface. O que houver, está no perfil.
+  return [resolveMarket(marketInputFrom(profile)).market.id]
 }
 
 /**

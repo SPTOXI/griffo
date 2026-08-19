@@ -217,39 +217,45 @@ atualizações.
 
 ## 7. Trabalho pendente, em ordem
 
-### 7.1 🔴 URGENTE — o Radar quebra com escala, e antes disso fica errado
+### 7.1 ✅ RESOLVIDO — o Radar quebrava com escala, e antes disso ficava errado
 
-Em `src/lib/radar/runner.ts`, `runForUser` faz:
+Fica registrado porque a correção tem uma forma que não é óbvia, e desfazê-la por
+engano é fácil.
 
-```ts
-const rows = await db.job.findMany({
-  where: { closedAt: null },
-  orderBy: { publishedAt: 'desc' },
-  take: MAX_JOBS_PER_USER,   // 500
-})
-```
+**O erro.** Em `src/lib/radar/runner.ts`, `runForUser` carregava as 500 vagas
+abertas mais recentes do banco inteiro, sem nenhuma menção a mercado. Com 300
+vagas funcionava; com 50 mil, as 500 mais recentes poderiam ser todas de um país
+só, e um usuário brasileiro receberia silêncio havendo vagas brasileiras abertas.
+Não era lentidão: era **resultado errado**, calado, piorando sozinho.
 
-**Ele carrega as 500 vagas mais recentes do banco inteiro, sem filtrar por
-mercado.** Com 300 vagas isso funciona. Com 50 mil, as 500 mais recentes podem
-ser todas de um país só — e um usuário brasileiro receberia silêncio mesmo
-havendo vagas brasileiras abertas.
+**A correção.** `openJobsWithinBudget` (no mesmo arquivo) gasta o teto de 500 em
+ordem de prioridade: primeiro as vagas dos mercados da pessoa
+(`marketScopeOf`, em `lib/matching/filters.ts`), e — **se sobrar orçamento** — o
+resto do mundo, numa segunda consulta.
 
-Isso **não é lentidão, é resultado errado**, e piora sozinho conforme o banco
-cresce.
+**Por que a segunda consulta não pode ser removida.** Ela é o que mantém a
+mudança sendo de ORDEM e não de ESCOPO. O filtro duro deixa passar vaga sem
+mercado declarado, deixa passar vaga remota para quem aceita remoto
+internacional, e deixa passar tudo para quem ainda não declarou alvo nenhum. Se o
+SQL parasse na primeira consulta, o banco estaria eliminando o que o filtro
+decidiu não eliminar — e essa eliminação nem aparece como rejeição em lugar
+nenhum. Seria trocar um erro por outro, pior.
 
-O conserto: filtrar no SQL antes de carregar. O índice já existe
-(`@@index([market, closedAt])` no modelo `Job`). Derive o mercado do usuário com
-`marketInputFrom` + `resolveMarket` (em `lib/profile` e `lib/market`) e filtre
-por `market` e por `country`, considerando também quem aceita remoto
-internacional — esse aceita vaga de qualquer mercado.
+**`marketScopeOf` vs `targetMarketsOf`.** São perguntas diferentes.
+`targetMarketsOf` responde "o que a pessoa declarou" e governa **eliminação** —
+perfil sem alvo vê tudo. `marketScopeOf` responde "o que ler primeiro quando não
+dá para ler tudo" e governa **ordem** — perfil sem alvo cai em
+`marketInputFrom` + `resolveMarket` (residência, depois idioma). Palpite é
+aceitável para ordenar e inaceitável para excluir; não unifique as duas.
 
-Cuidado: o filtro precisa **incluir** vaga remota internacional para quem marcou
-`openToInternationalRemote`, senão você troca um erro por outro.
+**Ordenação.** `NEWEST_FIRST` usa `nulls: 'last'`. Em Postgres, `ORDER BY x DESC`
+põe os nulos na frente — sem isso, as vagas que a fonte não datou consumiam o
+orçamento antes das vagas realmente recentes.
 
-Depois disso, o §27 (cache de Job Intelligence — separar o que é da vaga do que é
-do par vaga×usuário) passa a fazer sentido. Hoje `matchJob` roda por par e é
-determinístico e barato; o problema não é ele, é **quantas vagas irrelevantes
-chegam até ele**.
+Com isso feito, o §27 (cache de Job Intelligence — separar o que é da vaga do que
+é do par vaga×usuário) passa a fazer sentido. `matchJob` roda por par, é
+determinístico e barato; o problema nunca foi ele, era **quantas vagas
+irrelevantes chegavam até ele**.
 
 ### 7.2 Currículo direcionado a partir da vaga — verificar em produção
 
