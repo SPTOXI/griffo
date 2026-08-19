@@ -325,3 +325,85 @@ chute.
   tem cargo-alvo declarado; sem termo, fonte de busca não roda.
 - **Cache de prompt não acionado em currículo curto.** A Anthropic não cacheia
   prefixo menor que ~1024 tokens, e não avisa.
+
+---
+
+## 10. Áreas onde o erro não aparece como erro
+
+As seções acima tratam do Radar. Esta trata do que é mais perigoso que o Radar.
+
+Nos sete pontos abaixo, uma mudança errada **não quebra teste, não quebra tela e
+não aparece em log**. Ela cobra duas vezes, dá crédito de graça, manda dado
+pessoal para fora da jurisdição ou apaga currículo de cliente ativo. Você
+descobre pela reclamação.
+
+**Regra: nestas áreas, pergunte ao operador ANTES de mexer. Sempre.**
+
+### 10.1 `src/lib/entitlements.ts` — cobrança
+
+O código mais sutil do repositório, e o cuidado dele é invisível para quem lê
+rápido.
+
+- `unlockAnalysis` põe as condições **na cláusula da escrita** — `updateMany`
+  com `unlockedAt: null` reivindica o currículo, e `update` com
+  `analysisBalance: { gte: 1 }` faz o decremento condicional. Trocar por
+  `if (saldo >= 1) { decrementa }` reintroduz cobrança dupla em duplo clique.
+- O `catch` do final **não compensa nada de propósito**. Preenchê-lo apagaria o
+  `unlockedAt` que outra requisição concorrente acabou de gravar *e cobrar*.
+- `grantAnalyses` é idempotente **pela restrição única de `paymentRef` no
+  banco**, não por consulta prévia. O webhook da Stripe e o retorno do navegador
+  correm em paralelo por construção; qualquer `findFirst` antes da escrita perde
+  a corrida e credita duas vezes. "Verificar antes de criar" parece mais limpo e
+  está errado.
+
+### 10.2 `src/app/api/webhooks/stripe/route.ts` — assinatura sobre o corpo cru
+
+`constructEvent(rawBody, signature, secret)` usa `req.text()`. Nada pode ler
+`req.json()` antes, e nenhum parser pode entrar no caminho: quebra o HMAC. Sem
+essa verificação, quem souber a URL credita análises para qualquer conta.
+
+### 10.3 `src/lib/data-residency.ts` — isso é lei, não custo
+
+`filterProvidersByResidency` proíbe enviar currículo de usuário do EEE, Reino
+Unido ou Suíça para DeepSeek e Kimi — processam na China, que não tem decisão de
+adequação da UE. É exigência do GDPR.
+
+Nunca remova nem contorne essa filtragem na cadeia de fallback, por mais barato
+que o provedor seja. **O sintoma de violar isto é zero.**
+
+### 10.4 `src/lib/url-guard.ts` — SSRF
+
+`/api/resume/job-fetch` recebe URL fornecida pelo usuário. O guard resolve DNS,
+confere **todos** os endereços contra faixas reservadas e revalida **cada salto
+de redirecionamento**. A versão anterior comparava texto de hostname e deixava
+passar `http://2130706433/` (= 127.0.0.1) e o serviço de metadados da nuvem via
+redirect. Nunca troque por `fetch` direto seguindo redirects.
+
+### 10.5 `src/lib/retention.ts` — exclusão irreversível em produção
+
+`resume.deleteMany` usa `updatedAt`, **não** `createdAt`: quem revisou o
+currículo ano passado ainda o está usando. Não existe desfazer.
+
+### 10.6 `src/app/api/resume/analyze/route.ts` — assíncrona por necessidade
+
+A rota cria o job, responde na hora, e processa via `after()` gravando o
+progresso no banco; a tela acompanha por `GET /api/resume/analyze/status`.
+
+Era síncrona antes: 82s de IA dentro de função com `maxDuration = 60`, e o
+usuário via "erro de conexão" depois de mais de um minuto. `await` + responder é
+mais simples e traz o 504 de volta.
+
+### 10.7 `src/lib/ai-router/router.ts` — os três números são um sistema
+
+`DEFAULT_TASK_BUDGET_MS = 52_000`, `MAX_PROVIDER_ATTEMPTS = 2`,
+`MIN_PROVIDER_TIMEOUT_MS = 12_000`. O teto por tentativa é **derivado** (metade
+do orçamento) porque precisa caber **duas vezes**: com 35s fixos, um provedor
+travado consumia o prazo inteiro e o segundo nunca era tentado. Mexer num número
+isolado desliga o fallback em silêncio. Os 8s que sobram dos 60 existem para
+gravar o resultado e responder o erro.
+
+### 10.8 Rotas de administração
+
+Toda rota nova sob `/api/admin/` precisa chamar `getAdminUser()` e tratar `null`
+como 403. A função **não lança exceção** — devolve `null`. Esquecer de checar
+deixa a rota aberta.
