@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertCircle, CheckCircle2, Loader2, Lock, ShoppingBag, Sparkles } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Loader2, Lock, RefreshCw, ShoppingBag, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { internalFetch } from '@/lib/internal-fetch'
 import { useI18n } from '@/context/i18n-context'
@@ -55,37 +55,54 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
   const [unlocking, setUnlocking] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (preview || loadingPreview) return
+  /**
+   * Busca a prévia.
+   *
+   * Normalmente ela JÁ chega pronta: a tela de envio a calcula enquanto a
+   * animação está no ar, e o resultado fica gravado no currículo. Isto aqui é o
+   * caminho de exceção — currículo antigo, ou a tentativa de lá tendo falhado.
+   *
+   * O prazo é do cliente e menor que o teto da função: sem isso, a espera
+   * terminaria num 504 do navegador, que para quem olha é indistinguível de
+   * queda de rede.
+   */
+  const fetchPreview = useCallback(async () => {
+    setLoadingPreview(true)
+    setPreviewError(null)
 
-    let active = true
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 55_000)
 
-    // Fora do corpo do efeito: a primeira escrita de estado encadearia um
-    // render em cima do outro se acontecesse de forma síncrona aqui.
-    queueMicrotask(() => {
-      if (!active) return
-      setLoadingPreview(true)
-      internalFetch('/api/resume/preview', {
+    try {
+      const res = await internalFetch('/api/resume/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resumeId }),
+        signal: controller.signal,
       })
-        .then(async (res) => {
-          const data = await res.json().catch(() => null)
-          if (!active) return
-          if (res.ok && data?.preview) setPreview(data.preview)
-          else setPreviewError(data?.error || 'Não foi possível calcular sua prévia agora.')
-        })
-        .catch(() => active && setPreviewError('Falha de conexão ao calcular sua prévia.'))
-        .finally(() => active && setLoadingPreview(false))
-    })
+      const data = await res.json().catch(() => null)
 
-    return () => {
-      active = false
+      if (res.ok && data?.preview) setPreview(data.preview)
+      else setPreviewError(data?.error || 'Não foi possível calcular sua prévia agora.')
+    } catch {
+      setPreviewError('A prévia demorou mais que o esperado. O currículo está salvo — tente de novo.')
+    } finally {
+      clearTimeout(timer)
+      setLoadingPreview(false)
     }
-    // Uma vez por currículo: a prévia é gravada no banco e as chamadas seguintes
-    // leem a mesma, mas nem por isso vale disparar a cada render.
-  }, [resumeId, preview, loadingPreview])
+  }, [resumeId])
+
+  useEffect(() => {
+    if (preview || loadingPreview || previewError) return
+
+    // Fora do corpo do efeito: a primeira escrita de estado encadearia um
+    // render em cima do outro se acontecesse de forma síncrona aqui.
+    queueMicrotask(() => { void fetchPreview() })
+    // Uma vez por currículo. `previewError` na lista impede o reenvio automático
+    // depois de uma falha: repetir sozinho gastaria chamada atrás de chamada
+    // sem que ninguém pedisse, e a decisão de tentar de novo é de quem está
+    // olhando.
+  }, [preview, loadingPreview, previewError, fetchPreview])
 
   /**
    * Com saldo, libera direto. Sem saldo, vai ao checkout levando o `resumeId`
@@ -142,9 +159,26 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
           )}
 
           {previewError && !preview && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="bg-rose-50 border-rose-300">
               <AlertCircle className="w-4 h-4" />
-              <AlertDescription>{previewError}</AlertDescription>
+              <AlertDescription className="space-y-2">
+                <p className="text-sm text-rose-900">{previewError}</p>
+                {/* Um erro sem saída faz a pessoa ir embora achando que o
+                    produto não funciona. Seu currículo está salvo; falta só a
+                    nota, e repetir custa um clique. */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void fetchPreview()}
+                  disabled={loadingPreview}
+                  className="bg-white"
+                >
+                  {loadingPreview
+                    ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                    : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
+                  Calcular minha nota de novo
+                </Button>
+              </AlertDescription>
             </Alert>
           )}
 

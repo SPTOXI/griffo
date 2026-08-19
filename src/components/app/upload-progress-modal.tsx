@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+
 import { Card, CardContent } from '@/components/ui/card'
 import { CheckCircle2, Loader2, Cpu, Sparkles } from 'lucide-react'
 import { ANALYSIS_STAGES, type SegmentId } from '@/lib/analysis/stages'
@@ -36,6 +38,8 @@ export function UploadProgressModal({
   partial,
   headline,
 }: UploadProgressModalProps) {
+  const elapsed = useElapsedSeconds(isOpen)
+
   if (!isOpen) return null
 
   const done = new Set(completedSegments)
@@ -71,6 +75,24 @@ export function UploadProgressModal({
             {headline ??
               'As oito dimensões e o parecer executivo são gerados em paralelo. Cada etapa acende quando fica pronta.'}
           </p>
+
+          {/* Tempo DECORRIDO, nunca previsto. Uma animação sem número é
+              indistinguível de tela travada, e uma barra estimada mente: a
+              versão anterior chegava a 96% e terminava em "erro". */}
+          <p className="text-[11px] text-slate-500 mt-3 font-mono">
+            {elapsed}s decorridos
+          </p>
+
+          {/* A partir daqui a espera saiu do esperado, e calar sobre isso é o
+              que faz a pessoa achar que travou e fechar a aba. */}
+          {elapsed >= 30 && (
+            <p className="text-[11px] text-amber-300/90 mt-2 max-w-sm mx-auto leading-relaxed">
+              Está levando mais que o comum — currículos longos demoram mais.
+              {elapsed >= 60
+                ? ' O trabalho continua no servidor: se você fechar, ele termina e o resultado estará aqui quando voltar.'
+                : ' Continue nesta tela.'}
+            </p>
+          )}
         </div>
 
         <CardContent className="p-6 space-y-6 relative z-10">
@@ -80,7 +102,11 @@ export function UploadProgressModal({
                 <Loader2 className="w-4 h-4 animate-spin" />
                 {currentIndex >= 0 ? ANALYSIS_STAGES[currentIndex].label : 'Consolidando laudo'}
               </span>
-              <span className="text-amber-400 font-mono text-sm">{Math.round(progress)}%</span>
+              {/* Sem segmento concluído não há progresso real a mostrar, e um
+                  número inventado aqui seria a barra falsa de volta. */}
+              <span className="text-amber-400 font-mono text-sm">
+                {completedSegments.length > 0 ? `${Math.round(progress)}%` : '—'}
+              </span>
             </div>
             <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
               <div
@@ -188,4 +214,32 @@ export function UploadProgressModal({
       `}} />
     </div>
   )
+}
+
+/**
+ * Segundos decorridos desde que a espera começou.
+ *
+ * Existe porque uma animação sem referência nenhuma é indistinguível de uma
+ * tela travada — e foi assim que a primeira análise se apresentava: giro
+ * infinito, sem número, sem etapa, sem nada que dissesse "ainda está vivo".
+ *
+ * O que se mostra é o **tempo real decorrido**, nunca uma porcentagem estimada.
+ * A versão anterior desta tela animava uma barra falsa calibrada num tempo
+ * previsto: quando a função era encerrada, a barra estava em 96% e o usuário
+ * lia "erro". Um relógio pode ser lento; ele não pode mentir.
+ */
+function useElapsedSeconds(running: boolean): number {
+  const [seconds, setSeconds] = useState(0)
+
+  useEffect(() => {
+    if (!running) {
+      setSeconds(0)
+      return
+    }
+    const startedAt = Date.now()
+    const timer = setInterval(() => setSeconds(Math.floor((Date.now() - startedAt) / 1000)), 1000)
+    return () => clearInterval(timer)
+  }, [running])
+
+  return seconds
 }
