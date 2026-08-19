@@ -306,7 +306,9 @@ chute.
    explicando uma decisão e o que ela evita.
 2. Leia `src/lib/jobs/collection.ts` e seus testes. É a regra mais importante do
    sistema.
-3. Rode `npm test` e confirme 418 passando antes de mudar qualquer linha.
+3. Rode `npm test` e confirme **423 passando** antes de mudar qualquer linha.
+   Se o número não bater, o problema é o seu ambiente — resolva isso antes de
+   escrever código, não depois.
 4. Ao acrescentar fonte de vaga: peça o `curl` ao operador primeiro. Sempre.
 
 ---
