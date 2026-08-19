@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { EMPTY_PROFILE, type ProfessionalProfile } from '../profile'
 import { normalizeJob } from '../jobs/normalize'
 import type { NormalizedJob, RawJob } from '../jobs/types'
-import { applyHardFilters, filterJobs, targetMarketsOf } from './filters'
+import { applyHardFilters, filterJobs, marketScopeOf, targetMarketsOf } from './filters'
 import {
   contextualAxis,
   internalSignalScore,
@@ -93,6 +93,41 @@ test('remoto internacional inclui o mercado GLOBAL nos alvos', () => {
   const markets = targetMarketsOf(profileWith({ primaryMarket: 'BR', openToInternationalRemote: true }))
   assert.ok(markets.includes('GLOBAL'))
   assert.ok(markets.includes('BR'))
+})
+
+test('escopo de prioridade é o alvo declarado, quando existe', () => {
+  const scope = marketScopeOf(profileWith({ primaryMarket: 'US', residenceCountry: 'BR' }))
+  assert.deepEqual(scope, ['US'])
+})
+
+test('sem alvo declarado, o escopo cai na residência', () => {
+  // O caso que motivou esta função: perfil vindo da orientação vocacional, que
+  // não pede mercado. Sem isto, quem mora no Brasil disputa o teto de leitura
+  // com as vagas mais recentes do mundo inteiro.
+  const scope = marketScopeOf(profileWith({ residenceCountry: 'BR' }))
+  assert.deepEqual(scope, ['BR'])
+})
+
+test('escopo nunca é vazio — um perfil em branco ainda tem por onde começar', () => {
+  const scope = marketScopeOf(EMPTY_PROFILE)
+  assert.equal(scope.length, 1)
+  assert.equal(scope[0], 'GLOBAL')
+})
+
+test('escopo de quem aceita remoto internacional inclui GLOBAL', () => {
+  const scope = marketScopeOf(profileWith({ primaryMarket: 'BR', openToInternationalRemote: true }))
+  assert.ok(scope.includes('BR'))
+  assert.ok(scope.includes('GLOBAL'))
+})
+
+test('escopo de prioridade nunca é mais estreito que o filtro duro aceita', () => {
+  // A garantia que sustenta a segunda consulta do Radar: o escopo ordena, não
+  // elimina. Toda vaga cujo mercado está no escopo passa no filtro de mercado.
+  const profile = profileWith({ primaryMarket: 'BR', alternativeMarkets: ['PT'] })
+  for (const market of marketScopeOf(profile)) {
+    const outcome = applyHardFilters(job({ country: market }), profile)
+    assert.ok(!outcome.reasons.includes('market_not_targeted'), market)
+  }
 })
 
 test('vaga presencial em outro país elimina quem não quer mudar', () => {

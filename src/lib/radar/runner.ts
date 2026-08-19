@@ -11,9 +11,9 @@ import { closeStaleJobs, type StaleCloseReport } from '../jobs/lifecycle.server'
 import { dedupeBatch } from '../jobs/dedup'
 import { normalizeJob } from '../jobs/normalize'
 import { JobNormalizationError, type NormalizedJob } from '../jobs/types'
-import { filterJobs } from '../matching/filters'
+import { filterJobs, marketScopeOf } from '../matching/filters'
 import { internalSignalScore, matchJob } from '../matching/compatibility'
-import { fromRecord as profileFromRecord } from '../profile'
+import { fromRecord as profileFromRecord, type ProfessionalProfile } from '../profile'
 import { curate, DEFAULT_RADAR_PREFERENCES, type EvaluatedOpportunity, type RadarPreferences } from './curation'
 
 /**
@@ -346,6 +346,78 @@ function jobFromRow(row: any): NormalizedJob & { id: string; closedAt: Date | nu
 }
 
 /**
+ * Ordem em que as vagas abertas são lidas.
+ *
+ * `nulls: 'last'` não é detalhe: em Postgres, `ORDER BY x DESC` põe os nulos na
+ * FRENTE. Com um teto de leitura, isso fazia as vagas sem data de publicação —
+ * as que a fonte não datou — consumirem o orçamento antes das vagas realmente
+ * recentes. Uma vaga sem data não é a mais nova; é a que não disse quando saiu.
+ */
+const NEWEST_FIRST = { publishedAt: { sort: 'desc', nulls: 'last' } } as const
+
+/**
+ * As vagas abertas que este usuário vai avaliar nesta rodada.
+ *
+ * ## O erro que isto corrige
+ *
+ * A consulta anterior era `closedAt: null` ordenado por data, com teto de 500 —
+ * sem nenhuma menção a mercado. Com o banco pequeno isso funciona: 500 é mais
+ * do que existe, todo mundo vê tudo, e o filtro duro faz o resto na memória.
+ *
+ * O defeito só aparece com volume, e aí aparece calado. Quando as vagas abertas
+ * passam de 500, as 500 mais recentes DO MUNDO não têm relação nenhuma com quem
+ * está sendo atendido: uma rodada com muitas vagas recentes na Índia entrega a
+ * um usuário no Brasil um lote que o filtro duro rejeita inteiro. Ele recebe
+ * silêncio — e silêncio é a resposta que o produto usa para dizer "não há nada
+ * bom para você hoje". O sistema mente sem errar em nenhum lugar.
+ *
+ * ## A correção
+ *
+ * O teto passa a ser gasto em ordem de prioridade, e não por acaso: primeiro as
+ * vagas dos mercados desta pessoa, e só depois o resto. O índice
+ * `@@index([market, closedAt])` já existia para isto.
+ *
+ * ## Por que a segunda consulta existe
+ *
+ * Porque filtrar por mercado no banco NÃO pode virar eliminação. O filtro duro
+ * deixa passar vaga sem mercado declarado, e deixa passar vaga remota para quem
+ * aceita remoto internacional; e para quem ainda não declarou alvo nenhum, ele
+ * deixa passar tudo. Se a consulta parasse na primeira metade, o banco estaria
+ * decidindo o que o filtro decidiu não decidir — trocaríamos um erro por outro,
+ * e o segundo seria pior, porque nem sequer é registrado como rejeição.
+ *
+ * Então: enquanto sobrar orçamento, o resto do mundo continua entrando. A
+ * mudança é de ORDEM, não de escopo. Só quando 500 vagas do mercado da pessoa
+ * já não cabem é que o resto fica de fora — e aí ficar de fora é a decisão
+ * certa.
+ */
+async function openJobsWithinBudget(profile: ProfessionalProfile) {
+  const scope = marketScopeOf(profile)
+
+  const inScope = await db.job.findMany({
+    where: { closedAt: null, market: { in: scope } },
+    orderBy: NEWEST_FIRST,
+    take: MAX_JOBS_PER_USER,
+  })
+
+  if (inScope.length >= MAX_JOBS_PER_USER) return inScope
+
+  const rest = await db.job.findMany({
+    where: {
+      closedAt: null,
+      // `notIn` sozinho deixaria de fora as vagas sem mercado: em SQL,
+      // `market NOT IN (...)` com `market` nulo não é verdadeiro. São
+      // justamente as vagas que "desconhecido nunca elimina" protege.
+      OR: [{ market: null }, { market: { notIn: scope } }],
+    },
+    orderBy: NEWEST_FIRST,
+    take: MAX_JOBS_PER_USER - inScope.length,
+  })
+
+  return [...inScope, ...rest]
+}
+
+/**
  * A rodada de um usuário.
  *
  * Não envia nada: grava `RadarAlert`. O envio — e-mail, push — é uma camada
@@ -373,11 +445,7 @@ export async function runForUser(userId: string): Promise<UserRunResult> {
     return { userId, eligible: 0, evaluated: 0, alerted: 0, silenceReason: 'radar_off' }
   }
 
-  const rows = await db.job.findMany({
-    where: { closedAt: null },
-    orderBy: { publishedAt: 'desc' },
-    take: MAX_JOBS_PER_USER,
-  })
+  const rows = await openJobsWithinBudget(profile)
 
   const jobs = rows.map(jobFromRow)
   const { eligible } = filterJobs(jobs, profile)
