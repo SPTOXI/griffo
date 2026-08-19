@@ -12,61 +12,61 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String?
-  passwordHash String
-  phone        String?
-  profession   String?
-  socialLinks  String?  // JSON string storing saved social networks { "LinkedIn": "...", "Gupy": "..." }
+  id                    String    @id @default(cuid())
+  email                 String    @unique
+  name                  String?
+  passwordHash          String
+  phone                 String?
+  profession            String?
+  socialLinks           String? // JSON string storing saved social networks { "LinkedIn": "...", "Gupy": "..." }
   // Role & Permissions
-  role         String   @default("user") // user | admin
-  disabled     Boolean  @default(false) // Account status: false = active, true = disabled
+  role                  String    @default("user") // user | admin
+  disabled              Boolean   @default(false) // Account status: false = active, true = disabled
   /// Análises completas disponíveis. Uma delas destrava TODOS os itens de um
   /// currículo — laudo, comparação com a vaga, reescrita, orientação,
   /// otimização de perfil, mídias sociais, carta, resumo e PDF. Não há mais
   /// consumo por ação.
-  analysisBalance Int @default(0)
+  analysisBalance       Int       @default(0)
   /// País do meio de pagamento da última compra confirmada.
   ///
   /// É ELE que define a faixa de preço nas compras seguintes. O IP serve para
   /// sugerir a moeda de exibição antes da primeira compra e para nada além
   /// disso: um usuário atrás de VPN não escolhe a própria faixa.
-  paymentCountry String?
+  paymentCountry        String?
   /// Prévia gratuita já usada. Uma por conta — é o que evita que a análise
   /// paga seja obtida de graça abrindo currículos novos.
-  freePreviewAt DateTime?
+  freePreviewAt         DateTime?
   /// Saldo do modelo antigo de créditos, mantido apenas como rastro da
   /// migração (25 créditos = 1 análise, arredondando a favor do usuário). Nada
   /// no produto lê ou escreve este campo depois da conversão; ele existe para
   /// que a conversão seja auditável e reversível.
-  credits           Int       @default(0)
-  creditsMigratedAt DateTime?
-  plan         String   @default("free") // free | day | monthly | annual
-  planStartsAt DateTime?
-  planEndsAt   DateTime?
+  credits               Int       @default(0)
+  creditsMigratedAt     DateTime?
+  plan                  String    @default("free") // free | day | monthly | annual
+  planStartsAt          DateTime?
+  planEndsAt            DateTime?
   // For Phase 2: B2B recruiter marketplace consent
-  recruiterOptIn Boolean @default(false)
+  recruiterOptIn        Boolean   @default(false)
   /// Consentimento explícito de transferência internacional de dados.
   /// O currículo é processado por provedores de IA fora do país de origem;
   /// LGPD Art. 33 e GDPR Cap. V exigem base jurídica registrada para isso.
   dataTransferConsent   Boolean   @default(false)
   dataTransferConsentAt DateTime?
   // Profile visibility for future recruiter search (Phase 2)
-  profileVisible Boolean @default(false)
+  profileVisible        Boolean   @default(false)
   // Audit
-  createdAt    DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @default(now()) @updatedAt
 
-  resumes            Resume[]
-  subscriptions      Subscription[]
-  auditLogs          AuditLog[]
-  aiLogs             AiLog[]
-  creditTransactions CreditTransaction[]
-  analysisLedger     AnalysisLedger[]
-  incidents          SystemIncident[]
-  sessions           Session[]
-  analysisJobs       AnalysisJob[]
+  resumes             Resume[]
+  subscriptions       Subscription[]
+  auditLogs           AuditLog[]
+  aiLogs              AiLog[]
+  creditTransactions  CreditTransaction[]
+  analysisLedger      AnalysisLedger[]
+  incidents           SystemIncident[]
+  sessions            Session[]
+  analysisJobs        AnalysisJob[]
   professionalProfile ProfessionalProfile?
   radarPreference     RadarPreference?
   radarAlerts         RadarAlert[]
@@ -136,14 +136,14 @@ model ProfessionalProfile {
 
   // --- Mobilidade (§7: residência e destino são coisas separadas) ---
   /// Onde a pessoa está hoje. ISO-3166 alpha-2.
-  residenceCountry String?
-  residenceRegion  String?
-  residenceCity    String?
+  residenceCountry          String?
+  residenceRegion           String?
+  residenceCity             String?
   /// Mercado principal onde quer trabalhar. É o `targetCountry` que
   /// `resolveMarket` consome, e a razão de ser desta tabela.
-  primaryMarket    String?
+  primaryMarket             String?
   /// JSON array de mercados alternativos (§8: uma pessoa pode ter vários).
-  alternativeMarkets String?
+  alternativeMarkets        String?
   openToRelocation          Boolean @default(false)
   /// Trabalho remoto para empresa de outro país. Não é o mesmo que mudar de
   /// país, e por isso é uma pergunta própria.
@@ -214,37 +214,37 @@ model SystemConfig {
 
 model AiApiKey {
   id        String   @id @default(cuid())
-  name      String   // Name/Label (e.g., "Kimi K3 Produção")
-  provider  String   // moonshot | anthropic | deepseek | gemini
-  apiKey    String   // Secret API key
-  baseUrl   String?  // Custom base URL if needed
-  model     String   // Target AI model string
+  name      String // Name/Label (e.g., "Kimi K3 Produção")
+  provider  String // moonshot | anthropic | deepseek | gemini
+  apiKey    String // Secret API key
+  baseUrl   String? // Custom base URL if needed
+  model     String // Target AI model string
   status    String   @default("active") // active | paused
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Resume {
-  id               String   @id @default(cuid())
-  userId           String
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String  @id @default(cuid())
+  userId               String
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   // Original uploaded content (plain text / markdown)
-  originalContent  String
-  originalFormat   String   @default("text") // text | markdown
+  originalContent      String
+  originalFormat       String  @default("text") // text | markdown
   // Analysis output as JSON (scores + strengths + weaknesses + recommendations)
-  analysisJson     String?
+  analysisJson         String?
   // Rewritten resume content (markdown)
-  rewrittenContent String?
+  rewrittenContent     String?
   // ATS target check results
-  atsScore         Int?
+  atsScore             Int?
   // Target job title / industry if provided
   targetJob            String?
   targetJobDescription String?
   jobMatchJson         String?
   // Social links submitted with resume (JSON stringified record)
-  socialLinksJson  String?
+  socialLinksJson      String?
   // User consent for social links evaluation
-  socialConsent    Boolean  @default(false)
+  socialConsent        Boolean @default(false)
 
   // Career orientation analysis JSON
   careerOrientationJson String?
@@ -289,12 +289,12 @@ model Subscription {
   id         String   @id @default(cuid())
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan       String   // day | monthly | annual
+  plan       String // day | monthly | annual
   priceBrl   Float
   startsAt   DateTime @default(now())
   endsAt     DateTime
   status     String   @default("active") // active | cancelled | expired
-  paymentRef String?  // gateway ref
+  paymentRef String? // gateway ref
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -310,13 +310,13 @@ model Subscription {
 /// compras já feitas — apagá-la destruiria o rastro fiscal de quem comprou
 /// antes da mudança.
 model CreditTransaction {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount      Int      // positive for purchase/grant, negative for deduction
-  type        String   // welcome | purchase | spend | refund | admin_gift
-  description String
-  costBrl     Float?
+  id             String  @id @default(cuid())
+  userId         String
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount         Int // positive for purchase/grant, negative for deduction
+  type           String // welcome | purchase | spend | refund | admin_gift
+  description    String
+  costBrl        Float?
   /// Moeda em que a compra foi efetivamente cobrada (brl | usd | eur).
   /// `costBrl` gravava `amount_total / 100` sem conversão, qualquer que fosse
   /// a moeda do checkout — somar essa coluna misturava reais, dólares e euros
@@ -325,11 +325,11 @@ model CreditTransaction {
   /// Valor cobrado na moeda acima, sem conversão. A conversão passa a ser
   /// feita na leitura, com a cotação do momento, e não gravada na escrita.
   amountOriginal Float?
-  paymentRef  String?  @unique // Stripe Session ID - unique constraint prevents double-spending
+  paymentRef     String? @unique // Stripe Session ID - unique constraint prevents double-spending
   /// pending  = reserva em aberto, crédito já debitado do saldo
   /// completed = entrega confirmada, cobrança definitiva
   /// refunded  = reserva liberada, crédito devolvido ao saldo
-  status      String   @default("completed")
+  status         String  @default("completed")
 
   createdAt DateTime @default(now())
 
@@ -387,7 +387,7 @@ model WebhookEvent {
   /// evento passariam por qualquer verificação feita antes da escrita.
   eventId   String?  @unique
   processed Boolean  @default(false)
-  body      String   // JSON stringified payload
+  body      String // JSON stringified payload
   createdAt DateTime @default(now())
 
   @@index([createdAt])
@@ -450,8 +450,8 @@ model AuditLog {
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   resumeId  String?
   resume    Resume?  @relation(fields: [resumeId], references: [id], onDelete: SetNull)
-  action    String   // upload | analyze | rewrite | download | subscribe | login | register
-  meta      String?  // JSON additional context
+  action    String // upload | analyze | rewrite | download | subscribe | login | register
+  meta      String? // JSON additional context
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
@@ -462,10 +462,10 @@ model AiLog {
   id             String   @id @default(cuid())
   userId         String?
   user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  taskType       String   // ocr | initial_ats | normalization | rewriting | cover_letter | linkedin | full_analysis
-  primaryModel   String   // initial intended model
-  usedModel      String   // actual model that succeeded
-  provider       String   // moonshot | anthropic | deepseek | gemini
+  taskType       String // ocr | initial_ats | normalization | rewriting | cover_letter | linkedin | full_analysis
+  primaryModel   String // initial intended model
+  usedModel      String // actual model that succeeded
+  provider       String // moonshot | anthropic | deepseek | gemini
   tokensIn       Int      @default(0)
   tokensOut      Int      @default(0)
   costUsd        Float    @default(0.0)
@@ -478,8 +478,8 @@ model AiLog {
   /// Veredito do juiz de qualidade (P10). Preenchido de forma assíncrona e
   /// amostrada, DEPOIS da resposta ao usuário — nunca no caminho dela.
   /// Nulo significa "não sorteado", não "reprovado".
-  qualityScore   Float?
-  qualityNotes   String?
+  qualityScore    Float?
+  qualityNotes    String?
   qualityJudgedAt DateTime?
 
   @@index([createdAt])
@@ -496,7 +496,7 @@ model SystemIncident {
   description      String
   severity         String   @default("medium") // low | medium | high | critical
   status           String   @default("investigating") // investigating | auto_fixed | action_required | resolved
-  diagnosticResult String?  // JSON with simulation and test results
+  diagnosticResult String? // JSON with simulation and test results
   alertSent        Boolean  @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @default(now()) @updatedAt
@@ -525,7 +525,7 @@ model JobSource {
   /// Mercados em que esta fonte é relevante. JSON array de MarketId.
   markets String?
   /// ats | job_board | company_careers | api | feed
-  kind    String @default("ats")
+  kind    String  @default("ats")
 
   enabled Boolean @default(true)
 
@@ -537,7 +537,7 @@ model JobSource {
   collectionStatus String  @default("never_collected")
   collectionError  String?
 
-  lastCollectionAt DateTime?
+  lastCollectionAt         DateTime?
   /// Última coleta que foi considerada CONFIÁVEL. É esta data, e não a de
   /// cima, que autoriza encerrar vagas ausentes.
   lastSuccessfulCollection DateTime?
@@ -566,8 +566,8 @@ model JobSource {
 model Job {
   id String @id @default(cuid())
 
-  sourceId String
-  source   JobSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  sourceId    String
+  source      JobSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
   /// Identificador da vaga NA FONTE. Junto de `company`, é a chave de
   /// deduplicação preferida (§14).
   sourceJobId String?
@@ -580,24 +580,24 @@ model Job {
   /// resposta válida: título desconhecido não vira o vizinho mais próximo.
   normalizedTitle String?
 
-  country String?
-  region  String?
-  city    String?
+  country    String?
+  region     String?
+  city       String?
   /// remote | hybrid | onsite | unknown
-  remoteType String @default("unknown")
+  remoteType String  @default("unknown")
   /// Mercado a que esta vaga pertence, resolvido pela camada de mercado.
-  market  String?
+  market     String?
 
   /// Vínculo, no vocabulário do mercado da vaga.
   employmentType String?
   /// intern | junior | mid | senior | lead | principal | director | executive
   seniority      String?
 
-  salaryMin      Float?
-  salaryMax      Float?
-  currency       String?
+  salaryMin    Float?
+  salaryMax    Float?
+  currency     String?
   /// year | month | hour
-  salaryPeriod   String?
+  salaryPeriod String?
 
   description  String?
   /// JSON array de requisitos extraídos.
@@ -612,11 +612,11 @@ model Job {
   /// vaga entrar duas vezes vinda de duas fontes.
   dedupeKey      String @unique
 
-  publishedAt DateTime?
+  publishedAt  DateTime?
   /// Quando esta vaga foi vista pela última vez numa coleta CONFIÁVEL.
-  lastSeenAt  DateTime  @default(now())
+  lastSeenAt   DateTime  @default(now())
   /// Preenchido só com evidência suficiente — ver §12 e lib/jobs/collection.ts.
-  closedAt    DateTime?
+  closedAt     DateTime?
   /// Por que foi encerrada: absent_from_reliable_collection | source_reported |
   /// expired_by_age | manual. Sem isto não há como auditar um fechamento errado.
   closedReason String?
@@ -656,11 +656,11 @@ model RadarPreference {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// immediate | daily | weekly | off
-  frequency  String @default("daily")
+  frequency    String @default("daily")
   /// strong | good | partial — relevância mínima para interromper.
-  minimumFit String @default("good")
+  minimumFit   String @default("good")
   /// Teto de oportunidades por envio. Acima disto vira lista, não curadoria.
-  maxPerDigest Int  @default(4)
+  maxPerDigest Int    @default(4)
 
   /// Última vez que o Radar rodou para este usuário. É por este campo que a
   /// rodada escolhe quem atender primeiro, o que dá rotação justa quando há
@@ -717,4 +717,35 @@ model RadarAlert {
   @@unique([userId, jobId])
   @@index([userId, createdAt])
   @@index([userId, seenAt])
+}
+
+/// Consumo de cota das APIs externas, por provedor e por mês.
+///
+/// Existe porque cota estourada é invisível até a fonte parar de responder — e
+/// aí a coleta falha em silêncio até alguém reparar. A Adzuna, por exemplo,
+/// permite 2.500 requisições por mês e responde 200 com `exception` quando o
+/// limite passa, o que se parece com "não há vaga".
+///
+/// Uma linha por provedor por mês, não uma por requisição: o que interessa é o
+/// total, e uma linha por chamada seriam milhares de registros para responder
+/// uma pergunta de um número só.
+model ApiQuotaUsage {
+  id String @id @default(cuid())
+
+  /// `adzuna`, `gupy`, `remotive`... Casa com o prefixo do slug da fonte.
+  provider String
+  /// `2026-08`. Mês em UTC, para não mudar de bucket conforme o fuso.
+  period   String
+
+  /// Requisições contadas no período.
+  used Int @default(0)
+
+  /// Teto conhecido do plano, quando há um. Nulo = sem limite declarado.
+  limit Int?
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([provider, period])
+  @@index([period])
 }

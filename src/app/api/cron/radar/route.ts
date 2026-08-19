@@ -9,6 +9,7 @@ import { leverAdapters } from '@/lib/jobs/adapters/lever'
 import { createGupyAdapter } from '@/lib/jobs/adapters/gupy'
 import { adzunaLastCollections, searchTermsByCountry, searchTermsFromProfiles } from '@/lib/jobs/search-terms.server'
 import { estimatedRequests, planAdzunaRound } from '@/lib/jobs/adzuna-plan'
+import { recordQuotaUsage } from '@/lib/jobs/quota.server'
 import { careerPageAdapters } from '@/lib/jobs/adapters/jsonld'
 import { remoteBoardAdapters } from '@/lib/jobs/adapters/remote-boards'
 import { adzunaCredentials, createAdzunaAdapter } from '@/lib/jobs/adapters/adzuna'
@@ -153,6 +154,12 @@ export async function GET(req: Request) {
   ]
 
   try {
+    // Registrado ANTES da rodada: se ela estourar o tempo no meio, as
+    // requisições já feitas continuam contadas. Contar depois perderia
+    // justamente o consumo das rodadas que deram problema.
+    const adzunaRequests = estimatedRequests(adzunaPlans, ADZUNA_PAGES_PER_TERM)
+    if (adzunaRequests > 0) await recordQuotaUsage('adzuna', adzunaRequests)
+
     const summary = await runRadar({
       adapters,
       collectionBudgetMs: COLLECTION_BUDGET_MS,
@@ -170,7 +177,7 @@ export async function GET(req: Request) {
       // O mesmo para a Adzuna, mais o consumo de cota da rodada — sem isso,
       // saber quanto do mês já foi gasto exigiria adivinhação.
       adzunaPlans,
-      adzunaRequests: estimatedRequests(adzunaPlans, ADZUNA_PAGES_PER_TERM),
+      adzunaRequests,
       ...summary,
     })
   } catch (e: any) {
