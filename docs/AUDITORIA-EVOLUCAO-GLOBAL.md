@@ -990,3 +990,64 @@ termos novos como produto pago mais adiante — quando os custos forem estudados
 O que se vende ali é **imediatismo, não acesso**: a varredura diária pega os
 termos novos de qualquer forma no dia seguinte. A tela precisa dizer isso, e
 nunca insinuar que sem pagar não se recebe nada.
+
+---
+
+## 2.22 A Adzuna deixa de ser só o Brasil
+
+Os dez mercados foram **testados um a um** contra
+`/v1/api/jobs/{country}/search/1` em 18/08/2026:
+
+| Cobertos (200) | Fora (404) |
+|---|---|
+| BR, US, CA, GB, ES, MX, DE, FR, IN, AU | **PT, JP** |
+
+O código fixava `country: 'br'`. Agora o país sai do perfil de cada usuário.
+
+### A cota não cabe todos toda noite
+
+A camada gratuita da Adzuna é de **2.500 requisições por mês** — cerca de 83 por
+dia. Varrer dez países com seis termos e duas páginas seria 120 por rodada:
+estouraria na primeira semana.
+
+A saída não é cortar arbitrariamente, e sim **rodízio**: quatro países por
+rodada, três termos cada, uma página por termo — **12 requisições**. Em três
+rodadas todos os dez mercados tiveram vez.
+
+A fila é ordenada por `lastCollectionAt` da fonte daquele país
+(`adzuna:br`, `adzuna:us`...), com quem nunca coletou na frente. Reusa estado
+que a coleta já grava, em vez de um contador de rodízio que precisaria ser
+mantido em sincronia com a realidade.
+
+É a mesma decisão que a rodada do Radar já toma com usuários, pelo mesmo motivo:
+tentar atender todos e ser cortado no meio deixa metade sem atendimento e sem
+registro disso.
+
+### A folga é o produto
+
+12 × 31 = 372 requisições por mês. Sobram mais de 2.100 — e essa folga **é** a
+busca sob demanda: ela serve uma pessoa, enquanto a rodada diária serve todas.
+O compartilhado precisa estar protegido do individual, e é por isso que os três
+limites são conservadores.
+
+Há teste travando essa conta. Quem subir qualquer um dos três vai descobrir ali,
+e não pela fatura.
+
+### Perfil sem país fica de fora, e não é descuido
+
+Sem saber onde a pessoa mora não dá para escolher o mercado, e chutar o Brasil
+porque é o mais comum entregaria vaga do país errado. O país continua sendo o
+campo que mais decide o que o Radar faz — e é por isso que a tela do perfil
+agora o pede numa lista com o nome escrito.
+
+### O que sobra descoberto
+
+**Portugal e Japão** não têm fonte de busca por cargo. Portugal importa: é
+mercado de língua portuguesa e está em `MARKETS`. As candidatas são ATS locais
+(Net-Empregos, ITJobs) e os agregadores com chave sob solicitação (Jooble,
+Careerjet).
+
+E há um caminho que atende os dois de graça: as **APIs de vaga remota**
+(Remotive, RemoteOK, Arbeitnow) — sem chave, sem zona cinzenta, servindo o
+mercado `GLOBAL` que já existe no `lib/market`. É a melhor relação
+esforço/retorno do que sobrou.
