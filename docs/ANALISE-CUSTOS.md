@@ -144,6 +144,28 @@ Custo da análise isolada (2.464 tokens de entrada / 3.800 de saída, currículo
 
 > ⚠️ **A tabela de preços do código está desatualizada em dois provedores.** `registry.ts:33-35` declara `deepseek-chat` a $0,27/$1,10; os modelos atuais são V4-Flash ($0,14/$0,28) e V4-Pro ($0,435/$0,87). E `registry.ts:158` reescreve silenciosamente qualquer modelo com "v4" no nome de volta para `deepseek-chat` — o mesmo anti-padrão do Claude em `registry.ts:155`.
 
+> 📌 **Atualização de 14/08/2026 — o DeepSeek divulgou o aumento.** A tabela acima
+> é a que vale até **16/08/2026 16:00 UTC**. Depois disso o preço passa a variar
+> com a hora, e a linha do V4-Flash sai de $0,14/$0,28 para:
+>
+> | Modelo | $/1M in (miss) | $/1M out | $/1M in (hit) |
+> |---|---|---|---|
+> | V4-Flash fora de pico | 0,22 | 0,66 | 0,007 |
+> | V4-Flash em pico | 0,44 | 1,32 | 0,014 |
+> | V4-Pro fora de pico | 0,66 | 1,98 | 0,022 |
+> | V4-Pro em pico | 1,32 | 3,96 | 0,044 |
+>
+> Pico é **01:00–04:00 e 06:00–10:00 UTC**; todo o resto do dia é fora de pico.
+> Fora de pico o V4-Flash custa 1,6x a entrada e 2,4x a saída de hoje; no pico,
+> 3,1x e 4,7x. A prévia gratuita passa de US$ 0,0017 para US$ 0,0011 fora de
+> pico e US$ 0,0022 no pico — a comparação com o número antigo é enganosa,
+> porque US$ 0,0017 foi calculado com o preço de `deepseek-chat` que já estava
+> desatualizado no código.
+>
+> O código agora resolve o preço no instante da chamada
+> (`registry.ts:resolveModelPricing`), então o painel administrativo acompanha a
+> variação sem edição manual.
+
 ### Ressalvas do Kimi K3
 
 Mesmo preço do Sonnet 5, mas com dois problemas estruturais para um laudo pontuado:
@@ -157,7 +179,8 @@ Histórico: cinco commits brigando com a integração (`e510e87`, `a09d40a`, `c3
 
 Mais barato por larga margem e adequado ao que faz hoje. Três ressalvas para ampliar o uso:
 
-- **Aumento de preço anunciado em 06/08/2026**, sem tamanho nem data divulgados, mais uma política de **pico 2×** em 09:00–12:00 e 14:00–18:00 no horário de Pequim. Convertendo: **22:00–01:00 e 03:00–07:00 BRT** — fora do horário comercial brasileiro. O fuso favorece.
+- **Aumento confirmado em 13/08/2026, em vigor a partir de 16/08/2026 16:00 UTC** (anunciado sem números em 06/08). O pico **2×** vale em **01:00–04:00 e 06:00–10:00 UTC** = **22:00–01:00 e 03:00–07:00 BRT** — fora do horário comercial brasileiro. O fuso favorece: na prática a operação paga a faixa fora de pico. Valores no quadro da seção 5.
+- **`deepseek-chat` foi retirado em 24/07/2026 15:59 UTC.** Era o `defaultModel` do provedor no código até 14/08/2026 — ou seja, toda chamada ao DeepSeek sem modelo configurado no painel batia num ID inexistente e caía para o suplente. Hoje o padrão é `deepseek-v4-flash`.
 - **Qualidade em português e espanhol** é inferior à do inglês — relevante com a operação global.
 - **Transferência internacional**: enviar currículos para provedor na China sem decisão de adequação é problema concreto de GDPR (ver `PLANO-GLOBAL.md`).
 

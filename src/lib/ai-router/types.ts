@@ -33,6 +33,23 @@ export interface ModelPricing {
   outputPer1k: number // USD per 1K output tokens
 }
 
+/**
+ * Preço que muda com o relógio.
+ *
+ * O DeepSeek passou a cobrar o dobro em duas janelas fixas do dia (ver
+ * `TIERED_MODEL_PRICING` em pricing.ts). Um número único não representa isso:
+ * ou superestima o custo por 17 horas do dia, ou o subestima pelas outras 7.
+ */
+export interface TieredPricing {
+  /// Instante (ms desde a época) a partir do qual esta tabela vale. Antes dele,
+  /// o preço aplicado é o de `MODEL_PRICING`.
+  from: number
+  /// Faixas [início, fim) de hora UTC em que vale `peak`. Fora delas, `offPeak`.
+  peakWindowsUtc: ReadonlyArray<readonly [number, number]>
+  peak: ModelPricing
+  offPeak: ModelPricing
+}
+
 export interface ProviderConfig {
   id: ProviderId
   name: string
