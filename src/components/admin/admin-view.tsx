@@ -20,8 +20,10 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Shield, Users, CreditCard, Cpu, Search, Loader2, Save, RefreshCw, Activity,
-  BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Award, UserPlus, Minus
+  BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Award, UserPlus, Minus,
+  Radar as RadarIcon
 } from 'lucide-react'
+import { RadarQuotas } from './radar-quotas'
 import { toast } from 'sonner'
 import { slowModelWarning } from '@/lib/model-warnings'
 import {
@@ -725,10 +727,20 @@ function AdminViewContent() {
           <TabsTrigger value="director" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
             <Award className="w-5 h-5 text-violet-600" /> <span className="font-semibold text-sm">👑 Coordenador Mestre 24h</span>
           </TabsTrigger>
-          <TabsTrigger value="health" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3 md:col-span-2">
+          <TabsTrigger value="radar" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
+            <RadarIcon className="w-5 h-5 text-indigo-600" /> <span className="font-semibold text-sm">Radar e Cotas</span>
+          </TabsTrigger>
+          <TabsTrigger value="health" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
             <Activity className="w-5 h-5 text-emerald-600" /> <span className="font-semibold text-sm">Saúde do Sistema</span>
           </TabsTrigger>
         </TabsList>
+
+        {/* Cota das APIs e saúde das fontes. Fica numa aba própria porque a
+            pergunta que ela responde — "por que apareceu menos vaga hoje?" —
+            não é a mesma que as outras abas respondem. */}
+        <TabsContent value="radar" className="space-y-4">
+          <RadarQuotas />
+        </TabsContent>
 
         {/* USERS TAB - WITH SELECTION & ACTIONS */}
         <TabsContent value="users" className="space-y-4">
