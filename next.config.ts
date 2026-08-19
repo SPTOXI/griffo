@@ -50,6 +50,35 @@ const securityHeaders = [
   },
 ];
 
+/**
+ * Política de cache.
+ *
+ * O Next serve página prerenderizada com `Cache-Control: s-maxage=31536000` —
+ * um ano de cache compartilhado no DOCUMENTO HTML. A CDN da própria Vercel
+ * expurga isso a cada deploy, então lá o problema é invisível; um cache
+ * intermediário na frente do domínio, não. Ele nunca fica sabendo que houve
+ * deploy, continua servindo o HTML antigo, e esse HTML aponta para chunks de
+ * JavaScript com hash de conteúdo que **não existem mais**. O sintoma é o pior
+ * possível: um deploy que corrigiu o problema ainda renderiza como página
+ * quebrada, e nada no servidor indica isso.
+ *
+ * São três casos, e tratá-los junto é que estava errado nas duas pontas — o
+ * `no-store` genérico que existiu aqui até o commit `2888b3d` marcava também os
+ * assets com hash como não-cacheáveis, jogando fora a performance, e teria
+ * marcado as rotas de API como `public`.
+ *
+ * | Alvo            | Política                              | Por quê |
+ * |-----------------|---------------------------------------|---------|
+ * | Documento HTML  | `public, max-age=0, must-revalidate`   | Cache pode guardar, mas revalida na origem: deploy aparece na hora, e página sem mudança custa só um 304 |
+ * | `/api/*`        | `no-store, no-cache, must-revalidate`  | Resposta por usuário (cookie de sessão) ou de admin; nunca pode cair em cache compartilhado |
+ * | `/_next/static` | `public, max-age=31536000, immutable`  | O nome do arquivo muda quando os bytes mudam; cachear para sempre é o comportamento correto |
+ *
+ * O `source` do documento exclui os outros dois por expressão regular em vez de
+ * depender da ordem das regras: assim não há dúvida sobre qual valor prevalece
+ * quando mais de uma casa com o mesmo caminho.
+ */
+const HTML_ONLY = '/:path((?!api/|_next/static/).*)'
+
 const nextConfig: NextConfig = {
   /**
    * Pacotes que o servidor carrega do disco, sem passar pelo empacotador.
@@ -78,6 +107,18 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: HTML_ONLY,
+        headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }],
+      },
+      {
+        source: "/api/:path*",
+        headers: [{ key: "Cache-Control", value: "no-store, no-cache, must-revalidate" }],
+      },
+      {
+        source: "/_next/static/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
     ];
   },
