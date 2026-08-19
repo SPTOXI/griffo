@@ -411,7 +411,7 @@ da Etapa 3 (Market Adapter)**. O resto está mapeado abaixo, não implementado.
 | **2 — Professional Profile** (§7, §8) | ✅ Feita, em produção | — |
 | **3 — Market Adapter** (§2, §10) | ✅ Feita | Falta apenas `SalaryContext`, que depende de dados de mercado que ainda não coletamos |
 | **4 — Job Intelligence** (§13, §14) | ✅ Feita | — |
-| **5 — Job Sources** (§11, §12) | ✅ Cinco fontes | Greenhouse, Lever, Gupy, páginas de carreira (schema.org) e Adzuna. Só a Gupy é API interna; as demais têm contrato público |
+| **5 — Job Sources** (§11, §12) | ✅ Sete fontes | Greenhouse, Lever, Gupy, páginas de carreira, Adzuna, Remotive e RemoteOK. Só a Gupy é API interna; as demais têm contrato público |
 | **6 — Matching** (§9, §16) | ✅ Feita | — |
 | **7 — Radar** (§15, §22, §23) | ✅ Roda por cron, entrega no produto | Falta o e-mail — não há provedor configurado no projeto |
 | **8 — Ação** (§18, §19, §20) | ✅ Job Fit na tela do Radar | Falta o currículo direcionado partir da vaga encontrada, e não só da vaga digitada |
@@ -1051,3 +1051,65 @@ E há um caminho que atende os dois de graça: as **APIs de vaga remota**
 (Remotive, RemoteOK, Arbeitnow) — sem chave, sem zona cinzenta, servindo o
 mercado `GLOBAL` que já existe no `lib/market`. É a melhor relação
 esforço/retorno do que sobrou.
+
+---
+
+## 2.23 Portugal e Japão entram pela porta do remoto
+
+A Adzuna cobre dez dos doze mercados. Portugal e Japão ficavam sem fonte de
+busca por cargo — e Portugal importa, é mercado de língua portuguesa.
+
+A saída não foi procurar um ATS local para cada um. Foi notar que **vaga remota
+internacional não tem mercado local**: ela atende quem mora em qualquer lugar e
+aceita trabalhar de casa para fora. É o mercado `GLOBAL` que já existia em
+`lib/market` e que até aqui não tinha fonte nenhuma.
+
+Remotive e RemoteOK: gratuitas, sem chave, com API documentada para terceiros.
+
+### A Arbeitnow ficou de fora, de propósito
+
+Ela apareceu no mesmo teste e foi descartada: a primeira vaga veio com
+`remote: false` e `location: "Berlin"`. É quadro alemão, não de vaga remota — e
+a Adzuna já cobre a Alemanha. Fonte redundante gasta orçamento de coleta sem
+ampliar cobertura.
+
+### Quatro armadilhas do payload real
+
+**O cargo do RemoteOK está em `position`**, não em `title` — a mesma pegadinha
+do `text` no Lever. Ler `title` descartaria tudo, e a fonte pareceria vazia em
+vez de quebrada.
+
+**`epoch` e `created_at` vêm em SEGUNDOS**, não em milissegundos como no Lever.
+Tratar como milissegundos jogaria toda vaga para 1970.
+
+**`salary_min: 0` significa "não informado"**, não "paga zero". Gravar o zero
+poria no produto um salário que ninguém ofereceu.
+
+**O `salary` da Remotive é texto livre** (`"$120 - $170 /hour"`). Interpretá-lo
+exigiria adivinhar moeda, período e intervalo — três chances de errar num campo
+que o usuário lê como promessa. Fica fora, e a vaga declara `notDisclosed`, que
+é diferente de deixar o campo vazio por descuido.
+
+### Duas sutilezas que não são armadilha, mas mudam o resultado
+
+A data da Remotive vem **sem fuso** (`"2026-08-16T10:09:41"`). Sem marcador, o
+`Date` a lê no fuso de quem executa — e a mesma vaga teria data diferente
+conforme a região da função. É assumida como UTC.
+
+O `candidate_required_location` (`"Americas, Europe, Israel"`) é de **onde se
+pode candidatar**, não onde fica a vaga. Vai como texto de localização, e o país
+fica nulo: vaga remota internacional não tem um.
+
+### Ligadas por padrão, ao contrário das demais
+
+Não pedem chave, não têm cota conhecida, e são a única fonte de quem mora em
+país fora da Adzuna. Atrás de uma variável de ambiente, esses mercados ficariam
+sem fonte por esquecimento. `REMOTE_BOARDS=off` desliga as duas, caso alguma
+passe a exigir chave.
+
+### E uma duplicação que virou defeito
+
+A limpeza de HTML estava copiada em três adapters, e as três deixavam
+`"Construir sistemas ."` — a tag no meio da frase vira espaço, e o espaço
+encosta na pontuação. Três cópias são três lugares para corrigir o mesmo
+defeito; agora é uma, em `jobs/text.ts`.
