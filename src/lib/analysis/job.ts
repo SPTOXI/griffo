@@ -317,12 +317,27 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
   }
 
   if (errors.length > 0) {
-    // Só faltou tempo NESTA invocação. O job continua `running`, a concessão
-    // vence junto com ela, e a próxima consulta de status retoma o que falta —
-    // sem refazer, sem cobrar de novo e sem declarar falha de um laudo que está
-    // quase pronto.
+    /**
+     * Só faltou tempo NESTA invocação. O job continua `running` e a próxima
+     * consulta retoma o que falta — sem refazer, sem cobrar de novo e sem
+     * declarar falha de um laudo que está quase pronto.
+     *
+     * A concessão é LIBERADA na hora, e isso é o que faz a retomada ser
+     * imediata. Deixá-la vencer sozinha custava até o resto do minuto de
+     * espera com ninguém trabalhando: `resumeIfStalled` só reativa um job cuja
+     * concessão já venceu, então enquanto ela valesse, cada consulta de status
+     * olhava e ia embora. Aqui a invocação SABE que parou — nada mais está em
+     * voo, o `allSettled` já esperou todos —, e anunciar isso vale mais que
+     * qualquer relógio.
+     */
+    await db.analysisJob.update({
+      where: { id: jobId },
+      data: { leaseUntil: null },
+    })
+
     console.warn(
-      `[Analysis] Job ${jobId}: ${errors.length} segmento(s) sem tempo nesta invocação; retomará.`
+      `[Analysis] Job ${jobId}: ${errors.length} segmento(s) sem tempo nesta invocação; retomará. ` +
+        `Concluídos até aqui: ${Object.keys(done).length}/${SEGMENT_IDS.length}.`
     )
     return
   }
