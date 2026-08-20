@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { clientIpFrom } from '@/lib/request-ip'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { hashPassword, verifyPassword, createSession } from '@/lib/auth'
@@ -51,7 +52,10 @@ export async function POST(req: Request) {
 
     await createSession(user.id, {
       userAgent: req.headers.get('user-agent'),
-      ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim() || null,
+      // Mesma leitura do limitador: atrás do Cloudflare o primeiro item de
+      // `x-forwarded-for` é o que o cliente mandou, e registrar isso como IP de
+      // login guardaria no banco o número que o atacante escolheu.
+      ip: clientIpFrom(req.headers),
     })
 
     return NextResponse.json({

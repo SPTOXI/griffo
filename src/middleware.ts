@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { clientIpFrom } from '@/lib/request-ip'
 import type { NextRequest } from 'next/server'
 
 /**
@@ -57,9 +58,7 @@ const RULES: Rule[] = [
 ]
 
 function clientIp(req: NextRequest): string {
-  const forwarded = req.headers.get('x-forwarded-for')
-  if (forwarded) return forwarded.split(',')[0].trim()
-  return req.headers.get('x-real-ip') || 'desconhecido'
+  return clientIpFrom(req.headers)
 }
 
 function check(key: string, rule: Rule): { allowed: boolean; retryAfterSec: number } {
