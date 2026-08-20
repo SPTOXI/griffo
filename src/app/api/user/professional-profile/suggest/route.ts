@@ -176,8 +176,30 @@ Responda APENAS o JSON do schema, sem texto antes ou depois.`
     // log que confirma a falha e não ajuda a resolvê-la, que foi exatamente o
     // que aconteceu aqui: a rota falhou em produção e o log não dizia por quê.
     console.error('[professional-profile/suggest]', e?.diagnostic || e?.message || e)
+    /**
+     * A mensagem que vai para a tela é ESCRITA, nunca a do erro.
+     *
+     * Esta rota devolvia `e?.message`, e o que chegava ao usuário era o texto
+     * interno do roteador de IA — "Falha ao processar com as IAs ativas", ou
+     * pior, o nome do modelo, o teto de `max_tokens` e o tamanho do raciocínio.
+     * Nada disso quer dizer coisa alguma para quem está montando o próprio
+     * perfil, e ainda expõe como o sistema é feito por dentro.
+     *
+     * O detalhe técnico não se perde: ele está no log desta rota, em
+     * `AiLog.errorMessage` e no painel de admin.
+     *
+     * O texto abaixo tem um trabalho a fazer além de avisar do erro — dizer
+     * que a pessoa não está travada. Preencher à mão continua disponível, e é
+     * o que ela precisa saber para não abandonar a tela.
+     */
     return NextResponse.json(
-      { error: e?.message || 'Não foi possível ler seu currículo agora. Tente de novo em instantes.' },
+      {
+        error:
+          'Não consegui ler seu currículo agora — isso costuma ser temporário. ' +
+          'Tente de novo em alguns instantes, ou preencha os campos à mão: o perfil ' +
+          'funciona igual dos dois jeitos.',
+        code: 'SUGGESTION_FAILED',
+      },
       { status: 500 }
     )
   }

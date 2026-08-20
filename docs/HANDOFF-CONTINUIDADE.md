@@ -431,7 +431,30 @@ retomar.
 Ao criar sub-rota de qualquer rota já limitada, confira o limite que ela herda.
 Rota de leitura que a tela consulta em laço precisa de regra própria.
 
-### 10.9 Rotas de administração
+### 10.9 A mensagem que vai para a tela é ESCRITA, nunca a do erro
+
+Nenhuma rota devolve `e?.message` ao usuário. O texto de um erro é feito para o
+log; mostrá-lo na tela entrega detalhe interno a quem não tem o que fazer com
+ele — e às vezes expõe como o sistema é por dentro.
+
+Aconteceu de verdade: a sugestão de perfil devolvia `e?.message`, e o usuário
+recebeu *"Falha ao processar com as IAs ativas"*. Depois de uma correção no
+roteador, a mesma linha teria mostrado o nome do modelo, o teto de `max_tokens`
+e o tamanho do raciocínio do provedor.
+
+O detalhe técnico não se perde e não precisa estar na tela: ele vai para o log
+da rota, para `AiLog.errorMessage`, para `AuditLog`, e aparece no painel de
+admin na tabela de falhas operacionais.
+
+Exceção legítima: erro de tipo próprio cuja mensagem foi ESCRITA para o usuário
+— `BlockedUrlError` em `job-fetch` é o caso, porque ela explica por que aquela
+URL foi recusada.
+
+Ao escrever a mensagem, lembre que ela tem duas tarefas: avisar da falha e
+dizer o que a pessoa pode fazer agora. "Preencha à mão, funciona igual" evita
+que ela abandone a tela; "tente de novo" sozinho, não.
+
+### 10.10 Rotas de administração
 
 Toda rota nova sob `/api/admin/` precisa chamar `getAdminUser()` e tratar `null`
 como 403. A função **não lança exceção** — devolve `null`. Esquecer de checar
