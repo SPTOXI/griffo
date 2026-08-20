@@ -113,7 +113,11 @@ export async function POST(req: Request) {
     // Nomenclatura de cargo é local: "Analista de Dados" no Brasil e em
     // Portugal, "Data Analyst" nos EUA, ambos na Alemanha. O mercado sai do
     // Perfil Profissional quando declarado; sem ele, do país de acesso.
+    // Único escopo `career` do produto: aqui a IA fala sobre a PESSOA e o rumo
+    // dela, não avalia um documento. O perfil declarado é o assunto, e entra
+    // inteiro — inclusive cargo atual, área e objetivo.
     const { market, promptContext: profileContext } = await loadProfileContext(user.id, {
+      scope: 'career',
       edgeCountry: edgeCountry(req),
       language: lang,
     })

@@ -441,8 +441,55 @@ export function resumeLanguageFor(
  * Devolve string vazia quando não há nada declarado — e quem chama deve omitir
  * o bloco inteiro nesse caso.
  */
-export function profilePromptContext(profile: ProfessionalProfile | null | undefined): string {
+/**
+ * Para que serve o bloco de perfil nesta chamada.
+ *
+ * - `document`: a IA está avaliando UM DOCUMENTO — currículo, reescrita, carta.
+ *   Quem a pessoa é profissionalmente está no documento, e é o documento que
+ *   manda. O perfil só entra com o que um currículo NÃO diz.
+ * - `career`: a IA está falando sobre A PESSOA — orientação de carreira. Aqui o
+ *   perfil declarado é o assunto, e entra inteiro.
+ */
+export type ProfileContextScope = 'document' | 'career'
+
+/**
+ * O perfil como bloco de prompt.
+ *
+ * ## O erro que o `scope` corrige
+ *
+ * O Perfil Profissional é UM POR USUÁRIO, e passou a ser preenchido
+ * automaticamente a partir do currículo. Isso é certo enquanto a pessoa tem um
+ * currículo só. Quando ela envia um segundo, de outra profissão, o perfil
+ * continua descrevendo o primeiro — e este bloco ia inteiro para o prompt,
+ * antes do currículo, dizendo "Cargo atual: Biomédico" acima do currículo de um
+ * advogado.
+ *
+ * O texto do cabeçalho piorava: ele mandava a IA usar o perfil como objetivo do
+ * candidato e **não contradizê-lo sem motivo**. Ou seja, diante do conflito
+ * entre o documento real e um perfil desatualizado, o sistema instruía a IA a
+ * ficar com o perfil. O laudo de um currículo de advogado saía sobre
+ * biomedicina, e nada no caminho registrava isso como erro.
+ *
+ * Afirmar "Cargo atual: Biomédico" ao analisar o currículo de um advogado é o
+ * sistema inventando um fato sobre o candidato — §43 pela porta dos fundos.
+ *
+ * A separação é por natureza do dado, não por confiança: senioridade, área,
+ * cargo, especializações e anos de experiência são fatos que o CURRÍCULO
+ * carrega, e o documento em avaliação é a fonte melhor. País, disponibilidade
+ * para mudança, modelo de trabalho, pretensão salarial e idiomas são
+ * preferências que currículo nenhum declara de forma confiável — essas o perfil
+ * acrescenta sem competir com nada.
+ */
+export function profilePromptContext(
+  profile: ProfessionalProfile | null | undefined,
+  // O padrão é o lado seguro. Quem quer o perfil inteiro — só a orientação de
+  // carreira — pede por extenso; esquecer de declarar não pode reintroduzir o
+  // vazamento entre currículos.
+  scope: ProfileContextScope = 'document'
+): string {
   if (!profile) return ''
+
+  const isDocument = scope === 'document'
 
   const lines: string[] = []
   const add = (label: string, value: string | number | null | undefined) => {
@@ -454,15 +501,25 @@ export function profilePromptContext(profile: ProfessionalProfile | null | undef
     lines.push(`- ${label}: ${values.join(', ')}`)
   }
 
-  add('Cargo atual', profile.currentTitle)
-  add('Senioridade', profile.seniority)
-  add('Área', profile.field)
-  addList('Especializações', profile.specializations)
-  add('Anos de experiência', profile.yearsExperience)
-  addList('Cargos-alvo', profile.targetRoles)
-  addList('Áreas-alvo', profile.targetFields)
-  addList('Setores de interesse', profile.targetIndustries)
-  add('Objetivo de carreira', profile.careerGoal)
+  // Identidade e aspiração profissional: só no escopo de carreira.
+  //
+  // Todos estes campos são deriváveis do currículo, e quando o perfil foi
+  // preenchido a partir de OUTRO currículo eles passam a contradizer o
+  // documento que está sendo avaliado. Inclusive os "alvo": um perfil derivado
+  // de um currículo de biomedicina traz "Cargos-alvo: Biomédico". Para o
+  // documento, o alvo correto é o `targetJob` do próprio currículo, que é por
+  // currículo e não por usuário.
+  if (!isDocument) {
+    add('Cargo atual', profile.currentTitle)
+    add('Senioridade', profile.seniority)
+    add('Área', profile.field)
+    addList('Especializações', profile.specializations)
+    add('Anos de experiência', profile.yearsExperience)
+    addList('Cargos-alvo', profile.targetRoles)
+    addList('Áreas-alvo', profile.targetFields)
+    addList('Setores de interesse', profile.targetIndustries)
+    add('Objetivo de carreira', profile.careerGoal)
+  }
 
   if (profile.residenceCity || profile.residenceCountry) {
     add('Reside em', [profile.residenceCity, profile.residenceRegion, profile.residenceCountry].filter(Boolean).join(', '))
@@ -495,6 +552,15 @@ export function profilePromptContext(profile: ProfessionalProfile | null | undef
 
   if (!lines.length) return ''
 
-  return `PERFIL PROFISSIONAL DECLARADO PELO CANDIDATO (use como objetivo dele; não contradiga sem motivo, e não invente o que não está aqui):
+  // O cabeçalho anterior — "use como objetivo dele; não contradiga sem motivo"
+  // — era a instrução que fazia a IA preferir um perfil desatualizado ao
+  // documento que tinha à frente. No escopo de documento a precedência agora é
+  // dita ao contrário, e explicitamente.
+  const header = isDocument
+    ? `PREFERÊNCIAS DECLARADAS PELO CANDIDATO (localização, disponibilidade e condições de trabalho).
+O CURRÍCULO ABAIXO É A ÚNICA FONTE sobre quem o candidato é profissionalmente — cargo, área, senioridade e experiência saem DELE. Se algo aqui parecer não combinar com o currículo, siga o currículo e ignore esta lista:`
+    : `PERFIL PROFISSIONAL DECLARADO PELO CANDIDATO (use como objetivo dele; não invente o que não está aqui):`
+
+  return `${header}
 ${lines.join('\n')}`
 }

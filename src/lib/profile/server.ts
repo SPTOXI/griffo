@@ -8,6 +8,7 @@ import {
   marketInputFrom,
   profilePromptContext,
   toRecordData,
+  type ProfileContextScope,
   type ProfessionalProfile,
 } from './index'
 import { deriveFromOrientation, parseStoredOrientation } from './from-orientation'
@@ -55,7 +56,18 @@ export async function loadProfile(userId: string): Promise<ProfessionalProfile |
  */
 export async function loadProfileContext(
   userId: string,
-  fallback: { edgeCountry?: string | null; language: Language }
+  fallback: {
+    edgeCountry?: string | null
+    language: Language
+    /**
+     * O que a IA vai fazer com o perfil nesta chamada. Ver `ProfileContextScope`.
+     *
+     * O padrão é `document` de propósito: quem avalia um documento é a maioria
+     * das rotas, e é onde um perfil de outro currículo estraga o resultado.
+     * Esquecer de declarar o escopo passa a errar para o lado seguro.
+     */
+    scope?: ProfileContextScope
+  }
 ): Promise<ProfileContext> {
   const profile = await loadProfile(userId)
 
@@ -70,7 +82,7 @@ export async function loadProfileContext(
     profile,
     market,
     marketSource: source,
-    promptContext: profilePromptContext(profile),
+    promptContext: profilePromptContext(profile, fallback.scope ?? 'document'),
   }
 }
 
