@@ -149,9 +149,12 @@ export function createAdzunaAdapter(options: {
   terms: string[]
   fetchImpl?: typeof fetch
   maxPagesPerTerm?: number
+  /** Quantidade máxima de dias atrás em que a vaga foi criada (padrão: 30). */
+  maxDaysOld?: number
 }): JobSourceAdapter {
   const doFetch = options.fetchImpl ?? fetch
   const maxPagesPerTerm = options.maxPagesPerTerm ?? 2
+  const maxDaysOld = options.maxDaysOld ?? 30
   const country = options.country.toLowerCase()
 
   return {
@@ -187,7 +190,9 @@ export function createAdzunaAdapter(options: {
             `?app_id=${encodeURIComponent(options.credentials.appId)}` +
             `&app_key=${encodeURIComponent(options.credentials.appKey)}` +
             `&results_per_page=${PAGE_SIZE}` +
-            `&what=${encodeURIComponent(term)}`
+            `&what=${encodeURIComponent(term)}` +
+            `&max_days_old=${maxDaysOld}` +
+            `&sort_by=date`
 
           const controller = new AbortController()
           const remaining = budget - (Date.now() - startedAt)
