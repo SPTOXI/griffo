@@ -39,6 +39,15 @@ const MIN_PROVIDER_TIMEOUT_MS = 12_000
 // comentário no cálculo de `providerTimeoutMs`.
 const ATTEMPT_OVERHEAD_RESERVE_MS = 3_000
 
+/**
+ * Piso de tokens de saída para os provedores que raciocinam antes de responder.
+ *
+ * Ver o comentário em `max_tokens`, no montador da requisição: nesses modelos o
+ * teto cobre raciocínio E resposta, então um valor calibrado só para a resposta
+ * termina o orçamento antes de ela existir.
+ */
+const JSON_TASK_TOKEN_FLOOR = 4_000
+
 // Multiplicadores do cache de prompt da Anthropic, relativos ao preço de
 // entrada: gravar custa 1,25x e ler custa 0,1x.
 const CACHE_WRITE_MULTIPLIER = 1.25
@@ -342,7 +351,19 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
             { role: 'user' as const, content: req.userPrompt },
           ],
           temperature: isReasoningModel ? 1 : (req.temperature ?? 0.3),
-          max_tokens: req.maxTokens ?? 3500,
+          /**
+           * O teto de saída precisa caber o RACIOCÍNIO mais a resposta.
+           *
+           * Nestes modelos `max_tokens` cobre os dois. Um teto calibrado só
+           * para a resposta — 1.200 para a extração de perfil, por exemplo —
+           * acaba durante o raciocínio, e a resposta nunca começa. O sintoma é
+           * JSON inválido, que aponta para o lado errado do problema.
+           *
+           * O piso é generoso porque teto folgado não custa nada: cobra-se
+           * pelos tokens gerados, não pelo limite. O que ele evita é a resposta
+           * ser cortada no meio.
+           */
+          max_tokens: Math.max(req.maxTokens ?? 3500, JSON_TASK_TOKEN_FLOOR),
           // Estes provedores não aceitam JSON Schema; `json_object` garante
           // apenas que a saída é JSON válido. A conformidade com o formato é
           // verificada pelo chamador.
@@ -352,7 +373,34 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         const completion = await createCompletion()
 
         const msg = completion.choices?.[0]?.message
-        content = msg?.content || (msg as any)?.reasoning_content || ''
+        const reasoning = (msg as any)?.reasoning_content as string | undefined
+
+        /**
+         * `reasoning_content` NUNCA é a resposta.
+         *
+         * Estes modelos separam o raciocínio da resposta: o pensamento vai em
+         * `reasoning_content`, a resposta em `content`. A linha anterior caía
+         * de um para o outro — e com isso transformava "o modelo não
+         * respondeu" em "o modelo respondeu isto aqui", entregando prosa de
+         * raciocínio ao chamador como se fosse a saída pedida.
+         *
+         * O estrago aparecia longe da causa: a extração de perfil recebia esse
+         * texto, o agente de qualidade reprovava com "não veio em JSON válido",
+         * e o roteador ia tentar outro provedor atrás de um erro que não era do
+         * provedor. Nenhum log dizia que o problema era orçamento de saída.
+         *
+         * Conteúdo vazio com raciocínio presente tem um significado só, e
+         * preciso: o teto de `max_tokens` acabou durante o raciocínio e não
+         * sobrou nada para a resposta. Dizer isso é a única saída honesta.
+         */
+        content = msg?.content || ''
+
+        if (!content && reasoning) {
+          throw new Error(
+            `O modelo ${runtime.model} consumiu o orçamento de saída raciocinando e não chegou a responder ` +
+              `(max_tokens=${req.maxTokens ?? 3500}, ${reasoning.length} caracteres de raciocínio).`
+          )
+        }
         tokensIn =
           completion.usage?.prompt_tokens ||
           Math.ceil(
