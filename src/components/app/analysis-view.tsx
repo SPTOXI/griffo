@@ -352,6 +352,23 @@ export function AnalysisView() {
   }
 
   if (!resume.analysis) {
+    /**
+     * A PRIMEIRA análise mostrava um giro sem etapa, sem número e sem
+     * referência.
+     *
+     * O modal de progresso existia e era montado no fim deste componente — mas
+     * este `return` acontece antes, e só deixa de acontecer quando
+     * `resume.analysis` existe. Ou seja: a animação boa só aparecia na
+     * RE-análise, e justamente a primeira vez, que é quando a pessoa está
+     * decidindo se confia no produto, caía no giro mudo. Ela via a animação do
+     * envio piscar, trocar de tela, e começar uma segunda espera que não
+     * dizia nada — e, cinco minutos depois, uma mensagem de tempo.
+     *
+     * Agora a mesma animação cobre as duas: o laudo é escrito à vista, com as
+     * notas acendendo conforme chegam, e a tela por baixo já é a do relatório.
+     */
+    const jobRunning = job.phase === 'starting' || job.phase === 'running'
+
     return (
       <div className="space-y-4 max-w-3xl">
         <div className="flex items-center justify-between">
@@ -372,6 +389,13 @@ export function AnalysisView() {
             )}
           </CardContent>
         </Card>
+
+        <UploadProgressModal
+          isOpen={jobRunning}
+          progress={job.progress}
+          completedSegments={job.completedSegments}
+          partial={job.partial}
+        />
       </div>
     )
   }

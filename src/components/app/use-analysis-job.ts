@@ -21,11 +21,31 @@ import type { SegmentId } from '@/lib/analysis/stages'
 const POLL_INTERVAL_MS = 1500
 
 /**
- * Teto de espera antes de desistir de acompanhar. Generoso de propósito: o
- * trabalho continua no servidor mesmo depois disto, e o laudo aparece na volta
- * — o limite é da tela, não do processamento.
+ * A partir daqui o acompanhamento continua, mas devagar.
+ *
+ * Antes isto era o ponto de DESISTIR: aos cinco minutos a tela declarava falha
+ * e mostrava uma mensagem de tempo. Só que o trabalho não tinha falhado — ele
+ * seguia no servidor e terminava; bastava recarregar a página para o laudo
+ * estar lá. Ou seja, a única coisa que falhava era a tela, e ela falhava
+ * anunciando fracasso de um trabalho que deu certo. Para quem está usando o
+ * produto pela primeira vez, essa mensagem é o fim da conversa.
+ *
+ * Agora os cinco minutos só mudam o RITMO da consulta: de 1,5s para 10s. A
+ * espera longa deixa de custar uma consulta por segundo e meio, e o laudo
+ * aparece sozinho quando ficar pronto, sem recarregar nada.
  */
-const MAX_WAIT_MS = 5 * 60 * 1000
+const SLOW_POLL_AFTER_MS = 5 * 60 * 1000
+const SLOW_POLL_INTERVAL_MS = 10_000
+
+/**
+ * Limite real de acompanhamento.
+ *
+ * Existe porque parar de avisar também é uma forma de mentir: um giro que nunca
+ * termina é indistinguível de tela travada, e "falhar em silêncio é pior que
+ * falhar alto". Aos vinte minutos alguma coisa está de fato errada, e aí a
+ * mensagem é verdadeira.
+ */
+const MAX_WAIT_MS = 20 * 60 * 1000
 
 export type AnalysisJobPhase = 'idle' | 'starting' | 'running' | 'completed' | 'failed'
 
@@ -138,16 +158,20 @@ export function useAnalysisJob(options: UseAnalysisJobOptions = {}) {
         keepWaiting = true
       }
 
-      if (Date.now() - startedAt > MAX_WAIT_MS) {
+      const waited = Date.now() - startedAt
+
+      if (waited > MAX_WAIT_MS) {
         const message =
-          'A análise está demorando mais que o previsto. Ela continua sendo processada — recarregue a página em instantes.'
+          'A análise está demorando muito mais que o previsto. Ela continua sendo processada — recarregue a página em instantes.'
         activeJobRef.current = null
         setState((s) => ({ ...s, phase: 'failed', error: message }))
         callbacksRef.current.onFailed?.(message, null)
         return
       }
 
-      if (keepWaiting) await sleep(POLL_INTERVAL_MS)
+      if (keepWaiting) {
+        await sleep(waited > SLOW_POLL_AFTER_MS ? SLOW_POLL_INTERVAL_MS : POLL_INTERVAL_MS)
+      }
     }
   }, [])
 

@@ -11,6 +11,7 @@ import {
   type AnalysisSegmentSpec,
 } from './segments'
 import { SEGMENT_IDS, type SegmentId } from './stages'
+import { executionDeadline, leaseUntil, segmentBudgetMs } from './budget'
 
 /**
  * Execução da análise fora da requisição que a pediu.
@@ -35,7 +36,18 @@ import { SEGMENT_IDS, type SegmentId } from './stages'
  */
 const LEASE_MS = 60_000
 
-/** Tentativas de retomada antes de desistir e marcar o job como falho. */
+/**
+ * Retomadas SEM PROGRESSO antes de desistir.
+ *
+ * Conta tentativas infrutíferas, não tentativas: `attempts` volta a zero
+ * sempre que um segmento é gravado. A distinção importa porque uma análise
+ * legítima pode precisar de várias invocações — cinco segmentos nem sempre
+ * cabem nos 60s de uma só. Contando tentativas absolutas, um job que estava
+ * avançando normalmente era declarado falho na quarta passada.
+ *
+ * O que este limite existe para pegar é o job que roda e não sai do lugar. Esse
+ * continua pego.
+ */
 const MAX_JOB_ATTEMPTS = 3
 
 /** Uma repetição por segmento cobre a falha esporádica sem dobrar o custo. */
@@ -93,6 +105,21 @@ async function claimJob(jobId: string): Promise<boolean> {
   return claimed.count === 1
 }
 
+/**
+ * Acabou o tempo DESTA invocação — o que não é falha da análise.
+ *
+ * O progresso já gravado continua no banco, a concessão vence junto com a
+ * invocação, e a próxima consulta de status retoma de onde parou. Tratar isto
+ * como falha marcaria o job como `failed` e faria o usuário perder um laudo que
+ * estava a um segmento de ficar pronto.
+ */
+class ExecutionBudgetExhausted extends Error {
+  constructor(segmentId: string) {
+    super(`Sem tempo nesta invocação para o segmento '${segmentId}'.`)
+    this.name = 'ExecutionBudgetExhausted'
+  }
+}
+
 async function executeSegment(
   spec: AnalysisSegmentSpec,
   ctx: {
@@ -100,13 +127,28 @@ async function executeSegment(
     userId: string
     resumeId: string
     userCountry: string | null
+    /** Instante em que esta invocação para de começar trabalho novo. */
+    deadlineAt: number
   }
 ): Promise<Record<string, unknown>> {
   let lastError: unknown = null
 
   for (let attempt = 1; attempt <= SEGMENT_ATTEMPTS; attempt++) {
+    // O orçamento sai do que sobra da INVOCAÇÃO, e não do padrão do roteador.
+    //
+    // Sem isto, cada tentativa pedia os 52s padrão dentro de uma função de 60s:
+    // a segunda tentativa era impossível por construção, e a primeira, quando
+    // usava o orçamento inteiro, garantia que a plataforma encerrasse tudo no
+    // meio — inclusive as gravações dos outros segmentos, que rodam junto.
+    const budget = segmentBudgetMs(Date.now(), ctx.deadlineAt)
+    if (budget === null) {
+      if (lastError) throw lastError
+      throw new ExecutionBudgetExhausted(spec.id)
+    }
+
     try {
       const result = await executeAiTask({
+        timeBudgetMs: budget,
         taskType: 'analysis_segment',
         userId: ctx.userId,
         resumeId: ctx.resumeId,
@@ -148,6 +190,12 @@ async function executeSegment(
  * concessão sai em silêncio, e quem retomar pula os segmentos já gravados.
  */
 export async function processAnalysisJob(jobId: string): Promise<void> {
+  // Marcado ANTES da posse: é a partir daqui que a plataforma conta os 60s, e
+  // é este instante — não "agora" — que limita até quando a concessão pode
+  // alegar que esta invocação está viva.
+  const executionStartedAt = Date.now()
+  const deadlineAt = executionDeadline(executionStartedAt)
+
   if (!(await claimJob(jobId))) return
 
   const job = await db.analysisJob.findUnique({
@@ -168,8 +216,10 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
   if (job.status === 'completed' || job.status === 'failed') return
 
 
-  // Desistir depois de esgotar as retomadas evita que um job que falha sempre
-  // fique preso em `running` para sempre, com a tela do usuário esperando.
+  // Desistir depois de esgotar as retomadas SEM PROGRESSO evita que um job que
+  // falha sempre fique preso em `running` para sempre. `attempts` volta a zero
+  // a cada segmento gravado, então uma análise que está avançando nunca cai
+  // aqui, por mais invocações que precise.
   if (job.attempts > MAX_JOB_ATTEMPTS) {
     await failJob(jobId, 'A análise não pôde ser concluída após várias tentativas.')
     return
@@ -213,38 +263,69 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
     userId: job.userId,
     resumeId: job.resumeId,
     userCountry: job.userCountry,
+    deadlineAt,
   }
 
-  try {
-    // Todos de uma vez: é o paralelismo aqui que troca ~82s por ~18s. O tempo
-    // total passa a ser o do segmento mais lento, não a soma dos cinco.
-    await Promise.all(
-      pending.map(async (spec) => {
-        const output = await executeSegment(spec, ctx)
-        done[spec.id] = output
+  // `allSettled`, e não `Promise.all`: com `all`, o primeiro segmento a
+  // terminar mal derrubava o bloco inteiro enquanto os outros ainda estavam em
+  // voo, e o que eles já tinham produzido se perdia sem ser gravado. Aqui todos
+  // chegam ao fim e gravam o que conseguiram, e só depois se decide o desfecho.
+  const outcomes = await Promise.allSettled(
+    pending.map(async (spec) => {
+      const output = await executeSegment(spec, ctx)
+      done[spec.id] = output
 
-        // Gravar já, e não no fim: é isto que alimenta a tela com conteúdo real
-        // enquanto o resto ainda está sendo gerado, e o que permite retomar sem
-        // refazer o que já foi pago.
-        await serialize(() =>
-          db.analysisJob.update({
-            where: { id: jobId },
-            data: {
-              segmentsJson: JSON.stringify(done),
-              leaseUntil: new Date(Date.now() + LEASE_MS),
-            },
-          })
-        )
-      })
-    )
-  } catch (e: any) {
-    const message = e?.diagnostic || e?.message || String(e)
+      // Gravar já, e não no fim: é isto que alimenta a tela com conteúdo real
+      // enquanto o resto ainda está sendo gerado, e o que permite retomar sem
+      // refazer o que já foi pago.
+      //
+      // `attempts: 0` porque este segmento é progresso: o contador existe para
+      // pegar job que roda e não sai do lugar, não job que precisa de mais de
+      // uma invocação.
+      await serialize(() =>
+        db.analysisJob.update({
+          where: { id: jobId },
+          data: {
+            segmentsJson: JSON.stringify(done),
+            attempts: 0,
+            leaseUntil: leaseUntil({
+              now: Date.now(),
+              executionStartedAt,
+              leaseMs: LEASE_MS,
+            }),
+          },
+        })
+      )
+    })
+  )
+
+  await serialize(async () => undefined)
+
+  const errors = outcomes
+    .filter((o): o is PromiseRejectedResult => o.status === 'rejected')
+    .map((o) => o.reason)
+
+  const realErrors = errors.filter((e) => !(e instanceof ExecutionBudgetExhausted))
+
+  if (realErrors.length > 0) {
+    const message = realErrors
+      .map((e: any) => e?.diagnostic || e?.message || String(e))
+      .join(' | ')
     console.error(`[Analysis] Job ${jobId} falhou:`, message)
     await failJob(jobId, 'Falha ao gerar o laudo com a IA.', message)
     return
   }
 
-  await serialize(async () => undefined)
+  if (errors.length > 0) {
+    // Só faltou tempo NESTA invocação. O job continua `running`, a concessão
+    // vence junto com ela, e a próxima consulta de status retoma o que falta —
+    // sem refazer, sem cobrar de novo e sem declarar falha de um laudo que está
+    // quase pronto.
+    console.warn(
+      `[Analysis] Job ${jobId}: ${errors.length} segmento(s) sem tempo nesta invocação; retomará.`
+    )
+    return
+  }
 
   let analysis: Record<string, unknown>
   try {
