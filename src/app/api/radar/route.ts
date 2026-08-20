@@ -7,6 +7,7 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { buildJobFit } from '@/lib/matching/job-fit'
 import { fromRecord as profileFromRecord } from '@/lib/profile'
+import { hasMatchableSignal } from '@/lib/matching/filters'
 import { summarizeDigest } from '@/lib/radar/curation'
 import type { MatchResult } from '@/lib/matching/compatibility'
 import type { NormalizedJob } from '@/lib/jobs/types'
@@ -118,6 +119,15 @@ export async function GET() {
     digest,
     unseen: alerts.filter((a) => !a.seenAt).length,
     hasProfile: Boolean(profileRow),
+    /**
+     * O perfil EXISTE é uma coisa; ele ter o que comparar é outra.
+     *
+     * `hasProfile` só diz que a linha foi criada. Um perfil só com país e
+     * modelo de trabalho passa nisso e não dá base para julgar vaga nenhuma —
+     * e a tela então dizia "nada digno de nota", que é mentira: não é que o
+     * mercado esteja vazio, é que ainda não sabemos o que procurar.
+     */
+    profileMatchable: hasMatchableSignal(profileFromRecord(profileRow)),
   })
 }
 

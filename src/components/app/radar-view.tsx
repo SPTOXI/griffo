@@ -104,6 +104,8 @@ export function RadarView() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [digest, setDigest] = useState<Digest | null>(null)
   const [hasProfile, setHasProfile] = useState(true)
+  // Perfil existir e perfil ter o que comparar são coisas diferentes.
+  const [profileMatchable, setProfileMatchable] = useState(true)
   const [preferences, setPreferences] = useState<Preferences | null>(null)
   const [lastRunAt, setLastRunAt] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -125,6 +127,7 @@ export function RadarView() {
       setOpportunities(radar.opportunities || [])
       setDigest(radar.digest || null)
       setHasProfile(Boolean(radar.hasProfile))
+      setProfileMatchable(radar.profileMatchable !== false)
       setError(null)
     } else {
       setError(radar?.error || 'Não foi possível carregar o Radar.')
@@ -367,7 +370,31 @@ export function RadarView() {
         </Card>
       )}
 
-      {hasProfile && opportunities.length === 0 && (
+      {hasProfile && !profileMatchable && (
+        <Card className="border-amber-200 bg-amber-50/40">
+          <CardContent className="p-5 space-y-2">
+            <p className="text-sm font-semibold text-amber-950">
+              Falta dizer o que você faz
+            </p>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Seu perfil tem onde você está e como quer trabalhar, mas ainda não tem{' '}
+              <strong>cargo, área ou competências</strong>. Sem isso não há o que comparar com uma
+              vaga: qualquer resultado seria só o que calhou de existir no banco, e não o que tem a
+              ver com você.
+            </p>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Preencher <strong>um</strong> desses campos já liga o Radar. O botão{' '}
+              <em>Preencher a partir do currículo</em>, na tela do perfil, tira todos eles do
+              currículo que você já enviou.
+            </p>
+            <Button size="sm" onClick={() => setView('profile')} className="bg-amber-600 hover:bg-amber-700 mt-1">
+              <Briefcase className="w-4 h-4 mr-1.5" /> Completar perfil profissional
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {hasProfile && profileMatchable && opportunities.length === 0 && (
         <Card className="border-slate-200">
           <CardContent className="p-8 text-center space-y-2">
             <RadarIcon className="w-10 h-10 text-slate-300 mx-auto" />

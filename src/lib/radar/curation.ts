@@ -70,6 +70,13 @@ export function meetsMinimumFit(match: MatchResult, minimum: RadarPreferences['m
 
 export type SilenceReason =
   | 'radar_off'
+  /**
+   * O perfil não tem sinal profissional suficiente para comparar com vaga
+   * nenhuma. NÃO é "não encontramos nada": é "não há o que procurar ainda", e
+   * confundir os dois faz a tela dizer que o mercado está vazio quando quem
+   * está vazio é o perfil.
+   */
+  | 'profile_insufficient'
   | 'no_opportunities'
   | 'below_minimum_fit'
   | 'all_blocked'

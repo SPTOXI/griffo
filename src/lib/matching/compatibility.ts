@@ -312,6 +312,25 @@ export function matchJob(profile: ProfessionalProfile, job: NormalizedJob): Matc
   // compatibilidade: tem uma porta fechada, e dizer o contrário é enganá-lo.
   let overall: OverallFit
   if (blockers.length > 0) overall = 'weak'
+  /**
+   * Aderência ZERO não vira "parcial" por falta do que descontar.
+   *
+   * O eixo contextual parte de 100 e só subtrai o que atrapalha. Num perfil sem
+   * nada declarado não há o que subtrair, e ele fica com 100 — "nada te impede"
+   * vira nota cheia. Somado a um eixo profissional neutro de 50, o sinal
+   * chegava a 40 e o desfecho a `partial`: um perfil em branco recebia vaga de
+   * qualquer área como "vale esticar".
+   *
+   * Foi assim que um perfil de biomedicina recebeu vagas de tecnologia. Nenhum
+   * eixo errou; o que errou foi transformar ausência de informação em pontos.
+   *
+   * `jobFit === 0` significa que a vaga listou requisitos e o candidato não
+   * evidenciou NENHUM — ou porque não combina, ou porque ele ainda não declarou
+   * competência alguma. Nos dois casos não há base para recomendar, e dizer o
+   * contrário é inventar aderência. Vaga que não publica requisito não cai
+   * aqui: essa recebe 50 e um registro honesto de que não deu para medir.
+   */
+  else if (jobFit.score === 0) overall = 'weak'
   else if (contextual.level === 'low') overall = 'weak'
   else if (signal >= 75 && jobFit.level === 'high') overall = 'strong'
   else if (signal >= 60) overall = 'good'

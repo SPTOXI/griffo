@@ -11,7 +11,7 @@ import { closeStaleJobs, type StaleCloseReport } from '../jobs/lifecycle.server'
 import { dedupeBatch } from '../jobs/dedup'
 import { normalizeJob } from '../jobs/normalize'
 import { JobNormalizationError, type NormalizedJob } from '../jobs/types'
-import { filterJobs, marketScopeOf } from '../matching/filters'
+import { filterJobs, hasMatchableSignal, marketScopeOf } from '../matching/filters'
 import { internalSignalScore, matchJob } from '../matching/compatibility'
 import { fromRecord as profileFromRecord, type ProfessionalProfile } from '../profile'
 import { curate, DEFAULT_RADAR_PREFERENCES, type EvaluatedOpportunity, type RadarPreferences } from './curation'
@@ -443,6 +443,23 @@ export async function runForUser(userId: string): Promise<UserRunResult> {
   if (preferences.frequency === 'off') {
     await markAsRun()
     return { userId, eligible: 0, evaluated: 0, alerted: 0, silenceReason: 'radar_off' }
+  }
+
+  /**
+   * Sem sinal profissional não se avalia nada — e não se lê o banco.
+   *
+   * Um perfil em branco passa por todo filtro, porque "desconhecido nunca
+   * elimina". Sobra o pool inteiro de vagas coletadas, que hoje vem em grande
+   * parte de quadros de tecnologia, e a pessoa recebe o que calhou de existir.
+   * Foi assim que um perfil de biomedicina recebeu vagas de tecnologia.
+   *
+   * Sair aqui não é economia: é a diferença entre "não encontramos nada para
+   * você" e "ainda não sabemos o que procurar". A primeira é mentira quando a
+   * segunda é o caso.
+   */
+  if (!hasMatchableSignal(profile)) {
+    await markAsRun()
+    return { userId, eligible: 0, evaluated: 0, alerted: 0, silenceReason: 'profile_insufficient' }
   }
 
   const rows = await openJobsWithinBudget(profile)

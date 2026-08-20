@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { EMPTY_PROFILE, type ProfessionalProfile } from '../profile'
 import { normalizeJob } from '../jobs/normalize'
 import type { NormalizedJob, RawJob } from '../jobs/types'
-import { applyHardFilters, filterJobs, marketScopeOf, targetMarketsOf } from './filters'
+import { applyHardFilters, filterJobs, hasMatchableSignal, marketScopeOf, targetMarketsOf } from './filters'
 import {
   contextualAxis,
   internalSignalScore,
@@ -396,4 +396,59 @@ test('§19: o contexto da vaga leva as lacunas para o prompt', () => {
   assert.match(context, /LACUNAS IDENTIFICADAS/)
   assert.match(context, /não afirme que ele tem o que não tem/)
   assert.match(context, /Python/)
+})
+
+test('perfil sem nada declarado não tem base para o Radar julgar', () => {
+  // A pergunta anterior ao filtro: dá para dizer QUALQUER coisa sobre esta
+  // pessoa? Sem sinal, o Radar não fica errado — fica sem assunto.
+  assert.equal(hasMatchableSignal(EMPTY_PROFILE), false)
+})
+
+test('qualquer um dos sinais mínimos já basta', () => {
+  // O mínimo é baixo de propósito: exigir o perfil inteiro fecharia o Radar
+  // para quem preencheu metade.
+  assert.equal(hasMatchableSignal(profileWith({ currentTitle: 'Biomédico' })), true)
+  assert.equal(hasMatchableSignal(profileWith({ field: 'Saúde' })), true)
+  assert.equal(hasMatchableSignal(profileWith({ skills: ['hematologia'] })), true)
+  assert.equal(hasMatchableSignal(profileWith({ specializations: ['análises clínicas'] })), true)
+  assert.equal(hasMatchableSignal(profileWith({ targetRoles: ['Biomédico'] })), true)
+})
+
+test('país e preferências sozinhos não são sinal profissional', () => {
+  // São condições de trabalho, não identidade. Comparar vaga com "mora no
+  // Brasil e aceita remoto" devolve o mundo inteiro.
+  const so_contexto = profileWith({
+    residenceCountry: 'BR',
+    openToInternationalRemote: true,
+    workModes: ['remote'],
+  })
+  assert.equal(hasMatchableSignal(so_contexto), false)
+})
+
+test('aderência zero nunca vira parcial por falta do que descontar', () => {
+  // O caso real: perfil de biomedicina recebendo vaga de tecnologia. O eixo
+  // contextual parte de 100 e só subtrai — num perfil vazio não há o que
+  // subtrair, e "nada te impede" virava nota cheia, empurrando o desfecho para
+  // `partial`.
+  const vagaTech = job({
+    title: 'Senior Frontend Engineer',
+    country: 'US',
+    remoteType: 'remote',
+    requirements: ['React', 'TypeScript'],
+    skills: ['react', 'typescript'],
+  })
+
+  const match = matchJob(EMPTY_PROFILE, vagaTech)
+  assert.equal(match.jobFit.score, 0)
+  assert.equal(match.overall, 'weak')
+  assert.equal(match.recommendation, 'skip')
+})
+
+test('vaga que não publica requisito não é punida pela mesma regra', () => {
+  // Vaga sem requisitos listados recebe 50 e um registro honesto de que não deu
+  // para medir. Ela não pode cair na regra de aderência zero.
+  const semRequisitos = job({ title: 'Analista', requirements: [], skills: [] })
+  const match = matchJob(profileWith({ currentTitle: 'Analista' }), semRequisitos)
+  assert.notEqual(match.jobFit.score, 0)
+  assert.notEqual(match.overall, 'weak')
 })
