@@ -109,6 +109,20 @@ Responda APENAS o JSON do schema, sem texto antes ou depois.`
       maxTokens: 1200,
       disableThinking: true,
       jsonSchema: PROFILE_EXTRACTION_JSON_SCHEMA,
+      /**
+       * Três tentativas, e não as duas do padrão.
+       *
+       * A cadeia desta tarefa é DeepSeek → Kimi → Claude. Com duas tentativas
+       * ela parava no Kimi, e o Claude — o único que nunca falhou nesta tarefa
+       * — jamais era alcançado: a rota falhava inteira com os dois provedores
+       * baratos, tendo um confiável na fila logo atrás.
+       *
+       * Cabe no prazo porque a tarefa é curta: o orçamento dividido por três
+       * ainda dá ~16s por tentativa, acima do mínimo do roteador. E o custo de
+       * chegar ao Claude só existe quando os dois primeiros falham — no caminho
+       * feliz continua sendo a extração barata de sempre.
+       */
+      maxProviderAttempts: 3,
     })
 
     const suggestion = parseProfileExtraction(aiResponse.content)
