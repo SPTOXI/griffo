@@ -3,13 +3,43 @@
 **Para quem assumir o desenvolvimento deste projeto.**
 
 Escrito em 19/08/2026, ao fim de uma sequência de trabalho que levou o produto
-da Etapa 1 à Etapa 8 do prompt mestre. Este documento existe para que quem
-continuar não precise redescobrir o que já foi decidido, e — mais importante —
-não repita erros que já custaram caro aqui.
+da Etapa 1 à Etapa 8 do prompt mestre. Revisado em 20/08/2026 (PR #61). Este
+documento existe para que quem continuar não precise redescobrir o que já foi
+decidido, e — mais importante — não repita erros que já custaram caro aqui.
 
 Leia junto com `docs/AUDITORIA-EVOLUCAO-GLOBAL.md`, que registra o porquê de
 cada decisão em ordem cronológica. Este documento é o resumo operacional; aquele
 é a memória.
+
+---
+
+## 0. Onde as coisas estão agora
+
+Este bloco envelhece rápido e é o primeiro a conferir. As datas e o commit dizem
+o quanto confiar nele.
+
+| | |
+|---|---|
+| Última revisão | 20/08/2026, `main` em `1b546a7` (PR #61) |
+| Suíte | 495 testes, `fail 0` — a regra da contagem está na seção 8 |
+| `tsc`, `lint`, `build` | limpos nessa revisão |
+
+**Pendências que estão esperando alguém, não código:**
+
+1. **`npx prisma db push`** — o PR #61 acrescentou `RadarAlert.notifiedAt` e o
+   índice `[notifiedAt, userId]`. Enquanto a coluna não existir no banco, o
+   passo do digest no cron diário levanta erro do Prisma. O `catch` do cron
+   contém isso — a coleta do Radar termina normal e a resposta traz
+   `digest: { ok: false, ... }` —, mas fica um erro por dia no log até rodar.
+2. **Conferir o digest com o envio desligado.** Depois da migração, o cron passa
+   a registrar no log quem receberia o quê, com o assunto montado. É o material
+   para decidir se o conteúdo presta antes de ligar `RADAR_DIGEST_ENABLED`.
+3. **Os três testes de produto** que só quem tem conta faz: importar currículo no
+   Perfil Profissional, conferir se o preço aparece em real, e abrir o Radar com
+   o perfil preenchido para ver se entra vaga de outra área.
+
+**O que NÃO está pendente e parece que está:** o e-mail do digest está
+implementado e desligado de propósito (§7.3). Não é trabalho pela metade.
 
 ---
 
@@ -98,6 +128,7 @@ honesta.
 | 8 — Ação | ✅ Job Fit + currículo direcionado a partir da vaga |
 | 9 — Assinatura | ⬜ travada pelo §21 |
 | 10 — Escala global | 🟡 12 mercados declarados, cobertura real de fontes varia |
+| Aviso por e-mail | 🟡 implementado, envio desligado por decisão — ver §7.3 |
 
 **As sete fontes:**
 
@@ -159,10 +190,23 @@ Rotas relevantes: `src/app/api/cron/radar` (a rodada), `src/app/api/radar/*`
 
 ## 5. Convenções de trabalho
 
-**Branch e PR.** Todo trabalho vai em `claude/analise-projeto-execucao-pw6cb9`,
-que é reescrita com `--force-with-lease` a cada mudança. Cada bloco vira um PR
-próprio, mesclado com squash. **Não use `git pull` nessa branch** — use
-`git fetch` + `git reset --hard origin/<branch>`.
+**Branch e PR.** Cada sessão de trabalho recebe uma branch `claude/...` própria e
+trabalha só nela; `main` é o que está em produção. Cada bloco vira um PR,
+mesclado com **squash**. Mesclar na `main` dispara o deploy pela integração da
+Vercel — não existe `vercel deploy` pela linha de comando aqui, e o motivo está
+em `.agents/rules/deployment.md`.
+
+**Branch reescrita com `--force-with-lease` nunca aceita `git pull`.** A
+`claude/analise-projeto-execucao-pw6cb9` é assim, e qualquer outra pode ser. Use
+`git fetch` + `git reset --hard origin/<branch>`. Um `pull` numa branch
+reescrita produz merge com histórico que já não existe, e o estrago só aparece
+no PR.
+
+**Uma sessão, uma branch — e quando dois blocos independentes caem na mesma.**
+A convenção é um PR por bloco, mas a sessão às vezes só tem uma branch. Nesse
+caso não force PRs separados: faça **um commit por bloco**, com mensagem que se
+sustenta sozinha, e diga no corpo do PR que são assuntos independentes. Foi o
+que o #61 fez.
 
 **MCP da Vercel.** O `.mcp.json` registra `https://mcp.vercel.com` no escopo do
 projeto, mas a autenticação é OAuth por pessoa e **não acontece em sessão
@@ -176,6 +220,12 @@ máquina. Em sessão remota, log de deploy continua vindo por cópia manual.
 o ambiente de desenvolvimento não tem acesso ao banco. Toda migração precisa ser
 **aditiva**, e o PR precisa avisar em destaque que ela existe.
 
+**Dependências.** Em sessão remota o contêiner nasce com o repositório clonado e
+sem `node_modules`. O hook `.claude/hooks/session-start.sh` roda `npm install`
+sozinho no início da sessão — e é por isso que ele está versionado. Se por algum
+motivo ele não rodar, `npm install` antes de qualquer verificação: a suíte sem
+dependências mente, e como ela mente está na seção 9.
+
 **Verificação antes de qualquer PR:**
 
 ```
@@ -184,6 +234,9 @@ npm test          # ver a nota sobre a contagem na seção 8
 npm run lint
 npm run build
 ```
+
+Alterou `prisma/schema.prisma`? `npx prisma generate` antes do `tsc`, ou o
+typecheck reclama de um campo que existe no schema e não no cliente gerado.
 
 **Comentários e mensagens em português**, explicando *por que*, não *o que*. O
 código diz o que faz; o comentário existe para o motivo que não é óbvio — em
@@ -352,10 +405,15 @@ chute.
 3. Rode `npm test` antes de mudar qualquer linha, e guarde o resultado.
 
    **O que importa é `fail 0`, e não a contagem.** Na data desta revisão eram
-   432, mas o número sobe a cada PR e este documento vai ficar para trás — se
+   495, mas o número sobe a cada PR e este documento vai ficar para trás — se
    ele não bater, olhe o último PR mesclado antes de concluir que quebrou
    alguma coisa. O que nunca muda é a regra: se havia zero falhas antes de você
    mexer e há falha depois, o problema é a sua mudança, não o teste.
+
+   **Contagem MENOR que a esperada é outra coisa, e é grave.** Suíte que
+   encolhe não quebrou: emagreceu em silêncio. As duas causas conhecidas — o
+   glob sem aspas e o `node_modules` ausente — estão na seção 9. Confira as
+   duas antes de investigar o código.
 4. Ao acrescentar fonte de vaga: peça o `curl` ao operador primeiro. Sempre.
 
 ---
@@ -389,8 +447,8 @@ chute.
   suíte ausente. É a mesma família de armadilha das aspas no glob.
 
   Resolvido pelo hook `.claude/hooks/session-start.sh`, que roda `npm install`
-  no início de toda sessão remota. Se um dia o número vier abaixo de 474 sem
-  PR que justifique, confira `ls node_modules` **antes** de investigar o
+  no início de toda sessão remota. Se um dia a contagem vier abaixo da do
+  último PR mesclado, confira `ls node_modules` **antes** de investigar o
   código.
 
 ---
