@@ -208,8 +208,10 @@ test('perfil vazio não produz bloco de prompt', () => {
 })
 
 test('o bloco só cita o que foi declarado', () => {
+  // `career` por extenso: cargo atual e cargos-alvo só existem nesse escopo.
   const prompt = profilePromptContext(
-    profileWith({ currentTitle: 'Analista de Dados', targetRoles: ['Data Analyst'] })
+    profileWith({ currentTitle: 'Analista de Dados', targetRoles: ['Data Analyst'] }),
+    'career'
   )
   assert.ok(prompt.includes('Analista de Dados'))
   assert.ok(prompt.includes('Data Analyst'))
@@ -218,8 +220,63 @@ test('o bloco só cita o que foi declarado', () => {
 })
 
 test('a pretensão salarial entra com moeda e período', () => {
+  // `career` por extenso: o bloco de perfil só existe nesse escopo.
   const prompt = profilePromptContext(
-    profileWith({ salaryMin: 8000, salaryMax: 12000, salaryCurrency: 'BRL', salaryPeriod: 'month' })
+    profileWith({ salaryMin: 8000, salaryMax: 12000, salaryCurrency: 'BRL', salaryPeriod: 'month' }),
+    'career'
   )
   assert.ok(prompt.includes('BRL 8000 a 12000/month'), prompt)
+})
+
+test('escopo de documento não leva nada do perfil', () => {
+  // O caso real: o perfil foi preenchido a partir de um currículo de
+  // biomedicina, e depois um currículo de advogado foi enviado. O bloco ia
+  // inteiro para o prompt, ANTES do currículo, e o laudo do advogado saía
+  // sobre biomedicina.
+  //
+  // A regra do produto é que cada análise é única e não se baseia na anterior.
+  // Por isso o corte é total: um perfil cheio não produz bloco nenhum.
+  const biomedico = {
+    ...EMPTY_PROFILE,
+    currentTitle: 'Biomédico',
+    field: 'Saúde',
+    seniority: 'senior' as const,
+    yearsExperience: 12,
+    specializations: ['Análises clínicas'],
+    targetRoles: ['Biomédico'],
+    residenceCountry: 'BR',
+    openToRelocation: true,
+    workModes: ['remote' as const],
+    salaryMin: 8000,
+    salaryCurrency: 'BRL',
+  }
+
+  assert.equal(profilePromptContext(biomedico, 'document'), '')
+})
+
+test('nem as preferências sobrevivem ao escopo de documento', () => {
+  // Meia dúzia de campos herdados continua sendo herança. O que o documento
+  // precisa de contexto vem do mercado e da vaga-alvo do próprio currículo.
+  const prompt = profilePromptContext(
+    { ...EMPTY_PROFILE, residenceCountry: 'PT', openToInternationalRemote: true },
+    'document'
+  )
+  assert.equal(prompt, '')
+})
+
+test('escopo de carreira continua trazendo o perfil inteiro', () => {
+  // A orientação vocacional fala sobre a PESSOA: aqui o perfil declarado é o
+  // assunto, e omiti-lo esvaziaria a entrega.
+  const prompt = profilePromptContext(
+    { ...EMPTY_PROFILE, currentTitle: 'Biomédico', careerGoal: 'Migrar para gestão' },
+    'career'
+  )
+
+  assert.ok(/Biomédico/.test(prompt))
+  assert.ok(/Migrar para gestão/.test(prompt))
+})
+
+test('sem escopo declarado, o padrão é o lado seguro', () => {
+  // Esquecer de declarar não pode reintroduzir o vazamento.
+  assert.equal(profilePromptContext({ ...EMPTY_PROFILE, currentTitle: 'Biomédico' }), '')
 })

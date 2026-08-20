@@ -441,8 +441,72 @@ export function resumeLanguageFor(
  * Devolve string vazia quando não há nada declarado — e quem chama deve omitir
  * o bloco inteiro nesse caso.
  */
-export function profilePromptContext(profile: ProfessionalProfile | null | undefined): string {
+/**
+ * Para que serve o bloco de perfil nesta chamada.
+ *
+ * - `document`: a IA está avaliando UM DOCUMENTO — currículo, reescrita, carta.
+ *   **O perfil não entra.** Cada análise responde pelo documento que recebeu, e
+ *   por mais nada.
+ * - `career`: a IA está falando sobre A PESSOA — orientação de carreira. Aqui o
+ *   perfil declarado é o assunto, e entra inteiro.
+ */
+export type ProfileContextScope = 'document' | 'career'
+
+/**
+ * O perfil como bloco de prompt.
+ *
+ * ## O erro que o `scope` corrige
+ *
+ * O Perfil Profissional é UM POR USUÁRIO, e passou a ser preenchido
+ * automaticamente a partir do currículo. Isso é certo enquanto a pessoa tem um
+ * currículo só. Quando ela envia um segundo, de outra profissão, o perfil
+ * continua descrevendo o primeiro — e este bloco ia inteiro para o prompt,
+ * antes do currículo, dizendo "Cargo atual: Biomédico" acima do currículo de um
+ * advogado.
+ *
+ * O texto do cabeçalho piorava: ele mandava a IA usar o perfil como objetivo do
+ * candidato e **não contradizê-lo sem motivo**. Ou seja, diante do conflito
+ * entre o documento real e um perfil desatualizado, o sistema instruía a IA a
+ * ficar com o perfil. O laudo de um currículo de advogado saía sobre
+ * biomedicina, e nada no caminho registrava isso como erro.
+ *
+ * Afirmar "Cargo atual: Biomédico" ao analisar o currículo de um advogado é o
+ * sistema inventando um fato sobre o candidato — §43 pela porta dos fundos.
+ *
+ * ## Por que o corte é total, e não campo a campo
+ *
+ * A primeira versão desta correção separava o perfil em duas metades: fora os
+ * campos que o currículo carrega (cargo, área, senioridade, experiência,
+ * cargos-alvo), dentro as preferências que ele não carrega (país, mudança,
+ * modelo de trabalho, pretensão, idiomas).
+ *
+ * Só que a regra do produto é mais simples e mais forte: **cada análise é
+ * única e não se baseia na anterior**. Um laudo tem de responder pelo documento
+ * que recebeu, e por mais nada. Meia dúzia de campos herdados continuam sendo
+ * herança, e a divisão campo a campo só desloca a pergunta — a cada campo novo
+ * no perfil, alguém teria de decidir de que lado ele cai, e um erro nessa
+ * decisão volta a contaminar em silêncio.
+ *
+ * O que o documento precisa saber sobre contexto continua chegando, por
+ * caminhos que não são herança de currículo nenhum:
+ *
+ * - **O mercado** (`marketPromptContext`), que decide convenção de formato,
+ *   foto, número de páginas e idioma das vagas. Ele sai do mercado declarado
+ *   ou do país de acesso — nunca de um currículo anterior.
+ * - **A vaga-alvo**, que fica no PRÓPRIO currículo (`targetJob`,
+ *   `targetJobDescription`), por currículo e não por usuário.
+ */
+export function profilePromptContext(
+  profile: ProfessionalProfile | null | undefined,
+  // O padrão é o lado seguro. Quem quer o perfil inteiro — só a orientação de
+  // carreira — pede por extenso; esquecer de declarar não pode reintroduzir o
+  // vazamento entre currículos.
+  scope: ProfileContextScope = 'document'
+): string {
   if (!profile) return ''
+
+  // O corte é aqui, e antes de qualquer campo: o que não é montado não vaza.
+  if (scope === 'document') return ''
 
   const lines: string[] = []
   const add = (label: string, value: string | number | null | undefined) => {
@@ -495,6 +559,10 @@ export function profilePromptContext(profile: ProfessionalProfile | null | undef
 
   if (!lines.length) return ''
 
-  return `PERFIL PROFISSIONAL DECLARADO PELO CANDIDATO (use como objetivo dele; não contradiga sem motivo, e não invente o que não está aqui):
+  // O cabeçalho dizia "não contradiga sem motivo" — era ele que fazia a IA
+  // preferir um perfil desatualizado ao documento que tinha à frente. Some
+  // junto com o escopo de documento; no de carreira não há documento com que
+  // conflitar, e o perfil é o próprio assunto.
+  return `PERFIL PROFISSIONAL DECLARADO PELO CANDIDATO (use como objetivo dele; não invente o que não está aqui):
 ${lines.join('\n')}`
 }
