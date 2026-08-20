@@ -10,6 +10,7 @@ import { executeAiTask } from '@/lib/ai-router/router'
 import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
 import { edgeCountry } from '@/lib/pricing/resolve'
 import { DIMENSION_KEYS, DIMENSION_LABELS, type DimensionKey } from '@/lib/analysis/stages'
+import { checkResumeContent } from '@/lib/analysis/content-guard'
 
 /**
  * Prévia gratuita: as oito notas, e só isso.
@@ -83,6 +84,16 @@ export async function POST(req: Request) {
     })
     if (!resume) {
       return NextResponse.json({ error: 'Currículo não encontrado.' }, { status: 404 })
+    }
+
+    // Antes de gastar a única prévia gratuita da conta: currículo ilegível não
+    // produz nota, e queimar a cota nele seria cobrar duas vezes pelo erro.
+    const verdict = checkResumeContent(resume.originalContent)
+    if (!verdict.analyzable) {
+      return NextResponse.json(
+        { error: verdict.message, code: 'UNREADABLE_RESUME' },
+        { status: 422 }
+      )
     }
 
     // Já calculada: devolve a mesma, sem gastar de novo e sem consumir a cota.

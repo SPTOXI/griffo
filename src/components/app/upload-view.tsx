@@ -142,6 +142,7 @@ export function UploadView() {
   const [socialConsent, setSocialConsent] = useState(true)
 
   const [pdfBase64, setPdfBase64] = useState<string | null>(null)
+  const [pdfFileName, setPdfFileName] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -164,11 +165,16 @@ export function UploadView() {
         setPdfBase64(result)
         setFormat('pdf')
         if (!title) setTitle(file.name.replace(/\.pdf$/i, ''))
-        setContent((prev) =>
-          prev.trim().length >= minChars
-            ? prev
-            : `[Arquivo PDF Anexado: ${file.name}] - O texto será processado e analisado automaticamente.`
-        )
+        // O campo de conteúdo NÃO recebe texto de enfeite.
+        //
+        // Ele recebia `[Arquivo PDF Anexado: nome.pdf] - O texto será
+        // processado...`, uns 90 caracteres que o servidor não tinha como
+        // distinguir de currículo de verdade. Quando o PDF não tinha camada de
+        // texto, era esse marcador que ia para a IA — e o laudo saía pontuado,
+        // com gráfico, sobre um nome de arquivo. O anexo já aparece na tela
+        // como anexo; escrevê-lo dentro do currículo não informava ninguém e
+        // enganava o servidor.
+        setPdfFileName(file.name)
         toast.success('Arquivo PDF anexado com sucesso!')
       }
       reader.onerror = () => setError('Não foi possível ler o arquivo PDF.')
@@ -177,6 +183,7 @@ export function UploadView() {
     }
 
     setPdfBase64(null)
+    setPdfFileName(null)
     const reader = new FileReader()
     reader.onload = (e) => {
       const text = String(e.target?.result || '')
