@@ -4,6 +4,7 @@ export const maxDuration = 60
 
 import { NextResponse } from 'next/server'
 import { runRadar } from '@/lib/radar/runner'
+import { sendPendingDigests, type DigestRunSummary } from '@/lib/radar/digest.server'
 import { greenhouseAdapters } from '@/lib/jobs/adapters/greenhouse'
 import { leverAdapters } from '@/lib/jobs/adapters/lever'
 import { createGupyAdapter } from '@/lib/jobs/adapters/gupy'
@@ -72,6 +73,19 @@ const COLLECTION_BUDGET_MS = 12_000
  * fila está girando.
  */
 const RUN_BUDGET_MS = 45_000
+
+/**
+ * Até quando o envio do digest pode ir, contado do início da invocação.
+ *
+ * O e-mail vem DEPOIS da rodada e divide os mesmos 60s com ela. Os 6s que
+ * sobram existem pelo mesmo motivo dos 8s do roteador de IA: responder. Uma
+ * função morta pela plataforma não diz o que enviou nem o que faltou.
+ *
+ * Se a rodada gastar os 45s inteiros, sobram 9s para o digest — dois ou três
+ * envios. Não é problema: a marca de "já avisado" está no alerta, então quem
+ * não couber hoje é atendido amanhã sem perder nada.
+ */
+const DIGEST_DEADLINE_MS = 54_000
 
 /**
  * O orçamento da Adzuna, em três números.
@@ -166,10 +180,27 @@ export async function GET(req: Request) {
       deadlineAt: startedAt + RUN_BUDGET_MS,
     })
 
+    /**
+     * O digest vai aqui, e não numa rota própria, porque o plano Hobby dá um
+     * cron por dia — não existe segundo agendamento para pedir.
+     *
+     * O `catch` é largo de propósito: e-mail que não sai é chato, rodada que
+     * não roda é grave. Uma falha de envio não pode derrubar a resposta que
+     * conta o que a coleta fez, então ela vira um campo do resultado.
+     */
+    let digest: DigestRunSummary | { ok: false; error: string }
+    try {
+      digest = await sendPendingDigests({ deadline: startedAt + DIGEST_DEADLINE_MS })
+    } catch (e: any) {
+      console.error('[cron/radar] envio do digest falhou:', e?.message || e)
+      digest = { ok: false, error: e?.message || 'Falha no envio do digest.' }
+    }
+
     return NextResponse.json({
       ok: true,
       durationMs: Date.now() - startedAt,
       sourcesConfigured: adapters.length,
+      digest,
       sources: adapters.map((a) => a.descriptor.slug),
       // Declarado para que uma rodada sem resultado na Gupy possa ser
       // explicada: nenhum termo é diferente de nenhuma vaga.

@@ -703,6 +703,19 @@ model RadarAlert {
   seenAt    DateTime?
   clickedAt DateTime?
 
+  /// Quando este alerta saiu num e-mail. Nulo = ainda não foi enviado.
+  ///
+  /// É este campo — e não uma data no `RadarPreference` — que garante o "não se
+  /// avisa duas vezes" do §15 também por e-mail. Uma marca por USUÁRIO diria
+  /// apenas "houve um envio naquele dia"; qualquer alerta criado depois do
+  /// envio e antes da virada do dia ficaria de fora para sempre, ou entraria
+  /// duas vezes, conforme a comparação escolhida.
+  ///
+  /// A marca só é gravada DEPOIS que o envio deu certo. Envio que falhou deixa
+  /// o campo nulo, e a rodada seguinte tenta de novo — o contrário perderia o
+  /// aviso em silêncio, que é o pior desfecho possível aqui.
+  notifiedAt DateTime?
+
   /// §30: 👍 interessante | 👎 não serve. Nulo = ainda não respondeu.
   feedback       String?
   /// wrong_role | location | salary | seniority | skills | company | work_mode | other
@@ -717,6 +730,10 @@ model RadarAlert {
   @@unique([userId, jobId])
   @@index([userId, createdAt])
   @@index([userId, seenAt])
+  /// A rodada do digest pergunta "quem tem alerta ainda não enviado?" antes de
+  /// qualquer outra coisa. Sem este índice, essa pergunta vira varredura da
+  /// tabela inteira dentro de uma função com teto de 60s.
+  @@index([notifiedAt, userId])
 }
 
 /// Consumo de cota das APIs externas, por provedor e por mês.

@@ -137,9 +137,14 @@ src/lib/
     filters.ts     Filtro duro — desconhecido não elimina
     compatibility.ts  Três eixos, sem porcentagem única
     job-fit.ts     O que a pessoa vê
+  email/
+    digest.ts      Monta o conteúdo do e-mail. Puro e com teste
+    send.ts        Fala com o Resend. Recebe fetch e config por parâmetro
+    unsubscribe.ts Assina e confere o token do link de descadastro
   radar/
     curation.ts    Decide se vale interromper — silêncio é acerto
     runner.ts      A rodada: coleta, encerra por tempo, avalia, alerta
+    digest.server.ts  Quem recebe e-mail, e o que vai nele
   ai-router/       Roteamento entre provedores, failover, cache de prompt
   analysis/
     segments.ts    Análise em 5 segmentos paralelos
@@ -270,17 +275,48 @@ irrelevantes chegavam até ele**.
 usuário real. É a ponte entre o Radar e a venda; se ela falhar, o Radar não
 converte.
 
-### 7.3 E-mail do digest
+### 7.3 🟡 IMPLEMENTADO E DESLIGADO — e-mail do digest
 
-Nada existe ainda. O Resend está configurado no domínio `send.griffo.work`, com
-SPF, DKIM e DMARC passando — mas os testes caem no spam do Gmail por reputação de
-domínio novo, o que se resolve com uso real e não com configuração.
+O caminho inteiro existe. O envio **não está ligado**, e ligar é decisão de
+operação: `RADAR_DIGEST_ENABLED=true`.
 
-Quando for implementar: idioma do usuário (`communicationLanguage` no perfil),
-link de descadastro (obrigatório por LGPD/GDPR), respeitar
-`RadarPreference.frequency === 'off'`, registrar o que foi enviado para não
-repetir alerta, e `Reply-To` para um endereço em `@griffo.work` que o Cloudflare
-Email Routing encaminha.
+O Resend está configurado no domínio `send.griffo.work`, com SPF, DKIM e DMARC
+passando — mas os testes caem no spam do Gmail por reputação de domínio novo, o
+que se resolve com uso real e não com configuração.
+
+**Onde está.** `lib/email/digest.ts` monta o conteúdo (puro, com teste),
+`lib/email/send.ts` fala com o Resend, `lib/email/unsubscribe.ts` assina o token
+de descadastro, `lib/radar/digest.server.ts` decide quem recebe o quê, e
+`/api/radar/unsubscribe` desliga. O disparo é o mesmo cron do Radar, depois da
+rodada — o plano Hobby dá um cron por dia, então não há segundo agendamento a
+pedir.
+
+**O que já está resolvido:** idioma do perfil (`communicationLanguage`, com
+português como padrão para o que não for pt/en/es), link de descadastro nas duas
+versões do corpo mais os cabeçalhos `List-Unsubscribe` da RFC 8058,
+`frequency === 'off'` respeitado, `Reply-To` em `@griffo.work`, e
+`RadarAlert.notifiedAt` registrando o que já saiu.
+
+**Com a variável desligada o caminho roda mesmo assim** e escreve no log quem
+receberia o quê, com o assunto montado. É assim que se confere o conteúdo sem
+arriscar a reputação do domínio.
+
+**Três decisões que não são óbvias:**
+
+- **Envia primeiro, marca depois.** Marcar antes tornaria uma falha de envio num
+  aviso perdido em silêncio. O contrário, no pior caso, repete um aviso.
+  Repetir constrange; sumir é dano.
+- **`frequency: 'immediate'` se comporta como diário.** Com um cron por dia, o
+  mais rápido que existe é diário. O valor continua aceito, e o código diz isso
+  em vez de fingir.
+- **GET não descadastra, POST descadastra.** Verificador de link e antivírus
+  abrem sozinhos as URLs de um e-mail. Se o GET desligasse, gente seria
+  descadastrada sem ter clicado.
+
+**O que ainda não foi exercitado:** nenhuma mensagem saiu de verdade. O módulo
+de envio foi escrito contra a documentação do Resend, não contra resposta
+observada — exceção declarada à regra da seção 6, e o motivo de `sendEmail`
+receber o `fetch` por parâmetro. O primeiro envio real é o primeiro teste real.
 
 **Não ligue o envio antes do Radar estar validado.** Mandar e-mail sobre vaga
 ruim queima o domínio, e domínio queimado não se recupera fácil.
@@ -476,7 +512,28 @@ Ao escrever a mensagem, lembre que ela tem duas tarefas: avisar da falha e
 dizer o que a pessoa pode fazer agora. "Preencha à mão, funciona igual" evita
 que ela abandone a tela; "tente de novo" sozinho, não.
 
-### 10.10 Rotas de administração
+### 10.10 O descadastro do e-mail — o erro aqui é jurídico
+
+`/api/radar/unsubscribe` e `lib/email/unsubscribe.ts`.
+
+Três coisas quebram sem fazer barulho:
+
+- **Tirar o link do corpo do e-mail.** É obrigação legal (LGPD Art. 18, GDPR
+  Art. 21). O sintoma de violar isto não é erro nenhum: é a pessoa marcando como
+  spam, e o domínio afundando junto.
+- **Fazer o GET desligar.** Antivírus e verificadores corporativos abrem as URLs
+  de um e-mail sozinhos. Com o GET desligando, uma fatia dos usuários sai da
+  lista sem ter clicado — e ninguém descobre, porque "não recebeu e-mail" é
+  exatamente como o silêncio do §15 se parece.
+- **Fazer o token expirar, ou tirar a assinatura.** Expirado, o direito de sair
+  vira mensagem de erro. Sem assinatura, o id na URL deixa qualquer um desligar
+  o Radar de qualquer pessoa.
+
+O descadastro desliga o e-mail e **só** o e-mail: conta, análises e alertas na
+tela continuam. Tratar as duas coisas como uma apagaria uma decisão que a pessoa
+não tomou.
+
+### 10.11 Rotas de administração
 
 Toda rota nova sob `/api/admin/` precisa chamar `getAdminUser()` e tratar `null`
 como 403. A função **não lança exceção** — devolve `null`. Esquecer de checar
