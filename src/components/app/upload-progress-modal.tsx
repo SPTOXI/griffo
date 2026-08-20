@@ -29,6 +29,16 @@ export interface UploadProgressModalProps {
   partial?: { dimensions?: { label: string; score: number }[]; summary?: string } | null
   /** Texto do topo, para as fases que antecedem a análise (upload, gravação). */
   headline?: string
+  /**
+   * Mostra a lista das oito dimensões.
+   *
+   * Falso durante o envio do arquivo: ali nenhuma dimensão está sendo gerada, e
+   * exibir a lista inteira apagada faz a tela prometer um trabalho que ainda
+   * não começou. O usuário via a lista piscar e sumir sem nada acender —
+   * exatamente a impressão de travamento que este componente existe para
+   * evitar.
+   */
+  showStages?: boolean
 }
 
 export function UploadProgressModal({
@@ -37,6 +47,7 @@ export function UploadProgressModal({
   completedSegments,
   partial,
   headline,
+  showStages = true,
 }: UploadProgressModalProps) {
   const elapsed = useElapsedSeconds(isOpen)
 
@@ -96,6 +107,7 @@ export function UploadProgressModal({
         </div>
 
         <CardContent className="p-6 space-y-6 relative z-10">
+          {showStages && (
           <div className="space-y-3 bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-white/10">
             <div className="flex justify-between items-center text-[11px] font-bold tracking-wider uppercase">
               <span className="text-blue-400 flex items-center gap-2">
@@ -117,7 +129,9 @@ export function UploadProgressModal({
               </div>
             </div>
           </div>
+          )}
 
+          {showStages && (
           <div className="grid sm:grid-cols-2 gap-3 max-h-[260px] overflow-y-auto pr-2 custom-scrollbar">
             {ANALYSIS_STAGES.map((stage, index) => {
               const isCompleted = done.has(stage.segment)
@@ -179,6 +193,7 @@ export function UploadProgressModal({
               )
             })}
           </div>
+          )}
 
           {/* O parecer aparece assim que o segmento executivo termina, antes do
               laudo completo estar montado. */}
@@ -194,7 +209,9 @@ export function UploadProgressModal({
           <div className="text-center pt-4 border-t border-white/10">
             <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase flex items-center justify-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-              Pode fechar esta janela — o laudo continua sendo gerado
+              {showStages
+                ? 'Pode fechar esta janela — o laudo continua sendo gerado'
+                : 'Preparando seu currículo'}
             </p>
           </div>
         </CardContent>

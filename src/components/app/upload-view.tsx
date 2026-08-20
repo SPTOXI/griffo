@@ -571,11 +571,20 @@ export function UploadView() {
         </CardContent>
       </Card>
 
+      {/*
+        Sem lista de dimensões aqui: nesta fase o que roda é o envio do arquivo
+        e a prévia gratuita, e nenhuma das oito está sendo gerada. A versão
+        anterior passava `progress={0}` e `completedSegments={[]}` fixos, então
+        a lista inteira aparecia apagada e sumia sem nada acender — a tela
+        prometia um trabalho que ainda não tinha começado, e o efeito era o de
+        um piscar sem sentido antes da troca de página.
+      */}
       <UploadProgressModal
         isOpen={loading}
         progress={0}
         completedSegments={[]}
         headline={loadingStep ?? undefined}
+        showStages={false}
       />
     </div>
   )
