@@ -155,7 +155,13 @@ Responda APENAS o JSON do schema, sem texto antes ou depois.`
 
     return NextResponse.json({ suggestion, conflicts, resumeId: resume.id })
   } catch (e: any) {
-    console.error('[professional-profile/suggest]', e?.message || e)
+    // `diagnostic` primeiro, e não `message`: o roteador de IA guarda em
+    // `message` um texto seguro para mostrar ao usuário — "Falha ao processar
+    // com as IAs ativas" — e em `diagnostic` o motivo por provedor, com código
+    // de status e latência de cada tentativa. Registrar só o primeiro produz um
+    // log que confirma a falha e não ajuda a resolvê-la, que foi exatamente o
+    // que aconteceu aqui: a rota falhou em produção e o log não dizia por quê.
+    console.error('[professional-profile/suggest]', e?.diagnostic || e?.message || e)
     return NextResponse.json(
       { error: e?.message || 'Não foi possível ler seu currículo agora. Tente de novo em instantes.' },
       { status: 500 }
