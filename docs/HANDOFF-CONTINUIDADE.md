@@ -7,9 +7,16 @@ da Etapa 1 à Etapa 8 do prompt mestre. Revisado em 20/08/2026 (PR #61). Este
 documento existe para que quem continuar não precise redescobrir o que já foi
 decidido, e — mais importante — não repita erros que já custaram caro aqui.
 
-Leia junto com `docs/AUDITORIA-EVOLUCAO-GLOBAL.md`, que registra o porquê de
-cada decisão em ordem cronológica. Este documento é o resumo operacional; aquele
-é a memória.
+São três documentos, com papéis diferentes:
+
+| Documento | Responde |
+|---|---|
+| **este** | o que fazer, o que não quebrar, onde o erro não aparece como erro |
+| `docs/MAPA-DO-PRODUTO.md` | **o que o produto é** — rota por rota, módulo por módulo, com o que é vendido conferido contra o que tem produtor |
+| `docs/AUDITORIA-EVOLUCAO-GLOBAL.md` | **por que** cada decisão foi tomada, em ordem cronológica |
+
+Este é o resumo operacional, o mapa é o inventário, a auditoria é a memória.
+Quem chega agora ganha tempo lendo o mapa antes deste.
 
 ---
 
@@ -20,7 +27,7 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 20/08/2026, `main` em `1b546a7` (PR #61) |
+| Última revisão | 20/08/2026, `main` em `4e51028` (PRs #61, #62, #63) |
 | Suíte | 495 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão |
 
@@ -37,9 +44,18 @@ o quanto confiar nele.
 3. **Os três testes de produto** que só quem tem conta faz: importar currículo no
    Perfil Profissional, conferir se o preço aparece em real, e abrir o Radar com
    o perfil preenchido para ver se entra vaga de outra área.
+4. **Apagar as branches `claude/*` já mescladas.** O `git push --delete` volta
+   403 em sessão remota — é operação de humano, pelo navegador ou pela máquina
+   dele. A conferência já foi feita e está registrada na seção 11.
 
-**O que NÃO está pendente e parece que está:** o e-mail do digest está
-implementado e desligado de propósito (§7.3). Não é trabalho pela metade.
+**O que NÃO está pendente e parece que está:**
+
+- O e-mail do digest está implementado e **desligado de propósito** (§7.3). Não é
+  trabalho pela metade.
+- `docs/MAPA-DO-PRODUTO.md` traz data de 20/08 mas descreve decisões de meses
+  atrás. Ele foi escrito em 14/08, ficou órfão numa branch fechada sem merge e
+  foi recuperado e reescrito contra a `main` atual no PR #63. É documento
+  vigente, não arquivo histórico.
 
 ---
 
@@ -596,3 +612,37 @@ não tomou.
 Toda rota nova sob `/api/admin/` precisa chamar `getAdminUser()` e tratar `null`
 como 403. A função **não lança exceção** — devolve `null`. Esquecer de checar
 deixa a rota aberta.
+
+---
+
+## 11. Branches `claude/*` no remoto — conferência de 20/08
+
+Doze branches acumularam no remoto. A conferência abaixo foi feita comparando o
+tip de cada branch com o head do PR correspondente, e — para as fechadas sem
+merge — procurando cada linha adicionada dentro da `main` atual. Ela existe para
+que ninguém precise repetir o trabalho, e para que ninguém apague por engano a
+única cópia de alguma coisa.
+
+**Nove com PR mesclado e tip igual ao head do PR. Seguras:**
+
+```
+claude/analise-projeto-execucao-pw6cb9        claude/painel-laudo-8-dimensoes-2uintg
+claude/code-audit-planning-pc5sap             claude/price-changes-frontend-backend-stripe-a37av5
+claude/github-code-changes-ru61f3             claude/profile-pdf-analysis-timeout-g5dvhx
+claude/handoff-revisao-pos-61                 claude/vercel-claude-code-connection-nvz7jn
+claude/mcp-vercel-integration-c5qpvw
+```
+
+**Três com PR fechado SEM merge.** Nenhuma delas guarda trabalho vivo:
+
+| Branch | PR | Situação verificada |
+|---|---|---|
+| `claude/deepseek-v4-pricing-update-z1aijg` | #22 | O commit de preço foi recuperado **inteiro** pelo PR #45: `pricing.ts` e `pricing.test.ts` byte a byte idênticos, e nenhuma das 68 linhas adicionadas em `registry.ts`, `types.ts`, `admin-view.tsx` e `ANALISE-CUSTOS.md` falta na `main`. O segundo commit era o `MAPA-DO-PRODUTO.md`, recuperado no PR #63 |
+| `claude/index-page-design-review-3okhnq` | #15 | **Não** foi recuperado — 77 de 90 linhas da `landing.tsx` e as 155 do `i18n/index.ts` não estão na `main`. Mas o segundo commit mexe em `lib/credits.ts` e `api/credits/*`, três arquivos que a `main` apagou junto com o modelo de créditos, e a landing foi reescrita depois. Trabalho superado, não perdido |
+| `claude/page-load-error-39mpbh` | #2 | Recuperado **inteiro** pelo PR #45, e melhorado: as três regras de `Cache-Control` estão na `next.config.ts` com os mesmos valores, agora com a constante `HTML_ONLY` e a tabela explicando cada uma |
+
+**A lição, que vale mais que a lista.** O PR #45 se chama *"Recupera o preço do
+DeepSeek e a política de cache dos PRs #22 e #2"* — alguém já teve de refazer à
+mão trabalho que estava pronto numa branch fechada por engano. Fechar PR sem
+mesclar é decisão que precisa ser dita em voz alta; senão o conteúdo não some,
+mas fica caro de achar.
