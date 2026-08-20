@@ -220,17 +220,22 @@ test('o bloco só cita o que foi declarado', () => {
 })
 
 test('a pretensão salarial entra com moeda e período', () => {
+  // `career` por extenso: o bloco de perfil só existe nesse escopo.
   const prompt = profilePromptContext(
-    profileWith({ salaryMin: 8000, salaryMax: 12000, salaryCurrency: 'BRL', salaryPeriod: 'month' })
+    profileWith({ salaryMin: 8000, salaryMax: 12000, salaryCurrency: 'BRL', salaryPeriod: 'month' }),
+    'career'
   )
   assert.ok(prompt.includes('BRL 8000 a 12000/month'), prompt)
 })
 
-test('escopo de documento não afirma quem o candidato é', () => {
+test('escopo de documento não leva nada do perfil', () => {
   // O caso real: o perfil foi preenchido a partir de um currículo de
-  // biomedicina, e depois um currículo de advogado foi enviado. O bloco de
-  // perfil ia inteiro para o prompt, ANTES do currículo, e o laudo do advogado
-  // saía sobre biomedicina.
+  // biomedicina, e depois um currículo de advogado foi enviado. O bloco ia
+  // inteiro para o prompt, ANTES do currículo, e o laudo do advogado saía
+  // sobre biomedicina.
+  //
+  // A regra do produto é que cada análise é única e não se baseia na anterior.
+  // Por isso o corte é total: um perfil cheio não produz bloco nenhum.
   const biomedico = {
     ...EMPTY_PROFILE,
     currentTitle: 'Biomédico',
@@ -241,47 +246,22 @@ test('escopo de documento não afirma quem o candidato é', () => {
     targetRoles: ['Biomédico'],
     residenceCountry: 'BR',
     openToRelocation: true,
+    workModes: ['remote' as const],
+    salaryMin: 8000,
+    salaryCurrency: 'BRL',
   }
 
-  const prompt = profilePromptContext(biomedico, 'document')
-
-  assert.ok(!/Biomédico/i.test(prompt), 'cargo não pode vazar para a análise de outro currículo')
-  assert.ok(!/Saúde/i.test(prompt))
-  assert.ok(!/Análises clínicas/i.test(prompt))
-  // Rótulo não, VALOR: o cabeçalho novo cita "senioridade" ao dizer que ela sai
-  // do currículo, e é exatamente isso que se quer.
-  assert.ok(!/- Senioridade:/i.test(prompt))
-  assert.ok(!/- Anos de experiência:/i.test(prompt))
-  assert.ok(!/12/.test(prompt))
+  assert.equal(profilePromptContext(biomedico, 'document'), '')
 })
 
-test('escopo de documento mantém as preferências que o currículo não declara', () => {
+test('nem as preferências sobrevivem ao escopo de documento', () => {
+  // Meia dúzia de campos herdados continua sendo herança. O que o documento
+  // precisa de contexto vem do mercado e da vaga-alvo do próprio currículo.
   const prompt = profilePromptContext(
-    {
-      ...EMPTY_PROFILE,
-      residenceCountry: 'BR',
-      openToInternationalRemote: true,
-      workModes: ['remote'],
-      currentTitle: 'Biomédico',
-    },
+    { ...EMPTY_PROFILE, residenceCountry: 'PT', openToInternationalRemote: true },
     'document'
   )
-
-  assert.ok(/BR/.test(prompt))
-  assert.ok(/remoto/i.test(prompt))
-  assert.ok(!/Biomédico/i.test(prompt))
-})
-
-test('escopo de documento manda seguir o currículo, não o perfil', () => {
-  // O cabeçalho antigo dizia "não contradiga sem motivo" — era ele que fazia a
-  // IA preferir o perfil desatualizado ao documento que tinha à frente.
-  const prompt = profilePromptContext(
-    { ...EMPTY_PROFILE, residenceCountry: 'BR' },
-    'document'
-  )
-
-  assert.ok(/siga o currículo/i.test(prompt))
-  assert.ok(!/não contradiga/i.test(prompt))
+  assert.equal(prompt, '')
 })
 
 test('escopo de carreira continua trazendo o perfil inteiro', () => {
@@ -298,6 +278,5 @@ test('escopo de carreira continua trazendo o perfil inteiro', () => {
 
 test('sem escopo declarado, o padrão é o lado seguro', () => {
   // Esquecer de declarar não pode reintroduzir o vazamento.
-  const prompt = profilePromptContext({ ...EMPTY_PROFILE, currentTitle: 'Biomédico' })
-  assert.ok(!/Biomédico/.test(prompt))
+  assert.equal(profilePromptContext({ ...EMPTY_PROFILE, currentTitle: 'Biomédico' }), '')
 })
