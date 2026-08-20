@@ -21,7 +21,11 @@ export default function Home() {
     if (hydrated && typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const v = params.get('view')
-      if (v === 'admin' || v === 'upload' || v === 'analysis' || v === 'rewrite' || v === 'plans') {
+      // `radar` entrou aqui para o e-mail do digest ter uma porta de entrada.
+      // A navegação do app vive em memória, sem rota própria, então sem este
+      // nome na lista o link do e-mail deixaria a pessoa no painel inicial —
+      // que não é onde o aviso dela está.
+      if (v === 'admin' || v === 'upload' || v === 'analysis' || v === 'rewrite' || v === 'plans' || v === 'radar') {
         setNavView(v as any)
       }
     }

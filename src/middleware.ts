@@ -63,6 +63,20 @@ const RULES: Rule[] = [
   // irreversível. Ambas são legítimas e raras — o limite é baixo de propósito.
   { prefix: '/api/user/export', limit: 5, windowMs: 60 * 60_000 },
   { prefix: '/api/user', limit: 20, windowMs: 10 * 60_000 },
+  /**
+   * Descadastro do digest: pública, sem sessão, e escreve no banco — então
+   * merece limite. Mas o limite é ALTO, e isso é a decisão, não um descuido.
+   *
+   * O botão nativo do Gmail e do Outlook faz o POST a partir dos servidores
+   * DELES, não do computador de quem clicou. Todos os descadastros de um
+   * provedor chegam do mesmo punhado de IPs. Um limite apertado por IP
+   * bloquearia justamente o caminho que a RFC 8058 existe para oferecer — e o
+   * sintoma seria gente que tentou sair, não conseguiu, e marcou como spam.
+   *
+   * O que o limite protege é o banco contra repetição em massa. Contra
+   * descadastro alheio quem protege é a assinatura do token, não isto.
+   */
+  { prefix: '/api/radar/unsubscribe', limit: 300, windowMs: 10 * 60_000 },
 ]
 
 function clientIp(req: NextRequest): string {
@@ -114,5 +128,10 @@ export const config = {
     '/api/checkout/:path*',
     '/api/analyses/:path*',
     '/api/user/:path*',
+    // Entra por causa do descadastro, que é público. As outras rotas de
+    // `/api/radar` passam a atravessar o middleware sem regra que case, o que
+    // as deixa exatamente como estavam — `matchRule` devolve nada e a
+    // requisição segue.
+    '/api/radar/:path*',
   ],
 }

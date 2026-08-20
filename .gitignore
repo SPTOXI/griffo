@@ -42,7 +42,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 local-*
-.claude
+# A configuração local do Claude Code fica fora do versionamento, mas o hook de
+# início de sessão precisa estar versionado: é ele que instala as dependências
+# no contêiner das sessões remotas, e um hook não versionado não vale para
+# ninguém além de quem o escreveu.
+.claude/*
+!.claude/hooks/
+!.claude/settings.json
 .z-ai-config
 *.log
 dev.log

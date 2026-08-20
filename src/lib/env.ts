@@ -67,3 +67,63 @@ export function getSessionSecret(): string {
     'Gere um valor forte com: openssl rand -hex 32'
   )
 }
+
+/**
+ * Endereço público da aplicação, sem barra no fim.
+ *
+ * O e-mail precisa dele por um motivo que a tela não tem: um link relativo não
+ * existe dentro de uma caixa de entrada. Todo link que sai daqui é absoluto ou
+ * não é link.
+ */
+export function getAppUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_APP_URL?.trim() || 'https://griffo.work'
+  return raw.replace(/\/+$/, '')
+}
+
+/** Chave da API do Resend. */
+export function getResendApiKey(): string {
+  return required(
+    'RESEND_API_KEY',
+    'Crie uma chave em https://resend.com/api-keys e configure-a no ambiente.'
+  )
+}
+
+/**
+ * Remetente do digest.
+ *
+ * O domínio precisa estar verificado no Resend. O padrão é
+ * `send.griffo.work`, que é onde SPF, DKIM e DMARC estão passando — mandar do
+ * domínio raiz sem essa verificação é o caminho mais curto para a caixa de
+ * spam.
+ */
+export function getDigestFrom(): string {
+  return process.env.RADAR_DIGEST_FROM?.trim() || 'GriffoWork <radar@send.griffo.work>'
+}
+
+/**
+ * Para onde vai a resposta.
+ *
+ * `send.griffo.work` só envia; quem responder ao remetente fala com o vazio.
+ * O `Reply-To` aponta para uma caixa em `@griffo.work`, que o Cloudflare Email
+ * Routing encaminha. Um e-mail que não aceita resposta ensina o destinatário a
+ * ignorar os próximos.
+ */
+export function getDigestReplyTo(): string {
+  return process.env.RADAR_DIGEST_REPLY_TO?.trim() || 'contato@griffo.work'
+}
+
+/**
+ * O envio está ligado?
+ *
+ * Desligado por padrão, e de propósito. O documento de continuidade é direto:
+ * *"Não ligue o envio antes do Radar estar validado. Mandar e-mail sobre vaga
+ * ruim queima o domínio, e domínio queimado não se recupera fácil."*
+ *
+ * Todo o resto do caminho funciona com a variável desligada — a rodada apura
+ * quem receberia o quê e registra isso no log —, então dá para conferir o
+ * conteúdo antes de qualquer mensagem sair. Ligar é uma decisão de operação,
+ * não de código: `RADAR_DIGEST_ENABLED=true`.
+ */
+export function isDigestEnabled(): boolean {
+  return (process.env.RADAR_DIGEST_ENABLED || '').trim().toLowerCase() === 'true'
+}
