@@ -329,6 +329,11 @@ chute.
   tem cargo-alvo declarado; sem termo, fonte de busca não roda.
 - **Cache de prompt não acionado em currículo curto.** A Anthropic não cacheia
   prefixo menor que ~1024 tokens, e não avisa.
+- **`npm test` com o glob entre aspas.** Sem elas o SHELL expandia
+  `src/**/*.test.ts` — e sem `globstar` isso vira `src/*/*.test.ts`, um nível
+  só. A suíte passou a rodar 4 testes em vez de 465 no dia em que apareceu o
+  primeiro arquivo de teste em `src/lib/` raso, e reportou sucesso. As aspas
+  entregam o glob para o `tsx`, que o expande direito. Não tire.
 
 ---
 
