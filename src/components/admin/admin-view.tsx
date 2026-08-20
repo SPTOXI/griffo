@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Shield, Users, CreditCard, Cpu, Search, Loader2, Save, RefreshCw, Activity,
-  BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Award, UserPlus, Minus,
+  BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Award, UserPlus, Minus, Pencil,
   Radar as RadarIcon
 } from 'lucide-react'
 import { RadarQuotas } from './radar-quotas'
@@ -87,10 +87,13 @@ interface AdminUser {
   id: string
   name: string
   email: string
+  phone?: string | null
+  profession?: string | null
   role: string
   plan: string
   analysisBalance?: number
   disabled?: boolean
+  paymentCountry?: string | null
   createdAt: string
   _count: { resumes: number; subscriptions: number }
 }
@@ -374,9 +377,7 @@ function AdminViewContent() {
     }
   }
 
-  // User Management Actions
-  // Criação de conta pelo administrador. Existe para os casos em que a pessoa
-  // não passa pelo cadastro público: cortesia, suporte, conta de teste.
+  // User Creation State & Handlers
   const [newUser, setNewUser] = useState({
     email: '',
     name: '',
@@ -408,6 +409,90 @@ function AdminViewContent() {
       toast.error('Falha ao conectar com o servidor.')
     } finally {
       setCreatingUser(false)
+    }
+  }
+
+  // User Edit State & Handlers
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    profession: '',
+    role: 'user',
+    plan: 'free',
+    disabled: false,
+    analysisBalance: 0,
+    paymentCountry: '',
+    password: '',
+  })
+  const [updatingUserLoading, setUpdatingUserLoading] = useState(false)
+
+  const handleOpenEditModal = (u: AdminUser) => {
+    setEditingUser(u)
+    setEditFormData({
+      name: u.name || '',
+      email: u.email || '',
+      phone: u.phone || '',
+      profession: u.profession || '',
+      role: u.role || 'user',
+      plan: u.plan || 'free',
+      disabled: !!u.disabled,
+      analysisBalance: u.analysisBalance ?? 0,
+      paymentCountry: u.paymentCountry || '',
+      password: '',
+    })
+    setEditOpen(true)
+  }
+
+  const handleSaveUserEdit = async () => {
+    if (!editingUser) return
+    if (!editFormData.email || !editFormData.email.includes('@')) {
+      toast.error('Informe um e-mail válido.')
+      return
+    }
+    if (editFormData.password && editFormData.password.length < 8) {
+      toast.error('A senha deve ter no mínimo 8 caracteres.')
+      return
+    }
+
+    setUpdatingUserLoading(true)
+    try {
+      const payload: any = {
+        userId: editingUser.id,
+        name: editFormData.name,
+        email: editFormData.email,
+        phone: editFormData.phone || null,
+        profession: editFormData.profession || null,
+        role: editFormData.role,
+        plan: editFormData.plan,
+        disabled: editFormData.disabled,
+        analysisBalance: editFormData.analysisBalance,
+        paymentCountry: editFormData.paymentCountry || null,
+      }
+      if (editFormData.password) {
+        payload.password = editFormData.password
+      }
+
+      const r = await internalFetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await r.json()
+      if (!r.ok) {
+        toast.error(data.error || 'Erro ao atualizar usuário.')
+        return
+      }
+      toast.success(data.message || 'Usuário atualizado com sucesso!')
+      setEditOpen(false)
+      setEditingUser(null)
+      await loadData()
+    } catch {
+      toast.error('Falha de conexão ao atualizar usuário.')
+    } finally {
+      setUpdatingUserLoading(false)
     }
   }
 
@@ -1051,35 +1136,41 @@ function AdminViewContent() {
                             )}
                           </td>
                           <td className="px-4 py-3 text-right">
-                            {isAdmin ? (
-                              <span className="text-[10px] font-bold text-violet-600 italic">
-                                Protegido (Imutável)
-                              </span>
-                            ) : (
-                              <div className="flex items-center justify-end gap-1.5">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleToggleUserStatus(u)}
-                                  className={`h-7 text-[11px] px-2 ${
-                                    u.disabled
-                                      ? 'text-emerald-700 border-emerald-300 hover:bg-emerald-50'
-                                      : 'text-amber-700 border-amber-300 hover:bg-amber-50'
-                                  }`}
-                                >
-                                  <Power className="w-3 h-3 mr-1" />
-                                  {u.disabled ? 'Habilitar' : 'Desabilitar'}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleDeleteUser(u)}
-                                  className="h-7 text-[11px] px-2 bg-rose-600 hover:bg-rose-700 text-white"
-                                >
-                                  <Trash2 className="w-3 h-3 mr-1" /> Deletar
-                                </Button>
-                              </div>
-                            )}
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleOpenEditModal(u)}
+                                className="h-7 text-[11px] px-2 text-blue-700 border-blue-300 hover:bg-blue-50"
+                              >
+                                <Pencil className="w-3 h-3 mr-1" /> Editar
+                              </Button>
+                              {!isAdmin && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleToggleUserStatus(u)}
+                                    className={`h-7 text-[11px] px-2 ${
+                                      u.disabled
+                                        ? 'text-emerald-700 border-emerald-300 hover:bg-emerald-50'
+                                        : 'text-amber-700 border-amber-300 hover:bg-amber-50'
+                                    }`}
+                                  >
+                                    <Power className="w-3 h-3 mr-1" />
+                                    {u.disabled ? 'Habilitar' : 'Desabilitar'}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDeleteUser(u)}
+                                    className="h-7 text-[11px] px-2 bg-rose-600 hover:bg-rose-700 text-white"
+                                  >
+                                    <Trash2 className="w-3 h-3 mr-1" /> Deletar
+                                  </Button>
+                                </>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       )
@@ -1089,6 +1180,180 @@ function AdminViewContent() {
               </div>
             </CardContent>
           </Card>
+
+          {/* EDIT USER MODAL */}
+          <Dialog open={editOpen} onOpenChange={setEditOpen}>
+            <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-base">
+                  <Pencil className="w-5 h-5 text-blue-600" />
+                  Editar Usuário ({editingUser?.email})
+                </DialogTitle>
+                <DialogDescription className="text-xs">
+                  Altere dados cadastrais, permissões, plano, saldos ou redefina a senha deste usuário.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Nome Completo</Label>
+                    <Input
+                      value={editFormData.name}
+                      onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                      placeholder="Nome do usuário"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">E-mail</Label>
+                    <Input
+                      type="email"
+                      value={editFormData.email}
+                      onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                      placeholder="email@exemplo.com"
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Telefone</Label>
+                    <Input
+                      value={editFormData.phone}
+                      onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                      placeholder="(11) 99999-9999"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Profissão / Cargo</Label>
+                    <Input
+                      value={editFormData.profession}
+                      onChange={(e) => setEditFormData({ ...editFormData, profession: e.target.value })}
+                      placeholder="Engenheiro de Software"
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Função (Role)</Label>
+                    <Select
+                      value={editFormData.role}
+                      onValueChange={(v) => setEditFormData({ ...editFormData, role: v })}
+                      disabled={editingUser?.role === 'admin'}
+                    >
+                      <SelectTrigger className="text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="user">Usuário</SelectItem>
+                        <SelectItem value="admin">Administrador</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Status da Conta</Label>
+                    <Select
+                      value={editFormData.disabled ? 'disabled' : 'active'}
+                      onValueChange={(v) => setEditFormData({ ...editFormData, disabled: v === 'disabled' })}
+                      disabled={editingUser?.role === 'admin'}
+                    >
+                      <SelectTrigger className="text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Ativo</SelectItem>
+                        <SelectItem value="disabled">Desabilitado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Plano</Label>
+                    <Select
+                      value={editFormData.plan}
+                      onValueChange={(v) => setEditFormData({ ...editFormData, plan: v })}
+                    >
+                      <SelectTrigger className="text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="free">Gratuito (free)</SelectItem>
+                        <SelectItem value="day">Diário (day)</SelectItem>
+                        <SelectItem value="monthly">Mensal (monthly)</SelectItem>
+                        <SelectItem value="annual">Anual (annual)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Saldo de Análises</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={editFormData.analysisBalance}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          analysisBalance: Math.max(0, parseInt(e.target.value, 10) || 0),
+                        })
+                      }
+                      className="text-sm font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">País de Pagamento (ISO2)</Label>
+                    <Input
+                      value={editFormData.paymentCountry}
+                      onChange={(e) => setEditFormData({ ...editFormData, paymentCountry: e.target.value.toUpperCase() })}
+                      placeholder="BR, US, PT..."
+                      maxLength={2}
+                      className="text-sm uppercase font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 pt-1 border-t border-slate-100">
+                  <Label className="text-xs font-semibold text-rose-700">Redefinir Senha (Opcional)</Label>
+                  <Input
+                    type="text"
+                    value={editFormData.password}
+                    onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                    placeholder="Deixe em branco para manter a senha atual"
+                    className="text-sm font-mono"
+                  />
+                  <p className="text-[11px] text-slate-500">
+                    Se preenchida (mínimo 8 caracteres), a nova senha será gravada e as sessões do usuário serão revogadas.
+                  </p>
+                </div>
+              </div>
+              <DialogFooter className="gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditOpen(false)}
+                  className="text-xs"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSaveUserEdit}
+                  disabled={updatingUserLoading}
+                  className="bg-blue-600 hover:bg-blue-700 text-xs font-bold"
+                >
+                  {updatingUserLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-1.5" />
+                  )}
+                  Salvar Alterações
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* AI KEYS MANAGER TAB (4 IAs) */}

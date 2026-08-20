@@ -34,10 +34,13 @@ export async function GET() {
           id: true,
           name: true,
           email: true,
+          phone: true,
+          profession: true,
           role: true,
           plan: true,
           analysisBalance: true,
           disabled: true,
+          paymentCountry: true,
           createdAt: true,
           _count: {
             select: { resumes: true, subscriptions: true },

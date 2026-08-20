@@ -66,23 +66,26 @@ export async function GET(req: Request) {
     const [total, users] = await Promise.all([
       db.user.count({ where }),
       db.user.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      skip: offset,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        plan: true,
-        analysisBalance: true,
-        disabled: true,
-        createdAt: true,
-        _count: {
-          select: { resumes: true, subscriptions: true },
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          profession: true,
+          role: true,
+          plan: true,
+          analysisBalance: true,
+          disabled: true,
+          paymentCountry: true,
+          createdAt: true,
+          _count: {
+            select: { resumes: true, subscriptions: true },
+          },
         },
-      },
       }),
     ])
 
@@ -145,7 +148,22 @@ export async function POST(req: Request) {
         // Nada a converter: contas novas nascem no modelo de análises.
         creditsMigratedAt: new Date(),
       },
-      select: { id: true, name: true, email: true, role: true, plan: true, analysisBalance: true, disabled: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        profession: true,
+        role: true,
+        plan: true,
+        analysisBalance: true,
+        disabled: true,
+        paymentCountry: true,
+        createdAt: true,
+        _count: {
+          select: { resumes: true, subscriptions: true },
+        },
+      },
     })
 
     if (analysisBalance > 0) {
@@ -188,8 +206,25 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json()
-    const { userId, role, plan, analysisBalance, analysisDelta, disabled } = body as {
+    const {
+      userId,
+      name,
+      email,
+      phone,
+      profession,
+      role,
+      plan,
+      analysisBalance,
+      analysisDelta,
+      disabled,
+      paymentCountry,
+      password,
+    } = body as {
       userId: string
+      name?: string
+      email?: string
+      phone?: string | null
+      profession?: string | null
       role?: string
       plan?: string
       /** Novo saldo absoluto. */
@@ -197,6 +232,8 @@ export async function PATCH(req: Request) {
       /** Crédito (positivo) ou redução (negativo) sobre o saldo atual. */
       analysisDelta?: number
       disabled?: boolean
+      paymentCountry?: string | null
+      password?: string
     }
 
     if (!userId) {
@@ -217,25 +254,39 @@ export async function PATCH(req: Request) {
     }
 
     const data: any = {}
+    if (typeof name === 'string') data.name = name.trim()
+    if (typeof email === 'string' && email.trim() !== targetUser.email) {
+      const normalizedEmail = email.toLowerCase().trim()
+      if (!normalizedEmail.includes('@')) {
+        return NextResponse.json({ error: 'E-mail inválido.' }, { status: 400 })
+      }
+      const existing = await db.user.findUnique({ where: { email: normalizedEmail } })
+      if (existing && existing.id !== userId) {
+        return NextResponse.json({ error: 'Já existe uma conta com este e-mail.' }, { status: 409 })
+      }
+      data.email = normalizedEmail
+    }
+    if (typeof phone === 'string' || phone === null) data.phone = phone ? phone.trim() : null
+    if (typeof profession === 'string' || profession === null) data.profession = profession ? profession.trim() : null
+    if (typeof paymentCountry === 'string' || paymentCountry === null) data.paymentCountry = paymentCountry ? paymentCountry.trim().toUpperCase() : null
     if (role && ['user', 'admin'].includes(role)) data.role = role
-    if (plan) data.plan = plan
+    if (plan && ['free', 'day', 'monthly', 'annual'].includes(plan)) data.plan = plan
     if (typeof disabled === 'boolean') data.disabled = disabled
 
+    let passwordUpdated = false
+    if (typeof password === 'string' && password.trim() !== '') {
+      if (password.length < 8) {
+        return NextResponse.json({ error: 'A nova senha precisa ter ao menos 8 caracteres.' }, { status: 400 })
+      }
+      data.passwordHash = hashPassword(password)
+      passwordUpdated = true
+    }
+
     // O saldo tem duas formas de mudar, e a diferença entre elas importa.
-    //
-    // `analysisDelta` é incremento: some 5, tire 2. É atômico no banco, então
-    // não perde uma análise que o usuário gastou entre a leitura da tela e o
-    // clique do administrador.
-    //
-    // `analysisBalance` é atribuição: o saldo passa a ser exatamente isto.
-    // Perde essa corrida por construção — quem atribui está dizendo "o valor é
-    // este, independente do que houver" —, e existe para corrigir um saldo
-    // errado, não para operar o dia a dia.
     let appliedDelta = 0
     const previousBalance = targetUser.analysisBalance
 
     if (typeof analysisDelta === 'number' && Number.isFinite(analysisDelta) && analysisDelta !== 0) {
-      // Piso em zero: reduzir mais do que existe zera, não fica negativo.
       appliedDelta = Math.max(analysisDelta, -previousBalance)
       data.analysisBalance = { increment: appliedDelta }
     } else if (typeof analysisBalance === 'number' && analysisBalance >= 0) {
@@ -246,7 +297,22 @@ export async function PATCH(req: Request) {
     const updated = await db.user.update({
       where: { id: userId },
       data,
-      select: { id: true, name: true, email: true, role: true, plan: true, analysisBalance: true, disabled: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        profession: true,
+        role: true,
+        plan: true,
+        analysisBalance: true,
+        disabled: true,
+        paymentCountry: true,
+        createdAt: true,
+        _count: {
+          select: { resumes: true, subscriptions: true },
+        },
+      },
     })
 
     if (appliedDelta !== 0) {
@@ -258,10 +324,8 @@ export async function PATCH(req: Request) {
       })
     }
 
-    // Desabilitar já era respeitado por `getCurrentUser`, mas agora as sessões
-    // do usuário também são revogadas — o efeito passa a ser registrado e
-    // auditável, em vez de depender só da checagem em cada requisição.
-    if (disabled === true) {
+    // Revoga sessões ativas do usuário se a conta for desabilitada, a senha for trocada ou o e-mail for alterado.
+    if (disabled === true || passwordUpdated || data.email) {
       await revokeAllUserSessions(userId)
     }
 
