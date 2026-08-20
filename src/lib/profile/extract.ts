@@ -211,3 +211,90 @@ export function applySuggestion(
 
   return { profile, filled }
 }
+
+/**
+ * Um campo do perfil que o currículo novo contradiz.
+ *
+ * `current` é o que está gravado; `suggested`, o que o currículo diz.
+ */
+export interface ProfileConflict {
+  field: 'currentTitle' | 'field'
+  label: string
+  current: string
+  suggested: string
+}
+
+const CONFLICT_LABELS: Record<ProfileConflict['field'], string> = {
+  currentTitle: 'Cargo atual',
+  field: 'Área',
+}
+
+/** Sem acento, sem caixa, sem espaço sobrando — para comparar sentido, não grafia. */
+function fold(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/**
+ * O currículo novo contradiz o perfil gravado?
+ *
+ * ## Por que esta pergunta existe
+ *
+ * O Perfil Profissional é um por usuário e foi preenchido a partir de um
+ * currículo. Quando chega um currículo de outra profissão, o perfil passa a
+ * descrever outra pessoa profissional — e ele ainda governa a orientação de
+ * carreira e a busca de vagas do Radar. Alguém que enviou um currículo de
+ * advogado receberia vagas de biomedicina.
+ *
+ * Trocar sozinho está fora de questão: o §30 diz que o perfil não muda em
+ * silêncio, e um perfil que se reescreve a cada upload apagaria o que a pessoa
+ * ajustou à mão. Então o sistema detecta e PERGUNTA.
+ *
+ * ## Por que só cargo e área
+ *
+ * Poderia comparar especializações, competências, cargos-alvo. Não compara de
+ * propósito: esses divergem entre dois currículos da MESMA profissão, e uma
+ * pergunta que aparece em todo upload é uma pergunta que se aprende a fechar
+ * sem ler. Cargo e área são as âncoras de identidade profissional — quando as
+ * duas mudam, mudou a profissão.
+ *
+ * ## O que não é conflito
+ *
+ * - **Campo vazio de um dos lados.** Falta não é contradição; é o caso que
+ *   `applySuggestion` preenche sem perguntar nada.
+ * - **Grafia diferente.** "Analista de Dados" e "analista de dados" são o mesmo
+ *   cargo.
+ * - **Um contido no outro.** "Advogado" e "Advogado Trabalhista" são a mesma
+ *   carreira com mais detalhe, e perguntar aqui seria ruído.
+ */
+export function detectProfileConflicts(
+  current: ProfessionalProfile,
+  suggestion: ProfileSuggestion
+): ProfileConflict[] {
+  const conflicts: ProfileConflict[] = []
+
+  for (const field of ['currentTitle', 'field'] as const) {
+    const stored = current[field]
+    const incoming = suggestion[field]
+
+    if (!stored || !incoming) continue
+
+    const a = fold(stored)
+    const b = fold(incoming)
+    if (!a || !b) continue
+    if (a === b || a.includes(b) || b.includes(a)) continue
+
+    conflicts.push({
+      field,
+      label: CONFLICT_LABELS[field],
+      current: stored,
+      suggested: incoming,
+    })
+  }
+
+  return conflicts
+}
