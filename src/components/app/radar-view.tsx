@@ -411,7 +411,7 @@ export function RadarView() {
         </Card>
       )}
 
-      {digest && digest.total > 0 && (
+      {profileMatchable && digest && digest.total > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
           <Info className="w-4 h-4 text-indigo-500" />
           <span className="font-semibold text-slate-800">{digest.headline}</span>
@@ -421,7 +421,14 @@ export function RadarView() {
         </div>
       )}
 
-      {opportunities.map((opportunity) => {
+      {/*
+        Sem base para comparar, nada é listado — nem o que já estava gravado.
+        O alerta é uma linha no banco, e a tela o lia sem recalcular: os avisos
+        antigos continuavam aparecendo por baixo do cartão que acabou de dizer
+        que não há como recomendar nada. A rodada seguinte apaga essas linhas;
+        até lá, esconder é o mínimo.
+      */}
+      {profileMatchable && opportunities.map((opportunity) => {
         const fit = opportunity.fit
         if (!fit) {
           return (
