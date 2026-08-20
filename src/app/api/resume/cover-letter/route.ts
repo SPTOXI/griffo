@@ -236,9 +236,12 @@ Responda APENAS o JSON do schema, sem texto antes ou depois.`
     const isProviderFailure = Boolean(e?.diagnostic)
     return NextResponse.json(
       {
+        // Escrita, e não `e?.message`: a mensagem do erro é feita para o log,
+        // e mostrá-la ao usuário entrega texto interno — às vezes com nome de
+        // modelo e teto de tokens — a quem só queria a carta.
         error: isProviderFailure
           ? 'Os provedores de IA não responderam a tempo nesta tentativa. Clique em gerar novamente.'
-          : e?.message || 'Ocorreu uma falha ao redigir a carta de apresentação.',
+          : 'Não foi possível redigir a carta agora. Tente novamente em instantes — o currículo continua liberado e nada foi cobrado.',
         code: isProviderFailure ? 'AI_PROVIDERS_UNAVAILABLE' : 'COVER_LETTER_FAILED',
       },
       { status: 500 }
