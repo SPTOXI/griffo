@@ -9,12 +9,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   FileSearch, Loader2, AlertCircle, Sparkles, Award, Target, Lightbulb, Key,
-  CheckCircle2, XCircle, FileEdit, Download, ArrowRight, RefreshCw, Share2, Globe, Linkedin, Compass, Info, BarChart3
+  CheckCircle2, AlertTriangle, XCircle, FileEdit, Download, ArrowRight, RefreshCw, Share2, Globe, Linkedin, Compass, Info, BarChart3
 } from 'lucide-react'
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
 } from 'recharts'
 import { UploadProgressModal } from './upload-progress-modal'
+import { JOB_MATCH_TONE, jobMatchSeverity } from '@/lib/analysis/job-match'
 import {
   ProfileConflictPrompt,
   wasConflictDismissed,
@@ -694,7 +695,17 @@ export function AnalysisView() {
         >
           <Target className="w-3.5 h-3.5" /> 💼 Match Vaga Alvo
           {rawAnalysis.jobMatch && (
-            <Badge className="bg-indigo-200 text-indigo-950 border-0 text-[10px] px-1.5 py-0 h-4 font-mono font-bold">
+            /* A aba carrega a mesma cor do bloco: quem está em outra aba
+               precisa ver que há um problema aqui sem ter de abrir. */
+            <Badge
+              className={`border-0 text-[10px] px-1.5 py-0 h-4 font-mono font-bold ${
+                {
+                  incompatible: 'bg-red-600 text-white',
+                  partial: 'bg-amber-500 text-white',
+                  aligned: 'bg-emerald-600 text-white',
+                }[jobMatchSeverity(rawAnalysis.jobMatch.matchPercentage)]
+              }`}
+            >
               {rawAnalysis.jobMatch.matchPercentage}%
             </Badge>
           )}
@@ -976,16 +987,56 @@ export function AnalysisView() {
       )}
 
       {/* TARGET JOB MATCHING (FASE 1 - NOVO PAINEL DE COMPATIBILIDADE) */}
-      {(activeTab === 'all' || activeTab === 'match') && rawAnalysis.jobMatch && (
-        <Card className="border-indigo-200 bg-gradient-to-br from-indigo-50/40 via-white to-sky-50/30 shadow-sm">
+      {(activeTab === 'all' || activeTab === 'match') && rawAnalysis.jobMatch && (() => {
+        /**
+         * A cor do bloco segue o resultado.
+         *
+         * Ele era sempre azul. Um laudo que dizia "incompatibilidade radical",
+         * "requisitos que o candidato não pode suprir" e "reprovação automática
+         * na triagem" aparecia no mesmo tom tranquilo de um match de 95%, sob o
+         * título "💡 Avaliação de Aderência". Quem bate o olho e não lê o
+         * parágrafo inteiro sai achando que está tudo bem — cor é informação, e
+         * a mesma cor para desfechos opostos esconde o resultado.
+         */
+        const severity = jobMatchSeverity(rawAnalysis.jobMatch.matchPercentage)
+        const tone = JOB_MATCH_TONE[severity]
+        const skin = {
+          incompatible: {
+            card: 'border-red-300 bg-gradient-to-br from-red-50/70 via-white to-rose-50/40',
+            icon: 'bg-red-600',
+            title: 'text-red-950',
+            box: 'border-red-200',
+            score: 'text-red-600',
+            alert: 'border-red-300 bg-red-50 text-red-900',
+          },
+          partial: {
+            card: 'border-amber-300 bg-gradient-to-br from-amber-50/60 via-white to-orange-50/30',
+            icon: 'bg-amber-600',
+            title: 'text-amber-950',
+            box: 'border-amber-200',
+            score: 'text-amber-600',
+            alert: 'border-amber-300 bg-amber-50 text-amber-900',
+          },
+          aligned: {
+            card: 'border-emerald-200 bg-gradient-to-br from-emerald-50/40 via-white to-sky-50/30',
+            icon: 'bg-emerald-600',
+            title: 'text-emerald-950',
+            box: 'border-emerald-100',
+            score: 'text-emerald-600',
+            alert: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+          },
+        }[severity]
+
+        return (
+        <Card className={`${skin.card} shadow-sm`}>
           <CardHeader className="pb-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
-                  <Target className="w-5 h-5" />
+                <div className={`w-10 h-10 rounded-xl ${skin.icon} text-white flex items-center justify-center font-bold shrink-0 shadow-xs`}>
+                  {severity === 'incompatible' ? <AlertCircle className="w-5 h-5" /> : <Target className="w-5 h-5" />}
                 </div>
                 <div>
-                  <CardTitle className="text-base text-indigo-950 font-bold flex items-center gap-2">
+                  <CardTitle className={`text-base ${skin.title} font-bold flex items-center gap-2`}>
                     Análise de Compatibilidade por Vaga Alvo
                   </CardTitle>
                   <CardDescription className="text-xs text-slate-600">
@@ -993,18 +1044,33 @@ export function AnalysisView() {
                   </CardDescription>
                 </div>
               </div>
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-indigo-100 shadow-xs self-start sm:self-auto">
+              <div className={`flex items-center gap-2 bg-white px-4 py-2 rounded-xl border ${skin.box} shadow-xs self-start sm:self-auto`}>
                 <span className="text-xs font-semibold text-slate-500">Score de Match:</span>
-                <span className="text-2xl font-extrabold text-indigo-600">
+                <span className={`text-2xl font-extrabold ${skin.score}`}>
                   {rawAnalysis.jobMatch.matchPercentage}%
                 </span>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* O aviso vem ANTES do veredito da IA: é o que se lê sem ler. */}
+            <div className={`p-3 rounded-lg border ${skin.alert} text-xs leading-relaxed flex items-start gap-2`}>
+              {severity === 'incompatible' ? (
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              ) : severity === 'partial' ? (
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+              )}
+              <span>
+                <strong className="block">{tone.headline}</strong>
+                {tone.detail}
+              </span>
+            </div>
+
             {rawAnalysis.jobMatch.verdict && (
-              <div className="p-3 rounded-lg bg-white border border-indigo-100 text-xs text-slate-700 leading-relaxed">
-                <p className="font-bold text-indigo-900 mb-0.5">💡 Avaliação de Aderência:</p>
+              <div className={`p-3 rounded-lg bg-white border ${skin.box} text-xs text-slate-700 leading-relaxed`}>
+                <p className={`font-bold ${skin.title} mb-0.5`}>Avaliação de Aderência:</p>
                 <p>{rawAnalysis.jobMatch.verdict}</p>
               </div>
             )}
@@ -1069,7 +1135,8 @@ export function AnalysisView() {
             )}
           </CardContent>
         </Card>
-      )}
+        )
+      })()}
 
       {/* DIMENSIONS DETAIL */}
       {(activeTab === 'all' || activeTab === 'dimensions') && (
