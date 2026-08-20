@@ -15,6 +15,11 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
 } from 'recharts'
 import { UploadProgressModal } from './upload-progress-modal'
+import {
+  ProfileConflictPrompt,
+  wasConflictDismissed,
+  type ProfileConflict,
+} from './profile-conflict-prompt'
 import { useAnalysisJob } from './use-analysis-job'
 import { SocialAnalysisPanel, type SocialAnalysis } from './social-analysis-panel'
 import { internalFetch } from '@/lib/internal-fetch'
@@ -257,11 +262,52 @@ export function AnalysisView() {
   // chamada, possivelmente depois de o estado ter mudado.
   const analyzingIdRef = useRef<string | null>(null)
 
+  /**
+   * O currículo recém-analisado contradiz o Perfil Profissional?
+   *
+   * A verificação custa uma leitura de IA, então roda UMA vez por currículo, ao
+   * fim da análise — e não a cada abertura da tela. Se a pessoa já respondeu
+   * (inclusive "manter como está"), não roda de novo.
+   *
+   * Nunca bloqueia nada: falha aqui é silêncio, porque isto é um aviso sobre o
+   * perfil e não parte do laudo que foi pago.
+   */
+  const [conflicts, setConflicts] = useState<{ resumeId: string; list: ProfileConflict[] } | null>(
+    null
+  )
+  const conflictCheckedRef = useRef<Record<string, boolean>>({})
+
+  const checkProfileConflicts = async (id: string) => {
+    if (conflictCheckedRef.current[id] || wasConflictDismissed(id)) return
+    conflictCheckedRef.current[id] = true
+
+    try {
+      const r = await internalFetch('/api/user/professional-profile/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeId: id }),
+      })
+      if (!r.ok) return
+      const data = await r.json()
+      if (Array.isArray(data.conflicts) && data.conflicts.length > 0) {
+        setConflicts({ resumeId: id, list: data.conflicts })
+      }
+    } catch {
+      // Sem aviso é melhor que um erro sobre uma verificação que o usuário
+      // nem pediu.
+    }
+  }
+
   const job = useAnalysisJob({
     onCompleted: () => {
       setAnalyzing(false)
       const id = analyzingIdRef.current
-      if (id) void loadResume(id)
+      if (id) {
+        void loadResume(id)
+        // Depois do laudo, e fora do caminho dele: a pergunta sobre o perfil
+        // não pode atrasar a entrega que a pessoa está esperando.
+        void checkProfileConflicts(id)
+      }
     },
     onFailed: (message, code) => {
       setAnalyzing(false)
@@ -592,6 +638,14 @@ export function AnalysisView() {
 
   return (
     <div className="space-y-5 max-w-5xl">
+      {conflicts && conflicts.resumeId === resume.id && (
+        <ProfileConflictPrompt
+          resumeId={conflicts.resumeId}
+          conflicts={conflicts.list}
+          onResolved={() => setConflicts(null)}
+        />
+      )}
+
       {/* TAB NAVIGATION BAR */}
       {/* As abas quebram em várias linhas em vez de rolarem: a fila inteira é
           mais larga que o painel, e a rolagem escondia o fim do rótulo da aba

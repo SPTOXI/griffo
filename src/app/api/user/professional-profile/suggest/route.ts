@@ -7,7 +7,12 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { executeAiTask } from '@/lib/ai-router/router'
 import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
-import { parseProfileExtraction, PROFILE_EXTRACTION_JSON_SCHEMA } from '@/lib/profile/extract'
+import {
+  detectProfileConflicts,
+  parseProfileExtraction,
+  PROFILE_EXTRACTION_JSON_SCHEMA,
+} from '@/lib/profile/extract'
+import { fromRecord } from '@/lib/profile'
 import { parseStoredOrientation, rolesFromOrientation } from '@/lib/profile/from-orientation'
 import { EDUCATION_LEVELS, SENIORITY_LEVELS } from '@/lib/profile'
 
@@ -41,10 +46,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 })
     }
 
-    // O mais recente, e não um `resumeId` do corpo: a tela do perfil não sabe
-    // de currículos, e a pergunta que ela faz é "o que você sabe sobre mim".
+    /**
+     * O currículo pedido, ou o mais recente.
+     *
+     * A tela do perfil não sabe de currículos, e a pergunta que ela faz é "o
+     * que você sabe sobre mim" — para ela, o mais recente é a resposta certa.
+     *
+     * Quem passa `resumeId` é a tela do laudo, perguntando outra coisa: "este
+     * currículo aqui contradiz o perfil?". Aí o currículo tem de ser
+     * exatamente o que está aberto, e não o último enviado — senão a pergunta
+     * seria feita sobre um documento que a pessoa não está olhando.
+     */
+    const body = await req.json().catch(() => ({}))
+    const requestedId = typeof body?.resumeId === 'string' ? body.resumeId : null
+
     const resume = await db.resume.findFirst({
-      where: { userId: user.id },
+      where: requestedId
+        ? { id: requestedId, userId: user.id }
+        : { userId: user.id },
       orderBy: { createdAt: 'desc' },
       select: { id: true, originalContent: true, careerOrientationJson: true },
     })
@@ -121,7 +140,20 @@ Responda APENAS o JSON do schema, sem texto antes ou depois.`
       )
     }
 
-    return NextResponse.json({ suggestion })
+    /**
+     * O que este currículo CONTRADIZ no perfil gravado.
+     *
+     * Vem junto da sugestão, e não numa rota própria, porque depende da mesma
+     * extração — que é uma chamada de IA. Separar em duas rotas faria a tela
+     * pagar duas vezes pela mesma leitura do mesmo currículo.
+     *
+     * Lista vazia é o caso comum e não é erro: quer dizer que o currículo
+     * combina com o perfil, ou que ainda não há perfil com que conflitar.
+     */
+    const record = await db.professionalProfile.findUnique({ where: { userId: user.id } })
+    const conflicts = detectProfileConflicts(fromRecord(record), suggestion)
+
+    return NextResponse.json({ suggestion, conflicts, resumeId: resume.id })
   } catch (e: any) {
     console.error('[professional-profile/suggest]', e?.message || e)
     return NextResponse.json(

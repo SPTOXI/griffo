@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { applySuggestion, parseProfileExtraction } from './extract'
+import { applySuggestion, detectProfileConflicts, parseProfileExtraction } from './extract'
 import { deriveFromOrientation, parseStoredOrientation, rolesFromOrientation } from './from-orientation'
 import { EMPTY_PROFILE } from './index'
 import { COUNTRIES, countryName, groupedCountries, isKnownCountry } from '../market/countries'
@@ -189,4 +189,65 @@ test('isKnownCountry recusa o que não está na lista', () => {
   assert.ok(isKnownCountry('PT'))
   assert.ok(!isKnownCountry('ZZ'))
   assert.ok(!isKnownCountry(''))
+})
+
+test('currículo de outra profissão é conflito', () => {
+  // O caso real: perfil preenchido a partir de um currículo de biomedicina,
+  // seguido de um currículo de advogado.
+  const perfil = { ...EMPTY_PROFILE, currentTitle: 'Biomédico', field: 'Saúde' }
+  const conflitos = detectProfileConflicts(perfil, {
+    currentTitle: 'Advogado',
+    field: 'Direito',
+  })
+
+  assert.equal(conflitos.length, 2)
+  assert.deepEqual(
+    conflitos.map((c) => c.field).sort(),
+    ['currentTitle', 'field']
+  )
+  assert.equal(conflitos[0].current, 'Biomédico')
+  assert.equal(conflitos[0].suggested, 'Advogado')
+})
+
+test('campo vazio no perfil não é conflito, é lacuna', () => {
+  // Falta não é contradição — é o caso que applySuggestion preenche calado.
+  const conflitos = detectProfileConflicts(EMPTY_PROFILE, {
+    currentTitle: 'Advogado',
+    field: 'Direito',
+  })
+  assert.equal(conflitos.length, 0)
+})
+
+test('currículo que não diz o cargo não contradiz o perfil', () => {
+  const perfil = { ...EMPTY_PROFILE, currentTitle: 'Biomédico', field: 'Saúde' }
+  assert.equal(detectProfileConflicts(perfil, {}).length, 0)
+})
+
+test('diferença de grafia não é conflito', () => {
+  const perfil = { ...EMPTY_PROFILE, currentTitle: 'Analista de Dados', field: 'Tecnologia' }
+  const conflitos = detectProfileConflicts(perfil, {
+    currentTitle: '  analista de dados ',
+    field: 'tecnologia',
+  })
+  assert.equal(conflitos.length, 0)
+})
+
+test('cargo mais específico não é conflito', () => {
+  // "Advogado" e "Advogado Trabalhista" são a mesma carreira com mais detalhe.
+  // Perguntar aqui seria o ruído que faz a pergunta ser fechada sem ler.
+  const perfil = { ...EMPTY_PROFILE, currentTitle: 'Advogado' }
+  assert.equal(
+    detectProfileConflicts(perfil, { currentTitle: 'Advogado Trabalhista' }).length,
+    0
+  )
+})
+
+test('só o cargo mudou: um conflito, não dois', () => {
+  const perfil = { ...EMPTY_PROFILE, currentTitle: 'Enfermeiro', field: 'Saúde' }
+  const conflitos = detectProfileConflicts(perfil, {
+    currentTitle: 'Biomédico',
+    field: 'Saúde',
+  })
+  assert.equal(conflitos.length, 1)
+  assert.equal(conflitos[0].field, 'currentTitle')
 })
