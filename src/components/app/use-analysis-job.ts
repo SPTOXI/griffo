@@ -108,6 +108,8 @@ export function useAnalysisJob(options: UseAnalysisJobOptions = {}) {
    */
   const track = useCallback(async (jobId: string) => {
     const startedAt = Date.now()
+    // Verdadeiro enquanto a última consulta voltou 429.
+    let throttled = false
 
     while (activeJobRef.current === jobId) {
       let keepWaiting = true
@@ -144,6 +146,7 @@ export function useAnalysisJob(options: UseAnalysisJobOptions = {}) {
         }
 
         if (r.ok) {
+          throttled = false
           setState((s) => ({
             ...s,
             phase: 'running',
@@ -151,6 +154,15 @@ export function useAnalysisJob(options: UseAnalysisJobOptions = {}) {
             completedSegments: data.completedSegments ?? s.completedSegments,
             partial: data.partial ?? s.partial,
           }))
+        } else if (r.status === 429) {
+          /**
+           * Consultar mais rápido é exatamente o que NÃO ajuda aqui.
+           *
+           * Cada tentativa recusada mantém o balde do limitador cheio, e a tela
+           * ficava batendo a cada 1,5s numa porta fechada — sem nunca deixar a
+           * janela esvaziar. Espaçar é o que devolve o acesso.
+           */
+          throttled = true
         }
         // Uma consulta que falha não condena o job: ele segue no servidor, e a
         // próxima volta do laço tenta de novo.
@@ -170,7 +182,9 @@ export function useAnalysisJob(options: UseAnalysisJobOptions = {}) {
       }
 
       if (keepWaiting) {
-        await sleep(waited > SLOW_POLL_AFTER_MS ? SLOW_POLL_INTERVAL_MS : POLL_INTERVAL_MS)
+        const interval =
+          throttled || waited > SLOW_POLL_AFTER_MS ? SLOW_POLL_INTERVAL_MS : POLL_INTERVAL_MS
+        await sleep(interval)
       }
     }
   }, [])

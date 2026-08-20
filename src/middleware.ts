@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { clientIpFrom } from '@/lib/request-ip'
+import { matchRule, type RateRule } from '@/lib/rate-rules'
 import type { NextRequest } from 'next/server'
 
 /**
@@ -22,16 +23,10 @@ const buckets = new Map<string, Bucket>()
 // Evita crescimento sem limite da memória em instâncias de vida longa.
 const MAX_BUCKETS = 10_000
 
-interface Rule {
-  /** Prefixo do caminho ao qual a regra se aplica. */
-  prefix: string
-  /** Requisições permitidas dentro da janela. */
-  limit: number
-  /** Tamanho da janela em milissegundos. */
-  windowMs: number
-}
+type Rule = RateRule
 
-// Ordem importa: a primeira regra cujo prefixo casa é a aplicada.
+// Vence o prefixo MAIS LONGO, não a ordem da lista — ver `lib/rate-rules.ts`.
+// A ordem aqui é só de leitura.
 const RULES: Rule[] = [
   // Força bruta de senha. Senhas têm mínimo de 6 caracteres, então este é o
   // limite mais importante do conjunto.
@@ -39,6 +34,19 @@ const RULES: Rule[] = [
   { prefix: '/api/auth/register', limit: 5, windowMs: 60 * 60_000 },
   // Rotas que gastam tokens de IA — cada chamada tem custo real.
   { prefix: '/api/resume/analyze', limit: 10, windowMs: 10 * 60_000 },
+  /**
+   * A consulta de status NÃO é a rota cara, e precisa de um limite próprio.
+   *
+   * Ela é de leitura, e a tela a chama a cada 1,5 segundo por desenho: são ~400
+   * consultas em dez minutos numa análise longa, e o dobro com duas abas
+   * abertas. Sob o limite da rota pai — 10 por 10 minutos — ela era bloqueada
+   * quinze segundos depois de começar.
+   *
+   * O prejuízo ia muito além da barra parar: é esta rota que REATIVA um
+   * trabalho cuja invocação a plataforma encerrou. Bloqueada, o laudo ficava
+   * parado no primeiro segmento para sempre.
+   */
+  { prefix: '/api/resume/analyze/status', limit: 900, windowMs: 10 * 60_000 },
   { prefix: '/api/resume/rewrite', limit: 10, windowMs: 10 * 60_000 },
   { prefix: '/api/resume/career-orientation', limit: 10, windowMs: 10 * 60_000 },
   // Gasta tokens e ainda dispara buscas externas (GitHub, Jina) por perfil.
@@ -86,7 +94,7 @@ function check(key: string, rule: Rule): { allowed: boolean; retryAfterSec: numb
 
 export function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname
-  const rule = RULES.find((r) => path.startsWith(r.prefix))
+  const rule = matchRule(path, RULES)
   if (!rule) return NextResponse.next()
 
   const { allowed, retryAfterSec } = check(`${clientIp(req)}:${rule.prefix}`, rule)
