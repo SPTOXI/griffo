@@ -159,6 +159,13 @@ que é reescrita com `--force-with-lease` a cada mudança. Cada bloco vira um PR
 próprio, mesclado com squash. **Não use `git pull` nessa branch** — use
 `git fetch` + `git reset --hard origin/<branch>`.
 
+**MCP da Vercel.** O `.mcp.json` registra `https://mcp.vercel.com` no escopo do
+projeto, mas a autenticação é OAuth por pessoa e **não acontece em sessão
+remota** — ela é não-interativa, e sem autorização nenhuma ferramenta da Vercel
+fica disponível. Quem quiser consultar deployment e log pelo agente precisa
+autorizar antes, com `/mcp` numa sessão interativa do Claude Code na própria
+máquina. Em sessão remota, log de deploy continua vindo por cópia manual.
+
 **Migração.** Não existe diretório de migrações versionadas. O fluxo é editar
 `prisma/schema.prisma` e o operador rodar `npx prisma db push` na máquina dele —
 o ambiente de desenvolvimento não tem acesso ao banco. Toda migração precisa ser
@@ -334,6 +341,21 @@ chute.
   só. A suíte passou a rodar 4 testes em vez de 465 no dia em que apareceu o
   primeiro arquivo de teste em `src/lib/` raso, e reportou sucesso. As aspas
   entregam o glob para o `tsx`, que o expande direito. Não tire.
+- **Suíte encolhida em sessão remota do Claude Code.** O contêiner nasce com o
+  repositório clonado e **sem `node_modules`**. Nesse estado o `npm test` roda
+  — o `tsx` vem por `npx` — mas os arquivos que importam `zod` (`matching`,
+  `extract`, `profile`) morrem no carregamento com `Cannot find module 'zod'`,
+  e os ~99 testes deles não rodam. O relatório vira `tests 375 / pass 372 /
+  fail 3` em vez de `474 / 474 / 0`.
+
+  Aqui as três falhas avisaram, mas isso foi sorte: se esses arquivos não
+  importassem nada externo, o relatório mostraria `fail 0` com um terço da
+  suíte ausente. É a mesma família de armadilha das aspas no glob.
+
+  Resolvido pelo hook `.claude/hooks/session-start.sh`, que roda `npm install`
+  no início de toda sessão remota. Se um dia o número vier abaixo de 474 sem
+  PR que justifique, confira `ls node_modules` **antes** de investigar o
+  código.
 
 ---
 
