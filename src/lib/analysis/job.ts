@@ -140,7 +140,8 @@ async function executeSegment(
     // a segunda tentativa era impossível por construção, e a primeira, quando
     // usava o orçamento inteiro, garantia que a plataforma encerrasse tudo no
     // meio — inclusive as gravações dos outros segmentos, que rodam junto.
-    const budget = segmentBudgetMs(Date.now(), ctx.deadlineAt)
+    const startedAt = Date.now()
+    const budget = segmentBudgetMs(startedAt, ctx.deadlineAt)
     if (budget === null) {
       if (lastError) throw lastError
       throw new ExecutionBudgetExhausted(spec.id)
@@ -170,11 +171,16 @@ async function executeSegment(
         jsonSchema: spec.schema,
       })
 
+      console.warn(
+        `[Analysis] Segmento '${spec.id}' pronto em ${Math.round((Date.now() - startedAt) / 1000)}s ` +
+          `(${result.usedProvider}/${result.usedModel}).`
+      )
       return spec.parse(parseJsonLoose(result.content))
     } catch (e) {
       lastError = e
       console.warn(
-        `[Analysis] Segmento '${spec.id}' falhou na tentativa ${attempt}/${SEGMENT_ATTEMPTS}:`,
+        `[Analysis] Segmento '${spec.id}' falhou na tentativa ${attempt}/${SEGMENT_ATTEMPTS} ` +
+          `após ${Math.round((Date.now() - startedAt) / 1000)}s:`,
         (e as any)?.message || e
       )
     }
@@ -196,7 +202,13 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
   const executionStartedAt = Date.now()
   const deadlineAt = executionDeadline(executionStartedAt)
 
-  if (!(await claimJob(jobId))) return
+  if (!(await claimJob(jobId))) {
+    // Corrida perdida para outra invocação, ou job já encerrado. É benigno, mas
+    // precisa aparecer: um trabalho que nunca começa e um que começou noutro
+    // lugar produzem exatamente o mesmo silêncio no log.
+    console.warn(`[Analysis] Job ${jobId}: posse negada, outra invocação está com ele.`)
+    return
+  }
 
   const job = await db.analysisJob.findUnique({
     where: { id: jobId },
@@ -248,6 +260,13 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
 
   const done = readSegments(job.segmentsJson)
   const pending = ANALYSIS_SEGMENTS.filter((spec) => !done[spec.id])
+
+  console.warn(
+    `[Analysis] Job ${jobId}: iniciando ${pending.length} segmento(s) ` +
+      `(${pending.map((p) => p.id).join(', ') || 'nenhum'}); ` +
+      `já concluídos ${Object.keys(done).length}/${SEGMENT_IDS.length}; ` +
+      `orçamento ${Math.round((deadlineAt - Date.now()) / 1000)}s.`
+  )
 
   // As gravações de progresso são encadeadas para não perderem umas às outras:
   // os segmentos terminam em paralelo e todos escrevem na mesma linha.
@@ -369,6 +388,11 @@ export async function processAnalysisJob(jobId: string): Promise<void> {
     },
   })
 
+  console.warn(
+    `[Analysis] Job ${jobId} CONCLUÍDO em ${Math.round((Date.now() - executionStartedAt) / 1000)}s ` +
+      `desta invocação.`
+  )
+
   try {
     await db.auditLog.create({
       data: {
@@ -420,6 +444,12 @@ export async function resumeIfStalled(jobId: string): Promise<boolean> {
   })
 
   if (!stalled) return false
+
+  // Anunciado porque a alternativa é adivinhar. Sem esta linha, um log só mostra
+  // consultas de status de 800ms sem chamada externa nenhuma — e não há como
+  // distinguir "a concessão ainda valia, tudo certo" de "ninguém está
+  // trabalhando neste job há minutos".
+  console.warn(`[Analysis] Job ${jobId} sem dono; reativando.`)
 
   const run = () =>
     processAnalysisJob(jobId).catch((e) => console.error('[Analysis] Falha ao retomar job:', e))

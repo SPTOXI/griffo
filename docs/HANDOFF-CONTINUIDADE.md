@@ -411,7 +411,27 @@ travado consumia o prazo inteiro e o segundo nunca era tentado. Mexer num númer
 isolado desliga o fallback em silêncio. Os 8s que sobram dos 60 existem para
 gravar o resultado e responder o erro.
 
-### 10.8 Rotas de administração
+### 10.8 `src/middleware.ts` — o limitador pode matar o próprio produto
+
+As regras casam por **prefixo mais longo**, e não pela ordem da lista. Não
+volte para `find(r => path.startsWith(r.prefix))`.
+
+O motivo é um defeito que travou análises em produção sem emitir erro nenhum:
+`/api/resume/analyze/status` casava com o prefixo `/api/resume/analyze` e
+herdava o limite da rota cara — 10 requisições por 10 minutos. A tela consulta
+o status a cada 1,5 segundo por desenho, então tudo depois de quinze segundos
+voltava **429**.
+
+E o estrago passava longe da barra de progresso: é a consulta de status que
+REATIVA um job cuja invocação a plataforma encerrou (`resumeIfStalled`).
+Bloqueada no middleware, ela nunca chegava à rota — o laudo ficava parado no
+primeiro segmento para sempre, e a tela girava sobre um trabalho que ninguém ia
+retomar.
+
+Ao criar sub-rota de qualquer rota já limitada, confira o limite que ela herda.
+Rota de leitura que a tela consulta em laço precisa de regra própria.
+
+### 10.9 Rotas de administração
 
 Toda rota nova sob `/api/admin/` precisa chamar `getAdminUser()` e tratar `null`
 como 403. A função **não lança exceção** — devolve `null`. Esquecer de checar
