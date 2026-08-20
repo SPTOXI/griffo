@@ -418,6 +418,63 @@ async function openJobsWithinBudget(profile: ProfessionalProfile) {
 }
 
 /**
+ * Apaga alertas que deixaram de se sustentar.
+ *
+ * ## Por que isto precisa existir
+ *
+ * O alerta é GRAVADO, e a tela o lê de `RadarAlert` sem recalcular — de
+ * propósito: o veredito guardado é o que motivou o aviso, e recalcular na
+ * leitura mostraria à pessoa algo diferente do que ela foi avisada.
+ *
+ * A consequência é que um alerta errado fica errado para sempre. Foi o que
+ * aconteceu com um perfil de biomedicina que recebeu vagas de tecnologia: a
+ * regra que produzia esses alertas foi corrigida, mas as linhas já gravadas
+ * continuaram na tela, e rodar o Radar de novo não as tirava de lá.
+ *
+ * Recalcular para EXIBIR continua proibido. Recalcular para ENCERRAR é outra
+ * coisa, e é o mesmo que `closeStaleJobs` já faz com vaga parada: uma decisão
+ * deliberada, dentro da rodada, registrada no log.
+ *
+ * ## O critério é `weak`, e não "abaixo do mínimo"
+ *
+ * `weak` quer dizer que não havia base para avisar — impedimento estrutural ou
+ * aderência zero. "Abaixo do mínimo" depende da preferência do usuário, que ele
+ * pode mudar de um dia para o outro; apagar por causa dela transformaria um
+ * ajuste de exigência em perda de histórico.
+ */
+async function pruneUnfoundedAlerts(
+  userId: string,
+  profile: ReturnType<typeof profileFromRecord>
+): Promise<number> {
+  const alerts = await db.radarAlert.findMany({
+    where: { userId },
+    select: { id: true, job: true },
+  })
+
+  if (alerts.length === 0) return 0
+
+  const unfounded: string[] = []
+  for (const alert of alerts) {
+    if (!alert.job) continue
+    if (alert.job.closedAt) {
+      unfounded.push(alert.id)
+      continue
+    }
+    if (matchJob(profile, jobFromRow(alert.job)).overall === 'weak') {
+      unfounded.push(alert.id)
+    }
+  }
+
+  if (unfounded.length === 0) return 0
+
+  const res = await db.radarAlert.deleteMany({ where: { id: { in: unfounded } } })
+  console.warn(
+    `[radar] usuário ${userId}: ${res.count} alerta(s) sem base removido(s) de ${alerts.length}.`
+  )
+  return res.count
+}
+
+/**
  * A rodada de um usuário.
  *
  * Não envia nada: grava `RadarAlert`. O envio — e-mail, push — é uma camada
@@ -458,9 +515,26 @@ export async function runForUser(userId: string): Promise<UserRunResult> {
    * segunda é o caso.
    */
   if (!hasMatchableSignal(profile)) {
+    // Sem sinal, NENHUM alerta existente se justifica — inclusive os que já
+    // estão gravados. Deixá-los na tela seria manter no ar exatamente a
+    // recomendação que não temos base para fazer.
+    //
+    // O custo é perder o histórico de feedback desses alertas. É aceitável:
+    // feedback sobre um aviso que nunca deveria ter saído não mede nada.
+    const removed = await db.radarAlert.deleteMany({ where: { userId } })
+    if (removed.count > 0) {
+      console.warn(
+        `[radar] usuário ${userId}: perfil sem sinal profissional; ` +
+          `${removed.count} alerta(s) sem base removido(s).`
+      )
+    }
+
     await markAsRun()
     return { userId, eligible: 0, evaluated: 0, alerted: 0, silenceReason: 'profile_insufficient' }
   }
+
+  // Com sinal: a rodada revisa o que já foi avisado antes de avisar de novo.
+  await pruneUnfoundedAlerts(userId, profile)
 
   const rows = await openJobsWithinBudget(profile)
 
