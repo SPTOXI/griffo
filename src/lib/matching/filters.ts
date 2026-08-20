@@ -200,3 +200,34 @@ export function filterJobs(
 
   return { eligible, rejected }
 }
+
+/**
+ * O perfil tem base suficiente para o Radar julgar alguma coisa?
+ *
+ * O filtro duro responde "esta vaga pode ser mostrada". Esta função responde
+ * uma pergunta anterior, e mais importante: **dá para dizer qualquer coisa
+ * sobre esta pessoa?**
+ *
+ * Sem nenhum sinal profissional o Radar não fica errado — ele fica sem assunto.
+ * E como "desconhecido nunca elimina" é a regra do filtro, um perfil vazio
+ * passa por tudo: sobra o pool inteiro de vagas coletadas, que hoje vem em
+ * grande parte de quadros de tecnologia. Foi assim que um perfil de biomedicina
+ * recebeu vagas de tecnologia — não por erro de comparação, mas por não haver
+ * comparação nenhuma a fazer.
+ *
+ * A regra "desconhecido nunca elimina" continua valendo onde ela nasceu: no
+ * filtro, para não descartar vaga por silêncio da FONTE. Ela nunca quis dizer
+ * que desconhecido QUALIFICA — e é essa a metade que faltava.
+ *
+ * O mínimo é deliberadamente baixo: qualquer um destes já dá o que comparar.
+ * Exigir o perfil inteiro fecharia o Radar para quem preencheu metade.
+ */
+export function hasMatchableSignal(profile: ProfessionalProfile): boolean {
+  return Boolean(
+    profile.targetRoles.length > 0 ||
+      profile.skills.length > 0 ||
+      profile.specializations.length > 0 ||
+      profile.currentTitle ||
+      profile.field
+  )
+}
