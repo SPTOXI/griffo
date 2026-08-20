@@ -10,6 +10,7 @@ import { unlockAnalysis } from '@/lib/entitlements'
 import { getRequestLanguage } from '@/lib/i18n/server'
 import { edgeCountry } from '@/lib/pricing/resolve'
 import { processAnalysisJob, resumeIfStalled } from '@/lib/analysis/job'
+import { checkResumeContent } from '@/lib/analysis/content-guard'
 import { SEGMENT_IDS } from '@/lib/analysis/stages'
 
 /**
@@ -51,11 +52,31 @@ export async function POST(req: Request) {
 
     const resume = await db.resume.findFirst({
       where: { id: resumeId, userId: user.id },
-      select: { id: true },
+      select: { id: true, originalContent: true },
     })
 
     if (!resume) {
       return NextResponse.json({ error: 'Currículo não encontrado' }, { status: 404 })
+    }
+
+    /**
+     * Antes de qualquer coisa, e principalmente ANTES DE COBRAR.
+     *
+     * Um PDF sem camada de texto chegou a ser analisado, pontuado nas oito
+     * dimensões e desenhado em gráfico — com o parecer dizendo, no próprio
+     * texto, que só o nome do arquivo havia sido fornecido. Pontuar um
+     * documento que não se conseguiu ler é inventar dado sobre o candidato.
+     *
+     * A posição desta verificação é parte da correção: aqui, o destrave ainda
+     * não aconteceu e o saldo não foi tocado. Recusar depois devolveria a
+     * mensagem certa e cobraria mesmo assim.
+     */
+    const verdict = checkResumeContent(resume.originalContent)
+    if (!verdict.analyzable) {
+      return NextResponse.json(
+        { error: verdict.message, code: 'UNREADABLE_RESUME', reason: verdict.code },
+        { status: 422 }
+      )
     }
 
     // Uma análise já em andamento é devolvida em vez de duplicada. Sem isto, um

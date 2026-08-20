@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { cleanAndOptimizeTextForAi } from '@/lib/ocr/extractor'
 import { parsePdfBuffer, extractPdfWithVision } from '@/lib/pdf-text'
+import { checkResumeContent } from '@/lib/analysis/content-guard'
 
 const schema = z.object({
   content: z.string().nullable().optional().default(''),
@@ -63,10 +64,21 @@ export async function POST(req: Request) {
 
       if (extractedText && extractedText.trim().length >= 30) {
         content = extractedText.trim()
-      } else if (!content || content.trim().length < 50) {
-        // PDF sem camada de texto — digitalização ou foto. A extração local
-        // devolve vazio, e antes o upload morria com "conteúdo muito curto",
-        // que descreve o sintoma e esconde a causa.
+      } else {
+        /**
+         * PDF sem camada de texto — digitalização ou foto.
+         *
+         * A condição aqui era `else if (!content || content.length < 50)`:
+         * a transcrição por imagem só era tentada quando o conteúdo vindo da
+         * TELA era curto. Só que a tela mandava um marcador de uns 90
+         * caracteres ao anexar um PDF, então a condição era falsa exatamente
+         * quando mais precisava ser verdadeira — a transcrição era pulada, o
+         * marcador seguia como conteúdo, e o laudo saía sobre um nome de
+         * arquivo.
+         *
+         * Quem decide se o PDF precisa de transcrição é o RESULTADO DA
+         * EXTRAÇÃO, e nada mais.
+         */
         pdfWasScanned = true
         try {
           const transcribed = await extractPdfWithVision(cleanBase64)
@@ -84,7 +96,12 @@ export async function POST(req: Request) {
       content = cleanAndOptimizeTextForAi(content)
     }
 
-    if (!content || content.trim().length < 50) {
+    // O piso de 50 caracteres deixava passar o marcador que a tela escrevia. A
+    // guarda agora é a mesma que a análise usa, e reconhece marcador por
+    // formato — inclusive nos currículos que já foram gravados com ele.
+    const analyzable = (content ?? '').trim()
+    const verdict = checkResumeContent(analyzable)
+    if (!verdict.analyzable) {
       // Mensagem por causa, não por sintoma.
       if (pdfWasScanned) {
         return NextResponse.json(
@@ -100,7 +117,7 @@ export async function POST(req: Request) {
         )
       }
       return NextResponse.json(
-        { error: 'Conteúdo do currículo muito curto. Forneça pelo menos 50 caracteres de texto.' },
+        { error: verdict.message, code: verdict.code },
         { status: 400 }
       )
     }
@@ -108,7 +125,7 @@ export async function POST(req: Request) {
     const resume = await db.resume.create({
       data: {
         userId: user.id,
-        originalContent: content,
+        originalContent: analyzable,
         originalFormat: format || 'text',
         targetJob: targetJob || null,
         targetJobDescription: targetJobDescription || null,
@@ -122,7 +139,7 @@ export async function POST(req: Request) {
         userId: user.id,
         resumeId: resume.id,
         action: 'upload',
-        meta: JSON.stringify({ format, length: content.length, socialConsent, visionUsed }),
+        meta: JSON.stringify({ format, length: analyzable.length, socialConsent, visionUsed }),
       },
     })
 
