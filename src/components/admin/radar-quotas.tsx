@@ -162,7 +162,7 @@ export function RadarQuotas() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle className="text-sm font-bold text-indigo-950 flex items-center gap-2">
-                🧹 Faxina Semântica de Duplicatas por IA
+                🧹 Faxina Semântica de Duplicadas por IA
               </CardTitle>
               <CardDescription className="text-xs text-indigo-800/80">
                 Agente IA (Kimi K3 &rarr; DeepSeek Flash &rarr; Gemini) para comparar e eliminar vagas idênticas vindas de fontes diferentes.
@@ -175,7 +175,7 @@ export function RadarQuotas() {
               className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs shadow-sm gap-2"
             >
               {dedupRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-              {dedupRunning ? 'Analisando Vagas…' : 'Executar Faxina de Duplicatas'}
+              {dedupRunning ? 'Analisando Vagas…' : 'Executar Faxina de Duplicadas'}
             </Button>
           </div>
         </CardHeader>
@@ -194,7 +194,7 @@ export function RadarQuotas() {
                   <p className="font-bold text-sm text-slate-900">{dedupResult.pairsAnalyzed}</p>
                 </div>
                 <div className="p-2 bg-amber-50 rounded">
-                  <p className="text-[10px] text-amber-700 uppercase">Duplicatas Confirmadas</p>
+                  <p className="text-[10px] text-amber-700 uppercase">Duplicadas Confirmadas</p>
                   <p className="font-bold text-sm text-amber-900">{dedupResult.duplicatesFound}</p>
                 </div>
                 <div className="p-2 bg-emerald-50 rounded">
