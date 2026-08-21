@@ -152,11 +152,13 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
   normalization: 'deepseek',
+  // Agente de deduplicação semântica de vagas: Kimi K3 prioritário.
+  job_deduplication: 'kimi',
 }
 
 /**
- * Ordem de fallback. O Kimi é o primeiro suplente em todas as cadeias; o Gemini
- * fica por último enquanto não se decide se entra em uso.
+ * Ordem de fallback. O Kimi é o primário para deduplicação, com DeepSeek Flash
+ * como primeiro suplente e Gemini como segundo.
  *
  * Vale lembrar que só os dois primeiros candidatos são de fato tentados
  * (`MAX_PROVIDER_ATTEMPTS` no router): o terceiro e o quarto existem para o
@@ -165,7 +167,7 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
 export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
   claude: ['kimi', 'deepseek', 'gemini'],
   deepseek: ['kimi', 'claude', 'gemini'],
-  kimi: ['deepseek', 'claude', 'gemini'],
+  kimi: ['deepseek', 'gemini', 'claude'],
   gemini: ['kimi', 'deepseek', 'claude'],
 }
 

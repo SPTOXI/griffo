@@ -25,6 +25,8 @@ export type TaskType =
   /// respostas corretas — o defeito que já derrubou o diagnóstico vocacional.
   | 'profile_extraction'
   | 'support_chat'
+  /// Análise semântica de similaridade entre pares de vagas para deduplicação avançada.
+  | 'job_deduplication'
 
 export type ProviderId = 'gemini' | 'deepseek' | 'claude' | 'kimi'
 

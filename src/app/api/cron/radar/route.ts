@@ -196,11 +196,30 @@ export async function GET(req: Request) {
       digest = { ok: false, error: e?.message || 'Falha no envio do digest.' }
     }
 
+    /**
+     * Deduplicação semântica por IA (Kimi K3 -> DeepSeek -> Gemini).
+     * Roda após a coleta e o digest, aproveitando o tempo restante da janela.
+     */
+    let aiDedupSummary: import('@/lib/jobs/agent-dedup').DedupRoundSummary | null = null
+    const remainingTime = RUN_BUDGET_MS - (Date.now() - startedAt)
+    if (remainingTime >= 5000) {
+      try {
+        const { runAiDeduplicationClean } = await import('@/lib/jobs/agent-dedup')
+        aiDedupSummary = await runAiDeduplicationClean({
+          maxPairsToAnalyze: 10,
+          timeBudgetMs: Math.min(15_000, remainingTime - 2000),
+        })
+      } catch (e: any) {
+        console.error('[cron/radar] deduplicação semântica por IA falhou:', e?.message || e)
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       durationMs: Date.now() - startedAt,
       sourcesConfigured: adapters.length,
       digest,
+      aiDedup: aiDedupSummary,
       sources: adapters.map((a) => a.descriptor.slug),
       // Declarado para que uma rodada sem resultado na Gupy possa ser
       // explicada: nenhum termo é diferente de nenhuma vaga.

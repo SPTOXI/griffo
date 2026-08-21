@@ -9,17 +9,7 @@ import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Radar as RadarIcon, XC
 import { internalFetch } from '@/lib/internal-fetch'
 
 /**
- * Cota das APIs de vagas e saúde das fontes.
- *
- * Existe porque as duas formas de uma fonte parar são invisíveis de fora:
- *
- * - **Cota estourada** não vira erro. A Adzuna responde 200 com `exception`
- *   quando o mês acaba, o que se parece com "não há vaga".
- * - **Fonte quebrada** só aparece como "o Radar entregou menos".
- *
- * Nos dois casos o Radar continua rodando e ninguém sabe por quê está mais
- * pobre. Esta tela responde as duas perguntas no mesmo lugar, porque é assim
- * que elas chegam: "por que apareceu menos vaga hoje?".
+ * Cota das APIs de vagas, saúde das fontes e faxina semântica de duplicatas.
  */
 
 interface QuotaDecision {
@@ -79,6 +69,15 @@ export function RadarQuotas() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const [dedupRunning, setDedupRunning] = useState(false)
+  const [dedupResult, setDedupResult] = useState<{
+    pairsAnalyzed: number
+    duplicatesFound: number
+    jobsDeleted: number
+    timeSpentMs: number
+    errors: string[]
+  } | null>(null)
+
   const load = useCallback(async () => {
     setLoading(true)
     try {
@@ -103,6 +102,28 @@ export function RadarQuotas() {
 
   useEffect(() => { void load() }, [load])
 
+  const handleRunDedup = async () => {
+    setDedupRunning(true)
+    try {
+      const res = await internalFetch('/api/admin/jobs/dedup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ maxPairs: 20, timeBudgetMs: 40_000 }),
+      })
+      const data = await res.json().catch(() => null)
+      if (data?.ok && data.summary) {
+        setDedupResult(data.summary)
+        void load()
+      } else {
+        alert(data?.error || 'Erro ao executar a faxina de deduplicação.')
+      }
+    } catch {
+      alert('Falha na comunicação ao rodar a deduplicação.')
+    } finally {
+      setDedupRunning(false)
+    }
+  }
+
   if (loading && quotas.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[200px] gap-2 text-slate-500">
@@ -118,84 +139,133 @@ export function RadarQuotas() {
   )
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <RadarIcon className="w-5 h-5 text-indigo-600" /> Radar de Vagas — Saúde e Cotas
+          </h2>
+          <p className="text-xs text-slate-500">
+            Monitoramento das fontes externas, consumo das APIs ({period ?? 'mês corrente'}) e faxina inteligente da base.
+          </p>
+        </div>
+
+        <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading} className="gap-2">
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          Atualizar
+        </Button>
+      </div>
+
+      {/* Card da Faxina Semântica com IA */}
+      <Card className="border-indigo-100 bg-gradient-to-r from-indigo-50/50 to-blue-50/50">
+        <CardHeader className="pb-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-sm font-bold text-indigo-950 flex items-center gap-2">
+                🧹 Faxina Semântica de Duplicatas por IA
+              </CardTitle>
+              <CardDescription className="text-xs text-indigo-800/80">
+                Agente IA (Kimi K3 &rarr; DeepSeek Flash &rarr; Gemini) para comparar e eliminar vagas idênticas vindas de fontes diferentes.
+              </CardDescription>
+            </div>
+            <Button
+              onClick={() => void handleRunDedup()}
+              disabled={dedupRunning}
+              size="sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs shadow-sm gap-2"
+            >
+              {dedupRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+              {dedupRunning ? 'Analisando Vagas…' : 'Executar Faxina de Duplicatas'}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-2">
+          <p className="text-[11px] text-slate-600 leading-relaxed">
+            Identifica vagas com pequenas variações de título, nome de empresa ou links intermediários, preserva a versão mais recente e migra alertas existentes dos usuários.
+          </p>
+          {dedupResult && (
+            <div className="p-3 bg-white rounded-lg border border-indigo-100 text-xs text-slate-700 space-y-1">
+              <p className="font-semibold text-emerald-800">
+                ✅ Faxina concluída em {(dedupResult.timeSpentMs / 1000).toFixed(1)}s!
+              </p>
+              <div className="grid grid-cols-3 gap-2 text-center pt-1">
+                <div className="p-2 bg-slate-50 rounded">
+                  <p className="text-[10px] text-slate-500 uppercase">Pares Analisados</p>
+                  <p className="font-bold text-sm text-slate-900">{dedupResult.pairsAnalyzed}</p>
+                </div>
+                <div className="p-2 bg-amber-50 rounded">
+                  <p className="text-[10px] text-amber-700 uppercase">Duplicatas Confirmadas</p>
+                  <p className="font-bold text-sm text-amber-900">{dedupResult.duplicatesFound}</p>
+                </div>
+                <div className="p-2 bg-emerald-50 rounded">
+                  <p className="text-[10px] text-emerald-700 uppercase">Vagas Antigas Removidas</p>
+                  <p className="font-bold text-sm text-emerald-900">{dedupResult.jobsDeleted}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {error && (
-        <Alert variant="destructive" className="bg-rose-50 border-rose-300">
-          <AlertDescription className="text-sm text-rose-900">{error}</AlertDescription>
+        <Alert className="border-rose-200 bg-rose-50 text-rose-900">
+          <AlertDescription className="text-xs">{error}</AlertDescription>
         </Alert>
       )}
 
-      {/* O que exige ação vem primeiro. Um painel que mostra tudo igual obriga
-          a procurar o problema, e quem procura acaba não olhando. */}
       {criticos.length > 0 && (
-        <Alert className="border-rose-300 bg-rose-50">
-          <AlertTriangle className="w-4 h-4 text-rose-600" />
-          <AlertDescription className="text-sm text-rose-900">
-            <strong>{criticos.map((q) => q.provider).join(', ')}</strong> passou de 90% da cota do mês.
-            Quando ela acabar, a fonte para de trazer vaga — e o Radar não avisa sozinho.
+        <Alert className="border-rose-300 bg-rose-50 text-rose-900">
+          <XCircle className="w-4 h-4 text-rose-600" />
+          <AlertDescription className="text-xs">
+            <strong>{criticos.length} cota(s) crítica(s):</strong>{' '}
+            {criticos.map((q) => q.provider).join(', ')}. O Radar pode não encontrar vagas nestas fontes até o
+            próximo mês.
           </AlertDescription>
         </Alert>
       )}
 
-      {criticos.length === 0 && atencao.length > 0 && (
-        <Alert className="border-amber-300 bg-amber-50">
+      {atencao.length > 0 && (
+        <Alert className="border-amber-300 bg-amber-50 text-amber-900">
           <AlertTriangle className="w-4 h-4 text-amber-600" />
-          <AlertDescription className="text-sm text-amber-900">
-            <strong>{atencao.map((q) => q.provider).join(', ')}</strong> passou de 70% da cota. Ainda dá
-            tempo de decidir sem pressa.
+          <AlertDescription className="text-xs">
+            <strong>{atencao.length} cota(s) em atenção:</strong>{' '}
+            {atencao.map((q) => q.provider).join(', ')}. O consumo passou do ritmo esperado para o dia do mês.
           </AlertDescription>
         </Alert>
       )}
 
       {fontesComProblema.length > 0 && (
-        <Alert className="border-rose-300 bg-rose-50">
-          <XCircle className="w-4 h-4 text-rose-600" />
-          <AlertDescription className="text-sm text-rose-900">
-            {fontesComProblema.length === 1 ? 'Uma fonte está' : `${fontesComProblema.length} fontes estão`}{' '}
-            falhando: <strong>{fontesComProblema.map((s) => s.slug).join(', ')}</strong>. Cota é só uma das
-            formas de uma fonte parar.
+        <Alert className="border-amber-300 bg-amber-50 text-amber-900">
+          <AlertTriangle className="w-4 h-4 text-amber-600" />
+          <AlertDescription className="text-xs">
+            <strong>{fontesComProblema.length} fonte(s) com problema recente:</strong>{' '}
+            {fontesComProblema.map((s) => `${s.slug} (${s.collectionStatus})`).join(', ')}.
           </AlertDescription>
         </Alert>
       )}
 
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <RadarIcon className="w-4 h-4 text-indigo-600" /> Cota das APIs de vagas
-          </h3>
-          <p className="text-[11px] text-slate-500">
-            Consumo do mês {period ? <strong>{period}</strong> : 'corrente'}. Zerado a cada virada de mês.
-          </p>
-        </div>
-        <Button size="sm" variant="outline" onClick={load} disabled={loading}>
-          {loading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1.5" />}
-          Atualizar
-        </Button>
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {quotas.map((q) => {
           const pct = q.limit ? Math.min(100, Math.round((q.used / q.limit) * 100)) : null
+          const badgeClass =
+            q.alert === 'critical'
+              ? 'bg-rose-100 text-rose-800 border-rose-200'
+              : q.alert === 'attention'
+              ? 'bg-amber-100 text-amber-800 border-amber-200'
+              : 'bg-emerald-100 text-emerald-800 border-emerald-200'
 
           return (
             <Card key={q.provider} className={ALERT_STYLE[q.alert]}>
               <CardHeader className="pb-2">
-                <div className="flex items-center justify-between gap-2">
-                  <CardTitle className="text-sm font-bold text-slate-900 capitalize">{q.provider}</CardTitle>
-                  {q.limit == null ? (
-                    <Badge variant="outline" className="text-[10px] bg-slate-50">sem teto declarado</Badge>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-xs font-bold text-slate-800 capitalize">{q.provider}</CardTitle>
+                  {pct != null ? (
+                    <Badge variant="outline" className={`text-[10px] ${badgeClass}`}>
+                      {pct}%
+                    </Badge>
                   ) : (
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] ${
-                        q.alert === 'critical'
-                          ? 'bg-rose-100 text-rose-800 border-rose-200'
-                          : q.alert === 'attention'
-                            ? 'bg-amber-100 text-amber-800 border-amber-200'
-                            : 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                      }`}
-                    >
-                      {pct}% usado
+                    <Badge variant="outline" className="text-[10px] bg-slate-100 text-slate-700">
+                      Sem teto
                     </Badge>
                   )}
                 </div>
