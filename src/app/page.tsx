@@ -38,7 +38,7 @@ export default function Home() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-3">
-          <img src="/logo.png" alt="GriffoWork Logo" className="w-16 h-16 object-contain animate-pulse rounded-lg" />
+          <img src="/logo-icon.png" alt="GriffoWork Logo" className="w-20 h-20 object-contain animate-pulse rounded-lg" />
           <p className="text-xs font-semibold text-[#0B192E] tracking-wider uppercase">Carregando GriffoWork…</p>
         </div>
       </div>

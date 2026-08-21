@@ -109,7 +109,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
         <button onClick={onExit} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-          <img src="/logo.png" alt="GriffoWork" className="h-9 w-auto object-contain rounded-md shrink-0" />
+          <img src="/logo-icon.png" alt="GriffoWork" className="h-10 sm:h-11 w-auto object-contain shrink-0" />
           <div className="hidden sm:flex flex-col text-left leading-none">
             <span className="font-extrabold text-[#0B192E] text-base tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
             <span className="text-[9px] font-extrabold tracking-wider text-[#0B63E5] uppercase">{appSubtitles[lang] || appSubtitles.pt}</span>

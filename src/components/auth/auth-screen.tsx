@@ -61,7 +61,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
           </button>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="GriffoWork" className="h-8 w-auto object-contain rounded-md shrink-0" />
+              <img src="/logo-icon.png" alt="GriffoWork" className="h-10 sm:h-11 w-auto object-contain shrink-0" />
               <span className="font-extrabold text-[#0B192E] text-base tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
             </div>
             <LanguageSelector />

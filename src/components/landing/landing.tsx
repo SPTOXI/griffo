@@ -41,16 +41,16 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
     <div className="min-h-screen flex flex-col bg-white font-sans selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
       {/* NAV */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-slate-200/80 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between transition-all">
-          <div className="flex items-center gap-3 sm:gap-3.5 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 sm:h-22 flex items-center justify-between transition-all">
+          <div className="flex items-center gap-3.5 sm:gap-4 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <img
-              src="/logo.png"
+              src="/logo-icon.png"
               alt="GriffoWork Logo"
-              className="h-11 sm:h-13 md:h-14 w-auto object-contain rounded-lg shrink-0 transition-transform duration-200 group-hover:scale-105"
+              className="h-13 sm:h-16 md:h-18 w-auto object-contain shrink-0 transition-transform duration-200 group-hover:scale-105"
             />
             <div className="flex flex-col leading-none">
-              <span className="font-extrabold text-[#0B192E] text-xl sm:text-2xl tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
-              <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-[#0B63E5] mt-0.5 sm:mt-1">{appSubtitles[lang] || appSubtitles.pt}</span>
+              <span className="font-extrabold text-[#0B192E] text-2xl sm:text-3xl tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#0B63E5] mt-1">{appSubtitles[lang] || appSubtitles.pt}</span>
             </div>
           </div>
 
@@ -448,10 +448,10 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-sm">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="GriffoWork Logo" className="h-10 sm:h-11 w-auto object-contain rounded-md shrink-0" />
+              <img src="/logo-icon.png" alt="GriffoWork Logo" className="h-11 sm:h-12 w-auto object-contain shrink-0" />
               <div className="flex flex-col leading-none">
-                <span className="font-extrabold text-[#0B192E] text-lg tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
-                <span className="text-[8.5px] font-extrabold uppercase tracking-wider text-[#0B63E5] mt-0.5">{appSubtitles[lang] || appSubtitles.pt}</span>
+                <span className="font-extrabold text-[#0B192E] text-xl tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
+                <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#0B63E5] mt-0.5">{appSubtitles[lang] || appSubtitles.pt}</span>
               </div>
             </div>
             <p className="text-xs text-slate-500 leading-relaxed">
