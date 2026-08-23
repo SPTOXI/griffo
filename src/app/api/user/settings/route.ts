@@ -2,13 +2,18 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { socialLinksSchema } from '@/lib/validation'
 
 const schema = z.object({
   name: z.string().min(2).max(120).optional(),
   profession: z.string().max(120).optional(),
   recruiterOptIn: z.boolean().optional(),
   profileVisible: z.boolean().optional(),
-  socialLinks: z.record(z.string(), z.string()).optional(),
+  // Era `z.record(z.string(), z.string())`: sem teto de quantidade, de tamanho
+  // de chave, de tamanho de valor nem de esquema de URL. `User.socialLinks` é
+  // `String` sem limite no Postgres, então o que passava era o tamanho do
+  // corpo da requisição. Ver `lib/validation.ts`.
+  socialLinks: socialLinksSchema.optional(),
 })
 
 export async function PATCH(req: Request) {

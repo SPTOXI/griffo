@@ -7,18 +7,43 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { cleanAndOptimizeTextForAi } from '@/lib/ocr/extractor'
-import { parsePdfBuffer, extractPdfWithVision } from '@/lib/pdf-text'
+import { MAX_PDF_BASE64_CHARS, parsePdfBase64, extractPdfWithVision } from '@/lib/pdf-text'
 import { checkResumeContent } from '@/lib/analysis/content-guard'
+import {
+  MAX_JOB_DESCRIPTION_CHARS,
+  MAX_RESUME_CHARS,
+  MAX_TARGET_JOB_CHARS,
+  socialLinksSchema,
+} from '@/lib/validation'
 
+/**
+ * Nenhum campo de texto tinha teto.
+ *
+ * `content`, `targetJob`, `targetJobDescription` e `socialLinks` eram
+ * `z.string()` puro, e as colunas correspondentes são `String` sem tamanho no
+ * Postgres. O que passava por validação, então, era exatamente o tamanho do
+ * corpo da requisição — e quem escolhe esse tamanho é quem envia.
+ *
+ * Os tetos vivem em `lib/validation.ts` com a justificativa de cada número.
+ * Todos são folgados o bastante para não encostar em nenhum currículo real.
+ */
 const schema = z.object({
-  content: z.string().nullable().optional().default(''),
+  content: z.string().max(MAX_RESUME_CHARS, 'Conteúdo muito longo.').nullable().optional().default(''),
   format: z.enum(['text', 'markdown', 'pdf']).nullable().optional().default('text'),
-  title: z.string().nullable().optional(),
-  targetJob: z.string().nullable().optional(),
-  targetJobDescription: z.string().nullable().optional(),
-  socialLinks: z.record(z.string(), z.string()).nullable().optional(),
+  title: z.string().max(200).nullable().optional(),
+  targetJob: z.string().max(MAX_TARGET_JOB_CHARS, 'Cargo alvo muito longo.').nullable().optional(),
+  targetJobDescription: z
+    .string()
+    .max(MAX_JOB_DESCRIPTION_CHARS, 'Descrição da vaga muito longa.')
+    .nullable()
+    .optional(),
+  socialLinks: socialLinksSchema.nullable().optional(),
   socialConsent: z.boolean().nullable().optional().default(false),
-  pdfBase64: z.string().nullable().optional(),
+  pdfBase64: z
+    .string()
+    .max(MAX_PDF_BASE64_CHARS, 'O arquivo PDF é muito grande. O tamanho máximo permitido é 10MB.')
+    .nullable()
+    .optional(),
 })
 
 export async function OPTIONS(req: Request) {
@@ -49,21 +74,42 @@ export async function POST(req: Request) {
 
     // Server-side PDF extraction if pdfBase64 is supplied
     if (pdfBase64) {
-      // Limit PDF size to 10MB (base64 is ~33% larger than binary)
-      const MAX_PDF_BASE64_SIZE = 14 * 1024 * 1024 // ~10MB binary
-      if (pdfBase64.length > MAX_PDF_BASE64_SIZE) {
-        return NextResponse.json(
-          { error: 'O arquivo PDF é muito grande. O tamanho máximo permitido é 10MB.' },
-          { status: 400 }
-        )
-      }
+      /**
+       * A leitura passa por `parsePdfBase64`, não mais por `parsePdfBuffer`
+       * cru. A diferença é o que a primeira faz ANTES de decodificar:
+       *
+       *  - confere o tamanho pelo comprimento do base64, sem alocar o buffer;
+       *  - recorta o prefixo `data:` de QUALQUER tipo MIME (o recorte fixo em
+       *    `application/pdf` que estava aqui deixava
+       *    `data:application/octet-stream;base64,` dentro da string, e o
+       *    decodificador produzia lixo);
+       *  - exige a assinatura `%PDF-` nos primeiros bytes.
+       *
+       * Essa última é a que faltava. Sem ela, qualquer arquivo — um ZIP, um
+       * executável, bytes aleatórios — era entregue ao parser, falhava, e caía
+       * na transcrição por VISÃO, que é uma chamada de IA paga. Uma rota que
+       * gasta dinheiro com entrada que nem é do tipo declarado.
+       */
+      const cleanBase64 = pdfBase64.replace(/^data:[^;,]*;base64,/i, '').replace(/\s/g, '')
+      const decoded = await parsePdfBase64(pdfBase64)
 
-      const cleanBase64 = pdfBase64.replace(/^data:application\/pdf;base64,/, '')
-      const buffer = Buffer.from(cleanBase64, 'base64')
-      const extractedText = await parsePdfBuffer(buffer)
+      if (decoded.text.trim().length >= 30) {
+        content = decoded.text.trim()
+      } else if (decoded.code && decoded.code !== 'NO_TEXT_LAYER') {
+        // Grande demais, vazio, ou não é PDF: reprocessar por visão receberia o
+        // mesmo arquivo ruim e cobraria por isso.
+        //
+        // A mensagem de `INVALID` é reescrita aqui porque a de `parsePdfBase64`
+        // fala em "o arquivo gerado pelo próprio LinkedIn" — correto para a
+        // rota de perfil, que é de onde ela veio, e desorientador para quem
+        // está enviando um currículo.
+        const message =
+          decoded.code === 'INVALID'
+            ? 'O arquivo enviado não é um PDF válido. Confira o arquivo e envie novamente, ' +
+              'ou cole o conteúdo do currículo no campo de texto.'
+            : decoded.error || 'Não foi possível ler este PDF.'
 
-      if (extractedText && extractedText.trim().length >= 30) {
-        content = extractedText.trim()
+        return NextResponse.json({ error: message, code: decoded.code }, { status: 400 })
       } else {
         /**
          * PDF sem camada de texto — digitalização ou foto.

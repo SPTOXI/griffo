@@ -1,5 +1,6 @@
 import type { Language } from '../i18n'
 import type { OverallFit } from '../matching/compatibility'
+import { safeHttpUrl } from '../safe-url'
 
 /**
  * O conteúdo do e-mail do digest do Radar.
@@ -152,6 +153,23 @@ export function digestLanguage(declared: string | null | undefined): Language {
   return 'pt'
 }
 
+/**
+ * `href` seguro para o corpo do e-mail.
+ *
+ * `escapeHtml` sozinho NÃO cobre um atributo `href`: ele impede a saída do
+ * atributo, mas `javascript:alert(1)` atravessa sem um caractere alterado e
+ * continua sendo um esquema executável dentro de um `href` bem formado. Um link
+ * assim é recusado pela maioria dos clientes de e-mail modernos, mas "a maioria"
+ * não é uma garantia que valha a pena assinar, e o mesmo valor alimenta a versão
+ * em texto puro, que a pessoa copia e cola no navegador.
+ *
+ * URL vazia ou de esquema recusado vira `#`: o cartão da vaga continua legível,
+ * só não leva a lugar nenhum.
+ */
+function safeHref(value: string): string {
+  return escapeHtml(safeHttpUrl(value) || '#')
+}
+
 export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -189,7 +207,7 @@ export function buildDigest(input: DigestInput): DigestContent {
         `<div style="color:#3f3f46;font-size:14px;margin-top:2px">${escapeHtml(job.company)}</div>`,
         locationLine,
         `<div style="color:#3f3f46;font-size:13px;margin-top:10px">${escapeHtml(s.fit[job.overallFit])} — ${escapeHtml(job.headline)}</div>`,
-        `<div style="margin-top:12px"><a href="${escapeHtml(job.url)}" style="color:#1d4ed8;font-size:14px">${escapeHtml(s.seeAll)}</a></div>`,
+        `<div style="margin-top:12px"><a href="${safeHref(job.url)}" style="color:#1d4ed8;font-size:14px">${escapeHtml(s.seeAll)}</a></div>`,
         '</div>',
       ].join('')
     })
@@ -200,11 +218,11 @@ export function buildDigest(input: DigestInput): DigestContent {
     `<p style="font-size:16px;margin:0 0 4px">${escapeHtml(greeting)}</p>`,
     `<p style="font-size:15px;color:#3f3f46;margin:0 0 20px">${escapeHtml(s.intro(n))}</p>`,
     htmlCards,
-    `<p style="margin:20px 0 0"><a href="${escapeHtml(input.radarUrl)}" style="color:#1d4ed8;font-size:15px">${escapeHtml(s.seeAll)}</a></p>`,
+    `<p style="margin:20px 0 0"><a href="${safeHref(input.radarUrl)}" style="color:#1d4ed8;font-size:15px">${escapeHtml(s.seeAll)}</a></p>`,
     '<hr style="border:none;border-top:1px solid #e4e4e7;margin:28px 0 16px">',
     `<p style="font-size:12px;color:#71717a;margin:0 0 6px">${escapeHtml(s.why)}</p>`,
     `<p style="font-size:12px;color:#71717a;margin:0">`,
-    `<a href="${escapeHtml(input.unsubscribeUrl)}" style="color:#71717a">${escapeHtml(s.unsubscribe)}</a>`,
+    `<a href="${safeHref(input.unsubscribeUrl)}" style="color:#71717a">${escapeHtml(s.unsubscribe)}</a>`,
     ` — ${escapeHtml(s.unsubscribeNote)}`,
     '</p>',
     `<p style="font-size:12px;color:#a1a1aa;margin:16px 0 0">${escapeHtml(s.signature)}</p>`,

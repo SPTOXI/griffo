@@ -23,6 +23,7 @@
  * normalizador recusa, e o adapter conta como item descartado.
  */
 
+import { safeHttpUrl } from '../safe-url'
 import { conceptForTitle, foldTitle, seniorityFromTitle } from '../market/taxonomy'
 import { marketForCountry } from '../market'
 import {
@@ -177,8 +178,29 @@ export function normalizeJob(raw: RawJob, options: NormalizeOptions): Normalized
   const title = text(raw.title)
   if (!title) throw new JobNormalizationError('title', 'Vaga sem cargo.')
 
-  const applicationUrl = text(raw.applicationUrl)
-  if (!applicationUrl) throw new JobNormalizationError('applicationUrl', 'Vaga sem URL de candidatura.')
+  /**
+   * A URL de candidatura vem de terceiro — quadro de vagas, agregador, ou o
+   * JSON-LD que a própria empresa publica na página de carreira. Ela termina
+   * como `href` no e-mail do digest e como argumento de `window.open` no
+   * Radar, e nesses dois lugares um `javascript:` executa script na origem da
+   * aplicação.
+   *
+   * A checagem anterior era só "não está vazia". Escapar o HTML na hora de
+   * montar o e-mail não cobre isto: o esquema perigoso atravessa o escape
+   * intacto, porque não tem nenhum caractere que o escape trate. Quem fecha a
+   * porta é a recusa do esquema, e o lugar de fazer isso é aqui — na fronteira
+   * onde o dado de fora vira dado interno —, não em cada tela que o exibe.
+   *
+   * Uma vaga com URL inutilizável é descartada como qualquer outra vaga
+   * malformada: sem candidatura possível, ela não serve para ninguém.
+   */
+  const applicationUrl = safeHttpUrl(text(raw.applicationUrl))
+  if (!applicationUrl) {
+    throw new JobNormalizationError(
+      'applicationUrl',
+      'Vaga sem URL de candidatura válida (apenas http e https são aceitos).'
+    )
+  }
 
   const unknownFields: Record<string, UnknownReason> = {}
   const notDisclosed = new Set((raw.notDisclosed || []).map((f) => String(f)))

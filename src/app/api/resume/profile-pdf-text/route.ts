@@ -5,7 +5,7 @@ export const maxDuration = 60
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/auth'
-import { parsePdfBase64, extractPdfWithVision } from '@/lib/pdf-text'
+import { MAX_PDF_BASE64_CHARS, parsePdfBase64, extractPdfWithVision } from '@/lib/pdf-text'
 
 /**
  * Extração do texto do PDF do perfil, separada da análise que o consome.
@@ -25,7 +25,13 @@ import { parsePdfBase64, extractPdfWithVision } from '@/lib/pdf-text'
  */
 
 const schema = z.object({
-  pdfBase64: z.string().min(1, 'Envie um arquivo PDF.'),
+  // O teto duplica o que `parsePdfBase64` já confere, mas atua antes: sem ele,
+  // um corpo de centenas de megabytes é lido e mantido em memória inteiro
+  // antes de a rota ter chance de recusá-lo.
+  pdfBase64: z
+    .string()
+    .min(1, 'Envie um arquivo PDF.')
+    .max(MAX_PDF_BASE64_CHARS, 'O arquivo excede o limite de 10 MB.'),
 })
 
 export async function POST(req: Request) {

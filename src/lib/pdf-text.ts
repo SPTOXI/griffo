@@ -49,6 +49,15 @@ export async function parsePdfBuffer(buffer: Buffer): Promise<string> {
 /** Teto de tamanho do PDF aceito, em bytes decodificados. */
 export const MAX_PDF_BYTES = 10 * 1024 * 1024
 
+/**
+ * O mesmo teto expresso em caracteres de base64, para recusar a entrada no
+ * esquema do Zod — antes de o corpo virar string na memória do handler.
+ *
+ * 4 caracteres de base64 codificam 3 bytes; a folga cobre o prefixo `data:` e
+ * eventuais quebras de linha, que `parsePdfBase64` remove depois.
+ */
+export const MAX_PDF_BASE64_CHARS = Math.ceil((MAX_PDF_BYTES * 4) / 3) + 1024
+
 export interface PdfDecodeResult {
   text: string
   error?: string

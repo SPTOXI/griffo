@@ -77,6 +77,25 @@ const RULES: Rule[] = [
    * descadastro alheio quem protege é a assinatura do token, não isto.
    */
   { prefix: '/api/radar/unsubscribe', limit: 300, windowMs: 10 * 60_000 },
+  /**
+   * Painel administrativo.
+   *
+   * O limite não substitui a verificação de sessão — ela é feita rota a rota,
+   * com `getAdminUser` — mas o `/api/admin` inteiro estava FORA do `matcher`,
+   * então nem o login de administrador nem as rotas que gastam IA (`ai-test`,
+   * `jobs/dedup`, `director`) tinham qualquer teto. Um 403 repetido milhares de
+   * vezes por segundo ainda é uma consulta ao banco por tentativa.
+   *
+   * 120 por 10 minutos é folgado para uso humano do painel — ele carrega
+   * várias rotas de uma vez ao abrir — e apertado para um laço automatizado.
+   */
+  { prefix: '/api/admin', limit: 120, windowMs: 10 * 60_000 },
+  /**
+   * Crons. Autenticados por `CRON_SECRET`, e agora fechados quando ele falta;
+   * o limite existe para que uma tentativa de adivinhar o segredo custe tempo,
+   * já que a Vercel chama estas rotas uma vez por dia cada.
+   */
+  { prefix: '/api/cron', limit: 20, windowMs: 10 * 60_000 },
 ]
 
 function clientIp(req: NextRequest): string {
@@ -133,5 +152,10 @@ export const config = {
     // as deixa exatamente como estavam — `matchRule` devolve nada e a
     // requisição segue.
     '/api/radar/:path*',
+    // Entraram junto com as regras acima: sem estar no matcher, uma regra
+    // declarada em RULES nunca é consultada — o middleware simplesmente não
+    // roda para o caminho.
+    '/api/admin/:path*',
+    '/api/cron/:path*',
   ],
 }

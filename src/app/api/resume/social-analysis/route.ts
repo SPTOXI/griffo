@@ -12,7 +12,8 @@ import { edgeCountry } from '@/lib/pricing/resolve'
 import { fetchAllProfiles, detectPlatform, type SocialProfileData } from '@/lib/social/fetchers'
 import { analyzeSocialPresence } from '@/lib/social/analysis'
 import { loadProfileContext } from '@/lib/profile/server'
-import { parsePdfBase64 } from '@/lib/pdf-text'
+import { MAX_PDF_BASE64_CHARS, parsePdfBase64 } from '@/lib/pdf-text'
+import { MAX_SOCIAL_LINKS } from '@/lib/validation'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório.'),
@@ -21,11 +22,23 @@ const schema = z.object({
    * o LinkedIn sempre, e as demais plataformas quando a leitura falha.
    * Chave = URL do perfil.
    */
-  suppliedContent: z.record(z.string(), z.string().max(20000)).optional(),
+  suppliedContent: z
+    .record(z.string().max(300), z.string().max(20000))
+    // O tamanho de cada valor já tinha teto; a QUANTIDADE de chaves não, e o
+    // produto dos dois é o que chega à memória e ao prompt. Doze é o mesmo
+    // teto de perfis de `socialLinksSchema`.
+    .refine((v) => Object.keys(v).length <= MAX_SOCIAL_LINKS, 'Perfis demais.')
+    .optional(),
   /** Texto já extraído do perfil, quando o cliente prefere colar. */
   linkedinPdfText: z.string().max(30000).optional(),
-  /** PDF que o LinkedIn gera em "Mais → Salvar como PDF", em base64. */
-  linkedinPdfBase64: z.string().optional(),
+  /**
+   * PDF que o LinkedIn gera em "Mais → Salvar como PDF", em base64.
+   *
+   * `parsePdfBase64` já recusa o arquivo grande demais, mas só DEPOIS de o
+   * corpo inteiro ter sido lido e mantido em memória. O teto no esquema recusa
+   * antes.
+   */
+  linkedinPdfBase64: z.string().max(MAX_PDF_BASE64_CHARS).optional(),
 })
 
 /**
