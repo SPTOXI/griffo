@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { internalFetch } from '@/lib/internal-fetch'
+import { safeHttpUrl } from '@/lib/safe-url'
 
 /**
  * O Radar, do lado do usuário.
@@ -264,7 +265,16 @@ export function RadarView() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ alertId: opportunity.alertId, action: 'clicked' }),
     })
-    window.open(opportunity.applicationUrl, '_blank', 'noopener,noreferrer')
+    // Segunda barreira, e não redundância: `normalizeJob` passou a recusar
+    // esquema perigoso na entrada, mas as vagas gravadas ANTES dessa mudança
+    // continuam no banco como estavam. `window.open('javascript:...')` executa
+    // na origem desta página — é XSS, não navegação.
+    const safeUrl = safeHttpUrl(opportunity.applicationUrl)
+    if (!safeUrl) {
+      toast.error('O link desta vaga é inválido e não pode ser aberto.')
+      return
+    }
+    window.open(safeUrl, '_blank', 'noopener,noreferrer')
   }
 
   if (loading) {

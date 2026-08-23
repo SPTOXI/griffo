@@ -11,14 +11,35 @@ import { edgeCountry, resolvePricingContext } from '@/lib/pricing/resolve'
 import { formatPrice, priceFor } from '@/lib/pricing/catalog'
 import { localMethodLabels } from '@/lib/pricing/payment-methods'
 
+/**
+ * O histórico é enviado pelo CLIENTE a cada mensagem, e vai direto para o
+ * prompt do modelo. `message` já tinha teto de 1000 caracteres; `history` não
+ * tinha nenhum — nem no número de turnos, nem no tamanho de cada texto.
+ *
+ * O teto de `message` não valia de nada enquanto isso: bastava mandar a
+ * mensagem gigante dentro de `history` para contorná-lo. E o custo não é só o
+ * de tokens: um histórico grande empurra a base de conhecimento e os
+ * guardrails do prompt do sistema para fora da janela de atenção do modelo,
+ * que é como uma instrução plantada pelo usuário passa a competir com as
+ * regras da plataforma.
+ *
+ * 20 turnos cobrem uma conversa de suporte inteira com folga.
+ */
+const MAX_HISTORY_TURNS = 20
+
 const schema = z.object({
   message: z.string().min(1, 'Mensagem em branco').max(1000, 'Mensagem muito longa'),
-  history: z.array(
-    z.object({
-      sender: z.enum(['user', 'bot']),
-      text: z.string(),
-    })
-  ).optional(),
+  history: z
+    .array(
+      z.object({
+        sender: z.enum(['user', 'bot']),
+        text: z.string().max(4000),
+      })
+    )
+    .max(MAX_HISTORY_TURNS)
+    // Conversa longa não é erro: o excesso é cortado mantendo os turnos mais
+    // recentes, que são os que dão contexto à pergunta atual.
+    .optional(),
 })
 
 const SYSTEM_SUPPORT_PROMPT_BASE = `Você é o Assistente Virtual Oficial do Griffo — a plataforma líder em análise preditiva de currículos, triagem ATS e otimização de carreiras com Inteligência Artificial.
