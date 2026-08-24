@@ -421,13 +421,13 @@ export function ProfessionalProfileView() {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-sky-200 bg-sky-50/70 p-3">
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
             <Button
               type="button"
               variant="outline"
               onClick={fillFromResume}
               disabled={filling}
-              className="bg-white border-sky-300 text-sky-800 hover:bg-sky-50 h-9 text-xs font-semibold"
+              className="bg-white border-primary/30 text-primary hover:bg-primary/10 h-9 text-xs font-semibold"
             >
               {filling ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5 mr-1.5" />}
               Preencher com o que já sei sobre você
@@ -559,10 +559,10 @@ export function ProfessionalProfileView() {
       </Card>
 
       {/* MOBILIDADE E MERCADOS */}
-      <Card className="border-sky-200">
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Globe2 className="w-4 h-4 text-sky-600" /> Onde você está e onde quer trabalhar
+            <Globe2 className="w-4 h-4 text-slate-600" /> Onde você está e onde quer trabalhar
           </CardTitle>
           <CardDescription className="text-[11px] text-slate-600">
             São perguntas diferentes de propósito. Morar num país não significa querer trabalhar nele.
@@ -733,10 +733,10 @@ export function ProfessionalProfileView() {
       </Card>
 
       {/* IDIOMAS */}
-      <Card className="border-violet-200">
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Languages className="w-4 h-4 text-violet-600" /> Idiomas
+            <Languages className="w-4 h-4 text-slate-600" /> Idiomas
           </CardTitle>
           <CardDescription className="text-[11px] text-slate-600">
             O idioma da tela não decide o idioma do seu currículo. Se você mira outro país, provavelmente são

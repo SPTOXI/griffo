@@ -194,7 +194,7 @@ export function DownloadsView() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                         <FileSearch className="w-4 h-4" />
                       </div>
                       <div>
@@ -214,7 +214,7 @@ export function DownloadsView() {
                     <Button
                       onClick={() => download('analysis_pdf')}
                       disabled={!!downloading || !canDownload}
-                      className="w-full bg-sky-600 hover:bg-sky-700"
+                      className="w-full bg-primary hover:bg-primary/90"
                     >
                       {downloading === 'analysis_pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
                       Baixar laudo PDF
@@ -228,7 +228,7 @@ export function DownloadsView() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 rounded-lg bg-violet-100 text-violet-700 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                         <FileEdit className="w-4 h-4" />
                       </div>
                       <div>
@@ -249,7 +249,7 @@ export function DownloadsView() {
                       <Button
                         onClick={() => download('resume_pdf')}
                         disabled={!!downloading || !canDownload}
-                        className="w-full bg-violet-600 hover:bg-violet-700"
+                        className="w-full bg-primary hover:bg-primary/90"
                       >
                         {downloading === 'resume_pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileType className="w-4 h-4 mr-2" />}
                         Baixar PDF
@@ -282,7 +282,7 @@ export function DownloadsView() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                         <Share2 className="w-4 h-4" />
                       </div>
                       <div>
@@ -304,7 +304,7 @@ export function DownloadsView() {
                         onClick={() => download('social_advice_txt')}
                         disabled={!!downloading || !canDownload}
                         variant="outline"
-                        className="w-full border-indigo-200 text-indigo-900 hover:bg-indigo-50"
+                        className="w-full border-primary/20 text-primary hover:bg-primary/10"
                       >
                         {downloading === 'social_advice_txt' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
                         Baixar Dicas (.txt)
@@ -313,7 +313,7 @@ export function DownloadsView() {
                         onClick={() => download('social_advice_md')}
                         disabled={!!downloading || !canDownload}
                         variant="outline"
-                        className="w-full border-indigo-200 text-indigo-900 hover:bg-indigo-50"
+                        className="w-full border-primary/20 text-primary hover:bg-primary/10"
                       >
                         {downloading === 'social_advice_md' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
                         Baixar Dicas (.md)
