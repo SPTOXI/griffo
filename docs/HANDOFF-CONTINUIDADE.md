@@ -20,7 +20,7 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 24/08/2026, correção do incidente de produção do Radar (ver 7.6) |
+| Última revisão | 24/08/2026, revisão visual do app inteiro na branch `design-refresh-2026-08` (ver 7.7) |
 | Suíte | 510 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão |
 | Banco | Sincronizado via `prisma db push`, incluindo `RadarAlert.notifiedAt` (ver 7.6) |
@@ -40,6 +40,12 @@ o quanto confiar nele.
    o perfil preenchido para ver se entra vaga de outra área. O terceiro já
    aconteceu de verdade em 24/08/2026 — ver 7.6 — e é a razão de a seção 7.5 ter
    deixado de ser hipotética.
+4. **Revisão visual da branch `design-refresh-2026-08` (ver 7.7).** Todo o
+   trabalho foi verificado por `tsc`/`eslint`/`npm test`, mas ninguém olhou as
+   telas autenticadas ainda — o agente não tem credencial de login e não pode
+   digitá-la. Falta: abrir cada tela no navegador, comparar com a tag
+   `backup-pre-design-refresh-20260824` se algo parecer errado, e decidir se
+   mergeia em `main`.
 
 **O que NÃO está pendente e parece que está:** o e-mail do digest está
 implementado e desligado de propósito (§7.3). Não é trabalho pela metade.
@@ -442,6 +448,66 @@ apagados em produção para que a próxima varredura regrave com a regra nova �
 leitura não recalcula por desenho (§ do prompt mestre), então mantê-los teria
 deixado o veredito antigo na tela até a próxima rodada de qualquer forma.
 Nenhuma vaga foi apagada, só o registro do alerta.
+
+### 7.7 🟡 EM REVISÃO — revisão visual de todo o app, branch `design-refresh-2026-08`
+
+Pedido do usuário: interface mais moderna, fácil de navegar e visualmente
+agradável, mantendo a paleta de marca e a sobriedade, sem alterar
+funcionalidade, com backup do estado anterior. Detalhe completo em
+`docs/AUDITORIA-EVOLUCAO-GLOBAL.md`, seção 2.26.
+
+**Backup.** Tag `backup-pre-design-refresh-20260824` no commit que era `main`
+antes de qualquer mudança. Todo o trabalho está na branch
+`design-refresh-2026-08` — `main` não foi tocado, e nada foi publicado em
+produção.
+
+**O achado que guiou tudo.** A "paleta da marca" (navy `#0B192E` + azul
+`#0B63E5`) era usada de forma consistente, mas só como hex literal repetido
+centenas de vezes — sem token central, com três gradientes escuros diferentes
+fazendo o mesmo papel visual. Por cima disso, pelo menos 7 tons soltos
+(slate/sky/violet/amber/emerald/blue/indigo) decidiam cor tela por tela sem
+mapa de significado: o estado ativo do menu era emerald sem relação com a
+marca, o botão de admin tinha forma diferente dos outros itens, badges de
+status usavam 5 cores sem critério.
+
+**O que foi feito, em 4 fases (cada uma com commit próprio):**
+- **Fase A** — `globals.css`: registra `--primary` (azul da marca) e
+  `--brand-navy` como tokens de verdade, com o mapa semântico documentado em
+  comentário (primary/emerald/amber/destructive/violet-só-admin/slate).
+  `tailwind.config.ts` foi deixado intocado: é Tailwind v4 com `@theme inline`
+  no CSS, e o config `.ts` com `hsl(var(...))` não está carregado (sem
+  `@config` no CSS) — é código morto, não quebrado.
+- **Fase B** — `app-shell.tsx`: estado ativo do menu passa de emerald pra
+  `primary`; botão de admin ganha a forma dos outros itens (a cor violeta fica,
+  como identidade documentada da área admin); zero hex solto; breadcrumb para
+  de repetir "Painel > Painel".
+- **Fase C** — sweep em todas as telas de `src/components/app/`: zero hex de
+  marca hardcoded restante no diretório inteiro; violeta só aparece em admin ou
+  nos dois arquivos que o plano decidiu preservar por já terem sistema de cor
+  por categoria bem cuidado (`radar-view.tsx` com indigo como identidade
+  própria da tela, `analysis-view.tsx` com cor por tipo de entrega).
+  `dashboard.tsx` também perdeu um card de estatística que duplicava o saldo já
+  mostrado no banner acima.
+- **Fase D** — landing: grid de features passa de 6 para 9 (Radar de Vagas,
+  Orientação de Carreira, Carta de Apresentação), reordenado em blocos com
+  sentido. Ver seção 2.26 do documento de auditoria para a lista completa.
+
+**O que NÃO foi feito, por decisão registrada no plano:**
+- Seção de destaque dedicada ao Radar na landing (estilo `#social`) — mais
+  arriscada de acertar de primeira, não necessária pro pedido.
+- Estatística nova no hero sobre o Radar — sem dado real auditável por trás,
+  não inventa (regra permanente do produto).
+- `admin-view.tsx` — fora do escopo funcional (área interna, não afeta usuário
+  pagante).
+
+**O que falta.** Verificação visual nas telas autenticadas — o agente não tem
+credencial de login e não pode digitá-la (regra de segurança), então o usuário
+optou por revisar tudo no final em vez de logar durante o trabalho. `tsc`,
+`eslint` e `npm test` (510/510) estão limpos em cada commit, mas ninguém olhou
+as telas no navegador ainda. Antes de mergear em `main`: abrir a branch
+localmente ou no Preview da Vercel e percorrer dashboard, upload, perfil
+profissional, radar, planos, histórico, downloads, configurações, suporte e a
+landing nos três idiomas — inclusive o menu em mobile.
 
 ---
 
