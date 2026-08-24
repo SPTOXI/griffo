@@ -1181,3 +1181,41 @@ da coleta). Confundir os dois faria a Gupy virar barra livre.
 `GET /api/admin/quotas` devolve as cotas **e** o estado de cada fonte: cota é só
 uma das formas de uma fonte parar, e uma que responde 500 há três dias precisa
 aparecer no mesmo lugar.
+
+---
+
+## 11. Global Day 1 & Priorização Dinâmica por Mercado (24/08/2026)
+
+### Diagnóstico & Contexto Estratégico
+
+A internacionalização de produtos digitais de IA costuma falhar por dois extremos:
+1. **Linearismo excessivo:** esperar anos para dominar o mercado doméstico (Brasil) antes de abrir outros países, correndo o risco de concorrentes globais ocuparem os canais e o SEO antes.
+2. **Ilusão do TAM bruto:** apostar cegamente em países de população massiva (Índia, Indonésia) onde o CAC e a conversão podem não cobrir os custos ou ter ticket médio irrelevante.
+
+A estratégia adotada é **Global Day 1 com Priorização Dinâmica**:
+- O produto nasce disponível em múltiplos mercados simultaneamente (idiomas, moedas, ATS e regras de currículo locais).
+- Micro-testes controlados de tráfego de anúncios são executados.
+- **O algoritmo de dados decide a alocação de verba**, priorizando mercados com maior margem de contribuição ($\text{Receita Líquida} - \text{CAC} - \text{Custo IA}$).
+
+### O que foi implementado
+
+1. **Captura de Campanhas e UTMs (`page-view-tracker.tsx`):**
+   * Parâmetros `utm_source`, `utm_medium`, `utm_campaign`, `utm_content` e `utm_term` são lidos da URL no primeiro acesso, salvos no `localStorage` do visitante e propagados em todos os eventos do funil (`page_view`, `checkout_initiated`, `upsell_viewed`).
+
+2. **Detecção de Geolocalização na Borda (`/api/analytics/track`):**
+   * Leitura dos cabeçalhos de edge `x-vercel-ip-country` e `cf-ipcountry`, associando o código ISO do país diretamente aos eventos de telemetria sem expor IP ou violar LGPD/GDPR.
+
+3. **Cálculo de Performance por Mercado (`lib/analytics/market-performance.ts`):**
+   * Agregação em memória cruzando `AnalyticsEvent` e `AnalysisLedger`.
+   * Métricas computadas por país: Visitantes Únicos, Checkouts, Compras, Taxa de Conversão Final (Visitante $\rightarrow$ Compra), Conversão de Checkout, Receita (USD/BRL), Custo Direto de IA (\$1.0449/análise), Taxas de Gateway (4%), Lucro Líquido e Margem Líquida.
+   * Recomendação algorítmica:
+     * 🚀 **Escalar Verba:** Conversão $\ge 3.5\%$ e margem positiva $\ge 50\%$.
+     * 🟡 **Testar mais:** Amostragem inicial.
+     * 🔻 **Otimizar / Reduzir:** Tráfego expressivo com conversão $< 1.5\%$ ou margem negativa.
+
+4. **Painel Visual no Dashboard Admin (`admin-view.tsx`):**
+   * Tabela analítica completa com bandeiras Unicode, volumes, conversões e badges de decisão por país.
+
+5. **Expansão do Market Adapter (`lib/market/index.ts`):**
+   * Adicionado suporte ao mercado da Itália (`IT`), totalizando 13 mercados com regras nativas de ATS e currículo declaradas.
+

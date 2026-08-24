@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Shield, Users, CreditCard, Cpu, Search, Loader2, Save, RefreshCw, Activity,
-  BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Award, UserPlus, Minus, Pencil,
+  BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Award, UserPlus, Minus, Pencil, Globe,
   Radar as RadarIcon
 } from 'lucide-react'
 import { RadarQuotas } from './radar-quotas'
@@ -149,6 +149,24 @@ interface Metrics {
     upsellPurchasesCount: number
     upsellConversionRate: number
   }
+  marketPerformance?: {
+    countryCode: string
+    countryName: string
+    flag: string
+    visitors: number
+    checkouts: number
+    purchases: number
+    visitorConversionRate: number
+    checkoutConversionRate: number
+    revenueUsd: number
+    revenueBrl: number
+    aiCostUsd: number
+    netProfitUsd: number
+    netMarginPercent: number
+    decision: 'scale' | 'test' | 'optimize'
+    decisionLabel: string
+    decisionBadge: string
+  }[]
 }
 
 interface BenchmarkItem {
@@ -1889,6 +1907,125 @@ function AdminViewContent() {
               </CardContent>
             </Card>
           </div>
+
+          {/* PRIORIZAÇÃO DINÂMICA POR MERCADO (GLOBAL DAY 1) */}
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader className="pb-3 border-b border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Globe className="w-5 h-5 text-indigo-600" />
+                    Performance & Priorização Dinâmica por Mercado
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-1">
+                    Métricas de funil, conversão e retorno financeiro por país (Global Day 1). O algoritmo decide a alocação de verba com base na margem e conversão real.
+                  </CardDescription>
+                </div>
+                <Badge variant="outline" className="text-xs font-bold text-indigo-700 bg-indigo-50 border-indigo-200 self-start sm:self-auto">
+                  Algoritmo de Escala Ativo
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-4">
+              <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-b border-slate-200">
+                    <tr>
+                      <th className="px-3 py-2.5">Mercado / País</th>
+                      <th className="px-3 py-2.5 text-center">Visitantes</th>
+                      <th className="px-3 py-2.5 text-center">Checkouts</th>
+                      <th className="px-3 py-2.5 text-center">Compras</th>
+                      <th className="px-3 py-2.5 text-center">Conv. Final</th>
+                      <th className="px-3 py-2.5 text-center">Conv. Checkout</th>
+                      <th className="px-3 py-2.5 text-right">Receita (USD)</th>
+                      <th className="px-3 py-2.5 text-right">Lucro Líq.</th>
+                      <th className="px-3 py-2.5 text-right">Margem</th>
+                      <th className="px-3 py-2.5 text-center">Decisão / Verba</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {metrics?.marketPerformance && metrics.marketPerformance.length > 0 ? (
+                      metrics.marketPerformance.map((item) => (
+                        <tr key={item.countryCode} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="px-3 py-2.5 font-medium text-slate-900">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">{item.flag}</span>
+                              <div>
+                                <span className="font-semibold text-slate-800">{item.countryName}</span>
+                                <span className="text-[10px] text-slate-400 font-mono ml-1.5">({item.countryCode})</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2.5 text-center font-mono text-slate-700">
+                            {item.visitors}
+                          </td>
+                          <td className="px-3 py-2.5 text-center font-mono text-slate-700">
+                            {item.checkouts}
+                          </td>
+                          <td className="px-3 py-2.5 text-center font-mono font-bold text-emerald-700">
+                            {item.purchases}
+                          </td>
+                          <td className="px-3 py-2.5 text-center font-mono">
+                            <span
+                              className={`px-1.5 py-0.5 rounded font-bold ${
+                                item.visitorConversionRate >= 3.5
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : item.visitorConversionRate > 0
+                                  ? 'bg-blue-50 text-blue-700'
+                                  : 'text-slate-400'
+                              }`}
+                            >
+                              {item.visitorConversionRate.toFixed(1)}%
+                            </span>
+                          </td>
+                          <td className="px-3 py-2.5 text-center font-mono text-slate-600">
+                            {item.checkoutConversionRate.toFixed(1)}%
+                          </td>
+                          <td className="px-3 py-2.5 text-right font-mono font-semibold text-slate-800">
+                            US$ {item.revenueUsd.toFixed(2)}
+                            <div className="text-[10px] text-slate-400 font-normal">
+                              R$ {item.revenueBrl.toFixed(2)}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2.5 text-right font-mono font-semibold text-emerald-700">
+                            US$ {item.netProfitUsd.toFixed(2)}
+                          </td>
+                          <td className="px-3 py-2.5 text-right font-mono font-bold text-slate-800">
+                            {item.netMarginPercent.toFixed(0)}%
+                          </td>
+                          <td className="px-3 py-2.5 text-center">
+                            {item.decision === 'scale' ? (
+                              <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200 text-[10px] font-bold">
+                                🚀 Escalar Verba
+                              </Badge>
+                            ) : item.decision === 'optimize' ? (
+                              <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 text-[10px] font-bold">
+                                🔻 Otimizar / Reduzir
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200 text-[10px] font-bold">
+                                🟡 Testar mais
+                              </Badge>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={10} className="px-4 py-8 text-center text-slate-400">
+                          <Globe className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                          <p className="font-medium text-slate-600">Nenhum evento com identificação de país registrado ainda.</p>
+                          <p className="text-[11px] text-slate-400 mt-1">
+                            A telemetria da borda associa automaticamente novos acessos e checkouts aos seus respectivos países e campanhas UTM.
+                          </p>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>

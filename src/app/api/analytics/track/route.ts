@@ -21,7 +21,20 @@ export async function POST(req: Request) {
     }
 
     const user = await getCurrentUser().catch(() => null)
-    const { event, visitorId, sku, meta } = parsed.data
+    const { event, visitorId, sku, meta = {} } = parsed.data
+
+    // Detecta país pelos headers de geolocalização da borda (Vercel / Cloudflare)
+    const headerCountry =
+      req.headers.get('x-vercel-ip-country')?.toUpperCase() ||
+      req.headers.get('cf-ipcountry')?.toUpperCase() ||
+      null
+
+    const metaCountry = (meta.country as string | undefined)?.toUpperCase() || headerCountry || user?.paymentCountry || null
+
+    const enrichedMeta = {
+      ...meta,
+      ...(metaCountry ? { country: metaCountry } : {}),
+    }
 
     await db.analyticsEvent.create({
       data: {
@@ -29,7 +42,7 @@ export async function POST(req: Request) {
         userId: user?.id || null,
         visitorId: visitorId || null,
         sku: sku || null,
-        meta: meta ? JSON.stringify(meta) : null,
+        meta: JSON.stringify(enrichedMeta),
       },
     })
 

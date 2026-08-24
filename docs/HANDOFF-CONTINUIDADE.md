@@ -20,10 +20,10 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 24/08/2026, telemetria de funil, upsell e unit economics |
-| Suíte | 499 testes, `fail 0` — a regra da contagem está na seção 8 |
+| Última revisão | 24/08/2026, telemetria de funil, UTMs, priorização dinâmica por mercado e unit economics |
+| Suíte | 523 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão |
-| Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent`) |
+| Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`) |
 
 **Pendências que estão esperando alguém, não código:**
 

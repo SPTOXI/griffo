@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { getAiMetricsData } from '@/lib/ai-router/metrics'
 import { maskSecret } from '@/lib/crypto'
 import { isSensitiveConfigKey } from '@/lib/system-config'
+import { calculateMarketPerformance } from '@/lib/analytics/market-performance'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,6 +39,8 @@ export async function GET() {
       upsellViewsCount,
       upsellPurchasesCount,
       distinctBuyersRows,
+      rawPurchasesRows,
+      rawEventsRows,
     ] = await Promise.all([
       db.user.findMany({
         orderBy: { createdAt: 'desc' },
@@ -107,7 +110,20 @@ export async function GET() {
         distinct: ['userId'],
         select: { userId: true },
       }).catch(() => []),
+      // Compras detalhadas para quebra por mercado
+      db.analysisLedger.findMany({
+        where: { type: 'purchase' },
+        select: { priceUsd: true, paymentCountry: true, delta: true, userId: true, createdAt: true },
+      }).catch(() => []),
+      // Eventos detalhados para quebra de visitantes/checkouts por país
+      db.analyticsEvent.findMany({
+        select: { event: true, visitorId: true, meta: true, createdAt: true },
+      }).catch(() => []),
     ])
+
+    const rawPurchases = (rawPurchasesRows as any[]) || []
+    const rawEvents = (rawEventsRows as any[]) || []
+    const marketPerformance = calculateMarketPerformance(rawEvents, rawPurchases)
 
     const totalTokensIn = tokenStats._sum.tokensIn || 0
     const totalTokensOut = tokenStats._sum.tokensOut || 0
@@ -208,6 +224,7 @@ export async function GET() {
           upsellPurchasesCount,
           upsellConversionRate,
         },
+        marketPerformance,
       },
       config: configMap,
       aiMetrics,

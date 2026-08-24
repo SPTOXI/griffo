@@ -103,7 +103,7 @@ async function main() {
     // Estado ANTES: sem isto o script não consegue dizer o que de fato mudou,
     // e "aplicado com sucesso" numa base que já estava aplicada é indistinguível
     // de "aplicado com sucesso" numa base que acabou de ser protegida.
-    const antes = await db.$queryRawUnsafe<TableRow[]>(PENDING_TABLES_QUERY)
+    const antes = (await db.$queryRawUnsafe(PENDING_TABLES_QUERY)) as TableRow[]
     console.log(
       antes.length === 0
         ? '[db:rls] Todas as tabelas já estavam com RLS ligado. Reaplicando por garantia.\n'
@@ -130,8 +130,8 @@ async function main() {
     // repassa mensagens de aviso do servidor. Então a conferência é feita
     // consultando o catálogo de novo, que é prova melhor que log de qualquer
     // jeito — ela mede o estado, não a intenção.
-    const depois = await db.$queryRawUnsafe<TableRow[]>(PENDING_TABLES_QUERY)
-    const expostas = await db.$queryRawUnsafe<ExposedRow[]>(EXPOSED_TABLES_QUERY)
+    const depois = (await db.$queryRawUnsafe(PENDING_TABLES_QUERY)) as TableRow[]
+    const expostas = (await db.$queryRawUnsafe(EXPOSED_TABLES_QUERY)) as ExposedRow[]
 
     console.log()
     if (depois.length === 0 && expostas.length === 0) {
