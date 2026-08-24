@@ -304,9 +304,15 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
           <p className="text-sm sm:text-base text-slate-600">{t.features.subtitle}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {/* Diagnóstico e descoberta */}
           <Feature icon={<BarChart3 className="w-5 h-5" />} title={t.features.f1Title} desc={t.features.f1Desc} />
+          <Feature icon={<FileSearch className="w-5 h-5" />} title={t.features.f7Title} desc={t.features.f7Desc} />
           <Feature icon={<Search className="w-5 h-5" />} title={t.features.f2Title} desc={t.features.f2Desc} />
+          {/* Preparação */}
           <Feature icon={<Sparkles className="w-5 h-5" />} title={t.features.f3Title} desc={t.features.f3Desc} />
+          <Feature icon={<TrendingUp className="w-5 h-5" />} title={t.features.f8Title} desc={t.features.f8Desc} />
+          <Feature icon={<Edit3 className="w-5 h-5" />} title={t.features.f9Title} desc={t.features.f9Desc} />
+          {/* Entrega e confiança */}
           <Feature icon={<Share2 className="w-5 h-5" />} title={t.features.f4Title} desc={t.features.f4Desc} />
           <Feature icon={<Download className="w-5 h-5" />} title={t.features.f5Title} desc={t.features.f5Desc} />
           <Feature icon={<ShieldCheck className="w-5 h-5" />} title={t.features.f6Title} desc={t.features.f6Desc} />
