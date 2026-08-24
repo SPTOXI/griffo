@@ -404,7 +404,7 @@ export function RadarView() {
         </Card>
       )}
 
-      {hasProfile && profileMatchable && opportunities.length === 0 && (
+      {!error && hasProfile && profileMatchable && opportunities.length === 0 && (
         <Card className="border-slate-200">
           <CardContent className="p-8 text-center space-y-2">
             <RadarIcon className="w-10 h-10 text-slate-300 mx-auto" />
@@ -421,7 +421,7 @@ export function RadarView() {
         </Card>
       )}
 
-      {profileMatchable && digest && digest.total > 0 && (
+      {!error && profileMatchable && digest && digest.total > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
           <Info className="w-4 h-4 text-indigo-500" />
           <span className="font-semibold text-slate-800">{digest.headline}</span>
@@ -438,7 +438,7 @@ export function RadarView() {
         que não há como recomendar nada. A rodada seguinte apaga essas linhas;
         até lá, esconder é o mínimo.
       */}
-      {profileMatchable && opportunities.map((opportunity) => {
+      {!error && profileMatchable && opportunities.map((opportunity) => {
         const fit = opportunity.fit
         if (!fit) {
           return (

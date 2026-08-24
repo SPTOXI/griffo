@@ -111,6 +111,19 @@ function intersectSkills(candidate: string[], required: string[]): { matched: st
 }
 
 /**
+ * O cargo declarado (atual ou alvo) é reconhecido como o mesmo da vaga?
+ *
+ * Único lugar que faz essa pergunta — usado pelo eixo profissional para
+ * pontuar e pelo veredito para decidir se há identidade real confirmada,
+ * distinta de senioridade batendo ou anos de experiência, que dizem algo
+ * sobre a pessoa mas nada sobre esta vaga específica.
+ */
+function confirmedSameRole(profile: ProfessionalProfile, job: NormalizedJob): boolean {
+  const candidateTitles = [profile.currentTitle, ...profile.targetRoles].filter(Boolean) as string[]
+  return candidateTitles.some((t) => isSameRole(t, job.title))
+}
+
+/**
  * Eixo 1 — quem a pessoa é.
  *
  * Não olha a vaga. É o mesmo resultado para todas as vagas do mesmo cargo, e é
@@ -123,7 +136,7 @@ export function professionalAxis(profile: ProfessionalProfile, job: NormalizedJo
 
   // Cargo equivalente entre mercados — é aqui que a taxonomia paga.
   const candidateTitles = [profile.currentTitle, ...profile.targetRoles].filter(Boolean) as string[]
-  const sameRole = candidateTitles.some((t) => isSameRole(t, job.title))
+  const sameRole = confirmedSameRole(profile, job)
   if (sameRole) {
     score += 25
     evidence.push(`Sua trajetória é do mesmo cargo que a vaga (${job.title}).`)
@@ -332,6 +345,17 @@ export function matchJob(profile: ProfessionalProfile, job: NormalizedJob): Matc
    */
   else if (jobFit.score === 0) overall = 'weak'
   else if (contextual.level === 'low') overall = 'weak'
+  /**
+   * Sem cargo reconhecido como o mesmo E sem requisito da vaga batendo com
+   * competência declarada, não há identidade real confirmada — só ausência de
+   * sinal negativo. Senioridade batendo e anos de experiência não contam aqui:
+   * dizem algo sobre a pessoa, nada sobre ESTA vaga. Foi assim que um perfil
+   * de gestão hospitalar recebeu "Analista de Dados" e "Coordenador de
+   * Desenvolvimento de Software" como boa compatibilidade — nenhuma vaga
+   * listava requisito (jobFit neutro em 50) e o cargo nunca foi confirmado
+   * como o mesmo, só faltou o que descontar, não sobrou o que recomendar.
+   */
+  else if (!confirmedSameRole(profile, job) && jobFit.evidence.length === 0) overall = 'partial'
   else if (signal >= 75 && jobFit.level === 'high') overall = 'strong'
   else if (signal >= 60) overall = 'good'
   else if (signal >= 40) overall = 'partial'
