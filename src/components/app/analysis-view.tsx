@@ -762,7 +762,7 @@ export function AnalysisView() {
       {(activeTab === 'all' || activeTab === 'overview') && (
         <>
           <div className="grid lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-1 border-0 shadow-2xl relative overflow-hidden bg-gradient-to-br from-[#0B192E] via-[#10233D] to-[#0B192E]">
+        <Card className="lg:col-span-1 border-0 shadow-2xl relative overflow-hidden bg-gradient-to-br from-brand-navy via-[#10233D] to-brand-navy">
           <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay"></div>
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/20 blur-3xl rounded-full pointer-events-none"></div>
           <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full relative z-10">
@@ -858,11 +858,11 @@ export function AnalysisView() {
       <Card className="border-blue-200 bg-gradient-to-br from-white via-blue-50/20 to-slate-50 shadow-sm">
         <CardHeader className="pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#0B63E5] text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
               <Sparkles className="w-5 h-5 text-amber-300" />
             </div>
             <div>
-              <CardTitle className="text-base text-[#0B192E] font-bold">
+              <CardTitle className="text-base text-brand-navy font-bold">
                 📋 Análise do Perfil Profissional & Veredito Executivo
               </CardTitle>
               <CardDescription className="text-xs text-slate-500">

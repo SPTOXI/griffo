@@ -67,14 +67,14 @@ export function UploadProgressModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
       <Card className="w-full max-w-xl bg-[#090E17] border-slate-800 shadow-2xl overflow-hidden relative ring-1 ring-white/10">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#0B63E5]/20 rounded-full blur-[100px] mix-blend-screen animate-pulse" />
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[100px] mix-blend-screen animate-pulse" />
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] mix-blend-screen" />
         </div>
 
         <div className="p-6 text-center relative z-10 border-b border-white/10">
           <div className="flex justify-center mb-4">
             <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex items-center justify-center shadow-inner relative">
-              <div className="absolute inset-0 rounded-2xl border border-[#0B63E5]/50 animate-ping opacity-20" />
+              <div className="absolute inset-0 rounded-2xl border border-primary/50 animate-ping opacity-20" />
               <Cpu className="w-6 h-6 text-blue-400 animate-pulse" />
             </div>
           </div>
