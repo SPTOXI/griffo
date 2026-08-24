@@ -1181,3 +1181,108 @@ da coleta). Confundir os dois faria a Gupy virar barra livre.
 `GET /api/admin/quotas` devolve as cotas **e** o estado de cada fonte: cota é só
 uma das formas de uma fonte parar, e uma que responde 500 há três dias precisa
 aparecer no mesmo lugar.
+
+---
+
+## 2.25 A coluna que faltava, e o defeito de matching que ela escondia
+
+Usuário real testou o Radar em produção e recebeu, ao mesmo tempo, "Não foi
+possível carregar o Radar" e "Nada digno de nota no momento" — as duas
+mensagens juntas, uma dizendo que falhou e a outra dizendo que está tudo bem.
+
+### O erro estava nos dois lugares onde apareceu
+
+Os logs da Vercel mostraram a causa em produção: `P2022`, `RadarAlert.notifiedAt`
+does not exist in the current database. A coluna do PR #61 — nulável, aditiva,
+o mesmo padrão seguro já usado antes — nunca teve seu `prisma db push` aplicado
+ao banco de produção. Sem migração versionada, essa aplicação é manual, e
+ninguém a fez depois do deploy. `GET /api/radar` e `POST /api/radar/run`
+quebravam a cada chamada.
+
+O segundo defeito estava em `radar-view.tsx`: quando `/api/radar` falha, os
+estados `hasProfile`/`profileMatchable` não eram resetados e ficavam no padrão
+`true`, então o card de "silêncio correto" do §15 renderizava por baixo do
+banner de erro — uma tela que nunca deveria dizer duas coisas contraditórias ao
+mesmo tempo passou a dizer. Corrigido: os blocos de resultado (vazio, digest,
+lista de oportunidades) agora são condicionados a `!error`.
+
+`db push` resolveu a coluna. A tela deixou de esconder erro atrás de silêncio.
+
+### O silêncio anterior não era o comportamento correto — era o mesmo defeito, calado
+
+Assim que os alertas voltaram a ser gravados, veio o caso concreto que a seção
+7.5 do `HANDOFF-CONTINUIDADE.md` esperava havia tempo: um perfil de gestão
+hospitalar (`coordenação`, `saúde`, `gestão de unidades de saúde`, 25 anos de
+experiência) recebeu como **boa compatibilidade** vagas de "Analista de Dados"
+(quatro delas, de empresas diferentes) e "Coordenador de Desenvolvimento de
+Software". Nada ali tinha relação com a área da pessoa.
+
+A tentação foi reverter o `db push` — "a versão anterior estava certa". Não
+estava: a versão anterior não filtrava nada, só quebrava antes de chegar a
+filtrar. Reverter teria escondido de novo o defeito, não corrigido.
+
+### A causa: dois sinais neutros que nunca deveriam se somar em positivo
+
+Nenhuma das vagas ruins tinha `requirements`/`skills` cadastrados. Vaga sem
+requisito listado recebe nota neutra (50) no eixo Vaga — decisão de design
+certa, e testada desde a Etapa 6: "vaga sem requisitos publicados não vira
+aderência alta" (`matching.test.ts`). O problema não era essa neutralidade
+sozinha.
+
+O que faltava enxergar: `SENIORITY_TERMS` (em `lib/market/taxonomy.ts`) mapeia
+"coordenador"/"supervisor"/"tech lead" para o nível `lead` — é assim que o
+normalizador infere hierarquia a partir do texto do título, sem saber a área.
+Uma pessoa cuja própria senioridade também resolve para `lead` (qualquer
+gerente ou coordenadora sênior, de qualquer setor) bate com **qualquer** vaga
+cujo título contenha essas palavras, em qualquer área. Somado à nota neutra do
+eixo Vaga e a um eixo Contextual que parte de 100 e só desconta o que sabe que
+está errado — e não sabia nada sobre essas vagas —, o sinal combinado bastava
+para cruzar o limiar de "boa compatibilidade" sem nenhuma evidência de que o
+cargo tinha relação com o perfil.
+
+É a mesma classe de defeito da regra do §9 registrada na Etapa 6 ("aderência
+zero nunca vira parcial por falta do que descontar"), só que do lado oposto:
+lá, ausência de informação vestia nota cheia por não haver o que descontar;
+aqui, ausência de requisito e uma coincidência de nível hierárquico vestiam
+evidência positiva por não haver voto contrário.
+
+### A correção
+
+`src/lib/matching/compatibility.ts` ganhou `confirmedSameRole` — única função
+que responde "o cargo declarado é reconhecido como o mesmo da vaga", usada pelo
+eixo profissional e pelo veredito, para que a pergunta não exista em dois
+lugares com o risco de divergir.
+
+O veredito deixa de poder passar de `partial` quando **nem** o cargo é
+confirmado como o mesmo **nem** a vaga tem requisito batendo com competência
+declarada. Senioridade batendo e anos de experiência continuam pontuando o
+eixo profissional — são sinal real sobre a pessoa —, mas sozinhos, sem cargo
+confirmado nem competência evidenciada, não bastam para uma recomendação
+positiva. Os 43 testes de `matching.test.ts` continuam passando sem alteração,
+incluindo o caso que garante que vaga sem requisito não seja punida — o teto
+mudou, a proteção contra punir ausência não.
+
+Com a preferência padrão do usuário (avisar só de "boa compatibilidade" para
+cima), esse tipo de vaga volta a produzir silêncio — silêncio de verdade desta
+vez, por falta de evidência, não por erro de banco.
+
+### O que isso não resolve
+
+Não existe, em lugar nenhum do matching, comparação por área ou indústria:
+`ProfessionalProfile.targetFields`/`targetIndustries` nunca são lidos por
+`compatibility.ts`, e `NormalizedJob` não tem campo de indústria — nenhuma fonte
+o declara. `confirmedSameRole` reduz o falso positivo a casos onde nem o cargo
+nem a competência dão qualquer base, mas um "Coordenador de Operações" de TI
+ainda pode confirmar o mesmo conceito de cargo que um "Coordenador de
+Operações" da saúde, se a taxonomia tratar os dois como o mesmo `RoleConcept`.
+Resolver isso de verdade pede um eixo de área/indústria que hoje não existe —
+registrado aqui, não implementado.
+
+### Efeito colateral aceito, e por quê
+
+Os 31 `RadarAlert` gravados até então (2 usuários) foram apagados em produção.
+A leitura de `GET /api/radar` nunca recalcula o veredito — é gravado no alerta
+para poder ser auditado depois, por desenho (seção 2.11) —, então mantê-los
+teria deixado o veredito antigo (calculado pela regra velha) na tela até a
+próxima rodada de qualquer jeito. Apagar o alerta não apaga a vaga: ela volta a
+ser avaliada, com a regra nova, na próxima varredura ou em "Procurar agora".

@@ -20,24 +20,26 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 24/08/2026, telemetria de funil, upsell e unit economics |
-| Suíte | 499 testes, `fail 0` — a regra da contagem está na seção 8 |
+| Última revisão | 24/08/2026, correção do incidente de produção do Radar (ver 7.6) |
+| Suíte | 510 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão |
-| Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent`) |
+| Banco | Sincronizado via `prisma db push`, incluindo `RadarAlert.notifiedAt` (ver 7.6) |
 
 **Pendências que estão esperando alguém, não código:**
 
-1. **`npx prisma db push`** — o PR #61 acrescentou `RadarAlert.notifiedAt` e o
-   índice `[notifiedAt, userId]`. Enquanto a coluna não existir no banco, o
-   passo do digest no cron diário levanta erro do Prisma. O `catch` do cron
-   contém isso — a coleta do Radar termina normal e a resposta traz
-   `digest: { ok: false, ... }` —, mas fica um erro por dia no log até rodar.
+1. ~~`npx prisma db push`~~ — ✅ **resolvido em 24/08/2026.** A coluna
+   `RadarAlert.notifiedAt` (do PR #61) nunca chegou a ser aplicada no banco de
+   produção, e isso não ficou só esperando em silêncio: quebrou `GET /api/radar`
+   e `POST /api/radar/run` de verdade, em produção, para usuário real. Detalhe
+   em 7.6.
 2. **Conferir o digest com o envio desligado.** Depois da migração, o cron passa
    a registrar no log quem receberia o quê, com o assunto montado. É o material
    para decidir se o conteúdo presta antes de ligar `RADAR_DIGEST_ENABLED`.
 3. **Os três testes de produto** que só quem tem conta faz: importar currículo no
    Perfil Profissional, conferir se o preço aparece em real, e abrir o Radar com
-   o perfil preenchido para ver se entra vaga de outra área.
+   o perfil preenchido para ver se entra vaga de outra área. O terceiro já
+   aconteceu de verdade em 24/08/2026 — ver 7.6 — e é a razão de a seção 7.5 ter
+   deixado de ser hipotética.
 
 **O que NÃO está pendente e parece que está:** o e-mail do digest está
 implementado e desligado de propósito (§7.3). Não é trabalho pela metade.
@@ -393,7 +395,53 @@ webhook, e a rota que coleta sob demanda com os termos daquele usuário.
 
 Só faz sentido com retorno de usuário real. O que serve é um caso concreto:
 *qual vaga não deveria ter aparecido, e por quê*. No abstrato, mexer nos pesos é
-chute.
+chute. O primeiro caso concreto chegou — ver 7.6.
+
+### 7.6 ✅ RESOLVIDO — coluna ausente em produção, e o defeito de matching que ela escondia
+
+Registrado em detalhe em `docs/AUDITORIA-EVOLUCAO-GLOBAL.md`, seção 2.25. Resumo
+operacional aqui.
+
+**O incidente.** `RadarAlert.notifiedAt` (schema do PR #61) nunca foi aplicada
+ao banco de produção — o item 1 da seção 0 ficou pendente por dias sem que
+nada avisasse. Não era um risco teórico: quebrava `GET /api/radar` e
+`POST /api/radar/run` com `P2022` a cada chamada, e a tela escondia isso atrás
+do estado "nada digno de nota", mostrando as duas mensagens juntas — o próprio
+banner de erro dizia "não foi possível carregar" e o card abaixo dizia
+"o Radar está monitorando e não encontrou nada", ao mesmo tempo. `db push`
+resolve; a tela também foi corrigida para nunca mais mostrar as duas coisas
+juntas (`radar-view.tsx`).
+
+**O que a correção revelou.** Assim que os alertas voltaram a ser gravados,
+apareceu o caso concreto que a seção 7.5 esperava: um perfil de gestão
+hospitalar (`coordenação`, `saúde`) recebendo "Analista de Dados" e
+"Coordenador de Desenvolvimento de Software" como **boa compatibilidade**.
+
+Causa: vaga sem `requirements`/`skills` cadastrados recebe nota neutra (50) no
+eixo Vaga — decisão de design correta, documentada em `compatibility.ts`. O que
+não estava correto era essa neutralidade se combinar com senioridade batendo
+**por coincidência de nível hierárquico, não de cargo** (o normalizador lê
+"Coordenador" no título e classifica como senioridade `lead` — o mesmo nível
+que o perfil da pessoa, para qualquer área) e produzir sinal suficiente para
+"boa compatibilidade" sem nenhuma evidência real de que o cargo tem relação
+com o perfil.
+
+**A correção**, em `src/lib/matching/compatibility.ts`: o veredito só passa de
+`partial` quando o cargo é reconhecido como o mesmo (`confirmedSameRole`,
+função nova, única fonte dessa pergunta) **ou** a vaga lista requisito que bate
+com competência declarada. Sem isso, senioridade e anos de experiência sozinhos
+não bastam — eles dizem algo sobre a pessoa, nada sobre a vaga específica.
+
+Os 43 testes de `matching.test.ts` continuam passando sem alteração, incluindo
+o que documenta "vaga sem requisito não pode ser punida" (linha ~447) — o que
+mudou é só o teto do veredito quando não há evidência a favor, não a regra que
+protege contra penalizar ausência de dado.
+
+**Efeito colateral aceito.** Os 31 `RadarAlert` já gravados (2 usuários) foram
+apagados em produção para que a próxima varredura regrave com a regra nova — a
+leitura não recalcula por desenho (§ do prompt mestre), então mantê-los teria
+deixado o veredito antigo na tela até a próxima rodada de qualquer forma.
+Nenhuma vaga foi apagada, só o registro do alerta.
 
 ---
 
