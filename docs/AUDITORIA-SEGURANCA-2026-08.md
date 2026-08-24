@@ -282,3 +282,77 @@ Continua aberto em `PLANO-MELHORIAS` (E7).
 
 **Ação manual necessária após o deploy:** `npm run db:rls`.
 Nada mais no conjunto exige intervenção.
+
+---
+
+## Adendo — o comando `db:rls` não rodava no Windows
+
+A primeira versão do comando era:
+
+```
+psql "$POSTGRES_URL_NON_POOLING" -v ON_ERROR_STOP=1 -f prisma/rls.sql
+```
+
+Ela falhava por dois motivos independentes, e o segundo só apareceria depois de
+resolvido o primeiro:
+
+1. **`psql` não está instalado.** É parte do pacote cliente do PostgreSQL, que
+   ninguém precisa ter para desenvolver este projeto — o Prisma fala com o banco
+   pelo próprio driver.
+2. **`"$POSTGRES_URL_NON_POOLING"` é expansão de shell Unix.** Os scripts do npm
+   rodam pelo `cmd.exe` no Windows, que não expande essa forma. O psql receberia
+   a string literal `$POSTGRES_URL_NON_POOLING` como connection string, e o erro
+   resultante não teria relação visível com a causa.
+
+O comando agora roda `src/scripts/apply-rls.ts`, sem binário externo e sem
+sintaxe de shell.
+
+### O divisor de SQL, e por que não é `split(';')`
+
+O driver do Postgres aceita uma instrução por chamada, então o arquivo precisa
+ser dividido. `prisma/rls.sql` quebra as três formas ingênuas de fazer isso:
+
+- os dois blocos `DO $$ ... $$` são uma instrução cada e têm `;` dentro;
+- há apóstrofos em número **ímpar** dentro de comentários `--` (linhas 54, 148
+  e 160 — `current_setting('app.user_id')`), então um divisor que rastreie aspas
+  sem entender comentários passa a se achar dentro de uma string e cola o resto
+  do arquivo numa instrução só;
+- o rodapé traz SQL de exemplo (`CREATE ROLE`, `FORCE ROW LEVEL SECURITY`,
+  `CREATE POLICY`) que está em comentário e **não pode** ser executado.
+
+`src/lib/sql-split.ts` trata os três, com 10 testes em `sql-split.test.ts` —
+inclusive um que trava o contrato com o arquivo real: três instruções, e nenhum
+dos exemplos do rodapé virando SQL executável.
+
+### Verificado contra um Postgres real
+
+Não só typecheck. Uma instância PostgreSQL 16 temporária, com o schema real
+aplicado via `prisma db push` (20 tabelas) e os papéis `anon` e `authenticated`
+do Supabase criados:
+
+| Cenário | Resultado |
+|---|---|
+| Base sem proteção → `npm run db:rls` | 20/20 tabelas com RLS; 0 privilégios para `anon`/`authenticated` |
+| `SET ROLE anon; SELECT FROM "User"` | `ERROR: permission denied for table User` |
+| `SET ROLE anon; INSERT INTO "User"` | `ERROR: permission denied for table User` |
+| Reaplicar numa base já protegida | Idempotente — reconhece e não altera nada |
+| Sabotagem (`GRANT SELECT ... TO anon` + `DISABLE ROW LEVEL SECURITY`) | Detecta, relata a tabela afetada e restaura |
+| `FORCE ROW LEVEL SECURITY` | 0 tabelas — a decisão deliberada foi respeitada |
+
+### Uma correção sobre o `USAGE` no schema
+
+O `REVOKE USAGE ON SCHEMA public` não remove o privilégio de `anon`, e isso é
+esperado: o Postgres concede `USAGE` ao pseudo-papel `PUBLIC` por padrão, e
+revogar de um papel específico não desfaz o que vem por herança.
+
+Não é exposição. `USAGE` no schema permite referenciar nomes; sem privilégio de
+tabela nenhuma linha sai — o que os testes com `SET ROLE anon` acima confirmam.
+Os 189 grants a `PUBLIC` que restam no banco estão todos em `pg_catalog` e
+`information_schema`; **zero** nas tabelas da aplicação.
+
+Revogar de `PUBLIC` atingiria todo papel do banco, extensões inclusive, e por
+isso fica de fora pelo mesmo critério do FORCE: não se aplica às cegas.
+
+A conferência do script foi trocada por `has_table_privilege`, que enxerga
+privilégio herdado — consultar apenas os grants diretos declararia sucesso com
+a porta aberta por herança.

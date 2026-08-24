@@ -3,7 +3,20 @@
 -- =============================================================================
 --
 -- Aplicar com:  npm run db:rls
--- É idempotente: rodar de novo não muda nada e não falha.
+--
+-- Esse comando roda `src/scripts/apply-rls.ts`, que executa este arquivo pelo
+-- driver do Prisma. NÃO precisa do `psql` instalado, e funciona igual no
+-- Windows, macOS e Linux — a primeira versão chamava o psql com expansão de
+-- shell Unix e falhava no `cmd.exe` por dois motivos de uma vez.
+--
+-- É idempotente e autocorretivo: rodar de novo numa base já protegida não muda
+-- nada, e numa base onde alguma proteção foi desfeita, restaura.
+--
+-- ATENÇÃO ao executar este arquivo por outro caminho que não o `npm run db:rls`:
+-- o driver do Postgres aceita uma instrução por vez, e o rodapé deste arquivo
+-- contém SQL de EXEMPLO dentro de comentários (`CREATE ROLE`,
+-- `FORCE ROW LEVEL SECURITY`, `CREATE POLICY`) que NÃO deve ser executado. O
+-- script trata as duas coisas; um copiar-e-colar apressado, não.
 --
 -- -----------------------------------------------------------------------------
 -- POR QUE ISTO EXISTE, se o aplicativo já filtra por usuário
@@ -126,6 +139,22 @@ $$;
 -- -----------------------------------------------------------------------------
 --
 -- Deve devolver zero linhas. Cada linha devolvida é uma tabela ainda aberta.
+--
+-- O script faz uma segunda conferência, mais forte, que não cabe aqui como uma
+-- consulta só: ele pergunta ao banco se `anon` e `authenticated` ainda
+-- ALCANÇAM cada tabela, via `has_table_privilege`. A diferença importa —
+-- `has_table_privilege` enxerga privilégio herdado de outro papel ou do
+-- pseudo-papel `PUBLIC`, e conferir apenas os grants diretos declararia
+-- sucesso com a porta aberta por herança.
+--
+-- Sobre o `USAGE` no schema `public`: ele CONTINUA valendo depois deste
+-- arquivo, e isso é esperado. O Postgres concede `USAGE` a `PUBLIC` por
+-- padrão, e revogar de `anon` não desfaz o que vem por herança. É inofensivo:
+-- `USAGE` no schema permite referenciar nomes, e sem privilégio de tabela
+-- nenhuma linha sai — verificado com `SET ROLE anon`, que recebe
+-- "permission denied for table". Revogar de `PUBLIC` atingiria todo papel do
+-- banco, extensões inclusive, e é da mesma categoria do FORCE descrito
+-- abaixo: não se aplica às cegas.
 SELECT c.relname AS tabela_sem_rls
 FROM pg_class c
 JOIN pg_namespace n ON n.oid = c.relnamespace
