@@ -59,10 +59,6 @@ na landing. O checkout monta o preço inline a partir do catálogo.
 | 3 — Média | **BR** MX CO AR TH RO BG | $5,90 | $22,90 |
 | 4 — Emergente | IN ID PH VN NG EG PK BD KE | $3,90 | $16,90 |
 
-País não mapeado cai na Faixa 1 — é o preço de tabela, e a Faixa 1 é a única
-que pode ser cobrada em dólar. Rebaixar o desconhecido para uma faixa barata
-faria de "país não mapeado" a forma mais fácil de pagar menos.
-
 ## Como a faixa é decidida
 
 `src/lib/pricing/resolve.ts`. Ordem: **país do meio de pagamento** >
@@ -71,6 +67,27 @@ faria de "país não mapeado" a forma mais fácil de pagar menos.
 O IP entra apenas enquanto ninguém pagou nada — serve para escolher a moeda de
 exibição, nunca para definir o preço. Assim que um pagamento confirma, o país do
 cartão é gravado em `User.paymentCountry` e passa a mandar nas compras
+seguintes; trocar de VPN deixa de mudar o preço.
+
+Na primeira compra o país do dinheiro ainda não existe quando o checkout é
+criado, então o preço sai da borda. `recordTierAudit` compara, depois do
+pagamento, a faixa cobrada com a faixa do país do cartão e grava
+`purchase_tier_mismatch` no `AuditLog` quando elas divergem. Não dá para
+recobrar retroativamente; dá para não repetir.
+
+## Teste de piso — a guarda contra regressão
+
+`src/lib/pricing/catalog.test.ts`. Roda em toda compilação e verifica duas
+coisas:
+
+1. Que todo preço declarado fica **estritamente acima de `ANALYSIS_FLOOR_USD`**
+   quando convertido de volta ao câmbio de referência.
+2. Que todo preço de tabela do pacote de 5 é mais barato **por análise** que a
+   compra avulsa, mas continua acima do piso.
+
+Se alguém editar o catálogo e colocar um preço abaixo do piso — por exemplo,
+esquecer de atualizar a cotação de referência —, o teste falha e a compilação
+não fecha.
 seguintes; trocar de VPN deixa de mudar o preço.
 
 Na primeira compra o país do dinheiro ainda não existe quando o checkout é
@@ -170,3 +187,27 @@ deve acontecer DEPOIS da conversão, para os e-mails que o script listar.
 | Prompt caching no prefixo estável | `cacheableContext` em `lib/analysis/job.ts` |
 | Saldos antigos convertidos a favor do usuário | `migrate-credits-to-analyses.ts` |
 | Webhook idempotente por `event.id`, HMAC verificado | `api/webhooks/stripe` |
+
+---
+
+## Telemetria de Funil, Upsell e Unit Economics no Painel Admin
+
+A inteligência de negócios da plataforma é monitorada na rota `/api/admin/dashboard` e exibida no painel administrativo mestre:
+
+### 1. Funil de Conversão
+- **Visitantes Únicos**: Rastreamento leve via `PageViewTracker` e modelo `AnalyticsEvent` (`event: 'page_view'`).
+- **Checkouts Iniciados**: Disparado em `/api/checkout` (`event: 'checkout_initiated'`) com SKU (`single` ou `pack5`).
+- **Compras Confirmadas**: Agregação de `AnalysisLedger` (`type: 'purchase'`).
+- **Taxas de Conversão**: `Visitante → Compra` e `Checkout → Compra`.
+
+### 2. Performance do Upsell (Pacote de 5 Análises)
+- **Upsell Apresentado**: Impressões do componente `RepurchaseUpsell` (`event: 'upsell_viewed'`) renderizado pós-compra no laudo.
+- **Upsell Aceito**: Vendas confirmadas de `AnalysisLedger` com `delta = 5` (SKU `pack5`).
+- **Taxa de Conversão de Upsell**: $\frac{\text{Compras de Pack 5}}{\text{Impressões do Upsell}} \times 100\%$.
+
+### 3. Unit Economics & Rentabilidade
+- **AOV (*Average Order Value*) 💎**: Ticket médio por pedido $\frac{\text{Receita Total}}{\text{Total de Pedidos}}$ em USD e BRL.
+- **ARPU (*Average Revenue Per User*)**: Receita média por comprador único $\frac{\text{Receita Total}}{\text{Compradores Únicos}}$ em USD e BRL.
+- **Custo Real de IA por Cliente**: Consumo real registrado em `AiLog` por cliente pagante.
+- **Margem Líquida Real**: Lucro líquido descontando o consumo medido de IA e taxas do gateway Stripe (~4%).
+

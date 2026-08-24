@@ -766,3 +766,18 @@ model ApiQuotaUsage {
   @@unique([provider, period])
   @@index([period])
 }
+
+/// Eventos de telemetria e funil de conversão (visitantes, checkouts e upsell).
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  event     String   // 'page_view' | 'checkout_initiated' | 'upsell_viewed'
+  userId    String?
+  visitorId String?  // Hash ou identificador anônimo de sessão
+  sku       String?  // 'single' | 'pack5'
+  meta      String?  // JSON string com metadados adicionais
+  createdAt DateTime @default(now())
+
+  @@index([event, createdAt])
+  @@index([visitorId, createdAt])
+  @@index([userId, createdAt])
+}

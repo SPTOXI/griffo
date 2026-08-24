@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Layers, Loader2, ShoppingBag } from 'lucide-react'
@@ -23,6 +23,22 @@ export function RepurchaseUpsell({ resumeId }: { resumeId: string }) {
   const { t } = useI18n()
   const { hasPurchased, pricing, refresh } = useAnalyses()
   const [buying, setBuying] = useState(false)
+  const trackedRef = useRef(false)
+
+  useEffect(() => {
+    if (hasPurchased && pricing && !trackedRef.current) {
+      trackedRef.current = true
+      fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'upsell_viewed',
+          sku: 'pack5',
+          meta: { resumeId },
+        }),
+      }).catch(() => {})
+    }
+  }, [hasPurchased, pricing, resumeId])
 
   if (!hasPurchased || !pricing) return null
 

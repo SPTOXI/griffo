@@ -122,11 +122,32 @@ interface Metrics {
     totalCostBrl: number
   }
   financial: {
-    /// Receita em dólar: é a moeda base do catálogo, e a única em que somar
-    /// vendas de países diferentes significa alguma coisa.
     totalRevenueUsd: number
+    totalRevenueBrl?: number
     purchaseCount: number
+    uniqueBuyersCount?: number
     estimatedProfitUsd: number
+    netProfitUsd?: number
+    netProfitBrl?: number
+    netMarginPercent?: number
+    aovUsd?: number
+    aovBrl?: number
+    arpuUsd?: number
+    arpuBrl?: number
+    avgAiCostPerBuyerUsd?: number
+    avgAiCostPerBuyerBrl?: number
+  }
+  funnel?: {
+    visitorsCount: number
+    checkoutsCount: number
+    purchasesCount: number
+    visitorConversionRate: number
+    checkoutConversionRate: number
+  }
+  upsell?: {
+    upsellViewsCount: number
+    upsellPurchasesCount: number
+    upsellConversionRate: number
   }
 }
 
@@ -701,21 +722,49 @@ function AdminViewContent() {
     }
   }
 
-  // Monetização — tudo em dólar, a moeda base do catálogo.
+  // Monetização e Unit Economics
   const totalRevenueUsd = metrics?.financial?.totalRevenueUsd || 0
+  const totalRevenueBrl = metrics?.financial?.totalRevenueBrl || totalRevenueUsd * 5.4
   const purchaseCount = metrics?.financial?.purchaseCount || 0
-  const purchasingUsersCount = safeUsers.filter((u) => u && (u.analysisBalance ?? 0) > 0).length
-  const freeUsersCount = Math.max(0, safeUsers.length - purchasingUsersCount)
-  const conversionRate = safeUsers.length > 0 ? (purchasingUsersCount / safeUsers.length) * 100 : 0
-  const avgOrderUsd = purchaseCount > 0 ? totalRevenueUsd / purchaseCount : 0
+  const uniqueBuyersCount = metrics?.financial?.uniqueBuyersCount || safeUsers.filter((u) => u && (u.analysisBalance ?? 0) > 0).length
+  const freeUsersCount = Math.max(0, safeUsers.length - uniqueBuyersCount)
+
+  // Funil
+  const visitorsCount = metrics?.funnel?.visitorsCount || Math.max(safeUsers.length, metrics?.totalUsers || 0)
+  const checkoutsCount = metrics?.funnel?.checkoutsCount || 0
+  const visitorConversionRate = metrics?.funnel?.visitorConversionRate ?? (visitorsCount > 0 ? (purchaseCount / visitorsCount) * 100 : 0)
+  const checkoutConversionRate = metrics?.funnel?.checkoutConversionRate ?? (checkoutsCount > 0 ? (purchaseCount / checkoutsCount) * 100 : 0)
+
+  // Upsell
+  const upsellViewsCount = metrics?.upsell?.upsellViewsCount || 0
+  const upsellPurchasesCount = metrics?.upsell?.upsellPurchasesCount || 0
+  const upsellConversionRate =
+    metrics?.upsell?.upsellConversionRate ??
+    (upsellViewsCount > 0
+      ? (upsellPurchasesCount / upsellViewsCount) * 100
+      : uniqueBuyersCount > 0
+        ? (upsellPurchasesCount / uniqueBuyersCount) * 100
+        : 0)
+
+  // Unit Economics
+  const aovUsd = metrics?.financial?.aovUsd ?? (purchaseCount > 0 ? totalRevenueUsd / purchaseCount : 0)
+  const aovBrl = metrics?.financial?.aovBrl ?? aovUsd * 5.4
+  const arpuUsd = metrics?.financial?.arpuUsd ?? (uniqueBuyersCount > 0 ? totalRevenueUsd / uniqueBuyersCount : aovUsd)
+  const arpuBrl = metrics?.financial?.arpuBrl ?? arpuUsd * 5.4
+  const avgAiCostPerBuyerUsd =
+    metrics?.financial?.avgAiCostPerBuyerUsd ??
+    (uniqueBuyersCount > 0 ? (aiMetrics?.costs?.totalAiCostUsd || 0) / uniqueBuyersCount : 0)
+  const avgAiCostPerBuyerBrl = metrics?.financial?.avgAiCostPerBuyerBrl ?? avgAiCostPerBuyerUsd * 5.4
+  const netMarginPercent =
+    metrics?.financial?.netMarginPercent ??
+    (totalRevenueUsd > 0
+      ? Math.round(((totalRevenueUsd - (aiMetrics?.costs?.totalAiCostUsd || 0) - totalRevenueUsd * 0.04) / totalRevenueUsd) * 100)
+      : 0)
 
   const aiAvgCostBrl = parseFloat(configs?.AI_AVG_COST_BRL || '0.05') || 0.05
-  // Margem sobre o preço, não sobre o custo: é assim que a planilha do modelo
-  // calcula, e comparar as duas contas como se fossem a mesma inflaria o
-  // número por um fator de dez.
   const marginPercent =
-    avgOrderUsd > 0
-      ? Math.round(((avgOrderUsd - ANALYSIS_DIRECT_COST_USD) / avgOrderUsd) * 100)
+    aovUsd > 0
+      ? Math.round(((aovUsd - ANALYSIS_DIRECT_COST_USD) / aovUsd) * 100)
       : 0
 
   if (loading) {
@@ -737,7 +786,7 @@ function AdminViewContent() {
             <Shield className="w-6 h-6 text-violet-600" /> Painel Administrativo Mestre
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Gerenciador completo de usuários, cadastro de APIs de IA, roteamento e métricas financeiras.
+            Métricas de funil de conversão, performance de upsell, unit economics e telemetria de IA.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => loadData()}>
@@ -747,43 +796,49 @@ function AdminViewContent() {
 
       {metrics && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
+          <Card className="border-slate-200">
             <CardContent className="pt-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-500">Usuários Registrados</p>
-                <p className="text-2xl font-bold text-slate-900">{metrics.totalUsers}</p>
-                <p className="text-[10px] text-emerald-600 font-medium">{freeUsersCount} Free / {purchasingUsersCount} Compradores</p>
+                <p className="text-xs font-medium text-slate-500">Visitantes & Usuários</p>
+                <p className="text-2xl font-bold text-slate-900">{visitorsCount}</p>
+                <p className="text-[10px] text-slate-500 font-medium">
+                  {metrics.totalUsers} cadastrados ({uniqueBuyersCount} compradores)
+                </p>
               </div>
               <Users className="w-8 h-8 text-blue-500 opacity-80" />
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-slate-200">
             <CardContent className="pt-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-500">Receita Gerada</p>
+                <p className="text-xs font-medium text-slate-500">Receita & AOV</p>
                 <p className="text-2xl font-bold text-slate-900">US$ {totalRevenueUsd.toFixed(2)}</p>
-                <p className="text-[10px] text-slate-400">Ticket Médio: US$ {avgOrderUsd.toFixed(2)}</p>
+                <p className="text-[10px] text-emerald-700 font-semibold">
+                  AOV (Ticket Médio): US$ {aovUsd.toFixed(2)} (R$ {aovBrl.toFixed(2)})
+                </p>
               </div>
               <DollarSign className="w-8 h-8 text-emerald-500 opacity-80" />
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-slate-200">
             <CardContent className="pt-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-500">Taxa de Conversão</p>
-                <p className="text-2xl font-bold text-slate-900">{conversionRate.toFixed(1)}%</p>
-                <p className="text-[10px] text-slate-400">Free ➔ Comprador</p>
+                <p className="text-xs font-medium text-slate-500">Funil de Conversão</p>
+                <p className="text-2xl font-bold text-slate-900">{visitorConversionRate.toFixed(1)}%</p>
+                <p className="text-[10px] text-slate-500">
+                  {checkoutsCount} checkouts ➔ {purchaseCount} compras
+                </p>
               </div>
               <TrendingUp className="w-8 h-8 text-amber-500 opacity-80" />
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-slate-200">
             <CardContent className="pt-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-500">Margem por Análise</p>
-                <p className="text-2xl font-bold text-slate-900">{marginPercent}%</p>
-                <p className="text-[10px] text-slate-400">
-                  Custo direto US$ {ANALYSIS_DIRECT_COST_USD.toFixed(2)} / Piso US$ {ANALYSIS_FLOOR_USD.toFixed(2)}
+                <p className="text-xs font-medium text-slate-500">Upsell & Margem Líquida</p>
+                <p className="text-2xl font-bold text-slate-900">{netMarginPercent.toFixed(1)}%</p>
+                <p className="text-[10px] text-violet-700 font-medium">
+                  Taxa de Upsell: {upsellConversionRate.toFixed(1)}% ({upsellPurchasesCount} pacotes)
                 </p>
               </div>
               <Percent className="w-8 h-8 text-violet-500 opacity-80" />
@@ -1625,71 +1680,211 @@ function AdminViewContent() {
           </Card>
         </TabsContent>
 
-        {/* CREDITS FINANCE TAB */}
+        {/* CREDITS FINANCE & UNIT ECONOMICS TAB */}
         <TabsContent value="pricing" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-emerald-600" /> Dashboard Financeiro
-                </CardTitle>
-                <CardDescription>Vendas, custo de IA e margem por análise completa.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 text-xs">
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Receita Bruta Gerada</span>
-                  <span className="font-bold text-slate-900 text-sm font-mono">US$ {totalRevenueUsd.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Compras Confirmadas</span>
-                  <span className="font-mono text-slate-900 font-semibold">{purchaseCount}</span>
-                </div>
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Custo Real de IA (medido)</span>
-                  <span className="font-mono text-slate-700 font-semibold">
-                    US$ {(aiMetrics?.costs?.totalAiCostUsd || 0).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Margem sobre o Preço</span>
-                  <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold">
-                    {marginPercent}%
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Custo Direto por Análise (modelo)</span>
-                  <span className="font-mono text-slate-900 font-semibold">US$ {ANALYSIS_DIRECT_COST_USD.toFixed(2)}</span>
-                </div>
+          {/* CARDS DE UNIT ECONOMICS & AOV */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50/50 via-white to-white">
+              <CardContent className="pt-4 space-y-1">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-600">Piso Absoluto por Análise</span>
-                  <span className="font-mono text-rose-700 font-bold">US$ {ANALYSIS_FLOOR_USD.toFixed(2)}</span>
+                  <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wide">AOV (Ticket Médio) 💎</span>
+                  <DollarSign className="w-4 h-4 text-emerald-600" />
+                </div>
+                <p className="text-2xl font-extrabold text-slate-900 font-mono">
+                  US$ {aovUsd.toFixed(2)}
+                </p>
+                <p className="text-xs text-emerald-700 font-medium font-mono">
+                  ≈ R$ {aovBrl.toFixed(2)} / pedido
+                </p>
+                <p className="text-[10px] text-slate-400 pt-1 border-t border-emerald-100">
+                  Receita total ÷ {purchaseCount} pedidos
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-blue-200 bg-gradient-to-br from-blue-50/50 via-white to-white">
+              <CardContent className="pt-4 space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-semibold text-blue-800 uppercase tracking-wide">Receita / Comprador (ARPU)</span>
+                  <Users className="w-4 h-4 text-blue-600" />
+                </div>
+                <p className="text-2xl font-extrabold text-slate-900 font-mono">
+                  US$ {arpuUsd.toFixed(2)}
+                </p>
+                <p className="text-xs text-blue-700 font-medium font-mono">
+                  ≈ R$ {arpuBrl.toFixed(2)} / comprador
+                </p>
+                <p className="text-[10px] text-slate-400 pt-1 border-t border-blue-100">
+                  {uniqueBuyersCount} clientes pagantes únicos
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-amber-200 bg-gradient-to-br from-amber-50/50 via-white to-white">
+              <CardContent className="pt-4 space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-semibold text-amber-800 uppercase tracking-wide">Custo IA / Cliente</span>
+                  <Cpu className="w-4 h-4 text-amber-600" />
+                </div>
+                <p className="text-2xl font-extrabold text-slate-900 font-mono">
+                  US$ {avgAiCostPerBuyerUsd.toFixed(2)}
+                </p>
+                <p className="text-xs text-amber-700 font-medium font-mono">
+                  ≈ R$ {avgAiCostPerBuyerBrl.toFixed(2)} / cliente
+                </p>
+                <p className="text-[10px] text-slate-400 pt-1 border-t border-amber-100">
+                  Custo real de IA consumido ÷ compradores
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-violet-200 bg-gradient-to-br from-violet-50/50 via-white to-white">
+              <CardContent className="pt-4 space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-semibold text-violet-800 uppercase tracking-wide">Margem Líquida Real</span>
+                  <Percent className="w-4 h-4 text-violet-600" />
+                </div>
+                <p className="text-2xl font-extrabold text-slate-900 font-mono">
+                  {netMarginPercent.toFixed(1)}%
+                </p>
+                <p className="text-xs text-violet-700 font-medium font-mono">
+                  Lucro Líq: US$ {((metrics?.financial?.netProfitUsd) ?? (totalRevenueUsd - (aiMetrics?.costs?.totalAiCostUsd || 0) - totalRevenueUsd * 0.04)).toFixed(2)}
+                </p>
+                <p className="text-[10px] text-slate-400 pt-1 border-t border-violet-100">
+                  Descontando IA + Gateway Stripe (~4%)
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* GRID DE FUNIL E UPSELL */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* FUNIL DE CONVERSÃO */}
+            <Card className="border-slate-200">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-base flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-blue-600" /> Funil de Conversão
+                  </span>
+                  <Badge variant="outline" className="text-xs font-bold text-blue-700 bg-blue-50 border-blue-200">
+                    {visitorConversionRate.toFixed(1)}% Global
+                  </Badge>
+                </CardTitle>
+                <CardDescription>Jornada do topo de funil à confirmação de pagamento.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-4 text-xs">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 font-medium">1. Visitantes Únicos</span>
+                    <span className="font-bold text-slate-900 font-mono text-sm">{visitorsCount}</span>
+                  </div>
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div className="bg-blue-500 h-full rounded-full w-full" />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 font-medium">2. Checkouts Iniciados</span>
+                    <div className="text-right">
+                      <span className="font-bold text-slate-900 font-mono text-sm">{checkoutsCount}</span>
+                      <span className="text-[10px] text-slate-400 ml-1">
+                        ({visitorsCount > 0 ? ((checkoutsCount / visitorsCount) * 100).toFixed(1) : '0.0'}% dos visitantes)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-amber-500 h-full rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(100, visitorsCount > 0 ? (checkoutsCount / visitorsCount) * 100 : 0)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 font-medium">3. Compras Confirmadas</span>
+                    <div className="text-right">
+                      <span className="font-bold text-emerald-700 font-mono text-sm">{purchaseCount}</span>
+                      <span className="text-[10px] text-emerald-600 font-semibold ml-1">
+                        ({visitorConversionRate.toFixed(1)}% conv. final)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-emerald-500 h-full rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(100, visitorsCount > 0 ? (purchaseCount / visitorsCount) * 100 : 0)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-500">
+                  <span>Conversão Checkout ➔ Compra:</span>
+                  <span className="font-bold font-mono text-slate-800">{checkoutConversionRate.toFixed(1)}%</span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="w-5 h-5 text-blue-600" /> Métricas de Usuários & Conversão
+            {/* PERFORMANCE DO UPSELL */}
+            <Card className="border-slate-200">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-base flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <ShoppingBag className="w-5 h-5 text-amber-600" /> Performance do Upsell (Pack 5)
+                  </span>
+                  <Badge variant="outline" className="text-xs font-bold text-amber-700 bg-amber-50 border-amber-200">
+                    {upsellConversionRate.toFixed(1)}% Aceitação
+                  </Badge>
                 </CardTitle>
-                <CardDescription>Acompanhamento de usuários gratuitos versus compradores.</CardDescription>
+                <CardDescription>Conversão da oferta pós-compra do pacote de 5 análises.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3 text-xs">
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Usuários Gratuitos (Griffo Free)</span>
-                  <span className="font-bold text-slate-900 font-mono">{freeUsersCount}</span>
+              <CardContent className="space-y-4 pt-4 text-xs">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 font-medium">1. Upsell Apresentado (Impressões no Laudo)</span>
+                    <span className="font-bold text-slate-900 font-mono text-sm">{upsellViewsCount || uniqueBuyersCount}</span>
+                  </div>
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div className="bg-amber-400 h-full rounded-full w-full" />
+                  </div>
                 </div>
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Usuários com Análise Disponível</span>
-                  <span className="font-bold text-emerald-700 font-mono">{purchasingUsersCount}</span>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 font-medium">2. Pacotes de 5 Vendidos (Upsell Aceito)</span>
+                    <div className="text-right">
+                      <span className="font-bold text-amber-700 font-mono text-sm">{upsellPurchasesCount}</span>
+                      <span className="text-[10px] text-amber-600 font-semibold ml-1">
+                        ({upsellConversionRate.toFixed(1)}% aceito)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-amber-600 h-full rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(100, upsellConversionRate)}%`,
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Taxa de Conversão (Free ➔ Comprador)</span>
-                  <span className="font-mono font-bold text-slate-900">{conversionRate.toFixed(1)}%</span>
-                </div>
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-slate-600">Ticket Médio por Compra</span>
-                  <span className="font-mono text-emerald-700 font-semibold">US$ {avgOrderUsd.toFixed(2)}</span>
+
+                <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                  <div className="flex justify-between items-center text-[11px] text-slate-500">
+                    <span>Impacto do Upsell no Ticket Médio (AOV):</span>
+                    <span className="font-bold font-mono text-emerald-700">
+                      +US$ {(aovUsd - (totalRevenueUsd - upsellPurchasesCount * 22) / Math.max(1, purchaseCount - upsellPurchasesCount)).toFixed(2)} / pedido
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] text-slate-500">
+                    <span>SKU do Upsell:</span>
+                    <span className="font-mono text-slate-700 font-semibold">pack5 (5 análises completas)</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>

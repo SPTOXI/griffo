@@ -289,3 +289,33 @@ Como `router.ts:139-141` calcula `costUsd` a partir dessa tabela e grava em `AiL
 **Médio prazo — o custo não impede o Opus 5.** A R$ 0,83 por ciclo sobre venda de R$ 9,90, o Opus 5 é perfeitamente pagável. O que impede é a arquitetura. Com streaming ou fila, o teto de 60 s desaparece e o Opus 5 passa a ser escolha de qualidade legítima.
 
 **Antes de qualquer troca, meça.** Estes números são de custo, não de qualidade. Rode os mesmos 10 currículos reais em cada candidato e compare os laudos lado a lado — especialmente `targetedChanges` e as `rationale`. Rode o mesmo currículo 3× em cada um para medir a variância das notas. A tabela `AiLog` já registra `responseTimeMs`, `usedModel` e `tokensOut` para sustentar essa comparação.
+
+---
+
+## 10. Atualização de Arquitetura, Tokens por Função e Unit Economics
+
+Com a transição para o modelo de análise completa única (sem créditos fracionados) e paralelização de segmentos com Prompt Caching (`cacheableContext` com 90% de economia em leitura de contexto na Anthropic), os custos reais apurados são:
+
+### 10.1 Matriz de Consumo de Tokens e Custo Real por IA
+
+| Função / Entregável | Modelo IA | Tokens Input | Tokens Output | Custo Médio (USD) | Custo Médio (BRL) |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **Laudo 8 Dimensões + Vaga** (5 seg. paralelos) | `claude-sonnet-5` | 4.800–5.400 (cache 90%) | 3.200–4.500 | ~$0,085 | **~R$ 0,46** |
+| **Reescrita de Experiências** (STAR/XYZ) | `claude-sonnet-5` | 4.500–5.500 | 2.000–3.500 | ~$0,058 | **~R$ 0,31** |
+| **Presença Digital / LinkedIn** | `claude-sonnet-5` | 5.500–7.000 | 550–900 | ~$0,028 | **~R$ 0,15** |
+| **Carta de Apresentação** | `claude-sonnet-5` | 4.500–5.000 | 700–1.000 | ~$0,028 | **~R$ 0,15** |
+| **Resumo Profissional** | `deepseek-v4-flash` | 3.000–4.500 | 400–600 | ~$0,0015 | **~R$ 0,008** |
+| **Prévia Gratuita ATS** | `deepseek-v4-flash` | 3.000–3.500 | 80–150 | ~$0,0008 | **~R$ 0,004** |
+| **Extração de Perfil** | `deepseek-v4-flash` | 3.800–4.200 | 300–500 | ~$0,0015 | **~R$ 0,008** |
+| **Radar (Coleta, Match e Digest)** | *Sem LLM* (Determinístico) | 0 | 0 | **$0,00** | **R$ 0,00** |
+
+> [!NOTE]
+> O **Radar** é 100% determinístico (`runner.ts`, `curation.ts`, `compatibility.ts`). As rodadas automáticas de cron consom zero chamadas de IA. A IA é acionada apenas uma vez na extração inicial de perfil (`profile_extraction`).
+
+### 10.2 Unit Economics e Métricas no Painel Admin
+
+1. **AOV (*Average Order Value*) 💎**: Ticket médio por pedido $\frac{\text{Receita Total}}{\text{Total de Pedidos}}$. No Brasil, com o single a R$ 29,90 e o pacote a R$ 119,90, a cada 20% de upsell aceito o AOV salta para **~R$ 44,90**.
+2. **Receita Média por Comprador (ARPU)**: Mede o LTV imediato $\frac{\text{Receita Total}}{\text{Compradores Únicos}}$ (~R$ 53,88 com 20% de taxa de upsell).
+3. **Custo de IA por Cliente**: Soma total de `AiLog.costUsd` por cliente pagante (~R$ 1,15 por análise completa destravada com todos os entregáveis).
+4. **Margem Líquida Real**: $\frac{\text{Receita} - \text{Custo Real IA} - \text{Gateway Stripe (~4\%)}}{\text{Receita}} \times 100\%$ (Margem líquida média entre **88% e 94%** sobre a receita).
+

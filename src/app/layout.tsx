@@ -11,6 +11,7 @@ import "./globals.css";
 // aparecer. Para o usuário, clicar simplesmente não fazia nada.
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/context/i18n-context";
+import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -69,6 +70,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
         <I18nProvider>
+          <PageViewTracker />
           {children}
           <Toaster position="top-center" richColors closeButton />
         </I18nProvider>

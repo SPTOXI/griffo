@@ -155,6 +155,25 @@ export async function POST(req: Request) {
         session = await stripe.checkout.sessions.create(buildSession(['card']))
       }
 
+      // Registra evento de funil: checkout_initiated
+      try {
+        await db.analyticsEvent.create({
+          data: {
+            event: 'checkout_initiated',
+            userId: user.id,
+            sku,
+            meta: JSON.stringify({
+              country: context.country,
+              currency: price.currency,
+              amount: price.amount,
+              amountUsd: price.amountUsd,
+            }),
+          },
+        })
+      } catch (e) {
+        console.warn('[checkout] Falha ao registrar evento analytics:', e)
+      }
+
       return NextResponse.json({
         success: true,
         gateway: 'stripe',

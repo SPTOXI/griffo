@@ -23,10 +23,22 @@ export async function GET() {
     // Sem o e-mail: o log de produção é lido por qualquer pessoa com acesso ao
     // painel da Vercel, e este identificava a conta administrativa em texto puro.
     console.log('[API Admin Dashboard] Administrador autenticado. Executando consultas no banco de dados...')
-    const [users, totalUsers, totalResumes, activeSubscriptions, tokenStats, revenueStats, configsRaw, aiMetrics, rawKeys] = await Promise.all([
-      // Mesmo motivo da rota de usuários: sem `take`, o painel carregava a
-      // base inteira a cada abertura. Os totais vêm dos `count` abaixo, então
-      // a lista pode ser recortada sem falsear nenhuma métrica.
+    const [
+      users,
+      totalUsers,
+      totalResumes,
+      activeSubscriptions,
+      tokenStats,
+      revenueStats,
+      configsRaw,
+      aiMetrics,
+      rawKeys,
+      uniqueVisitorsRows,
+      checkoutsCount,
+      upsellViewsCount,
+      upsellPurchasesCount,
+      distinctBuyersRows,
+    ] = await Promise.all([
       db.user.findMany({
         orderBy: { createdAt: 'desc' },
         take: DASHBOARD_USER_LIMIT,
@@ -77,14 +89,62 @@ export async function GET() {
         orderBy: { createdAt: 'desc' },
         take: 50,
       }),
+      // Funil: Visitantes únicos
+      db.analyticsEvent.findMany({
+        where: { event: 'page_view', visitorId: { not: null } },
+        distinct: ['visitorId'],
+        select: { visitorId: true },
+      }).catch(() => []),
+      // Funil: Checkouts iniciados
+      db.analyticsEvent.count({ where: { event: 'checkout_initiated' } }).catch(() => 0),
+      // Upsell: Visualizações do banner de upsell
+      db.analyticsEvent.count({ where: { event: 'upsell_viewed' } }).catch(() => 0),
+      // Upsell: Compras do Pacote de 5 (delta = 5)
+      db.analysisLedger.count({ where: { type: 'purchase', delta: 5 } }).catch(() => 0),
+      // Compradores únicos
+      db.analysisLedger.findMany({
+        where: { type: 'purchase' },
+        distinct: ['userId'],
+        select: { userId: true },
+      }).catch(() => []),
     ])
 
     const totalTokensIn = tokenStats._sum.tokensIn || 0
     const totalTokensOut = tokenStats._sum.tokensOut || 0
     const totalCostUsd = tokenStats._sum.costUsd || 0
-    // Receita em dólar, a moeda base do catálogo — `priceUsd` já vem
-    // normalizada no ledger, então somar linhas de países diferentes é válido.
     const totalRevenueUsd = revenueStats._sum.priceUsd || 0
+    const purchasesCount = revenueStats._count || 0
+    const uniqueBuyersCount = distinctBuyersRows.length
+
+    // Se a telemetria acabou de ser instalada e ainda não acumulou histórico de pageviews,
+    // usamos o piso dos usuários cadastrados para não mostrar 0 visitantes quando já temos base.
+    const rawVisitors = uniqueVisitorsRows.length
+    const visitorsCount = Math.max(rawVisitors, totalUsers)
+
+    // Funil
+    const visitorConversionRate = visitorsCount > 0 ? (purchasesCount / visitorsCount) * 100 : 0
+    const checkoutConversionRate = checkoutsCount > 0 ? (purchasesCount / checkoutsCount) * 100 : 0
+
+    // Upsell
+    const upsellConversionRate =
+      upsellViewsCount > 0
+        ? (upsellPurchasesCount / upsellViewsCount) * 100
+        : uniqueBuyersCount > 0
+          ? (upsellPurchasesCount / uniqueBuyersCount) * 100
+          : 0
+
+    // Unit Economics
+    const aovUsd = purchasesCount > 0 ? totalRevenueUsd / purchasesCount : 0
+    const aovBrl = aovUsd * 5.4
+    const arpuUsd = uniqueBuyersCount > 0 ? totalRevenueUsd / uniqueBuyersCount : aovUsd
+    const arpuBrl = arpuUsd * 5.4
+    const avgAiCostPerBuyerUsd = uniqueBuyersCount > 0 ? totalCostUsd / uniqueBuyersCount : 0
+    const avgAiCostPerBuyerBrl = avgAiCostPerBuyerUsd * 5.4
+
+    // Margem Líquida estimada (Receita - IA - Taxas de Gateway ~4%)
+    const gatewayFeesUsd = totalRevenueUsd * 0.04
+    const netProfitUsd = totalRevenueUsd - totalCostUsd - gatewayFeesUsd
+    const netMarginPercent = totalRevenueUsd > 0 ? (netProfitUsd / totalRevenueUsd) * 100 : 0
 
     // Mesma regra de `GET /api/admin/settings`: segredos só saem mascarados.
     const configMap = configsRaw.reduce((acc, curr) => {
@@ -122,8 +182,31 @@ export async function GET() {
         },
         financial: {
           totalRevenueUsd,
-          purchaseCount: revenueStats._count || 0,
+          totalRevenueBrl: totalRevenueUsd * 5.4,
+          purchaseCount: purchasesCount,
+          uniqueBuyersCount,
           estimatedProfitUsd: totalRevenueUsd - totalCostUsd,
+          netProfitUsd,
+          netProfitBrl: netProfitUsd * 5.4,
+          netMarginPercent,
+          aovUsd,
+          aovBrl,
+          arpuUsd,
+          arpuBrl,
+          avgAiCostPerBuyerUsd,
+          avgAiCostPerBuyerBrl,
+        },
+        funnel: {
+          visitorsCount,
+          checkoutsCount,
+          purchasesCount,
+          visitorConversionRate,
+          checkoutConversionRate,
+        },
+        upsell: {
+          upsellViewsCount,
+          upsellPurchasesCount,
+          upsellConversionRate,
         },
       },
       config: configMap,

@@ -20,9 +20,10 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 20/08/2026, `main` em `1b546a7` (PR #61) |
-| Suíte | 495 testes, `fail 0` — a regra da contagem está na seção 8 |
+| Última revisão | 24/08/2026, telemetria de funil, upsell e unit economics |
+| Suíte | 499 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão |
+| Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent`) |
 
 **Pendências que estão esperando alguém, não código:**
 
@@ -596,3 +597,18 @@ não tomou.
 Toda rota nova sob `/api/admin/` precisa chamar `getAdminUser()` e tratar `null`
 como 403. A função **não lança exceção** — devolve `null`. Esquecer de checar
 deixa a rota aberta.
+
+### 10.12 Telemetria de Funil, Upsell e Unit Economics (AOV / ARPU)
+
+Implementado em 24/08/2026 para rastreamento ponta a ponta:
+- **`AnalyticsEvent`**: modelo no Prisma com `event` (`page_view`, `checkout_initiated`, `upsell_viewed`), `visitorId`, `userId`, `sku`, `meta`.
+- **`PageViewTracker`**: roda no cliente gravando `visitorId` em `localStorage` e disparando evento único de sessão via `/api/analytics/track`.
+- **Checkouts**: log de `checkout_initiated` em `/api/checkout` ao criar sessão Stripe.
+- **Upsell**: beacon `upsell_viewed` em `repurchase-upsell.tsx` ao exibir a oferta pós-compra.
+- **Métricas no Admin (`/api/admin/dashboard`)**:
+  - **AOV (Average Order Value)**: $\frac{\text{Receita}}{\text{Pedidos}}$ (em USD e BRL).
+  - **ARPU (Receita / Comprador)**: $\frac{\text{Receita}}{\text{Compradores Únicos}}$ (em USD e BRL).
+  - **Custo Real de IA / Cliente**: $\frac{\sum \text{AiLog.costUsd}}{\text{Compradores}}$.
+  - **Margem Líquida Real**: Lucro após descontar consumo real de IA e taxas do gateway (~4%).
+  - **Funil de Conversão e Taxa de Aceitação do Upsell**.
+
