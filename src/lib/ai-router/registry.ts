@@ -166,6 +166,10 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
  */
 export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
   claude: ['kimi', 'deepseek', 'gemini'],
+  // Kimi como primeiro suplente do DeepSeek é decisão deliberada, não só
+  // ordem alfabética: quando o DeepSeek estoura o orçamento de raciocínio
+  // (ver JSON_TASK_TOKEN_FLOOR em router.ts), o Kimi é quem tenta em
+  // seguida, antes do Claude — mais caro por chamada.
   deepseek: ['kimi', 'claude', 'gemini'],
   kimi: ['deepseek', 'gemini', 'claude'],
   gemini: ['kimi', 'deepseek', 'claude'],

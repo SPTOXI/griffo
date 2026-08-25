@@ -45,8 +45,19 @@ const ATTEMPT_OVERHEAD_RESERVE_MS = 3_000
  * Ver o comentário em `max_tokens`, no montador da requisição: nesses modelos o
  * teto cobre raciocínio E resposta, então um valor calibrado só para a resposta
  * termina o orçamento antes de ela existir.
+ *
+ * Subiu de 4.000 para 16.000 (4x) em 25/08/2026: a DeepSeek aposentou o modelo
+ * não-pensante (`registry.ts`, linha 34), e o que restou (`deepseek-v4-flash`)
+ * às vezes já gastava 3.400-3.500 tokens só de raciocínio antes de começar a
+ * responder — perto o bastante do piso antigo para cortar a resposta na
+ * extração de perfil (`profile_extraction`). O custo real não sobe junto: o
+ * provedor cobra pelos tokens GERADOS, não pelo teto, e o raciocínio observado
+ * não passou de ~3.500 tokens mesmo com 16.000 disponíveis — o piso novo é
+ * folga, não gasto. Vale para todas as tarefas deste branch (`profile_extraction`,
+ * `free_preview`, `support_chat`, `normalization`), que compartilham o mesmo
+ * problema estrutural.
  */
-const JSON_TASK_TOKEN_FLOOR = 4_000
+const JSON_TASK_TOKEN_FLOOR = 16_000
 
 // Multiplicadores do cache de prompt da Anthropic, relativos ao preço de
 // entrada: gravar custa 1,25x e ler custa 0,1x.
