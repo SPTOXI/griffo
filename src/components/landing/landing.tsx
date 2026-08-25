@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import {
   FileText, Sparkles, ShieldCheck, Download, TrendingUp, Target, CheckCircle2,
   ArrowRight, Brain, Search, Award, Lock, Users, BarChart3, Zap, Globe, Share2,
-  Check, HelpCircle, ChevronDown, Star, MessageSquare, Menu, X, FileSearch, Edit3
+  Check, HelpCircle, ChevronDown, Star, MessageSquare, Menu, X, FileSearch, Edit3,
+  Instagram
 } from 'lucide-react'
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
@@ -499,6 +500,14 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               <strong>https://griffo.work</strong><br/>
               São Paulo, SP · Brasil
             </p>
+            <a
+              href="https://www.instagram.com/griffowork"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs text-slate-600 font-medium hover:text-primary transition-colors mt-2"
+            >
+              <Instagram className="w-3.5 h-3.5 shrink-0" /> @griffowork
+            </a>
           </div>
         </div>
         <div className="border-t border-slate-200 py-4 text-center text-xs text-slate-500 font-medium">
