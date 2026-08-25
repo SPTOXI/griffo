@@ -362,6 +362,55 @@ export interface TranslationDictionary {
     statusRewritten: string
     statusConfirmed: string
   }
+  /** Tela de Configurações (`settings-view.tsx`). */
+  settings: {
+    title: string
+    subtitle: string
+    profileCardTitle: string
+    profileCardDesc: string
+    emailLabel: string
+    emailHint: string
+    nameLabel: string
+    professionLabel: string
+    professionPlaceholder: string
+    socialLabel: string
+    addProfileButton: string
+    socialHint: string
+    socialUrlPlaceholder: string
+    saveButton: string
+    saveErrorFallback: string
+    saveSuccess: string
+    planCardTitle: string
+    planCardDesc: string
+    planFree: string
+    planDay: string
+    planMonthly: string
+    planAnnual: string
+    planUnknown: string
+    planExpiresAt: string
+    viewPlansButton: string
+    marketplaceCardTitle: string
+    marketplacePhaseBadge: string
+    marketplaceCardDesc: string
+    marketplaceAlert: string
+    optInTitle: string
+    optInDesc: string
+    optInAcceptedToast: string
+    optOutToast: string
+    optInErrorToast: string
+    visibleTitle: string
+    visibleDesc: string
+    consentNote: string
+    securityCardTitle: string
+    securityCardDesc: string
+    securityPassword: string
+    securitySession: string
+    securityResumes: string
+    securityAudit: string
+    logoutTitle: string
+    logoutDesc: string
+    logoutButton: string
+  }
 }
 
 export const DICTIONARIES: Record<Language, TranslationDictionary> = {
@@ -719,6 +768,54 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       statusRewritten: 'Reescrito',
       statusConfirmed: 'Confirmado',
     },
+    settings: {
+      title: 'Configurações',
+      subtitle: 'Gerencie seu perfil, privacidade e preferências.',
+      profileCardTitle: 'Perfil',
+      profileCardDesc: 'Informações básicas da sua conta',
+      emailLabel: 'E-mail',
+      emailHint: 'O e-mail não pode ser alterado.',
+      nameLabel: 'Nome completo',
+      professionLabel: 'Profissão',
+      professionPlaceholder: 'Ex: Desenvolvedora Front-end',
+      socialLabel: 'Redes Sociais & Perfis Profissionais (Padrão para Análise)',
+      addProfileButton: 'Adicionar perfil',
+      socialHint: 'Cadastre aqui os links do seu LinkedIn, Gupy, GitHub, etc. Eles serão preenchidos automaticamente em todas as novas análises.',
+      socialUrlPlaceholder: 'Link do seu perfil ({platform})',
+      saveButton: 'Salvar alterações',
+      saveErrorFallback: 'Falha ao salvar.',
+      saveSuccess: 'Perfil e redes sociais salvas com sucesso!',
+      planCardTitle: 'Plano atual',
+      planCardDesc: 'Sua assinatura atual',
+      planFree: 'Gratuito',
+      planDay: 'Passe Diário',
+      planMonthly: 'Mensal',
+      planAnnual: 'Anual',
+      planUnknown: '—',
+      planExpiresAt: 'Expira em {date}',
+      viewPlansButton: 'Ver planos',
+      marketplaceCardTitle: 'Marketplace de talentos',
+      marketplacePhaseBadge: 'Fase 2',
+      marketplaceCardDesc: 'Controle se recrutadores parceiros podem te encontrar',
+      marketplaceAlert: 'Recrutadores verificados poderão buscar candidatos por score, dimensões de força e palavras-chave. Você está no controle: pode ativar ou desativar a qualquer momento. Dados sensíveis (e-mail, telefone) só aparecem após você aceitar um match.',
+      optInTitle: 'Aparecer em buscas de recrutadores',
+      optInDesc: 'Seus laudos (sem dados sensíveis) ficam visíveis para recrutadores parceiros verificados.',
+      optInAcceptedToast: 'Você aceitou aparecer para recruiters parceiros (Fase 2). Seus dados sensíveis só serão liberados após match aceito.',
+      optOutToast: 'Opt-out feito. Você não aparecerá em buscas de recrutadores.',
+      optInErrorToast: 'Erro ao salvar preferência.',
+      visibleTitle: 'Perfil público para matches',
+      visibleDesc: 'Permite que recrutadores vejam seu nome e profissão (não contato) quando houver match por palavras-chave.',
+      consentNote: 'Você pode revogar consentimento a qualquer momento. Em conformidade com a LGPD (Lei nº 13.709/2018).',
+      securityCardTitle: 'Segurança',
+      securityCardDesc: 'Sua senha está protegida com hash scrypt e sal único',
+      securityPassword: 'Senha: hash scrypt + salt aleatório (não armazenamos em texto puro)',
+      securitySession: 'Sessão: cookie httpOnly + assinatura HMAC (não pode ser lida por JS)',
+      securityResumes: 'Currículos: vinculados à sua conta, visíveis apenas para você',
+      securityAudit: 'Auditoria: todos os acessos e ações são logados',
+      logoutTitle: 'Sair da conta',
+      logoutDesc: 'Encerra a sessão neste dispositivo.',
+      logoutButton: 'Sair',
+    },
   },
 
   en: {
@@ -1075,6 +1172,54 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       statusRewritten: 'Rewritten',
       statusConfirmed: 'Confirmed',
     },
+    settings: {
+      title: 'Settings',
+      subtitle: 'Manage your profile, privacy, and preferences.',
+      profileCardTitle: 'Profile',
+      profileCardDesc: 'Basic account information',
+      emailLabel: 'Email',
+      emailHint: 'Email cannot be changed.',
+      nameLabel: 'Full name',
+      professionLabel: 'Profession',
+      professionPlaceholder: 'E.g.: Front-end Developer',
+      socialLabel: 'Social Networks & Professional Profiles (Analysis Default)',
+      addProfileButton: 'Add profile',
+      socialHint: 'Add your LinkedIn, Gupy, GitHub, etc. links here. They will be filled in automatically in every new analysis.',
+      socialUrlPlaceholder: 'Your profile link ({platform})',
+      saveButton: 'Save changes',
+      saveErrorFallback: 'Failed to save.',
+      saveSuccess: 'Profile and social links saved successfully!',
+      planCardTitle: 'Current plan',
+      planCardDesc: 'Your current subscription',
+      planFree: 'Free',
+      planDay: 'Day Pass',
+      planMonthly: 'Monthly',
+      planAnnual: 'Annual',
+      planUnknown: '—',
+      planExpiresAt: 'Expires on {date}',
+      viewPlansButton: 'View plans',
+      marketplaceCardTitle: 'Talent marketplace',
+      marketplacePhaseBadge: 'Phase 2',
+      marketplaceCardDesc: 'Control whether partner recruiters can find you',
+      marketplaceAlert: 'Verified recruiters will be able to search candidates by score, strength dimensions, and keywords. You are in control: you can turn this on or off at any time. Sensitive data (email, phone) only appears after you accept a match.',
+      optInTitle: 'Appear in recruiter searches',
+      optInDesc: 'Your reports (without sensitive data) become visible to verified partner recruiters.',
+      optInAcceptedToast: 'You agreed to appear to partner recruiters (Phase 2). Your sensitive data will only be released after an accepted match.',
+      optOutToast: 'Opted out. You will not appear in recruiter searches.',
+      optInErrorToast: 'Error saving preference.',
+      visibleTitle: 'Public profile for matches',
+      visibleDesc: 'Lets recruiters see your name and profession (not contact info) when there is a keyword match.',
+      consentNote: 'You can revoke consent at any time. Compliant with LGPD (Brazilian Law No. 13,709/2018).',
+      securityCardTitle: 'Security',
+      securityCardDesc: 'Your password is protected with scrypt hashing and a unique salt',
+      securityPassword: 'Password: scrypt hash + random salt (never stored in plain text)',
+      securitySession: 'Session: httpOnly cookie + HMAC signature (cannot be read by JS)',
+      securityResumes: 'Resumes: linked to your account, visible only to you',
+      securityAudit: 'Audit: all access and actions are logged',
+      logoutTitle: 'Sign out',
+      logoutDesc: 'Ends the session on this device.',
+      logoutButton: 'Sign out',
+    },
   },
 
   es: {
@@ -1430,6 +1575,54 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       statusRewriteRequested: 'Reescritura solicitada',
       statusRewritten: 'Reescrito',
       statusConfirmed: 'Confirmado',
+    },
+    settings: {
+      title: 'Configuración',
+      subtitle: 'Gestiona tu perfil, privacidad y preferencias.',
+      profileCardTitle: 'Perfil',
+      profileCardDesc: 'Información básica de tu cuenta',
+      emailLabel: 'Correo electrónico',
+      emailHint: 'El correo electrónico no se puede cambiar.',
+      nameLabel: 'Nombre completo',
+      professionLabel: 'Profesión',
+      professionPlaceholder: 'Ej: Desarrolladora Front-end',
+      socialLabel: 'Redes Sociales y Perfiles Profesionales (Predeterminado para el Análisis)',
+      addProfileButton: 'Agregar perfil',
+      socialHint: 'Registra aquí los enlaces de tu LinkedIn, Gupy, GitHub, etc. Se completarán automáticamente en todos los nuevos análisis.',
+      socialUrlPlaceholder: 'Enlace de tu perfil ({platform})',
+      saveButton: 'Guardar cambios',
+      saveErrorFallback: 'Error al guardar.',
+      saveSuccess: '¡Perfil y redes sociales guardados con éxito!',
+      planCardTitle: 'Plan actual',
+      planCardDesc: 'Tu suscripción actual',
+      planFree: 'Gratuito',
+      planDay: 'Pase Diario',
+      planMonthly: 'Mensual',
+      planAnnual: 'Anual',
+      planUnknown: '—',
+      planExpiresAt: 'Vence el {date}',
+      viewPlansButton: 'Ver planes',
+      marketplaceCardTitle: 'Mercado de talentos',
+      marketplacePhaseBadge: 'Fase 2',
+      marketplaceCardDesc: 'Controla si los reclutadores asociados pueden encontrarte',
+      marketplaceAlert: 'Los reclutadores verificados podrán buscar candidatos por puntuación, dimensiones de fortaleza y palabras clave. Tú tienes el control: puedes activarlo o desactivarlo en cualquier momento. Los datos sensibles (correo, teléfono) solo aparecen después de que aceptes un match.',
+      optInTitle: 'Aparecer en búsquedas de reclutadores',
+      optInDesc: 'Tus informes (sin datos sensibles) quedan visibles para reclutadores asociados verificados.',
+      optInAcceptedToast: 'Aceptaste aparecer para reclutadores asociados (Fase 2). Tus datos sensibles solo se liberarán después de un match aceptado.',
+      optOutToast: 'Baja realizada. No aparecerás en búsquedas de reclutadores.',
+      optInErrorToast: 'Error al guardar la preferencia.',
+      visibleTitle: 'Perfil público para matches',
+      visibleDesc: 'Permite que los reclutadores vean tu nombre y profesión (sin contacto) cuando haya un match por palabras clave.',
+      consentNote: 'Puedes revocar el consentimiento en cualquier momento. Conforme a la LGPD (Ley n.º 13.709/2018 de Brasil).',
+      securityCardTitle: 'Seguridad',
+      securityCardDesc: 'Tu contraseña está protegida con hash scrypt y sal única',
+      securityPassword: 'Contraseña: hash scrypt + sal aleatoria (no se almacena en texto plano)',
+      securitySession: 'Sesión: cookie httpOnly + firma HMAC (no puede ser leída por JS)',
+      securityResumes: 'Currículums: vinculados a tu cuenta, visibles solo para ti',
+      securityAudit: 'Auditoría: todos los accesos y acciones quedan registrados',
+      logoutTitle: 'Cerrar sesión',
+      logoutDesc: 'Termina la sesión en este dispositivo.',
+      logoutButton: 'Cerrar sesión',
     },
   },
 }

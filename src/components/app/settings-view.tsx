@@ -12,7 +12,17 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { User, Shield, Bell, Lock, Users, Eye, AlertCircle, CheckCircle2, Loader2, Share2, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { internalFetch } from '@/lib/internal-fetch'
+import { useI18n } from '@/context/i18n-context'
+import { localeForLang } from '@/lib/i18n'
 
+/**
+ * Valores estáveis, não traduzidos: `field.platform` é a própria chave
+ * gravada em `socialLinksDict` e lida de volta do banco (`user.socialLinks`).
+ * Traduzir o texto mudaria a chave salva conforme o idioma da tela — o
+ * mesmo problema que `MARKET_OPTIONS.id` evita ao separar id de nome no
+ * perfil profissional. Aqui não há essa separação na origem do dado, então
+ * a lista fica como está.
+ */
 const AVAILABLE_PLATFORMS = [
   'LinkedIn',
   'Gupy',
@@ -34,6 +44,8 @@ interface CustomSocialField {
 }
 
 export function SettingsView() {
+  const { t, lang } = useI18n()
+  const s = t.settings
   const { user, hydrate, logout } = useAuth()
   const { setView } = useNav()
   const [name, setName] = useState(user?.name || '')
@@ -72,10 +84,10 @@ export function SettingsView() {
       })
       if (!r.ok) {
         const d = await r.json().catch(() => ({}))
-        toast.error(d.error || 'Falha ao salvar.')
+        toast.error(d.error || s.saveErrorFallback)
         return
       }
-      toast.success('Perfil e redes sociais salvas com sucesso!')
+      toast.success(s.saveSuccess)
       await hydrate()
     } finally {
       setSaving(false)
@@ -108,13 +120,10 @@ export function SettingsView() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recruiterOptIn: checked, profileVisible: false }),
       })
-      toast.info(checked
-        ? 'Você aceitou aparecer para recruiters parceiros (Fase 2). Seus dados sensíveis só serão liberados após match aceito.'
-        : 'Opt-out feito. Você não aparecerá em buscas de recrutadores.'
-      )
+      toast.info(checked ? s.optInAcceptedToast : s.optOutToast)
       await hydrate()
     } catch {
-      toast.error('Erro ao salvar preferência.')
+      toast.error(s.optInErrorToast)
     }
   }
 
@@ -128,15 +137,15 @@ export function SettingsView() {
       })
       await hydrate()
     } catch {
-      toast.error('Erro ao salvar preferência.')
+      toast.error(s.optInErrorToast)
     }
   }
 
   return (
     <div className="space-y-5 max-w-3xl">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Configurações</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Gerencie seu perfil, privacidade e preferências.</p>
+        <h1 className="text-2xl font-bold text-slate-900">{s.title}</h1>
+        <p className="text-sm text-slate-500 mt-0.5">{s.subtitle}</p>
       </div>
 
       {/* PROFILE */}
@@ -145,24 +154,24 @@ export function SettingsView() {
           <div className="flex items-center gap-2">
             <User className="w-4 h-4 text-slate-500" />
             <div>
-              <CardTitle className="text-base">Perfil</CardTitle>
-              <CardDescription>Informações básicas da sua conta</CardDescription>
+              <CardTitle className="text-base">{s.profileCardTitle}</CardTitle>
+              <CardDescription>{s.profileCardDesc}</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="email">E-mail</Label>
+            <Label htmlFor="email">{s.emailLabel}</Label>
             <Input id="email" value={user?.email || ''} disabled className="bg-slate-50" />
-            <p className="text-xs text-slate-500">O e-mail não pode ser alterado.</p>
+            <p className="text-xs text-slate-500">{s.emailHint}</p>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="name">Nome completo</Label>
+            <Label htmlFor="name">{s.nameLabel}</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="profession">Profissão</Label>
-            <Input id="profession" value={profession} onChange={(e) => setProfession(e.target.value)} placeholder="Ex: Desenvolvedora Front-end" />
+            <Label htmlFor="profession">{s.professionLabel}</Label>
+            <Input id="profession" value={profession} onChange={(e) => setProfession(e.target.value)} placeholder={s.professionPlaceholder} />
           </div>
 
           {/* SOCIAL PROFILES / WORK NETWORKS */}
@@ -170,7 +179,7 @@ export function SettingsView() {
             <div className="flex items-center justify-between">
               <Label className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                 <Share2 className="w-3.5 h-3.5 text-primary" />
-                Redes Sociais & Perfis Profissionais (Padrão para Análise)
+                {s.socialLabel}
               </Label>
               <Button
                 type="button"
@@ -179,11 +188,11 @@ export function SettingsView() {
                 onClick={addSocialProfile}
                 className="h-7 text-xs text-primary hover:text-primary hover:bg-primary/10 px-2"
               >
-                <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar perfil
+                <Plus className="w-3.5 h-3.5 mr-1" /> {s.addProfileButton}
               </Button>
             </div>
             <p className="text-xs text-slate-500">
-              Cadastre aqui os links do seu LinkedIn, Gupy, GitHub, etc. Eles serão preenchidos automaticamente em todas as novas análises.
+              {s.socialHint}
             </p>
 
             <div className="space-y-2">
@@ -203,7 +212,7 @@ export function SettingsView() {
                   <Input
                     value={field.url}
                     onChange={(e) => updateSocialProfile(field.id, 'url', e.target.value)}
-                    placeholder={`Link do seu perfil (${field.platform})`}
+                    placeholder={s.socialUrlPlaceholder.replace('{platform}', field.platform)}
                     className="h-9 text-xs flex-1"
                   />
                   {socialProfiles.length > 1 && (
@@ -224,7 +233,7 @@ export function SettingsView() {
 
           <Button onClick={saveProfile} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 mt-2">
             {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-            Salvar alterações
+            {s.saveButton}
           </Button>
         </CardContent>
       </Card>
@@ -235,8 +244,8 @@ export function SettingsView() {
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-slate-500" />
             <div>
-              <CardTitle className="text-base">Plano atual</CardTitle>
-              <CardDescription>Sua assinatura atual</CardDescription>
+              <CardTitle className="text-base">{s.planCardTitle}</CardTitle>
+              <CardDescription>{s.planCardDesc}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -244,13 +253,13 @@ export function SettingsView() {
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <Badge className={user?.planActive ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : 'bg-slate-100 text-slate-700 hover:bg-slate-100'}>
-                {user?.plan === 'free' ? 'Gratuito' : user?.plan === 'day' ? 'Passe Diário' : user?.plan === 'monthly' ? 'Mensal' : user?.plan === 'annual' ? 'Anual' : '—'}
+                {user?.plan === 'free' ? s.planFree : user?.plan === 'day' ? s.planDay : user?.plan === 'monthly' ? s.planMonthly : user?.plan === 'annual' ? s.planAnnual : s.planUnknown}
               </Badge>
               {user?.planActive && user?.planEndsAt && (
-                <p className="text-xs text-slate-500 mt-1">Expira em {new Date(user.planEndsAt).toLocaleDateString('pt-BR')}</p>
+                <p className="text-xs text-slate-500 mt-1">{s.planExpiresAt.replace('{date}', new Date(user.planEndsAt).toLocaleDateString(localeForLang(lang)))}</p>
               )}
             </div>
-            <Button variant="outline" size="sm" onClick={() => setView('plans')}>Ver planos</Button>
+            <Button variant="outline" size="sm" onClick={() => setView('plans')}>{s.viewPlansButton}</Button>
           </div>
         </CardContent>
       </Card>
@@ -261,8 +270,8 @@ export function SettingsView() {
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-slate-600" />
             <div>
-              <CardTitle className="text-base">Marketplace de talentos <Badge variant="outline" className="ml-1 text-[10px]">Fase 2</Badge></CardTitle>
-              <CardDescription>Controle se recrutadores parceiros podem te encontrar</CardDescription>
+              <CardTitle className="text-base">{s.marketplaceCardTitle} <Badge variant="outline" className="ml-1 text-[10px]">{s.marketplacePhaseBadge}</Badge></CardTitle>
+              <CardDescription>{s.marketplaceCardDesc}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -270,7 +279,7 @@ export function SettingsView() {
           <Alert>
             <AlertCircle className="w-4 h-4" />
             <AlertDescription>
-              Recrutadores verificados poderão buscar candidatos por score, dimensões de força e palavras-chave. <strong>Você está no controle:</strong> pode ativar ou desativar a qualquer momento. Dados sensíveis (e-mail, telefone) só aparecem após você aceitar um match.
+              {s.marketplaceAlert}
             </AlertDescription>
           </Alert>
 
@@ -278,8 +287,8 @@ export function SettingsView() {
             <div className="flex items-start gap-3">
               <Eye className="w-4 h-4 text-slate-500 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-slate-900">Aparecer em buscas de recrutadores</p>
-                <p className="text-xs text-slate-500 mt-0.5">Seus laudos (sem dados sensíveis) ficam visíveis para recrutadores parceiros verificados.</p>
+                <p className="text-sm font-medium text-slate-900">{s.optInTitle}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{s.optInDesc}</p>
               </div>
             </div>
             <Switch checked={recruiterOptIn} onCheckedChange={toggleOptIn} />
@@ -289,8 +298,8 @@ export function SettingsView() {
             <div className="flex items-start gap-3">
               <Lock className="w-4 h-4 text-slate-500 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-slate-900">Perfil público para matches</p>
-                <p className="text-xs text-slate-500 mt-0.5">Permite que recrutadores vejam seu nome e profissão (não contato) quando houver match por palavras-chave.</p>
+                <p className="text-sm font-medium text-slate-900">{s.visibleTitle}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{s.visibleDesc}</p>
               </div>
             </div>
             <Switch
@@ -301,7 +310,7 @@ export function SettingsView() {
           </div>
 
           <p className="text-xs text-slate-500">
-            Você pode revogar consentimento a qualquer momento. Em conformidade com a LGPD (Lei nº 13.709/2018).
+            {s.consentNote}
           </p>
         </CardContent>
       </Card>
@@ -312,17 +321,17 @@ export function SettingsView() {
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-slate-500" />
             <div>
-              <CardTitle className="text-base">Segurança</CardTitle>
-              <CardDescription>Sua senha está protegida com hash scrypt e sal único</CardDescription>
+              <CardTitle className="text-base">{s.securityCardTitle}</CardTitle>
+              <CardDescription>{s.securityCardDesc}</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600 space-y-1">
-            <p className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Senha: hash scrypt + salt aleatório (não armazenamos em texto puro)</p>
-            <p className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Sessão: cookie httpOnly + assinatura HMAC (não pode ser lida por JS)</p>
-            <p className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Currículos: vinculados à sua conta, visíveis apenas para você</p>
-            <p className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Auditoria: todos os acessos e ações são logados</p>
+            <p className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> {s.securityPassword}</p>
+            <p className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> {s.securitySession}</p>
+            <p className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> {s.securityResumes}</p>
+            <p className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> {s.securityAudit}</p>
           </div>
         </CardContent>
       </Card>
@@ -331,15 +340,15 @@ export function SettingsView() {
       <Card className="border-red-200">
         <CardContent className="p-4 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-900">Sair da conta</p>
-            <p className="text-xs text-slate-500">Encerra a sessão neste dispositivo.</p>
+            <p className="text-sm font-medium text-slate-900">{s.logoutTitle}</p>
+            <p className="text-xs text-slate-500">{s.logoutDesc}</p>
           </div>
           <Button
             variant="outline"
             onClick={async () => { await logout(); setView('dashboard'); window.location.reload() }}
             className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
           >
-            Sair
+            {s.logoutButton}
           </Button>
         </CardContent>
       </Card>
