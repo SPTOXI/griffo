@@ -326,6 +326,42 @@ export interface TranslationDictionary {
     resumeOf: string
     updatedAt: string
   }
+  /** Tela do Painel (`dashboard.tsx`). */
+  dashboard: {
+    accountLabelActive: string
+    accountLabelDefault: string
+    greeting: string
+    defaultName: string
+    subtitle: string
+    newResumeButton: string
+    activeBadge: string
+    planCardDesc: string
+    balanceLabel: string
+    quickUploadLabel: string
+    quickUploadDesc: string
+    quickViewLabel: string
+    quickViewDesc: string
+    quickRewriteLabel: string
+    quickRewriteDesc: string
+    quickDownloadsLabel: string
+    quickDownloadsDesc: string
+    statIssuedReports: string
+    statImprovedResumes: string
+    historyTitle: string
+    historySubtitle: string
+    historyViewAll: string
+    syncing: string
+    emptyTitle: string
+    emptyDesc: string
+    emptyButton: string
+    reportOf: string
+    lastUpdated: string
+    statusUploaded: string
+    statusAnalyzed: string
+    statusRewriteRequested: string
+    statusRewritten: string
+    statusConfirmed: string
+  }
 }
 
 export const DICTIONARIES: Record<Language, TranslationDictionary> = {
@@ -648,6 +684,41 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       resumeOf: 'Currículo de {date}',
       updatedAt: 'Atualizado em {date}',
     },
+    dashboard: {
+      accountLabelActive: 'Análise Completa disponível',
+      accountLabelDefault: 'Conta Griffo',
+      greeting: 'Olá, {name} 👋',
+      defaultName: 'candidato(a)',
+      subtitle: 'Bem-vindo(a) ao seu painel executivo GriffoWork.',
+      newResumeButton: 'Novo currículo',
+      activeBadge: 'Ativo',
+      planCardDesc: 'Uma compra libera a Análise Completa de um currículo: laudo das 8 dimensões, comparação com a vaga, trechos a ajustar, reescrita, orientação, presença digital, carta, resumo e PDF.',
+      balanceLabel: 'Análises Disponíveis',
+      quickUploadLabel: 'Enviar currículo',
+      quickUploadDesc: 'Cole ou anexe',
+      quickViewLabel: 'Ver laudo',
+      quickViewDesc: 'Análise 0–10',
+      quickRewriteLabel: 'Reescrever',
+      quickRewriteDesc: 'Com sua autorização',
+      quickDownloadsLabel: 'Downloads',
+      quickDownloadsDesc: 'PDF e Markdown',
+      statIssuedReports: 'Laudos Emitidos',
+      statImprovedResumes: 'Currículos Aprimorados',
+      historyTitle: 'Histórico de Processamento',
+      historySubtitle: 'Seus últimos currículos processados pela inteligência artificial',
+      historyViewAll: 'Ver histórico completo',
+      syncing: 'Sincronizando dados…',
+      emptyTitle: 'Nenhum currículo em auditoria',
+      emptyDesc: 'Inicie uma auditoria gratuita agora para descobrir as fragilidades e o potencial do seu currículo com base nas métricas das big techs.',
+      emptyButton: 'Iniciar Auditoria IA',
+      reportOf: 'Laudo de {date}',
+      lastUpdated: 'Última atualização: {date}',
+      statusUploaded: 'Enviado',
+      statusAnalyzed: 'Analisado',
+      statusRewriteRequested: 'Reescrita solicitada',
+      statusRewritten: 'Reescrito',
+      statusConfirmed: 'Confirmado',
+    },
   },
 
   en: {
@@ -969,6 +1040,41 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       resumeOf: 'Resume from {date}',
       updatedAt: 'Updated on {date}',
     },
+    dashboard: {
+      accountLabelActive: 'Full Analysis available',
+      accountLabelDefault: 'Griffo Account',
+      greeting: 'Hello, {name} 👋',
+      defaultName: 'candidate',
+      subtitle: 'Welcome to your GriffoWork executive dashboard.',
+      newResumeButton: 'New resume',
+      activeBadge: 'Active',
+      planCardDesc: 'One purchase unlocks the Full Analysis of a resume: 8-dimension report, job comparison, sections to adjust, rewrite, guidance, digital presence, cover letter, summary, and PDF.',
+      balanceLabel: 'Available Analyses',
+      quickUploadLabel: 'Upload resume',
+      quickUploadDesc: 'Paste or attach',
+      quickViewLabel: 'View report',
+      quickViewDesc: 'Score 0–10',
+      quickRewriteLabel: 'Rewrite',
+      quickRewriteDesc: 'With your authorization',
+      quickDownloadsLabel: 'Downloads',
+      quickDownloadsDesc: 'PDF and Markdown',
+      statIssuedReports: 'Reports Issued',
+      statImprovedResumes: 'Resumes Improved',
+      historyTitle: 'Processing History',
+      historySubtitle: 'Your latest resumes processed by artificial intelligence',
+      historyViewAll: 'View full history',
+      syncing: 'Syncing data…',
+      emptyTitle: 'No resume under review',
+      emptyDesc: 'Start a free audit now to discover your resume\'s weaknesses and potential, based on big tech metrics.',
+      emptyButton: 'Start AI Audit',
+      reportOf: 'Report from {date}',
+      lastUpdated: 'Last updated: {date}',
+      statusUploaded: 'Uploaded',
+      statusAnalyzed: 'Analyzed',
+      statusRewriteRequested: 'Rewrite requested',
+      statusRewritten: 'Rewritten',
+      statusConfirmed: 'Confirmed',
+    },
   },
 
   es: {
@@ -1289,6 +1395,41 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       deleteError: 'Error al eliminar.',
       resumeOf: 'Currículum del {date}',
       updatedAt: 'Actualizado el {date}',
+    },
+    dashboard: {
+      accountLabelActive: 'Análisis Completo disponible',
+      accountLabelDefault: 'Cuenta Griffo',
+      greeting: 'Hola, {name} 👋',
+      defaultName: 'candidato/a',
+      subtitle: 'Bienvenido/a a tu panel ejecutivo de GriffoWork.',
+      newResumeButton: 'Nuevo currículum',
+      activeBadge: 'Activo',
+      planCardDesc: 'Una compra desbloquea el Análisis Completo de un currículum: informe de 8 dimensiones, comparación con la vacante, secciones a ajustar, reescritura, orientación, presencia digital, carta, resumen y PDF.',
+      balanceLabel: 'Análisis Disponibles',
+      quickUploadLabel: 'Enviar currículum',
+      quickUploadDesc: 'Pega o adjunta',
+      quickViewLabel: 'Ver informe',
+      quickViewDesc: 'Puntuación 0–10',
+      quickRewriteLabel: 'Reescribir',
+      quickRewriteDesc: 'Con tu autorización',
+      quickDownloadsLabel: 'Descargas',
+      quickDownloadsDesc: 'PDF y Markdown',
+      statIssuedReports: 'Informes Emitidos',
+      statImprovedResumes: 'Currículums Mejorados',
+      historyTitle: 'Historial de Procesamiento',
+      historySubtitle: 'Tus últimos currículums procesados por inteligencia artificial',
+      historyViewAll: 'Ver historial completo',
+      syncing: 'Sincronizando datos…',
+      emptyTitle: 'Ningún currículum en auditoría',
+      emptyDesc: 'Inicia una auditoría gratuita ahora para descubrir las debilidades y el potencial de tu currículum según las métricas de las big tech.',
+      emptyButton: 'Iniciar Auditoría IA',
+      reportOf: 'Informe del {date}',
+      lastUpdated: 'Última actualización: {date}',
+      statusUploaded: 'Enviado',
+      statusAnalyzed: 'Analizado',
+      statusRewriteRequested: 'Reescritura solicitada',
+      statusRewritten: 'Reescrito',
+      statusConfirmed: 'Confirmado',
     },
   },
 }
