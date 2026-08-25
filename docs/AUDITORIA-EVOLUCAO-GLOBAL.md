@@ -1701,3 +1701,48 @@ de ser exercitado enquanto o número de países cobertos não crescer além do
 que uma rodada cobre.
 
 Commit `08424db`. 525 testes, `tsc`/`eslint` limpos.
+
+---
+
+## 2.30 Medir antes de automatizar — qualidade e maturidade por fonte de vaga
+
+O usuário pediu um agente que aprenda a dinâmica do mercado de vagas — tempo
+de renovação, qualidade — para que, quando tiver "conhecimento robusto",
+possa um dia gerenciar a busca sozinho, "com lógica, com razão e com bom
+senso". Antes de automatizar qualquer coisa, a etapa certa é medir — e medir
+o quanto dá para confiar em cada medida, não só a medida em si.
+
+**O que existe agora.** `lib/analytics/job-source-quality.ts`, função pura no
+mesmo padrão de `market-performance.ts` e `decideCollection`. Por fonte
+(`adzuna:br`, `greenhouse`, `gupy`...), calcula:
+
+- **Tempo de renovação** — média de dias entre `publishedAt` e `closedAt`,
+  só quando há pelo menos 5 encerramentos observados. Abaixo disso o campo
+  fica `null`, não vira média de amostra pequena — mesma regra do produto em
+  todo lugar: ausência de dado não vira número inventado (§43).
+- **Qualidade do dado** — % com salário informado, % com requisitos ou
+  competências extraídos, % com título reconhecido pela taxonomia.
+- **Rendimento real** — % dos alertas do Radar que essa fonte gerou como
+  `strong`/`good`, e % de feedback 👍 entre quem respondeu (sem resposta
+  fica `null`, nunca vira zero).
+- **Maturidade** (`baixa`/`média`/`alta`) — a resposta à pergunta do usuário.
+  Combina tamanho de amostra **e** janela de tempo observada. `alta` exige
+  janela de pelo menos `STALE_AFTER_DAYS` (45 dias, a mesma janela que o
+  produto já usa para dar uma vaga como encerrada) — confiar no padrão de
+  renovação de uma fonte antes dela ter sido observada por um ciclo inteiro
+  seria julgar o relógio antes de ele dar uma volta.
+
+**Onde mora.** Nenhuma tabela nova, nenhum cron novo: lê `Job` e
+`RadarAlert` direto na rota `/api/admin/quotas`, que já existia, e aparece
+como seção nova no painel admin — "Qualidade e maturidade por fonte" —, ao
+lado da saúde das fontes que já era mostrada ali.
+
+**O que isto explicitamente não é.** Não decide nada sozinho, e não deveria
+— é observação, não controle (§30: o produto não muda comportamento por
+conta própria a partir de sinal indireto). A leitura continua sendo de uma
+pessoa. O caminho para a automação que o usuário pediu passa por aqui: só
+faz sentido considerar decisão automática quando a maturidade de uma fonte
+chegar em `alta` de forma sustentada — e mesmo aí, é decisão a ser tomada
+depois, não implementada nesta etapa.
+
+10 testes novos (535 no total), `tsc`/`eslint` limpos.
