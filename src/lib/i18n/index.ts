@@ -411,6 +411,25 @@ export interface TranslationDictionary {
     logoutDesc: string
     logoutButton: string
   }
+  /** Tela de Suporte (`support-view.tsx`). */
+  support: {
+    pageTitle: string
+    pageSubtitle: string
+    welcomeMessage: string
+    faq1: string
+    faq2: string
+    faq3: string
+    faq4: string
+    faq5: string
+    botFallback: string
+    connectionError: string
+    faqSectionTitle: string
+    chatHeaderTitle: string
+    chatStatus: string
+    officialBadge: string
+    typingIndicator: string
+    inputPlaceholder: string
+  }
 }
 
 export const DICTIONARIES: Record<Language, TranslationDictionary> = {
@@ -816,6 +835,24 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       logoutDesc: 'Encerra a sessão neste dispositivo.',
       logoutButton: 'Sair',
     },
+    support: {
+      pageTitle: 'Suporte & Dúvidas do Griffo',
+      pageSubtitle: 'Tire suas dúvidas sobre o funcionamento do sistema, laudos e cobrança.',
+      welcomeMessage: 'Olá! Sou o Assistente Virtual Oficial do Griffo. Estou aqui para ajudar com qualquer dúvida sobre as funcionalidades do sistema, laudos, reescritas e a Análise Completa. Como posso te ajudar hoje?',
+      faq1: 'Quanto custa e o que vem incluso?',
+      faq2: 'O que é analisado no laudo do currículo?',
+      faq3: 'Como funciona a reescrita em STAR e XYZ?',
+      faq4: 'Como posso baixar meu laudo e currículo?',
+      faq5: 'O que é a análise de Presença Digital e otimização de perfil?',
+      botFallback: 'Desculpe, não consegui obter uma resposta.',
+      connectionError: 'Ocorreu um erro ao conectar com o suporte. Por favor, tente novamente em instantes.',
+      faqSectionTitle: 'Perguntas frequentes sugeridas',
+      chatHeaderTitle: 'Atendimento Virtual Griffo',
+      chatStatus: 'Online · Respostas instantâneas',
+      officialBadge: 'Suporte Oficial',
+      typingIndicator: 'Digitando resposta...',
+      inputPlaceholder: 'Digite sua dúvida sobre o sistema ou cobrança...',
+    },
   },
 
   en: {
@@ -1220,6 +1257,24 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       logoutDesc: 'Ends the session on this device.',
       logoutButton: 'Sign out',
     },
+    support: {
+      pageTitle: 'Griffo Support & FAQ',
+      pageSubtitle: 'Get answers about how the system works, reports, and billing.',
+      welcomeMessage: 'Hi! I\'m Griffo\'s official virtual assistant. I\'m here to help with any question about the system\'s features, reports, rewrites, and the Complete Analysis. How can I help you today?',
+      faq1: 'How much does it cost and what\'s included?',
+      faq2: 'What does the resume report analyze?',
+      faq3: 'How does the STAR/XYZ rewrite work?',
+      faq4: 'How can I download my report and resume?',
+      faq5: 'What is the Digital Presence analysis and profile optimization?',
+      botFallback: 'Sorry, I couldn\'t get a response.',
+      connectionError: 'An error occurred while connecting to support. Please try again shortly.',
+      faqSectionTitle: 'Suggested frequently asked questions',
+      chatHeaderTitle: 'Griffo Virtual Support',
+      chatStatus: 'Online · Instant replies',
+      officialBadge: 'Official Support',
+      typingIndicator: 'Typing a reply...',
+      inputPlaceholder: 'Type your question about the system or billing...',
+    },
   },
 
   es: {
@@ -1623,6 +1678,24 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       logoutTitle: 'Cerrar sesión',
       logoutDesc: 'Termina la sesión en este dispositivo.',
       logoutButton: 'Cerrar sesión',
+    },
+    support: {
+      pageTitle: 'Soporte y Dudas de Griffo',
+      pageSubtitle: 'Resuelve tus dudas sobre el funcionamiento del sistema, los informes y la facturación.',
+      welcomeMessage: '¡Hola! Soy el Asistente Virtual Oficial de Griffo. Estoy aquí para ayudarte con cualquier duda sobre las funcionalidades del sistema, informes, reescrituras y el Análisis Completo. ¿Cómo puedo ayudarte hoy?',
+      faq1: '¿Cuánto cuesta y qué incluye?',
+      faq2: '¿Qué se analiza en el informe del currículum?',
+      faq3: '¿Cómo funciona la reescritura en STAR y XYZ?',
+      faq4: '¿Cómo puedo descargar mi informe y currículum?',
+      faq5: '¿Qué es el análisis de Presencia Digital y optimización de perfil?',
+      botFallback: 'Lo siento, no pude obtener una respuesta.',
+      connectionError: 'Ocurrió un error al conectar con soporte. Por favor, inténtalo de nuevo en unos instantes.',
+      faqSectionTitle: 'Preguntas frecuentes sugeridas',
+      chatHeaderTitle: 'Atención Virtual Griffo',
+      chatStatus: 'En línea · Respuestas instantáneas',
+      officialBadge: 'Soporte Oficial',
+      typingIndicator: 'Escribiendo respuesta...',
+      inputPlaceholder: 'Escribe tu duda sobre el sistema o la facturación...',
     },
   },
 }

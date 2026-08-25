@@ -13,6 +13,8 @@ import {
 } from 'lucide-react'
 import { internalFetch } from '@/lib/internal-fetch'
 import ReactMarkdown from 'react-markdown'
+import { useI18n } from '@/context/i18n-context'
+import { localeForLang } from '@/lib/i18n'
 
 interface ChatMessage {
   id: string
@@ -21,22 +23,18 @@ interface ChatMessage {
   timestamp: string
 }
 
-const FAQ_SUGGESTIONS = [
-  'Quanto custa e o que vem incluso?',
-  'O que é analisado no laudo do currículo?',
-  'Como funciona a reescrita em STAR e XYZ?',
-  'Como posso baixar meu laudo e currículo?',
-  'O que é a análise de Presença Digital e otimização de perfil?',
-]
-
 export function SupportView() {
+  const { t, lang } = useI18n()
+  const sp = t.support
+  const locale = localeForLang(lang)
+  const FAQ_SUGGESTIONS = [sp.faq1, sp.faq2, sp.faq3, sp.faq4, sp.faq5]
   const { setView } = useNav()
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
       sender: 'bot',
-      text: 'Olá! Sou o Assistente Virtual Oficial do Griffo. Estou aqui para ajudar com qualquer dúvida sobre as funcionalidades do sistema, laudos, reescritas e a Análise Completa. Como posso te ajudar hoje?',
-      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      text: sp.welcomeMessage,
+      timestamp: new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
     },
   ])
   const [input, setInput] = useState('')
@@ -57,7 +55,7 @@ export function SupportView() {
       id: Date.now().toString(),
       sender: 'user',
       text: query,
-      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
     }
 
     setMessages((prev) => [...prev, userMsg])
@@ -83,8 +81,8 @@ export function SupportView() {
       const botMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         sender: 'bot',
-        text: data.reply || 'Desculpe, não consegui obter uma resposta.',
-        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        text: data.reply || sp.botFallback,
+        timestamp: new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
       }
 
       setMessages((prev) => [...prev, botMsg])
@@ -94,8 +92,8 @@ export function SupportView() {
         {
           id: (Date.now() + 1).toString(),
           sender: 'bot',
-          text: 'Ocorreu um erro ao conectar com o suporte. Por favor, tente novamente em instantes.',
-          timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          text: sp.connectionError,
+          timestamp: new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
         },
       ])
     } finally {
@@ -111,8 +109,8 @@ export function SupportView() {
             <HelpCircle className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Suporte & Dúvidas do Griffo</h1>
-            <p className="text-sm text-slate-500 mt-0.5">Tire suas dúvidas sobre o funcionamento do sistema, laudos e cobrança.</p>
+            <h1 className="text-2xl font-bold text-slate-900">{sp.pageTitle}</h1>
+            <p className="text-sm text-slate-500 mt-0.5">{sp.pageSubtitle}</p>
           </div>
         </div>
       </div>
@@ -121,7 +119,7 @@ export function SupportView() {
       <Card className="border-slate-200 bg-slate-50/50">
         <CardContent className="p-4">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-primary" /> Perguntas frequentes sugeridas
+            <Sparkles className="w-3.5 h-3.5 text-primary" /> {sp.faqSectionTitle}
           </p>
           <div className="flex flex-wrap gap-2">
             {FAQ_SUGGESTIONS.map((faq, i) => (
@@ -148,14 +146,14 @@ export function SupportView() {
               <Bot className="w-4 h-4" />
             </div>
             <div>
-              <CardTitle className="text-sm font-bold text-slate-900">Atendimento Virtual Griffo</CardTitle>
+              <CardTitle className="text-sm font-bold text-slate-900">{sp.chatHeaderTitle}</CardTitle>
               <CardDescription className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Online · Respostas instantâneas
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> {sp.chatStatus}
               </CardDescription>
             </div>
           </div>
           <Badge variant="outline" className="text-[10px] text-slate-500 border-slate-200 bg-white">
-            Suporte Oficial
+            {sp.officialBadge}
           </Badge>
         </CardHeader>
 
@@ -202,7 +200,7 @@ export function SupportView() {
               </div>
               <div className="p-3.5 rounded-2xl bg-slate-100 border border-slate-200 rounded-tl-none text-xs text-slate-500 flex items-center gap-2">
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                Digitando resposta...
+                {sp.typingIndicator}
               </div>
             </div>
           )}
@@ -220,7 +218,7 @@ export function SupportView() {
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Digite sua dúvida sobre o sistema ou cobrança..."
+              placeholder={sp.inputPlaceholder}
               disabled={loading}
               className="flex-1 text-xs sm:text-sm h-10 focus-visible:ring-primary"
             />
