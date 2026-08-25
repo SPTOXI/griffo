@@ -1443,3 +1443,101 @@ o resultado visual agrada. O usuário optou por revisar tudo de uma vez ao
 final, em vez de logar durante o trabalho. Fica registrado em
 `docs/HANDOFF-CONTINUIDADE.md`, seção 7.7, como pendência aberta antes de
 mergear a branch `design-refresh-2026-08` em `main`.
+
+---
+
+## 2.27 Hero reorganizado, e o problema estrutural por trás do laudo
+
+Continuação da revisão visual (seção 2.26). Depois de ver o resultado, o
+usuário pediu duas coisas mais específicas: o hero da landing "mais
+organizado, moderno", mantendo a paleta; e uma revisão de UX nas telas
+internas que mostram relatório/orientação/painéis — não mais cor, e sim
+como a informação está organizada.
+
+### O hero
+
+`landing.tsx`: os blocos que ainda tinham hex solto (badge, título, CTAs,
+card de mockup, blobs decorativos) passaram para os tokens `primary`/
+`brand-navy`. A faixa de confiança abaixo dos CTAs (Free/No Card/
+Security/Safe) trocou um `grid grid-cols-2` rígido — que forçava quebra de
+linha torta em telas estreitas — por `flex flex-wrap`, que acomoda cada
+item onde precisar. As 4 barras de dimensão do card de mockup usavam 3 tons
+de azul e 1 de indigo sem critério; viraram uma cor só. Nenhum texto mudou.
+
+### O achado que importava mais: abas falsas no laudo
+
+Uma investigação (agente `Explore`, só leitura) nas 5 telas mais densas do
+app achou um problema estrutural, não estético, em `analysis-view.tsx` — a
+tela do laudo, 1496 linhas, o produto principal.
+
+A tela tem 8 seções de conteúdo (visão geral, mídias sociais, match com
+vaga, orientação vocacional, dimensões detalhadas, ajustes pontuais,
+carta/resumo) navegáveis por uma barra de abas. Mas o estado padrão do
+`activeTab` era `'all'`, e cada bloco de conteúdo checa
+`activeTab === 'all' || activeTab === 'x'` — ou seja, **no modo em que a
+pessoa cai ao abrir a tela, as 8 seções renderizam empilhadas na mesma
+rolagem**. A barra de abas não trocava de tela: filtrava o scroll. Quem
+clicava numa aba just via as outras sumirem, mas a página continuava do
+mesmo tamanho gigante.
+
+Consequência colateral: ao trocar de aba pra ler um detalhe (a carta, a
+orientação), a nota geral — que só existe dentro do bloco "Score &
+Veredito" — sumia da tela. Não havia nenhuma referência fixa do "8.7/10"
+enquanto se lia o resto.
+
+### O que foi corrigido, e o que foi decidido não tocar
+
+**`activeTab` inicial passou de `'all'` para `'overview'`.** Uma linha.
+A pessoa passa a cair numa visão focada, não numa rolagem de 8 seções.
+"Visão Completa" continua existindo como opção — nada foi removido, só
+deixou de ser o primeiro contato.
+
+**Faixa de resumo fixa, nova.** Uma faixa `sticky top-14` (14 = altura do
+cabeçalho do app-shell) aparece quando `activeTab` é diferente de
+`'overview'`/`'all'`, mostrando nota geral + status ATS + um atalho de
+volta. Reaproveita `score`, `hasScore`, `scoreColor`, `a.atsFriendly` —
+todos já calculados no componente — sem introduzir lógica nova.
+
+**Decisão registrada: não trocar a barra de abas hand-rolled pelo
+componente `Tabs` do shadcn.** A cor por aba não é decoração sem critério
+como em outros lugares já corrigidos nesta revisão — a aba "Match Vaga"
+herda a cor de severidade do próprio resultado (vermelho/âmbar/verde),
+então quem está noutra aba vê que há um problema sem precisar abrir. Trocar
+pelo primitivo tocaria as 8 seções condicionais espalhadas por um arquivo
+de 1500 linhas, por um ganho majoritariamente de acessibilidade/semântica —
+risco alto para o momento. Fica como melhoria futura, não feita agora.
+
+**Tipografia do texto de leitura longa** (parecer executivo, justificativa
+por dimensão, orientação vocacional, carta de apresentação, resumo
+profissional, pontos fortes/fracos, recomendações, trechos a ajustar) subiu
+de `text-xs`/`text-[10px]`/`text-[11px]` para `text-sm`. Títulos de seção e
+rótulos pequenos (badges, contadores) não mudaram — só a massa de texto que
+a pessoa de fato lê linha a linha.
+
+### `professional-profile-view.tsx` — o formulário que não mostrava o que faltava
+
+A tela promete, no próprio texto ("Preencha aos poucos — nada é
+obrigatório"), um preenchimento incremental. Mas era um formulário de 6
+`Card`s em rolagem única, sem nenhum jeito de ver o que já tinha sido
+preenchido sem rolar tudo.
+
+As 5 seções de dado (Identidade profissional, Objetivos, Onde está/quer
+trabalhar, Preferências de trabalho, Idiomas — o cartão de intro/CTA
+"Preencher com o que já sei sobre você" não é seção de dado, ficou como
+estava) viram um `Accordion` do shadcn (`type="multiple"`, pra não forçar
+fechar uma seção pra abrir outra — incremental não deveria exigir isso).
+
+Cada cabeçalho de seção ganhou um indicador — badge "Preenchido" — calculado
+por checagem direta de presença nos campos daquela seção (ex.: Identidade =
+`currentTitle || field || seniority || ...`), sem estado novo: é leitura do
+`profile` que a tela já mantinha. Seção sem dado abre sozinha; as demais
+começam fechadas — dá pra ver de relance o que falta sem abrir nada.
+
+### O que ficou de fora, por decisão
+
+`dashboard.tsx` e `radar-view.tsx` já tinham sido avaliados como bem
+organizados na mesma investigação (a única redundância do dashboard — saldo
+duplicado — já tinha sido corrigida na etapa anterior desta revisão) e não
+entraram neste passo. Verificação visual continua pendente pelo mesmo
+motivo da etapa anterior — sem credencial de login, o agente não confere
+telas autenticadas; fica para o usuário revisar no dev server ou Preview.

@@ -20,7 +20,7 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 24/08/2026, revisão visual do app inteiro na branch `design-refresh-2026-08` (ver 7.7) |
+| Última revisão | 24/08/2026, revisão visual do app inteiro + hero da landing + UX do laudo/perfil, branch `design-refresh-2026-08` (ver 7.7) |
 | Suíte | 510 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão |
 | Banco | Sincronizado via `prisma db push`, incluindo `RadarAlert.notifiedAt` (ver 7.6) |
@@ -508,6 +508,29 @@ as telas no navegador ainda. Antes de mergear em `main`: abrir a branch
 localmente ou no Preview da Vercel e percorrer dashboard, upload, perfil
 profissional, radar, planos, histórico, downloads, configurações, suporte e a
 landing nos três idiomas — inclusive o menu em mobile.
+
+**Continuação (mesmo dia, mesma branch): hero + UX de laudo/perfil.**
+Depois de revisar o resultado, o usuário pediu duas coisas mais específicas.
+Detalhe completo em `docs/AUDITORIA-EVOLUCAO-GLOBAL.md`, seção 2.27.
+
+- **Hero da landing**: badge/CTAs/mockup tokenizados, faixa de confiança virou
+  `flex flex-wrap` (era grid rígido, quebrava torto em tela estreita).
+- **`analysis-view.tsx` (o laudo)**: achado estrutural, não estético — a
+  navegação por abas era falsa. O padrão era `activeTab: 'all'`, que renderiza
+  as 8 seções empilhadas na mesma rolagem; a barra de abas só filtrava o
+  scroll. Corrigido: padrão vira `'overview'` (uma linha), mais uma faixa de
+  resumo fixa (`sticky top-14`) com nota + status ATS visível em qualquer aba
+  — a nota sumia da tela ao trocar de aba antes disso. Texto de leitura longa
+  subiu de `text-xs` para `text-sm`. **Decisão registrada**: não trocar a
+  barra de abas hand-rolled pelo componente `Tabs` do shadcn — a cor por aba
+  não é decorativa (a aba "Match Vaga" herda a severidade do resultado),
+  trocar tocaria as 8 seções condicionais do arquivo de 1500 linhas por ganho
+  majoritariamente de acessibilidade. Fica pra depois.
+- **`professional-profile-view.tsx`**: as 5 seções de dado (não o cartão de
+  intro) viram `Accordion` com badge "Preenchido" por seção — calculado por
+  leitura direta do `profile`, sem estado novo. Seção vazia abre sozinha.
+- Mesma pendência de antes: verificação visual continua sem ser feita (sem
+  login). `npm test` 510/510, `tsc`/`eslint` limpos em cada commit.
 
 ---
 
