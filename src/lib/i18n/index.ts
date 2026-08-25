@@ -307,6 +307,25 @@ export interface TranslationDictionary {
     languageEn: string
     languageEs: string
   }
+  /** Tela de Histórico (`history-view.tsx`). */
+  history: {
+    title: string
+    subtitle: string
+    newButton: string
+    emptyTitle: string
+    emptyDesc: string
+    emptyButton: string
+    statusUploaded: string
+    statusAnalyzed: string
+    statusRewriteRequested: string
+    statusRewritten: string
+    statusConfirmed: string
+    deleteConfirm: string
+    deleteSuccess: string
+    deleteError: string
+    resumeOf: string
+    updatedAt: string
+  }
 }
 
 export const DICTIONARIES: Record<Language, TranslationDictionary> = {
@@ -611,6 +630,24 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       languageEn: 'Inglês',
       languageEs: 'Espanhol',
     },
+    history: {
+      title: 'Histórico',
+      subtitle: 'Todos os currículos que você enviou.',
+      newButton: 'Novo',
+      emptyTitle: 'Nenhum currículo enviado',
+      emptyDesc: 'Seu histórico aparecerá aqui.',
+      emptyButton: 'Enviar currículo',
+      statusUploaded: 'Enviado',
+      statusAnalyzed: 'Analisado',
+      statusRewriteRequested: 'Reescrita solicitada',
+      statusRewritten: 'Reescrito',
+      statusConfirmed: 'Confirmado',
+      deleteConfirm: 'Excluir este currículo permanentemente? Esta ação não pode ser desfeita.',
+      deleteSuccess: 'Currículo excluído.',
+      deleteError: 'Falha ao excluir.',
+      resumeOf: 'Currículo de {date}',
+      updatedAt: 'Atualizado em {date}',
+    },
   },
 
   en: {
@@ -913,6 +950,24 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       languagePt: 'Portuguese',
       languageEn: 'English',
       languageEs: 'Spanish',
+    },
+    history: {
+      title: 'History',
+      subtitle: 'All the resumes you\'ve uploaded.',
+      newButton: 'New',
+      emptyTitle: 'No resumes uploaded',
+      emptyDesc: 'Your history will appear here.',
+      emptyButton: 'Upload resume',
+      statusUploaded: 'Uploaded',
+      statusAnalyzed: 'Analyzed',
+      statusRewriteRequested: 'Rewrite requested',
+      statusRewritten: 'Rewritten',
+      statusConfirmed: 'Confirmed',
+      deleteConfirm: 'Permanently delete this resume? This action cannot be undone.',
+      deleteSuccess: 'Resume deleted.',
+      deleteError: 'Failed to delete.',
+      resumeOf: 'Resume from {date}',
+      updatedAt: 'Updated on {date}',
     },
   },
 
@@ -1217,6 +1272,24 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       languageEn: 'Inglés',
       languageEs: 'Español',
     },
+    history: {
+      title: 'Historial',
+      subtitle: 'Todos los currículums que has enviado.',
+      newButton: 'Nuevo',
+      emptyTitle: 'Ningún currículum enviado',
+      emptyDesc: 'Tu historial aparecerá aquí.',
+      emptyButton: 'Enviar currículum',
+      statusUploaded: 'Enviado',
+      statusAnalyzed: 'Analizado',
+      statusRewriteRequested: 'Reescritura solicitada',
+      statusRewritten: 'Reescrito',
+      statusConfirmed: 'Confirmado',
+      deleteConfirm: '¿Eliminar este currículum de forma permanente? Esta acción no se puede deshacer.',
+      deleteSuccess: 'Currículum eliminado.',
+      deleteError: 'Error al eliminar.',
+      resumeOf: 'Currículum del {date}',
+      updatedAt: 'Actualizado el {date}',
+    },
   },
 }
 
@@ -1258,4 +1331,15 @@ export function detectBrowserLanguage(): Language {
   }
 
   return 'pt' // Default fallback
+}
+
+const LOCALE_BY_LANG: Record<Language, string> = {
+  pt: 'pt-BR',
+  en: 'en-US',
+  es: 'es-ES',
+}
+
+/** Locale do `Intl`/`toLocaleDateString` para o idioma da tela — não é o mercado da vaga. */
+export function localeForLang(lang: Language): string {
+  return LOCALE_BY_LANG[lang] || 'pt-BR'
 }
