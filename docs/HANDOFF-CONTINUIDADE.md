@@ -27,9 +27,9 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 25/08/2026, maturidade dos agentes de IA e do sistema — sem IA nenhuma por trás, é leitura de `AiLog`/`SystemIncident` (ver 2.31 na auditoria) |
+| Última revisão | 25/08/2026, as dez telas internas migradas para `useI18n`/`t.*` — fecha a pendência 6 abaixo (ver 2.32 na auditoria) |
 | Suíte | 545 testes, `fail 0` — a regra da contagem está na seção 8 |
-| `tsc`, `lint`, `build` | limpos nessa revisão |
+| `tsc`, `lint`, `build` | limpos nessa revisão (`npm run build` também rodado, produção compila) |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |
 
 **Pendências que estão esperando alguém, não código:**
@@ -55,11 +55,20 @@ o quanto confiar nele.
    `normalization`~~ — ✅ **resolvido em 25/08/2026** (commit `5c37f71`, ver
    2.28). Piso de tokens dos modelos que raciocinam subiu 4x (4.000→16.000);
    Kimi K3 confirmado como primeiro suplente do DeepSeek.
-6. **Telas autenticadas sem tradução (ver 2.28).** Só a landing e partes de
-   `plans-view.tsx`/`app-shell.tsx` usam `useI18n`. O laudo e todo o resto do
-   app pós-login são texto fixo em português — trocar o idioma no seletor não
-   tem efeito ali. Decisão registrada: não é bug a caçar, é escopo a planejar
-   — ver seção 2.28 antes de começar, para não redescobrir o levantamento.
+6. ~~Telas autenticadas sem tradução~~ — ✅ **resolvido em 25/08/2026** (ver
+   2.32). As dez telas internas (Perfil Profissional, Histórico, Painel,
+   Configurações, Suporte, Downloads, Reescrita, Radar, Envio de Currículo,
+   Laudo) migraram para `useI18n`/`t.*`. Trocar o idioma no seletor agora
+   tem efeito em toda a interface estática do app pós-login.
+
+   **O que continua em português, de propósito, e não é a mesma pendência:**
+   conteúdo gerado por IA por usuário (parecer executivo, justificativas,
+   orientação vocacional, carta de apresentação, currículo reescrito) —
+   exigiria rodar a geração de novo no idioma-alvo, mudança de backend fora
+   do escopo desta rodada; dado de vaga de terceiro no Radar (cargo/empresa
+   no idioma original da fonte); e nomes de plataforma social (`LinkedIn`,
+   `Gupy`...) que são chave persistida em `socialLinks`, não rótulo de tela.
+   Ver 2.32 na auditoria para a lista completa por categoria.
 
 **O que NÃO está pendente e parece que está:**
 

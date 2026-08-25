@@ -1799,3 +1799,61 @@ controle. Nenhum agente passa a decidir nada sozinho a partir da própria
 maturidade — a leitura continua sendo de uma pessoa.
 
 10 testes novos (545 no total), `tsc`/`eslint` limpos.
+
+## 2.32 A pendência do idioma (§2.28) fechada — as dez telas internas
+
+O gap descrito no §2.28 — seletor de idioma sem efeito depois do login,
+porque só a landing e partes de duas telas liam `useI18n`/`t.*` — foi
+fechado nesta rodada, com o usuário autorizando modo autônomo por não estar
+disponível nas horas seguintes.
+
+**As dez telas** migraram para `useI18n`/`t.*`, uma por commit, cada uma
+verificada com `tsc --noEmit`/`eslint`/`npm test` antes do commit:
+
+| Tela | Commit | Chaves novas |
+|---|---|---|
+| Perfil Profissional | `cb0d3b0` | ~90 |
+| Histórico | `885bf15` | 16 |
+| Painel (dashboard) | `524373d` | — |
+| Configurações | `3d86cb2` | ~48 |
+| Suporte | `c57a224` | 16 |
+| Downloads | `c208c37` | 36 |
+| Reescrita | `49b46b9` | 51 |
+| Radar | `47f123b` | 92 |
+| Envio de Currículo | `68b7129` | 61 |
+| Laudo (analysis-view) | `c7fed3a` | ~118 |
+
+Mais de 500 chaves novas no dicionário (`lib/i18n/index.ts`), em pt/en/es,
+seguindo o padrão já usado pela landing: `pt` copiado literalmente do texto
+original, `en`/`es` traduzidos com o mesmo tom.
+
+**Datas passaram a formatar no locale do idioma escolhido.** Novo helper
+`localeForLang(lang)` em `lib/i18n/index.ts` (mapeia `pt→pt-BR`,
+`en→en-US`, `es→es-ES`), usado em toda tela que chamava
+`toLocaleDateString('pt-BR', ...)` fixo antes.
+
+**O que ficou de propósito em português — três categorias, não é bug:**
+
+1. **Conteúdo gerado pela IA por usuário.** O parecer executivo, as
+   justificativas por dimensão, a orientação vocacional (`whyFit`,
+   conselho de carreira), a carta de apresentação, o resumo/currículo
+   reescrito — tudo isso é saída de IA já gravada em português para aquele
+   usuário específico. Traduzir isso exigiria rodar a geração de novo no
+   idioma alvo (mudança de arquitetura no backend, prompt precisa saber o
+   idioma-alvo), não uma troca de string na tela. Fora do escopo desta
+   rodada, que foi deliberadamente só de interface.
+2. **Dado de terceiro.** No Radar, cargo/empresa/local/modalidade das
+   vagas vêm das fontes externas (Adzuna, Gupy, Greenhouse...) no idioma
+   original da vaga — não é texto do produto para traduzir.
+3. **Valor persistido como chave, não como rótulo.** Nomes de plataforma
+   em `professional-profile-view.tsx`/`upload-view.tsx`/`settings-view.tsx`
+   (`LinkedIn`, `Gupy`, `GitHub`...) são gravados literalmente em
+   `socialLinks` no banco — traduzir o rótulo mudaria o dado salvo
+   dependendo do idioma da tela no momento do envio. Ficaram como estão,
+   mesmo raciocínio em todas as telas que os usam.
+
+Zero mudança de lógica de negócio, chamada de API ou estrutura de dado em
+qualquer uma das dez telas — só o texto exibido trocou de string fixa para
+`t.<tela>.*`. `tsc --noEmit`, `eslint` e `npm run build` limpos ao final;
+suite de testes manteve os mesmos 545 (nenhuma destas telas tem teste
+unitário dedicado — é toda mudança de apresentação).
