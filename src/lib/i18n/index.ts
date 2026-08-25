@@ -671,6 +671,138 @@ export interface TranslationDictionary {
     whatWillBeAnalyzedLabel: string
     whatWillBeAnalyzedDesc: string
   }
+  /**
+   * Tela do Laudo (`analysis-view.tsx`). Só o chrome estático — título de
+   * seção, rótulo, botão, estado vazio/erro. O corpo do laudo (parecer,
+   * justificativas por dimensão, orientação vocacional, carta) é gerado pela
+   * IA por usuário e fica em português; traduzir isso exigiria rodar a
+   * análise de novo no idioma do usuário, fora do escopo desta tela.
+   */
+  analysis: {
+    loadingText: string
+    notFoundText: string
+    uploadButton: string
+    loadErrorFallback: string
+    connectionError: string
+    reportTitle: string
+    startingAnalysis: string
+    processingAuto: string
+    retryButton: string
+    orientationSuccess: string
+    orientationErrorFallback: string
+    orientationConnectionError: string
+    letterSuccess: string
+    letterErrorFallback: string
+    letterConnectionError: string
+    copiedTemplate: string
+    copyErrorFallback: string
+    dimRelevanceToRole: string
+    dimExperienceImpact: string
+    dimClarityFormatting: string
+    dimAtsOptimization: string
+    dimKeywordIntegration: string
+    dimStructure: string
+    dimSummary: string
+    dimImpact: string
+    dimSkills: string
+    dimExperience: string
+    dimKeywords: string
+    dimCareer: string
+    dimUpskilling: string
+    dimEducation: string
+    dimLanguage: string
+    tabAll: string
+    tabOverview: string
+    tabSocial: string
+    tabMatch: string
+    tabCareer: string
+    tabLetter: string
+    tabDimensions: string
+    tabTargeted: string
+    scoreNotEvaluated: string
+    atsApprovedSticky: string
+    atsRejectedSticky: string
+    atsNotEvaluatedSticky: string
+    viewFullReport: string
+    scoreAuditLabel: string
+    atsPass: string
+    atsFail: string
+    atsNotEvaluated: string
+    calcDimensionsLabel: string
+    algorithmicAverage: string
+    noDimensionScores: string
+    scoreLabelNotEvaluated: string
+    scoreLabelExcellent: string
+    scoreLabelGood: string
+    scoreLabelRegular: string
+    scoreLabelNeedsImprovement: string
+    performanceByDimension: string
+    noChartData: string
+    executiveTitle: string
+    executiveDesc: string
+    noSummaryFallback: string
+    strengthsTitle: string
+    noStrengths: string
+    weaknessesTitle: string
+    noWeaknesses: string
+    recommendationsTitle: string
+    recommendationsDesc: string
+    keywordsTitle: string
+    keywordsDesc: string
+    matchTitle: string
+    matchTargetJobPrefix: string
+    matchNoTargetJob: string
+    matchScoreLabel: string
+    matchVerdictLabel: string
+    matchedReqTitle: string
+    noMatchedReq: string
+    missingReqTitle: string
+    noMissingReq: string
+    actionPlanLabel: string
+    matchToneIncompatibleHeadline: string
+    matchToneIncompatibleDetail: string
+    matchTonePartialHeadline: string
+    matchTonePartialDetail: string
+    matchToneAlignedHeadline: string
+    matchToneAlignedDetail: string
+    dimensionsDetailTitle: string
+    dimensionsDetailDesc: string
+    noTargetedTitle: string
+    noTargetedDesc: string
+    targetedTitle: string
+    targetedDesc: string
+    currentTextLabel: string
+    suggestedTextLabel: string
+    rationaleLabel: string
+    careerTitle: string
+    careerDesc: string
+    updateDiagnosisButton: string
+    discoverAreaButton: string
+    mappingAreas: string
+    careerTimeEstimate: string
+    profileSummaryLabel: string
+    optionLabel: string
+    adherenceLabel: string
+    recommendedSkillsLabel: string
+    adherenceDisclaimer: string
+    careerAdviceLabel: string
+    letterTitle: string
+    letterDesc: string
+    regenerateLetterButton: string
+    writeLetterButton: string
+    writingLetterText: string
+    letterTimeEstimate: string
+    letterEmptyState: string
+    letterTargetedTo: string
+    summaryLabel: string
+    copyButton: string
+    summaryFootnote: string
+    letterLabel: string
+    letterKeywordsLabel: string
+    ctaTitle: string
+    ctaDesc: string
+    ctaButton: string
+  }
 }
 
 export const DICTIONARIES: Record<Language, TranslationDictionary> = {
@@ -1327,6 +1459,131 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       whatWillBeAnalyzedLabel: 'O que será analisado:',
       whatWillBeAnalyzedDesc: 'estrutura, resumo, resultados (STAR/XYZ), hard/soft skills, palavras-chave ATS, trajetória de carreira, sugestão de cursos/capacitação e otimização de presença digital global (LinkedIn, Gupy, Behance, GitHub, etc.).',
     },
+    analysis: {
+      loadingText: 'Carregando análise do currículo...',
+      notFoundText: 'Nenhum currículo encontrado para exibir a análise.',
+      uploadButton: 'Enviar currículo',
+      loadErrorFallback: 'Erro ao carregar.',
+      connectionError: 'Erro de conexão.',
+      reportTitle: 'Laudo de análise',
+      startingAnalysis: 'Iniciando análise preditiva em 8 dimensões...',
+      processingAuto: 'Seu laudo está sendo processado automaticamente pela IA sem necessidade de novos cliques.',
+      retryButton: 'Tentar novamente',
+      orientationSuccess: 'Diagnóstico de Orientação Vocacional gerado com sucesso!',
+      orientationErrorFallback: 'O diagnóstico não pôde ser concluído nesta tentativa. Nada foi cobrado — tente novamente.',
+      orientationConnectionError: 'Falha de conexão ao gerar a orientação vocacional. Verifique sua internet e tente de novo.',
+      letterSuccess: 'Carta de apresentação e resumo profissional gerados.',
+      letterErrorFallback: 'A carta não pôde ser redigida nesta tentativa. Nada foi cobrado — tente novamente.',
+      letterConnectionError: 'Falha de conexão ao gerar a carta. Verifique sua internet e tente de novo.',
+      copiedTemplate: '{label} copiado.',
+      copyErrorFallback: 'Não foi possível copiar. Selecione o texto e copie manualmente.',
+      dimRelevanceToRole: 'Relevância para a Vaga',
+      dimExperienceImpact: 'Impacto das Experiências',
+      dimClarityFormatting: 'Clareza & Formatação',
+      dimAtsOptimization: 'Otimização ATS',
+      dimKeywordIntegration: 'Integração de Palavras-Chave',
+      dimStructure: 'Estrutura & Compatibilidade ATS',
+      dimSummary: 'Resumo & Posicionamento',
+      dimImpact: 'Resultados (STAR/XYZ)',
+      dimSkills: 'Habilidades & Ferramentas',
+      dimExperience: 'Experiência & Verbos de Ação',
+      dimKeywords: 'Palavras-Chave & Match',
+      dimCareer: 'Trajetória & Plano de Carreira',
+      dimUpskilling: 'Capacitação & Cursos',
+      dimEducation: 'Formação & Cursos',
+      dimLanguage: 'Linguagem & Tom',
+      tabAll: 'Visão Completa',
+      tabOverview: 'Score & Veredito',
+      tabSocial: 'Mídias & Redes Sociais',
+      tabMatch: 'Match Vaga Alvo',
+      tabCareer: 'Agente Vocacional',
+      tabLetter: 'Carta & Resumo',
+      tabDimensions: '8 Dimensões',
+      tabTargeted: 'Ajustes STAR/XYZ',
+      scoreNotEvaluated: 'Nota não avaliada',
+      atsApprovedSticky: 'ATS aprovado',
+      atsRejectedSticky: 'ATS reprovado',
+      atsNotEvaluatedSticky: 'ATS não avaliado',
+      viewFullReport: 'Ver laudo completo',
+      scoreAuditLabel: 'Score Audit',
+      atsPass: 'ATS PASS',
+      atsFail: 'ATS FAIL',
+      atsNotEvaluated: 'ATS NÃO AVALIADO',
+      calcDimensionsLabel: 'Cálculo Dimensões',
+      algorithmicAverage: 'Média Algorítmica',
+      noDimensionScores: 'Este laudo não trouxe as notas por dimensão. Reprocesse a análise para obtê-las.',
+      scoreLabelNotEvaluated: 'Não avaliado',
+      scoreLabelExcellent: 'Excelente',
+      scoreLabelGood: 'Bom',
+      scoreLabelRegular: 'Regular',
+      scoreLabelNeedsImprovement: 'Precisa melhorar',
+      performanceByDimension: 'Desempenho por dimensão',
+      noChartData: 'Sem notas por dimensão neste laudo — não há o que representar no gráfico.',
+      executiveTitle: 'Análise do Perfil Profissional & Veredito Executivo',
+      executiveDesc: 'Avaliação técnica consolidada com base no seu currículo e melhores práticas de RH',
+      noSummaryFallback: 'O parecer executivo não foi produzido nesta análise. Reprocesse o currículo para gerá-lo — não há cobrança nova.',
+      strengthsTitle: 'Pontos Fortes do Perfil',
+      noStrengths: 'Nenhum ponto forte registrado.',
+      weaknessesTitle: 'Pontos de Atenção (Fragilidades)',
+      noWeaknesses: 'Nenhum ponto de atenção crítico.',
+      recommendationsTitle: 'Sugestões Práticas de Melhoria',
+      recommendationsDesc: 'Ações recomendadas para aumentar suas chances de entrevista',
+      keywordsTitle: 'Palavras-Chave ATS Sugeridas',
+      keywordsDesc: 'Adicione estas palavras-chave estratégicas ao seu currículo para passar pelos filtros automáticos',
+      matchTitle: 'Análise de Compatibilidade por Vaga Alvo',
+      matchTargetJobPrefix: 'Cargo Alvo: {job}',
+      matchNoTargetJob: 'Comparativo de exigências x conhecimentos do candidato',
+      matchScoreLabel: 'Score de Match:',
+      matchVerdictLabel: 'Avaliação de Aderência:',
+      matchedReqTitle: 'Requisitos Atendidos (Conhecimentos OK)',
+      noMatchedReq: 'Nenhum requisito diretamente correspondido.',
+      missingReqTitle: 'Requisitos Faltantes / Lacunas a Desenvolver',
+      noMissingReq: 'Parabéns! Nenhuma lacuna crítica encontrada.',
+      actionPlanLabel: 'Plano de Ação & Orientação para Performar Melhor:',
+      matchToneIncompatibleHeadline: 'Esta vaga exige requisitos que o currículo não atende',
+      matchToneIncompatibleDetail: 'A candidatura a esta vaga tende a ser reprovada logo na triagem, e nenhum ajuste de texto muda isso. Não é um veredito sobre o seu currículo: é a distância entre ele e ESTA vaga. Compare com uma vaga da sua área para ver a diferença.',
+      matchTonePartialHeadline: 'Dá para disputar esta vaga, com ajustes',
+      matchTonePartialDetail: 'Há lacunas, mas são do tipo que o currículo resolve: ênfase, palavra-chave e evidência do que você já fez. Os requisitos ausentes abaixo são a lista do que atacar.',
+      matchToneAlignedHeadline: 'Seu perfil é aderente a esta vaga',
+      matchToneAlignedDetail: 'Os requisitos principais estão cobertos. O trabalho aqui é de acabamento — deixar explícito o que já existe no currículo.',
+      dimensionsDetailTitle: 'Detalhamento por dimensão',
+      dimensionsDetailDesc: 'Critérios de ATS, recrutamento executivo, plano de carreira e capacitação',
+      noTargetedTitle: 'Sem alterações pontuais neste laudo',
+      noTargetedDesc: 'Esta análise não devolveu trechos específicos do seu currículo para ajustar. Reprocessar o currículo costuma resolver — e não há cobrança nova.',
+      targetedTitle: 'Onde & Por Que Ajustar (Diagnóstico Ponto a Ponto)',
+      targetedDesc: 'A IA identificou trechos exatos que estão reduzindo sua nota e justifica o impacto de cada alteração.',
+      currentTextLabel: 'Trecho Atual no Currículo',
+      suggestedTextLabel: 'Sugestão Recomendada (Fórmula STAR/XYZ)',
+      rationaleLabel: 'Justificativa Técnica & Motivo da Alteração:',
+      careerTitle: 'Indeciso de qual vaga concorrer? Orientação Vocacional de Carreira',
+      careerDesc: 'Nosso Agente de Carreira lê seu perfil e aponta as 3 áreas/cargos com maior aderência ao que você já construiu. Já incluída na Análise Completa deste currículo.',
+      updateDiagnosisButton: 'Atualizar Diagnóstico',
+      discoverAreaButton: 'Descobrir Minha Área Ideal',
+      mappingAreas: 'Mapeando as 3 áreas com maior aderência ao seu perfil...',
+      careerTimeEstimate: 'Costuma levar de 15 a 40 segundos. Não feche esta página.',
+      profileSummaryLabel: 'Resumo do Perfil Identificado:',
+      optionLabel: 'Opção #{n}',
+      adherenceLabel: '{pct}% aderência',
+      recommendedSkillsLabel: 'Habilidades recomendadas:',
+      adherenceDisclaimer: 'A aderência mede o quanto sua trajetória se aproxima do que essas áreas costumam exigir. Não é probabilidade de contratação nem medição do mercado de trabalho.',
+      careerAdviceLabel: 'Conselho Estratégico de Carreira:',
+      letterTitle: 'Carta de Apresentação & Resumo Profissional',
+      letterDesc: 'Escritos a partir do seu currículo real e direcionados à vaga alvo, no formato de candidatura do seu mercado. Já incluídos na Análise Completa deste currículo.',
+      regenerateLetterButton: 'Gerar novamente',
+      writeLetterButton: 'Escrever minha carta',
+      writingLetterText: 'Redigindo a carta e o resumo direcionados...',
+      letterTimeEstimate: 'Costuma levar de 20 a 45 segundos. Não feche esta página.',
+      letterEmptyState: 'Ainda não gerada para este currículo. Ela usa a vaga alvo que você informou no envio — quanto mais completa a descrição da vaga, mais direcionados ficam os dois textos.',
+      letterTargetedTo: 'Direcionada a: {job}',
+      summaryLabel: 'Resumo profissional',
+      copyButton: 'Copiar',
+      summaryFootnote: 'Este é o parágrafo de abertura do currículo. O texto "Sobre" do LinkedIn é outro, e sai na aba de Mídias & Redes Sociais.',
+      letterLabel: 'Carta de apresentação',
+      letterKeywordsLabel: 'Termos da vaga incorporados aos textos',
+      ctaTitle: 'Pronto para melhorar seu currículo?',
+      ctaDesc: 'Com sua autorização, reescrevemos o currículo aplicando todas as recomendações acima.',
+      ctaButton: 'Reescrever currículo',
+    },
   },
 
   en: {
@@ -1982,6 +2239,131 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       whatWillBeAnalyzedLabel: 'What will be analyzed:',
       whatWillBeAnalyzedDesc: 'structure, summary, results (STAR/XYZ), hard/soft skills, ATS keywords, career trajectory, course/training suggestions, and global digital presence optimization (LinkedIn, GitHub, Behance, etc.).',
     },
+    analysis: {
+      loadingText: 'Loading resume analysis...',
+      notFoundText: 'No resume found to display the analysis.',
+      uploadButton: 'Upload resume',
+      loadErrorFallback: 'Error loading.',
+      connectionError: 'Connection error.',
+      reportTitle: 'Analysis report',
+      startingAnalysis: 'Starting predictive analysis across 8 dimensions...',
+      processingAuto: 'Your report is being processed automatically by AI — no further clicks needed.',
+      retryButton: 'Try again',
+      orientationSuccess: 'Vocational Orientation diagnosis generated successfully!',
+      orientationErrorFallback: 'The diagnosis could not be completed this time. Nothing was charged — try again.',
+      orientationConnectionError: 'Connection error while generating the vocational orientation. Check your connection and try again.',
+      letterSuccess: 'Cover letter and professional summary generated.',
+      letterErrorFallback: 'The letter could not be written this time. Nothing was charged — try again.',
+      letterConnectionError: 'Connection error while generating the letter. Check your connection and try again.',
+      copiedTemplate: '{label} copied.',
+      copyErrorFallback: 'Could not copy. Select the text and copy it manually.',
+      dimRelevanceToRole: 'Relevance to the Role',
+      dimExperienceImpact: 'Impact of Experience',
+      dimClarityFormatting: 'Clarity & Formatting',
+      dimAtsOptimization: 'ATS Optimization',
+      dimKeywordIntegration: 'Keyword Integration',
+      dimStructure: 'Structure & ATS Compatibility',
+      dimSummary: 'Summary & Positioning',
+      dimImpact: 'Results (STAR/XYZ)',
+      dimSkills: 'Skills & Tools',
+      dimExperience: 'Experience & Action Verbs',
+      dimKeywords: 'Keywords & Match',
+      dimCareer: 'Career Path & Plan',
+      dimUpskilling: 'Upskilling & Courses',
+      dimEducation: 'Education & Courses',
+      dimLanguage: 'Language & Tone',
+      tabAll: 'Full View',
+      tabOverview: 'Score & Verdict',
+      tabSocial: 'Social Media & Profiles',
+      tabMatch: 'Target Job Match',
+      tabCareer: 'Vocational Agent',
+      tabLetter: 'Letter & Summary',
+      tabDimensions: '8 Dimensions',
+      tabTargeted: 'STAR/XYZ Edits',
+      scoreNotEvaluated: 'Score not evaluated',
+      atsApprovedSticky: 'ATS approved',
+      atsRejectedSticky: 'ATS rejected',
+      atsNotEvaluatedSticky: 'ATS not evaluated',
+      viewFullReport: 'View full report',
+      scoreAuditLabel: 'Score Audit',
+      atsPass: 'ATS PASS',
+      atsFail: 'ATS FAIL',
+      atsNotEvaluated: 'ATS NOT EVALUATED',
+      calcDimensionsLabel: 'Dimension Calculation',
+      algorithmicAverage: 'Algorithmic Average',
+      noDimensionScores: 'This report did not include per-dimension scores. Reprocess the analysis to get them.',
+      scoreLabelNotEvaluated: 'Not evaluated',
+      scoreLabelExcellent: 'Excellent',
+      scoreLabelGood: 'Good',
+      scoreLabelRegular: 'Fair',
+      scoreLabelNeedsImprovement: 'Needs improvement',
+      performanceByDimension: 'Performance by dimension',
+      noChartData: 'No per-dimension scores in this report — nothing to plot.',
+      executiveTitle: 'Professional Profile Analysis & Executive Verdict',
+      executiveDesc: 'Consolidated technical assessment based on your resume and HR best practices',
+      noSummaryFallback: 'The executive summary was not produced in this analysis. Reprocess the resume to generate it — no new charge.',
+      strengthsTitle: 'Profile Strengths',
+      noStrengths: 'No strengths recorded.',
+      weaknessesTitle: 'Points of Attention (Weaknesses)',
+      noWeaknesses: 'No critical points of attention.',
+      recommendationsTitle: 'Practical Improvement Suggestions',
+      recommendationsDesc: 'Recommended actions to increase your interview chances',
+      keywordsTitle: 'Suggested ATS Keywords',
+      keywordsDesc: 'Add these strategic keywords to your resume to get past automated filters',
+      matchTitle: 'Target Job Compatibility Analysis',
+      matchTargetJobPrefix: 'Target Role: {job}',
+      matchNoTargetJob: 'Comparison of requirements vs. the candidate\'s knowledge',
+      matchScoreLabel: 'Match Score:',
+      matchVerdictLabel: 'Fit Assessment:',
+      matchedReqTitle: 'Requirements Met (Knowledge OK)',
+      noMatchedReq: 'No requirement directly matched.',
+      missingReqTitle: 'Missing Requirements / Gaps to Develop',
+      noMissingReq: 'Congratulations! No critical gaps found.',
+      actionPlanLabel: 'Action Plan & Guidance to Perform Better:',
+      matchToneIncompatibleHeadline: 'This role requires qualifications the resume doesn\'t meet',
+      matchToneIncompatibleDetail: 'This application is likely to be rejected in initial screening, and no text edit changes that. This is not a verdict on your resume: it is the distance between it and THIS role. Compare it with a role in your field to see the difference.',
+      matchTonePartialHeadline: 'This role is within reach, with adjustments',
+      matchTonePartialDetail: 'There are gaps, but the kind your resume can fix: emphasis, keywords, and evidence of what you\'ve already done. The missing requirements below are the list of what to tackle.',
+      matchToneAlignedHeadline: 'Your profile fits this role',
+      matchToneAlignedDetail: 'The main requirements are covered. The remaining work here is polish — making explicit what\'s already in the resume.',
+      dimensionsDetailTitle: 'Dimension breakdown',
+      dimensionsDetailDesc: 'ATS criteria, executive recruiting, career plan, and upskilling',
+      noTargetedTitle: 'No targeted edits in this report',
+      noTargetedDesc: 'This analysis did not return specific resume excerpts to adjust. Reprocessing the resume usually resolves this — no new charge.',
+      targetedTitle: 'Where & Why to Adjust (Point-by-Point Diagnosis)',
+      targetedDesc: 'The AI identified exact excerpts that are lowering your score and explains the impact of each change.',
+      currentTextLabel: 'Current Excerpt in the Resume',
+      suggestedTextLabel: 'Recommended Suggestion (STAR/XYZ Formula)',
+      rationaleLabel: 'Technical Rationale & Reason for the Change:',
+      careerTitle: 'Not sure which role to pursue? Vocational Career Orientation',
+      careerDesc: 'Our Career Agent reads your profile and points to the 3 areas/roles with the best fit to what you\'ve already built. Already included in this resume\'s Full Analysis.',
+      updateDiagnosisButton: 'Update Diagnosis',
+      discoverAreaButton: 'Discover My Ideal Area',
+      mappingAreas: 'Mapping the 3 areas with the best fit for your profile...',
+      careerTimeEstimate: 'Usually takes 15 to 40 seconds. Don\'t close this page.',
+      profileSummaryLabel: 'Identified Profile Summary:',
+      optionLabel: 'Option #{n}',
+      adherenceLabel: '{pct}% fit',
+      recommendedSkillsLabel: 'Recommended skills:',
+      adherenceDisclaimer: 'Fit measures how close your trajectory is to what these areas typically require. It is not a hiring probability or a labor-market measurement.',
+      careerAdviceLabel: 'Strategic Career Advice:',
+      letterTitle: 'Cover Letter & Professional Summary',
+      letterDesc: 'Written from your actual resume and targeted to the role, in the application format of your market. Already included in this resume\'s Full Analysis.',
+      regenerateLetterButton: 'Generate again',
+      writeLetterButton: 'Write my letter',
+      writingLetterText: 'Writing the targeted letter and summary...',
+      letterTimeEstimate: 'Usually takes 20 to 45 seconds. Don\'t close this page.',
+      letterEmptyState: 'Not yet generated for this resume. It uses the target role you provided at upload — the more complete the job description, the more targeted both texts become.',
+      letterTargetedTo: 'Targeted to: {job}',
+      summaryLabel: 'Professional summary',
+      copyButton: 'Copy',
+      summaryFootnote: 'This is the resume\'s opening paragraph. The LinkedIn "About" text is different, and lives in the Social Media & Profiles tab.',
+      letterLabel: 'Cover letter',
+      letterKeywordsLabel: 'Job terms incorporated into the texts',
+      ctaTitle: 'Ready to improve your resume?',
+      ctaDesc: 'With your authorization, we rewrite the resume applying all the recommendations above.',
+      ctaButton: 'Rewrite resume',
+    },
   },
 
   es: {
@@ -2636,6 +3018,131 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       submitButton: 'Iniciar Auditoría',
       whatWillBeAnalyzedLabel: 'Qué se analizará:',
       whatWillBeAnalyzedDesc: 'estructura, resumen, resultados (STAR/XYZ), hard/soft skills, palabras clave ATS, trayectoria profesional, sugerencia de cursos/capacitación y optimización de presencia digital global (LinkedIn, GitHub, Behance, etc.).',
+    },
+    analysis: {
+      loadingText: 'Cargando análisis del currículum...',
+      notFoundText: 'No se encontró ningún currículum para mostrar el análisis.',
+      uploadButton: 'Enviar currículum',
+      loadErrorFallback: 'Error al cargar.',
+      connectionError: 'Error de conexión.',
+      reportTitle: 'Informe de análisis',
+      startingAnalysis: 'Iniciando análisis predictivo en 8 dimensiones...',
+      processingAuto: 'Tu informe se está procesando automáticamente con IA, sin necesidad de nuevos clics.',
+      retryButton: 'Intentar de nuevo',
+      orientationSuccess: '¡Diagnóstico de Orientación Vocacional generado con éxito!',
+      orientationErrorFallback: 'El diagnóstico no pudo completarse en este intento. No se realizó ningún cobro — inténtalo de nuevo.',
+      orientationConnectionError: 'Fallo de conexión al generar la orientación vocacional. Verifica tu conexión e inténtalo de nuevo.',
+      letterSuccess: 'Carta de presentación y resumen profesional generados.',
+      letterErrorFallback: 'La carta no pudo redactarse en este intento. No se realizó ningún cobro — inténtalo de nuevo.',
+      letterConnectionError: 'Fallo de conexión al generar la carta. Verifica tu conexión e inténtalo de nuevo.',
+      copiedTemplate: '{label} copiado.',
+      copyErrorFallback: 'No fue posible copiar. Selecciona el texto y cópialo manualmente.',
+      dimRelevanceToRole: 'Relevancia para el Puesto',
+      dimExperienceImpact: 'Impacto de las Experiencias',
+      dimClarityFormatting: 'Claridad y Formato',
+      dimAtsOptimization: 'Optimización ATS',
+      dimKeywordIntegration: 'Integración de Palabras Clave',
+      dimStructure: 'Estructura y Compatibilidad ATS',
+      dimSummary: 'Resumen y Posicionamiento',
+      dimImpact: 'Resultados (STAR/XYZ)',
+      dimSkills: 'Habilidades y Herramientas',
+      dimExperience: 'Experiencia y Verbos de Acción',
+      dimKeywords: 'Palabras Clave y Match',
+      dimCareer: 'Trayectoria y Plan de Carrera',
+      dimUpskilling: 'Capacitación y Cursos',
+      dimEducation: 'Formación y Cursos',
+      dimLanguage: 'Lenguaje y Tono',
+      tabAll: 'Vista Completa',
+      tabOverview: 'Puntaje y Veredicto',
+      tabSocial: 'Redes y Perfiles Sociales',
+      tabMatch: 'Match con Puesto Objetivo',
+      tabCareer: 'Agente Vocacional',
+      tabLetter: 'Carta y Resumen',
+      tabDimensions: '8 Dimensiones',
+      tabTargeted: 'Ajustes STAR/XYZ',
+      scoreNotEvaluated: 'Puntaje no evaluado',
+      atsApprovedSticky: 'ATS aprobado',
+      atsRejectedSticky: 'ATS reprobado',
+      atsNotEvaluatedSticky: 'ATS no evaluado',
+      viewFullReport: 'Ver informe completo',
+      scoreAuditLabel: 'Score Audit',
+      atsPass: 'ATS PASS',
+      atsFail: 'ATS FAIL',
+      atsNotEvaluated: 'ATS NO EVALUADO',
+      calcDimensionsLabel: 'Cálculo de Dimensiones',
+      algorithmicAverage: 'Promedio Algorítmico',
+      noDimensionScores: 'Este informe no trajo puntajes por dimensión. Vuelve a procesar el análisis para obtenerlos.',
+      scoreLabelNotEvaluated: 'No evaluado',
+      scoreLabelExcellent: 'Excelente',
+      scoreLabelGood: 'Bueno',
+      scoreLabelRegular: 'Regular',
+      scoreLabelNeedsImprovement: 'Necesita mejorar',
+      performanceByDimension: 'Desempeño por dimensión',
+      noChartData: 'Sin puntajes por dimensión en este informe — no hay nada que representar en el gráfico.',
+      executiveTitle: 'Análisis del Perfil Profesional y Veredicto Ejecutivo',
+      executiveDesc: 'Evaluación técnica consolidada según tu currículum y las mejores prácticas de RR. HH.',
+      noSummaryFallback: 'El dictamen ejecutivo no se produjo en este análisis. Vuelve a procesar el currículum para generarlo — sin cobro nuevo.',
+      strengthsTitle: 'Puntos Fuertes del Perfil',
+      noStrengths: 'Ningún punto fuerte registrado.',
+      weaknessesTitle: 'Puntos de Atención (Debilidades)',
+      noWeaknesses: 'Ningún punto de atención crítico.',
+      recommendationsTitle: 'Sugerencias Prácticas de Mejora',
+      recommendationsDesc: 'Acciones recomendadas para aumentar tus posibilidades de entrevista',
+      keywordsTitle: 'Palabras Clave ATS Sugeridas',
+      keywordsDesc: 'Agrega estas palabras clave estratégicas a tu currículum para pasar los filtros automáticos',
+      matchTitle: 'Análisis de Compatibilidad con Puesto Objetivo',
+      matchTargetJobPrefix: 'Puesto Objetivo: {job}',
+      matchNoTargetJob: 'Comparativo de requisitos frente a los conocimientos del candidato',
+      matchScoreLabel: 'Puntaje de Match:',
+      matchVerdictLabel: 'Evaluación de Adecuación:',
+      matchedReqTitle: 'Requisitos Cumplidos (Conocimientos OK)',
+      noMatchedReq: 'Ningún requisito directamente coincidente.',
+      missingReqTitle: 'Requisitos Faltantes / Brechas a Desarrollar',
+      noMissingReq: '¡Felicidades! No se encontraron brechas críticas.',
+      actionPlanLabel: 'Plan de Acción y Orientación para Rendir Mejor:',
+      matchToneIncompatibleHeadline: 'Este puesto exige requisitos que el currículum no cumple',
+      matchToneIncompatibleDetail: 'Esta postulación tiende a ser rechazada ya en la preselección, y ningún ajuste de texto cambia eso. No es un veredicto sobre tu currículum: es la distancia entre él y ESTE puesto. Compáralo con un puesto de tu área para ver la diferencia.',
+      matchTonePartialHeadline: 'Puedes disputar este puesto, con ajustes',
+      matchTonePartialDetail: 'Hay brechas, pero del tipo que el currículum resuelve: énfasis, palabra clave y evidencia de lo que ya has hecho. Los requisitos faltantes abajo son la lista de lo que atacar.',
+      matchToneAlignedHeadline: 'Tu perfil se ajusta a este puesto',
+      matchToneAlignedDetail: 'Los requisitos principales están cubiertos. El trabajo aquí es de acabado — dejar explícito lo que ya existe en el currículum.',
+      dimensionsDetailTitle: 'Detalle por dimensión',
+      dimensionsDetailDesc: 'Criterios de ATS, reclutamiento ejecutivo, plan de carrera y capacitación',
+      noTargetedTitle: 'Sin ajustes puntuales en este informe',
+      noTargetedDesc: 'Este análisis no devolvió fragmentos específicos de tu currículum para ajustar. Volver a procesar el currículum suele resolverlo — sin cobro nuevo.',
+      targetedTitle: 'Dónde y Por Qué Ajustar (Diagnóstico Punto por Punto)',
+      targetedDesc: 'La IA identificó fragmentos exactos que están reduciendo tu puntaje y justifica el impacto de cada cambio.',
+      currentTextLabel: 'Fragmento Actual en el Currículum',
+      suggestedTextLabel: 'Sugerencia Recomendada (Fórmula STAR/XYZ)',
+      rationaleLabel: 'Justificación Técnica y Motivo del Cambio:',
+      careerTitle: '¿Indeciso sobre qué puesto postular? Orientación Vocacional de Carrera',
+      careerDesc: 'Nuestro Agente de Carrera lee tu perfil y señala las 3 áreas/puestos con mayor adecuación a lo que ya has construido. Ya incluido en el Análisis Completo de este currículum.',
+      updateDiagnosisButton: 'Actualizar Diagnóstico',
+      discoverAreaButton: 'Descubrir Mi Área Ideal',
+      mappingAreas: 'Mapeando las 3 áreas con mayor adecuación a tu perfil...',
+      careerTimeEstimate: 'Suele tardar de 15 a 40 segundos. No cierres esta página.',
+      profileSummaryLabel: 'Resumen del Perfil Identificado:',
+      optionLabel: 'Opción #{n}',
+      adherenceLabel: '{pct}% de adecuación',
+      recommendedSkillsLabel: 'Habilidades recomendadas:',
+      adherenceDisclaimer: 'La adecuación mide cuánto se acerca tu trayectoria a lo que estas áreas suelen exigir. No es probabilidad de contratación ni una medición del mercado laboral.',
+      careerAdviceLabel: 'Consejo Estratégico de Carrera:',
+      letterTitle: 'Carta de Presentación y Resumen Profesional',
+      letterDesc: 'Escritos a partir de tu currículum real y dirigidos al puesto objetivo, en el formato de postulación de tu mercado. Ya incluidos en el Análisis Completo de este currículum.',
+      regenerateLetterButton: 'Generar de nuevo',
+      writeLetterButton: 'Escribir mi carta',
+      writingLetterText: 'Redactando la carta y el resumen dirigidos...',
+      letterTimeEstimate: 'Suele tardar de 20 a 45 segundos. No cierres esta página.',
+      letterEmptyState: 'Aún no generada para este currículum. Usa el puesto objetivo que indicaste al enviarlo — cuanto más completa la descripción del puesto, más dirigidos quedan ambos textos.',
+      letterTargetedTo: 'Dirigida a: {job}',
+      summaryLabel: 'Resumen profesional',
+      copyButton: 'Copiar',
+      summaryFootnote: 'Este es el párrafo de apertura del currículum. El texto "Acerca de" de LinkedIn es distinto, y aparece en la pestaña de Redes y Perfiles Sociales.',
+      letterLabel: 'Carta de presentación',
+      letterKeywordsLabel: 'Términos del puesto incorporados a los textos',
+      ctaTitle: '¿Listo para mejorar tu currículum?',
+      ctaDesc: 'Con tu autorización, reescribimos el currículum aplicando todas las recomendaciones anteriores.',
+      ctaButton: 'Reescribir currículum',
     },
   },
 }

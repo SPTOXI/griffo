@@ -15,7 +15,8 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
 } from 'recharts'
 import { UploadProgressModal } from './upload-progress-modal'
-import { JOB_MATCH_TONE, jobMatchSeverity } from '@/lib/analysis/job-match'
+import { jobMatchSeverity, type JobMatchSeverity } from '@/lib/analysis/job-match'
+import { useI18n } from '@/context/i18n-context'
 import {
   ProfileConflictPrompt,
   wasConflictDismissed,
@@ -91,6 +92,8 @@ interface Resume {
 }
 
 export function AnalysisView() {
+  const { t } = useI18n()
+  const an = t.analysis
   const { activeResumeId, setView, openResume } = useNav()
   const [resume, setResume] = useState<Resume | null>(null)
   const [loading, setLoading] = useState(true)
@@ -142,7 +145,7 @@ export function AnalysisView() {
 
       if (res.ok && data?.careerOrientation) {
         setCareerOrientation(data.careerOrientation)
-        toast.success('Diagnóstico de Orientação Vocacional gerado com sucesso!')
+        toast.success(an.orientationSuccess)
       } else if (data?.code === 'ANALYSIS_REQUIRED') {
         // Este currículo ainda não foi liberado. A orientação não tem preço
         // próprio: o que falta é a Análise Completa dele.
@@ -150,14 +153,12 @@ export function AnalysisView() {
         setOrientationError(msg)
         toast.error(msg)
       } else {
-        const msg =
-          data?.error ||
-          'O diagnóstico não pôde ser concluído nesta tentativa. Nada foi cobrado — tente novamente.'
+        const msg = data?.error || an.orientationErrorFallback
         setOrientationError(msg)
         toast.error(msg)
       }
     } catch {
-      const msg = 'Falha de conexão ao gerar a orientação vocacional. Verifique sua internet e tente de novo.'
+      const msg = an.orientationConnectionError
       setOrientationError(msg)
       toast.error(msg)
     } finally {
@@ -182,16 +183,14 @@ export function AnalysisView() {
 
       if (res.ok && data?.coverLetter) {
         setCoverLetter(data.coverLetter)
-        toast.success('Carta de apresentação e resumo profissional gerados.')
+        toast.success(an.letterSuccess)
       } else {
-        const msg =
-          data?.error ||
-          'A carta não pôde ser redigida nesta tentativa. Nada foi cobrado — tente novamente.'
+        const msg = data?.error || an.letterErrorFallback
         setLetterError(msg)
         toast.error(msg)
       }
     } catch {
-      const msg = 'Falha de conexão ao gerar a carta. Verifique sua internet e tente de novo.'
+      const msg = an.letterConnectionError
       setLetterError(msg)
       toast.error(msg)
     } finally {
@@ -202,9 +201,9 @@ export function AnalysisView() {
   const copyToClipboard = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text)
-      toast.success(`${label} copiado.`)
+      toast.success(an.copiedTemplate.replace('{label}', label))
     } catch {
-      toast.error('Não foi possível copiar. Selecione o texto e copie manualmente.')
+      toast.error(an.copyErrorFallback)
     }
   }
 
@@ -228,7 +227,7 @@ export function AnalysisView() {
       const r = await internalFetch(`/api/resume/${id}?id=${id}`, { cache: 'no-store' })
       const data = await r.json()
       if (!r.ok) {
-        setError(data.error || 'Erro ao carregar.')
+        setError(data.error || an.loadErrorFallback)
         return
       }
       setResume(data.resume)
@@ -239,7 +238,7 @@ export function AnalysisView() {
         setCoverLetter(data.resume.coverLetter)
       }
     } catch {
-      setError('Erro de conexão.')
+      setError(an.connectionError)
     } finally {
       setLoading(false)
     }
@@ -360,7 +359,7 @@ export function AnalysisView() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
         <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
-        <p className="text-sm text-slate-500 font-medium">Carregando análise do currículo...</p>
+        <p className="text-sm text-slate-500 font-medium">{an.loadingText}</p>
       </div>
     )
   }
@@ -377,9 +376,9 @@ export function AnalysisView() {
   if (!resume) {
     return (
       <div className="text-center py-12 space-y-3">
-        <p className="text-slate-600">Nenhum currículo encontrado para exibir a análise.</p>
+        <p className="text-slate-600">{an.notFoundText}</p>
         <Button onClick={() => setView('upload')} className="bg-emerald-600 hover:bg-emerald-700">
-          Enviar currículo
+          {an.uploadButton}
         </Button>
       </div>
     )
@@ -423,18 +422,18 @@ export function AnalysisView() {
     return (
       <div className="space-y-4 max-w-3xl">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-slate-900">Laudo de análise</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{an.reportTitle}</h1>
         </div>
         <Card className="border-slate-200 shadow-sm">
           <CardContent className="p-8 text-center space-y-3">
             <Loader2 className="w-8 h-8 text-emerald-600 animate-spin mx-auto" />
-            <p className="text-slate-800 font-semibold text-base">Iniciando análise preditiva em 8 dimensões...</p>
-            <p className="text-xs text-slate-500">Seu laudo está sendo processado automaticamente pela IA sem necessidade de novos cliques.</p>
+            <p className="text-slate-800 font-semibold text-base">{an.startingAnalysis}</p>
+            <p className="text-xs text-slate-500">{an.processingAuto}</p>
             {error && (
               <div className="pt-2">
                 <Alert variant="destructive" className="mb-3"><AlertCircle className="w-4 h-4" /><AlertDescription>{error}</AlertDescription></Alert>
                 <Button onClick={() => reanalyze()} className="bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold">
-                  <RefreshCw className="w-3.5 h-3.5 mr-1" /> Tentar novamente
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" /> {an.retryButton}
                 </Button>
               </div>
             )}
@@ -510,21 +509,21 @@ export function AnalysisView() {
   }
 
   const DIMENSION_LABELS: Record<string, string> = {
-    relevance_to_role: 'Relevância para a Vaga',
-    experience_impact: 'Impacto das Experiências',
-    clarity_formatting: 'Clareza & Formatação',
-    ats_optimization: 'Otimização ATS',
-    keyword_integration: 'Integração de Palavras-Chave',
-    structure: 'Estrutura & Compatibilidade ATS',
-    summary: 'Resumo & Posicionamento',
-    impact: 'Resultados (STAR/XYZ)',
-    skills: 'Habilidades & Ferramentas',
-    experience: 'Experiência & Verbos de Ação',
-    keywords: 'Palavras-Chave & Match',
-    career: 'Trajetória & Plano de Carreira',
-    upskilling: 'Capacitação & Cursos',
-    education: 'Formação & Cursos',
-    language: 'Linguagem & Tom',
+    relevance_to_role: an.dimRelevanceToRole,
+    experience_impact: an.dimExperienceImpact,
+    clarity_formatting: an.dimClarityFormatting,
+    ats_optimization: an.dimAtsOptimization,
+    keyword_integration: an.dimKeywordIntegration,
+    structure: an.dimStructure,
+    summary: an.dimSummary,
+    impact: an.dimImpact,
+    skills: an.dimSkills,
+    experience: an.dimExperience,
+    keywords: an.dimKeywords,
+    career: an.dimCareer,
+    upskilling: an.dimUpskilling,
+    education: an.dimEducation,
+    language: an.dimLanguage,
   }
 
   /**
@@ -632,8 +631,8 @@ export function AnalysisView() {
   const hasScore = score !== null
   const scoreColor = !hasScore ? '#64748b' : score >= 8 ? '#16a34a' : score >= 5 ? '#d97706' : '#dc2626'
   const scoreLabel = !hasScore
-    ? 'Não avaliado'
-    : score >= 8 ? 'Excelente' : score >= 6.5 ? 'Bom' : score >= 5 ? 'Regular' : 'Precisa melhorar'
+    ? an.scoreLabelNotEvaluated
+    : score >= 8 ? an.scoreLabelExcellent : score >= 6.5 ? an.scoreLabelGood : score >= 5 ? an.scoreLabelRegular : an.scoreLabelNeedsImprovement
 
   const chartData = a.dimensions.map(d => ({
     dimension: (d.label || '').length > 20 ? (d.label || '').slice(0, 18) + '…' : (d.label || ''),
@@ -664,7 +663,7 @@ export function AnalysisView() {
               : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Visão Completa
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" /> {an.tabAll}
         </button>
         <button
           onClick={() => setActiveTab('overview')}
@@ -674,7 +673,7 @@ export function AnalysisView() {
               : 'bg-white text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-700'
           }`}
         >
-          <BarChart3 className="w-3.5 h-3.5" /> Score & Veredito
+          <BarChart3 className="w-3.5 h-3.5" /> {an.tabOverview}
         </button>
         <button
           onClick={() => setActiveTab('social')}
@@ -684,7 +683,7 @@ export function AnalysisView() {
               : 'bg-violet-50/80 text-violet-800 border-violet-200 hover:bg-violet-100'
           }`}
         >
-          <Share2 className="w-3.5 h-3.5" /> 🌐 Mídias & Redes Sociais
+          <Share2 className="w-3.5 h-3.5" /> 🌐 {an.tabSocial}
           <Badge className="bg-violet-200 text-violet-900 border-0 text-[10px] px-1.5 py-0 h-4 font-mono font-bold">
             {resume.socialAnalysis?.profiles?.length || 0}
           </Badge>
@@ -697,7 +696,7 @@ export function AnalysisView() {
               : 'bg-indigo-50/80 text-indigo-900 border-indigo-200 hover:bg-indigo-100'
           }`}
         >
-          <Target className="w-3.5 h-3.5" /> 💼 Match Vaga Alvo
+          <Target className="w-3.5 h-3.5" /> 💼 {an.tabMatch}
           {rawAnalysis.jobMatch && (
             /* A aba carrega a mesma cor do bloco: quem está em outra aba
                precisa ver que há um problema aqui sem ter de abrir. */
@@ -722,7 +721,7 @@ export function AnalysisView() {
               : 'bg-sky-50/80 text-sky-900 border-sky-200 hover:bg-sky-100'
           }`}
         >
-          <Compass className="w-3.5 h-3.5" /> 🧭 Agente Vocacional
+          <Compass className="w-3.5 h-3.5" /> 🧭 {an.tabCareer}
         </button>
         <button
           onClick={() => setActiveTab('letter')}
@@ -732,7 +731,7 @@ export function AnalysisView() {
               : 'bg-amber-50/80 text-amber-900 border-amber-200 hover:bg-amber-100'
           }`}
         >
-          <FileEdit className="w-3.5 h-3.5" /> ✉️ Carta & Resumo
+          <FileEdit className="w-3.5 h-3.5" /> ✉️ {an.tabLetter}
         </button>
         <button
           onClick={() => setActiveTab('dimensions')}
@@ -742,7 +741,7 @@ export function AnalysisView() {
               : 'bg-white text-slate-600 border-slate-200 hover:bg-emerald-50 hover:text-emerald-700'
           }`}
         >
-          <Award className="w-3.5 h-3.5" /> 📐 8 Dimensões ({parsedDimensions.length})
+          <Award className="w-3.5 h-3.5" /> 📐 {an.tabDimensions} ({parsedDimensions.length})
         </button>
         <button
           onClick={() => setActiveTab('targeted')}
@@ -752,7 +751,7 @@ export function AnalysisView() {
               : 'bg-white text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700'
           }`}
         >
-          <FileEdit className="w-3.5 h-3.5" /> ✏️ Ajustes STAR/XYZ
+          <FileEdit className="w-3.5 h-3.5" /> ✏️ {an.tabTargeted}
         </button>
       </div>
 
@@ -763,21 +762,21 @@ export function AnalysisView() {
       {activeTab !== 'all' && activeTab !== 'overview' && (
         <div className="sticky top-14 z-20 -mx-1 px-1 py-2 bg-white/95 backdrop-blur-sm border-b border-slate-200 flex items-center gap-3 text-xs">
           <span className="font-bold" style={{ color: scoreColor }}>
-            {hasScore ? `${score!.toFixed(1)} / 10` : 'Nota não avaliada'}
+            {hasScore ? `${score!.toFixed(1)} / 10` : an.scoreNotEvaluated}
           </span>
           <span className="text-slate-300">·</span>
           {a.atsFriendly === true ? (
-            <span className="flex items-center gap-1 text-emerald-700 font-semibold"><CheckCircle2 className="w-3.5 h-3.5" /> ATS aprovado</span>
+            <span className="flex items-center gap-1 text-emerald-700 font-semibold"><CheckCircle2 className="w-3.5 h-3.5" /> {an.atsApprovedSticky}</span>
           ) : a.atsFriendly === false ? (
-            <span className="flex items-center gap-1 text-rose-700 font-semibold"><XCircle className="w-3.5 h-3.5" /> ATS reprovado</span>
+            <span className="flex items-center gap-1 text-rose-700 font-semibold"><XCircle className="w-3.5 h-3.5" /> {an.atsRejectedSticky}</span>
           ) : (
-            <span className="text-slate-500">ATS não avaliado</span>
+            <span className="text-slate-500">{an.atsNotEvaluatedSticky}</span>
           )}
           <button
             onClick={() => setActiveTab('overview')}
             className="ml-auto text-primary font-semibold hover:underline shrink-0"
           >
-            Ver laudo completo
+            {an.viewFullReport}
           </button>
         </div>
       )}
@@ -797,13 +796,13 @@ export function AnalysisView() {
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/20 blur-3xl rounded-full pointer-events-none"></div>
           <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full relative z-10">
             <div className="w-full flex items-center justify-between mb-4">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Score Audit</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">{an.scoreAuditLabel}</p>
               {a.atsFriendly === true ? (
-                <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> ATS PASS</Badge>
+                <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> {an.atsPass}</Badge>
               ) : a.atsFriendly === false ? (
-                <Badge className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-black tracking-widest"><XCircle className="w-3 h-3 mr-1" /> ATS FAIL</Badge>
+                <Badge className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-black tracking-widest"><XCircle className="w-3 h-3 mr-1" /> {an.atsFail}</Badge>
               ) : (
-                <Badge className="bg-slate-500/10 text-slate-400 border border-slate-500/20 text-[10px] font-black tracking-widest">ATS NÃO AVALIADO</Badge>
+                <Badge className="bg-slate-500/10 text-slate-400 border border-slate-500/20 text-[10px] font-black tracking-widest">{an.atsNotEvaluated}</Badge>
               )}
             </div>
 
@@ -833,7 +832,7 @@ export function AnalysisView() {
             {/* PAINEL TRANSPARENTE DA FÓRMULA DE CÁLCULO */}
             <div className="mt-6 pt-4 border-t border-slate-700/50 text-left w-full space-y-2">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                <Info className="w-3.5 h-3.5 text-blue-400 shrink-0" /> Cálculo Dimensões
+                <Info className="w-3.5 h-3.5 text-blue-400 shrink-0" /> {an.calcDimensionsLabel}
               </p>
               {parsedDimensions.length > 0 ? (
                 <>
@@ -846,13 +845,13 @@ export function AnalysisView() {
                     ))}
                   </div>
                   <div className="bg-blue-500/10 border border-blue-500/20 p-2 rounded flex justify-between items-center mt-2">
-                    <span className="text-[9px] text-blue-400 font-bold uppercase tracking-wider">Média Algorítmica</span>
+                    <span className="text-[9px] text-blue-400 font-bold uppercase tracking-wider">{an.algorithmicAverage}</span>
                     <strong className="text-xs text-white font-black">{hasScore ? score.toFixed(1) : '—'}</strong>
                   </div>
                 </>
               ) : (
                 <p className="text-[10px] text-slate-400 leading-relaxed">
-                  Este laudo não trouxe as notas por dimensão. Reprocesse a análise para obtê-las.
+                  {an.noDimensionScores}
                 </p>
               )}
             </div>
@@ -861,7 +860,7 @@ export function AnalysisView() {
 
         <Card className="lg:col-span-2">
           <CardContent className="p-4 sm:p-6">
-            <p className="text-xs uppercase tracking-wider text-slate-500 mb-2">Desempenho por dimensão</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500 mb-2">{an.performanceByDimension}</p>
             <div className="h-64">
               {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -875,7 +874,7 @@ export function AnalysisView() {
               ) : (
                 <div className="h-full flex items-center justify-center text-center px-6">
                   <p className="text-sm text-slate-500">
-                    Sem notas por dimensão neste laudo — não há o que representar no gráfico.
+                    {an.noChartData}
                   </p>
                 </div>
               )}
@@ -893,10 +892,10 @@ export function AnalysisView() {
             </div>
             <div>
               <CardTitle className="text-base text-brand-navy font-bold">
-                📋 Análise do Perfil Profissional & Veredito Executivo
+                📋 {an.executiveTitle}
               </CardTitle>
               <CardDescription className="text-xs text-slate-500">
-                Avaliação técnica consolidada com base no seu currículo e melhores práticas de RH
+                {an.executiveDesc}
               </CardDescription>
             </div>
           </div>
@@ -906,8 +905,7 @@ export function AnalysisView() {
             <p className="text-sm text-slate-700 leading-relaxed font-medium">{a.summary}</p>
           ) : (
             <p className="text-sm text-slate-500 leading-relaxed">
-              O parecer executivo não foi produzido nesta análise. Reprocesse o currículo para gerá-lo — não há
-              cobrança nova.
+              {an.noSummaryFallback}
             </p>
           )}
         </CardContent>
@@ -919,7 +917,7 @@ export function AnalysisView() {
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <CardTitle className="text-base text-emerald-950 font-bold">Pontos Fortes do Perfil</CardTitle>
+              <CardTitle className="text-base text-emerald-950 font-bold">{an.strengthsTitle}</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -932,7 +930,7 @@ export function AnalysisView() {
                   </li>
                 ))}
               </ul>
-            ) : <p className="text-xs text-slate-500">Nenhum ponto forte registrado.</p>}
+            ) : <p className="text-xs text-slate-500">{an.noStrengths}</p>}
           </CardContent>
         </Card>
 
@@ -940,7 +938,7 @@ export function AnalysisView() {
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-amber-600" />
-              <CardTitle className="text-base text-amber-950 font-bold">Pontos de Atenção (Fragilidades)</CardTitle>
+              <CardTitle className="text-base text-amber-950 font-bold">{an.weaknessesTitle}</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -953,7 +951,7 @@ export function AnalysisView() {
                   </li>
                 ))}
               </ul>
-            ) : <p className="text-xs text-slate-500">Nenhum ponto de atenção crítico.</p>}
+            ) : <p className="text-xs text-slate-500">{an.noWeaknesses}</p>}
           </CardContent>
         </Card>
       </div>
@@ -965,8 +963,8 @@ export function AnalysisView() {
             <div className="flex items-center gap-2">
               <Lightbulb className="w-5 h-5 text-sky-600" />
               <div>
-                <CardTitle className="text-base text-sky-950 font-bold">💡 Sugestões Práticas de Melhoria</CardTitle>
-                <CardDescription className="text-xs text-slate-500">Ações recomendadas para aumentar suas chances de entrevista</CardDescription>
+                <CardTitle className="text-base text-sky-950 font-bold">💡 {an.recommendationsTitle}</CardTitle>
+                <CardDescription className="text-xs text-slate-500">{an.recommendationsDesc}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -989,9 +987,9 @@ export function AnalysisView() {
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <Key className="w-4 h-4 text-violet-600" />
-              <CardTitle className="text-base text-violet-950 font-bold">🔑 Palavras-Chave ATS Sugeridas</CardTitle>
+              <CardTitle className="text-base text-violet-950 font-bold">🔑 {an.keywordsTitle}</CardTitle>
             </div>
-            <CardDescription className="text-xs text-slate-500">Adicione estas palavras-chave estratégicas ao seu currículo para passar pelos filtros automáticos</CardDescription>
+            <CardDescription className="text-xs text-slate-500">{an.keywordsDesc}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
@@ -1029,7 +1027,12 @@ export function AnalysisView() {
          * a mesma cor para desfechos opostos esconde o resultado.
          */
         const severity = jobMatchSeverity(rawAnalysis.jobMatch.matchPercentage)
-        const tone = JOB_MATCH_TONE[severity]
+        const matchTone: Record<JobMatchSeverity, { headline: string; detail: string }> = {
+          incompatible: { headline: an.matchToneIncompatibleHeadline, detail: an.matchToneIncompatibleDetail },
+          partial: { headline: an.matchTonePartialHeadline, detail: an.matchTonePartialDetail },
+          aligned: { headline: an.matchToneAlignedHeadline, detail: an.matchToneAlignedDetail },
+        }
+        const tone = matchTone[severity]
         const skin = {
           incompatible: {
             card: 'border-red-300 bg-gradient-to-br from-red-50/70 via-white to-rose-50/40',
@@ -1067,15 +1070,15 @@ export function AnalysisView() {
                 </div>
                 <div>
                   <CardTitle className={`text-base ${skin.title} font-bold flex items-center gap-2`}>
-                    Análise de Compatibilidade por Vaga Alvo
+                    {an.matchTitle}
                   </CardTitle>
                   <CardDescription className="text-xs text-slate-600">
-                    {rawAnalysis.jobMatch.targetJob ? `Cargo Alvo: ${rawAnalysis.jobMatch.targetJob}` : 'Comparativo de exigências x conhecimentos do candidato'}
+                    {rawAnalysis.jobMatch.targetJob ? an.matchTargetJobPrefix.replace('{job}', rawAnalysis.jobMatch.targetJob) : an.matchNoTargetJob}
                   </CardDescription>
                 </div>
               </div>
               <div className={`flex items-center gap-2 bg-white px-4 py-2 rounded-xl border ${skin.box} shadow-xs self-start sm:self-auto`}>
-                <span className="text-xs font-semibold text-slate-500">Score de Match:</span>
+                <span className="text-xs font-semibold text-slate-500">{an.matchScoreLabel}</span>
                 <span className={`text-2xl font-extrabold ${skin.score}`}>
                   {rawAnalysis.jobMatch.matchPercentage}%
                 </span>
@@ -1100,7 +1103,7 @@ export function AnalysisView() {
 
             {rawAnalysis.jobMatch.verdict && (
               <div className={`p-3 rounded-lg bg-white border ${skin.box} text-xs text-slate-700 leading-relaxed`}>
-                <p className={`font-bold ${skin.title} mb-0.5`}>Avaliação de Aderência:</p>
+                <p className={`font-bold ${skin.title} mb-0.5`}>{an.matchVerdictLabel}</p>
                 <p>{rawAnalysis.jobMatch.verdict}</p>
               </div>
             )}
@@ -1109,7 +1112,7 @@ export function AnalysisView() {
               {/* MATCHED REQUIREMENTS */}
               <div className="p-4 rounded-xl bg-white border border-emerald-100 space-y-2">
                 <p className="font-bold text-emerald-900 text-xs flex items-center gap-1.5 border-b border-emerald-50 pb-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Requisitos Atendidos (Conhecimentos OK)
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> {an.matchedReqTitle}
                 </p>
                 {rawAnalysis.jobMatch.matchedRequirements?.length ? (
                   <ul className="space-y-1.5">
@@ -1121,14 +1124,14 @@ export function AnalysisView() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-slate-400">Nenhum requisito diretamente correspondido.</p>
+                  <p className="text-slate-400">{an.noMatchedReq}</p>
                 )}
               </div>
 
               {/* MISSING REQUIREMENTS */}
               <div className="p-4 rounded-xl bg-white border border-rose-100 space-y-2">
                 <p className="font-bold text-rose-900 text-xs flex items-center gap-1.5 border-b border-rose-50 pb-2">
-                  <XCircle className="w-4 h-4 text-rose-600" /> Requisitos Faltantes / Lacunas a Desenvolver
+                  <XCircle className="w-4 h-4 text-rose-600" /> {an.missingReqTitle}
                 </p>
                 {rawAnalysis.jobMatch.missingRequirements?.length ? (
                   <ul className="space-y-1.5">
@@ -1140,7 +1143,7 @@ export function AnalysisView() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-emerald-600 font-medium">Parabéns! Nenhuma lacuna crítica encontrada.</p>
+                  <p className="text-emerald-600 font-medium">{an.noMissingReq}</p>
                 )}
               </div>
             </div>
@@ -1149,7 +1152,7 @@ export function AnalysisView() {
             {rawAnalysis.jobMatch.actionPlan && rawAnalysis.jobMatch.actionPlan.length > 0 && (
               <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-2 text-xs">
                 <p className="font-bold text-amber-950 flex items-center gap-1.5">
-                  <Lightbulb className="w-4 h-4 text-amber-600" /> Plano de Ação & Orientação para Performar Melhor:
+                  <Lightbulb className="w-4 h-4 text-amber-600" /> {an.actionPlanLabel}
                 </p>
                 <ul className="space-y-1 text-slate-800 pl-1">
                   {rawAnalysis.jobMatch.actionPlan.map((action: string, idx: number) => (
@@ -1172,8 +1175,8 @@ export function AnalysisView() {
       {(activeTab === 'all' || activeTab === 'dimensions') && (
         <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Detalhamento por dimensão</CardTitle>
-          <CardDescription>Critérios de ATS, recrutamento executivo, plano de carreira e capacitação</CardDescription>
+          <CardTitle className="text-base">{an.dimensionsDetailTitle}</CardTitle>
+          <CardDescription>{an.dimensionsDetailDesc}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {a.dimensions.map((d) => {
@@ -1201,10 +1204,9 @@ export function AnalysisView() {
       {activeTab === 'targeted' && a.targetedChanges.length === 0 && (
         <Card className="border-slate-200">
           <CardContent className="p-6 text-center space-y-1">
-            <p className="text-sm font-semibold text-slate-700">Sem alterações pontuais neste laudo</p>
+            <p className="text-sm font-semibold text-slate-700">{an.noTargetedTitle}</p>
             <p className="text-xs text-slate-500">
-              Esta análise não devolveu trechos específicos do seu currículo para ajustar. Reprocessar o currículo
-              costuma resolver — e não há cobrança nova.
+              {an.noTargetedDesc}
             </p>
           </CardContent>
         </Card>
@@ -1220,10 +1222,10 @@ export function AnalysisView() {
               </div>
               <div>
                 <CardTitle className="text-base text-sky-950 font-bold">
-                  🎯 Onde & Por Que Ajustar (Diagnóstico Ponto a Ponto)
+                  🎯 {an.targetedTitle}
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-600">
-                  A IA identificou trechos exatos que estão reduzindo sua nota e justifica o impacto de cada alteração.
+                  {an.targetedDesc}
                 </CardDescription>
               </div>
             </div>
@@ -1239,18 +1241,18 @@ export function AnalysisView() {
 
                 <div className="grid md:grid-cols-2 gap-3 text-xs">
                   <div className="p-3 rounded-lg bg-rose-50/70 border border-rose-100 text-rose-950 space-y-1">
-                    <p className="font-bold text-[10px] uppercase text-rose-800">❌ Trecho Atual no Currículo</p>
+                    <p className="font-bold text-[10px] uppercase text-rose-800">❌ {an.currentTextLabel}</p>
                     <p className="font-mono text-xs leading-relaxed">"{tc.originalText}"</p>
                   </div>
                   <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-100 text-emerald-950 space-y-1">
-                    <p className="font-bold text-[10px] uppercase text-emerald-800">✨ Sugestão Recomendada (Fórmula STAR/XYZ)</p>
+                    <p className="font-bold text-[10px] uppercase text-emerald-800">✨ {an.suggestedTextLabel}</p>
                     <p className="font-mono text-xs leading-relaxed">"{tc.suggestedText}"</p>
                   </div>
                 </div>
 
                 <div className="p-2.5 rounded-lg bg-amber-50/60 border border-amber-100 text-sm text-amber-950 space-y-0.5">
                   <p className="font-bold text-[10px] uppercase text-amber-800 flex items-center gap-1">
-                    <Lightbulb className="w-3.5 h-3.5" /> Justificativa Técnica & Motivo da Alteração:
+                    <Lightbulb className="w-3.5 h-3.5" /> {an.rationaleLabel}
                   </p>
                   <p className="leading-relaxed text-slate-700">{tc.rationale}</p>
                 </div>
@@ -1271,15 +1273,14 @@ export function AnalysisView() {
               </div>
               <div>
                 <CardTitle className="text-base text-sky-950 font-bold">
-                  Indeciso de qual vaga concorrer? Orientação Vocacional de Carreira
+                  {an.careerTitle}
                 </CardTitle>
                 {/* Não prometemos contratação. O texto anterior — "maior chance
                     imediata de contratação" — transformava uma leitura do
                     currículo em previsão de resultado de processo seletivo, que
                     o produto não tem dados para sustentar. */}
                 <CardDescription className="text-xs text-slate-600">
-                  Nosso Agente de Carreira lê seu perfil e aponta as 3 áreas/cargos com maior aderência ao que você
-                  já construiu. Já incluída na Análise Completa deste currículo.
+                  {an.careerDesc}
                 </CardDescription>
               </div>
             </div>
@@ -1289,7 +1290,7 @@ export function AnalysisView() {
               className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shrink-0 self-start sm:self-auto"
             >
               {orienting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1.5" />}
-              {careerOrientation ? 'Atualizar Diagnóstico' : 'Descobrir Minha Área Ideal'}
+              {careerOrientation ? an.updateDiagnosisButton : an.discoverAreaButton}
             </Button>
           </div>
         </CardHeader>
@@ -1297,12 +1298,12 @@ export function AnalysisView() {
           <CardContent className="py-6 flex flex-col items-center gap-2 text-center">
             <Loader2 className="w-6 h-6 animate-spin text-sky-600" />
             <p className="text-sm text-sky-800 font-semibold">
-              Mapeando as 3 áreas com maior aderência ao seu perfil...
+              {an.mappingAreas}
             </p>
             {/* O tempo esperado, dito de antemão: sem ele, uma espera normal de
                 meio minuto é lida como travamento. */}
             <p className="text-xs text-slate-500">
-              Costuma levar de 15 a 40 segundos. Não feche esta página.
+              {an.careerTimeEstimate}
             </p>
           </CardContent>
         )}
@@ -1321,7 +1322,7 @@ export function AnalysisView() {
           <CardContent className="space-y-4 pt-0">
             <div className="p-3.5 rounded-xl bg-white border border-sky-100 text-xs text-slate-700 space-y-1">
               <p className="font-bold text-sky-950 flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-sky-600" /> Resumo do Perfil Identificado:
+                <CheckCircle2 className="w-4 h-4 text-sky-600" /> {an.profileSummaryLabel}
               </p>
               <p className="leading-relaxed">{careerOrientation.profileSummary}</p>
             </div>
@@ -1331,17 +1332,17 @@ export function AnalysisView() {
                 <div key={idx} className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 shadow-2xs">
                   <div className="flex justify-between items-start gap-1">
                     <Badge variant="outline" className="bg-sky-100 text-sky-900 border-sky-300 font-bold text-[10px]">
-                      Opção #{idx + 1}
+                      {an.optionLabel.replace('{n}', String(idx + 1))}
                     </Badge>
                     {typeof area.matchPercentage === 'number' && (
-                      <span className="font-extrabold text-sky-600 text-sm">{area.matchPercentage}% aderência</span>
+                      <span className="font-extrabold text-sky-600 text-sm">{an.adherenceLabel.replace('{pct}', String(area.matchPercentage))}</span>
                     )}
                   </div>
                   <h4 className="font-bold text-slate-900 text-sm">{area.role}</h4>
                   <p className="text-slate-600 leading-relaxed text-sm">{area.whyFit}</p>
                   {area.requiredSkillsToLearn?.length > 0 && (
                     <div className="pt-2 border-t border-slate-100 space-y-1">
-                      <p className="font-semibold text-slate-700 text-[10px] uppercase tracking-wider">Habilidades recomendadas:</p>
+                      <p className="font-semibold text-slate-700 text-[10px] uppercase tracking-wider">{an.recommendedSkillsLabel}</p>
                       <ul className="space-y-1">
                         {area.requiredSkillsToLearn.map((skill: string, sIdx: number) => (
                           <li key={sIdx} className="flex items-center gap-1 text-[11px] text-slate-600">
@@ -1360,14 +1361,13 @@ export function AnalysisView() {
                 mercado. Dizer isso onde ele aparece evita que seja lido como
                 probabilidade de contratação — que o produto não calcula. */}
             <p className="text-[10px] text-slate-500 leading-relaxed">
-              A aderência mede o quanto sua trajetória se aproxima do que essas áreas costumam exigir. Não é
-              probabilidade de contratação nem medição do mercado de trabalho.
+              {an.adherenceDisclaimer}
             </p>
 
             {careerOrientation.careerAdvice && (
               <div className="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-200/80 text-sm text-indigo-950 space-y-1">
                 <p className="font-bold flex items-center gap-1.5">
-                  <Lightbulb className="w-4 h-4 text-indigo-600" /> Conselho Estratégico de Carreira:
+                  <Lightbulb className="w-4 h-4 text-indigo-600" /> {an.careerAdviceLabel}
                 </p>
                 <p className="leading-relaxed">{careerOrientation.careerAdvice}</p>
               </div>
@@ -1391,11 +1391,10 @@ export function AnalysisView() {
                 </div>
                 <div>
                   <CardTitle className="text-base text-amber-950 font-bold">
-                    ✉️ Carta de Apresentação & Resumo Profissional
+                    ✉️ {an.letterTitle}
                   </CardTitle>
                   <CardDescription className="text-xs text-slate-600">
-                    Escritos a partir do seu currículo real e direcionados à vaga alvo, no formato de candidatura do
-                    seu mercado. Já incluídos na Análise Completa deste currículo.
+                    {an.letterDesc}
                   </CardDescription>
                 </div>
               </div>
@@ -1405,7 +1404,7 @@ export function AnalysisView() {
                 className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shrink-0 self-start sm:self-auto"
               >
                 {writingLetter ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1.5" />}
-                {coverLetter ? 'Gerar novamente' : 'Escrever minha carta'}
+                {coverLetter ? an.regenerateLetterButton : an.writeLetterButton}
               </Button>
             </div>
           </CardHeader>
@@ -1413,8 +1412,8 @@ export function AnalysisView() {
           {writingLetter && (
             <CardContent className="py-6 flex flex-col items-center gap-2 text-center">
               <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
-              <p className="text-sm text-amber-900 font-semibold">Redigindo a carta e o resumo direcionados...</p>
-              <p className="text-xs text-slate-500">Costuma levar de 20 a 45 segundos. Não feche esta página.</p>
+              <p className="text-sm text-amber-900 font-semibold">{an.writingLetterText}</p>
+              <p className="text-xs text-slate-500">{an.letterTimeEstimate}</p>
             </CardContent>
           )}
 
@@ -1432,8 +1431,7 @@ export function AnalysisView() {
           {!writingLetter && !letterError && !coverLetter && (
             <CardContent className="pt-0 pb-5">
               <p className="text-xs text-slate-500 leading-relaxed">
-                Ainda não gerada para este currículo. Ela usa a vaga alvo que você informou no envio — quanto mais
-                completa a descrição da vaga, mais direcionados ficam os dois textos.
+                {an.letterEmptyState}
               </p>
             </CardContent>
           )}
@@ -1442,41 +1440,40 @@ export function AnalysisView() {
             <CardContent className="space-y-4 pt-0">
               {coverLetter.targetJob && (
                 <Badge variant="outline" className="bg-amber-50 text-amber-900 border-amber-300 font-semibold text-[11px]">
-                  🎯 Direcionada a: {coverLetter.targetJob}
+                  🎯 {an.letterTargetedTo.replace('{job}', coverLetter.targetJob)}
                 </Badge>
               )}
 
               <div className="p-4 rounded-xl bg-white border border-amber-100 space-y-2 shadow-2xs">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="font-bold text-amber-950 text-xs uppercase tracking-wider">Resumo profissional</p>
+                  <p className="font-bold text-amber-950 text-xs uppercase tracking-wider">{an.summaryLabel}</p>
                   <Button
                     variant="outline"
                     size="sm"
                     className="h-7 text-[11px]"
-                    onClick={() => copyToClipboard(coverLetter.professionalSummary, 'Resumo profissional')}
+                    onClick={() => copyToClipboard(coverLetter.professionalSummary, an.summaryLabel)}
                   >
-                    Copiar
+                    {an.copyButton}
                   </Button>
                 </div>
                 <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
                   {coverLetter.professionalSummary}
                 </p>
                 <p className="text-[10px] text-slate-500">
-                  Este é o parágrafo de abertura do currículo. O texto “Sobre” do LinkedIn é outro, e sai na aba de
-                  Mídias & Redes Sociais.
+                  {an.summaryFootnote}
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-white border border-amber-100 space-y-2 shadow-2xs">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="font-bold text-amber-950 text-xs uppercase tracking-wider">Carta de apresentação</p>
+                  <p className="font-bold text-amber-950 text-xs uppercase tracking-wider">{an.letterLabel}</p>
                   <Button
                     variant="outline"
                     size="sm"
                     className="h-7 text-[11px]"
-                    onClick={() => copyToClipboard(coverLetter.coverLetter, 'Carta de apresentação')}
+                    onClick={() => copyToClipboard(coverLetter.coverLetter, an.letterLabel)}
                   >
-                    Copiar
+                    {an.copyButton}
                   </Button>
                 </div>
                 <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{coverLetter.coverLetter}</p>
@@ -1485,7 +1482,7 @@ export function AnalysisView() {
               {coverLetter.keywords.length > 0 && (
                 <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-2">
                   <p className="font-bold text-amber-950 text-[10px] uppercase tracking-wider flex items-center gap-1.5">
-                    <Key className="w-3.5 h-3.5" /> Termos da vaga incorporados aos textos
+                    <Key className="w-3.5 h-3.5" /> {an.letterKeywordsLabel}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {coverLetter.keywords.map((k, i) => (
@@ -1505,11 +1502,11 @@ export function AnalysisView() {
       <Card className="bg-gradient-to-br from-violet-50 to-fuchsia-50 border-violet-200">
         <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
           <div>
-            <p className="font-semibold text-violet-900">Pronto para melhorar seu currículo?</p>
-            <p className="text-sm text-violet-700 mt-0.5">Com sua autorização, reescrevemos o currículo aplicando todas as recomendações acima.</p>
+            <p className="font-semibold text-violet-900">{an.ctaTitle}</p>
+            <p className="text-sm text-violet-700 mt-0.5">{an.ctaDesc}</p>
           </div>
           <Button onClick={() => openResume(resume.id, 'rewrite')} className="bg-violet-600 hover:bg-violet-700 shrink-0">
-            <FileEdit className="w-4 h-4 mr-1" /> Reescrever currículo <ArrowRight className="w-4 h-4 ml-1" />
+            <FileEdit className="w-4 h-4 mr-1" /> {an.ctaButton} <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </CardContent>
       </Card>
