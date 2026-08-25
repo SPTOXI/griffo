@@ -1655,3 +1655,49 @@ mudar nessas telas porque não há nada ali lendo o estado que ele altera.
 Decisão do usuário: não corrigir agora — é um trabalho grande (traduzir ~10
 telas para o sistema `t.*` já usado na landing, em 3 idiomas), registrado
 aqui como pendência conhecida para planejar depois, não como bug a caçar.
+
+---
+
+## 2.29 Itália operacionalizada, e a Adzuna deixa de ser rodízio
+
+Depois do achado da seção 2.28, o usuário perguntou por que a cobertura era
+tão limitada "sendo plataforma global" e pediu pra calcular um orçamento
+maior. No caminho, achou que o produto atendia 15 países — são 13 mercados
+no catálogo (`lib/market/index.ts`) + GLOBAL, e a Adzuna só cobria 10 deles.
+A Itália (`IT`) tinha sido adicionada ao catálogo de mercado por outra sessão
+(seção 11) mas **nunca foi testada nem ligada à busca de vagas** — gap real,
+achado ao investigar a pergunta.
+
+**Itália verificada e ligada.** Testada contra
+`api.adzuna.com/v1/api/jobs/it/search/1?what=analista`: HTTP 200, vaga real.
+Ela devolve o nome do país em italiano ("Italia", sem acento) — diferente do
+"Itália" em português já cadastrado — então um alias novo entrou em
+`lib/market/countries.ts`, mesmo padrão já usado para "brazil"/"united
+states"/"united kingdom". `ADZUNA_COUNTRIES` (`adzuna-plan.ts`) sobe de 10
+para 11.
+
+**Três opções calculadas, e a decisão.** Com a cota gratuita da Adzuna
+(2.500 req/mês) usando só ~15% (372/mês, rodízio de 4 países por vez), havia
+folga real. Três combinações foram calculadas para caber num teto de
+1.500/mês:
+
+| Opção | Países | Termos | Páginas | Req/mês |
+|---|---|---|---|---|
+| A | 11 (todos) | 4 | 1 | 1.240 |
+| B | 11 (todos) | 5 | 1 | **1.705** ← escolhida |
+| C | 11 (todos) | 3 | 2 | 2.046 |
+
+Escolhida a B: mais categorias de cargo por país (5 termos) sem reduzir a
+folga pra busca sob demanda (§21, ainda não implementada) abaixo da reserva
+de 20% (500) — C deixaria só 454, C foi cogitada primeiro e descartada por
+isso.
+
+**O que muda de verdade, além do volume.** As três opções tinham em comum
+`maxCountries: 11` — os onze países cobertos cabem numa rodada só. Isso
+acaba com o rodízio na prática: antes um país esperava até 3 dias pra ser
+revisitado (4 por vez, 10 no total); agora todo mercado é varrido todo dia.
+O código do rodízio por `lastCollectionAt` continua existindo — ele só deixa
+de ser exercitado enquanto o número de países cobertos não crescer além do
+que uma rodada cobre.
+
+Commit `08424db`. 525 testes, `tsc`/`eslint` limpos.
