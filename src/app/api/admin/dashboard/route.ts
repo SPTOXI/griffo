@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
 import { getAiMetricsData } from '@/lib/ai-router/metrics'
+import { calculateAgentMaturity, calculateSystemMaturity } from '@/lib/analytics/agent-maturity'
 import { maskSecret } from '@/lib/crypto'
 import { isSensitiveConfigKey } from '@/lib/system-config'
 import { calculateMarketPerformance } from '@/lib/analytics/market-performance'
@@ -41,6 +42,8 @@ export async function GET() {
       distinctBuyersRows,
       rawPurchasesRows,
       rawEventsRows,
+      aiLogsForMaturity,
+      incidentsForMaturity,
     ] = await Promise.all([
       db.user.findMany({
         orderBy: { createdAt: 'desc' },
@@ -119,11 +122,22 @@ export async function GET() {
       db.analyticsEvent.findMany({
         select: { event: true, visitorId: true, meta: true, createdAt: true },
       }).catch(() => []),
+      // Maturidade por agente e do sistema — ver lib/analytics/agent-maturity.ts
+      db.aiLog.findMany({
+        select: { taskType: true, status: true, failoverCount: true, responseTimeMs: true, qualityScore: true, createdAt: true },
+        take: 20_000,
+      }).catch(() => []),
+      db.systemIncident.findMany({
+        select: { severity: true, status: true, createdAt: true },
+        take: 5_000,
+      }).catch(() => []),
     ])
 
     const rawPurchases = (rawPurchasesRows as any[]) || []
     const rawEvents = (rawEventsRows as any[]) || []
     const marketPerformance = calculateMarketPerformance(rawEvents, rawPurchases)
+    const agentMaturity = calculateAgentMaturity(aiLogsForMaturity as any[])
+    const systemMaturity = calculateSystemMaturity(aiLogsForMaturity as any[], incidentsForMaturity as any[])
 
     const totalTokensIn = tokenStats._sum.tokensIn || 0
     const totalTokensOut = tokenStats._sum.tokensOut || 0
@@ -228,6 +242,8 @@ export async function GET() {
       },
       config: configMap,
       aiMetrics,
+      agentMaturity,
+      systemMaturity,
       keys,
     })
   } catch (e: any) {

@@ -219,6 +219,36 @@ interface AiMetricsData {
   operationalFailures?: OperationalFailure[]
 }
 
+interface AgentMaturityItem {
+  taskType: string
+  totalCalls: number
+  successRate: number
+  failoverRate: number
+  avgResponseTimeMs: number
+  qualitySamples: number
+  avgQualityScore: number | null
+  observationDays: number
+  maturity: 'baixa' | 'média' | 'alta'
+  maturityReason: string
+}
+
+interface SystemMaturityData {
+  totalCalls: number
+  overallSuccessRate: number
+  totalIncidents: number
+  unresolvedHighSeverity: number
+  incidentResolutionRate: number | null
+  observationDays: number
+  maturity: 'baixa' | 'média' | 'alta'
+  maturityReason: string
+}
+
+const AGENT_MATURITY_STYLE: Record<AgentMaturityItem['maturity'], string> = {
+  baixa: 'bg-slate-100 text-slate-700 border-slate-200',
+  média: 'bg-amber-100 text-amber-800 border-amber-200',
+  alta: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+}
+
 export function AdminView() {
   return (
     <AdminErrorBoundary>
@@ -233,6 +263,8 @@ function AdminViewContent() {
   const [aiKeys, setAiKeys] = useState<AiApiKeyItem[]>([])
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [aiMetrics, setAiMetrics] = useState<AiMetricsData | null>(null)
+  const [agentMaturity, setAgentMaturity] = useState<AgentMaturityItem[]>([])
+  const [systemMaturity, setSystemMaturity] = useState<SystemMaturityData | null>(null)
   // `CREDIT_PRICE_BRL` saiu: preço não é mais parâmetro editável no painel. O
   // catálogo é o ponto único de verdade, e um campo aqui seria um segundo.
   const [configs, setConfigs] = useState<Record<string, string>>({
@@ -311,6 +343,8 @@ function AdminViewContent() {
         }))
       }
       if (data.aiMetrics) setAiMetrics(data.aiMetrics)
+      if (data.agentMaturity) setAgentMaturity(data.agentMaturity)
+      if (data.systemMaturity) setSystemMaturity(data.systemMaturity)
       if (data.keys) setAiKeys(data.keys)
     } catch (e) {
       console.error('[AdminView:Erro] Exceção em loadData:', e)
@@ -2494,6 +2528,106 @@ function AdminViewContent() {
               </div>
             </CardContent>
           </Card>
+
+          {/* AGENT & SYSTEM MATURITY */}
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 mb-1 flex items-center gap-2">
+              <Award className="w-4 h-4 text-slate-500" /> Maturidade dos agentes e do sistema
+            </h3>
+            <p className="text-[11px] text-slate-500 mb-3">
+              Não é uma IA analisando o roteador — é leitura direta do histórico de chamadas
+              (<code className="text-[10px]">AiLog</code>) e de incidentes. A maturidade diz o quanto dá para
+              confiar em cada número por amostra e por janela de tempo observada; não decide nada sozinha.
+            </p>
+
+            {systemMaturity && (
+              <Card className="border-slate-200 mb-3">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="text-xs font-bold text-slate-800">Sistema como um todo</CardTitle>
+                    <Badge variant="outline" className={`text-[10px] shrink-0 ${AGENT_MATURITY_STYLE[systemMaturity.maturity]}`}>
+                      maturidade {systemMaturity.maturity}
+                    </Badge>
+                  </div>
+                  <CardDescription className="text-[11px] text-slate-600">
+                    {systemMaturity.totalCalls} chamada(s) de IA · {systemMaturity.observationDays}d de observação
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                    <div className="p-2 rounded bg-slate-50">
+                      <p className="text-slate-500">Sucesso geral</p>
+                      <p className="font-bold text-slate-800">{systemMaturity.overallSuccessRate}%</p>
+                    </div>
+                    <div className="p-2 rounded bg-slate-50">
+                      <p className="text-slate-500">Incidentes registrados</p>
+                      <p className="font-bold text-slate-800">{systemMaturity.totalIncidents}</p>
+                    </div>
+                    <div className="p-2 rounded bg-slate-50">
+                      <p className="text-slate-500">Graves em aberto</p>
+                      <p className="font-bold text-slate-800">{systemMaturity.unresolvedHighSeverity}</p>
+                    </div>
+                    <div className="p-2 rounded bg-slate-50">
+                      <p className="text-slate-500">Taxa de resolução</p>
+                      <p className="font-bold text-slate-800">
+                        {systemMaturity.incidentResolutionRate != null ? `${systemMaturity.incidentResolutionRate}%` : '—'}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-relaxed border-t border-slate-100 pt-2">
+                    {systemMaturity.maturityReason}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {agentMaturity.length === 0 && (
+                <p className="text-xs text-slate-500 italic">Sem dado suficiente ainda.</p>
+              )}
+
+              {agentMaturity.map((a) => (
+                <Card key={a.taskType} className="border-slate-200">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <CardTitle className="text-xs font-bold text-slate-800">{a.taskType}</CardTitle>
+                      <Badge variant="outline" className={`text-[10px] shrink-0 ${AGENT_MATURITY_STYLE[a.maturity]}`}>
+                        maturidade {a.maturity}
+                      </Badge>
+                    </div>
+                    <CardDescription className="text-[11px] text-slate-600">
+                      {a.totalCalls} chamada(s) · {a.observationDays}d de observação
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      <div className="p-2 rounded bg-slate-50">
+                        <p className="text-slate-500">Sucesso</p>
+                        <p className="font-bold text-slate-800">{a.successRate}%</p>
+                      </div>
+                      <div className="p-2 rounded bg-slate-50">
+                        <p className="text-slate-500">Failover</p>
+                        <p className="font-bold text-slate-800">{a.failoverRate}%</p>
+                      </div>
+                      <div className="p-2 rounded bg-slate-50">
+                        <p className="text-slate-500">Tempo médio</p>
+                        <p className="font-bold text-slate-800">{a.avgResponseTimeMs}ms</p>
+                      </div>
+                      <div className="p-2 rounded bg-slate-50">
+                        <p className="text-slate-500">Nota de qualidade</p>
+                        <p className="font-bold text-slate-800">
+                          {a.avgQualityScore != null ? a.avgQualityScore : 'insuficiente'}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 leading-relaxed border-t border-slate-100 pt-2">
+                      {a.maturityReason}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         </TabsContent>
 
         {/* INCIDENTS & AGENT CONTROL TAB */}
