@@ -27,8 +27,8 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 25/08/2026, três achados de produção pós-deploy — Adzuna resolvido, DeepSeek e i18n do app pendentes (ver 2.28 na auditoria) |
-| Suíte | 525 testes, `fail 0` — a regra da contagem está na seção 8 |
+| Última revisão | 25/08/2026, maturidade dos agentes de IA e do sistema — sem IA nenhuma por trás, é leitura de `AiLog`/`SystemIncident` (ver 2.31 na auditoria) |
+| Suíte | 545 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |
 
@@ -197,7 +197,9 @@ src/lib/
     text.ts        Limpeza de HTML compartilhada
     adapters/      Uma fonte por arquivo
   analytics/
-    market-performance.ts  Funil e margem por país. Decide onde a verba entra
+    market-performance.ts   Funil e margem por país. Decide onde a verba entra
+    job-source-quality.ts   Qualidade/tempo de renovação/maturidade por fonte de vaga (2.30)
+    agent-maturity.ts       Maturidade dos agentes de IA (por TaskType) e do sistema (2.31)
   matching/
     filters.ts     Filtro duro — desconhecido não elimina
     compatibility.ts  Três eixos, sem porcentagem única

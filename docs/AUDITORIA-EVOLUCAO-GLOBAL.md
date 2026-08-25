@@ -1746,3 +1746,56 @@ chegar em `alta` de forma sustentada — e mesmo aí, é decisão a ser tomada
 depois, não implementada nesta etapa.
 
 10 testes novos (535 no total), `tsc`/`eslint` limpos.
+
+## 2.31 Nenhuma IA por trás do "agente" de qualidade — e a mesma régua para os agentes de verdade
+
+Pergunta direta do usuário sobre o módulo do §2.30: "qual a IA ficará por
+trás desse agente?" A resposta é uma clarificação, não uma implementação —
+`job-source-quality.ts` **não chama nenhum provedor de IA**. É uma função
+pura que lê `Job`/`RadarAlert` e agrega números; "agente" ali era o nome que
+o pedido original usou para o conceito, não uma indicação de que existe um
+modelo de linguagem por trás. Vale registrar para não confundir com os
+agentes de IA de verdade do produto (extração de perfil, carta, orientação
+vocacional...), que são chamadas reais ao roteador (`lib/ai-router/`).
+
+Aproveitando a pergunta, o usuário pediu a mesma régua de maturidade para
+esses agentes de verdade — e para o sistema como um todo. Confirmado por
+`AskUserQuestion`: maturidade do sistema combina confiabilidade dos agentes
+de IA (`AiLog`) **e** incidentes (`SystemIncident`), não só uma das duas.
+
+**`lib/analytics/agent-maturity.ts`** (novo, mesmo espírito do §2.30, agora
+aplicado a `AiLog`/`SystemIncident` em vez de `Job`/`RadarAlert`):
+
+- `calculateAgentMaturity()` agrupa `AiLog` por `TaskType` (cada tipo de
+  tarefa do roteador é um "agente": extração de perfil, carta, orientação
+  vocacional...) e calcula taxa de sucesso (`success` + `fallback` contam,
+  só `error` é falha de vez), taxa de failover, tempo médio de resposta, e
+  nota média de qualidade — só quando há pelo menos 5 amostras julgadas
+  pelo juiz existente, senão fica `null`, nunca vira média de amostra
+  pequena.
+- `calculateSystemMaturity()` faz a mesma leitura de volume/janela para o
+  total de chamadas, e soma os incidentes: se há incidente grave
+  (`high`/`critical`) ainda em aberto agora, a maturidade é rebaixada um
+  nível — sistema com problema grave aberto não é "alta maturidade" nesse
+  momento, não importa o volume histórico acumulado.
+- Limiares de maturidade por agente: `baixa` com menos de 30 chamadas ou
+  menos de 7 dias de janela; `média` até 200 chamadas ou 30 dias; `alta`
+  acima disso — 30 dias é a referência porque cobre um ciclo mensal
+  completo (variação de dia de semana incluída), mesmo raciocínio do
+  `STALE_AFTER_DAYS` usado no §2.30, com limiares próprios porque chamada
+  de IA acontece com frequência bem maior que coleta de vaga.
+
+**Onde mora.** `GET /api/admin/dashboard` passou a ler `AiLog` (até 20 mil
+linhas) e `SystemIncident` (até 5 mil) em paralelo com as demais consultas,
+e expõe `agentMaturity`/`systemMaturity` na resposta. Aparece na aba
+"Roteador de IA" do admin, abaixo do log de falhas operacionais: um card de
+maturidade do sistema (chamadas totais, sucesso geral, incidentes,
+incidentes graves em aberto, taxa de resolução) e uma grade de cards por
+`TaskType`, mesmo padrão visual da seção "Qualidade e maturidade por fonte"
+do §2.30.
+
+**O que isto explicitamente não é**, mesma régua do §2.30: observação, não
+controle. Nenhum agente passa a decidir nada sozinho a partir da própria
+maturidade — a leitura continua sendo de uma pessoa.
+
+10 testes novos (545 no total), `tsc`/`eslint` limpos.
