@@ -123,6 +123,9 @@ const CODE_BY_NAME = new Map<string, string>([
   ['brazil', 'BR'],
   ['united states', 'US'],
   ['united kingdom', 'GB'],
+  // A Adzuna no locale `it` devolve o nome do país em italiano ("Italia", sem
+  // acento) — diferente do "Itália" em português já cadastrado em COUNTRIES.
+  ['italia', 'IT'],
 ])
 
 /**

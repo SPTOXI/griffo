@@ -91,15 +91,26 @@ const DIGEST_DEADLINE_MS = 54_000
  * O orçamento da Adzuna, em três números.
  *
  * A cota gratuita é de 2.500 requisições por mês, ~83 por dia. Multiplicados,
- * estes três dão **12 requisições por rodada** — folga proposital, porque o que
- * sobra é o que sustenta a busca sob demanda de quem não quer esperar a
- * madrugada.
+ * estes três dão **55 requisições por rodada** — 55 × 31 = 1.705/mês.
+ *
+ * Subiu de 4 países/3 termos/1 página (372/mês, ~15% da cota) em 25/08/2026,
+ * depois de medir que a rodada original usava uma fração pequena da cota
+ * disponível. Onze países — todos os que a Adzuna cobre, ver `ADZUNA_COUNTRIES`
+ * — cabem numa rodada só: o rodízio deixa de escolher quem espera mais porque
+ * ninguém mais espera, todo país é varrido todo dia. Cinco termos por país
+ * (era três) para cobrir mais categorias de cargo por mercado — a página
+ * continua em 1: aumentar pra 2 chegava perto demais do teto mensal (opção
+ * descartada, ver seção 2.28 da auditoria).
+ *
+ * A folga que sobra (2.500 − 1.705 = 795/mês) fica acima da reserva de 20%
+ * (500) desenhada para a busca sob demanda — que ainda não foi implementada
+ * (§21, Etapa 9), então essa folga hoje não tem quem dispute.
  *
  * Mexer em qualquer um deles mexe direto na conta do mês. O teste de
  * `adzuna-plan.ts` trava o resultado para que a mudança seja consciente.
  */
-const ADZUNA_COUNTRIES_PER_RUN = 4
-const ADZUNA_TERMS_PER_COUNTRY = 3
+const ADZUNA_COUNTRIES_PER_RUN = 11
+const ADZUNA_TERMS_PER_COUNTRY = 5
 const ADZUNA_PAGES_PER_TERM = 1
 
 export async function GET(req: Request) {
@@ -127,12 +138,15 @@ export async function GET(req: Request) {
   const adzuna = adzunaCredentials(process.env.ADZUNA_APP_ID, process.env.ADZUNA_APP_KEY)
 
   /**
-   * O rodízio da Adzuna.
+   * A rodada da Adzuna.
    *
-   * Uma página por termo, três termos por país, quatro países por rodada — doze
-   * requisições, contra as ~83 diárias que a cota mensal permite. A folga é
-   * deliberada: ela é o que sobra para a busca sob demanda, que serve uma pessoa
-   * enquanto esta rodada serve todas.
+   * Onze países (todos os que a Adzuna cobre), cinco termos por país, uma
+   * página por termo — todo mercado é varrido todo dia, não só quem esperou
+   * mais. Deixou de ser rodízio no sentido estrito (nenhum país fica de fora
+   * numa rodada), mas o nome do parâmetro (`ADZUNA_COUNTRIES_PER_RUN`) e
+   * `planAdzunaRound` continuam os mesmos — se um país novo for acrescentado a
+   * `ADZUNA_COUNTRIES` sem que este número acompanhe, o rodízio por
+   * `lastCollectionAt` volta a valer sozinho, sem quebrar nada.
    */
   const [termsByCountry, lastCollections] = adzuna
     ? await Promise.all([searchTermsByCountry(), adzunaLastCollections()])

@@ -46,16 +46,22 @@ export interface PlanOptions {
 }
 
 /**
- * Países cobertos pela Adzuna, **verificados um a um** em 18/08/2026.
+ * Países cobertos pela Adzuna, **verificados um a um**: os dez originais em
+ * 18/08/2026, a Itália (`it`) em 25/08/2026 — depois de acrescentada ao
+ * catálogo de mercados (`lib/market/index.ts`) sem verificação, o gap ficou
+ * registrado até aqui.
  *
- * Cada código foi testado contra `/v1/api/jobs/{country}/search/1`: os dez
+ * Cada código foi testado contra `/v1/api/jobs/{country}/search/1`: os onze
  * abaixo responderam 200. Portugal e Japão responderam 404 — a Adzuna não os
  * atende, e supor que atende faria a fonte falhar toda rodada para quem mora
  * lá, gastando cota e enchendo o log.
  *
+ * A Itália devolve o nome do país em italiano ("Italia") — o alias mora em
+ * `lib/market/countries.ts`, junto dos outros nomes fora do português.
+ *
  * Antes de acrescentar um país aqui, teste. É uma requisição.
  */
-export const ADZUNA_COUNTRIES = ['br', 'us', 'ca', 'gb', 'es', 'mx', 'de', 'fr', 'in', 'au'] as const
+export const ADZUNA_COUNTRIES = ['br', 'us', 'ca', 'gb', 'es', 'mx', 'de', 'fr', 'in', 'au', 'it'] as const
 
 const COVERED = new Set<string>(ADZUNA_COUNTRIES)
 
