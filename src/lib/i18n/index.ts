@@ -612,6 +612,65 @@ export interface TranslationDictionary {
     feedbackYes: string
     feedbackNo: string
   }
+  /** Tela de Envio de Currículo (`upload-view.tsx`). */
+  upload: {
+    jobUrlEmptyError: string
+    jobImportedTitleFallback: string
+    jobImportedSuccess: string
+    jobImportErrorFallback: string
+    jobImportConnectionError: string
+    fileTooLargeError: string
+    pdfAttachedSuccess: string
+    pdfReadError: string
+    fileReadError: string
+    contentTooShortError: string
+    contentTooLongError: string
+    loadingStepUpload: string
+    loadingStepPreview: string
+    saveErrorFallback: string
+    saveSuccess: string
+    saveConnectionError: string
+    heroTitle: string
+    heroDesc: string
+    badge1Title: string
+    badge1Desc: string
+    badge2Title: string
+    badge2Desc: string
+    badge3Title: string
+    badge3Desc: string
+    badge4Title: string
+    badge4Desc: string
+    cardTitle: string
+    cardDesc: string
+    attachButton: string
+    contentLabel: string
+    contentPlaceholder: string
+    charCountUnit: string
+    formatMarkdown: string
+    formatText: string
+    formatToggle: string
+    targetJobLabel: string
+    targetJobBadge: string
+    importUrlLabel: string
+    importUrlPlaceholder: string
+    importUrlButton: string
+    targetJobPlaceholder: string
+    targetJobDescLabel: string
+    targetJobDescPlaceholder: string
+    socialTitle: string
+    socialDesc: string
+    addProfileButton: string
+    platformPlaceholder: string
+    profileUrlPlaceholder: string
+    removeProfileTitle: string
+    consentText: string
+    secureEnvBadge: string
+    cancelButton: string
+    submitButtonLoading: string
+    submitButton: string
+    whatWillBeAnalyzedLabel: string
+    whatWillBeAnalyzedDesc: string
+  }
 }
 
 export const DICTIONARIES: Record<Language, TranslationDictionary> = {
@@ -1210,6 +1269,64 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       feedbackYes: 'Sim',
       feedbackNo: 'Não',
     },
+    upload: {
+      jobUrlEmptyError: 'Informe a URL da vaga (ex: https://linkedin.com/jobs/view/...)',
+      jobImportedTitleFallback: 'Vaga Importada via Link',
+      jobImportedSuccess: 'Conteúdo da vaga importado com sucesso via Link!',
+      jobImportErrorFallback: 'Erro ao importar vaga pela URL. Tente copiar e colar a descrição manualmente.',
+      jobImportConnectionError: 'Falha de conexão ao importar vaga. Verifique o link e tente novamente.',
+      fileTooLargeError: 'Arquivo muito grande (máx. 5MB).',
+      pdfAttachedSuccess: 'Arquivo PDF anexado com sucesso!',
+      pdfReadError: 'Não foi possível ler o arquivo PDF.',
+      fileReadError: 'Não foi possível ler o arquivo.',
+      contentTooShortError: 'Currículo muito curto. Cole pelo menos {min} caracteres de texto.',
+      contentTooLongError: 'Currículo muito longo (máx. {max} caracteres).',
+      loadingStepUpload: 'Enviando arquivo e extraindo conteúdo...',
+      loadingStepPreview: 'Avaliando seu currículo nas 8 dimensões...',
+      saveErrorFallback: 'Erro ao salvar currículo.',
+      saveSuccess: 'Currículo salvo! Veja sua nota nas 8 dimensões.',
+      saveConnectionError: 'Erro de conexão ao enviar o currículo. Verifique sua rede e tente novamente.',
+      heroTitle: 'Auditoria de IA Premium',
+      heroDesc: 'Análise preditiva executiva, SEO avançado para LinkedIn/Gupy, cálculo de % Match com vagas alvo e orientações vocacionais de carreira em 8 dimensões.',
+      badge1Title: '8 Dimensões',
+      badge1Desc: 'Auditoria Executiva',
+      badge2Title: 'Social SEO',
+      badge2Desc: 'LinkedIn & Portfólio',
+      badge3Title: 'Match Vaga',
+      badge3Desc: 'Aderência de Perfil',
+      badge4Title: 'Fórmula STAR',
+      badge4Desc: 'Correção de Escrita',
+      cardTitle: 'Conteúdo do currículo',
+      cardDesc: 'Mín. {min} caracteres · Máx. {max}',
+      attachButton: 'Anexar arquivo (.pdf, .txt, .md)',
+      contentLabel: 'Currículo (texto)',
+      contentPlaceholder: 'Exemplo:\n\nMaria Souza\nDesenvolvedora Front-end\nmaria@email.com | (11) 99999-9999 | linkedin.com/in/mariasouza\n\nRESUMO\nDesenvolvedora front-end com 5 anos de experiência em React, TypeScript e design systems...\n\nEXPERIÊNCIA\nSênior Front-end - Empresa X (2022-presente)\n- Liderei a migração de Angular para React...\n- Reduzi o tempo de carregamento em 40%...\n\n...',
+      charCountUnit: 'caracteres',
+      formatMarkdown: 'Markdown',
+      formatText: 'Texto',
+      formatToggle: 'alternar',
+      targetJobLabel: 'Cargo ou Vaga Alvo Desejada (Opcional)',
+      targetJobBadge: 'Ou cole o Link da vaga de emprego abaixo 🔗',
+      importUrlLabel: 'Importar Vaga de Emprego pelo Link (LinkedIn, Gupy, Catho, etc.)',
+      importUrlPlaceholder: 'https://www.linkedin.com/jobs/view/...',
+      importUrlButton: 'Importar Link',
+      targetJobPlaceholder: 'Ex: Gerente de Projetos Senior, Desenvolvedor React, Analista Financeiro...',
+      targetJobDescLabel: 'Descrição ou Requisitos da Vaga Alvo (Copia & Cola ou Texto Extraído do Link)',
+      targetJobDescPlaceholder: 'Cole aqui os requisitos, qualificações e atribuições da vaga para calcularmos o % de Match Exato e apontar lacunas de conhecimento (ou use o botão \'Importar Link\' acima)...',
+      socialTitle: 'Presença Digital & Perfis Profissionais Globais (Opcional)',
+      socialDesc: 'Insira o link das redes e plataformas relevantes para a área e mercado que deseja atuar (LinkedIn, Gupy, Behance, GitHub, Xing, StackOverflow, etc.).',
+      addProfileButton: 'Adicionar perfil',
+      platformPlaceholder: 'Rede / Plataforma',
+      profileUrlPlaceholder: 'Link do perfil (ex: https://...)',
+      removeProfileTitle: 'Remover perfil',
+      consentText: 'Autorizo a inteligência do Griffo a analisar meus perfis fornecidos e gerar recomendações personalizadas de posicionamento e otimização de presença digital global.',
+      secureEnvBadge: 'Ambiente Seguro · LGPD Compliance',
+      cancelButton: 'Cancelar',
+      submitButtonLoading: 'Incializando IA…',
+      submitButton: 'Iniciar Auditoria',
+      whatWillBeAnalyzedLabel: 'O que será analisado:',
+      whatWillBeAnalyzedDesc: 'estrutura, resumo, resultados (STAR/XYZ), hard/soft skills, palavras-chave ATS, trajetória de carreira, sugestão de cursos/capacitação e otimização de presença digital global (LinkedIn, Gupy, Behance, GitHub, etc.).',
+    },
   },
 
   en: {
@@ -1807,6 +1924,64 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       feedbackYes: 'Yes',
       feedbackNo: 'No',
     },
+    upload: {
+      jobUrlEmptyError: 'Enter the job URL (e.g. https://linkedin.com/jobs/view/...)',
+      jobImportedTitleFallback: 'Job Imported via Link',
+      jobImportedSuccess: 'Job content successfully imported via link!',
+      jobImportErrorFallback: 'Error importing job from URL. Try copying and pasting the description manually.',
+      jobImportConnectionError: 'Connection error while importing the job. Check the link and try again.',
+      fileTooLargeError: 'File too large (max. 5MB).',
+      pdfAttachedSuccess: 'PDF file attached successfully!',
+      pdfReadError: 'Could not read the PDF file.',
+      fileReadError: 'Could not read the file.',
+      contentTooShortError: 'Resume too short. Paste at least {min} characters of text.',
+      contentTooLongError: 'Resume too long (max. {max} characters).',
+      loadingStepUpload: 'Uploading file and extracting content...',
+      loadingStepPreview: 'Evaluating your resume across 8 dimensions...',
+      saveErrorFallback: 'Error saving resume.',
+      saveSuccess: 'Resume saved! See your score across the 8 dimensions.',
+      saveConnectionError: 'Connection error while uploading the resume. Check your network and try again.',
+      heroTitle: 'Premium AI Audit',
+      heroDesc: 'Executive predictive analysis, advanced LinkedIn/Gupy SEO, target-job match percentage, and career vocational guidance across 8 dimensions.',
+      badge1Title: '8 Dimensions',
+      badge1Desc: 'Executive Audit',
+      badge2Title: 'Social SEO',
+      badge2Desc: 'LinkedIn & Portfolio',
+      badge3Title: 'Job Match',
+      badge3Desc: 'Profile Fit',
+      badge4Title: 'STAR Method',
+      badge4Desc: 'Writing Correction',
+      cardTitle: 'Resume content',
+      cardDesc: 'Min. {min} characters · Max. {max}',
+      attachButton: 'Attach file (.pdf, .txt, .md)',
+      contentLabel: 'Resume (text)',
+      contentPlaceholder: 'Example:\n\nJohn Smith\nFront-end Developer\njohn@email.com | (555) 999-9999 | linkedin.com/in/johnsmith\n\nSUMMARY\nFront-end developer with 5 years of experience in React, TypeScript, and design systems...\n\nEXPERIENCE\nSenior Front-end - Company X (2022-present)\n- Led the migration from Angular to React...\n- Reduced load time by 40%...\n\n...',
+      charCountUnit: 'characters',
+      formatMarkdown: 'Markdown',
+      formatText: 'Text',
+      formatToggle: 'toggle',
+      targetJobLabel: 'Target Role or Job (Optional)',
+      targetJobBadge: 'Or paste the job posting link below 🔗',
+      importUrlLabel: 'Import Job Posting by Link (LinkedIn, Indeed, etc.)',
+      importUrlPlaceholder: 'https://www.linkedin.com/jobs/view/...',
+      importUrlButton: 'Import Link',
+      targetJobPlaceholder: 'E.g.: Senior Project Manager, React Developer, Financial Analyst...',
+      targetJobDescLabel: 'Target Job Description or Requirements (Copy & Paste or Text Extracted from Link)',
+      targetJobDescPlaceholder: 'Paste the requirements, qualifications, and responsibilities here so we can calculate the exact Match % and point out knowledge gaps (or use the \'Import Link\' button above)...',
+      socialTitle: 'Digital Presence & Global Professional Profiles (Optional)',
+      socialDesc: 'Enter links to the networks and platforms relevant to your field and target market (LinkedIn, GitHub, Behance, Xing, StackOverflow, etc.).',
+      addProfileButton: 'Add profile',
+      platformPlaceholder: 'Network / Platform',
+      profileUrlPlaceholder: 'Profile link (e.g.: https://...)',
+      removeProfileTitle: 'Remove profile',
+      consentText: 'I authorize Griffo\'s intelligence to analyze my provided profiles and generate personalized recommendations for positioning and optimizing my global digital presence.',
+      secureEnvBadge: 'Secure Environment · GDPR Compliance',
+      cancelButton: 'Cancel',
+      submitButtonLoading: 'Initializing AI…',
+      submitButton: 'Start Audit',
+      whatWillBeAnalyzedLabel: 'What will be analyzed:',
+      whatWillBeAnalyzedDesc: 'structure, summary, results (STAR/XYZ), hard/soft skills, ATS keywords, career trajectory, course/training suggestions, and global digital presence optimization (LinkedIn, GitHub, Behance, etc.).',
+    },
   },
 
   es: {
@@ -2403,6 +2578,64 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       feedbackAskUseful: '¿Fue útil esta oportunidad?',
       feedbackYes: 'Sí',
       feedbackNo: 'No',
+    },
+    upload: {
+      jobUrlEmptyError: 'Indica la URL de la vacante (ej: https://linkedin.com/jobs/view/...)',
+      jobImportedTitleFallback: 'Vacante Importada vía Link',
+      jobImportedSuccess: '¡Contenido de la vacante importado con éxito vía link!',
+      jobImportErrorFallback: 'Error al importar la vacante desde la URL. Intenta copiar y pegar la descripción manualmente.',
+      jobImportConnectionError: 'Fallo de conexión al importar la vacante. Verifica el enlace e intenta de nuevo.',
+      fileTooLargeError: 'Archivo demasiado grande (máx. 5MB).',
+      pdfAttachedSuccess: '¡Archivo PDF adjuntado con éxito!',
+      pdfReadError: 'No fue posible leer el archivo PDF.',
+      fileReadError: 'No fue posible leer el archivo.',
+      contentTooShortError: 'Currículum demasiado corto. Pega al menos {min} caracteres de texto.',
+      contentTooLongError: 'Currículum demasiado largo (máx. {max} caracteres).',
+      loadingStepUpload: 'Enviando archivo y extrayendo contenido...',
+      loadingStepPreview: 'Evaluando tu currículum en las 8 dimensiones...',
+      saveErrorFallback: 'Error al guardar el currículum.',
+      saveSuccess: '¡Currículum guardado! Mira tu nota en las 8 dimensiones.',
+      saveConnectionError: 'Error de conexión al enviar el currículum. Verifica tu red e intenta de nuevo.',
+      heroTitle: 'Auditoría de IA Premium',
+      heroDesc: 'Análisis predictivo ejecutivo, SEO avanzado para LinkedIn/Gupy, cálculo de % de coincidencia con vacantes objetivo y orientación vocacional de carrera en 8 dimensiones.',
+      badge1Title: '8 Dimensiones',
+      badge1Desc: 'Auditoría Ejecutiva',
+      badge2Title: 'SEO Social',
+      badge2Desc: 'LinkedIn y Portafolio',
+      badge3Title: 'Coincidencia de Vacante',
+      badge3Desc: 'Ajuste de Perfil',
+      badge4Title: 'Fórmula STAR',
+      badge4Desc: 'Corrección de Redacción',
+      cardTitle: 'Contenido del currículum',
+      cardDesc: 'Mín. {min} caracteres · Máx. {max}',
+      attachButton: 'Adjuntar archivo (.pdf, .txt, .md)',
+      contentLabel: 'Currículum (texto)',
+      contentPlaceholder: 'Ejemplo:\n\nMaría Sánchez\nDesarrolladora Front-end\nmaria@email.com | (11) 99999-9999 | linkedin.com/in/mariasanchez\n\nRESUMEN\nDesarrolladora front-end con 5 años de experiencia en React, TypeScript y design systems...\n\nEXPERIENCIA\nFront-end Senior - Empresa X (2022-presente)\n- Lideré la migración de Angular a React...\n- Reduje el tiempo de carga en un 40%...\n\n...',
+      charCountUnit: 'caracteres',
+      formatMarkdown: 'Markdown',
+      formatText: 'Texto',
+      formatToggle: 'alternar',
+      targetJobLabel: 'Puesto o Vacante Objetivo Deseada (Opcional)',
+      targetJobBadge: 'O pega el enlace de la vacante abajo 🔗',
+      importUrlLabel: 'Importar Vacante por Enlace (LinkedIn, Indeed, etc.)',
+      importUrlPlaceholder: 'https://www.linkedin.com/jobs/view/...',
+      importUrlButton: 'Importar Enlace',
+      targetJobPlaceholder: 'Ej: Gerente de Proyectos Senior, Desarrollador React, Analista Financiero...',
+      targetJobDescLabel: 'Descripción o Requisitos de la Vacante Objetivo (Copiar y Pegar o Texto Extraído del Enlace)',
+      targetJobDescPlaceholder: 'Pega aquí los requisitos, calificaciones y funciones de la vacante para calcular el % de coincidencia exacta y detectar brechas de conocimiento (o usa el botón \'Importar Enlace\' arriba)...',
+      socialTitle: 'Presencia Digital y Perfiles Profesionales Globales (Opcional)',
+      socialDesc: 'Ingresa el enlace de las redes y plataformas relevantes para tu área y mercado objetivo (LinkedIn, GitHub, Behance, Xing, StackOverflow, etc.).',
+      addProfileButton: 'Agregar perfil',
+      platformPlaceholder: 'Red / Plataforma',
+      profileUrlPlaceholder: 'Enlace del perfil (ej: https://...)',
+      removeProfileTitle: 'Eliminar perfil',
+      consentText: 'Autorizo a la inteligencia de Griffo a analizar mis perfiles proporcionados y generar recomendaciones personalizadas de posicionamiento y optimización de presencia digital global.',
+      secureEnvBadge: 'Entorno Seguro · Cumplimiento LGPD',
+      cancelButton: 'Cancelar',
+      submitButtonLoading: 'Inicializando IA…',
+      submitButton: 'Iniciar Auditoría',
+      whatWillBeAnalyzedLabel: 'Qué se analizará:',
+      whatWillBeAnalyzedDesc: 'estructura, resumen, resultados (STAR/XYZ), hard/soft skills, palabras clave ATS, trayectoria profesional, sugerencia de cursos/capacitación y optimización de presencia digital global (LinkedIn, GitHub, Behance, etc.).',
     },
   },
 }
