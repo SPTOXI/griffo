@@ -469,6 +469,63 @@ export interface TranslationDictionary {
     errorDownload: string
     downloadStarted: string
   }
+  /** Tela de Reescrita (`rewrite-view.tsx`) — só o chrome estático; o currículo reescrito é conteúdo gerado pela IA. */
+  rewrite: {
+    downloadGenericError: string
+    downloadSuccess: string
+    downloadConnectionError: string
+    authRequiredError: string
+    planRequiredError: string
+    planRequiredToast: string
+    rewriteErrorFallback: string
+    rewriteSuccessToast: string
+    rewriteConnectionError: string
+    confirmSuccessToast: string
+    rejectInfoToast: string
+    emptyTitle: string
+    emptyDesc: string
+    emptyCta: string
+    needsAnalysisTitle: string
+    needsAnalysisDesc: string
+    needsAnalysisCta: string
+    pageTitle: string
+    pageSubtitle: string
+    viewReportCta: string
+    authCardTitle: string
+    authCardDesc: string
+    willDoTitle: string
+    willDo1: string
+    willDo2: string
+    willDo3: string
+    willNotTitle: string
+    willNot1: string
+    willNot2: string
+    willNot3: string
+    authorizeLabel: string
+    rewritingButton: string
+    rewriteButton: string
+    successCardTitle: string
+    successCardDesc: string
+    keywordsCardTitle: string
+    keywordsCardDesc: string
+    copyKeywordsCta: string
+    copyKeywordsToast: string
+    viewRewrittenCta: string
+    viewOriginalCta: string
+    regenerateCta: string
+    downloadPdfCta: string
+    downloadTxtCta: string
+    downloadMdCta: string
+    originalBadge: string
+    rewrittenBadge: string
+    finalReviewTitle: string
+    finalReviewDesc: string
+    confirmCta: string
+    discardCta: string
+    confirmedTitle: string
+    confirmedDesc: string
+    goToDownloadsCta: string
+  }
 }
 
 export const DICTIONARIES: Record<Language, TranslationDictionary> = {
@@ -930,6 +987,62 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       errorDownload: 'Erro no download.',
       downloadStarted: 'Download iniciado!',
     },
+    rewrite: {
+      downloadGenericError: 'Falha ao baixar arquivo.',
+      downloadSuccess: 'Download realizado com sucesso!',
+      downloadConnectionError: 'Erro de conexão ao baixar arquivo.',
+      authRequiredError: 'Você precisa autorizar a reescrita para continuar.',
+      planRequiredError: 'Você precisa de um plano ativo para reescrever. Escolha um plano abaixo.',
+      planRequiredToast: 'Plano necessário para reescrever',
+      rewriteErrorFallback: 'Falha ao reescrever.',
+      rewriteSuccessToast: 'Currículo reescrito! Revise abaixo.',
+      rewriteConnectionError: 'Erro de conexão.',
+      confirmSuccessToast: 'Currículo confirmado! Pronto para download.',
+      rejectInfoToast: 'Reescrita descartada. Você pode solicitar novamente.',
+      emptyTitle: 'Nenhum currículo para reescrever',
+      emptyDesc: 'Envie e analise seu currículo primeiro.',
+      emptyCta: 'Enviar currículo',
+      needsAnalysisTitle: 'Analise antes de reescrever',
+      needsAnalysisDesc: 'A reescrita usa o laudo para priorizar as melhorias.',
+      needsAnalysisCta: 'Ver laudo',
+      pageTitle: 'Reescrita do currículo',
+      pageSubtitle: 'Com sua autorização, a IA reescreve o currículo preservando fatos.',
+      viewReportCta: 'Ver laudo',
+      authCardTitle: 'Autorização necessária',
+      authCardDesc: 'A IA só reescreve se você autorizar explicitamente.',
+      willDoTitle: 'O que a IA vai fazer:',
+      willDo1: 'Reescrever bullets com verbo de ação + contexto + resultado',
+      willDo2: 'Reorganizar hierarquia e otimizar para ATS',
+      willDo3: 'Aplicar as recomendações do laudo (resumo, palavras-chave, etc.)',
+      willNotTitle: 'O que a IA NÃO vai fazer:',
+      willNot1: 'Inventar experiências, métricas ou formação',
+      willNot2: 'Alterar datas, empresas ou cargos',
+      willNot3: 'Adicionar habilidades que você não declarou',
+      authorizeLabel: 'Autorizo a IA a reescrever meu currículo com base no laudo de análise. Entendo que o resultado deve ser revisado por mim antes do download, e que sou responsável por confirmar a veracidade das informações.',
+      rewritingButton: 'Reescrevendo… (15–30s)',
+      rewriteButton: 'Reescrever meu currículo',
+      successCardTitle: 'Currículo reescrito com sucesso!',
+      successCardDesc: 'Revise o conteúdo abaixo. Se estiver tudo OK, confirme para liberar o download.',
+      keywordsCardTitle: '🧩 Palavras-Chave Estratégicas (ATS) Incorporadas',
+      keywordsCardDesc: 'Estes termos essenciais foram integrados na reescrita para garantir pontuação máxima nos robôs de triagem (Gupy, LinkedIn, Workday).',
+      copyKeywordsCta: 'Copiar termos',
+      copyKeywordsToast: 'Palavras-chave copiadas!',
+      viewRewrittenCta: 'Ver reescrito',
+      viewOriginalCta: 'Ver original',
+      regenerateCta: 'Gerar novamente',
+      downloadPdfCta: 'Baixar PDF',
+      downloadTxtCta: 'Baixar .TXT',
+      downloadMdCta: 'Baixar .MD',
+      originalBadge: 'Original',
+      rewrittenBadge: 'Reescrito',
+      finalReviewTitle: 'Revisão final',
+      finalReviewDesc: 'Confirme se todas as informações estão corretas. Você é responsável pela veracidade dos dados.',
+      confirmCta: 'Tudo certo, confirmar e baixar',
+      discardCta: 'Descartar reescrita',
+      confirmedTitle: 'Currículo confirmado!',
+      confirmedDesc: 'Pronto para download em PDF e Markdown.',
+      goToDownloadsCta: 'Ir para downloads',
+    },
   },
 
   en: {
@@ -1390,6 +1503,62 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       errorDownload: 'Download error.',
       downloadStarted: 'Download started!',
     },
+    rewrite: {
+      downloadGenericError: 'Failed to download the file.',
+      downloadSuccess: 'Download completed successfully!',
+      downloadConnectionError: 'Connection error while downloading the file.',
+      authRequiredError: 'You need to authorize the rewrite to continue.',
+      planRequiredError: 'You need an active plan to rewrite. Choose a plan below.',
+      planRequiredToast: 'A plan is required to rewrite',
+      rewriteErrorFallback: 'Failed to rewrite.',
+      rewriteSuccessToast: 'Resume rewritten! Review it below.',
+      rewriteConnectionError: 'Connection error.',
+      confirmSuccessToast: 'Resume confirmed! Ready for download.',
+      rejectInfoToast: 'Rewrite discarded. You can request it again.',
+      emptyTitle: 'No resume to rewrite',
+      emptyDesc: 'Upload and analyze your resume first.',
+      emptyCta: 'Upload resume',
+      needsAnalysisTitle: 'Analyze before rewriting',
+      needsAnalysisDesc: 'The rewrite uses the report to prioritize improvements.',
+      needsAnalysisCta: 'View report',
+      pageTitle: 'Resume rewrite',
+      pageSubtitle: 'With your authorization, the AI rewrites the resume while preserving facts.',
+      viewReportCta: 'View report',
+      authCardTitle: 'Authorization required',
+      authCardDesc: 'The AI only rewrites if you explicitly authorize it.',
+      willDoTitle: 'What the AI will do:',
+      willDo1: 'Rewrite bullets with action verb + context + result',
+      willDo2: 'Reorganize hierarchy and optimize for ATS',
+      willDo3: 'Apply the report\'s recommendations (summary, keywords, etc.)',
+      willNotTitle: 'What the AI will NOT do:',
+      willNot1: 'Invent experience, metrics, or education',
+      willNot2: 'Change dates, companies, or job titles',
+      willNot3: 'Add skills you did not declare',
+      authorizeLabel: 'I authorize the AI to rewrite my resume based on the analysis report. I understand the result must be reviewed by me before downloading, and that I am responsible for confirming the accuracy of the information.',
+      rewritingButton: 'Rewriting… (15–30s)',
+      rewriteButton: 'Rewrite my resume',
+      successCardTitle: 'Resume rewritten successfully!',
+      successCardDesc: 'Review the content below. If everything looks good, confirm to unlock the download.',
+      keywordsCardTitle: '🧩 Strategic ATS Keywords Incorporated',
+      keywordsCardDesc: 'These essential terms were integrated into the rewrite to ensure maximum scoring in screening bots (Gupy, LinkedIn, Workday).',
+      copyKeywordsCta: 'Copy terms',
+      copyKeywordsToast: 'Keywords copied!',
+      viewRewrittenCta: 'View rewritten',
+      viewOriginalCta: 'View original',
+      regenerateCta: 'Regenerate',
+      downloadPdfCta: 'Download PDF',
+      downloadTxtCta: 'Download .TXT',
+      downloadMdCta: 'Download .MD',
+      originalBadge: 'Original',
+      rewrittenBadge: 'Rewritten',
+      finalReviewTitle: 'Final review',
+      finalReviewDesc: 'Confirm that all information is correct. You are responsible for the accuracy of the data.',
+      confirmCta: 'All good, confirm and download',
+      discardCta: 'Discard rewrite',
+      confirmedTitle: 'Resume confirmed!',
+      confirmedDesc: 'Ready for download in PDF and Markdown.',
+      goToDownloadsCta: 'Go to downloads',
+    },
   },
 
   es: {
@@ -1849,6 +2018,62 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       errorGeneric: 'Fallo en la descarga.',
       errorDownload: 'Error en la descarga.',
       downloadStarted: '¡Descarga iniciada!',
+    },
+    rewrite: {
+      downloadGenericError: 'Error al descargar el archivo.',
+      downloadSuccess: '¡Descarga realizada con éxito!',
+      downloadConnectionError: 'Error de conexión al descargar el archivo.',
+      authRequiredError: 'Necesitas autorizar la reescritura para continuar.',
+      planRequiredError: 'Necesitas un plan activo para reescribir. Elige un plan abajo.',
+      planRequiredToast: 'Se necesita un plan para reescribir',
+      rewriteErrorFallback: 'Error al reescribir.',
+      rewriteSuccessToast: '¡Currículum reescrito! Revísalo abajo.',
+      rewriteConnectionError: 'Error de conexión.',
+      confirmSuccessToast: '¡Currículum confirmado! Listo para descargar.',
+      rejectInfoToast: 'Reescritura descartada. Puedes solicitarla de nuevo.',
+      emptyTitle: 'Ningún currículum para reescribir',
+      emptyDesc: 'Envía y analiza tu currículum primero.',
+      emptyCta: 'Enviar currículum',
+      needsAnalysisTitle: 'Analiza antes de reescribir',
+      needsAnalysisDesc: 'La reescritura usa el informe para priorizar las mejoras.',
+      needsAnalysisCta: 'Ver informe',
+      pageTitle: 'Reescritura del currículum',
+      pageSubtitle: 'Con tu autorización, la IA reescribe el currículum preservando los hechos.',
+      viewReportCta: 'Ver informe',
+      authCardTitle: 'Autorización necesaria',
+      authCardDesc: 'La IA solo reescribe si la autorizas explícitamente.',
+      willDoTitle: 'Lo que la IA hará:',
+      willDo1: 'Reescribir viñetas con verbo de acción + contexto + resultado',
+      willDo2: 'Reorganizar la jerarquía y optimizar para ATS',
+      willDo3: 'Aplicar las recomendaciones del informe (resumen, palabras clave, etc.)',
+      willNotTitle: 'Lo que la IA NO hará:',
+      willNot1: 'Inventar experiencias, métricas o formación',
+      willNot2: 'Cambiar fechas, empresas o puestos',
+      willNot3: 'Agregar habilidades que no declaraste',
+      authorizeLabel: 'Autorizo a la IA a reescribir mi currículum basándose en el informe de análisis. Entiendo que debo revisar el resultado antes de descargarlo, y que soy responsable de confirmar la veracidad de la información.',
+      rewritingButton: 'Reescribiendo… (15–30s)',
+      rewriteButton: 'Reescribir mi currículum',
+      successCardTitle: '¡Currículum reescrito con éxito!',
+      successCardDesc: 'Revisa el contenido a continuación. Si todo está bien, confirma para habilitar la descarga.',
+      keywordsCardTitle: '🧩 Palabras Clave Estratégicas (ATS) Incorporadas',
+      keywordsCardDesc: 'Estos términos esenciales fueron integrados en la reescritura para garantizar la máxima puntuación en los sistemas de selección (Gupy, LinkedIn, Workday).',
+      copyKeywordsCta: 'Copiar términos',
+      copyKeywordsToast: '¡Palabras clave copiadas!',
+      viewRewrittenCta: 'Ver reescrito',
+      viewOriginalCta: 'Ver original',
+      regenerateCta: 'Generar de nuevo',
+      downloadPdfCta: 'Descargar PDF',
+      downloadTxtCta: 'Descargar .TXT',
+      downloadMdCta: 'Descargar .MD',
+      originalBadge: 'Original',
+      rewrittenBadge: 'Reescrito',
+      finalReviewTitle: 'Revisión final',
+      finalReviewDesc: 'Confirma que toda la información es correcta. Eres responsable de la veracidad de los datos.',
+      confirmCta: 'Todo correcto, confirmar y descargar',
+      discardCta: 'Descartar reescritura',
+      confirmedTitle: '¡Currículum confirmado!',
+      confirmedDesc: 'Listo para descargar en PDF y Markdown.',
+      goToDownloadsCta: 'Ir a descargas',
     },
   },
 }

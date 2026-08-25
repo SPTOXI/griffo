@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import ReactMarkdown from 'react-markdown'
+import { useI18n } from '@/context/i18n-context'
 
 interface Resume {
   id: string
@@ -26,6 +27,8 @@ interface Resume {
 }
 
 export function RewriteView() {
+  const { t } = useI18n()
+  const rw = t.rewrite
   const { activeResumeId, setView, openResume } = useNav()
   const { user } = useAuth()
   const [resume, setResume] = useState<Resume | null>(null)
@@ -43,7 +46,7 @@ export function RewriteView() {
       const r = await internalFetch(`/api/resume/download?resumeId=${resume.id}&type=${type}`)
       if (!r.ok) {
         const data = await r.json().catch(() => ({}))
-        toast.error(data.error || 'Falha ao baixar arquivo.')
+        toast.error(data.error || rw.downloadGenericError)
         return
       }
       const blob = await r.blob()
@@ -58,9 +61,9 @@ export function RewriteView() {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      toast.success('Download realizado com sucesso!')
+      toast.success(rw.downloadSuccess)
     } catch {
-      toast.error('Erro de conexão ao baixar arquivo.')
+      toast.error(rw.downloadConnectionError)
     } finally {
       setDownloadingType(null)
     }
@@ -101,7 +104,7 @@ export function RewriteView() {
   const requestRewrite = async () => {
     if (!resume) return
     if (!authorized) {
-      setError('Você precisa autorizar a reescrita para continuar.')
+      setError(rw.authRequiredError)
       return
     }
     setRewriting(true)
@@ -115,18 +118,18 @@ export function RewriteView() {
       const data = await r.json()
       if (!r.ok) {
         if (data.code === 'PLAN_REQUIRED') {
-          setError('Você precisa de um plano ativo para reescrever. Escolha um plano abaixo.')
-          toast.error('Plano necessário para reescrever')
+          setError(rw.planRequiredError)
+          toast.error(rw.planRequiredToast)
           setTimeout(() => setView('plans'), 1500)
           return
         }
-        setError(data.error || 'Falha ao reescrever.')
+        setError(data.error || rw.rewriteErrorFallback)
         return
       }
-      toast.success('Currículo reescrito! Revise abaixo.')
+      toast.success(rw.rewriteSuccessToast)
       await loadResume(resume.id)
     } catch {
-      setError('Erro de conexão.')
+      setError(rw.rewriteConnectionError)
     } finally {
       setRewriting(false)
     }
@@ -141,7 +144,7 @@ export function RewriteView() {
         body: JSON.stringify({ resumeId: resume.id, action: 'confirm' }),
       })
       if (r.ok) {
-        toast.success('Currículo confirmado! Pronto para download.')
+        toast.success(rw.confirmSuccessToast)
         await loadResume(resume.id)
         setView('downloads')
       }
@@ -157,7 +160,7 @@ export function RewriteView() {
         body: JSON.stringify({ resumeId: resume.id, action: 'reject' }),
       })
       if (r.ok) {
-        toast.info('Reescrita descartada. Você pode solicitar novamente.')
+        toast.info(rw.rejectInfoToast)
         await loadResume(resume.id)
       }
     } catch {}
@@ -176,9 +179,9 @@ export function RewriteView() {
     return (
       <div className="text-center py-16 max-w-md mx-auto">
         <FileEdit className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-        <h2 className="text-lg font-semibold mb-1">Nenhum currículo para reescrever</h2>
-        <p className="text-sm text-slate-500 mb-4">Envie e analise seu currículo primeiro.</p>
-        <Button onClick={() => setView('upload')} className="bg-emerald-600 hover:bg-emerald-700">Enviar currículo</Button>
+        <h2 className="text-lg font-semibold mb-1">{rw.emptyTitle}</h2>
+        <p className="text-sm text-slate-500 mb-4">{rw.emptyDesc}</p>
+        <Button onClick={() => setView('upload')} className="bg-emerald-600 hover:bg-emerald-700">{rw.emptyCta}</Button>
       </div>
     )
   }
@@ -187,9 +190,9 @@ export function RewriteView() {
     return (
       <div className="text-center py-16 max-w-md mx-auto">
         <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
-        <h2 className="text-lg font-semibold mb-1">Analise antes de reescrever</h2>
-        <p className="text-sm text-slate-500 mb-4">A reescrita usa o laudo para priorizar as melhorias.</p>
-        <Button onClick={() => openResume(resume.id, 'analysis')} className="bg-emerald-600 hover:bg-emerald-700">Ver laudo</Button>
+        <h2 className="text-lg font-semibold mb-1">{rw.needsAnalysisTitle}</h2>
+        <p className="text-sm text-slate-500 mb-4">{rw.needsAnalysisDesc}</p>
+        <Button onClick={() => openResume(resume.id, 'analysis')} className="bg-emerald-600 hover:bg-emerald-700">{rw.needsAnalysisCta}</Button>
       </div>
     )
   }
@@ -200,11 +203,11 @@ export function RewriteView() {
     <div className="space-y-5 max-w-5xl">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Reescrita do currículo</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Com sua autorização, a IA reescreve o currículo preservando fatos.</p>
+          <h1 className="text-2xl font-bold text-slate-900">{rw.pageTitle}</h1>
+          <p className="text-sm text-slate-500 mt-0.5">{rw.pageSubtitle}</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => openResume(resume.id, 'analysis')}>
-          Ver laudo
+          {rw.viewReportCta}
         </Button>
       </div>
 
@@ -219,24 +222,24 @@ export function RewriteView() {
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <CardTitle className="text-base">Autorização necessária</CardTitle>
-                <CardDescription className="mt-1">A IA só reescreve se você autorizar explicitamente.</CardDescription>
+                <CardTitle className="text-base">{rw.authCardTitle}</CardTitle>
+                <CardDescription className="mt-1">{rw.authCardDesc}</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 space-y-2 text-sm text-slate-700">
-              <p className="font-semibold text-slate-900">O que a IA vai fazer:</p>
+              <p className="font-semibold text-slate-900">{rw.willDoTitle}</p>
               <ul className="space-y-1.5">
-                <li className="flex items-start gap-2"><Check className="w-4 h-4 mt-0.5 text-emerald-600 shrink-0" /> Reescrever bullets com verbo de ação + contexto + resultado</li>
-                <li className="flex items-start gap-2"><Check className="w-4 h-4 mt-0.5 text-emerald-600 shrink-0" /> Reorganizar hierarquia e otimizar para ATS</li>
-                <li className="flex items-start gap-2"><Check className="w-4 h-4 mt-0.5 text-emerald-600 shrink-0" /> Aplicar as recomendações do laudo (resumo, palavras-chave, etc.)</li>
+                <li className="flex items-start gap-2"><Check className="w-4 h-4 mt-0.5 text-emerald-600 shrink-0" /> {rw.willDo1}</li>
+                <li className="flex items-start gap-2"><Check className="w-4 h-4 mt-0.5 text-emerald-600 shrink-0" /> {rw.willDo2}</li>
+                <li className="flex items-start gap-2"><Check className="w-4 h-4 mt-0.5 text-emerald-600 shrink-0" /> {rw.willDo3}</li>
               </ul>
-              <p className="font-semibold text-slate-900 mt-3">O que a IA NÃO vai fazer:</p>
+              <p className="font-semibold text-slate-900 mt-3">{rw.willNotTitle}</p>
               <ul className="space-y-1.5">
-                <li className="flex items-start gap-2"><X className="w-4 h-4 mt-0.5 text-red-500 shrink-0" /> Inventar experiências, métricas ou formação</li>
-                <li className="flex items-start gap-2"><X className="w-4 h-4 mt-0.5 text-red-500 shrink-0" /> Alterar datas, empresas ou cargos</li>
-                <li className="flex items-start gap-2"><X className="w-4 h-4 mt-0.5 text-red-500 shrink-0" /> Adicionar habilidades que você não declarou</li>
+                <li className="flex items-start gap-2"><X className="w-4 h-4 mt-0.5 text-red-500 shrink-0" /> {rw.willNot1}</li>
+                <li className="flex items-start gap-2"><X className="w-4 h-4 mt-0.5 text-red-500 shrink-0" /> {rw.willNot2}</li>
+                <li className="flex items-start gap-2"><X className="w-4 h-4 mt-0.5 text-red-500 shrink-0" /> {rw.willNot3}</li>
               </ul>
             </div>
 
@@ -247,7 +250,7 @@ export function RewriteView() {
                 className="mt-0.5"
               />
               <span className="text-sm text-slate-700">
-                <strong>Autorizo</strong> a IA a reescrever meu currículo com base no laudo de análise. Entendo que o resultado deve ser revisado por mim antes do download, e que sou responsável por confirmar a veracidade das informações.
+                {rw.authorizeLabel}
               </span>
             </label>
 
@@ -257,9 +260,9 @@ export function RewriteView() {
               className="w-full bg-primary hover:bg-primary/90 h-11"
             >
               {rewriting ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Reescrevendo… (15–30s)</>
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {rw.rewritingButton}</>
               ) : (
-                <><Sparkles className="w-4 h-4 mr-2" /> Reescrever meu currículo</>
+                <><Sparkles className="w-4 h-4 mr-2" /> {rw.rewriteButton}</>
               )}
             </Button>
           </CardContent>
@@ -273,8 +276,8 @@ export function RewriteView() {
             <CardContent className="p-4 flex items-center gap-3">
               <Check className="w-5 h-5 text-emerald-600 shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-semibold text-emerald-900">Currículo reescrito com sucesso!</p>
-                <p className="text-xs text-emerald-700">Revise o conteúdo abaixo. Se estiver tudo OK, confirme para liberar o download.</p>
+                <p className="text-sm font-semibold text-emerald-900">{rw.successCardTitle}</p>
+                <p className="text-xs text-emerald-700">{rw.successCardDesc}</p>
               </div>
             </CardContent>
           </Card>
@@ -287,10 +290,10 @@ export function RewriteView() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <Key className="w-4 h-4 text-primary shrink-0" />
-                      <h3 className="text-sm font-bold text-primary">🧩 Palavras-Chave Estratégicas (ATS) Incorporadas</h3>
+                      <h3 className="text-sm font-bold text-primary">{rw.keywordsCardTitle}</h3>
                     </div>
                     <p className="text-xs text-slate-600">
-                      Estes termos essenciais foram integrados na reescrita para garantir pontuação máxima nos robôs de triagem (Gupy, LinkedIn, Workday).
+                      {rw.keywordsCardDesc}
                     </p>
                   </div>
                   <Button
@@ -299,10 +302,10 @@ export function RewriteView() {
                     className="bg-white border-primary/20 text-primary hover:bg-primary/10 text-xs shrink-0 self-start sm:self-center"
                     onClick={() => {
                       navigator.clipboard.writeText(resume.analysis.keywords.join(', '))
-                      toast.success('Palavras-chave copiadas!')
+                      toast.success(rw.copyKeywordsToast)
                     }}
                   >
-                    <Copy className="w-3.5 h-3.5 mr-1" /> Copiar termos
+                    <Copy className="w-3.5 h-3.5 mr-1" /> {rw.copyKeywordsCta}
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-3">
@@ -318,11 +321,11 @@ export function RewriteView() {
 
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowOriginal(!showOriginal)}>
-              <Eye className="w-4 h-4 mr-1" /> {showOriginal ? 'Ver reescrito' : 'Ver original'}
+              <Eye className="w-4 h-4 mr-1" /> {showOriginal ? rw.viewRewrittenCta : rw.viewOriginalCta}
             </Button>
             <Button variant="outline" size="sm" onClick={requestRewrite} disabled={rewriting}>
               {rewriting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
-              Gerar novamente
+              {rw.regenerateCta}
             </Button>
             <Button
               size="sm"
@@ -331,7 +334,7 @@ export function RewriteView() {
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
             >
               {downloadingType === 'resume_pdf' ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-              Baixar PDF
+              {rw.downloadPdfCta}
             </Button>
             <Button
               size="sm"
@@ -341,7 +344,7 @@ export function RewriteView() {
               className="border-slate-300 font-medium"
             >
               {downloadingType === 'resume_txt' ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-              Baixar .TXT
+              {rw.downloadTxtCta}
             </Button>
             <Button
               size="sm"
@@ -351,10 +354,10 @@ export function RewriteView() {
               className="border-slate-300 font-medium"
             >
               {downloadingType === 'resume_md' ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-              Baixar .MD
+              {rw.downloadMdCta}
             </Button>
             <Badge variant="outline" className="ml-auto self-center">
-              {showOriginal ? 'Original' : 'Reescrito'}
+              {showOriginal ? rw.originalBadge : rw.rewrittenBadge}
             </Badge>
           </div>
 
@@ -425,15 +428,15 @@ export function RewriteView() {
           {/* CONFIRMATION */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Revisão final</CardTitle>
-              <CardDescription>Confirme se todas as informações estão corretas. Você é responsável pela veracidade dos dados.</CardDescription>
+              <CardTitle className="text-base">{rw.finalReviewTitle}</CardTitle>
+              <CardDescription>{rw.finalReviewDesc}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-2">
               <Button onClick={confirmRewrite} className="flex-1 bg-emerald-600 hover:bg-emerald-700">
-                <Check className="w-4 h-4 mr-1" /> Tudo certo, confirmar e baixar
+                <Check className="w-4 h-4 mr-1" /> {rw.confirmCta}
               </Button>
               <Button onClick={rejectRewrite} variant="outline" className="flex-1">
-                <X className="w-4 h-4 mr-1" /> Descartar reescrita
+                <X className="w-4 h-4 mr-1" /> {rw.discardCta}
               </Button>
             </CardContent>
           </Card>
@@ -442,11 +445,11 @@ export function RewriteView() {
             <Card className="border-emerald-300 bg-emerald-50">
               <CardContent className="p-5 flex items-center justify-between flex-wrap gap-3">
                 <div>
-                  <p className="font-semibold text-emerald-900">Currículo confirmado!</p>
-                  <p className="text-sm text-emerald-700">Pronto para download em PDF e Markdown.</p>
+                  <p className="font-semibold text-emerald-900">{rw.confirmedTitle}</p>
+                  <p className="text-sm text-emerald-700">{rw.confirmedDesc}</p>
                 </div>
                 <Button onClick={() => setView('downloads')} className="bg-emerald-600 hover:bg-emerald-700">
-                  <Download className="w-4 h-4 mr-1" /> Ir para downloads <ArrowRight className="w-4 h-4 ml-1" />
+                  <Download className="w-4 h-4 mr-1" /> {rw.goToDownloadsCta} <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
               </CardContent>
             </Card>
