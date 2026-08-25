@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
 import { currentQuotas } from '@/lib/jobs/quota.server'
+import { calculateSourceQuality, type RawAlertForQuality, type RawJobForQuality } from '@/lib/analytics/job-source-quality'
 
 /**
  * Consumo de cota das APIs de vagas, para o painel.
@@ -48,10 +49,67 @@ export async function GET() {
     console.warn('[admin/quotas] leitura das fontes falhou:', e?.message || e)
   }
 
+  /**
+   * Qualidade e tempo de renovação por fonte (ver `job-source-quality.ts`).
+   *
+   * Lê `Job` e `RadarAlert` direto — sem tabela nova, sem cron novo. O teto de
+   * leitura é só segurança para quando o banco crescer; hoje o volume real
+   * fica bem abaixo dele.
+   */
+  let sourceQuality: unknown[] = []
+  try {
+    const [jobRows, alertRows] = await Promise.all([
+      db.job.findMany({
+        select: {
+          createdAt: true,
+          publishedAt: true,
+          closedAt: true,
+          salaryMin: true,
+          salaryMax: true,
+          requirements: true,
+          skills: true,
+          normalizedTitle: true,
+          source: { select: { slug: true } },
+        },
+        take: 50_000,
+      }),
+      db.radarAlert.findMany({
+        select: {
+          overallFit: true,
+          feedback: true,
+          job: { select: { source: { select: { slug: true } } } },
+        },
+        take: 50_000,
+      }),
+    ])
+
+    const jobsForQuality: RawJobForQuality[] = jobRows.map((j) => ({
+      sourceSlug: j.source.slug,
+      createdAt: j.createdAt,
+      publishedAt: j.publishedAt,
+      closedAt: j.closedAt,
+      salaryMin: j.salaryMin,
+      salaryMax: j.salaryMax,
+      requirements: j.requirements,
+      skills: j.skills,
+      normalizedTitle: j.normalizedTitle,
+    }))
+    const alertsForQuality: RawAlertForQuality[] = alertRows.map((a) => ({
+      sourceSlug: a.job.source.slug,
+      overallFit: a.overallFit,
+      feedback: a.feedback,
+    }))
+
+    sourceQuality = calculateSourceQuality(jobsForQuality, alertsForQuality)
+  } catch (e: any) {
+    console.warn('[admin/quotas] cálculo de qualidade por fonte falhou:', e?.message || e)
+  }
+
   return NextResponse.json({
     period: quotas[0]?.period ?? null,
     quotas,
     sources,
+    sourceQuality,
     // O painel precisa saber se há algo a mostrar em destaque sem reimplementar
     // a regra — ela vive em `quota.ts` e é testada lá.
     hasAlert: quotas.some((q) => q.alert !== 'none'),

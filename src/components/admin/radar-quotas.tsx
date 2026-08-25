@@ -40,6 +40,28 @@ interface SourceHealth {
   _count: { jobs: number }
 }
 
+interface SourceQuality {
+  sourceSlug: string
+  totalJobs: number
+  closedJobs: number
+  observationDays: number
+  avgLifespanDays: number | null
+  salaryDisclosureRate: number
+  requirementsFillRate: number
+  recognizedTitleRate: number
+  totalAlerts: number
+  strongOrGoodShare: number
+  positiveFeedbackShare: number | null
+  maturity: 'baixa' | 'média' | 'alta'
+  maturityReason: string
+}
+
+const MATURITY_STYLE: Record<SourceQuality['maturity'], string> = {
+  baixa: 'bg-slate-100 text-slate-700 border-slate-200',
+  média: 'bg-amber-100 text-amber-800 border-amber-200',
+  alta: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+}
+
 const ALERT_STYLE: Record<ProviderQuota['alert'], string> = {
   none: 'border-slate-200',
   attention: 'border-amber-300 bg-amber-50/50',
@@ -65,6 +87,7 @@ function quandoFoi(iso: string | null): string {
 export function RadarQuotas() {
   const [quotas, setQuotas] = useState<ProviderQuota[]>([])
   const [sources, setSources] = useState<SourceHealth[]>([])
+  const [sourceQuality, setSourceQuality] = useState<SourceQuality[]>([])
   const [period, setPeriod] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -91,6 +114,7 @@ export function RadarQuotas() {
 
       setQuotas(data.quotas || [])
       setSources(data.sources || [])
+      setSourceQuality(data.sourceQuality || [])
       setPeriod(data.period ?? null)
       setError(null)
     } catch {
@@ -354,6 +378,69 @@ export function RadarQuotas() {
               </div>
             )
           })}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-bold text-slate-900 mb-1">Qualidade e maturidade por fonte</h3>
+        <p className="text-[11px] text-slate-500 mb-3">
+          Tempo de renovação, completude do dado e rendimento real no Radar — não muda nada sozinho, é
+          leitura para decidir onde ajustar termos, países ou orçamento de busca. A maturidade diz o quanto
+          dá para confiar em cada número: amostra e janela de tempo pequenas ainda não sustentam decisão.
+        </p>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {sourceQuality.length === 0 && (
+            <p className="text-xs text-slate-500 italic">Sem dado suficiente ainda.</p>
+          )}
+
+          {sourceQuality.map((q) => (
+            <Card key={q.sourceSlug} className="border-slate-200">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-xs font-bold text-slate-800">{q.sourceSlug}</CardTitle>
+                  <Badge variant="outline" className={`text-[10px] shrink-0 ${MATURITY_STYLE[q.maturity]}`}>
+                    maturidade {q.maturity}
+                  </Badge>
+                </div>
+                <CardDescription className="text-[11px] text-slate-600">
+                  {q.totalJobs} vaga(s) · {q.closedJobs} encerrada(s) · {q.observationDays}d de observação
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="p-2 rounded bg-slate-50">
+                    <p className="text-slate-500">Tempo de renovação</p>
+                    <p className="font-bold text-slate-800">
+                      {q.avgLifespanDays != null ? `${q.avgLifespanDays.toFixed(1)}d` : 'insuficiente'}
+                    </p>
+                  </div>
+                  <div className="p-2 rounded bg-slate-50">
+                    <p className="text-slate-500">Fortes/boas no Radar</p>
+                    <p className="font-bold text-slate-800">
+                      {q.totalAlerts > 0 ? `${q.strongOrGoodShare}%` : '—'}
+                    </p>
+                  </div>
+                  <div className="p-2 rounded bg-slate-50">
+                    <p className="text-slate-500">Salário informado</p>
+                    <p className="font-bold text-slate-800">{q.salaryDisclosureRate}%</p>
+                  </div>
+                  <div className="p-2 rounded bg-slate-50">
+                    <p className="text-slate-500">Requisitos preenchidos</p>
+                    <p className="font-bold text-slate-800">{q.requirementsFillRate}%</p>
+                  </div>
+                </div>
+                {q.positiveFeedbackShare != null && (
+                  <p className="text-[10px] text-slate-500">
+                    👍 em {q.positiveFeedbackShare}% dos feedbacks recebidos.
+                  </p>
+                )}
+                <p className="text-[10px] text-slate-500 leading-relaxed border-t border-slate-100 pt-2">
+                  {q.maturityReason}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     </div>
