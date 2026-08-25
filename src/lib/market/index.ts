@@ -360,6 +360,25 @@ export const MARKETS: MarketConfig[] = [
       workAuthorizationMatters: true,
     },
   },
+  {
+    id: 'IT',
+    name: 'Italy',
+    countries: ['IT'],
+    jobLanguage: 'en',
+    salaryCurrency: 'EUR',
+    ats: ['Workday', 'SAP SuccessFactors', 'InfoJobs', 'Cornerstone', 'LinkedIn Talent Solutions'],
+    jobSources: ['InfoJobs Italia', 'Indeed Italia', 'LinkedIn Jobs', 'Company career pages'],
+    socialPlatforms: ['LinkedIn', 'GitHub', 'Personal portfolio'],
+    resume: {
+      photo: 'expected',
+      maxPages: 2,
+      personalData: 'Nome, cognome, email, telefono, città e LinkedIn. La foto e la clausola sul trattamento dei dati (GDPR / D.Lgs. 196/2003) sono prassi consueta.',
+    },
+    employment: {
+      contractTypes: ['Tempo indeterminato', 'Tempo determinato', 'Apprendistato', 'Partita IVA'],
+      workAuthorizationMatters: true,
+    },
+  },
 ]
 
 /** Padrão de mercado por idioma — o palpite mais fraco, e o último da fila. */

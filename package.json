@@ -10,7 +10,7 @@
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:rls": "psql \"$POSTGRES_URL_NON_POOLING\" -v ON_ERROR_STOP=1 -f prisma/rls.sql",
+    "db:rls": "npx --yes tsx src/scripts/apply-rls.ts",
     "db:reset": "prisma migrate reset",
     "test": "npx --yes tsx --test \"src/**/*.test.ts\"",
     "stripe:setup": "npx --yes tsx src/scripts/setup-stripe.ts",

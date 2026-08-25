@@ -7,9 +7,16 @@ da Etapa 1 à Etapa 8 do prompt mestre. Revisado em 20/08/2026 (PR #61). Este
 documento existe para que quem continuar não precise redescobrir o que já foi
 decidido, e — mais importante — não repita erros que já custaram caro aqui.
 
-Leia junto com `docs/AUDITORIA-EVOLUCAO-GLOBAL.md`, que registra o porquê de
-cada decisão em ordem cronológica. Este documento é o resumo operacional; aquele
-é a memória.
+São três documentos, com papéis diferentes:
+
+| Documento | Responde |
+|---|---|
+| **este** | o que fazer, o que não quebrar, onde o erro não aparece como erro |
+| `docs/MAPA-DO-PRODUTO.md` | **o que o produto é** — rota por rota, módulo por módulo, com o que é vendido conferido contra o que tem produtor |
+| `docs/AUDITORIA-EVOLUCAO-GLOBAL.md` | **por que** cada decisão foi tomada, em ordem cronológica |
+
+Este é o resumo operacional, o mapa é o inventário, a auditoria é a memória.
+Quem chega agora ganha tempo lendo o mapa antes deste.
 
 ---
 
@@ -20,29 +27,34 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 24/08/2026, correção do incidente de produção do Radar (ver 7.6) |
-| Suíte | 510 testes, `fail 0` — a regra da contagem está na seção 8 |
+| Última revisão | 24/08/2026, correção do incidente de produção do Radar (ver 7.6) + telemetria de funil, UTMs, priorização dinâmica por mercado e unit economics |
+| Suíte | 523 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão |
-| Banco | Sincronizado via `prisma db push`, incluindo `RadarAlert.notifiedAt` (ver 7.6) |
+| Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |
 
 **Pendências que estão esperando alguém, não código:**
 
-1. ~~`npx prisma db push`~~ — ✅ **resolvido em 24/08/2026.** A coluna
-   `RadarAlert.notifiedAt` (do PR #61) nunca chegou a ser aplicada no banco de
-   produção, e isso não ficou só esperando em silêncio: quebrou `GET /api/radar`
-   e `POST /api/radar/run` de verdade, em produção, para usuário real. Detalhe
-   em 7.6.
-2. **Conferir o digest com o envio desligado.** Depois da migração, o cron passa
-   a registrar no log quem receberia o quê, com o assunto montado. É o material
+1. **Conferir o digest com o envio desligado.** Com a migração feita, o cron
+   registra no log quem receberia o quê, com o assunto montado. É o material
    para decidir se o conteúdo presta antes de ligar `RADAR_DIGEST_ENABLED`.
-3. **Os três testes de produto** que só quem tem conta faz: importar currículo no
+2. **Os três testes de produto** que só quem tem conta faz: importar currículo no
    Perfil Profissional, conferir se o preço aparece em real, e abrir o Radar com
    o perfil preenchido para ver se entra vaga de outra área. O terceiro já
    aconteceu de verdade em 24/08/2026 — ver 7.6 — e é a razão de a seção 7.5 ter
    deixado de ser hipotética.
+3. **Apagar as branches `claude/*` já mescladas.** O `git push --delete` volta
+   403 em sessão remota — é operação de humano, pelo navegador ou pela máquina
+   dele. A conferência já foi feita e está registrada na seção 11.
 
-**O que NÃO está pendente e parece que está:** o e-mail do digest está
-implementado e desligado de propósito (§7.3). Não é trabalho pela metade.
+**O que NÃO está pendente e parece que está:**
+
+- O e-mail do digest está implementado e **desligado de propósito** (§7.3). Não é
+  trabalho pela metade.
+- O **`npx prisma db push` do `RadarAlert.notifiedAt`** foi listado como
+  pendência do PR #61 até 24/08. A tabela acima registra o banco sincronizado
+  com a coluna e o índice `[notifiedAt, userId]`, então o erro diário do Prisma
+  no passo do digest deixou de acontecer. Se ele reaparecer no log, é a linha
+  "Banco" desta tabela que está errada — não uma pendência que voltou.
 
 ---
 
@@ -130,7 +142,7 @@ honesta.
 | 7 — Radar | ✅ roda por cron, alertas reais gerados |
 | 8 — Ação | ✅ Job Fit + currículo direcionado a partir da vaga |
 | 9 — Assinatura | ⬜ travada pelo §21 |
-| 10 — Escala global | 🟡 12 mercados declarados, cobertura real de fontes varia |
+| 10 — Escala global | 🟡 13 mercados declarados, cobertura real de fontes varia |
 | Aviso por e-mail | 🟡 implementado, envio desligado por decisão — ver §7.3 |
 
 **As sete fontes:**
@@ -154,7 +166,7 @@ vaga remota.
 
 ```
 src/lib/
-  market/          Adaptação por país. index.ts (12 mercados) e countries.ts (nomes + ISO2)
+  market/          Adaptação por país. index.ts (13 mercados) e countries.ts (nomes + ISO2)
   profile/         Professional Profile: tipos, validação, derivação de mercado
                    from-orientation.ts — o diagnóstico vocacional semeia o perfil
                    extract.ts — sugestão a partir do currículo
@@ -162,11 +174,15 @@ src/lib/
     adapter.ts     Contrato JobSourceAdapter (leia primeiro)
     collection.ts  §12 — a regra crítica
     normalize.ts   Vaga crua → NormalizedJob
-    dedup.ts       Chaves sid: / url: / cmp:
+    dedup.ts       Chaves sid: / url: / cmp: — a camada determinística
+    agent-dedup.ts Faxina semântica. A ÚNICA rotina que apaga vaga fora do
+                   expurgo por tempo: confiança ≥ 0,85, alerta migra, não some
     lifecycle.ts   Encerramento por tempo e expurgo
     quota.ts       Cota das APIs externas
     text.ts        Limpeza de HTML compartilhada
     adapters/      Uma fonte por arquivo
+  analytics/
+    market-performance.ts  Funil e margem por país. Decide onde a verba entra
   matching/
     filters.ts     Filtro duro — desconhecido não elimina
     compatibility.ts  Três eixos, sem porcentagem única
@@ -355,7 +371,8 @@ versões do corpo mais os cabeçalhos `List-Unsubscribe` da RFC 8058,
 
 **Com a variável desligada o caminho roda mesmo assim** e escreve no log quem
 receberia o quê, com o assunto montado. É assim que se confere o conteúdo sem
-arriscar a reputação do domínio.
+arriscar a reputação do domínio. A coluna `notifiedAt` já está no banco desde
+24/08, então esse caminho roda inteiro — era ela que faltava.
 
 **Três decisões que não são óbvias:**
 
@@ -454,7 +471,7 @@ Nenhuma vaga foi apagada, só o registro do alerta.
 3. Rode `npm test` antes de mudar qualquer linha, e guarde o resultado.
 
    **O que importa é `fail 0`, e não a contagem.** Na data desta revisão eram
-   495, mas o número sobe a cada PR e este documento vai ficar para trás — se
+   523, mas o número sobe a cada PR e este documento vai ficar para trás — se
    ele não bater, olhe o último PR mesclado antes de concluir que quebrou
    alguma coisa. O que nunca muda é a regra: se havia zero falhas antes de você
    mexer e há falha depois, o problema é a sua mudança, não o teste.
@@ -660,3 +677,47 @@ Implementado em 24/08/2026 para rastreamento ponta a ponta:
   - **Margem Líquida Real**: Lucro após descontar consumo real de IA e taxas do gateway (~4%).
   - **Funil de Conversão e Taxa de Aceitação do Upsell**.
 
+---
+
+## 11. Branches `claude/*` no remoto — conferência de 20/08
+
+Doze branches acumularam no remoto. A conferência abaixo foi feita comparando o
+tip de cada branch com o head do PR correspondente, e — para as fechadas sem
+merge — procurando cada linha adicionada dentro da `main` de então. Ela existe
+para que ninguém precise repetir o trabalho, e para que ninguém apague por engano
+a única cópia de alguma coisa.
+
+**Nove com PR mesclado e tip igual ao head do PR. Seguras:**
+
+```
+claude/analise-projeto-execucao-pw6cb9        claude/painel-laudo-8-dimensoes-2uintg
+claude/code-audit-planning-pc5sap             claude/price-changes-frontend-backend-stripe-a37av5
+claude/github-code-changes-ru61f3             claude/profile-pdf-analysis-timeout-g5dvhx
+claude/handoff-revisao-pos-61                 claude/vercel-claude-code-connection-nvz7jn
+claude/mcp-vercel-integration-c5qpvw
+```
+
+**Três com PR fechado SEM merge.** Nenhuma delas guarda trabalho vivo:
+
+| Branch | PR | Situação verificada |
+|---|---|---|
+| `claude/deepseek-v4-pricing-update-z1aijg` | #22 | O commit de preço foi recuperado **inteiro** pelo PR #45: `pricing.ts` e `pricing.test.ts` byte a byte idênticos, e nenhuma das 68 linhas adicionadas em `registry.ts`, `types.ts`, `admin-view.tsx` e `ANALISE-CUSTOS.md` falta na `main`. O segundo commit era o `MAPA-DO-PRODUTO.md` — recuperado depois, ver abaixo |
+| `claude/index-page-design-review-3okhnq` | #15 | **Não** foi recuperado — 77 de 90 linhas da `landing.tsx` e as 155 do `i18n/index.ts` não estavam na `main`. Mas o segundo commit mexe em `lib/credits.ts` e `api/credits/*`, três arquivos que a `main` apagou junto com o modelo de créditos, e a landing foi reescrita depois. Trabalho superado, não perdido |
+| `claude/page-load-error-39mpbh` | #2 | Recuperado **inteiro** pelo PR #45, e melhorado: as três regras de `Cache-Control` estão na `next.config.ts` com os mesmos valores, agora com a constante `HTML_ONLY` e a tabela explicando cada uma |
+
+**A quarta fechada sem merge, e por quê.** A `claude/mapa-do-produto-recuperado`
+(PR #63) trazia o mapa de volta, reescrito contra a `main` de 20/08. Ficou aberta
+esperando merge enquanto a `main` andava dez commits, e o documento envelheceu
+dentro do próprio PR que existia para desenvelhecê-lo — além de passar a
+conflitar com a §0 daqui. O conteúdo foi conferido de novo contra `ccdac2c` e
+entrou pelo PR #66. A branch foi fechada como superada, não descartada.
+
+**A lição, que vale mais que a lista.** O PR #45 se chama *"Recupera o preço do
+DeepSeek e a política de cache dos PRs #22 e #2"* — alguém já teve de refazer à
+mão trabalho que estava pronto numa branch fechada por engano. Fechar PR sem
+mesclar é decisão que precisa ser dita em voz alta; senão o conteúdo não some,
+mas fica caro de achar.
+
+E documentação parada em PR aberto apodrece por conta própria: o #63 cobrou o
+preço em retrabalho de conferência, não em conflito de git. Doc que descreve a
+`main` precisa entrar junto com ela, ou nasce vencida.

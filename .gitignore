@@ -80,3 +80,7 @@ mini-services/*/.env*worklog.md
 /scratch/
 /check-config.js
 .zscripts/*.pid
+
+# Garante que código em src/lib não seja afetado por gitignore global
+!src/lib/
+
