@@ -14,6 +14,8 @@ import {
 import { toast } from 'sonner'
 import { internalFetch } from '@/lib/internal-fetch'
 import { safeHttpUrl } from '@/lib/safe-url'
+import { useI18n } from '@/context/i18n-context'
+import { localeForLang, type TranslationDictionary } from '@/lib/i18n'
 
 /**
  * O Radar, do lado do usuário.
@@ -69,18 +71,20 @@ interface Preferences {
   maxPerDigest: number
 }
 
-const FREQUENCY_LABEL: Record<string, string> = {
-  immediate: 'Assim que encontrar',
-  daily: 'Uma vez por dia',
-  weekly: 'Uma vez por semana',
-  off: 'Desligado',
-}
+type RadarDict = TranslationDictionary['radar']
 
-const MINIMUM_FIT_LABEL: Record<string, string> = {
-  strong: 'Só as de alta compatibilidade',
-  good: 'Alta e boa compatibilidade',
-  partial: 'Inclusive as parciais',
-}
+const frequencyLabels = (rd: RadarDict): Record<string, string> => ({
+  immediate: rd.freqImmediate,
+  daily: rd.freqDaily,
+  weekly: rd.freqWeekly,
+  off: rd.freqOff,
+})
+
+const minimumFitLabels = (rd: RadarDict): Record<string, string> => ({
+  strong: rd.minFitStrong,
+  good: rd.minFitGood,
+  partial: rd.minFitPartial,
+})
 
 const COMPATIBILITY_STYLE: Record<string, string> = {
   Alta: 'bg-emerald-100 text-emerald-900 border-emerald-300',
@@ -89,18 +93,29 @@ const COMPATIBILITY_STYLE: Record<string, string> = {
   Baixa: 'bg-slate-100 text-slate-700 border-slate-300',
 }
 
-const FEEDBACK_REASONS: { id: string; label: string }[] = [
-  { id: 'wrong_role', label: 'Cargo errado' },
-  { id: 'location', label: 'Localização' },
-  { id: 'salary', label: 'Salário' },
-  { id: 'seniority', label: 'Senioridade' },
-  { id: 'skills', label: 'Competências' },
-  { id: 'company', label: 'Empresa' },
-  { id: 'work_mode', label: 'Modelo de trabalho' },
-  { id: 'other', label: 'Outro' },
+/** `fit.compatibility` chega do backend em português (enum interno) — aqui só se traduz o rótulo exibido. */
+const compatibilityLabels = (rd: RadarDict): Record<string, string> => ({
+  Alta: rd.compatAlta,
+  Boa: rd.compatBoa,
+  Parcial: rd.compatParcial,
+  Baixa: rd.compatBaixa,
+})
+
+const feedbackReasons = (rd: RadarDict): { id: string; label: string }[] => [
+  { id: 'wrong_role', label: rd.reasonWrongRole },
+  { id: 'location', label: rd.reasonLocation },
+  { id: 'salary', label: rd.reasonSalary },
+  { id: 'seniority', label: rd.reasonSeniority },
+  { id: 'skills', label: rd.reasonSkills },
+  { id: 'company', label: rd.reasonCompany },
+  { id: 'work_mode', label: rd.reasonWorkMode },
+  { id: 'other', label: rd.reasonOther },
 ]
 
 export function RadarView() {
+  const { t, lang } = useI18n()
+  const rd = t.radar
+  const locale = localeForLang(lang)
   const { setView, openResume } = useNav()
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [digest, setDigest] = useState<Digest | null>(null)
@@ -131,7 +146,7 @@ export function RadarView() {
       setProfileMatchable(radar.profileMatchable !== false)
       setError(null)
     } else {
-      setError(radar?.error || 'Não foi possível carregar o Radar.')
+      setError(radar?.error || rd.loadErrorFallback)
     }
     if (prefsRes.ok && prefs?.preferences) {
       setPreferences(prefs.preferences)
@@ -145,7 +160,7 @@ export function RadarView() {
       try {
         await load()
       } catch {
-        if (!cancelled) setError('Falha de conexão ao carregar o Radar.')
+        if (!cancelled) setError(rd.loadConnectionError)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -174,21 +189,21 @@ export function RadarView() {
       const data = await res.json().catch(() => null)
 
       if (!res.ok) {
-        toast.error(data?.error || 'Não foi possível preparar seu currículo para esta vaga.')
+        toast.error(data?.error || rd.prepareErrorFallback)
         return
       }
 
       // Dizer o que foi trocado, em vez de trocar o alvo em silêncio: a próxima
       // análise sairia diferente e ninguém saberia por quê.
       if (data?.previousTarget) {
-        toast.info(`Seu currículo estava direcionado a "${data.previousTarget}". Agora aponta para esta vaga.`)
+        toast.info(rd.prepareRedirected.replace('{target}', data.previousTarget))
       } else {
-        toast.success('Currículo direcionado a esta vaga.')
+        toast.success(rd.prepareSuccess)
       }
 
       openResume(data.resumeId, 'rewrite')
     } catch {
-      toast.error('Falha de conexão ao preparar seu currículo.')
+      toast.error(rd.prepareConnectionError)
     } finally {
       setPreparing(null)
     }
@@ -208,19 +223,19 @@ export function RadarView() {
       const data = await res.json().catch(() => null)
 
       if (!res.ok) {
-        toast.error(data?.error || 'Não foi possível atualizar o Radar agora.')
+        toast.error(data?.error || rd.runErrorFallback)
         return
       }
 
       await load()
 
       if (data?.alerted > 0) {
-        toast.success(`${data.alerted} ${data.alerted === 1 ? 'oportunidade nova' : 'oportunidades novas'}.`)
+        toast.success((data.alerted === 1 ? rd.runSuccessOne : rd.runSuccessMany).replace('{n}', String(data.alerted)))
       } else {
-        toast.info('Nada novo que justifique um aviso. O Radar continua monitorando.')
+        toast.info(rd.runNothingNew)
       }
     } catch {
-      toast.error('Falha de conexão ao atualizar o Radar.')
+      toast.error(rd.runConnectionError)
     } finally {
       setRunning(false)
     }
@@ -237,10 +252,10 @@ export function RadarView() {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => null)
-        toast.error(data?.error || 'Não foi possível salvar a preferência.')
+        toast.error(data?.error || rd.savePrefsErrorFallback)
       }
     } catch {
-      toast.error('Falha de conexão ao salvar a preferência.')
+      toast.error(rd.savePrefsConnectionError)
     }
   }
 
@@ -253,9 +268,9 @@ export function RadarView() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alertId, action: 'feedback', feedback, reason }),
       })
-      toast.success(feedback === 'interested' ? 'Anotado — vamos buscar mais assim.' : 'Anotado. Isso ajuda a calibrar o Radar.')
+      toast.success(feedback === 'interested' ? rd.feedbackInterestedToast : rd.feedbackNotUsefulToast)
     } catch {
-      toast.error('Falha ao registrar seu retorno.')
+      toast.error(rd.feedbackError)
     }
   }
 
@@ -271,7 +286,7 @@ export function RadarView() {
     // na origem desta página — é XSS, não navegação.
     const safeUrl = safeHttpUrl(opportunity.applicationUrl)
     if (!safeUrl) {
-      toast.error('O link desta vaga é inválido e não pode ser aberto.')
+      toast.error(rd.invalidLinkError)
       return
     }
     window.open(safeUrl, '_blank', 'noopener,noreferrer')
@@ -281,7 +296,7 @@ export function RadarView() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
         <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
-        <p className="text-sm text-slate-500 font-medium">Carregando seu Radar...</p>
+        <p className="text-sm text-slate-500 font-medium">{rd.loadingText}</p>
       </div>
     )
   }
@@ -298,8 +313,7 @@ export function RadarView() {
               <div>
                 <CardTitle className="text-base font-bold text-indigo-950">Griffo Radar</CardTitle>
                 <CardDescription className="text-xs text-slate-600">
-                  Monitora oportunidades para o seu perfil e só te interrompe quando encontra algo que merece
-                  sua atenção.
+                  {rd.cardDesc}
                 </CardDescription>
               </div>
             </div>
@@ -310,13 +324,13 @@ export function RadarView() {
                 onClick={runNow}
                 disabled={running || !hasProfile}
                 className="bg-white border-indigo-300 text-indigo-800 hover:bg-indigo-50"
-                title="Reavalia as vagas já coletadas contra o seu perfil"
+                title={rd.runNowTooltip}
               >
                 {running ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1.5" />}
-                Procurar agora
+                {rd.runNowButton}
               </Button>
               <Button variant="outline" size="sm" onClick={() => setShowSettings((v) => !v)}>
-                <Sliders className="w-4 h-4 mr-1.5" /> Preferências
+                <Sliders className="w-4 h-4 mr-1.5" /> {rd.preferencesButton}
               </Button>
             </div>
           </div>
@@ -326,34 +340,33 @@ export function RadarView() {
           <CardContent className="space-y-4 border-t border-indigo-100 pt-4">
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-slate-700">Com que frequência avisar</Label>
+                <Label className="text-xs font-semibold text-slate-700">{rd.freqLabel}</Label>
                 <select
                   value={preferences.frequency}
                   onChange={(e) => savePreferences({ frequency: e.target.value as Preferences['frequency'] })}
                   className="w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm"
                 >
-                  {Object.entries(FREQUENCY_LABEL).map(([value, label]) => (
+                  {Object.entries(frequencyLabels(rd)).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-slate-700">O que vale um aviso</Label>
+                <Label className="text-xs font-semibold text-slate-700">{rd.minFitLabel}</Label>
                 <select
                   value={preferences.minimumFit}
                   onChange={(e) => savePreferences({ minimumFit: e.target.value as Preferences['minimumFit'] })}
                   className="w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm"
                 >
-                  {Object.entries(MINIMUM_FIT_LABEL).map(([value, label]) => (
+                  {Object.entries(minimumFitLabels(rd)).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
               </div>
             </div>
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              O Radar é silencioso por padrão: se não houver nada realmente relevante, ele não envia nada. Isso é o
-              comportamento esperado, não uma falha.
-              {lastRunAt && <> Última varredura: {new Date(lastRunAt).toLocaleString('pt-BR')}.</>}
+              {rd.silentByDefault}
+              {lastRunAt && <> {rd.lastRun.replace('{date}', new Date(lastRunAt).toLocaleString(locale))}</>}
             </p>
           </CardContent>
         )}
@@ -368,13 +381,12 @@ export function RadarView() {
       {!hasProfile && (
         <Card className="border-amber-200 bg-amber-50/40">
           <CardContent className="p-5 space-y-2">
-            <p className="text-sm font-semibold text-amber-950">O Radar precisa do seu perfil profissional</p>
+            <p className="text-sm font-semibold text-amber-950">{rd.needsProfileTitle}</p>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Sem saber o que você faz e onde quer trabalhar, não há como separar o que é oportunidade do que é
-              ruído. Preencher o mercado principal já é suficiente para começar.
+              {rd.needsProfileDesc}
             </p>
             <Button size="sm" onClick={() => setView('profile')} className="bg-amber-600 hover:bg-amber-700 mt-1">
-              <Briefcase className="w-4 h-4 mr-1.5" /> Preencher perfil profissional
+              <Briefcase className="w-4 h-4 mr-1.5" /> {rd.needsProfileButton}
             </Button>
           </CardContent>
         </Card>
@@ -384,21 +396,18 @@ export function RadarView() {
         <Card className="border-amber-200 bg-amber-50/40">
           <CardContent className="p-5 space-y-2">
             <p className="text-sm font-semibold text-amber-950">
-              Falta dizer o que você faz
+              {rd.notMatchableTitle}
             </p>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Seu perfil tem onde você está e como quer trabalhar, mas ainda não tem{' '}
-              <strong>cargo, área ou competências</strong>. Sem isso não há o que comparar com uma
-              vaga: qualquer resultado seria só o que calhou de existir no banco, e não o que tem a
-              ver com você.
+              {rd.notMatchableP1Prefix}
+              <strong>{rd.notMatchableP1Bold}</strong>{rd.notMatchableP1Suffix}
             </p>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Preencher <strong>um</strong> desses campos já liga o Radar. O botão{' '}
-              <em>Preencher a partir do currículo</em>, na tela do perfil, tira todos eles do
-              currículo que você já enviou.
+              {rd.notMatchableP2Prefix}<strong>{rd.notMatchableP2Bold}</strong>{rd.notMatchableP2Mid}
+              <em>{rd.notMatchableP2Em}</em>{rd.notMatchableP2Suffix}
             </p>
             <Button size="sm" onClick={() => setView('profile')} className="bg-amber-600 hover:bg-amber-700 mt-1">
-              <Briefcase className="w-4 h-4 mr-1.5" /> Completar perfil profissional
+              <Briefcase className="w-4 h-4 mr-1.5" /> {rd.notMatchableButton}
             </Button>
           </CardContent>
         </Card>
@@ -408,14 +417,12 @@ export function RadarView() {
         <Card className="border-slate-200">
           <CardContent className="p-8 text-center space-y-2">
             <RadarIcon className="w-10 h-10 text-slate-300 mx-auto" />
-            <p className="text-sm font-semibold text-slate-700">Nada digno de nota no momento</p>
+            <p className="text-sm font-semibold text-slate-700">{rd.emptyTitle}</p>
             <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-              O Radar está monitorando e não encontrou oportunidade que justifique interromper você. Silêncio aqui
-              é o comportamento correto — quando aparecer algo relevante, ele aparece nesta tela.
+              {rd.emptyDesc}
             </p>
             <p className="text-[11px] text-slate-400 max-w-md mx-auto leading-relaxed pt-1">
-              A busca por vagas novas acontece uma vez por dia. <strong>Procurar agora</strong> reavalia as vagas já
-              encontradas contra o seu perfil — útil logo depois de mudar alguma coisa nele.
+              {rd.emptyHintPrefix}<strong>{rd.emptyHintBold}</strong>{rd.emptyHintSuffix}
             </p>
           </CardContent>
         </Card>
@@ -425,9 +432,9 @@ export function RadarView() {
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
           <Info className="w-4 h-4 text-indigo-500" />
           <span className="font-semibold text-slate-800">{digest.headline}</span>
-          {digest.strong > 0 && <Badge variant="outline" className="bg-emerald-50 text-emerald-900 border-emerald-300">{digest.strong} de alta compatibilidade</Badge>}
-          {digest.good > 0 && <Badge variant="outline" className="bg-sky-50 text-sky-900 border-sky-300">{digest.good} compatível</Badge>}
-          {digest.partial > 0 && <Badge variant="outline" className="bg-amber-50 text-amber-900 border-amber-300">{digest.partial} alternativa</Badge>}
+          {digest.strong > 0 && <Badge variant="outline" className="bg-emerald-50 text-emerald-900 border-emerald-300">{rd.digestStrong.replace('{n}', String(digest.strong))}</Badge>}
+          {digest.good > 0 && <Badge variant="outline" className="bg-sky-50 text-sky-900 border-sky-300">{rd.digestGood.replace('{n}', String(digest.good))}</Badge>}
+          {digest.partial > 0 && <Badge variant="outline" className="bg-amber-50 text-amber-900 border-amber-300">{rd.digestPartial.replace('{n}', String(digest.partial))}</Badge>}
         </div>
       )}
 
@@ -445,8 +452,7 @@ export function RadarView() {
             <Card key={opportunity.alertId} className="border-slate-200">
               <CardContent className="p-5">
                 <p className="text-sm text-slate-500">
-                  Esta oportunidade foi registrada, mas o diagnóstico dela não pôde ser lido. Ela reaparecerá numa
-                  próxima varredura.
+                  {rd.fitReadErrorFallback}
                 </p>
               </CardContent>
             </Card>
@@ -464,7 +470,7 @@ export function RadarView() {
                   </CardDescription>
                 </div>
                 <Badge variant="outline" className={`shrink-0 font-bold text-[11px] ${COMPATIBILITY_STYLE[fit.compatibility] ?? ''}`}>
-                  Compatibilidade {fit.compatibility}
+                  {rd.compatibilityBadge.replace('{level}', compatibilityLabels(rd)[fit.compatibility] ?? fit.compatibility)}
                 </Badge>
               </div>
             </CardHeader>
@@ -473,7 +479,7 @@ export function RadarView() {
               {fit.whyRecommended.length > 0 && (
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Por que recomendamos
+                    <CheckCircle2 className="w-3.5 h-3.5" /> {rd.whyRecommendedTitle}
                   </p>
                   <ul className="space-y-1">
                     {fit.whyRecommended.map((item, i) => (
@@ -488,7 +494,7 @@ export function RadarView() {
               {fit.attention.length > 0 && (
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5" /> Atenção
+                    <AlertTriangle className="w-3.5 h-3.5" /> {rd.attentionTitle}
                   </p>
                   <ul className="space-y-1">
                     {fit.attention.map((item, i) => (
@@ -503,7 +509,7 @@ export function RadarView() {
               {fit.blockers.length > 0 && (
                 <div className="space-y-1.5 p-3 rounded-lg bg-rose-50/70 border border-rose-200">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-rose-800 flex items-center gap-1.5">
-                    <XCircle className="w-3.5 h-3.5" /> Impedimentos
+                    <XCircle className="w-3.5 h-3.5" /> {rd.blockersTitle}
                   </p>
                   <ul className="space-y-1">
                     {fit.blockers.map((item, i) => (
@@ -517,7 +523,7 @@ export function RadarView() {
 
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 <Button size="sm" onClick={() => openJob(opportunity)} className="bg-indigo-600 hover:bg-indigo-700">
-                  <ExternalLink className="w-4 h-4 mr-1.5" /> Ver a vaga
+                  <ExternalLink className="w-4 h-4 mr-1.5" /> {rd.viewJobButton}
                 </Button>
                 <Button
                   size="sm"
@@ -529,7 +535,7 @@ export function RadarView() {
                   {preparing === opportunity.alertId
                     ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
                     : <Wand2 className="w-4 h-4 mr-1.5" />}
-                  Preparar meu currículo
+                  {rd.prepareResumeButton}
                 </Button>
               </div>
 
@@ -552,13 +558,13 @@ export function RadarView() {
               <div className="pt-3 border-t border-slate-100">
                 {opportunity.feedback ? (
                   <p className="text-[11px] text-slate-500">
-                    {opportunity.feedback === 'interested' ? '👍 Você marcou como interessante.' : '👎 Você marcou como não útil.'}
+                    {opportunity.feedback === 'interested' ? rd.feedbackInterestedNote : rd.feedbackNotUsefulNote}
                   </p>
                 ) : rejecting === opportunity.alertId ? (
                   <div className="space-y-2">
-                    <p className="text-[11px] font-semibold text-slate-700">O que não serviu?</p>
+                    <p className="text-[11px] font-semibold text-slate-700">{rd.feedbackWhatWrong}</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {FEEDBACK_REASONS.map((reason) => (
+                      {feedbackReasons(rd).map((reason) => (
                         <button
                           key={reason.id}
                           onClick={() => sendFeedback(opportunity.alertId, 'not_useful', reason.id)}
@@ -571,12 +577,12 @@ export function RadarView() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-slate-500">Esta oportunidade foi útil?</span>
+                    <span className="text-[11px] text-slate-500">{rd.feedbackAskUseful}</span>
                     <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => sendFeedback(opportunity.alertId, 'interested')}>
-                      <ThumbsUp className="w-3.5 h-3.5 mr-1" /> Sim
+                      <ThumbsUp className="w-3.5 h-3.5 mr-1" /> {rd.feedbackYes}
                     </Button>
                     <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setRejecting(opportunity.alertId)}>
-                      <ThumbsDown className="w-3.5 h-3.5 mr-1" /> Não
+                      <ThumbsDown className="w-3.5 h-3.5 mr-1" /> {rd.feedbackNo}
                     </Button>
                   </div>
                 )}

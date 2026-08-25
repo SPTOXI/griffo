@@ -526,6 +526,92 @@ export interface TranslationDictionary {
     confirmedDesc: string
     goToDownloadsCta: string
   }
+  /**
+   * Tela do Radar (`radar-view.tsx`). Só chrome estático: título da vaga,
+   * empresa, justificativas de compatibilidade e o resumo do digest são
+   * dado de terceiro ou saída da IA — ficam de fora, ver §2.28/§2.31.
+   */
+  radar: {
+    loadingText: string
+    loadErrorFallback: string
+    loadConnectionError: string
+    cardDesc: string
+    runNowButton: string
+    runNowTooltip: string
+    preferencesButton: string
+    freqLabel: string
+    freqImmediate: string
+    freqDaily: string
+    freqWeekly: string
+    freqOff: string
+    minFitLabel: string
+    minFitStrong: string
+    minFitGood: string
+    minFitPartial: string
+    silentByDefault: string
+    lastRun: string
+    prepareErrorFallback: string
+    prepareRedirected: string
+    prepareSuccess: string
+    prepareConnectionError: string
+    runSuccessOne: string
+    runSuccessMany: string
+    runNothingNew: string
+    runErrorFallback: string
+    runConnectionError: string
+    savePrefsErrorFallback: string
+    savePrefsConnectionError: string
+    feedbackInterestedToast: string
+    feedbackNotUsefulToast: string
+    feedbackError: string
+    invalidLinkError: string
+    needsProfileTitle: string
+    needsProfileDesc: string
+    needsProfileButton: string
+    notMatchableTitle: string
+    notMatchableP1Prefix: string
+    notMatchableP1Bold: string
+    notMatchableP1Suffix: string
+    notMatchableP2Prefix: string
+    notMatchableP2Bold: string
+    notMatchableP2Mid: string
+    notMatchableP2Em: string
+    notMatchableP2Suffix: string
+    notMatchableButton: string
+    emptyTitle: string
+    emptyDesc: string
+    emptyHintPrefix: string
+    emptyHintBold: string
+    emptyHintSuffix: string
+    digestStrong: string
+    digestGood: string
+    digestPartial: string
+    fitReadErrorFallback: string
+    compatibilityBadge: string
+    compatAlta: string
+    compatBoa: string
+    compatParcial: string
+    compatBaixa: string
+    whyRecommendedTitle: string
+    attentionTitle: string
+    blockersTitle: string
+    viewJobButton: string
+    prepareResumeButton: string
+    feedbackInterestedNote: string
+    feedbackNotUsefulNote: string
+    feedbackWhatWrong: string
+    reasonWrongRole: string
+    reasonLocation: string
+    reasonSalary: string
+    reasonSeniority: string
+    reasonSkills: string
+    reasonCompany: string
+    reasonWorkMode: string
+    reasonOther: string
+    feedbackAskUseful: string
+    feedbackYes: string
+    feedbackNo: string
+  }
 }
 
 export const DICTIONARIES: Record<Language, TranslationDictionary> = {
@@ -1043,6 +1129,87 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       confirmedDesc: 'Pronto para download em PDF e Markdown.',
       goToDownloadsCta: 'Ir para downloads',
     },
+    radar: {
+      loadingText: 'Carregando seu Radar...',
+      loadErrorFallback: 'Não foi possível carregar o Radar.',
+      loadConnectionError: 'Falha de conexão ao carregar o Radar.',
+      cardDesc: 'Monitora oportunidades para o seu perfil e só te interrompe quando encontra algo que merece sua atenção.',
+      runNowButton: 'Procurar agora',
+      runNowTooltip: 'Reavalia as vagas já coletadas contra o seu perfil',
+      preferencesButton: 'Preferências',
+      freqLabel: 'Com que frequência avisar',
+      freqImmediate: 'Assim que encontrar',
+      freqDaily: 'Uma vez por dia',
+      freqWeekly: 'Uma vez por semana',
+      freqOff: 'Desligado',
+      minFitLabel: 'O que vale um aviso',
+      minFitStrong: 'Só as de alta compatibilidade',
+      minFitGood: 'Alta e boa compatibilidade',
+      minFitPartial: 'Inclusive as parciais',
+      silentByDefault: 'O Radar é silencioso por padrão: se não houver nada realmente relevante, ele não envia nada. Isso é o comportamento esperado, não uma falha.',
+      lastRun: 'Última varredura: {date}.',
+      prepareErrorFallback: 'Não foi possível preparar seu currículo para esta vaga.',
+      prepareRedirected: 'Seu currículo estava direcionado a "{target}". Agora aponta para esta vaga.',
+      prepareSuccess: 'Currículo direcionado a esta vaga.',
+      prepareConnectionError: 'Falha de conexão ao preparar seu currículo.',
+      runSuccessOne: '{n} oportunidade nova.',
+      runSuccessMany: '{n} oportunidades novas.',
+      runNothingNew: 'Nada novo que justifique um aviso. O Radar continua monitorando.',
+      runErrorFallback: 'Não foi possível atualizar o Radar agora.',
+      runConnectionError: 'Falha de conexão ao atualizar o Radar.',
+      savePrefsErrorFallback: 'Não foi possível salvar a preferência.',
+      savePrefsConnectionError: 'Falha de conexão ao salvar a preferência.',
+      feedbackInterestedToast: 'Anotado — vamos buscar mais assim.',
+      feedbackNotUsefulToast: 'Anotado. Isso ajuda a calibrar o Radar.',
+      feedbackError: 'Falha ao registrar seu retorno.',
+      invalidLinkError: 'O link desta vaga é inválido e não pode ser aberto.',
+      needsProfileTitle: 'O Radar precisa do seu perfil profissional',
+      needsProfileDesc: 'Sem saber o que você faz e onde quer trabalhar, não há como separar o que é oportunidade do que é ruído. Preencher o mercado principal já é suficiente para começar.',
+      needsProfileButton: 'Preencher perfil profissional',
+      notMatchableTitle: 'Falta dizer o que você faz',
+      notMatchableP1Prefix: 'Seu perfil tem onde você está e como quer trabalhar, mas ainda não tem ',
+      notMatchableP1Bold: 'cargo, área ou competências',
+      notMatchableP1Suffix: '. Sem isso não há o que comparar com uma vaga: qualquer resultado seria só o que calhou de existir no banco, e não o que tem a ver com você.',
+      notMatchableP2Prefix: 'Preencher ',
+      notMatchableP2Bold: 'um',
+      notMatchableP2Mid: ' desses campos já liga o Radar. O botão ',
+      notMatchableP2Em: 'Preencher a partir do currículo',
+      notMatchableP2Suffix: ', na tela do perfil, tira todos eles do currículo que você já enviou.',
+      notMatchableButton: 'Completar perfil profissional',
+      emptyTitle: 'Nada digno de nota no momento',
+      emptyDesc: 'O Radar está monitorando e não encontrou oportunidade que justifique interromper você. Silêncio aqui é o comportamento correto — quando aparecer algo relevante, ele aparece nesta tela.',
+      emptyHintPrefix: 'A busca por vagas novas acontece uma vez por dia. ',
+      emptyHintBold: 'Procurar agora',
+      emptyHintSuffix: ' reavalia as vagas já encontradas contra o seu perfil — útil logo depois de mudar alguma coisa nele.',
+      digestStrong: '{n} de alta compatibilidade',
+      digestGood: '{n} compatível',
+      digestPartial: '{n} alternativa',
+      fitReadErrorFallback: 'Esta oportunidade foi registrada, mas o diagnóstico dela não pôde ser lido. Ela reaparecerá numa próxima varredura.',
+      compatibilityBadge: 'Compatibilidade {level}',
+      compatAlta: 'Alta',
+      compatBoa: 'Boa',
+      compatParcial: 'Parcial',
+      compatBaixa: 'Baixa',
+      whyRecommendedTitle: 'Por que recomendamos',
+      attentionTitle: 'Atenção',
+      blockersTitle: 'Impedimentos',
+      viewJobButton: 'Ver a vaga',
+      prepareResumeButton: 'Preparar meu currículo',
+      feedbackInterestedNote: '👍 Você marcou como interessante.',
+      feedbackNotUsefulNote: '👎 Você marcou como não útil.',
+      feedbackWhatWrong: 'O que não serviu?',
+      reasonWrongRole: 'Cargo errado',
+      reasonLocation: 'Localização',
+      reasonSalary: 'Salário',
+      reasonSeniority: 'Senioridade',
+      reasonSkills: 'Competências',
+      reasonCompany: 'Empresa',
+      reasonWorkMode: 'Modelo de trabalho',
+      reasonOther: 'Outro',
+      feedbackAskUseful: 'Esta oportunidade foi útil?',
+      feedbackYes: 'Sim',
+      feedbackNo: 'Não',
+    },
   },
 
   en: {
@@ -1559,6 +1726,87 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       confirmedDesc: 'Ready for download in PDF and Markdown.',
       goToDownloadsCta: 'Go to downloads',
     },
+    radar: {
+      loadingText: 'Loading your Radar...',
+      loadErrorFallback: 'Could not load the Radar.',
+      loadConnectionError: 'Connection error while loading the Radar.',
+      cardDesc: 'Monitors opportunities for your profile and only interrupts you when it finds something worth your attention.',
+      runNowButton: 'Search now',
+      runNowTooltip: 'Re-evaluates already-collected jobs against your profile',
+      preferencesButton: 'Preferences',
+      freqLabel: 'How often to notify you',
+      freqImmediate: 'As soon as it finds one',
+      freqDaily: 'Once a day',
+      freqWeekly: 'Once a week',
+      freqOff: 'Off',
+      minFitLabel: 'What counts as worth a notification',
+      minFitStrong: 'Only strong matches',
+      minFitGood: 'Strong and good matches',
+      minFitPartial: 'Including partial matches',
+      silentByDefault: 'Radar is silent by default: if there is nothing truly relevant, it sends nothing. That is the expected behavior, not a failure.',
+      lastRun: 'Last scan: {date}.',
+      prepareErrorFallback: 'Could not prepare your resume for this job.',
+      prepareRedirected: 'Your resume was targeted at "{target}". It now points to this job.',
+      prepareSuccess: 'Resume targeted at this job.',
+      prepareConnectionError: 'Connection error while preparing your resume.',
+      runSuccessOne: '{n} new opportunity.',
+      runSuccessMany: '{n} new opportunities.',
+      runNothingNew: 'Nothing new worth a notification. Radar keeps monitoring.',
+      runErrorFallback: 'Could not update the Radar right now.',
+      runConnectionError: 'Connection error while updating the Radar.',
+      savePrefsErrorFallback: 'Could not save the preference.',
+      savePrefsConnectionError: 'Connection error while saving the preference.',
+      feedbackInterestedToast: 'Noted — we\'ll look for more like this.',
+      feedbackNotUsefulToast: 'Noted. This helps calibrate the Radar.',
+      feedbackError: 'Failed to record your feedback.',
+      invalidLinkError: 'This job\'s link is invalid and cannot be opened.',
+      needsProfileTitle: 'Radar needs your professional profile',
+      needsProfileDesc: 'Without knowing what you do and where you want to work, there is no way to tell opportunity from noise. Filling in the primary market is already enough to get started.',
+      needsProfileButton: 'Fill in professional profile',
+      notMatchableTitle: 'You still need to say what you do',
+      notMatchableP1Prefix: 'Your profile has where you are and how you want to work, but still lacks ',
+      notMatchableP1Bold: 'title, field, or skills',
+      notMatchableP1Suffix: '. Without that there\'s nothing to compare against a job: any result would just be whatever happened to exist in the database, not what actually relates to you.',
+      notMatchableP2Prefix: 'Filling in ',
+      notMatchableP2Bold: 'one',
+      notMatchableP2Mid: ' of these fields already turns Radar on. The ',
+      notMatchableP2Em: 'Fill in from resume',
+      notMatchableP2Suffix: ' button, on the profile screen, pulls all of them from the resume you already uploaded.',
+      notMatchableButton: 'Complete professional profile',
+      emptyTitle: 'Nothing worth noting right now',
+      emptyDesc: 'Radar is monitoring and hasn\'t found an opportunity worth interrupting you for. Silence here is the correct behavior — when something relevant shows up, it appears on this screen.',
+      emptyHintPrefix: 'The search for new jobs runs once a day. ',
+      emptyHintBold: 'Search now',
+      emptyHintSuffix: ' re-evaluates already-found jobs against your profile — useful right after changing something in it.',
+      digestStrong: '{n} strong match',
+      digestGood: '{n} good match',
+      digestPartial: '{n} alternative',
+      fitReadErrorFallback: 'This opportunity was recorded, but its assessment could not be read. It will reappear on the next scan.',
+      compatibilityBadge: '{level} match',
+      compatAlta: 'Strong',
+      compatBoa: 'Good',
+      compatParcial: 'Partial',
+      compatBaixa: 'Low',
+      whyRecommendedTitle: 'Why we recommend it',
+      attentionTitle: 'Attention',
+      blockersTitle: 'Blockers',
+      viewJobButton: 'View job',
+      prepareResumeButton: 'Prepare my resume',
+      feedbackInterestedNote: '👍 You marked this as interesting.',
+      feedbackNotUsefulNote: '👎 You marked this as not useful.',
+      feedbackWhatWrong: 'What didn\'t work?',
+      reasonWrongRole: 'Wrong role',
+      reasonLocation: 'Location',
+      reasonSalary: 'Salary',
+      reasonSeniority: 'Seniority',
+      reasonSkills: 'Skills',
+      reasonCompany: 'Company',
+      reasonWorkMode: 'Work mode',
+      reasonOther: 'Other',
+      feedbackAskUseful: 'Was this opportunity useful?',
+      feedbackYes: 'Yes',
+      feedbackNo: 'No',
+    },
   },
 
   es: {
@@ -2074,6 +2322,87 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       confirmedTitle: '¡Currículum confirmado!',
       confirmedDesc: 'Listo para descargar en PDF y Markdown.',
       goToDownloadsCta: 'Ir a descargas',
+    },
+    radar: {
+      loadingText: 'Cargando tu Radar...',
+      loadErrorFallback: 'No fue posible cargar el Radar.',
+      loadConnectionError: 'Fallo de conexión al cargar el Radar.',
+      cardDesc: 'Monitorea oportunidades para tu perfil y solo te interrumpe cuando encuentra algo que merece tu atención.',
+      runNowButton: 'Buscar ahora',
+      runNowTooltip: 'Reevalúa las vacantes ya recopiladas contra tu perfil',
+      preferencesButton: 'Preferencias',
+      freqLabel: 'Con qué frecuencia avisar',
+      freqImmediate: 'En cuanto encuentre algo',
+      freqDaily: 'Una vez al día',
+      freqWeekly: 'Una vez a la semana',
+      freqOff: 'Apagado',
+      minFitLabel: 'Qué vale la pena avisar',
+      minFitStrong: 'Solo las de alta compatibilidad',
+      minFitGood: 'Alta y buena compatibilidad',
+      minFitPartial: 'Incluso las parciales',
+      silentByDefault: 'El Radar es silencioso por defecto: si no hay nada realmente relevante, no envía nada. Ese es el comportamiento esperado, no un fallo.',
+      lastRun: 'Último rastreo: {date}.',
+      prepareErrorFallback: 'No fue posible preparar tu currículum para esta vacante.',
+      prepareRedirected: 'Tu currículum estaba dirigido a "{target}". Ahora apunta a esta vacante.',
+      prepareSuccess: 'Currículum dirigido a esta vacante.',
+      prepareConnectionError: 'Fallo de conexión al preparar tu currículum.',
+      runSuccessOne: '{n} oportunidad nueva.',
+      runSuccessMany: '{n} oportunidades nuevas.',
+      runNothingNew: 'Nada nuevo que justifique un aviso. El Radar sigue monitoreando.',
+      runErrorFallback: 'No fue posible actualizar el Radar ahora.',
+      runConnectionError: 'Fallo de conexión al actualizar el Radar.',
+      savePrefsErrorFallback: 'No fue posible guardar la preferencia.',
+      savePrefsConnectionError: 'Fallo de conexión al guardar la preferencia.',
+      feedbackInterestedToast: 'Anotado — buscaremos más así.',
+      feedbackNotUsefulToast: 'Anotado. Esto ayuda a calibrar el Radar.',
+      feedbackError: 'Error al registrar tu respuesta.',
+      invalidLinkError: 'El enlace de esta vacante no es válido y no se puede abrir.',
+      needsProfileTitle: 'El Radar necesita tu perfil profesional',
+      needsProfileDesc: 'Sin saber qué haces y dónde quieres trabajar, no hay forma de separar la oportunidad del ruido. Completar el mercado principal ya es suficiente para empezar.',
+      needsProfileButton: 'Completar perfil profesional',
+      notMatchableTitle: 'Falta decir qué haces',
+      notMatchableP1Prefix: 'Tu perfil tiene dónde estás y cómo quieres trabajar, pero aún no tiene ',
+      notMatchableP1Bold: 'puesto, área o competencias',
+      notMatchableP1Suffix: '. Sin eso no hay nada que comparar con una vacante: cualquier resultado sería solo lo que existiera en la base de datos, no lo que tiene relación contigo.',
+      notMatchableP2Prefix: 'Completar ',
+      notMatchableP2Bold: 'uno',
+      notMatchableP2Mid: ' de esos campos ya activa el Radar. El botón ',
+      notMatchableP2Em: 'Completar desde el currículum',
+      notMatchableP2Suffix: ', en la pantalla del perfil, los extrae todos del currículum que ya enviaste.',
+      notMatchableButton: 'Completar perfil profesional',
+      emptyTitle: 'Nada digno de mención por ahora',
+      emptyDesc: 'El Radar está monitoreando y no encontró ninguna oportunidad que justifique interrumpirte. El silencio aquí es el comportamiento correcto — cuando aparezca algo relevante, aparecerá en esta pantalla.',
+      emptyHintPrefix: 'La búsqueda de nuevas vacantes ocurre una vez al día. ',
+      emptyHintBold: 'Buscar ahora',
+      emptyHintSuffix: ' reevalúa las vacantes ya encontradas contra tu perfil — útil justo después de cambiar algo en él.',
+      digestStrong: '{n} de alta compatibilidad',
+      digestGood: '{n} compatible',
+      digestPartial: '{n} alternativa',
+      fitReadErrorFallback: 'Esta oportunidad fue registrada, pero su diagnóstico no pudo leerse. Reaparecerá en un próximo rastreo.',
+      compatibilityBadge: 'Compatibilidad {level}',
+      compatAlta: 'Alta',
+      compatBoa: 'Buena',
+      compatParcial: 'Parcial',
+      compatBaixa: 'Baja',
+      whyRecommendedTitle: 'Por qué lo recomendamos',
+      attentionTitle: 'Atención',
+      blockersTitle: 'Impedimentos',
+      viewJobButton: 'Ver la vacante',
+      prepareResumeButton: 'Preparar mi currículum',
+      feedbackInterestedNote: '👍 Marcaste esto como interesante.',
+      feedbackNotUsefulNote: '👎 Marcaste esto como no útil.',
+      feedbackWhatWrong: '¿Qué no sirvió?',
+      reasonWrongRole: 'Puesto incorrecto',
+      reasonLocation: 'Ubicación',
+      reasonSalary: 'Salario',
+      reasonSeniority: 'Nivel de experiencia',
+      reasonSkills: 'Competencias',
+      reasonCompany: 'Empresa',
+      reasonWorkMode: 'Modalidad de trabajo',
+      reasonOther: 'Otro',
+      feedbackAskUseful: '¿Fue útil esta oportunidad?',
+      feedbackYes: 'Sí',
+      feedbackNo: 'No',
     },
   },
 }
