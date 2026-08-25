@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { internalFetch } from '@/lib/internal-fetch'
+import { useI18n } from '@/context/i18n-context'
+import { localeForLang } from '@/lib/i18n'
 
 interface ResumeListItem {
   id: string
@@ -21,6 +23,9 @@ interface ResumeListItem {
 }
 
 export function DownloadsView() {
+  const { t, lang } = useI18n()
+  const dl = t.downloads
+  const locale = localeForLang(lang)
   const { user } = useAuth()
   const { activeResumeId, setView, openResume } = useNav()
   const [resumes, setResumes] = useState<ResumeListItem[]>([])
@@ -79,7 +84,7 @@ export function DownloadsView() {
   const download = async (type: 'resume_pdf' | 'resume_md' | 'resume_txt' | 'analysis_pdf' | 'social_advice_txt' | 'social_advice_md') => {
     if (!selected) return
     if (!canDownload) {
-      toast.error('Libere a Análise Completa deste currículo para baixar os arquivos.')
+      toast.error(dl.errorNeedsPlan)
       setView('plans')
       return
     }
@@ -89,11 +94,11 @@ export function DownloadsView() {
       if (!r.ok) {
         const data = await r.json().catch(() => ({}))
         if (data.code === 'ANALYSIS_REQUIRED') {
-          toast.error(data.error || 'Este currículo ainda não tem uma Análise Completa.')
+          toast.error(data.error || dl.errorNeedsAnalysis)
           setView('plans')
           return
         }
-        toast.error(data.error || 'Falha no download.')
+        toast.error(data.error || dl.errorGeneric)
         return
       }
       const blob = await r.blob()
@@ -109,9 +114,9 @@ export function DownloadsView() {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      toast.success('Download iniciado!')
+      toast.success(dl.downloadStarted)
     } catch (e: any) {
-      toast.error('Erro no download.')
+      toast.error(dl.errorDownload)
     } finally {
       setDownloading(null)
     }
@@ -129,15 +134,15 @@ export function DownloadsView() {
   return (
     <div className="space-y-5 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Downloads</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Baixe o laudo e o currículo reescrito em PDF, TXT e Markdown.</p>
+        <h1 className="text-2xl font-bold text-slate-900">{dl.pageTitle}</h1>
+        <p className="text-sm text-slate-500 mt-0.5">{dl.pageSubtitle}</p>
       </div>
 
       {!canDownload && (
         <Alert className="border-amber-200 bg-amber-50">
           <Lock className="w-4 h-4 text-amber-600" />
           <AlertDescription className="text-amber-900">
-            Os downloads fazem parte da Análise Completa. <button onClick={() => setView('plans')} className="font-semibold underline">Comprar análise</button>.
+            {dl.lockedAlert} <button onClick={() => setView('plans')} className="font-semibold underline">{dl.lockedAlertCta}</button>.
           </AlertDescription>
         </Alert>
       )}
@@ -146,9 +151,9 @@ export function DownloadsView() {
         <Card>
           <CardContent className="p-8 text-center">
             <Download className="w-10 h-10 text-slate-400 mx-auto mb-3" />
-            <p className="text-slate-700 font-medium mb-1">Nenhum currículo disponível.</p>
-            <p className="text-sm text-slate-500 mb-4">Envie seu currículo para começar.</p>
-            <Button onClick={() => setView('upload')} className="bg-emerald-600 hover:bg-emerald-700">Enviar currículo</Button>
+            <p className="text-slate-700 font-medium mb-1">{dl.emptyTitle}</p>
+            <p className="text-sm text-slate-500 mb-4">{dl.emptyDesc}</p>
+            <Button onClick={() => setView('upload')} className="bg-emerald-600 hover:bg-emerald-700">{dl.emptyCta}</Button>
           </CardContent>
         </Card>
       ) : (
@@ -156,7 +161,7 @@ export function DownloadsView() {
           {/* SELECT RESUME */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Selecione o currículo</CardTitle>
+              <CardTitle className="text-base">{dl.selectResumeTitle}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {resumes.map((r) => {
@@ -175,9 +180,9 @@ export function DownloadsView() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-slate-900 truncate">
-                          Currículo · {new Date(r.createdAt).toLocaleDateString('pt-BR')}
+                          {dl.resumeLabel.replace('{date}', new Date(r.createdAt).toLocaleDateString(locale))}
                         </p>
-                        <p className="text-xs text-slate-500">Atualizado em {new Date(r.updatedAt).toLocaleString('pt-BR')}</p>
+                        <p className="text-xs text-slate-500">{dl.updatedAt.replace('{date}', new Date(r.updatedAt).toLocaleString(locale))}</p>
                       </div>
                     </div>
                     <Badge variant="outline" className="capitalize shrink-0">{r.status}</Badge>
@@ -198,8 +203,8 @@ export function DownloadsView() {
                         <FileSearch className="w-4 h-4" />
                       </div>
                       <div>
-                        <CardTitle className="text-base">Laudo de análise</CardTitle>
-                        <CardDescription>PDF · nota 0–10 e relatório</CardDescription>
+                        <CardTitle className="text-base">{dl.analysisCardTitle}</CardTitle>
+                        <CardDescription>{dl.analysisCardDesc}</CardDescription>
                       </div>
                     </div>
                     {statusInfo.hasAnalysis && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
@@ -208,7 +213,7 @@ export function DownloadsView() {
                 <CardContent>
                   {!statusInfo.hasAnalysis ? (
                     <Button variant="outline" className="w-full" onClick={() => openResume(selected, 'analysis')}>
-                      Analisar primeiro <ArrowRight className="w-4 h-4 ml-1" />
+                      {dl.analysisFirstCta} <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
                   ) : (
                     <Button
@@ -217,7 +222,7 @@ export function DownloadsView() {
                       className="w-full bg-primary hover:bg-primary/90"
                     >
                       {downloading === 'analysis_pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-                      Baixar laudo PDF
+                      {dl.analysisDownloadCta}
                     </Button>
                   )}
                 </CardContent>
@@ -232,8 +237,8 @@ export function DownloadsView() {
                         <FileEdit className="w-4 h-4" />
                       </div>
                       <div>
-                        <CardTitle className="text-base">Currículo reescrito</CardTitle>
-                        <CardDescription>PDF, TXT e Markdown</CardDescription>
+                        <CardTitle className="text-base">{dl.rewriteCardTitle}</CardTitle>
+                        <CardDescription>{dl.rewriteCardDesc}</CardDescription>
                       </div>
                     </div>
                     {statusInfo.hasRewrite && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
@@ -242,7 +247,7 @@ export function DownloadsView() {
                 <CardContent className="space-y-2">
                   {!statusInfo.hasRewrite ? (
                     <Button variant="outline" className="w-full" onClick={() => openResume(selected, 'rewrite')}>
-                      Reescrever primeiro <ArrowRight className="w-4 h-4 ml-1" />
+                      {dl.rewriteFirstCta} <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
                   ) : (
                     <>
@@ -252,7 +257,7 @@ export function DownloadsView() {
                         className="w-full bg-primary hover:bg-primary/90"
                       >
                         {downloading === 'resume_pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileType className="w-4 h-4 mr-2" />}
-                        Baixar PDF
+                        {dl.rewriteDownloadPdf}
                       </Button>
                       <Button
                         onClick={() => download('resume_txt')}
@@ -261,7 +266,7 @@ export function DownloadsView() {
                         className="w-full"
                       >
                         {downloading === 'resume_txt' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                        Baixar Texto (.txt)
+                        {dl.rewriteDownloadTxt}
                       </Button>
                       <Button
                         onClick={() => download('resume_md')}
@@ -270,7 +275,7 @@ export function DownloadsView() {
                         className="w-full"
                       >
                         {downloading === 'resume_md' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                        Baixar Markdown (.md)
+                        {dl.rewriteDownloadMd}
                       </Button>
                     </>
                   )}
@@ -286,8 +291,8 @@ export function DownloadsView() {
                         <Share2 className="w-4 h-4" />
                       </div>
                       <div>
-                        <CardTitle className="text-base">Presença Digital</CardTitle>
-                        <CardDescription>Auditoria dos seus perfis profissionais</CardDescription>
+                        <CardTitle className="text-base">{dl.socialCardTitle}</CardTitle>
+                        <CardDescription>{dl.socialCardDesc}</CardDescription>
                       </div>
                     </div>
                     {statusInfo.hasSocialAnalysis && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
@@ -296,7 +301,7 @@ export function DownloadsView() {
                 <CardContent className="space-y-2">
                   {!statusInfo.hasSocialAnalysis ? (
                     <Button variant="outline" className="w-full" onClick={() => openResume(selected, 'analysis')}>
-                      Auditar perfis primeiro <ArrowRight className="w-4 h-4 ml-1" />
+                      {dl.socialFirstCta} <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
                   ) : (
                     <>
@@ -307,7 +312,7 @@ export function DownloadsView() {
                         className="w-full border-primary/20 text-primary hover:bg-primary/10"
                       >
                         {downloading === 'social_advice_txt' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                        Baixar Dicas (.txt)
+                        {dl.socialDownloadTxt}
                       </Button>
                       <Button
                         onClick={() => download('social_advice_md')}
@@ -316,7 +321,7 @@ export function DownloadsView() {
                         className="w-full border-primary/20 text-primary hover:bg-primary/10"
                       >
                         {downloading === 'social_advice_md' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                        Baixar Dicas (.md)
+                        {dl.socialDownloadMd}
                       </Button>
                     </>
                   )}
@@ -328,9 +333,9 @@ export function DownloadsView() {
           {/* INFO */}
           <Card className="border-slate-200 bg-slate-50">
             <CardContent className="p-4 text-xs text-slate-600 space-y-1">
-              <p><strong>PDF do laudo:</strong> documento formatado com nota geral, dimensões, pontos fortes/fracos e recomendações.</p>
-              <p><strong>Currículo reescrito (PDF / TXT / .MD):</strong> versões otimizadas prontas para envio aos recrutadores ou editáveis no seu computador.</p>
-              <p><strong>Dicas de Presença Digital (.TXT / .MD):</strong> guia prático de biografia, títulos e palavras-chave para aplicar diretamente no seu LinkedIn e Gupy.</p>
+              <p><strong>{dl.infoAnalysisPdf}</strong> {dl.infoAnalysisPdfDesc}</p>
+              <p><strong>{dl.infoRewrite}</strong> {dl.infoRewriteDesc}</p>
+              <p><strong>{dl.infoSocial}</strong> {dl.infoSocialDesc}</p>
             </CardContent>
           </Card>
         </>

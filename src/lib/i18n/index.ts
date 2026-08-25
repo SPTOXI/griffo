@@ -430,6 +430,45 @@ export interface TranslationDictionary {
     typingIndicator: string
     inputPlaceholder: string
   }
+  /** Tela de Downloads (`downloads-view.tsx`). */
+  downloads: {
+    pageTitle: string
+    pageSubtitle: string
+    lockedAlert: string
+    lockedAlertCta: string
+    emptyTitle: string
+    emptyDesc: string
+    emptyCta: string
+    selectResumeTitle: string
+    resumeLabel: string
+    updatedAt: string
+    analysisCardTitle: string
+    analysisCardDesc: string
+    analysisFirstCta: string
+    analysisDownloadCta: string
+    rewriteCardTitle: string
+    rewriteCardDesc: string
+    rewriteFirstCta: string
+    rewriteDownloadPdf: string
+    rewriteDownloadTxt: string
+    rewriteDownloadMd: string
+    socialCardTitle: string
+    socialCardDesc: string
+    socialFirstCta: string
+    socialDownloadTxt: string
+    socialDownloadMd: string
+    infoAnalysisPdf: string
+    infoAnalysisPdfDesc: string
+    infoRewrite: string
+    infoRewriteDesc: string
+    infoSocial: string
+    infoSocialDesc: string
+    errorNeedsPlan: string
+    errorNeedsAnalysis: string
+    errorGeneric: string
+    errorDownload: string
+    downloadStarted: string
+  }
 }
 
 export const DICTIONARIES: Record<Language, TranslationDictionary> = {
@@ -853,6 +892,44 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       typingIndicator: 'Digitando resposta...',
       inputPlaceholder: 'Digite sua dúvida sobre o sistema ou cobrança...',
     },
+    downloads: {
+      pageTitle: 'Downloads',
+      pageSubtitle: 'Baixe o laudo e o currículo reescrito em PDF, TXT e Markdown.',
+      lockedAlert: 'Os downloads fazem parte da Análise Completa.',
+      lockedAlertCta: 'Comprar análise',
+      emptyTitle: 'Nenhum currículo disponível.',
+      emptyDesc: 'Envie seu currículo para começar.',
+      emptyCta: 'Enviar currículo',
+      selectResumeTitle: 'Selecione o currículo',
+      resumeLabel: 'Currículo · {date}',
+      updatedAt: 'Atualizado em {date}',
+      analysisCardTitle: 'Laudo de análise',
+      analysisCardDesc: 'PDF · nota 0–10 e relatório',
+      analysisFirstCta: 'Analisar primeiro',
+      analysisDownloadCta: 'Baixar laudo PDF',
+      rewriteCardTitle: 'Currículo reescrito',
+      rewriteCardDesc: 'PDF, TXT e Markdown',
+      rewriteFirstCta: 'Reescrever primeiro',
+      rewriteDownloadPdf: 'Baixar PDF',
+      rewriteDownloadTxt: 'Baixar Texto (.txt)',
+      rewriteDownloadMd: 'Baixar Markdown (.md)',
+      socialCardTitle: 'Presença Digital',
+      socialCardDesc: 'Auditoria dos seus perfis profissionais',
+      socialFirstCta: 'Auditar perfis primeiro',
+      socialDownloadTxt: 'Baixar Dicas (.txt)',
+      socialDownloadMd: 'Baixar Dicas (.md)',
+      infoAnalysisPdf: 'PDF do laudo:',
+      infoAnalysisPdfDesc: 'documento formatado com nota geral, dimensões, pontos fortes/fracos e recomendações.',
+      infoRewrite: 'Currículo reescrito (PDF / TXT / .MD):',
+      infoRewriteDesc: 'versões otimizadas prontas para envio aos recrutadores ou editáveis no seu computador.',
+      infoSocial: 'Dicas de Presença Digital (.TXT / .MD):',
+      infoSocialDesc: 'guia prático de biografia, títulos e palavras-chave para aplicar diretamente no seu LinkedIn e Gupy.',
+      errorNeedsPlan: 'Libere a Análise Completa deste currículo para baixar os arquivos.',
+      errorNeedsAnalysis: 'Este currículo ainda não tem uma Análise Completa.',
+      errorGeneric: 'Falha no download.',
+      errorDownload: 'Erro no download.',
+      downloadStarted: 'Download iniciado!',
+    },
   },
 
   en: {
@@ -1275,6 +1352,44 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       typingIndicator: 'Typing a reply...',
       inputPlaceholder: 'Type your question about the system or billing...',
     },
+    downloads: {
+      pageTitle: 'Downloads',
+      pageSubtitle: 'Download the report and rewritten resume in PDF, TXT, and Markdown.',
+      lockedAlert: 'Downloads are part of the Full Analysis.',
+      lockedAlertCta: 'Buy analysis',
+      emptyTitle: 'No resume available.',
+      emptyDesc: 'Upload your resume to get started.',
+      emptyCta: 'Upload resume',
+      selectResumeTitle: 'Select the resume',
+      resumeLabel: 'Resume · {date}',
+      updatedAt: 'Updated on {date}',
+      analysisCardTitle: 'Analysis report',
+      analysisCardDesc: 'PDF · 0–10 score and report',
+      analysisFirstCta: 'Analyze first',
+      analysisDownloadCta: 'Download report PDF',
+      rewriteCardTitle: 'Rewritten resume',
+      rewriteCardDesc: 'PDF, TXT, and Markdown',
+      rewriteFirstCta: 'Rewrite first',
+      rewriteDownloadPdf: 'Download PDF',
+      rewriteDownloadTxt: 'Download Text (.txt)',
+      rewriteDownloadMd: 'Download Markdown (.md)',
+      socialCardTitle: 'Digital Presence',
+      socialCardDesc: 'Audit of your professional profiles',
+      socialFirstCta: 'Audit profiles first',
+      socialDownloadTxt: 'Download Tips (.txt)',
+      socialDownloadMd: 'Download Tips (.md)',
+      infoAnalysisPdf: 'Report PDF:',
+      infoAnalysisPdfDesc: 'formatted document with overall score, dimensions, strengths/weaknesses, and recommendations.',
+      infoRewrite: 'Rewritten resume (PDF / TXT / .MD):',
+      infoRewriteDesc: 'optimized versions ready to send to recruiters or edit on your computer.',
+      infoSocial: 'Digital Presence Tips (.TXT / .MD):',
+      infoSocialDesc: 'practical guide for bio, headlines, and keywords to apply directly to your LinkedIn and Gupy.',
+      errorNeedsPlan: 'Unlock the Full Analysis for this resume to download the files.',
+      errorNeedsAnalysis: 'This resume does not have a Full Analysis yet.',
+      errorGeneric: 'Download failed.',
+      errorDownload: 'Download error.',
+      downloadStarted: 'Download started!',
+    },
   },
 
   es: {
@@ -1696,6 +1811,44 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       officialBadge: 'Soporte Oficial',
       typingIndicator: 'Escribiendo respuesta...',
       inputPlaceholder: 'Escribe tu duda sobre el sistema o la facturación...',
+    },
+    downloads: {
+      pageTitle: 'Descargas',
+      pageSubtitle: 'Descarga el informe y el currículum reescrito en PDF, TXT y Markdown.',
+      lockedAlert: 'Las descargas forman parte del Análisis Completo.',
+      lockedAlertCta: 'Comprar análisis',
+      emptyTitle: 'Ningún currículum disponible.',
+      emptyDesc: 'Envía tu currículum para empezar.',
+      emptyCta: 'Enviar currículum',
+      selectResumeTitle: 'Selecciona el currículum',
+      resumeLabel: 'Currículum · {date}',
+      updatedAt: 'Actualizado el {date}',
+      analysisCardTitle: 'Informe de análisis',
+      analysisCardDesc: 'PDF · puntuación 0–10 e informe',
+      analysisFirstCta: 'Analizar primero',
+      analysisDownloadCta: 'Descargar informe en PDF',
+      rewriteCardTitle: 'Currículum reescrito',
+      rewriteCardDesc: 'PDF, TXT y Markdown',
+      rewriteFirstCta: 'Reescribir primero',
+      rewriteDownloadPdf: 'Descargar PDF',
+      rewriteDownloadTxt: 'Descargar texto (.txt)',
+      rewriteDownloadMd: 'Descargar Markdown (.md)',
+      socialCardTitle: 'Presencia Digital',
+      socialCardDesc: 'Auditoría de tus perfiles profesionales',
+      socialFirstCta: 'Auditar perfiles primero',
+      socialDownloadTxt: 'Descargar consejos (.txt)',
+      socialDownloadMd: 'Descargar consejos (.md)',
+      infoAnalysisPdf: 'PDF del informe:',
+      infoAnalysisPdfDesc: 'documento formateado con puntuación general, dimensiones, fortalezas/debilidades y recomendaciones.',
+      infoRewrite: 'Currículum reescrito (PDF / TXT / .MD):',
+      infoRewriteDesc: 'versiones optimizadas listas para enviar a reclutadores o editar en tu computadora.',
+      infoSocial: 'Consejos de Presencia Digital (.TXT / .MD):',
+      infoSocialDesc: 'guía práctica de biografía, títulos y palabras clave para aplicar directamente en tu LinkedIn y Gupy.',
+      errorNeedsPlan: 'Desbloquea el Análisis Completo de este currículum para descargar los archivos.',
+      errorNeedsAnalysis: 'Este currículum aún no tiene un Análisis Completo.',
+      errorGeneric: 'Fallo en la descarga.',
+      errorDownload: 'Error en la descarga.',
+      downloadStarted: '¡Descarga iniciada!',
     },
   },
 }
