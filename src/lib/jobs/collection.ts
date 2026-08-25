@@ -65,8 +65,23 @@ export interface CollectionDecision {
   keysToClose: string[]
   /** Motivo do encerramento, gravado em `Job.closedReason`. */
   closeReason: 'absent_from_reliable_collection' | 'source_reported' | null
-  /** Esta coleta conta como bem-sucedida para `lastSuccessfulCollection`? */
+  /**
+   * Confiável o bastante para AUTORIZAR ENCERRAMENTO por ausência? Bem mais
+   * estrita que `healthy` — só `true` numa coleta completa. Não usar para
+   * decidir se a fonte está saudável: uma fonte de busca grande (Adzuna) é
+   * `partial` toda rodada, por desenho, e não é por isso que está falhando.
+   */
   reliable: boolean
+  /**
+   * A fonte respondeu de um jeito que indica que ela está funcionando? Não
+   * exige coleta completa — só que a resposta não pareça pane (erro de
+   * transporte, ou zero vagas com vaga aberta antes). É o sinal certo para
+   * `consecutiveFailures`/`lastSuccessfulCollection`: contar `partial` como
+   * falha de saúde faria uma fonte que sempre estoura o teto de páginas —
+   * caso normal da Adzuna, documentado — aparecer para sempre como "nunca
+   * teve sucesso" no painel, mesmo coletando vaga real a cada rodada.
+   */
+  healthy: boolean
   /** Explicação legível. Vai para o painel e para o log. */
   explanation: string
 }
@@ -108,6 +123,7 @@ export function decideCollection(report: CollectionReport): CollectionDecision {
       keysToClose: [],
       closeReason: null,
       reliable: false,
+      healthy: false,
       explanation: `Coleta falhou (${report.error || 'sem detalhe'}). Nenhuma vaga foi encerrada — uma falha de coleta não é evidência de encerramento.`,
     }
   }
@@ -125,6 +141,11 @@ export function decideCollection(report: CollectionReport): CollectionDecision {
       keysToClose: explicitlyClosed,
       closeReason: explicitlyClosed.length ? 'source_reported' : null,
       reliable: false,
+      // Só conta como saudável se trouxe vaga de verdade: uma fonte grande
+      // que estoura o teto de páginas com resultado é normal (Adzuna, toda
+      // rodada). Parcial com zero vaga nenhuma é outra coisa — mais parecido
+      // com falha no meio do caminho do que com fonte grande.
+      healthy: seen.size > 0,
       explanation: explicitlyClosed.length
         ? `Coleta incompleta. Encerradas apenas as ${explicitlyClosed.length} vagas que a fonte declarou encerradas; ausência não foi usada como critério.`
         : 'Coleta incompleta. Nenhuma vaga encerrada — o que faltou pode estar na parte que não veio.',
@@ -138,6 +159,7 @@ export function decideCollection(report: CollectionReport): CollectionDecision {
       keysToClose: explicitlyClosed,
       closeReason: explicitlyClosed.length ? 'source_reported' : null,
       reliable: false,
+      healthy: false,
       explanation:
         `A fonte respondeu sem erro mas devolveu zero vagas, e havia ${previouslyOpen.length} aberta(s). ` +
         'Isso pode ser manutenção, mudança de endpoint, falha do adapter, bloqueio ou erro de paginação. ' +
@@ -152,6 +174,7 @@ export function decideCollection(report: CollectionReport): CollectionDecision {
       keysToClose: [],
       closeReason: null,
       reliable: true,
+      healthy: true,
       explanation: 'Coleta completa sem vagas. Não havia nada aberto antes; nada a encerrar.',
     }
   }
@@ -170,6 +193,7 @@ export function decideCollection(report: CollectionReport): CollectionDecision {
       keysToClose: explicitlyClosed,
       closeReason: explicitlyClosed.length ? 'source_reported' : null,
       reliable: false,
+      healthy: false,
       explanation:
         `${missing.length} de ${previouslyOpen.length} vagas (${Math.round(disappearanceRatio * 100)}%) sumiram de uma vez. ` +
         'Desaparecimento em massa é mais provável ser paginação truncada que encerramento real. Nada foi encerrado por ausência.',
@@ -183,6 +207,7 @@ export function decideCollection(report: CollectionReport): CollectionDecision {
     keysToClose: [...explicitlyClosed, ...byAbsence],
     closeReason: byAbsence.length ? 'absent_from_reliable_collection' : explicitlyClosed.length ? 'source_reported' : null,
     reliable: true,
+    healthy: true,
     explanation:
       `Coleta completa com ${seen.size} vaga(s). ` +
       (missing.length
@@ -194,11 +219,18 @@ export function decideCollection(report: CollectionReport): CollectionDecision {
 /**
  * Os campos de estado da fonte depois de uma coleta.
  *
- * `lastSuccessfulCollection` só avança quando a coleta foi confiável — é ela, e
+ * `lastSuccessfulCollection` só avança quando a coleta foi SAUDÁVEL — é ela, e
  * não `lastCollectionAt`, que autoriza encerramentos futuros. Uma fonte que
  * responde há semanas sempre vazia tem `lastCollectionAt` de agora e
  * `lastSuccessfulCollection` antiga, e é essa distância que o painel mostra
  * como problema.
+ *
+ * Saudável, não confiável: `decision.healthy`, não `decision.reliable`. Uma
+ * fonte de busca grande como a Adzuna é `partial` toda rodada, por desenho —
+ * usar `reliable` aqui faria `consecutiveFailures` crescer para sempre e
+ * `lastSuccessfulCollection` nunca avançar numa fonte que está entregando
+ * vaga real a cada coleta. `reliable` continua controlando só o que pode
+ * fechar vaga (`keysToClose`, dentro de `decideCollection`).
  */
 export function sourceStateAfter(
   decision: CollectionDecision,
@@ -215,7 +247,7 @@ export function sourceStateAfter(
     collectionStatus: decision.status,
     collectionError: decision.reliable ? null : decision.explanation,
     lastCollectionAt: now,
-    ...(decision.reliable ? { lastSuccessfulCollection: now } : {}),
-    consecutiveFailures: decision.reliable ? 0 : previous.consecutiveFailures + 1,
+    ...(decision.healthy ? { lastSuccessfulCollection: now } : {}),
+    consecutiveFailures: decision.healthy ? 0 : previous.consecutiveFailures + 1,
   }
 }

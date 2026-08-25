@@ -163,6 +163,37 @@ test('§12: só coleta confiável avança lastSuccessfulCollection', () => {
   assert.equal(boa.collectionError, null)
 })
 
+test('coleta parcial com vaga real não conta como falha de saúde da fonte', () => {
+  // O caso da Adzuna: fonte grande, estoura o teto de páginas TODA rodada,
+  // por desenho — não é a fonte falhando. Antes deste teste, `partial`
+  // incrementava `consecutiveFailures` e nunca avançava
+  // `lastSuccessfulCollection`, fazendo uma fonte que traz vaga real a cada
+  // coleta aparecer no painel como "nunca teve sucesso".
+  const now = new Date('2026-08-24T12:00:00Z')
+
+  const decision = decideCollection({
+    outcome: 'partial',
+    seenKeys: ['a', 'b', 'c'],
+    previouslyOpenKeys: ['a'],
+  })
+  assert.equal(decision.reliable, false, 'parcial continua não autorizando encerramento por ausência')
+  assert.equal(decision.healthy, true, 'mas trouxe vaga real — a fonte está funcionando')
+
+  const state = sourceStateAfter(decision, { consecutiveFailures: 8 }, now)
+  assert.equal(state.consecutiveFailures, 0)
+  assert.equal(state.lastSuccessfulCollection?.getTime(), now.getTime())
+  // O texto informativo continua aparecendo — só o contador de saúde que muda.
+  assert.ok(state.collectionError)
+})
+
+test('coleta parcial SEM nenhuma vaga não é saudável', () => {
+  // Diferente do caso acima: parcial com zero resultado nenhum não é "fonte
+  // grande demais para uma rodada", é mais parecido com falha no meio do
+  // caminho — continua contando contra a saúde da fonte.
+  const decision = decideCollection({ outcome: 'partial', seenKeys: [], previouslyOpenKeys: [] })
+  assert.equal(decision.healthy, false)
+})
+
 /* ================================================================== *
  * §13 — Normalização
  * ================================================================== */
