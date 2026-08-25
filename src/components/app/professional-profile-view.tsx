@@ -22,6 +22,8 @@ import {
   EDUCATION_LEVELS, SENIORITY_LEVELS, WEEKLY_HOURS, WORK_MODES, SALARY_PERIODS,
   EMPTY_PROFILE, type ProfessionalProfile,
 } from '@/lib/profile'
+import { useI18n } from '@/context/i18n-context'
+import type { TranslationDictionary } from '@/lib/i18n'
 
 /**
  * A tela do Perfil Profissional.
@@ -37,55 +39,57 @@ import {
  *   ela é decidida pelo país do meio de pagamento e não é escolha de perfil.
  */
 
-const SENIORITY_LABELS: Record<string, string> = {
-  intern: 'Estágio',
-  junior: 'Júnior',
-  mid: 'Pleno',
-  senior: 'Sênior',
-  lead: 'Líder / Coordenação',
-  principal: 'Especialista / Principal',
-  director: 'Diretoria',
-  executive: 'Executivo (C-level)',
-}
+type ProfileDict = TranslationDictionary['profile']
 
-const EDUCATION_LABELS: Record<string, string> = {
-  none: 'Sem formação declarada',
-  high_school: 'Ensino médio',
-  technical: 'Técnico',
-  bachelor: 'Graduação',
-  postgrad: 'Pós-graduação',
-  master: 'Mestrado',
-  phd: 'Doutorado',
-}
+const seniorityLabels = (p: ProfileDict): Record<string, string> => ({
+  intern: p.seniorityIntern,
+  junior: p.seniorityJunior,
+  mid: p.seniorityMid,
+  senior: p.senioritySenior,
+  lead: p.seniorityLead,
+  principal: p.seniorityPrincipal,
+  director: p.seniorityDirector,
+  executive: p.seniorityExecutive,
+})
 
-const WORK_MODE_LABELS: Record<string, string> = {
-  remote: 'Remoto',
-  hybrid: 'Híbrido',
-  onsite: 'Presencial',
-}
+const educationLabels = (p: ProfileDict): Record<string, string> => ({
+  none: p.educationNone,
+  high_school: p.educationHighSchool,
+  technical: p.educationTechnical,
+  bachelor: p.educationBachelor,
+  postgrad: p.educationPostgrad,
+  master: p.educationMaster,
+  phd: p.educationPhd,
+})
 
-const WEEKLY_HOURS_LABELS: Record<string, string> = {
-  full_time: 'Tempo integral',
-  part_time: 'Meio período',
-  flexible: 'Flexível',
-}
+const workModeLabels = (p: ProfileDict): Record<string, string> => ({
+  remote: p.workModeRemote,
+  hybrid: p.workModeHybrid,
+  onsite: p.workModeOnsite,
+})
 
-const SALARY_PERIOD_LABELS: Record<string, string> = {
-  year: 'por ano',
-  month: 'por mês',
-  hour: 'por hora',
-}
+const weeklyHoursLabels = (p: ProfileDict): Record<string, string> => ({
+  full_time: p.weeklyHoursFullTime,
+  part_time: p.weeklyHoursPartTime,
+  flexible: p.weeklyHoursFlexible,
+})
 
-const LANGUAGE_LABELS: Record<string, string> = {
-  pt: 'Português',
-  en: 'Inglês',
-  es: 'Espanhol',
-}
+const salaryPeriodLabels = (p: ProfileDict): Record<string, string> => ({
+  year: p.salaryPeriodYear,
+  month: p.salaryPeriodMonth,
+  hour: p.salaryPeriodHour,
+})
+
+const languageLabels = (p: ProfileDict): Record<string, string> => ({
+  pt: p.languagePt,
+  en: p.languageEn,
+  es: p.languageEs,
+})
 
 /** Mercados oferecidos, mais o global — que é o do remoto internacional. */
-const MARKET_OPTIONS = [
+const marketOptions = (p: ProfileDict) => [
   ...MARKETS.map((m) => ({ id: m.id, name: m.name })),
-  { id: GLOBAL_MARKET.id, name: 'Global / Remoto internacional' },
+  { id: GLOBAL_MARKET.id, name: p.globalMarketName },
 ]
 
 /** Campo de lista: escreve, aperta Enter, vira etiqueta removível. */
@@ -98,6 +102,7 @@ function TagInput({
   onChange: (next: string[]) => void
   placeholder: string
 }) {
+  const { t } = useI18n()
   const [draft, setDraft] = useState('')
 
   const commit = () => {
@@ -141,7 +146,7 @@ function TagInput({
                 type="button"
                 onClick={() => onChange(values.filter((x) => x !== v))}
                 className="hover:text-rose-600"
-                aria-label={`Remover ${v}`}
+                aria-label={t.profile.removeAria.replace('{value}', v)}
               >
                 <X className="w-3 h-3" />
               </button>
@@ -166,6 +171,7 @@ function CountrySelect({
   value: string | null
   onChange: (next: string | null) => void
 }) {
+  const { t } = useI18n()
   const { adapted, others } = groupedCountries()
 
   return (
@@ -174,13 +180,13 @@ function CountrySelect({
       onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}
       className="w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
     >
-      <option value="">Não informado</option>
-      <optgroup label="Com adaptação própria">
+      <option value="">{t.profile.notInformed}</option>
+      <optgroup label={t.profile.countryGroupAdapted}>
         {adapted.map((c) => (
           <option key={c.code} value={c.code}>{c.name}</option>
         ))}
       </optgroup>
-      <optgroup label="Demais países">
+      <optgroup label={t.profile.countryGroupOthers}>
         {others.map((c) => (
           <option key={c.code} value={c.code}>{c.name}</option>
         ))}
@@ -208,7 +214,8 @@ function MarketChecklist({
   exclude: string | null
   onChange: (next: string[]) => void
 }) {
-  const options = MARKET_OPTIONS.filter((m) => m.id !== exclude)
+  const { t } = useI18n()
+  const options = marketOptions(t.profile).filter((m) => m.id !== exclude)
 
   const toggle = (id: string) => {
     onChange(values.includes(id) ? values.filter((v) => v !== id) : [...values, id])
@@ -258,6 +265,7 @@ function Choice({
   onChange: (next: string | null) => void
   allowEmpty?: boolean
 }) {
+  const { t } = useI18n()
   return (
     <div className="space-y-1.5">
       <Label className="text-xs font-semibold text-slate-700">{label}</Label>
@@ -266,7 +274,7 @@ function Choice({
         onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}
         className="w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
       >
-        {allowEmpty && <option value="">Não informado</option>}
+        {allowEmpty && <option value="">{t.profile.notInformed}</option>}
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
@@ -276,6 +284,8 @@ function Choice({
 }
 
 export function ProfessionalProfileView() {
+  const { t } = useI18n()
+  const p = t.profile
   const [profile, setProfile] = useState<ProfessionalProfile>({ ...EMPTY_PROFILE })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -292,10 +302,10 @@ export function ProfessionalProfileView() {
         if (res.ok && data?.profile) {
           setProfile(data.profile)
         } else {
-          setLoadError(data?.error || 'Não foi possível carregar o perfil.')
+          setLoadError(data?.error || p.loadErrorFallback)
         }
       } catch {
-        if (!cancelled) setLoadError('Falha de conexão ao carregar o perfil.')
+        if (!cancelled) setLoadError(p.loadConnectionError)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -304,7 +314,7 @@ export function ProfessionalProfileView() {
   }, [])
 
   const set = <K extends keyof ProfessionalProfile>(key: K, value: ProfessionalProfile[K]) => {
-    setProfile((p) => ({ ...p, [key]: value }))
+    setProfile((prev) => ({ ...prev, [key]: value }))
   }
 
   const toggleWorkMode = (mode: (typeof WORK_MODES)[number]) => {
@@ -315,7 +325,7 @@ export function ProfessionalProfileView() {
 
   const save = async () => {
     if (profile.salaryMin != null && profile.salaryMax != null && profile.salaryMax < profile.salaryMin) {
-      toast.error('A pretensão máxima não pode ser menor que a mínima.')
+      toast.error(p.saveMaxLessThanMinError)
       return
     }
 
@@ -334,14 +344,14 @@ export function ProfessionalProfileView() {
         const alerted = data?.radar?.alerted ?? 0
         toast.success(
           alerted > 0
-            ? `Perfil salvo. O Radar encontrou ${alerted} ${alerted === 1 ? 'oportunidade' : 'oportunidades'} — veja na tela Radar.`
-            : 'Perfil profissional salvo.'
+            ? (alerted === 1 ? p.saveSuccessWithRadarOne : p.saveSuccessWithRadarMany).replace('{n}', String(alerted))
+            : p.saveSuccessNoRadar
         )
       } else {
-        toast.error(data?.error || 'Não foi possível salvar o perfil.')
+        toast.error(data?.error || p.saveErrorFallback)
       }
     } catch {
-      toast.error('Falha de conexão ao salvar o perfil.')
+      toast.error(p.saveConnectionError)
     } finally {
       setSaving(false)
     }
@@ -364,23 +374,23 @@ export function ProfessionalProfileView() {
       const data = await res.json().catch(() => null)
 
       if (!res.ok) {
-        toast.error(data?.error || 'Não foi possível ler seu currículo agora.')
+        toast.error(data?.error || p.fillErrorFallback)
         return
       }
 
       const { profile: next, filled } = applySuggestion(profile, data?.suggestion || {})
 
       if (filled.length === 0) {
-        toast.info('Nada a preencher: os campos que eu saberia responder já estão preenchidos.')
+        toast.info(p.fillNothingToFill)
         return
       }
 
       setProfile(next)
       toast.success(
-        `${filled.length} ${filled.length === 1 ? 'campo preenchido' : 'campos preenchidos'}. Revise e salve.`
+        (filled.length === 1 ? p.fillSuccessOne : p.fillSuccessMany).replace('{n}', String(filled.length))
       )
     } catch {
-      toast.error('Falha de conexão ao ler seu currículo.')
+      toast.error(p.fillConnectionError)
     } finally {
       setFilling(false)
     }
@@ -390,11 +400,12 @@ export function ProfessionalProfileView() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
         <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
-        <p className="text-sm text-slate-500 font-medium">Carregando seu perfil profissional...</p>
+        <p className="text-sm text-slate-500 font-medium">{p.loadingText}</p>
       </div>
     )
   }
 
+  const MARKET_OPTIONS = marketOptions(p)
   const targetMarketName =
     MARKET_OPTIONS.find((m) => m.id === profile.primaryMarket)?.name || null
 
@@ -439,10 +450,9 @@ export function ProfessionalProfileView() {
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
-              <CardTitle className="text-base font-bold text-emerald-950">Perfil Profissional</CardTitle>
+              <CardTitle className="text-base font-bold text-emerald-950">{p.cardTitle}</CardTitle>
               <CardDescription className="text-xs text-slate-600">
-                É a partir daqui que o Griffo entende quem você é profissionalmente e para qual mercado deve
-                trabalhar. Preencha aos poucos — nada é obrigatório.
+                {p.cardDesc}
               </CardDescription>
             </div>
           </div>
@@ -457,22 +467,20 @@ export function ProfessionalProfileView() {
               className="bg-white border-primary/30 text-primary hover:bg-primary/10 h-9 text-xs font-semibold"
             >
               {filling ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5 mr-1.5" />}
-              Preencher com o que já sei sobre você
+              {p.fillButton}
             </Button>
             <p className="text-[11px] text-slate-600 leading-relaxed flex-1 min-w-[220px]">
-              Lê seu último currículo e seu diagnóstico vocacional e preenche só os campos vazios.
-              Nada é salvo até você conferir e clicar em salvar.
+              {p.fillDesc}
             </p>
           </div>
 
           <div className="flex items-start gap-2 text-[11px] text-slate-600 bg-white border border-emerald-100 rounded-lg p-3 leading-relaxed">
             <Info className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             <p>
-              O mercado que você declara aqui muda as recomendações: quais sistemas de triagem citamos, o formato
-              esperado do currículo e o vocabulário dos cargos.{' '}
+              {p.marketInfoIntro}{' '}
               {targetMarketName
-                ? <>Hoje suas análises usam <strong>{targetMarketName}</strong>.</>
-                : <>Sem mercado declarado, usamos seu país de acesso como palpite.</>}
+                ? <>{p.marketInfoWithMarket.split('{market}')[0]}<strong>{targetMarketName}</strong>{p.marketInfoWithMarket.split('{market}')[1]}</>
+                : <>{p.marketInfoWithoutMarket}</>}
             </p>
           </div>
         </CardContent>
@@ -491,11 +499,11 @@ export function ProfessionalProfileView() {
             <AccordionTrigger>
               <div className="flex items-center justify-between gap-2 flex-1 pr-2">
                 <span className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                  <Briefcase className="w-4 h-4 text-slate-600" /> Identidade profissional
+                  <Briefcase className="w-4 h-4 text-slate-600" /> {p.sectionIdentityTitle}
                 </span>
                 {sectionFilled.identity && (
                   <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold shrink-0">
-                    Preenchido
+                    {p.filledBadge}
                   </Badge>
                 )}
               </div>
@@ -503,31 +511,31 @@ export function ProfessionalProfileView() {
             <AccordionContent className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-700">Cargo atual</Label>
+              <Label className="text-xs font-semibold text-slate-700">{p.fieldCurrentTitle}</Label>
               <Input
                 value={profile.currentTitle ?? ''}
                 onChange={(e) => set('currentTitle', e.target.value || null)}
-                placeholder="Ex: Analista de Dados"
+                placeholder={p.placeholderCurrentTitle}
                 className="text-sm"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-700">Área de atuação</Label>
+              <Label className="text-xs font-semibold text-slate-700">{p.fieldArea}</Label>
               <Input
                 value={profile.field ?? ''}
                 onChange={(e) => set('field', e.target.value || null)}
-                placeholder="Ex: Dados & Analytics"
+                placeholder={p.placeholderArea}
                 className="text-sm"
               />
             </div>
             <Choice
-              label="Senioridade"
+              label={p.fieldSeniority}
               value={profile.seniority}
               onChange={(v) => set('seniority', v as ProfessionalProfile['seniority'])}
-              options={SENIORITY_LEVELS.map((s) => ({ value: s, label: SENIORITY_LABELS[s] }))}
+              options={SENIORITY_LEVELS.map((s) => ({ value: s, label: seniorityLabels(p)[s] }))}
             />
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-700">Anos de experiência</Label>
+              <Label className="text-xs font-semibold text-slate-700">{p.fieldYearsExperience}</Label>
               <Input
                 type="number"
                 min={0}
@@ -538,25 +546,25 @@ export function ProfessionalProfileView() {
               />
             </div>
             <Choice
-              label="Formação"
+              label={p.fieldEducation}
               value={profile.educationLevel}
               onChange={(v) => set('educationLevel', v as ProfessionalProfile['educationLevel'])}
-              options={EDUCATION_LEVELS.map((s) => ({ value: s, label: EDUCATION_LABELS[s] }))}
+              options={EDUCATION_LEVELS.map((s) => ({ value: s, label: educationLabels(p)[s] }))}
             />
           </div>
 
           <TagInput
-            label="Especializações"
+            label={p.fieldSpecializations}
             values={profile.specializations}
             onChange={(v) => set('specializations', v)}
-            placeholder="Ex: Modelagem dimensional"
+            placeholder={p.placeholderSpecializations}
           />
           <TagInput
-            label="Competências"
-            hint="As ferramentas e habilidades que você quer que apareçam nas recomendações."
+            label={p.fieldSkills}
+            hint={p.hintSkills}
             values={profile.skills}
             onChange={(v) => set('skills', v)}
-            placeholder="Ex: SQL"
+            placeholder={p.placeholderSkills}
           />
             </AccordionContent>
           </AccordionItem>
@@ -566,41 +574,41 @@ export function ProfessionalProfileView() {
             <AccordionTrigger>
               <div className="flex items-center justify-between gap-2 flex-1 pr-2">
                 <span className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                  <Target className="w-4 h-4 text-slate-600" /> Objetivos
+                  <Target className="w-4 h-4 text-slate-600" /> {p.sectionObjectivesTitle}
                 </span>
                 {sectionFilled.objectives && (
                   <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold shrink-0">
-                    Preenchido
+                    {p.filledBadge}
                   </Badge>
                 )}
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4">
           <TagInput
-            label="Cargos-alvo"
-            hint="Os cargos que você quer disputar — não necessariamente o que você faz hoje."
+            label={p.fieldTargetRoles}
+            hint={p.hintTargetRoles}
             values={profile.targetRoles}
             onChange={(v) => set('targetRoles', v)}
-            placeholder="Ex: Data Analyst"
+            placeholder={p.placeholderTargetRoles}
           />
           <TagInput
-            label="Áreas-alvo"
+            label={p.fieldTargetFields}
             values={profile.targetFields}
             onChange={(v) => set('targetFields', v)}
-            placeholder="Ex: Produto"
+            placeholder={p.placeholderTargetFields}
           />
           <TagInput
-            label="Setores de interesse"
+            label={p.fieldTargetIndustries}
             values={profile.targetIndustries}
             onChange={(v) => set('targetIndustries', v)}
-            placeholder="Ex: Saúde"
+            placeholder={p.placeholderTargetIndustries}
           />
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-slate-700">Trajetória desejada</Label>
+            <Label className="text-xs font-semibold text-slate-700">{p.fieldCareerGoal}</Label>
             <Textarea
               value={profile.careerGoal ?? ''}
               onChange={(e) => set('careerGoal', e.target.value || null)}
-              placeholder="Para onde você quer levar sua carreira nos próximos anos?"
+              placeholder={p.placeholderCareerGoal}
               className="text-sm min-h-[80px]"
             />
           </div>
@@ -612,33 +620,32 @@ export function ProfessionalProfileView() {
             <AccordionTrigger>
               <div className="flex items-center justify-between gap-2 flex-1 pr-2">
                 <span className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                  <Globe2 className="w-4 h-4 text-slate-600" /> Onde você está e onde quer trabalhar
+                  <Globe2 className="w-4 h-4 text-slate-600" /> {p.sectionLocationTitle}
                 </span>
                 {sectionFilled.location && (
                   <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold shrink-0">
-                    Preenchido
+                    {p.filledBadge}
                   </Badge>
                 )}
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4">
           <p className="text-[11px] text-slate-600 -mt-2">
-            São perguntas diferentes de propósito. Morar num país não significa querer trabalhar nele.
+            {p.hintLocationIntro}
           </p>
           <div className="grid sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-700">País onde mora</Label>
+              <Label className="text-xs font-semibold text-slate-700">{p.fieldResidenceCountry}</Label>
               <CountrySelect
                 value={profile.residenceCountry}
                 onChange={(v) => set('residenceCountry', v)}
               />
               <p className="text-[10px] text-slate-500">
-                Os países do primeiro grupo têm adaptação própria — formato de currículo, tipos de
-                contrato, sistemas de triagem. Os demais usam o padrão internacional.
+                {p.hintResidenceCountry}
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-700">Estado / região</Label>
+              <Label className="text-xs font-semibold text-slate-700">{p.fieldResidenceRegion}</Label>
               <Input
                 value={profile.residenceRegion ?? ''}
                 onChange={(e) => set('residenceRegion', e.target.value || null)}
@@ -646,7 +653,7 @@ export function ProfessionalProfileView() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-700">Cidade</Label>
+              <Label className="text-xs font-semibold text-slate-700">{p.fieldResidenceCity}</Label>
               <Input
                 value={profile.residenceCity ?? ''}
                 onChange={(e) => set('residenceCity', e.target.value || null)}
@@ -656,15 +663,15 @@ export function ProfessionalProfileView() {
           </div>
 
           <Choice
-            label="País onde quer trabalhar"
+            label={p.fieldTargetCountry}
             value={profile.primaryMarket}
             onChange={(v) => set('primaryMarket', v)}
             options={MARKET_OPTIONS.map((m) => ({ value: m.id, label: m.name }))}
           />
 
           <MarketChecklist
-            label="Outros países onde você também aceitaria trabalhar"
-            hint="Marque quantos quiser. Deixe tudo desmarcado se só quer o país principal."
+            label={p.fieldOtherMarkets}
+            hint={p.hintOtherMarkets}
             values={profile.alternativeMarkets}
             exclude={profile.primaryMarket}
             onChange={(v) => set('alternativeMarkets', v)}
@@ -673,8 +680,8 @@ export function ProfessionalProfileView() {
           <div className="space-y-3 pt-1">
             <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-slate-200 bg-slate-50/60">
               <div>
-                <p className="text-xs font-semibold text-slate-800">Disponível para mudar de país</p>
-                <p className="text-[11px] text-slate-500">Aceita se mudar fisicamente para outro país.</p>
+                <p className="text-xs font-semibold text-slate-800">{p.switchRelocationTitle}</p>
+                <p className="text-[11px] text-slate-500">{p.switchRelocationDesc}</p>
               </div>
               <Switch
                 checked={profile.openToRelocation}
@@ -683,9 +690,9 @@ export function ProfessionalProfileView() {
             </div>
             <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-slate-200 bg-slate-50/60">
               <div>
-                <p className="text-xs font-semibold text-slate-800">Aceita trabalho remoto internacional</p>
+                <p className="text-xs font-semibold text-slate-800">{p.switchRemoteTitle}</p>
                 <p className="text-[11px] text-slate-500">
-                  Trabalhar de onde mora para uma empresa de outro país. Não é o mesmo que mudar de país.
+                  {p.switchRemoteDesc}
                 </p>
               </div>
               <Switch
@@ -702,18 +709,18 @@ export function ProfessionalProfileView() {
             <AccordionTrigger>
               <div className="flex items-center justify-between gap-2 flex-1 pr-2">
                 <span className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                  <Sliders className="w-4 h-4 text-slate-600" /> Preferências de trabalho
+                  <Sliders className="w-4 h-4 text-slate-600" /> {p.sectionPreferencesTitle}
                 </span>
                 {sectionFilled.preferences && (
                   <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold shrink-0">
-                    Preenchido
+                    {p.filledBadge}
                   </Badge>
                 )}
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-slate-700">Modelos de trabalho aceitos</Label>
+            <Label className="text-xs font-semibold text-slate-700">{p.fieldWorkModes}</Label>
             <div className="flex flex-wrap gap-2 pt-1">
               {WORK_MODES.map((mode) => {
                 const active = profile.workModes.includes(mode)
@@ -728,7 +735,7 @@ export function ProfessionalProfileView() {
                         : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
                     }`}
                   >
-                    {WORK_MODE_LABELS[mode]}
+                    {workModeLabels(p)[mode]}
                   </button>
                 )
               })}
@@ -736,25 +743,24 @@ export function ProfessionalProfileView() {
           </div>
 
           <TagInput
-            label="Tipos de contrato aceitos"
-            hint="No vocabulário do seu mercado: CLT, PJ, CDI, W-2, contractor..."
+            label={p.fieldContractTypes}
+            hint={p.hintContractTypes}
             values={profile.contractTypes}
             onChange={(v) => set('contractTypes', v)}
-            placeholder="Ex: CLT"
+            placeholder={p.placeholderContractTypes}
           />
 
           <Choice
-            label="Jornada"
+            label={p.fieldWorkload}
             value={profile.weeklyHours}
             onChange={(v) => set('weeklyHours', v as ProfessionalProfile['weeklyHours'])}
-            options={WEEKLY_HOURS.map((h) => ({ value: h, label: WEEKLY_HOURS_LABELS[h] }))}
+            options={WEEKLY_HOURS.map((h) => ({ value: h, label: weeklyHoursLabels(p)[h] }))}
           />
 
           <div className="space-y-1.5 pt-1">
-            <Label className="text-xs font-semibold text-slate-700">Pretensão salarial</Label>
+            <Label className="text-xs font-semibold text-slate-700">{p.fieldSalary}</Label>
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              Na moeda do mercado que você mira. Não tem relação com a moeda em que você paga pelas análises —
-              essa é definida pelo seu meio de pagamento.
+              {p.hintSalary}
             </p>
             <div className="grid sm:grid-cols-4 gap-2 pt-1">
               <Input
@@ -762,7 +768,7 @@ export function ProfessionalProfileView() {
                 min={0}
                 value={profile.salaryMin ?? ''}
                 onChange={(e) => set('salaryMin', e.target.value === '' ? null : Number(e.target.value))}
-                placeholder="Mínimo"
+                placeholder={p.placeholderSalaryMin}
                 className="text-sm"
               />
               <Input
@@ -770,7 +776,7 @@ export function ProfessionalProfileView() {
                 min={0}
                 value={profile.salaryMax ?? ''}
                 onChange={(e) => set('salaryMax', e.target.value === '' ? null : Number(e.target.value))}
-                placeholder="Máximo"
+                placeholder={p.placeholderSalaryMax}
                 className="text-sm"
               />
               <Input
@@ -785,9 +791,9 @@ export function ProfessionalProfileView() {
                 onChange={(e) => set('salaryPeriod', (e.target.value || null) as ProfessionalProfile['salaryPeriod'])}
                 className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-800"
               >
-                <option value="">Período</option>
-                {SALARY_PERIODS.map((p) => (
-                  <option key={p} value={p}>{SALARY_PERIOD_LABELS[p]}</option>
+                <option value="">{p.placeholderSalaryPeriod}</option>
+                {SALARY_PERIODS.map((period) => (
+                  <option key={period} value={period}>{salaryPeriodLabels(p)[period]}</option>
                 ))}
               </select>
             </div>
@@ -800,32 +806,31 @@ export function ProfessionalProfileView() {
             <AccordionTrigger>
               <div className="flex items-center justify-between gap-2 flex-1 pr-2">
                 <span className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                  <Languages className="w-4 h-4 text-slate-600" /> Idiomas
+                  <Languages className="w-4 h-4 text-slate-600" /> {p.sectionLanguagesTitle}
                 </span>
                 {sectionFilled.languages && (
                   <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold shrink-0">
-                    Preenchido
+                    {p.filledBadge}
                   </Badge>
                 )}
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4">
           <p className="text-[11px] text-slate-600 -mt-2">
-            O idioma da tela não decide o idioma do seu currículo. Se você mira outro país, provavelmente são
-            diferentes.
+            {p.hintLanguagesIntro}
           </p>
           <div className="grid sm:grid-cols-2 gap-4">
           <Choice
-            label="Idioma do currículo e da carta"
+            label={p.fieldResumeLanguage}
             value={profile.resumeLanguage}
             onChange={(v) => set('resumeLanguage', v as ProfessionalProfile['resumeLanguage'])}
-            options={Object.entries(LANGUAGE_LABELS).map(([value, label]) => ({ value, label }))}
+            options={Object.entries(languageLabels(p)).map(([value, label]) => ({ value, label }))}
           />
           <Choice
-            label="Idioma dos avisos por e-mail"
+            label={p.fieldCommLanguage}
             value={profile.communicationLanguage}
             onChange={(v) => set('communicationLanguage', v as ProfessionalProfile['communicationLanguage'])}
-            options={Object.entries(LANGUAGE_LABELS).map(([value, label]) => ({ value, label }))}
+            options={Object.entries(languageLabels(p)).map(([value, label]) => ({ value, label }))}
           />
           </div>
             </AccordionContent>
@@ -838,7 +843,7 @@ export function ProfessionalProfileView() {
       <div className="flex justify-end pb-4">
         <Button onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 font-bold">
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-          Salvar perfil
+          {p.saveButton}
         </Button>
       </div>
     </div>

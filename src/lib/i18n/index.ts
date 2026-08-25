@@ -198,6 +198,115 @@ export interface TranslationDictionary {
     greetingSub: string
     newResume: string
   }
+  /** Tela do Perfil Profissional (`professional-profile-view.tsx`). */
+  profile: {
+    loadErrorFallback: string
+    loadConnectionError: string
+    saveMaxLessThanMinError: string
+    saveSuccessWithRadarOne: string
+    saveSuccessWithRadarMany: string
+    saveSuccessNoRadar: string
+    saveErrorFallback: string
+    saveConnectionError: string
+    fillErrorFallback: string
+    fillNothingToFill: string
+    fillSuccessOne: string
+    fillSuccessMany: string
+    fillConnectionError: string
+    loadingText: string
+    cardTitle: string
+    cardDesc: string
+    fillButton: string
+    fillDesc: string
+    marketInfoIntro: string
+    marketInfoWithMarket: string
+    marketInfoWithoutMarket: string
+    filledBadge: string
+    notInformed: string
+    countryGroupAdapted: string
+    countryGroupOthers: string
+    globalMarketName: string
+    removeAria: string
+    sectionIdentityTitle: string
+    fieldCurrentTitle: string
+    placeholderCurrentTitle: string
+    fieldArea: string
+    placeholderArea: string
+    fieldSeniority: string
+    fieldYearsExperience: string
+    fieldEducation: string
+    fieldSpecializations: string
+    placeholderSpecializations: string
+    fieldSkills: string
+    hintSkills: string
+    placeholderSkills: string
+    sectionObjectivesTitle: string
+    fieldTargetRoles: string
+    hintTargetRoles: string
+    placeholderTargetRoles: string
+    fieldTargetFields: string
+    placeholderTargetFields: string
+    fieldTargetIndustries: string
+    placeholderTargetIndustries: string
+    fieldCareerGoal: string
+    placeholderCareerGoal: string
+    sectionLocationTitle: string
+    hintLocationIntro: string
+    fieldResidenceCountry: string
+    hintResidenceCountry: string
+    fieldResidenceRegion: string
+    fieldResidenceCity: string
+    fieldTargetCountry: string
+    fieldOtherMarkets: string
+    hintOtherMarkets: string
+    switchRelocationTitle: string
+    switchRelocationDesc: string
+    switchRemoteTitle: string
+    switchRemoteDesc: string
+    sectionPreferencesTitle: string
+    fieldWorkModes: string
+    fieldContractTypes: string
+    hintContractTypes: string
+    placeholderContractTypes: string
+    fieldWorkload: string
+    fieldSalary: string
+    hintSalary: string
+    placeholderSalaryMin: string
+    placeholderSalaryMax: string
+    placeholderSalaryPeriod: string
+    sectionLanguagesTitle: string
+    hintLanguagesIntro: string
+    fieldResumeLanguage: string
+    fieldCommLanguage: string
+    saveButton: string
+    seniorityIntern: string
+    seniorityJunior: string
+    seniorityMid: string
+    senioritySenior: string
+    seniorityLead: string
+    seniorityPrincipal: string
+    seniorityDirector: string
+    seniorityExecutive: string
+    educationNone: string
+    educationHighSchool: string
+    educationTechnical: string
+    educationBachelor: string
+    educationPostgrad: string
+    educationMaster: string
+    educationPhd: string
+    workModeRemote: string
+    workModeHybrid: string
+    workModeOnsite: string
+    weeklyHoursFullTime: string
+    weeklyHoursPartTime: string
+    weeklyHoursFlexible: string
+    salaryPeriodYear: string
+    salaryPeriodMonth: string
+    salaryPeriodHour: string
+    languagePt: string
+    languageEn: string
+    languageEs: string
+  }
 }
 
 export const DICTIONARIES: Record<Language, TranslationDictionary> = {
@@ -394,6 +503,114 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       greetingSub: 'Aqui está o resumo da sua atividade no GriffoWork.',
       newResume: 'Novo currículo',
     },
+    profile: {
+      loadErrorFallback: 'Não foi possível carregar o perfil.',
+      loadConnectionError: 'Falha de conexão ao carregar o perfil.',
+      saveMaxLessThanMinError: 'A pretensão máxima não pode ser menor que a mínima.',
+      saveSuccessWithRadarOne: 'Perfil salvo. O Radar encontrou {n} oportunidade — veja na tela Radar.',
+      saveSuccessWithRadarMany: 'Perfil salvo. O Radar encontrou {n} oportunidades — veja na tela Radar.',
+      saveSuccessNoRadar: 'Perfil profissional salvo.',
+      saveErrorFallback: 'Não foi possível salvar o perfil.',
+      saveConnectionError: 'Falha de conexão ao salvar o perfil.',
+      fillErrorFallback: 'Não foi possível ler seu currículo agora.',
+      fillNothingToFill: 'Nada a preencher: os campos que eu saberia responder já estão preenchidos.',
+      fillSuccessOne: '{n} campo preenchido. Revise e salve.',
+      fillSuccessMany: '{n} campos preenchidos. Revise e salve.',
+      fillConnectionError: 'Falha de conexão ao ler seu currículo.',
+      loadingText: 'Carregando seu perfil profissional...',
+      cardTitle: 'Perfil Profissional',
+      cardDesc: 'É a partir daqui que o Griffo entende quem você é profissionalmente e para qual mercado deve trabalhar. Preencha aos poucos — nada é obrigatório.',
+      fillButton: 'Preencher com o que já sei sobre você',
+      fillDesc: 'Lê seu último currículo e seu diagnóstico vocacional e preenche só os campos vazios. Nada é salvo até você conferir e clicar em salvar.',
+      marketInfoIntro: 'O mercado que você declara aqui muda as recomendações: quais sistemas de triagem citamos, o formato esperado do currículo e o vocabulário dos cargos.',
+      marketInfoWithMarket: 'Hoje suas análises usam {market}.',
+      marketInfoWithoutMarket: 'Sem mercado declarado, usamos seu país de acesso como palpite.',
+      filledBadge: 'Preenchido',
+      notInformed: 'Não informado',
+      countryGroupAdapted: 'Com adaptação própria',
+      countryGroupOthers: 'Demais países',
+      globalMarketName: 'Global / Remoto internacional',
+      removeAria: 'Remover {value}',
+      sectionIdentityTitle: 'Identidade profissional',
+      fieldCurrentTitle: 'Cargo atual',
+      placeholderCurrentTitle: 'Ex: Analista de Dados',
+      fieldArea: 'Área de atuação',
+      placeholderArea: 'Ex: Dados & Analytics',
+      fieldSeniority: 'Senioridade',
+      fieldYearsExperience: 'Anos de experiência',
+      fieldEducation: 'Formação',
+      fieldSpecializations: 'Especializações',
+      placeholderSpecializations: 'Ex: Modelagem dimensional',
+      fieldSkills: 'Competências',
+      hintSkills: 'As ferramentas e habilidades que você quer que apareçam nas recomendações.',
+      placeholderSkills: 'Ex: SQL',
+      sectionObjectivesTitle: 'Objetivos',
+      fieldTargetRoles: 'Cargos-alvo',
+      hintTargetRoles: 'Os cargos que você quer disputar — não necessariamente o que você faz hoje.',
+      placeholderTargetRoles: 'Ex: Data Analyst',
+      fieldTargetFields: 'Áreas-alvo',
+      placeholderTargetFields: 'Ex: Produto',
+      fieldTargetIndustries: 'Setores de interesse',
+      placeholderTargetIndustries: 'Ex: Saúde',
+      fieldCareerGoal: 'Trajetória desejada',
+      placeholderCareerGoal: 'Para onde você quer levar sua carreira nos próximos anos?',
+      sectionLocationTitle: 'Onde você está e onde quer trabalhar',
+      hintLocationIntro: 'São perguntas diferentes de propósito. Morar num país não significa querer trabalhar nele.',
+      fieldResidenceCountry: 'País onde mora',
+      hintResidenceCountry: 'Os países do primeiro grupo têm adaptação própria — formato de currículo, tipos de contrato, sistemas de triagem. Os demais usam o padrão internacional.',
+      fieldResidenceRegion: 'Estado / região',
+      fieldResidenceCity: 'Cidade',
+      fieldTargetCountry: 'País onde quer trabalhar',
+      fieldOtherMarkets: 'Outros países onde você também aceitaria trabalhar',
+      hintOtherMarkets: 'Marque quantos quiser. Deixe tudo desmarcado se só quer o país principal.',
+      switchRelocationTitle: 'Disponível para mudar de país',
+      switchRelocationDesc: 'Aceita se mudar fisicamente para outro país.',
+      switchRemoteTitle: 'Aceita trabalho remoto internacional',
+      switchRemoteDesc: 'Trabalhar de onde mora para uma empresa de outro país. Não é o mesmo que mudar de país.',
+      sectionPreferencesTitle: 'Preferências de trabalho',
+      fieldWorkModes: 'Modelos de trabalho aceitos',
+      fieldContractTypes: 'Tipos de contrato aceitos',
+      hintContractTypes: 'No vocabulário do seu mercado: CLT, PJ, CDI, W-2, contractor...',
+      placeholderContractTypes: 'Ex: CLT',
+      fieldWorkload: 'Jornada',
+      fieldSalary: 'Pretensão salarial',
+      hintSalary: 'Na moeda do mercado que você mira. Não tem relação com a moeda em que você paga pelas análises — essa é definida pelo seu meio de pagamento.',
+      placeholderSalaryMin: 'Mínimo',
+      placeholderSalaryMax: 'Máximo',
+      placeholderSalaryPeriod: 'Período',
+      sectionLanguagesTitle: 'Idiomas',
+      hintLanguagesIntro: 'O idioma da tela não decide o idioma do seu currículo. Se você mira outro país, provavelmente são diferentes.',
+      fieldResumeLanguage: 'Idioma do currículo e da carta',
+      fieldCommLanguage: 'Idioma dos avisos por e-mail',
+      saveButton: 'Salvar perfil',
+      seniorityIntern: 'Estágio',
+      seniorityJunior: 'Júnior',
+      seniorityMid: 'Pleno',
+      senioritySenior: 'Sênior',
+      seniorityLead: 'Líder / Coordenação',
+      seniorityPrincipal: 'Especialista / Principal',
+      seniorityDirector: 'Diretoria',
+      seniorityExecutive: 'Executivo (C-level)',
+      educationNone: 'Sem formação declarada',
+      educationHighSchool: 'Ensino médio',
+      educationTechnical: 'Técnico',
+      educationBachelor: 'Graduação',
+      educationPostgrad: 'Pós-graduação',
+      educationMaster: 'Mestrado',
+      educationPhd: 'Doutorado',
+      workModeRemote: 'Remoto',
+      workModeHybrid: 'Híbrido',
+      workModeOnsite: 'Presencial',
+      weeklyHoursFullTime: 'Tempo integral',
+      weeklyHoursPartTime: 'Meio período',
+      weeklyHoursFlexible: 'Flexível',
+      salaryPeriodYear: 'por ano',
+      salaryPeriodMonth: 'por mês',
+      salaryPeriodHour: 'por hora',
+      languagePt: 'Português',
+      languageEn: 'Inglês',
+      languageEs: 'Espanhol',
+    },
   },
 
   en: {
@@ -589,6 +806,114 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       greetingSub: 'Here is an overview of your GriffoWork activity.',
       newResume: 'New Resume',
     },
+    profile: {
+      loadErrorFallback: 'Could not load your profile.',
+      loadConnectionError: 'Connection error while loading your profile.',
+      saveMaxLessThanMinError: 'Maximum target cannot be lower than the minimum.',
+      saveSuccessWithRadarOne: 'Profile saved. Radar found {n} opportunity — check the Radar screen.',
+      saveSuccessWithRadarMany: 'Profile saved. Radar found {n} opportunities — check the Radar screen.',
+      saveSuccessNoRadar: 'Professional profile saved.',
+      saveErrorFallback: 'Could not save your profile.',
+      saveConnectionError: 'Connection error while saving your profile.',
+      fillErrorFallback: 'Could not read your resume right now.',
+      fillNothingToFill: 'Nothing to fill: the fields I could answer are already filled in.',
+      fillSuccessOne: '{n} field filled in. Review and save.',
+      fillSuccessMany: '{n} fields filled in. Review and save.',
+      fillConnectionError: 'Connection error while reading your resume.',
+      loadingText: 'Loading your professional profile...',
+      cardTitle: 'Professional Profile',
+      cardDesc: 'This is where Griffo learns who you are professionally and which market you should be targeting. Fill it in gradually — nothing here is required.',
+      fillButton: 'Fill in what I already know about you',
+      fillDesc: 'Reads your latest resume and vocational diagnosis and fills in only the empty fields. Nothing is saved until you review and click save.',
+      marketInfoIntro: 'The market you declare here changes the recommendations: which screening systems we mention, the expected resume format, and job-title vocabulary.',
+      marketInfoWithMarket: 'Your analyses currently use {market}.',
+      marketInfoWithoutMarket: 'With no market declared, we use your access country as a guess.',
+      filledBadge: 'Filled in',
+      notInformed: 'Not informed',
+      countryGroupAdapted: 'With dedicated adaptation',
+      countryGroupOthers: 'Other countries',
+      globalMarketName: 'Global / International remote',
+      removeAria: 'Remove {value}',
+      sectionIdentityTitle: 'Professional identity',
+      fieldCurrentTitle: 'Current title',
+      placeholderCurrentTitle: 'E.g.: Data Analyst',
+      fieldArea: 'Field of work',
+      placeholderArea: 'E.g.: Data & Analytics',
+      fieldSeniority: 'Seniority',
+      fieldYearsExperience: 'Years of experience',
+      fieldEducation: 'Education',
+      fieldSpecializations: 'Specializations',
+      placeholderSpecializations: 'E.g.: Dimensional modeling',
+      fieldSkills: 'Skills',
+      hintSkills: 'Tools and skills you want featured in the recommendations.',
+      placeholderSkills: 'E.g.: SQL',
+      sectionObjectivesTitle: 'Objectives',
+      fieldTargetRoles: 'Target roles',
+      hintTargetRoles: 'The roles you want to pursue — not necessarily what you do today.',
+      placeholderTargetRoles: 'E.g.: Data Analyst',
+      fieldTargetFields: 'Target fields',
+      placeholderTargetFields: 'E.g.: Product',
+      fieldTargetIndustries: 'Industries of interest',
+      placeholderTargetIndustries: 'E.g.: Healthcare',
+      fieldCareerGoal: 'Desired trajectory',
+      placeholderCareerGoal: 'Where do you want to take your career in the coming years?',
+      sectionLocationTitle: 'Where you are and where you want to work',
+      hintLocationIntro: 'These are deliberately different questions. Living in a country does not mean wanting to work there.',
+      fieldResidenceCountry: 'Country of residence',
+      hintResidenceCountry: 'Countries in the first group have dedicated adaptation — resume format, contract types, screening systems. The rest use the international default.',
+      fieldResidenceRegion: 'State / region',
+      fieldResidenceCity: 'City',
+      fieldTargetCountry: 'Country you want to work in',
+      fieldOtherMarkets: 'Other countries you would also accept working in',
+      hintOtherMarkets: 'Select as many as you like. Leave everything unchecked if you only want the primary country.',
+      switchRelocationTitle: 'Open to relocating',
+      switchRelocationDesc: 'Willing to physically move to another country.',
+      switchRemoteTitle: 'Open to international remote work',
+      switchRemoteDesc: 'Working from where you live for a company in another country. Not the same as relocating.',
+      sectionPreferencesTitle: 'Work preferences',
+      fieldWorkModes: 'Accepted work modes',
+      fieldContractTypes: 'Accepted contract types',
+      hintContractTypes: 'In your market\'s vocabulary: CLT, PJ, W-2, contractor...',
+      placeholderContractTypes: 'E.g.: full-time',
+      fieldWorkload: 'Workload',
+      fieldSalary: 'Salary target',
+      hintSalary: 'In the currency of the market you\'re targeting. Not related to the currency you pay for analyses — that is set by your payment method.',
+      placeholderSalaryMin: 'Minimum',
+      placeholderSalaryMax: 'Maximum',
+      placeholderSalaryPeriod: 'Period',
+      sectionLanguagesTitle: 'Languages',
+      hintLanguagesIntro: 'The screen\'s language does not decide your resume\'s language. If you\'re targeting a different country, they are likely different.',
+      fieldResumeLanguage: 'Resume and cover letter language',
+      fieldCommLanguage: 'Email notification language',
+      saveButton: 'Save profile',
+      seniorityIntern: 'Internship',
+      seniorityJunior: 'Junior',
+      seniorityMid: 'Mid-level',
+      senioritySenior: 'Senior',
+      seniorityLead: 'Lead / Coordination',
+      seniorityPrincipal: 'Specialist / Principal',
+      seniorityDirector: 'Director',
+      seniorityExecutive: 'Executive (C-level)',
+      educationNone: 'No formal education declared',
+      educationHighSchool: 'High school',
+      educationTechnical: 'Technical degree',
+      educationBachelor: 'Bachelor\'s degree',
+      educationPostgrad: 'Postgraduate',
+      educationMaster: 'Master\'s degree',
+      educationPhd: 'PhD',
+      workModeRemote: 'Remote',
+      workModeHybrid: 'Hybrid',
+      workModeOnsite: 'On-site',
+      weeklyHoursFullTime: 'Full-time',
+      weeklyHoursPartTime: 'Part-time',
+      weeklyHoursFlexible: 'Flexible',
+      salaryPeriodYear: 'per year',
+      salaryPeriodMonth: 'per month',
+      salaryPeriodHour: 'per hour',
+      languagePt: 'Portuguese',
+      languageEn: 'English',
+      languageEs: 'Spanish',
+    },
   },
 
   es: {
@@ -783,6 +1108,114 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       greeting: 'Hola',
       greetingSub: 'Aquí tienes el resumen de tu actividad en GriffoWork.',
       newResume: 'Nuevo currículum',
+    },
+    profile: {
+      loadErrorFallback: 'No fue posible cargar el perfil.',
+      loadConnectionError: 'Fallo de conexión al cargar el perfil.',
+      saveMaxLessThanMinError: 'La pretensión máxima no puede ser menor que la mínima.',
+      saveSuccessWithRadarOne: 'Perfil guardado. El Radar encontró {n} oportunidad — revisa la pantalla Radar.',
+      saveSuccessWithRadarMany: 'Perfil guardado. El Radar encontró {n} oportunidades — revisa la pantalla Radar.',
+      saveSuccessNoRadar: 'Perfil profesional guardado.',
+      saveErrorFallback: 'No fue posible guardar el perfil.',
+      saveConnectionError: 'Fallo de conexión al guardar el perfil.',
+      fillErrorFallback: 'No fue posible leer tu currículum ahora.',
+      fillNothingToFill: 'Nada que completar: los campos que podría responder ya están completos.',
+      fillSuccessOne: '{n} campo completado. Revisa y guarda.',
+      fillSuccessMany: '{n} campos completados. Revisa y guarda.',
+      fillConnectionError: 'Fallo de conexión al leer tu currículum.',
+      loadingText: 'Cargando tu perfil profesional...',
+      cardTitle: 'Perfil Profesional',
+      cardDesc: 'Desde aquí Griffo entiende quién eres profesionalmente y para qué mercado debes trabajar. Complétalo poco a poco — nada es obligatorio.',
+      fillButton: 'Completar con lo que ya sé sobre ti',
+      fillDesc: 'Lee tu último currículum y tu diagnóstico vocacional y completa solo los campos vacíos. Nada se guarda hasta que revises y hagas clic en guardar.',
+      marketInfoIntro: 'El mercado que declaras aquí cambia las recomendaciones: qué sistemas de selección mencionamos, el formato esperado del currículum y el vocabulario de los puestos.',
+      marketInfoWithMarket: 'Hoy tus análisis usan {market}.',
+      marketInfoWithoutMarket: 'Sin mercado declarado, usamos tu país de acceso como referencia.',
+      filledBadge: 'Completado',
+      notInformed: 'No informado',
+      countryGroupAdapted: 'Con adaptación propia',
+      countryGroupOthers: 'Demás países',
+      globalMarketName: 'Global / Remoto internacional',
+      removeAria: 'Quitar {value}',
+      sectionIdentityTitle: 'Identidad profesional',
+      fieldCurrentTitle: 'Puesto actual',
+      placeholderCurrentTitle: 'Ej: Analista de Datos',
+      fieldArea: 'Área de actuación',
+      placeholderArea: 'Ej: Datos y Analítica',
+      fieldSeniority: 'Nivel de experiencia',
+      fieldYearsExperience: 'Años de experiencia',
+      fieldEducation: 'Formación',
+      fieldSpecializations: 'Especializaciones',
+      placeholderSpecializations: 'Ej: Modelado dimensional',
+      fieldSkills: 'Competencias',
+      hintSkills: 'Las herramientas y habilidades que quieres que aparezcan en las recomendaciones.',
+      placeholderSkills: 'Ej: SQL',
+      sectionObjectivesTitle: 'Objetivos',
+      fieldTargetRoles: 'Puestos objetivo',
+      hintTargetRoles: 'Los puestos que quieres disputar — no necesariamente lo que haces hoy.',
+      placeholderTargetRoles: 'Ej: Data Analyst',
+      fieldTargetFields: 'Áreas objetivo',
+      placeholderTargetFields: 'Ej: Producto',
+      fieldTargetIndustries: 'Sectores de interés',
+      placeholderTargetIndustries: 'Ej: Salud',
+      fieldCareerGoal: 'Trayectoria deseada',
+      placeholderCareerGoal: '¿Hacia dónde quieres llevar tu carrera en los próximos años?',
+      sectionLocationTitle: 'Dónde estás y dónde quieres trabajar',
+      hintLocationIntro: 'Son preguntas distintas a propósito. Vivir en un país no significa querer trabajar en él.',
+      fieldResidenceCountry: 'País donde vives',
+      hintResidenceCountry: 'Los países del primer grupo tienen adaptación propia — formato de currículum, tipos de contrato, sistemas de selección. Los demás usan el estándar internacional.',
+      fieldResidenceRegion: 'Estado / región',
+      fieldResidenceCity: 'Ciudad',
+      fieldTargetCountry: 'País donde quieres trabajar',
+      fieldOtherMarkets: 'Otros países donde también aceptarías trabajar',
+      hintOtherMarkets: 'Marca los que quieras. Deja todo desmarcado si solo quieres el país principal.',
+      switchRelocationTitle: 'Disponible para cambiar de país',
+      switchRelocationDesc: 'Acepta mudarse físicamente a otro país.',
+      switchRemoteTitle: 'Acepta trabajo remoto internacional',
+      switchRemoteDesc: 'Trabajar desde donde vives para una empresa de otro país. No es lo mismo que mudarse de país.',
+      sectionPreferencesTitle: 'Preferencias de trabajo',
+      fieldWorkModes: 'Modalidades de trabajo aceptadas',
+      fieldContractTypes: 'Tipos de contrato aceptados',
+      hintContractTypes: 'En el vocabulario de tu mercado: tiempo completo, medio tiempo, contractor...',
+      placeholderContractTypes: 'Ej: tiempo completo',
+      fieldWorkload: 'Jornada',
+      fieldSalary: 'Pretensión salarial',
+      hintSalary: 'En la moneda del mercado al que apuntas. No tiene relación con la moneda en la que pagas por los análisis — esa la define tu medio de pago.',
+      placeholderSalaryMin: 'Mínimo',
+      placeholderSalaryMax: 'Máximo',
+      placeholderSalaryPeriod: 'Período',
+      sectionLanguagesTitle: 'Idiomas',
+      hintLanguagesIntro: 'El idioma de la pantalla no decide el idioma de tu currículum. Si apuntas a otro país, probablemente sean distintos.',
+      fieldResumeLanguage: 'Idioma del currículum y de la carta',
+      fieldCommLanguage: 'Idioma de los avisos por correo',
+      saveButton: 'Guardar perfil',
+      seniorityIntern: 'Prácticas',
+      seniorityJunior: 'Junior',
+      seniorityMid: 'Semi-senior',
+      senioritySenior: 'Senior',
+      seniorityLead: 'Líder / Coordinación',
+      seniorityPrincipal: 'Especialista / Principal',
+      seniorityDirector: 'Dirección',
+      seniorityExecutive: 'Ejecutivo (C-level)',
+      educationNone: 'Sin formación declarada',
+      educationHighSchool: 'Educación media',
+      educationTechnical: 'Técnico',
+      educationBachelor: 'Licenciatura',
+      educationPostgrad: 'Posgrado',
+      educationMaster: 'Maestría',
+      educationPhd: 'Doctorado',
+      workModeRemote: 'Remoto',
+      workModeHybrid: 'Híbrido',
+      workModeOnsite: 'Presencial',
+      weeklyHoursFullTime: 'Tiempo completo',
+      weeklyHoursPartTime: 'Medio tiempo',
+      weeklyHoursFlexible: 'Flexible',
+      salaryPeriodYear: 'por año',
+      salaryPeriodMonth: 'por mes',
+      salaryPeriodHour: 'por hora',
+      languagePt: 'Portugués',
+      languageEn: 'Inglés',
+      languageEs: 'Español',
     },
   },
 }
