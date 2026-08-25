@@ -51,12 +51,10 @@ o quanto confiar nele.
    pode digitá-la. Falta: abrir o produto em produção (ou o dev server) e
    percorrer as telas; comparar com a tag `backup-pre-design-refresh-20260824`
    se algo parecer errado.
-5. **DeepSeek falhando em `profile_extraction`/`free_preview`/`support_chat`/
-   `normalization` (ver 2.28).** Causa raiz encontrada — a DeepSeek aposentou
-   o modelo não-pensante, e o roteador não desliga o raciocínio do que restou.
-   Decisão pendente: trocar o provedor principal dessas tarefas para Claude
-   (mais confiável, mais caro por chamada) ou aumentar o teto de tokens do
-   DeepSeek (mais barato, não garante). Ninguém decidiu ainda qual.
+5. ~~DeepSeek falhando em `profile_extraction`/`free_preview`/`support_chat`/
+   `normalization`~~ — ✅ **resolvido em 25/08/2026** (commit `5c37f71`, ver
+   2.28). Piso de tokens dos modelos que raciocinam subiu 4x (4.000→16.000);
+   Kimi K3 confirmado como primeiro suplente do DeepSeek.
 6. **Telas autenticadas sem tradução (ver 2.28).** Só a landing e partes de
    `plans-view.tsx`/`app-shell.tsx` usam `useI18n`. O laudo e todo o resto do
    app pós-login são texto fixo em português — trocar o idioma no seletor não

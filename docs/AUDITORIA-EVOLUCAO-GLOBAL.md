@@ -1629,10 +1629,15 @@ Não é só `profile_extraction`: `free_preview`, `support_chat` e
 `normalization` também têm o DeepSeek como primário (`registry.ts`,
 `INITIAL_TASK_ROUTING`) e correm o mesmo risco estrutural.
 
-**Não corrigido ainda** — é uma escolha de custo × confiabilidade (trocar o
-provedor principal por Claude custa mais por chamada; aumentar o teto de
-tokens é mais barato mas não garante) que fica para o usuário decidir antes
-de implementar.
+**Resolvido em 25/08/2026 (commit `5c37f71`), por decisão do usuário.** Entre
+trocar o provedor principal por Claude e aumentar o teto de tokens, escolheu
+a segunda depois de ver o custo: `JSON_TASK_TOKEN_FLOOR` subiu de 4.000 para
+16.000 (4x). O raciocínio observado nas falhas não passou de ~3.500 tokens —
+o piso novo dá folga sem aumentar gasto real, porque o provedor cobra pelos
+tokens GERADOS, não pelo teto. Kimi K3 já era o primeiro suplente do DeepSeek
+em `FALLBACK_CHAIN`; ficou explícito em comentário, sem mudança de
+comportamento. Vale para as quatro tarefas que compartilham esse branch do
+roteador.
 
 ### Idioma sem efeito depois do login — registrado, não é bug do seletor
 
