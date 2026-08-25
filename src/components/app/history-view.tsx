@@ -51,22 +51,24 @@ export function HistoryView() {
     }
   }
 
+  // Mesma progressão de status usada em dashboard.tsx — o vocabulário é o
+  // mesmo, a cor tem que contar a mesma história nas duas telas.
   const statusMap: Record<string, { label: string; color: string; icon: any }> = {
     uploaded: { label: 'Enviado', color: 'bg-slate-100 text-slate-700', icon: Upload },
-    analyzed: { label: 'Analisado', color: 'bg-sky-100 text-sky-700', icon: FileSearch },
-    rewrite_requested: { label: 'Reescrita solicitada', color: 'bg-violet-100 text-violet-700', icon: FileEdit },
-    rewritten: { label: 'Reescrito', color: 'bg-amber-100 text-amber-700', icon: FileEdit },
-    confirmed: { label: 'Confirmado', color: 'bg-blue-100 text-[#0B63E5]', icon: Download },
+    analyzed: { label: 'Analisado', color: 'bg-primary/10 text-primary', icon: FileSearch },
+    rewrite_requested: { label: 'Reescrita solicitada', color: 'bg-amber-100 text-amber-700', icon: FileEdit },
+    rewritten: { label: 'Reescrito', color: 'bg-emerald-100 text-emerald-700', icon: FileEdit },
+    confirmed: { label: 'Confirmado', color: 'bg-primary text-white', icon: Download },
   }
 
   return (
     <div className="space-y-5 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#0B192E]">Histórico</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-brand-navy">Histórico</h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Todos os currículos que você enviou.</p>
         </div>
-        <Button onClick={() => setView('upload')} size="sm" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white font-bold">
+        <Button onClick={() => setView('upload')} size="sm" className="bg-primary hover:bg-primary/90 text-white font-bold">
           <Upload className="w-4 h-4 mr-1" /> Novo
         </Button>
       </div>
@@ -82,7 +84,7 @@ export function HistoryView() {
               <History className="w-10 h-10 text-slate-400 mx-auto mb-3" />
               <p className="text-slate-700 font-bold mb-1">Nenhum currículo enviado</p>
               <p className="text-xs sm:text-sm text-slate-500 mb-4">Seu histórico aparecerá aqui.</p>
-              <Button onClick={() => setView('upload')} className="bg-[#0B63E5] hover:bg-[#0052CC] text-white font-bold">Enviar currículo</Button>
+              <Button onClick={() => setView('upload')} className="bg-primary hover:bg-primary/90 text-white font-bold">Enviar currículo</Button>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
@@ -95,11 +97,11 @@ export function HistoryView() {
                       onClick={() => openResume(r.id)}
                       className="flex items-center gap-3 flex-1 min-w-0 text-left"
                     >
-                      <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-lg bg-blue-50 text-[#0B63E5] flex items-center justify-center shrink-0 border border-blue-100">
+                      <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
                         <Icon className="w-4 sm:w-5 h-4 sm:h-5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-[#0B192E] truncate">
+                        <p className="text-sm font-bold text-brand-navy truncate">
                           Currículo de {new Date(r.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </p>
                         <p className="text-[11px] sm:text-xs text-slate-500">

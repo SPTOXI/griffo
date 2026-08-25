@@ -290,7 +290,7 @@ export function UploadView() {
 
   return (
     <div className="space-y-5 max-w-4xl">
-      <div className="bg-gradient-to-r from-[#0B192E] via-[#1A2E4B] to-[#0B192E] rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-brand-navy to-primary rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 p-16 bg-blue-500/10 blur-3xl rounded-full mix-blend-screen pointer-events-none" />
         <h1 className="text-2xl font-black flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-amber-400" /> Auditoria de IA Premium
@@ -300,31 +300,31 @@ export function UploadView() {
         </p>
       </div>
 
-      {/* FEATURE BADGES */}
+      {/* FEATURE BADGES — mesma cor pros 4, diferenciados por número/ícone, não por tom solto */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white border border-slate-200/70 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:border-blue-300 transition-colors">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center font-black text-xs shrink-0 shadow-inner">1</div>
+        <div className="bg-white border border-slate-200/70 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:border-primary/40 transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-black text-xs shrink-0 shadow-inner">1</div>
           <div>
             <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">8 Dimensões</p>
             <p className="text-[10px] text-slate-500 font-medium">Auditoria Executiva</p>
           </div>
         </div>
-        <div className="bg-white border border-slate-200/70 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:border-violet-300 transition-colors">
-          <div className="w-8 h-8 rounded-lg bg-violet-50 border border-violet-100 text-violet-600 flex items-center justify-center font-black text-xs shrink-0 shadow-inner">2</div>
+        <div className="bg-white border border-slate-200/70 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:border-primary/40 transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-black text-xs shrink-0 shadow-inner">2</div>
           <div>
             <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">Social SEO</p>
             <p className="text-[10px] text-slate-500 font-medium">LinkedIn & Portfólio</p>
           </div>
         </div>
-        <div className="bg-white border border-slate-200/70 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:border-indigo-300 transition-colors">
-          <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center font-black text-xs shrink-0 shadow-inner">3</div>
+        <div className="bg-white border border-slate-200/70 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:border-primary/40 transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-black text-xs shrink-0 shadow-inner">3</div>
           <div>
             <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">Match Vaga</p>
             <p className="text-[10px] text-slate-500 font-medium">Aderência de Perfil</p>
           </div>
         </div>
-        <div className="bg-white border border-slate-200/70 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:border-emerald-300 transition-colors">
-          <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-black text-xs shrink-0 shadow-inner">4</div>
+        <div className="bg-white border border-slate-200/70 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:border-primary/40 transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-black text-xs shrink-0 shadow-inner">4</div>
           <div>
             <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">Fórmula STAR</p>
             <p className="text-[10px] text-slate-500 font-medium">Correção de Escrita</p>
@@ -390,9 +390,9 @@ export function UploadView() {
           <div className="pt-3 border-t border-slate-100 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <Label htmlFor="targetJob" className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-sky-600" /> Cargo ou Vaga Alvo Desejada (Opcional)
+                <Sparkles className="w-3.5 h-3.5 text-primary" /> Cargo ou Vaga Alvo Desejada (Opcional)
               </Label>
-              <Badge variant="outline" className="text-[10px] text-sky-700 bg-sky-50 border-sky-200 self-start sm:self-auto">
+              <Badge variant="outline" className="text-[10px] text-primary bg-primary/10 border-primary/20 self-start sm:self-auto">
                 Ou cole o Link da vaga de emprego abaixo 🔗
               </Badge>
             </div>
@@ -424,7 +424,7 @@ export function UploadView() {
                   variant="outline"
                   className="text-xs h-9 font-semibold shrink-0 bg-white hover:bg-slate-100"
                 >
-                  {fetchingUrl ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Globe className="w-3.5 h-3.5 mr-1 text-sky-600" />}
+                  {fetchingUrl ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Globe className="w-3.5 h-3.5 mr-1 text-primary" />}
                   Importar Link
                 </Button>
               </div>
@@ -458,7 +458,7 @@ export function UploadView() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <p className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                  <Share2 className="w-3.5 h-3.5 text-violet-600" /> Presença Digital & Perfis Profissionais Globais (Opcional)
+                  <Share2 className="w-3.5 h-3.5 text-primary" /> Presença Digital & Perfis Profissionais Globais (Opcional)
                 </p>
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   Insira o link das redes e plataformas relevantes para a área e mercado que deseja atuar (LinkedIn, Gupy, Behance, GitHub, Xing, StackOverflow, etc.).
@@ -469,7 +469,7 @@ export function UploadView() {
                 variant="outline"
                 size="sm"
                 onClick={addSocialProfile}
-                className="text-xs text-violet-700 border-violet-200 hover:bg-violet-50 shrink-0 self-start sm:self-auto"
+                className="text-xs text-primary border-primary/20 hover:bg-primary/10 shrink-0 self-start sm:self-auto"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar perfil
               </Button>
@@ -519,7 +519,7 @@ export function UploadView() {
                 className="flex items-start sm:items-center gap-2 text-xs text-slate-700 hover:text-slate-900 select-none text-left"
               >
                 {socialConsent ? (
-                  <CheckSquare className="w-4 h-4 text-violet-600 shrink-0 mt-0.5 sm:mt-0" />
+                  <CheckSquare className="w-4 h-4 text-primary shrink-0 mt-0.5 sm:mt-0" />
                 ) : (
                   <Square className="w-4 h-4 text-slate-400 shrink-0 mt-0.5 sm:mt-0" />
                 )}
@@ -538,8 +538,8 @@ export function UploadView() {
           )}
 
           {loading && loadingStep && (
-            <Alert className="bg-violet-50 border-violet-200 text-violet-900">
-              <Loader2 className="w-4 h-4 animate-spin text-violet-600 shrink-0" />
+            <Alert className="bg-primary/5 border-primary/20 text-primary">
+              <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
               <AlertDescription className="text-xs font-medium">
                 {loadingStep}
               </AlertDescription>
@@ -556,7 +556,7 @@ export function UploadView() {
               <Button
                 onClick={submit}
                 disabled={loading || (!pdfBase64 && content.length < minChars)}
-                className="bg-[#0B192E] hover:bg-[#1A2E4B] text-white shadow-lg shadow-slate-900/20 font-bold transition-all px-6"
+                className="bg-brand-navy hover:bg-brand-navy/90 text-white shadow-lg shadow-slate-900/20 font-bold transition-all px-6"
               >
                 {loading ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Incializando IA…</>

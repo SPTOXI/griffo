@@ -58,12 +58,12 @@ export function PlansView() {
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-[#0B63E5]" /> {t.pricing.productTitle}
+            <Sparkles className="w-6 h-6 text-primary" /> {t.pricing.productTitle}
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">{t.pricing.productDesc}</p>
         </div>
 
-        <div className="bg-gradient-to-r from-[#0B192E] to-[#0B63E5] rounded-2xl px-5 py-3.5 text-white flex items-center gap-4 shadow-md">
+        <div className="bg-gradient-to-r from-brand-navy to-primary rounded-2xl px-5 py-3.5 text-white flex items-center gap-4 shadow-md">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-blue-200">
               {t.app.balance}
@@ -77,9 +77,9 @@ export function PlansView() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* O PRODUTO */}
-        <Card className="lg:col-span-2 border-2 border-[#0B63E5] shadow-lg bg-white">
+        <Card className="lg:col-span-2 border-2 border-primary shadow-lg bg-white">
           <CardHeader className="pb-3">
-            <Badge className="w-fit bg-blue-50 text-[#0B63E5] hover:bg-blue-50 text-[11px] font-bold">
+            <Badge className="w-fit bg-primary/10 text-primary hover:bg-primary/10 text-[11px] font-bold">
               {t.pricing.badge}
             </Badge>
             <CardTitle className="text-xl text-slate-900 pt-1">{t.pricing.productTitle}</CardTitle>
@@ -100,7 +100,7 @@ export function PlansView() {
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs text-slate-700">
                 {t.pricing.items.map((item) => (
                   <li key={item} className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
                     {item}
                   </li>
                 ))}
@@ -110,7 +110,7 @@ export function PlansView() {
             <Button
               onClick={() => handleBuy('single')}
               disabled={buying !== null}
-              className="w-full h-11 text-sm font-bold bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md"
+              className="w-full h-11 text-sm font-bold bg-primary hover:bg-primary/90 text-white shadow-md"
             >
               {buying === 'single' ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />

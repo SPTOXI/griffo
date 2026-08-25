@@ -81,6 +81,12 @@ export interface TranslationDictionary {
     f5Desc: string
     f6Title: string
     f6Desc: string
+    f7Title: string
+    f7Desc: string
+    f8Title: string
+    f8Desc: string
+    f9Title: string
+    f9Desc: string
   }
   how: {
     badge: string
@@ -276,6 +282,12 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       f5Desc: 'Exporte seu currículo atualizado e o laudo completo em PDF elegante e formato de texto editável para personalizar quando quiser.',
       f6Title: 'Privacidade & Segurança Total',
       f6Desc: 'Seus dados são protegidos com criptografia e em estrita conformidade com a LGPD e GDPR. Nunca compartilhamos suas informações com terceiros.',
+      f7Title: 'Radar de Vagas com IA',
+      f7Desc: 'Monitoramos milhares de vagas por dia e avisamos só quando encontramos uma que realmente combina com seu perfil — sem spam, sem vaga genérica.',
+      f8Title: 'Orientação de Carreira',
+      f8Desc: 'Diagnóstico vocacional que aponta as áreas e cargos onde sua trajetória tem mais força, com caminhos concretos para os próximos passos.',
+      f9Title: 'Carta de Apresentação Direcionada',
+      f9Desc: 'Uma carta escrita para a vaga específica, destacando os requisitos que você atende — pronta para enviar junto do currículo.',
     },
     how: {
       badge: 'Passo a Passo',
@@ -465,6 +477,12 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       f5Desc: 'Export your rewritten resume and audit report in high-resolution PDF and editable document formats.',
       f6Title: 'Bank-Grade Security & Privacy',
       f6Desc: 'Your personal data is encrypted and strictly compliant with GDPR and international privacy standards. We never sell your data.',
+      f7Title: 'AI-Powered Job Radar',
+      f7Desc: 'We monitor thousands of job postings every day and only alert you when we find one that truly matches your profile — no spam, no generic listings.',
+      f8Title: 'Career Orientation',
+      f8Desc: 'A vocational diagnosis that points to the roles and fields where your background is strongest, with concrete next steps.',
+      f9Title: 'Targeted Cover Letter',
+      f9Desc: 'A cover letter written for the specific job, highlighting the requirements you meet — ready to send alongside your resume.',
     },
     how: {
       badge: 'Step-by-step',
@@ -654,6 +672,12 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       f5Desc: 'Exporta tu currículum reescrito e informe técnico en formatos PDF de alta resolución y archivos editables.',
       f6Title: 'Privacidad y Seguridad Total',
       f6Desc: 'Tus datos están encriptados y protegidos en estricto cumplimiento del RGPD. Nunca vendemos ni compartimos tus datos.',
+      f7Title: 'Radar de Empleos con IA',
+      f7Desc: 'Monitoreamos miles de ofertas de empleo cada día y te avisamos solo cuando encontramos una que realmente combina con tu perfil — sin spam, sin ofertas genéricas.',
+      f8Title: 'Orientación de Carrera',
+      f8Desc: 'Diagnóstico vocacional que señala las áreas y cargos donde tu trayectoria tiene más fuerza, con próximos pasos concretos.',
+      f9Title: 'Carta de Presentación Dirigida',
+      f9Desc: 'Una carta escrita para la vacante específica, destacando los requisitos que cumples — lista para enviar junto con tu currículum.',
     },
     how: {
       badge: 'Paso a paso',

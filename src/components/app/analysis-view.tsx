@@ -105,7 +105,11 @@ export function AnalysisView() {
   const [coverLetter, setCoverLetter] = useState<CoverLetter | null>(null)
   const [letterError, setLetterError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'all' | 'overview' | 'social' | 'match' | 'career' | 'dimensions' | 'targeted' | 'letter'>('all')
+  // Padrão passa a ser 'overview', não 'all': a pessoa cai numa visão focada
+  // (nota + veredito) em vez de rolar as 8 seções empilhadas de uma vez.
+  // "Visão Completa" continua existindo como opção, só deixou de ser a
+  // primeira coisa que a tela mostra.
+  const [activeTab, setActiveTab] = useState<'all' | 'overview' | 'social' | 'match' | 'career' | 'dimensions' | 'targeted' | 'letter'>('overview')
   const [list, setList] = useState<{ id: string; status: string; updatedAt: string }[]>([])
   /**
    * Currículos cuja análise já foi disparada automaticamente nesta sessão.
@@ -752,6 +756,32 @@ export function AnalysisView() {
         </button>
       </div>
 
+      {/* RESUMO FIXO — a nota some da tela quando activeTab troca pra uma
+          seção que não é "overview"; esta faixa mantém a referência visível
+          o tempo todo, em qualquer aba. top-14 é a altura do cabeçalho do
+          app-shell (h-14, sticky top-0), pra não sobrepor. */}
+      {activeTab !== 'all' && activeTab !== 'overview' && (
+        <div className="sticky top-14 z-20 -mx-1 px-1 py-2 bg-white/95 backdrop-blur-sm border-b border-slate-200 flex items-center gap-3 text-xs">
+          <span className="font-bold" style={{ color: scoreColor }}>
+            {hasScore ? `${score!.toFixed(1)} / 10` : 'Nota não avaliada'}
+          </span>
+          <span className="text-slate-300">·</span>
+          {a.atsFriendly === true ? (
+            <span className="flex items-center gap-1 text-emerald-700 font-semibold"><CheckCircle2 className="w-3.5 h-3.5" /> ATS aprovado</span>
+          ) : a.atsFriendly === false ? (
+            <span className="flex items-center gap-1 text-rose-700 font-semibold"><XCircle className="w-3.5 h-3.5" /> ATS reprovado</span>
+          ) : (
+            <span className="text-slate-500">ATS não avaliado</span>
+          )}
+          <button
+            onClick={() => setActiveTab('overview')}
+            className="ml-auto text-primary font-semibold hover:underline shrink-0"
+          >
+            Ver laudo completo
+          </button>
+        </div>
+      )}
+
       {error && <Alert variant="destructive"><AlertCircle className="w-4 h-4" /><AlertDescription>{error}</AlertDescription></Alert>}
 
       {/* UPSELL — dentro do resultado, e só depois da primeira compra */}
@@ -762,7 +792,7 @@ export function AnalysisView() {
       {(activeTab === 'all' || activeTab === 'overview') && (
         <>
           <div className="grid lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-1 border-0 shadow-2xl relative overflow-hidden bg-gradient-to-br from-[#0B192E] via-[#10233D] to-[#0B192E]">
+        <Card className="lg:col-span-1 border-0 shadow-2xl relative overflow-hidden bg-gradient-to-br from-brand-navy via-[#10233D] to-brand-navy">
           <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay"></div>
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/20 blur-3xl rounded-full pointer-events-none"></div>
           <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full relative z-10">
@@ -858,11 +888,11 @@ export function AnalysisView() {
       <Card className="border-blue-200 bg-gradient-to-br from-white via-blue-50/20 to-slate-50 shadow-sm">
         <CardHeader className="pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#0B63E5] text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
               <Sparkles className="w-5 h-5 text-amber-300" />
             </div>
             <div>
-              <CardTitle className="text-base text-[#0B192E] font-bold">
+              <CardTitle className="text-base text-brand-navy font-bold">
                 📋 Análise do Perfil Profissional & Veredito Executivo
               </CardTitle>
               <CardDescription className="text-xs text-slate-500">
@@ -896,7 +926,7 @@ export function AnalysisView() {
             {a.strengths?.length ? (
               <ul className="space-y-2">
                 {a.strengths.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                  <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                     <span className="text-emerald-600 font-bold">•</span>
                     <span>{s}</span>
                   </li>
@@ -917,7 +947,7 @@ export function AnalysisView() {
             {a.weaknesses?.length ? (
               <ul className="space-y-2">
                 {a.weaknesses.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                  <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                     <span className="text-amber-600 font-bold">•</span>
                     <span>{s}</span>
                   </li>
@@ -943,7 +973,7 @@ export function AnalysisView() {
           <CardContent>
             <ol className="space-y-2.5">
               {a.recommendations.map((rec, i) => (
-                <li key={i} className="flex items-start gap-2.5 text-xs text-slate-700 bg-white p-2.5 rounded-lg border border-sky-100 shadow-2xs">
+                <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 bg-white p-2.5 rounded-lg border border-sky-100 shadow-2xs">
                   <span className="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
                   <span className="leading-relaxed font-medium">{rec}</span>
                 </li>
@@ -1158,7 +1188,7 @@ export function AnalysisView() {
                 <div className="h-2 rounded-full bg-slate-100 overflow-hidden mb-1.5">
                   <div className="h-full rounded-full transition-all" style={{ width: `${ds * 10}%`, backgroundColor: color }} />
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">{d.rationale}</p>
+                <p className="text-sm text-slate-600 leading-relaxed">{d.rationale}</p>
               </div>
             )
           })}
@@ -1210,15 +1240,15 @@ export function AnalysisView() {
                 <div className="grid md:grid-cols-2 gap-3 text-xs">
                   <div className="p-3 rounded-lg bg-rose-50/70 border border-rose-100 text-rose-950 space-y-1">
                     <p className="font-bold text-[10px] uppercase text-rose-800">❌ Trecho Atual no Currículo</p>
-                    <p className="font-mono text-[11px] leading-relaxed">"{tc.originalText}"</p>
+                    <p className="font-mono text-xs leading-relaxed">"{tc.originalText}"</p>
                   </div>
                   <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-100 text-emerald-950 space-y-1">
                     <p className="font-bold text-[10px] uppercase text-emerald-800">✨ Sugestão Recomendada (Fórmula STAR/XYZ)</p>
-                    <p className="font-mono text-[11px] leading-relaxed">"{tc.suggestedText}"</p>
+                    <p className="font-mono text-xs leading-relaxed">"{tc.suggestedText}"</p>
                   </div>
                 </div>
 
-                <div className="p-2.5 rounded-lg bg-amber-50/60 border border-amber-100 text-xs text-amber-950 space-y-0.5">
+                <div className="p-2.5 rounded-lg bg-amber-50/60 border border-amber-100 text-sm text-amber-950 space-y-0.5">
                   <p className="font-bold text-[10px] uppercase text-amber-800 flex items-center gap-1">
                     <Lightbulb className="w-3.5 h-3.5" /> Justificativa Técnica & Motivo da Alteração:
                   </p>
@@ -1308,7 +1338,7 @@ export function AnalysisView() {
                     )}
                   </div>
                   <h4 className="font-bold text-slate-900 text-sm">{area.role}</h4>
-                  <p className="text-slate-600 leading-relaxed text-[11px]">{area.whyFit}</p>
+                  <p className="text-slate-600 leading-relaxed text-sm">{area.whyFit}</p>
                   {area.requiredSkillsToLearn?.length > 0 && (
                     <div className="pt-2 border-t border-slate-100 space-y-1">
                       <p className="font-semibold text-slate-700 text-[10px] uppercase tracking-wider">Habilidades recomendadas:</p>
@@ -1335,7 +1365,7 @@ export function AnalysisView() {
             </p>
 
             {careerOrientation.careerAdvice && (
-              <div className="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-200/80 text-xs text-indigo-950 space-y-1">
+              <div className="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-200/80 text-sm text-indigo-950 space-y-1">
                 <p className="font-bold flex items-center gap-1.5">
                   <Lightbulb className="w-4 h-4 text-indigo-600" /> Conselho Estratégico de Carreira:
                 </p>
@@ -1428,7 +1458,7 @@ export function AnalysisView() {
                     Copiar
                   </Button>
                 </div>
-                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
                   {coverLetter.professionalSummary}
                 </p>
                 <p className="text-[10px] text-slate-500">
@@ -1449,7 +1479,7 @@ export function AnalysisView() {
                     Copiar
                   </Button>
                 </div>
-                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{coverLetter.coverLetter}</p>
+                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{coverLetter.coverLetter}</p>
               </div>
 
               {coverLetter.keywords.length > 0 && (

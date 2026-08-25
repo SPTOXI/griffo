@@ -1323,3 +1323,258 @@ A estratégia adotada é **Global Day 1 com Priorização Dinâmica**:
 
 5. **Expansão do Market Adapter (`lib/market/index.ts`):**
    * Adicionado suporte ao mercado da Itália (`IT`), totalizando 13 mercados com regras nativas de ATS e currículo declaradas.
+
+---
+
+## 2.26 Revisão visual de todo o app — uma paleta, não sete
+
+Pedido do usuário: interface mais moderna, fácil de navegar e visualmente
+agradável, mantendo a paleta de cores e a sobriedade em todo o app, sem alterar
+funcionalidade, com backup do estado anterior caso o resultado não agradasse.
+
+### O levantamento antes de qualquer mudança
+
+Duas explorações completas (app autenticado + landing) levantaram o estado real
+do sistema de design antes de propor qualquer coisa. A conclusão mudou o
+enquadramento do pedido: **a paleta "existente" não era uma coisa só.**
+
+Era duas coisas coexistindo. Primeiro, uma paleta de marca de fato usada e
+consistente — navy `#0B192E` e azul `#0B63E5` —, mas escrita como hex literal
+centenas de vezes espalhado por `app-shell.tsx`, `upload-view.tsx`,
+`plans-view.tsx`, `dashboard.tsx`, sem nenhum token central. Três gradientes
+escuros diferentes (`#0B192E→#0B63E5` no rodapé da sidebar,
+`#0B192E→#1A2E4B→#0B192E` no hero do upload, `#0F172A→#1E1B4B→#312E81` no
+banner do dashboard) faziam o mesmo papel — "painel premium" — sem serem o
+mesmo gradiente.
+
+Segundo, um sistema de tokens shadcn (`globals.css` + `tailwind.config.ts`) que
+existia, tinha dark mode pronto, mas era cinza puro — não conhecia a marca — e
+tinha uma armadilha: o projeto é Tailwind v4, com `@theme inline` no CSS
+mapeando `--color-primary: var(--primary)` direto (sem `hsl()`), que é o
+mecanismo que de fato gera as classes. O `tailwind.config.ts`, com
+`hsl(var(--primary))` e `content` apontando para `./app/**`, `./components/**`
+(pastas que não existem neste repositório, que usa `src/`), não tinha
+`@config` nenhum ligando ele ao CSS — **não estava quebrado, estava morto**,
+um resíduo do Tailwind v3 que sobrou do scaffold do shadcn e nunca foi
+carregado. Distinguir "quebrado" de "morto" importava: consertar um arquivo
+morto não muda nada visível, e gastar a revisão nisso seria desperdício.
+
+Em cima dos dois sistemas, pelo menos 7 tons soltos (slate, sky, violet, amber,
+emerald, blue, indigo) decidiam cor tela por tela sem mapa de significado:
+o estado ativo do menu lateral era emerald, sem relação com a marca; o botão de
+admin tinha forma diferente (`rounded-xl` com sombra) dos itens de navegação
+logo abaixo (`rounded-lg`, sem sombra); os badges de status do histórico de
+currículos usavam 5 cores (slate/sky/violet/amber/blue) sem progressão nem
+critério; o card de upsell usava amber, que em outro lugar da mesma tela
+significava "carregando".
+
+A landing page, por outro lado, já era a parte mais disciplinada
+visualmente — só usa a paleta de marca, sem tons soltos. O problema lá era de
+conteúdo: o grid de 6 features nunca mencionava Radar de vagas, orientação de
+carreira ou carta de apresentação — três entregas reais do produto, já
+vendidas na lista de itens do plano (`t.pricing.items`), mas invisíveis como
+"qualidade" para quem decide comprar.
+
+### O backup, antes de tocar em qualquer arquivo
+
+Tag `backup-pre-design-refresh-20260824` no commit que era `main`. Toda a
+revisão aconteceu na branch `design-refresh-2026-08` — `main` não foi tocado
+em nenhum momento, e nada foi publicado em produção durante o trabalho.
+
+### Fase A — a fundação de cor, um arquivo só
+
+`globals.css` ganhou `--primary` (o azul da marca, `#0B63E5`, até então
+hardcoded em dezenas de lugares) e `--brand-navy` (`#0B192E`), com o mapa de
+uso documentado em comentário no próprio arquivo: `primary` para ação
+principal/CTA/link/ativo; `emerald` para sucesso; `amber` para atenção/
+pendência; `destructive` (já existia) para erro; `violet` reservado só para a
+área admin; `slate` para neutro estrutural. Nenhum tom fora desse mapa deveria
+entrar sem atualizar o comentário.
+
+Decisão explícita de não tocar em `tailwind.config.ts` — é código morto, como
+descrito acima, e mexer nele não muda nada visível. O risco de tocar num
+arquivo que parece central mas não é seria maior que o benefício de "arrumá-lo"
+por estética.
+
+### Fase B — o shell, onde todo mundo entra primeiro
+
+`app-shell.tsx`: o estado ativo do menu lateral passou de emerald (sinal sem
+relação com a marca) para `primary`. O botão de admin ganhou a mesma
+forma/peso dos itens de navegação — a cor violeta ficou, porque virou a
+identidade documentada da área admin na Fase A, e destoar em forma não
+acrescentava nada a essa distinção. A gambiarra de `<span>` aninhado que
+particionava "Análises Ilimitadas (Admin)" em pedaços por breakpoint virou duas
+strings simples. O breadcrumb parou de mostrar "Painel › Painel" quando a tela
+atual já era o painel. Zero hex solto restante no arquivo.
+
+### Fase C — o sweep, tela por tela
+
+Todas as telas de `src/components/app/` passaram pela mesma pergunta: este tom
+aqui está contando uma história (como o indigo do Radar, ou o emerald do
+Perfil Profissional — cada tela grande pode ter sua cor de identidade própria,
+e isso ajuda a orientação, não atrapalha) ou é só decoração sem critério?
+
+Onde era decoração sem critério, a correção repetiu um padrão: itens **pares**
+(4 badges de feature no upload, 4 atalhos rápidos no dashboard, 3 cards de
+download) que tinham cada um sua cor sem relação nenhuma entre si viraram um só
+tratamento consistente (`primary`), diferenciados por ícone e texto — não por
+tom. Onde era progressão de **estado** (o `statusMap` de currículo, repetido
+igual em `dashboard.tsx` e `history-view.tsx`), a cor passou a contar a mesma
+história nos dois lugares: neutro → informativo (`primary`) → pendente
+(`amber`) → concluído (`emerald`) → confirmado (`primary` sólido). Onde era um
+card isolado com borda colorida sem nenhum outro card da mesma tela seguindo o
+padrão (dois casos em `professional-profile-view.tsx`, um em
+`settings-view.tsx`), a cor foi removida — a consistência ali era a maioria
+neutra, não a minoria colorida.
+
+Dois arquivos foram deliberadamente **preservados**: `radar-view.tsx` (indigo
+como identidade da tela, já bem cuidado) e `analysis-view.tsx` (cor por
+categoria de entrega ao longo do laudo — sky/indigo/violet por tipo de
+seção — sistema grande e consistente por si, fora do escopo desta varredura;
+só os 3 hex soltos que restavam viraram token).
+
+`dashboard.tsx` também perdeu uma duplicação: o saldo de análises aparecia
+duas vezes na mesma tela (banner grande no topo e um card de estatística
+abaixo repetindo o mesmo número). O card de estatística saiu — o grid de stats
+passou de 3 para 2 cards com dado que não se repete em lugar nenhum.
+
+Ao final da Fase C, zero hex de marca hardcoded restava em qualquer arquivo de
+`src/components/app/`, e violeta só aparecia em contexto admin ou nos dois
+arquivos preservados.
+
+### Fase D — a landing, e o que ela nunca mostrou
+
+`t.features` (em `src/lib/i18n/index.ts`) tinha exatamente `f1`..`f6`
+hardcoded no tipo `Translations` — acrescentar um recurso exigia mexer no
+tipo, não só nos três idiomas. Ganhou `f7`..`f9`: Radar de Vagas com IA,
+Orientação de Carreira, Carta de Apresentação Direcionada — nos três idiomas
+(pt/en/es), no mesmo tom e tamanho dos 6 existentes, sem mencionar fonte de
+dados, nome de ATS parceiro ou arquitetura interna (mesmo cuidado já registrado
+num commit anterior deste projeto sobre a landing).
+
+O grid de `#features` virou 3×3 (era 2×3), com os ícones vindos de imports que
+já existiam no arquivo e nunca eram usados (`FileSearch`, `TrendingUp`,
+`Edit3`) — nenhum import novo. A ordem ganhou sentido em blocos: diagnóstico/
+descoberta (8 Dimensões, Radar, ATS) → preparação (Reescrita, Orientação,
+Carta) → entrega/confiança (Presença Digital, PDF, Privacidade). Radar fica na
+segunda posição do grid — visível sem rolar, ao lado do recurso mais antigo e
+mais reconhecido do produto.
+
+Dois itens do plano original ficaram **de fora**, por decisão registrada
+antes de escrever qualquer linha: uma seção de destaque dedicada ao Radar na
+landing (repetindo o padrão "janela de app falsa" da seção `#social`) — mais
+arriscada de acertar de primeira num único passe, e não necessária para
+resolver o pedido; e uma estatística nova no hero sobre o Radar — sem métrica
+real e auditável disponível para preencher ali, e inventar número contraria
+uma regra permanente do produto (seção 4 deste documento, item 1).
+
+### O que ficou pendente
+
+Verificação visual nas telas autenticadas. O agente que fez esta revisão não
+tem — e não pode ter, por regra de segurança — credencial de login, então não
+consegue abrir dashboard, upload, perfil, radar, planos, histórico, downloads,
+configurações nem suporte para conferir visualmente. `tsc --noEmit`, `eslint`
+e `npm test` (510/510) ficaram limpos a cada um dos commits das quatro fases,
+mas isso garante que o código compila e não regride lógica — não garante que
+o resultado visual agrada. O usuário optou por revisar tudo de uma vez ao
+final, em vez de logar durante o trabalho. Fica registrado em
+`docs/HANDOFF-CONTINUIDADE.md`, seção 7.7, como pendência aberta antes de
+mergear a branch `design-refresh-2026-08` em `main`.
+
+---
+
+## 2.27 Hero reorganizado, e o problema estrutural por trás do laudo
+
+Continuação da revisão visual (seção 2.26). Depois de ver o resultado, o
+usuário pediu duas coisas mais específicas: o hero da landing "mais
+organizado, moderno", mantendo a paleta; e uma revisão de UX nas telas
+internas que mostram relatório/orientação/painéis — não mais cor, e sim
+como a informação está organizada.
+
+### O hero
+
+`landing.tsx`: os blocos que ainda tinham hex solto (badge, título, CTAs,
+card de mockup, blobs decorativos) passaram para os tokens `primary`/
+`brand-navy`. A faixa de confiança abaixo dos CTAs (Free/No Card/
+Security/Safe) trocou um `grid grid-cols-2` rígido — que forçava quebra de
+linha torta em telas estreitas — por `flex flex-wrap`, que acomoda cada
+item onde precisar. As 4 barras de dimensão do card de mockup usavam 3 tons
+de azul e 1 de indigo sem critério; viraram uma cor só. Nenhum texto mudou.
+
+### O achado que importava mais: abas falsas no laudo
+
+Uma investigação (agente `Explore`, só leitura) nas 5 telas mais densas do
+app achou um problema estrutural, não estético, em `analysis-view.tsx` — a
+tela do laudo, 1496 linhas, o produto principal.
+
+A tela tem 8 seções de conteúdo (visão geral, mídias sociais, match com
+vaga, orientação vocacional, dimensões detalhadas, ajustes pontuais,
+carta/resumo) navegáveis por uma barra de abas. Mas o estado padrão do
+`activeTab` era `'all'`, e cada bloco de conteúdo checa
+`activeTab === 'all' || activeTab === 'x'` — ou seja, **no modo em que a
+pessoa cai ao abrir a tela, as 8 seções renderizam empilhadas na mesma
+rolagem**. A barra de abas não trocava de tela: filtrava o scroll. Quem
+clicava numa aba just via as outras sumirem, mas a página continuava do
+mesmo tamanho gigante.
+
+Consequência colateral: ao trocar de aba pra ler um detalhe (a carta, a
+orientação), a nota geral — que só existe dentro do bloco "Score &
+Veredito" — sumia da tela. Não havia nenhuma referência fixa do "8.7/10"
+enquanto se lia o resto.
+
+### O que foi corrigido, e o que foi decidido não tocar
+
+**`activeTab` inicial passou de `'all'` para `'overview'`.** Uma linha.
+A pessoa passa a cair numa visão focada, não numa rolagem de 8 seções.
+"Visão Completa" continua existindo como opção — nada foi removido, só
+deixou de ser o primeiro contato.
+
+**Faixa de resumo fixa, nova.** Uma faixa `sticky top-14` (14 = altura do
+cabeçalho do app-shell) aparece quando `activeTab` é diferente de
+`'overview'`/`'all'`, mostrando nota geral + status ATS + um atalho de
+volta. Reaproveita `score`, `hasScore`, `scoreColor`, `a.atsFriendly` —
+todos já calculados no componente — sem introduzir lógica nova.
+
+**Decisão registrada: não trocar a barra de abas hand-rolled pelo
+componente `Tabs` do shadcn.** A cor por aba não é decoração sem critério
+como em outros lugares já corrigidos nesta revisão — a aba "Match Vaga"
+herda a cor de severidade do próprio resultado (vermelho/âmbar/verde),
+então quem está noutra aba vê que há um problema sem precisar abrir. Trocar
+pelo primitivo tocaria as 8 seções condicionais espalhadas por um arquivo
+de 1500 linhas, por um ganho majoritariamente de acessibilidade/semântica —
+risco alto para o momento. Fica como melhoria futura, não feita agora.
+
+**Tipografia do texto de leitura longa** (parecer executivo, justificativa
+por dimensão, orientação vocacional, carta de apresentação, resumo
+profissional, pontos fortes/fracos, recomendações, trechos a ajustar) subiu
+de `text-xs`/`text-[10px]`/`text-[11px]` para `text-sm`. Títulos de seção e
+rótulos pequenos (badges, contadores) não mudaram — só a massa de texto que
+a pessoa de fato lê linha a linha.
+
+### `professional-profile-view.tsx` — o formulário que não mostrava o que faltava
+
+A tela promete, no próprio texto ("Preencha aos poucos — nada é
+obrigatório"), um preenchimento incremental. Mas era um formulário de 6
+`Card`s em rolagem única, sem nenhum jeito de ver o que já tinha sido
+preenchido sem rolar tudo.
+
+As 5 seções de dado (Identidade profissional, Objetivos, Onde está/quer
+trabalhar, Preferências de trabalho, Idiomas — o cartão de intro/CTA
+"Preencher com o que já sei sobre você" não é seção de dado, ficou como
+estava) viram um `Accordion` do shadcn (`type="multiple"`, pra não forçar
+fechar uma seção pra abrir outra — incremental não deveria exigir isso).
+
+Cada cabeçalho de seção ganhou um indicador — badge "Preenchido" — calculado
+por checagem direta de presença nos campos daquela seção (ex.: Identidade =
+`currentTitle || field || seniority || ...`), sem estado novo: é leitura do
+`profile` que a tela já mantinha. Seção sem dado abre sozinha; as demais
+começam fechadas — dá pra ver de relance o que falta sem abrir nada.
+
+### O que ficou de fora, por decisão
+
+`dashboard.tsx` e `radar-view.tsx` já tinham sido avaliados como bem
+organizados na mesma investigação (a única redundância do dashboard — saldo
+duplicado — já tinha sido corrigida na etapa anterior desta revisão) e não
+entraram neste passo. Verificação visual continua pendente pelo mesmo
+motivo da etapa anterior — sem credencial de login, o agente não confere
+telas autenticadas; fica para o usuário revisar no dev server ou Preview.

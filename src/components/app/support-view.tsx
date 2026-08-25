@@ -107,7 +107,7 @@ export function SupportView() {
     <div className="space-y-5 max-w-4xl">
       <div>
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center border border-violet-200 shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
             <HelpCircle className="w-5 h-5" />
           </div>
           <div>
@@ -121,7 +121,7 @@ export function SupportView() {
       <Card className="border-slate-200 bg-slate-50/50">
         <CardContent className="p-4">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-violet-600" /> Perguntas frequentes sugeridas
+            <Sparkles className="w-3.5 h-3.5 text-primary" /> Perguntas frequentes sugeridas
           </p>
           <div className="flex flex-wrap gap-2">
             {FAQ_SUGGESTIONS.map((faq, i) => (
@@ -131,7 +131,7 @@ export function SupportView() {
                 size="sm"
                 onClick={() => sendMessage(faq)}
                 disabled={loading}
-                className="bg-white hover:bg-violet-50 hover:text-violet-900 hover:border-violet-200 text-xs text-slate-700 font-normal h-8"
+                className="bg-white hover:bg-primary/10 hover:text-primary hover:border-primary/20 text-xs text-slate-700 font-normal h-8"
               >
                 {faq}
               </Button>
@@ -144,7 +144,7 @@ export function SupportView() {
       <Card className="border-slate-200 shadow-sm flex flex-col h-[520px]">
         <CardHeader className="py-3 px-4 border-b border-slate-100 bg-slate-50/80 flex flex-row items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-violet-600 text-white flex items-center justify-center font-bold text-xs">
+            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs">
               <Bot className="w-4 h-4" />
             </div>
             <div>
@@ -168,7 +168,7 @@ export function SupportView() {
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                  m.sender === 'user' ? 'bg-slate-800 text-white' : 'bg-violet-600 text-white'
+                  m.sender === 'user' ? 'bg-slate-800 text-white' : 'bg-primary text-white'
                 }`}
               >
                 {m.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
@@ -197,11 +197,11 @@ export function SupportView() {
 
           {loading && (
             <div className="flex gap-3 max-w-[85%] mr-auto">
-              <div className="w-8 h-8 rounded-full bg-violet-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shrink-0 mt-0.5">
                 <Bot className="w-4 h-4 animate-spin" />
               </div>
               <div className="p-3.5 rounded-2xl bg-slate-100 border border-slate-200 rounded-tl-none text-xs text-slate-500 flex items-center gap-2">
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-600" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
                 Digitando resposta...
               </div>
             </div>
@@ -222,12 +222,12 @@ export function SupportView() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Digite sua dúvida sobre o sistema ou cobrança..."
               disabled={loading}
-              className="flex-1 text-xs sm:text-sm h-10 focus-visible:ring-violet-500"
+              className="flex-1 text-xs sm:text-sm h-10 focus-visible:ring-primary"
             />
             <Button
               type="submit"
               disabled={loading || !input.trim()}
-              className="bg-violet-600 hover:bg-violet-700 h-10 px-4 shrink-0"
+              className="bg-primary hover:bg-primary/90 h-10 px-4 shrink-0"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </Button>

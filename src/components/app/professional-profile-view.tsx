@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import {
   Briefcase, Target, Globe2, Sliders, Languages, Loader2, Save, Info, X, Plus, Wand2,
 } from 'lucide-react'
@@ -397,6 +398,32 @@ export function ProfessionalProfileView() {
   const targetMarketName =
     MARKET_OPTIONS.find((m) => m.id === profile.primaryMarket)?.name || null
 
+  /**
+   * O que já foi preenchido, seção por seção — leitura direta do `profile`
+   * que a tela já mantém, sem estado novo. Decide o rótulo "Preenchido" no
+   * cabeçalho de cada seção e quais seções abrem sozinhas: a promessa da
+   * tela é "preencha aos poucos", e a interface precisa mostrar de relance
+   * o que falta sem exigir abrir tudo pra descobrir.
+   */
+  const sectionFilled = {
+    identity: Boolean(
+      profile.currentTitle || profile.field || profile.seniority || profile.yearsExperience != null ||
+      profile.educationLevel || profile.specializations.length > 0 || profile.skills.length > 0
+    ),
+    objectives: Boolean(
+      profile.targetRoles.length > 0 || profile.targetFields.length > 0 ||
+      profile.targetIndustries.length > 0 || profile.careerGoal
+    ),
+    location: Boolean(profile.residenceCountry || profile.primaryMarket || profile.alternativeMarkets.length > 0),
+    preferences: Boolean(
+      profile.workModes.length > 0 || profile.contractTypes.length > 0 ||
+      profile.weeklyHours || profile.salaryMin != null || profile.salaryMax != null
+    ),
+    languages: Boolean(profile.resumeLanguage || profile.communicationLanguage),
+  }
+  const defaultOpenSections = (Object.keys(sectionFilled) as (keyof typeof sectionFilled)[])
+    .filter((key) => !sectionFilled[key])
+
   return (
     <div className="space-y-5 max-w-4xl">
       {loadError && (
@@ -421,13 +448,13 @@ export function ProfessionalProfileView() {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-sky-200 bg-sky-50/70 p-3">
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
             <Button
               type="button"
               variant="outline"
               onClick={fillFromResume}
               disabled={filling}
-              className="bg-white border-sky-300 text-sky-800 hover:bg-sky-50 h-9 text-xs font-semibold"
+              className="bg-white border-primary/30 text-primary hover:bg-primary/10 h-9 text-xs font-semibold"
             >
               {filling ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5 mr-1.5" />}
               Preencher com o que já sei sobre você
@@ -451,14 +478,29 @@ export function ProfessionalProfileView() {
         </CardContent>
       </Card>
 
-      {/* IDENTIDADE */}
+      {/* As cinco seções de dado viram um accordion só: a tela promete
+          "preencha aos poucos", e cinco cartões sempre abertos em rolagem
+          única não deixava ver de relance o que já foi preenchido. Seção
+          sem dado abre sozinha; o resto começa fechado. */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Briefcase className="w-4 h-4 text-slate-600" /> Identidade profissional
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="px-3 sm:px-5">
+          <Accordion type="multiple" defaultValue={defaultOpenSections}>
+
+          {/* IDENTIDADE */}
+          <AccordionItem value="identity">
+            <AccordionTrigger>
+              <div className="flex items-center justify-between gap-2 flex-1 pr-2">
+                <span className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                  <Briefcase className="w-4 h-4 text-slate-600" /> Identidade profissional
+                </span>
+                {sectionFilled.identity && (
+                  <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold shrink-0">
+                    Preenchido
+                  </Badge>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-slate-700">Cargo atual</Label>
@@ -516,17 +558,24 @@ export function ProfessionalProfileView() {
             onChange={(v) => set('skills', v)}
             placeholder="Ex: SQL"
           />
-        </CardContent>
-      </Card>
+            </AccordionContent>
+          </AccordionItem>
 
-      {/* OBJETIVOS */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Target className="w-4 h-4 text-slate-600" /> Objetivos
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          {/* OBJETIVOS */}
+          <AccordionItem value="objectives">
+            <AccordionTrigger>
+              <div className="flex items-center justify-between gap-2 flex-1 pr-2">
+                <span className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                  <Target className="w-4 h-4 text-slate-600" /> Objetivos
+                </span>
+                {sectionFilled.objectives && (
+                  <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold shrink-0">
+                    Preenchido
+                  </Badge>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-4">
           <TagInput
             label="Cargos-alvo"
             hint="Os cargos que você quer disputar — não necessariamente o que você faz hoje."
@@ -555,20 +604,27 @@ export function ProfessionalProfileView() {
               className="text-sm min-h-[80px]"
             />
           </div>
-        </CardContent>
-      </Card>
+            </AccordionContent>
+          </AccordionItem>
 
-      {/* MOBILIDADE E MERCADOS */}
-      <Card className="border-sky-200">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Globe2 className="w-4 h-4 text-sky-600" /> Onde você está e onde quer trabalhar
-          </CardTitle>
-          <CardDescription className="text-[11px] text-slate-600">
+          {/* MOBILIDADE E MERCADOS */}
+          <AccordionItem value="location">
+            <AccordionTrigger>
+              <div className="flex items-center justify-between gap-2 flex-1 pr-2">
+                <span className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                  <Globe2 className="w-4 h-4 text-slate-600" /> Onde você está e onde quer trabalhar
+                </span>
+                {sectionFilled.location && (
+                  <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold shrink-0">
+                    Preenchido
+                  </Badge>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-4">
+          <p className="text-[11px] text-slate-600 -mt-2">
             São perguntas diferentes de propósito. Morar num país não significa querer trabalhar nele.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
           <div className="grid sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-slate-700">País onde mora</Label>
@@ -638,17 +694,24 @@ export function ProfessionalProfileView() {
               />
             </div>
           </div>
-        </CardContent>
-      </Card>
+            </AccordionContent>
+          </AccordionItem>
 
-      {/* PREFERÊNCIAS */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-slate-600" /> Preferências de trabalho
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          {/* PREFERÊNCIAS */}
+          <AccordionItem value="preferences">
+            <AccordionTrigger>
+              <div className="flex items-center justify-between gap-2 flex-1 pr-2">
+                <span className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                  <Sliders className="w-4 h-4 text-slate-600" /> Preferências de trabalho
+                </span>
+                {sectionFilled.preferences && (
+                  <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold shrink-0">
+                    Preenchido
+                  </Badge>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-4">
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold text-slate-700">Modelos de trabalho aceitos</Label>
             <div className="flex flex-wrap gap-2 pt-1">
@@ -729,21 +792,29 @@ export function ProfessionalProfileView() {
               </select>
             </div>
           </div>
-        </CardContent>
-      </Card>
+            </AccordionContent>
+          </AccordionItem>
 
-      {/* IDIOMAS */}
-      <Card className="border-violet-200">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Languages className="w-4 h-4 text-violet-600" /> Idiomas
-          </CardTitle>
-          <CardDescription className="text-[11px] text-slate-600">
+          {/* IDIOMAS */}
+          <AccordionItem value="languages">
+            <AccordionTrigger>
+              <div className="flex items-center justify-between gap-2 flex-1 pr-2">
+                <span className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                  <Languages className="w-4 h-4 text-slate-600" /> Idiomas
+                </span>
+                {sectionFilled.languages && (
+                  <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold shrink-0">
+                    Preenchido
+                  </Badge>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-4">
+          <p className="text-[11px] text-slate-600 -mt-2">
             O idioma da tela não decide o idioma do seu currículo. Se você mira outro país, provavelmente são
             diferentes.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid sm:grid-cols-2 gap-4">
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
           <Choice
             label="Idioma do currículo e da carta"
             value={profile.resumeLanguage}
@@ -756,6 +827,11 @@ export function ProfessionalProfileView() {
             onChange={(v) => set('communicationLanguage', v as ProfessionalProfile['communicationLanguage'])}
             options={Object.entries(LANGUAGE_LABELS).map(([value, label]) => ({ value, label }))}
           />
+          </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          </Accordion>
         </CardContent>
       </Card>
 

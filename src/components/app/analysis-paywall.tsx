@@ -215,10 +215,10 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
       </Card>
 
       {/* O PRODUTO */}
-      <Card className="border-2 border-[#0B63E5] shadow-lg">
+      <Card className="border-2 border-primary shadow-lg">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg text-slate-900 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#0B63E5]" /> {t.pricing.productTitle}
+            <Sparkles className="w-5 h-5 text-primary" /> {t.pricing.productTitle}
           </CardTitle>
           <CardDescription className="text-xs">{t.pricing.oneTime}</CardDescription>
         </CardHeader>
@@ -226,7 +226,7 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs text-slate-700">
             {t.pricing.items.map((item) => (
               <li key={item} className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
                 {item}
               </li>
             ))}
@@ -235,7 +235,7 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
           <Button
             onClick={handleUnlock}
             disabled={unlocking || loadingBalance}
-            className="w-full h-11 text-sm font-bold bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md"
+            className="w-full h-11 text-sm font-bold bg-primary hover:bg-primary/90 text-white shadow-md"
           >
             {unlocking ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />

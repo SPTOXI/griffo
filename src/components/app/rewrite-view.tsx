@@ -212,10 +212,10 @@ export function RewriteView() {
 
       {/* AUTHORIZATION REQUIRED */}
       {!hasRewrite && (
-        <Card className="border-violet-200">
+        <Card className="border-primary/20">
           <CardHeader>
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-violet-100 text-violet-700 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
@@ -254,7 +254,7 @@ export function RewriteView() {
             <Button
               onClick={requestRewrite}
               disabled={!authorized || rewriting}
-              className="w-full bg-violet-600 hover:bg-violet-700 h-11"
+              className="w-full bg-primary hover:bg-primary/90 h-11"
             >
               {rewriting ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Reescrevendo… (15–30s)</>
@@ -281,13 +281,13 @@ export function RewriteView() {
 
           {/* ATS STRATEGIC KEYWORDS DEDICATED SECTION */}
           {resume.analysis?.keywords && Array.isArray(resume.analysis.keywords) && resume.analysis.keywords.length > 0 && (
-            <Card className="border-violet-200 bg-gradient-to-r from-violet-50/50 to-indigo-50/30">
+            <Card className="border-primary/20 bg-primary/5">
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <Key className="w-4 h-4 text-violet-600 shrink-0" />
-                      <h3 className="text-sm font-bold text-violet-950">🧩 Palavras-Chave Estratégicas (ATS) Incorporadas</h3>
+                      <Key className="w-4 h-4 text-primary shrink-0" />
+                      <h3 className="text-sm font-bold text-primary">🧩 Palavras-Chave Estratégicas (ATS) Incorporadas</h3>
                     </div>
                     <p className="text-xs text-slate-600">
                       Estes termos essenciais foram integrados na reescrita para garantir pontuação máxima nos robôs de triagem (Gupy, LinkedIn, Workday).
@@ -296,7 +296,7 @@ export function RewriteView() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="bg-white border-violet-200 text-violet-800 hover:bg-violet-100 text-xs shrink-0 self-start sm:self-center"
+                    className="bg-white border-primary/20 text-primary hover:bg-primary/10 text-xs shrink-0 self-start sm:self-center"
                     onClick={() => {
                       navigator.clipboard.writeText(resume.analysis.keywords.join(', '))
                       toast.success('Palavras-chave copiadas!')
@@ -307,7 +307,7 @@ export function RewriteView() {
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {resume.analysis.keywords.map((kw: string, i: number) => (
-                    <Badge key={i} className="bg-violet-600 text-white font-medium hover:bg-violet-700 text-xs px-2.5 py-0.5">
+                    <Badge key={i} className="bg-primary text-white font-medium hover:bg-primary/90 text-xs px-2.5 py-0.5">
                       {kw}
                     </Badge>
                   ))}
@@ -373,7 +373,7 @@ export function RewriteView() {
                           </h1>
                         ),
                         h2: ({ children }) => (
-                          <h2 className="text-sm font-bold text-violet-900 border-b border-violet-100 pb-1 mb-2 mt-5 tracking-wide uppercase">
+                          <h2 className="text-sm font-bold text-primary border-b border-primary/10 pb-1 mb-2 mt-5 tracking-wide uppercase">
                             {children}
                           </h2>
                         ),
@@ -408,7 +408,7 @@ export function RewriteView() {
                           </strong>
                         ),
                         blockquote: ({ children }) => (
-                          <blockquote className="border-l-4 border-violet-500 pl-3 py-1.5 bg-violet-50/50 text-xs text-slate-700 italic my-3 rounded-r-md">
+                          <blockquote className="border-l-4 border-primary pl-3 py-1.5 bg-primary/5 text-xs text-slate-700 italic my-3 rounded-r-md">
                             {children}
                           </blockquote>
                         ),

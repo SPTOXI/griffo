@@ -33,6 +33,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-brand-navy: var(--brand-navy);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -43,6 +44,23 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/*
+ * Paleta de marca e seu papel — vale para o app inteiro, não só aqui.
+ *
+ * --primary       Azul da marca. Ação principal, CTA, link, estado ativo.
+ * --brand-navy     Navy da marca. Fundo de painel/gradiente "premium" —
+ *                   um único gradiente de marca reaproveitado, não um novo
+ *                   por tela.
+ * emerald (Tailwind, sem token próprio) — sucesso/positivo.
+ * amber   (Tailwind, sem token próprio) — atenção/pendência.
+ * --destructive    Já existia — erro, bloqueio.
+ * violet  (Tailwind, sem token próprio) — reservado para a área admin, em
+ *                   nenhum outro lugar.
+ * slate   (Tailwind, sem token próprio) — neutro estrutural (borda, fundo,
+ *                   texto secundário).
+ *
+ * Não introduza um tom novo fora deste mapa sem atualizar este comentário.
+ */
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -51,8 +69,9 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: #0B63E5;
   --primary-foreground: oklch(0.985 0 0);
+  --brand-navy: #0B192E;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -85,8 +104,9 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: #0B63E5;
+  --primary-foreground: oklch(0.985 0 0);
+  --brand-navy: #0B192E;
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);

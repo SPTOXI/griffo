@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import {
   FileText, Sparkles, ShieldCheck, Download, TrendingUp, Target, CheckCircle2,
   ArrowRight, Brain, Search, Award, Lock, Users, BarChart3, Zap, Globe, Share2,
-  Check, HelpCircle, ChevronDown, Star, MessageSquare, Menu, X, FileSearch, Edit3
+  Check, HelpCircle, ChevronDown, Star, MessageSquare, Menu, X, FileSearch, Edit3,
+  Instagram
 } from 'lucide-react'
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
@@ -127,67 +128,75 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
       </header>
 
       {/* HERO */}
-      <section className="relative overflow-hidden pt-8 sm:pt-12 pb-16 md:py-24">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-50/60 via-white to-white pointer-events-none" />
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 sm:w-[500px] h-80 sm:h-[500px] rounded-full bg-blue-200/30 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 sm:w-[500px] h-80 sm:h-[500px] rounded-full bg-indigo-200/30 blur-3xl pointer-events-none" />
+      <section className="relative overflow-hidden pt-10 sm:pt-14 pb-16 md:py-24">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-white to-white pointer-events-none" />
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 sm:w-[500px] h-80 sm:h-[500px] rounded-full bg-primary/15 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 sm:w-[500px] h-80 sm:h-[500px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-8 items-center">
-            <div className="space-y-5 sm:space-y-6 text-left">
-              <Badge variant="outline" className="border-blue-300 bg-blue-50 text-[#0B63E5] px-3 py-1 text-xs font-bold rounded-full shadow-xs w-fit leading-snug whitespace-normal">
-                <Sparkles className="w-3.5 h-3.5 mr-1.5 text-[#0B63E5] shrink-0 inline" /> {t.hero.badge}
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-10 items-center">
+            {/* COPY — hierarquia em 3 níveis: prova (badge) → promessa (título) →
+                como (subtítulo) → ação (CTAs) → objeção (confiança), nessa ordem */}
+            <div className="space-y-6 text-left">
+              <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary px-3 py-1 text-xs font-bold rounded-full shadow-xs w-fit leading-snug whitespace-normal">
+                <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary shrink-0 inline" /> {t.hero.badge}
               </Badge>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#0B192E] leading-[1.1]">
-                {t.hero.title1}<span className="bg-gradient-to-r from-[#0B192E] via-[#0B63E5] to-[#2563EB] bg-clip-text text-transparent">{t.hero.titleAccent}</span>{t.hero.title2}
+
+              <h1 className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-brand-navy leading-[1.08]">
+                {t.hero.title1}<span className="bg-gradient-to-r from-brand-navy to-primary bg-clip-text text-transparent">{t.hero.titleAccent}</span>{t.hero.title2}
               </h1>
+
               <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl">
                 {t.hero.subtitle}
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-[#0B63E5] hover:bg-[#0052CC] text-white text-base h-12 sm:h-13 px-8 shadow-lg shadow-blue-600/25 font-bold">
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white text-base h-12 sm:h-13 px-8 shadow-lg shadow-primary/25 font-bold">
                   {t.hero.ctaPrimary} <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
                 <Button onClick={() => onNavigate('login')} size="lg" variant="outline" className="w-full sm:w-auto text-base h-12 sm:h-13 px-7 border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold">
                   {t.hero.ctaSecondary}
                 </Button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-semibold text-slate-600 pt-3 border-t border-slate-100">
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeFree}</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeNoCard}</span>
-                <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeSecurity}</span>
-                <span className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-[#0B63E5] shrink-0" /> {t.hero.badgeSafe}</span>
+
+              {/* Confiança: linha só, sem grid rígido — cada item quebra onde
+                  precisar em vez de forçar coluna de 2 e sobrar espaço torto. */}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5 text-xs font-semibold text-slate-600 pt-4 mt-2 border-t border-slate-100">
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary shrink-0" /> {t.hero.badgeFree}</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary shrink-0" /> {t.hero.badgeNoCard}</span>
+                <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-primary shrink-0" /> {t.hero.badgeSecurity}</span>
+                <span className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-primary shrink-0" /> {t.hero.badgeSafe}</span>
               </div>
             </div>
 
             {/* INTERACTIVE MOCKUP CARD */}
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/20 to-indigo-500/20 rounded-3xl transform rotate-1 blur-lg -z-10" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-primary/10 rounded-3xl transform rotate-1 blur-lg -z-10" />
               <Card className="shadow-2xl border-slate-200/90 rounded-2xl overflow-hidden bg-white">
                 <CardContent className="p-0">
-                  <div className="bg-[#0B192E] text-white px-4 sm:px-5 py-3.5 flex items-center justify-between">
+                  <div className="bg-brand-navy text-white px-4 sm:px-5 py-3.5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
                       <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
                       <div className="w-2.5 h-2.5 rounded-full bg-blue-500/80" />
                     </div>
                     <span className="text-[11px] sm:text-xs font-medium text-slate-300 flex items-center gap-1.5 truncate">
-                      <FileText className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> {t.mockup.title}
+                      <FileText className="w-3.5 h-3.5 text-primary shrink-0" /> {t.mockup.title}
                     </span>
-                    <Badge className="bg-[#0B63E5]/20 text-blue-300 text-[9px] sm:text-[10px] font-semibold border-none shrink-0">{t.mockup.precision}</Badge>
+                    <Badge className="bg-primary/20 text-blue-300 text-[9px] sm:text-[10px] font-semibold border-none shrink-0">{t.mockup.precision}</Badge>
                   </div>
                   <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4">
                       <div>
                         <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">{t.mockup.overallScore}</p>
                         <div className="flex items-baseline gap-1.5 mt-0.5">
-                          <span className="text-4xl sm:text-5xl font-extrabold text-[#0B192E]">8.7</span>
+                          <span className="text-4xl sm:text-5xl font-extrabold text-brand-navy">8.7</span>
                           <span className="text-slate-400 font-medium text-xs sm:text-sm">/ 10</span>
                         </div>
                       </div>
                       <div className="text-right space-y-1">
-                        <Badge className="bg-blue-100 text-[#0B63E5] border-blue-200 font-bold px-2 py-0.5 text-[10px] sm:text-xs">
-                          <CheckCircle2 className="w-3 h-3 mr-1 text-[#0B63E5] inline" /> {t.mockup.atsApproved}
+                        <Badge className="bg-primary/10 text-primary border-primary/20 font-bold px-2 py-0.5 text-[10px] sm:text-xs">
+                          <CheckCircle2 className="w-3 h-3 mr-1 text-primary inline" /> {t.mockup.atsApproved}
                         </Badge>
                         <p className="text-[10px] sm:text-[11px] text-slate-500">{t.mockup.atsSub}</p>
                       </div>
@@ -195,26 +204,26 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
 
                     <div className="space-y-2">
                       {[
-                        { l: t.mockup.dim1, s: 9.2, color: 'bg-[#0B63E5]' },
-                        { l: t.mockup.dim2, s: 8.8, color: 'bg-[#0B63E5]' },
-                        { l: t.mockup.dim3, s: 8.5, color: 'bg-[#0B63E5]' },
-                        { l: t.mockup.dim4, s: 8.3, color: 'bg-indigo-600' },
+                        { l: t.mockup.dim1, s: 9.2 },
+                        { l: t.mockup.dim2, s: 8.8 },
+                        { l: t.mockup.dim3, s: 8.5 },
+                        { l: t.mockup.dim4, s: 8.3 },
                       ].map((d) => (
                         <div key={d.l}>
                           <div className="flex justify-between text-[11px] sm:text-xs mb-1 font-medium">
                             <span className="text-slate-700 truncate pr-2">{d.l}</span>
-                            <span className="font-bold text-[#0B192E] shrink-0">{d.s.toFixed(1)}</span>
+                            <span className="font-bold text-brand-navy shrink-0">{d.s.toFixed(1)}</span>
                           </div>
                           <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                            <div className={`h-full rounded-full ${d.color}`} style={{ width: `${d.s * 10}%` }} />
+                            <div className="h-full rounded-full bg-primary" style={{ width: `${d.s * 10}%` }} />
                           </div>
                         </div>
                       ))}
                     </div>
 
-                    <div className="rounded-xl bg-blue-50/80 border border-blue-100 p-3 sm:p-3.5 space-y-1">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#0B192E]">
-                        <Share2 className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> {t.mockup.suggestionTitle}
+                    <div className="rounded-xl bg-primary/5 border border-primary/10 p-3 sm:p-3.5 space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-brand-navy">
+                        <Share2 className="w-3.5 h-3.5 text-primary shrink-0" /> {t.mockup.suggestionTitle}
                       </div>
                       <p className="text-xs text-slate-700 font-medium leading-relaxed">
                         {t.mockup.suggestionText}
@@ -304,9 +313,15 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
           <p className="text-sm sm:text-base text-slate-600">{t.features.subtitle}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {/* Diagnóstico e descoberta */}
           <Feature icon={<BarChart3 className="w-5 h-5" />} title={t.features.f1Title} desc={t.features.f1Desc} />
+          <Feature icon={<FileSearch className="w-5 h-5" />} title={t.features.f7Title} desc={t.features.f7Desc} />
           <Feature icon={<Search className="w-5 h-5" />} title={t.features.f2Title} desc={t.features.f2Desc} />
+          {/* Preparação */}
           <Feature icon={<Sparkles className="w-5 h-5" />} title={t.features.f3Title} desc={t.features.f3Desc} />
+          <Feature icon={<TrendingUp className="w-5 h-5" />} title={t.features.f8Title} desc={t.features.f8Desc} />
+          <Feature icon={<Edit3 className="w-5 h-5" />} title={t.features.f9Title} desc={t.features.f9Desc} />
+          {/* Entrega e confiança */}
           <Feature icon={<Share2 className="w-5 h-5" />} title={t.features.f4Title} desc={t.features.f4Desc} />
           <Feature icon={<Download className="w-5 h-5" />} title={t.features.f5Title} desc={t.features.f5Desc} />
           <Feature icon={<ShieldCheck className="w-5 h-5" />} title={t.features.f6Title} desc={t.features.f6Desc} />
@@ -485,6 +500,14 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
               <strong>https://griffo.work</strong><br/>
               São Paulo, SP · Brasil
             </p>
+            <a
+              href="https://www.instagram.com/griffowork"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs text-slate-600 font-medium hover:text-primary transition-colors mt-2"
+            >
+              <Instagram className="w-3.5 h-3.5 shrink-0" /> @griffowork
+            </a>
           </div>
         </div>
         <div className="border-t border-slate-200 py-4 text-center text-xs text-slate-500 font-medium">

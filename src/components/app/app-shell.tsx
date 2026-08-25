@@ -111,17 +111,21 @@ export function AppShell({ onExit }: { onExit: () => void }) {
         <button onClick={onExit} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
           <img src="/logo-icon.png" alt="GriffoWork" className="h-10 sm:h-11 w-auto object-contain shrink-0" />
           <div className="hidden sm:flex flex-col text-left leading-none">
-            <span className="font-extrabold text-[#0B192E] text-base tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
-            <span className="text-[9px] font-extrabold tracking-wider text-[#0B63E5] uppercase">{appSubtitles[lang] || appSubtitles.pt}</span>
+            <span className="font-extrabold text-brand-navy text-base tracking-tight">griffo<span className="text-primary">work</span></span>
+            <span className="text-[9px] font-extrabold tracking-wider text-primary uppercase">{appSubtitles[lang] || appSubtitles.pt}</span>
           </div>
         </button>
 
         <div className="hidden sm:flex items-center gap-1 ml-3 text-xs sm:text-sm text-slate-500 truncate">
-          <span>Painel</span>
-          <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-          <span className="text-slate-900 font-medium capitalize truncate">
-            {NAV_ITEMS.find(n => n.view === view)?.label || (view === 'admin' ? 'Área Admin' : view)}
-          </span>
+          <span className={view === 'dashboard' ? 'text-slate-900 font-medium' : undefined}>Painel</span>
+          {view !== 'dashboard' && (
+            <>
+              <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+              <span className="text-slate-900 font-medium capitalize truncate">
+                {NAV_ITEMS.find(n => n.view === view)?.label || (view === 'admin' ? 'Área Admin' : view)}
+              </span>
+            </>
+          )}
         </div>
 
         <div className="ml-auto flex items-center gap-2">
@@ -134,17 +138,18 @@ export function AppShell({ onExit }: { onExit: () => void }) {
               className="bg-violet-700 hover:bg-violet-800 h-8 text-xs font-semibold gap-1 px-2 sm:px-3 shadow-xs"
             >
               <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300 shrink-0" />
-              <span><span className="hidden sm:inline">Análises Ilimitadas (</span>Admin<span className="hidden sm:inline">)</span></span>
+              <span className="hidden sm:inline">Análises Ilimitadas (Admin)</span>
+              <span className="sm:hidden">Admin</span>
             </Button>
           ) : (
             <Button
               size="sm"
               onClick={() => setView('plans')}
-              className="bg-[#0B63E5] hover:bg-[#0052CC] text-white h-8 text-xs font-semibold gap-1 px-2 sm:px-3 shadow-xs"
+              className="bg-primary hover:bg-primary/90 text-white h-8 text-xs font-semibold gap-1 px-2 sm:px-3 shadow-xs"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
               <span>{balance} <span className="hidden sm:inline">{t.app.balance}</span></span>
-              <span className="hidden md:inline text-[10px] text-blue-100 ml-1 bg-blue-700/60 px-1.5 py-0.5 rounded-full">{t.app.buyMore}</span>
+              <span className="hidden md:inline text-[10px] text-white ml-1 bg-white/15 px-1.5 py-0.5 rounded-full">{t.app.buyMore}</span>
             </Button>
           )}
 
@@ -152,7 +157,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 p-1 pr-2 rounded-full hover:bg-slate-100 transition-colors">
                 <Avatar className="w-8 h-8">
-                  <AvatarFallback className="bg-blue-100 text-[#0B63E5] text-xs font-bold">{initials}</AvatarFallback>
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">{initials}</AvatarFallback>
                 </Avatar>
                 <span className="hidden md:block text-xs sm:text-sm text-slate-700 max-w-[100px] truncate">{user?.name || user?.email}</span>
               </button>
@@ -205,10 +210,10 @@ export function AppShell({ onExit }: { onExit: () => void }) {
                     setSidebarOpen(false)
                   }}
                   className={`
-                    w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold
-                    transition-all shadow-xs mb-2
+                    w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold
+                    transition-colors mb-2
                     ${view === 'admin'
-                      ? 'bg-violet-700 text-white shadow-md'
+                      ? 'bg-violet-700 text-white'
                       : 'bg-violet-50 text-violet-900 border border-violet-200 hover:bg-violet-100'
                     }
                   `}
@@ -232,12 +237,12 @@ export function AppShell({ onExit }: { onExit: () => void }) {
                       w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium
                       transition-colors
                       ${active
-                        ? 'bg-emerald-50 text-emerald-800 font-semibold'
+                        ? 'bg-primary/10 text-primary font-semibold'
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                       }
                     `}
                   >
-                    <Icon className={`w-4 h-4 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
+                    <Icon className={`w-4 h-4 ${active ? 'text-primary' : 'text-slate-400'}`} />
                     <span>{item.label}</span>
                   </button>
                 )
@@ -257,12 +262,12 @@ export function AppShell({ onExit }: { onExit: () => void }) {
                 </Button>
               </div>
             ) : (
-              <div className="rounded-xl bg-gradient-to-br from-[#0B192E] to-[#0B63E5] p-3.5 text-white space-y-2 shadow-md">
+              <div className="rounded-xl bg-gradient-to-br from-brand-navy to-primary p-3.5 text-white space-y-2 shadow-md">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-blue-200">
                   <Sparkles className="w-4 h-4 text-amber-300" /> {t.app.balance}
                 </div>
                 <p className="text-2xl font-extrabold">{balance} <span className="text-xs font-normal text-blue-100">{t.app.balanceUnit}</span></p>
-                <Button onClick={() => { setView('plans'); setSidebarOpen(false) }} size="sm" className="w-full bg-white text-[#0B192E] hover:bg-blue-50 font-bold text-xs h-8">
+                <Button onClick={() => { setView('plans'); setSidebarOpen(false) }} size="sm" className="w-full bg-white text-brand-navy hover:bg-blue-50 font-bold text-xs h-8">
                   {t.pricing.buyCta}
                 </Button>
               </div>

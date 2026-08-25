@@ -169,7 +169,7 @@ export function SettingsView() {
           <div className="space-y-2 pt-2 border-t border-slate-100">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                <Share2 className="w-3.5 h-3.5 text-violet-600" />
+                <Share2 className="w-3.5 h-3.5 text-primary" />
                 Redes Sociais & Perfis Profissionais (Padrão para Análise)
               </Label>
               <Button
@@ -177,7 +177,7 @@ export function SettingsView() {
                 variant="ghost"
                 size="sm"
                 onClick={addSocialProfile}
-                className="h-7 text-xs text-violet-700 hover:text-violet-900 hover:bg-violet-50 px-2"
+                className="h-7 text-xs text-primary hover:text-primary hover:bg-primary/10 px-2"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar perfil
               </Button>
@@ -192,7 +192,7 @@ export function SettingsView() {
                   <select
                     value={field.platform}
                     onChange={(e) => updateSocialProfile(field.id, 'platform', e.target.value)}
-                    className="h-9 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800 font-medium focus:outline-none focus:ring-1 focus:ring-violet-500 w-36 shrink-0"
+                    className="h-9 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800 font-medium focus:outline-none focus:ring-1 focus:ring-primary w-36 shrink-0"
                   >
                     {AVAILABLE_PLATFORMS.map((plat) => (
                       <option key={plat} value={plat}>
@@ -256,10 +256,10 @@ export function SettingsView() {
       </Card>
 
       {/* PRIVACY / B2B */}
-      <Card className="border-violet-200">
+      <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-violet-600" />
+            <Users className="w-4 h-4 text-slate-600" />
             <div>
               <CardTitle className="text-base">Marketplace de talentos <Badge variant="outline" className="ml-1 text-[10px]">Fase 2</Badge></CardTitle>
               <CardDescription>Controle se recrutadores parceiros podem te encontrar</CardDescription>
