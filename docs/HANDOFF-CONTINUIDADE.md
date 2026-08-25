@@ -27,8 +27,8 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 24/08/2026, correção do incidente de produção do Radar (ver 7.6) + telemetria de funil, UTMs, priorização dinâmica por mercado e unit economics + revisão visual do app inteiro, hero da landing e UX do laudo/perfil (ver 7.7) |
-| Suíte | 523 testes, `fail 0` — a regra da contagem está na seção 8 |
+| Última revisão | 25/08/2026, três achados de produção pós-deploy — Adzuna resolvido, DeepSeek e i18n do app pendentes (ver 2.28 na auditoria) |
+| Suíte | 525 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |
 
@@ -51,6 +51,17 @@ o quanto confiar nele.
    pode digitá-la. Falta: abrir o produto em produção (ou o dev server) e
    percorrer as telas; comparar com a tag `backup-pre-design-refresh-20260824`
    se algo parecer errado.
+5. **DeepSeek falhando em `profile_extraction`/`free_preview`/`support_chat`/
+   `normalization` (ver 2.28).** Causa raiz encontrada — a DeepSeek aposentou
+   o modelo não-pensante, e o roteador não desliga o raciocínio do que restou.
+   Decisão pendente: trocar o provedor principal dessas tarefas para Claude
+   (mais confiável, mais caro por chamada) ou aumentar o teto de tokens do
+   DeepSeek (mais barato, não garante). Ninguém decidiu ainda qual.
+6. **Telas autenticadas sem tradução (ver 2.28).** Só a landing e partes de
+   `plans-view.tsx`/`app-shell.tsx` usam `useI18n`. O laudo e todo o resto do
+   app pós-login são texto fixo em português — trocar o idioma no seletor não
+   tem efeito ali. Decisão registrada: não é bug a caçar, é escopo a planejar
+   — ver seção 2.28 antes de começar, para não redescobrir o levantamento.
 
 **O que NÃO está pendente e parece que está:**
 

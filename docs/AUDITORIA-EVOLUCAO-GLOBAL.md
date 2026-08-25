@@ -1578,3 +1578,75 @@ duplicado — já tinha sido corrigida na etapa anterior desta revisão) e não
 entraram neste passo. Verificação visual continua pendente pelo mesmo
 motivo da etapa anterior — sem credencial de login, o agente não confere
 telas autenticadas; fica para o usuário revisar no dev server ou Preview.
+
+---
+
+## 2.28 Três achados de produção, e um deles ainda em aberto
+
+O usuário trouxe três sintomas observados em produção depois do deploy: um
+padrão de erro repetido no log de IA, uma fonte do Radar marcada como sempre
+falhando, e o seletor de idioma sem efeito depois do login. Nenhum dos três
+tinha relação com os dois anteriores.
+
+### `adzuna:br` "nunca teve sucesso" — resolvido
+
+Detalhe completo no commit `2f875bd`. Resumo: o painel calculava saúde da
+fonte a partir de `decision.reliable`, que só é `true` numa coleta COMPLETA.
+A Adzuna é fonte de busca grande e estoura o teto de páginas por termo **toda
+rodada**, por desenho (seção 2.20) — `outcome: 'partial'` é o resultado
+normal dela, não uma falha. `sourceStateAfter` tratava os dois como a mesma
+coisa: `consecutiveFailures` crescia pra sempre e `lastSuccessfulCollection`
+nunca avançava, mesmo a fonte entregando vaga real todo dia (293 no banco).
+
+`CollectionDecision` ganhou um campo novo, `healthy`, separado de `reliable`:
+`reliable` continua controlando só o que pode fechar vaga por ausência (sem
+mudança de comportamento); `healthy` decide o que o painel mostra —
+verdadeiro para `partial` que trouxe vaga real, falso para `partial` vazio
+(esse sim parece falha no meio do caminho) e para as falhas de verdade.
+
+### `profile_extraction` falhando — causa raiz encontrada, correção pendente
+
+Log observado: DeepSeek consumiu o orçamento de saída "pensando"
+(13-14 mil caracteres de raciocínio) sem chegar a responder; Kimi expirou
+por tempo; Claude foi pulado por falta de orçamento — os três provedores da
+cadeia falharam na mesma chamada.
+
+Causa: a DeepSeek aposentou `deepseek-chat` — o apelido do V4-Flash em modo
+**não-pensante** — em 24/07/2026 (já registrado em `registry.ts`, linha 34).
+O que restou, `deepseek-v4-flash`, sempre raciocina antes de responder, e o
+roteador **não tem como desligar isso para esse provedor**: `disableThinking`
+(pedido explicitamente por esta rota, em `suggest/route.ts`) só é de fato
+aplicado no branch do Claude (`router.ts`, linha 222) — no branch OpenAI-
+compatible que atende DeepSeek e Kimi (linha 339 em diante) esse parâmetro
+nunca é lido. O piso de tokens (`JSON_TASK_TOKEN_FLOOR = 4000`) ajuda mas não
+resolve: o raciocínio observado já consome perto disso sozinho.
+
+Efeito em cadeia: DeepSeek gasta ~30s "pensando", Kimi mais ~16s, e não sobra
+orçamento dentro dos 52s para o Claude — que é descrito no próprio código da
+rota como "o único que nunca falhou nesta tarefa".
+
+Não é só `profile_extraction`: `free_preview`, `support_chat` e
+`normalization` também têm o DeepSeek como primário (`registry.ts`,
+`INITIAL_TASK_ROUTING`) e correm o mesmo risco estrutural.
+
+**Não corrigido ainda** — é uma escolha de custo × confiabilidade (trocar o
+provedor principal por Claude custa mais por chamada; aumentar o teto de
+tokens é mais barato mas não garante) que fica para o usuário decidir antes
+de implementar.
+
+### Idioma sem efeito depois do login — registrado, não é bug do seletor
+
+O `LanguageSelector` funciona: atualiza `lang` no `I18nContext` e persiste em
+`localStorage` corretamente. O problema é estrutural, não um defeito pontual:
+**só a landing e partes de duas telas (`plans-view.tsx`, `app-shell.tsx`) leem
+`useI18n`/`t.*`**. Todas as demais telas autenticadas —
+`analysis-view.tsx` (o laudo, a mais importante), `dashboard.tsx`,
+`upload-view.tsx`, `radar-view.tsx`, `professional-profile-view.tsx`,
+`rewrite-view.tsx`, `history-view.tsx`, `downloads-view.tsx`,
+`settings-view.tsx`, `support-view.tsx` — têm texto 100% fixo em português,
+nunca tocam o contexto de idioma. Trocar o idioma no seletor não tem o que
+mudar nessas telas porque não há nada ali lendo o estado que ele altera.
+
+Decisão do usuário: não corrigir agora — é um trabalho grande (traduzir ~10
+telas para o sistema `t.*` já usado na landing, em 3 idiomas), registrado
+aqui como pendência conhecida para planejar depois, não como bug a caçar.
