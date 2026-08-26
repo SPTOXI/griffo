@@ -173,6 +173,22 @@ Um adapter que engole a exceção e devolve lista vazia com `outcome: 'complete'
 está mentindo para o §12. Quando não se sabe se terminou, `partial` é a resposta
 honesta.
 
+### Nunca dar sensação de travamento, bug ou "sem resposta"
+
+Toda ação que leva mais que um instante perceptível — geração de IA, upload,
+processamento em segundo plano — mostra sinal REAL de que está em andamento.
+Isso não é o mesmo que o §43 permite: aqui a exigência é usar só sinal real —
+estado do servidor, etapa concluída, evento que de fato ocorreu — nunca
+inventar um número ou uma frase pra parecer que algo está acontecendo quando
+não está. Toda entrega, além disso, mira em qualidade da informação e em
+superar a expectativa de quem está usando o produto — não só em não travar.
+
+Motivado por: pedido do operador em 26/08/2026 ao encomendar progresso real
+em cinco fluxos de IA (leitura de perfil social, preenchimento do Perfil
+Profissional, orientação vocacional, carta de apresentação, reescrita do
+currículo) — nenhum deles podia dar a impressão de bug, congelamento ou
+ausência de ação. Ver 2.35 na auditoria para o desenho completo.
+
 ---
 
 ## 3. Estado atual

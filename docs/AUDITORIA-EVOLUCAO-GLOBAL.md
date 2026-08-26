@@ -2036,3 +2036,56 @@ se precisa dele.
 9 testes novos no total desta rodada (571 no total), `tsc`/`eslint` limpos.
 Efeito das trocas de ordem só é observável pelo `AiLog` no próximo cluster
 de falha do provedor primário — sem como forçar a reprodução sob demanda.
+
+## 2.35 Progresso real em cinco fluxos de IA — nova regra inegociável
+
+O usuário pediu barras de progresso reais (não uma estimativa de tempo) em
+cinco pontos do produto: leitura de Perfil Social, preenchimento do Perfil
+Profissional a partir do currículo, Orientação Vocacional, Carta de
+Apresentação e Reescrita do Currículo. Ao ser perguntado sobre o nível de
+fidelidade, generalizou o pedido: "quero que o usuário não tenha sensação de
+'sem resposta', 'bug', 'congelamento', 'sem ação' em todas as atividades
+dentro do Griffo [...] Grave essas recomendações em nossas regras
+imutáveis." Registrado em `HANDOFF-CONTINUIDADE.md` §2, ao lado do §43 (que
+já proibia "barra de progresso estimada" desde a correção do
+acompanhamento do laudo principal).
+
+**Diagnóstico**: dos cinco fluxos, só a leitura de Perfil Social já
+decompõe naturalmente em sub-chamadas paralelas de IA (uma por rede social
++ uma avaliação geral, em `lib/social/analysis.ts`). Os outros quatro são
+hoje UMA chamada de IA só cada. Sem decomposição real, uma barra "de
+verdade" nesses quatro só existiria simulando tempo — exatamente o que o
+§43 proíbe. Não existe streaming em nenhum lugar do código (nenhuma
+ocorrência de `stream: true`/`ReadableStream`/`text/event-stream`), e
+adicioná-lo tocaria `lib/ai-router/router.ts`, compartilhado pelas 12
+tarefas do sistema (inclusive o laudo pago) — a opção de maior risco.
+
+**Decisão (Opção B, escolhida pelo usuário)**: Perfil Social e Reescrita do
+Currículo ganham progresso por ETAPA real, decompostos em sub-chamadas
+paralelas — mesmo padrão já usado pelo laudo principal
+(`lib/analysis/segments.ts` + `AnalysisJob`). A Reescrita, especificamente,
+passa a gerar em 3 seções fixas (cabeçalho/resumo, experiências, formação/
+habilidades) em vez de parsear o currículo em seções variáveis — evita o
+risco de perder ou duplicar conteúdo, que violaria a garantia de veracidade
+do próprio prompt de reescrita. Perfil Profissional, Orientação Vocacional
+e Carta de Apresentação continuam UMA chamada — decompor um fluxo de ~10-20s
+que já funciona bem, só para dar granularidade a uma barra, foi julgado risco
+maior que benefício — e passam a expor MARCOS reais dentro dessa chamada
+única (tentativa no provedor primário, troca real para o suplente, quando
+acontece) via um novo callback aditivo `onProviderAttempt` em
+`lib/ai-router/types.ts`/`router.ts`, que não muda comportamento de nenhuma
+das 12 tarefas existentes.
+
+**Infraestrutura, toda nova e aditiva** (nada do `AnalysisJob`/
+`use-analysis-job.ts`/`lib/analysis/job.ts` do laudo principal é tocado):
+novo model `AiJob` no Prisma (genérico por `kind`, mesmo desenho de
+concessão/retomada do `AnalysisJob`), `lib/ai-jobs/engine.ts` (motor
+genérico), um runner por `kind` em `lib/ai-jobs/runners/`, rota única
+`GET /api/ai-jobs/status`, e um hook genérico `use-ai-job.ts` no cliente.
+Detalhe completo no plano salvo em
+`C:\Users\sptox\.claude\plans\snappy-jingling-pinwheel.md` desta máquina.
+
+Implementação em andamento, um fluxo por vez (Perfil Profissional primeiro,
+valida a infra ponta a ponta; Reescrita por último, o mais arriscado) —
+cada entrega desta rodada será registrada aqui como uma subseção própria
+conforme for concluída.
