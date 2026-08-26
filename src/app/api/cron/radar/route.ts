@@ -14,6 +14,7 @@ import { recordQuotaUsage } from '@/lib/jobs/quota.server'
 import { careerPageAdapters } from '@/lib/jobs/adapters/jsonld'
 import { remoteBoardAdapters } from '@/lib/jobs/adapters/remote-boards'
 import { adzunaCredentials, createAdzunaAdapter } from '@/lib/jobs/adapters/adzuna'
+import { jobBaseAdapters, jobBaseCredentials } from '@/lib/jobs/adapters/jobbase'
 
 /**
  * O gatilho do Radar (§28).
@@ -41,6 +42,11 @@ import { adzunaCredentials, createAdzunaAdapter } from '@/lib/jobs/adapters/adzu
  * sem essas variáveis valem os boards já conferidos. Acrescentar um board é
  * mudar a variável, não o código — mas conferir o board antes continua sendo
  * obrigatório, pelo motivo descrito lá.
+ *
+ * O JobBase (projeto Supabase irmão, mesmo time Vercel) entra sempre ligado —
+ * as credenciais padrão são a chave publicável de produção dele, e não um
+ * segredo. `JOBBASE=off` desliga, se o projeto irmão sair do ar ou mudar de
+ * forma incompatível. Detalhes em `lib/jobs/adapters/jobbase.ts`.
  *
  * O Lever começa SEM board nenhum: o único conferido é o `leverdemo`, board de
  * demonstração do próprio Lever, e encher o Radar de vaga de mentira é pior que
@@ -166,6 +172,12 @@ export async function GET(req: Request) {
     ...leverAdapters(process.env.LEVER_BOARDS),
     ...(gupyTerms.length > 0 ? [createGupyAdapter({ terms: gupyTerms })] : []),
     ...careerPageAdapters(process.env.CAREER_PAGES),
+    // Base própria (projeto irmão Supabase), agregando Greenhouse/Lever/Ashby/
+    // LinkedIn de várias empresas de uma vez — ver o cabeçalho de jobbase.ts.
+    ...jobBaseAdapters({
+      toggle: process.env.JOBBASE,
+      credentials: jobBaseCredentials(process.env.JOBBASE_URL, process.env.JOBBASE_ANON_KEY),
+    }),
     // Vaga remota internacional: sem chave, sem cota, e a ÚNICA fonte de quem
     // mora em Portugal ou no Japão — que a Adzuna não atende.
     ...remoteBoardAdapters(process.env.REMOTE_BOARDS),

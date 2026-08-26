@@ -1857,3 +1857,62 @@ qualquer uma das dez telas — só o texto exibido trocou de string fixa para
 `t.<tela>.*`. `tsc --noEmit`, `eslint` e `npm run build` limpos ao final;
 suite de testes manteve os mesmos 545 (nenhuma destas telas tem teste
 unitário dedicado — é toda mudança de apresentação).
+
+## 2.33 JobBase — uma base própria de vagas, num segundo projeto Supabase
+
+O usuário criou um projeto irmão (mesmo time Vercel `griffojobs`), o
+JobBase, que varre Greenhouse/Lever/Ashby/LinkedIn para dentro de um
+Postgres próprio, em lote 1x/dia, e pediu para o GriffoWork consumir essa
+base livremente. Três opções foram discutidas: (A) o GriffoWork lê
+diretamente via cliente Supabase/REST; (B) o JobBase expõe uma API HTTP
+versionada própria; (C) o JobBase publica uma view Postgres estável. Optou-se
+pela **A**, implementada como mais um `JobSourceAdapter` — o mesmo contrato
+que já existe para Adzuna/Gupy/Greenhouse/Lever/RemoteOK/Remotive — em vez
+de uma API dedicada (overhead sem ganho para um time de uma pessoa nos dois
+lados) ou uma view estável (a coordenação de schema entre dois projetos do
+mesmo operador já é barata o bastante sem ela).
+
+**`lib/jobs/adapters/jobbase.ts`** (novo): lê `job_postings` via PostgREST
+(`GET /rest/v1/job_postings`, paginado por cabeçalho `Range`, até 1000
+linhas por página), com a chave publicável do JobBase (`sb_publishable_...`)
+como padrão embutido no código — não é segredo, é a mesma leitura pública
+que o RLS do JobBase já autoriza para qualquer um, e o mesmo raciocínio do
+token `vercel` fixo em `VERIFIED_BOARDS` do Greenhouse. `JOBBASE_URL`/
+`JOBBASE_ANON_KEY` sobrepõem o padrão se a chave girar; `JOBBASE=off`
+desliga a fonte inteira.
+
+**Decisão registrada: aceitar a redundância com os adapters próprios, sem
+filtro de exclusão por empresa.** O JobBase também coleta Greenhouse/Lever,
+que o GriffoWork já coleta por conta própria — mas hoje o adapter próprio do
+Greenhouse cobre uma empresa só (`Vercel`) e o do Lever cobre zero
+(`VERIFIED_LEVER_BOARDS` vazio), então a sobreposição real é mínima. Mais
+importante: o `agent-dedup.ts` (§14) já existe exatamente para este cenário
+— foi escrito citando "Adzuna vs Gupy vs Lever" como wrappers de URL
+diferentes para a mesma vaga. Construir uma lista de exclusão por empresa
+seria complexidade nova para resolver um problema que o dedup semântico já
+resolve.
+
+**Por que `closesByAbsence: false`.** Diferente de um board por empresa (que
+lista o catálogo inteiro de quem o board pertence), o JobBase agrega várias
+empresas de fontes variadas — sair da resposta de uma coleta não prova
+encerramento, mesma classe da Adzuna/Gupy/RemoteOK/Remotive (§12).
+
+**`status` do JobBase é sempre `'open'` hoje** — nada no pipeline deles
+marca vaga como fechada ainda, conforme o próprio operador avisou. O filtro
+`status=eq.open` na consulta é inofensivo agora e correto no dia em que o
+JobBase passar a preencher `'expired'`/`'removed'` de verdade. A data de
+publicação usa `posted_at`, com `first_seen_at` como recuo — nunca o
+`status` — para não depender de um campo já documentado como não confiável.
+
+`company_name_raw` vem na própria linha de `job_postings` (sem join com
+`companies`), o que dispensou qualquer consulta à tabela `companies`.
+Verificado contra a API real em 26/08/2026 (3375 linhas na base): quando
+presente, `country_code` já vem em ISO2, mas é esparso — nulo em boa parte
+das vagas de `greenhouse`/`linkedin` mesmo com `city` preenchida, populado
+para `smartrecruiters`; `work_mode` é `"unknown"` na maioria das linhas
+observadas, não exceção. Nenhum dos dois é adivinhado a partir de outro
+campo — o adapter manda o que a fonte disse, o normalizador decide o resto.
+Registrado em `src/app/api/cron/radar/route.ts`, sempre ligado por padrão
+(ao lado dos boards remotos, que também não exigem configuração).
+
+17 testes novos (562 no total), `tsc`/`eslint` limpos.

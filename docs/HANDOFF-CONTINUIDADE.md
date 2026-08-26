@@ -27,8 +27,8 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 25/08/2026, as dez telas internas migradas para `useI18n`/`t.*` — fecha a pendência 6 abaixo (ver 2.32 na auditoria) |
-| Suíte | 545 testes, `fail 0` — a regra da contagem está na seção 8 |
+| Última revisão | 26/08/2026, adapter do JobBase (base própria, projeto Supabase irmão) ligado no Radar (ver 2.33 na auditoria) |
+| Suíte | 562 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão (`npm run build` também rodado, produção compila) |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |
 
@@ -69,6 +69,12 @@ o quanto confiar nele.
    no idioma original da fonte); e nomes de plataforma social (`LinkedIn`,
    `Gupy`...) que são chave persistida em `socialLinks`, não rótulo de tela.
    Ver 2.32 na auditoria para a lista completa por categoria.
+7. **Ver o adapter do JobBase rodar dentro do cron de verdade.** Ligado em
+   26/08/2026 (ver 2.33), verificado por `curl` manual contra a API real e
+   por 17 testes com `fetch` injetado — mas ainda não foi observado dentro de
+   uma execução real do `/api/cron/radar` em produção (orçamento de tempo
+   dividido com as outras fontes, paginação sob o teto de 12s por fonte).
+   Primeiro deploy que rodar o cron mostra isso; conferir o log dessa rodada.
 
 **O que NÃO está pendente e parece que está:**
 
