@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Progress } from '@/components/ui/progress'
 import {
   FileSearch, Loader2, AlertCircle, Sparkles, Award, Target, Lightbulb, Key,
   CheckCircle2, AlertTriangle, XCircle, FileEdit, Download, ArrowRight, RefreshCw, Share2, Globe, Linkedin, Compass, Info, BarChart3
@@ -23,6 +24,7 @@ import {
   type ProfileConflict,
 } from './profile-conflict-prompt'
 import { useAnalysisJob } from './use-analysis-job'
+import { useAiJob } from './use-ai-job'
 import { SocialAnalysisPanel, type SocialAnalysis } from './social-analysis-panel'
 import { internalFetch } from '@/lib/internal-fetch'
 import { notifyBalanceChanged } from '@/hooks/use-analyses'
@@ -98,13 +100,11 @@ export function AnalysisView() {
   const [resume, setResume] = useState<Resume | null>(null)
   const [loading, setLoading] = useState(true)
   const [analyzing, setAnalyzing] = useState(false)
-  const [orienting, setOrienting] = useState(false)
   const [careerOrientation, setCareerOrientation] = useState<any>(null)
   // O desfecho da orientação vivia só num toast, que some sozinho em segundos.
   // Quando a chamada falhava, o card voltava ao estado inicial sem explicação
   // nenhuma — o spinner girava, parava, e nada aparecia no lugar.
   const [orientationError, setOrientationError] = useState<string | null>(null)
-  const [writingLetter, setWritingLetter] = useState(false)
   const [coverLetter, setCoverLetter] = useState<CoverLetter | null>(null)
   const [letterError, setLetterError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -127,76 +127,54 @@ export function AnalysisView() {
    */
   const autoTriggeredRef = useRef<Record<string, boolean>>({})
 
-  const handleGenerateOrientation = async () => {
-    if (!resume?.id) return
-    setOrienting(true)
-    setOrientationError(null)
-    try {
-      const res = await internalFetch('/api/resume/career-orientation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeId: resume.id }),
-      })
-
-      // Um encerramento pelo limite de tempo da plataforma devolve HTML, não
-      // JSON. Sem este tratamento a exceção do `json()` caía no `catch` e virava
-      // "falha de conexão", que descreve a causa errada.
-      const data = await res.json().catch(() => null)
-
-      if (res.ok && data?.careerOrientation) {
-        setCareerOrientation(data.careerOrientation)
-        toast.success(an.orientationSuccess)
-      } else if (data?.code === 'ANALYSIS_REQUIRED') {
-        // Este currículo ainda não foi liberado. A orientação não tem preço
-        // próprio: o que falta é a Análise Completa dele.
-        const msg = data.error
-        setOrientationError(msg)
-        toast.error(msg)
-      } else {
-        const msg = data?.error || an.orientationErrorFallback
-        setOrientationError(msg)
-        toast.error(msg)
-      }
-    } catch {
-      const msg = an.orientationConnectionError
+  /**
+   * Orientação vocacional e carta de apresentação, com progresso real via
+   * `useAiJob` — cada uma vira um job com marco real de tentativa de
+   * provedor em vez do spinner com aviso de tempo que existia antes (ver
+   * `lib/ai-jobs/runners/{career-orientation,cover-letter}.ts` e a regra em
+   * HANDOFF-CONTINUIDADE.md, "Nunca dar sensação de travamento").
+   */
+  const orientationJob = useAiJob<{ careerOrientation: any; profileSeeded: string[] }>({
+    startUrl: '/api/resume/career-orientation',
+    statusUrl: '/api/ai-jobs/status',
+    onCompleted: (result) => {
+      setOrientationError(null)
+      setCareerOrientation(result.careerOrientation)
+      toast.success(an.orientationSuccess)
+    },
+    onFailed: (message) => {
+      const msg = message || an.orientationErrorFallback
       setOrientationError(msg)
       toast.error(msg)
-    } finally {
-      setOrienting(false)
-    }
-  }
-
-  const handleGenerateCoverLetter = async () => {
+    },
+  })
+  const handleGenerateOrientation = () => {
     if (!resume?.id) return
-    setWritingLetter(true)
-    setLetterError(null)
-    try {
-      const res = await internalFetch('/api/resume/cover-letter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeId: resume.id }),
-      })
-      // Mesmo tratamento da orientação: um encerramento por limite de tempo da
-      // plataforma devolve HTML, e deixar a exceção do `json()` cair no `catch`
-      // faria o erro ser descrito como falha de conexão, que é causa errada.
-      const data = await res.json().catch(() => null)
+    setOrientationError(null)
+    void orientationJob.start({ resumeId: resume.id })
+  }
+  const orienting = orientationJob.phase === 'starting' || orientationJob.phase === 'running'
 
-      if (res.ok && data?.coverLetter) {
-        setCoverLetter(data.coverLetter)
-        toast.success(an.letterSuccess)
-      } else {
-        const msg = data?.error || an.letterErrorFallback
-        setLetterError(msg)
-        toast.error(msg)
-      }
-    } catch {
-      const msg = an.letterConnectionError
+  const letterJob = useAiJob<{ coverLetter: CoverLetter }>({
+    startUrl: '/api/resume/cover-letter',
+    statusUrl: '/api/ai-jobs/status',
+    onCompleted: (result) => {
+      setLetterError(null)
+      setCoverLetter(result.coverLetter)
+      toast.success(an.letterSuccess)
+    },
+    onFailed: (message) => {
+      const msg = message || an.letterErrorFallback
       setLetterError(msg)
       toast.error(msg)
-    } finally {
-      setWritingLetter(false)
-    }
+    },
+  })
+  const handleGenerateCoverLetter = () => {
+    if (!resume?.id) return
+    setLetterError(null)
+    void letterJob.start({ resumeId: resume.id })
   }
+  const writingLetter = letterJob.phase === 'starting' || letterJob.phase === 'running'
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -286,15 +264,32 @@ export function AnalysisView() {
     conflictCheckedRef.current[id] = true
 
     try {
+      // A extração de perfil virou job com progresso real (ver 2.35 na
+      // auditoria) — esta verificação não tem tela própria, então acompanha
+      // em silêncio até o job terminar, em vez de usar useAiJob.
       const r = await internalFetch('/api/user/professional-profile/suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resumeId: id }),
       })
       if (!r.ok) return
-      const data = await r.json()
-      if (Array.isArray(data.conflicts) && data.conflicts.length > 0) {
-        setConflicts({ resumeId: id, list: data.conflicts })
+      const { jobId } = await r.json()
+      if (!jobId) return
+
+      const deadline = Date.now() + 30_000
+      while (Date.now() < deadline) {
+        const s = await internalFetch(`/api/ai-jobs/status?jobId=${jobId}`, { cache: 'no-store' })
+        const data = await s.json().catch(() => ({}))
+        if (!s.ok) return
+        if (data.status === 'completed') {
+          const conflictsList = data.result?.conflicts
+          if (Array.isArray(conflictsList) && conflictsList.length > 0) {
+            setConflicts({ resumeId: id, list: conflictsList })
+          }
+          return
+        }
+        if (data.status === 'failed') return
+        await new Promise((res) => setTimeout(res, 1500))
       }
     } catch {
       // Sem aviso é melhor que um erro sobre uma verificação que o usuário
@@ -1300,11 +1295,9 @@ export function AnalysisView() {
             <p className="text-sm text-sky-800 font-semibold">
               {an.mappingAreas}
             </p>
-            {/* O tempo esperado, dito de antemão: sem ele, uma espera normal de
-                meio minuto é lida como travamento. */}
-            <p className="text-xs text-slate-500">
-              {an.careerTimeEstimate}
-            </p>
+            {/* Progresso real — cada avanço vem de um marco de verdade
+                (tentativa de provedor concluída), não de um relógio. */}
+            <Progress value={orientationJob.progress} className="h-1.5 w-full max-w-xs" />
           </CardContent>
         )}
 
@@ -1413,7 +1406,9 @@ export function AnalysisView() {
             <CardContent className="py-6 flex flex-col items-center gap-2 text-center">
               <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
               <p className="text-sm text-amber-900 font-semibold">{an.writingLetterText}</p>
-              <p className="text-xs text-slate-500">{an.letterTimeEstimate}</p>
+              {/* Progresso real — cada avanço vem de um marco de verdade
+                  (tentativa de provedor concluída), não de um relógio. */}
+              <Progress value={letterJob.progress} className="h-1.5 w-full max-w-xs" />
             </CardContent>
           )}
 

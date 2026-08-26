@@ -13,3 +13,5 @@ import 'server-only'
  * auditoria).
  */
 import './profile-extraction'
+import './career-orientation'
+import './cover-letter'

@@ -2,80 +2,26 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const maxDuration = 60
 
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { executeAiTask } from '@/lib/ai-router/router'
 import { getRequestLanguage } from '@/lib/i18n/server'
 import { requireUnlockedResume } from '@/lib/entitlements'
 import { edgeCountry } from '@/lib/pricing/resolve'
-import { buildResumeContext } from '@/lib/analysis/resume-context'
-import { loadProfileContext, seedProfileFromOrientation } from '@/lib/profile/server'
-import { runForUserQuietly } from '@/lib/radar/runner'
+import { processCareerOrientationJob } from '@/lib/ai-jobs/runners/career-orientation'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório.'),
 })
 
-const str = { type: 'string' } as const
-
-// Restringe a geração ao formato (`output_config.format`) em vez de apenas
-// pedi-lo no prompt.
-const ORIENTATION_JSON_SCHEMA = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['profileSummary', 'topMatchingAreas', 'careerAdvice'],
-  properties: {
-    profileSummary: str,
-    topMatchingAreas: {
-      type: 'array',
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['role', 'matchPercentage', 'whyFit', 'requiredSkillsToLearn'],
-        properties: {
-          role: str,
-          matchPercentage: { type: 'number' },
-          whyFit: str,
-          requiredSkillsToLearn: { type: 'array', items: str },
-        },
-      },
-    },
-    careerAdvice: str,
-  },
-} as const
-
 /**
- * Valida a orientação vocacional.
+ * Agente de Orientação Vocacional e Transição de Carreira.
  *
- * Lança em vez de devolver um resultado plausível: a versão anterior inventava
- * três áreas com percentuais fixos (88%, 84%, 80%) e as apresentava ao usuário
- * como diagnóstico.
- */
-function parseOrientation(rawText: string): any {
-  const cleaned = rawText.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim()
-
-  let parsed: any
-  try {
-    parsed = JSON.parse(cleaned)
-  } catch {
-    throw new Error('A IA devolveu a orientação em formato inválido.')
-  }
-
-  if (typeof parsed?.profileSummary !== 'string' || !parsed.profileSummary.trim()) {
-    throw new Error('A orientação veio sem resumo de perfil.')
-  }
-  if (!Array.isArray(parsed?.topMatchingAreas) || parsed.topMatchingAreas.length === 0) {
-    throw new Error('A orientação veio sem áreas sugeridas.')
-  }
-
-  return parsed
-}
-
-/**
- * Agente de Orientação Vocacional e Transição de Carreira
- * Avalia o currículo de candidatos indecisos e indica as 3 áreas/cargos ideais e o plano de qualificação.
+ * Abre o job e responde na hora — a tela acompanha por
+ * `GET /api/ai-jobs/status`, com progresso real em vez do spinner com aviso
+ * de tempo que existia antes (ver `lib/ai-jobs/runners/career-orientation.ts`
+ * e a regra em HANDOFF-CONTINUIDADE.md, "Nunca dar sensação de travamento").
  */
 export async function POST(req: Request) {
   try {
@@ -92,6 +38,7 @@ export async function POST(req: Request) {
 
     const resume = await db.resume.findFirst({
       where: { id: parsed.data.resumeId, userId: user.id },
+      select: { id: true },
     })
 
     if (!resume) {
@@ -108,147 +55,45 @@ export async function POST(req: Request) {
       )
     }
 
-    const lang = getRequestLanguage(req)
-
-    // Nomenclatura de cargo é local: "Analista de Dados" no Brasil e em
-    // Portugal, "Data Analyst" nos EUA, ambos na Alemanha. O mercado sai do
-    // Perfil Profissional quando declarado; sem ele, do país de acesso.
-    // Único escopo `career` do produto: aqui a IA fala sobre a PESSOA e o rumo
-    // dela, não avalia um documento. O perfil declarado é o assunto, e entra
-    // inteiro — inclusive cargo atual, área e objetivo.
-    const { market, promptContext: profileContext } = await loadProfileContext(user.id, {
-      scope: 'career',
-      edgeCountry: edgeCountry(req),
-      language: lang,
+    const inFlight = await db.aiJob.findFirst({
+      where: {
+        resumeId: resume.id,
+        userId: user.id,
+        kind: 'career_orientation',
+        status: { in: ['queued', 'running'] },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, status: true },
     })
 
-    // Vaga real que o usuário importou, quando houver. É o único dado de
-    // mercado concreto disponível hoje — melhor do que raciocinar só sobre o
-    // currículo, e honesto quanto à origem.
-    /**
-     * Currículo, mercado, perfil e vaga vão no bloco cacheável — idêntico ao que
-     * a reescrita e a carta montam. Quem pede duas dessas entregas seguidas paga
-     * o prefixo uma vez só.
-     */
-    const cacheableContext = buildResumeContext({
-      resumeContent: resume.originalContent.slice(0, 12000),
-      targetJob: resume.targetJob,
-      targetJobDescription: resume.targetJobDescription,
-      lang,
-      market,
-      profileContext,
-    })
-
-    const systemPrompt = `Você é o Agente Especialista em Orientação de Carreira e Diagnóstico Vocacional do GriffoWork.
-
-Use a nomenclatura de cargo praticada NESTE mercado — o mesmo trabalho tem nomes diferentes em mercados diferentes.
-
-Analise o histórico, hard skills, soft skills e conquistas do candidato e determine as 3 melhores áreas ou cargos do mercado atual em que ele possui maior afinidade e chances imediatas de sucesso.
-
-TAMANHO DA RESPOSTA (o que controla a latência — respeite):
-- "profileSummary": 2 a 3 frases.
-- "topMatchingAreas": exatamente 3 itens; cada "whyFit" com 2 frases; "requiredSkillsToLearn" com 3 a 4 itens curtos.
-- "careerAdvice": 3 a 4 frases.
-- "matchPercentage": número inteiro entre 0 e 100, derivado do currículo — não use valores de exemplo.
-
-Responda APENAS um JSON válido no seguinte formato. NÃO adicione nenhum texto antes ou depois do JSON:
-{
-  "profileSummary": "Resumo do perfil e vocação identificados",
-  "topMatchingAreas": [
-    {
-      "role": "Nome do Cargo/Área Sugerida 1",
-      "matchPercentage": 90,
-      "whyFit": "Justificativa técnica de porque o candidato se encaixa perfeitamente nesta área",
-      "requiredSkillsToLearn": ["Skill ou ferramenta 1 a estudar", "Skill 2"]
+    if (inFlight) {
+      return NextResponse.json({ jobId: inFlight.id, status: inFlight.status }, { status: 202 })
     }
-  ],
-  "careerAdvice": "Orientação geral e dicas para o candidato decidir seu próximo passo profissional com confiança."
-}`
 
-    const aiResponse = await executeAiTask({
-      // Tipo próprio, e não `full_analysis`: o Agente de Qualidade valida cada
-      // tarefa pelo formato que ela produz, e as regras de `full_analysis`
-      // exigem `dimensions` — que este diagnóstico nunca gerou. Enquanto os dois
-      // compartilharam o tipo, toda resposta correta era reprovada como
-      // "Dimensões de análise incompletas" e a rota terminava em falha
-      // operacional depois de esgotar os provedores.
-      taskType: 'career_orientation',
-      userId: user.id,
-      userCountry: edgeCountry(req),
-      cacheableContext,
-      systemPrompt,
-      // O currículo já está no bloco cacheável; repeti-lo aqui dobraria o custo
-      // de entrada sem acrescentar informação.
-      userPrompt: 'Realize o Diagnóstico de Orientação Vocacional para o candidato do contexto acima.',
-      maxTokens: 3000,
-      // Extração estruturada não ganha nada com raciocínio estendido, e no
-      // Sonnet 5 ele vem LIGADO por padrão: consumia parte do orçamento de
-      // tokens e empurrava a chamada para além do teto de 25s por provedor.
-      disableThinking: true,
-      // Uma tentativa só, com o prazo inteiro.
-      //
-      // O roteador divide o orçamento de 52s entre as tentativas: com o padrão
-      // de duas, cada provedor recebe ~26s. Três mil tokens de saída não saem
-      // nesse prazo de forma confiável, e o log de produção mostrou o desfecho
-      // exato disso — Claude e Kimi encerrados com 1ms de diferença entre si,
-      // aos 24,5s cada, porque não eram duas falhas diferentes: era o mesmo
-      // prazo curto, gasto duas vezes.
-      //
-      // Guardar metade do tempo para um suplente que também não caberia troca
-      // um sucesso por duas falhas. Mesma conclusão, mesmo remédio da reescrita
-      // em resume/rewrite/route.ts.
-      maxProviderAttempts: 1,
-      jsonSchema: ORIENTATION_JSON_SCHEMA as unknown as Record<string, unknown>,
-    })
-
-    const orientationData = parseOrientation(aiResponse.content)
-
-    const orientationJson = JSON.stringify(orientationData)
-
-    // Persist to database so orientation is preserved across page refreshes
-    await db.resume.update({
-      where: { id: resume.id },
+    const job = await db.aiJob.create({
       data: {
-        careerOrientationJson: orientationJson,
+        userId: user.id,
+        resumeId: resume.id,
+        kind: 'career_orientation',
+        status: 'queued',
+        totalSteps: 4,
+        lang: getRequestLanguage(req),
+        userCountry: edgeCountry(req),
       },
+      select: { id: true },
     })
 
-    /**
-     * O diagnóstico abre a porta do Radar.
-     *
-     * O Radar nasceu para buscar vagas DAS ÁREAS QUE ESTE DIAGNÓSTICO
-     * RECOMENDOU, no país da pessoa. Mas `runRadar` só avalia quem tem
-     * `ProfessionalProfile` gravado, e o único jeito de ter era preencher trinta
-     * campos à mão. Quem rodava o diagnóstico, lia as três áreas e fechava a
-     * tela ficava de fora — tendo dito ao produto exatamente o que queria.
-     *
-     * Só preenche o que está vazio, e o que preencheu volta na resposta: perfil
-     * que muda sozinho e em silêncio é o que o §30 proíbe.
-     */
-    const seededFields = await seedProfileFromOrientation(user.id, orientationJson, {
-      fallbackCountry: edgeCountry(req),
-    })
+    after(() =>
+      processCareerOrientationJob(job.id).catch((e) =>
+        console.error('[career-orientation] Falha ao processar job:', e)
+      )
+    )
 
-    // Perfil recém-semeado: avaliar agora evita que a pessoa abra o Radar logo
-    // depois do diagnóstico e encontre tela vazia até a madrugada.
-    if (seededFields.length > 0) await runForUserQuietly(user.id)
-
-    return NextResponse.json({ careerOrientation: orientationData, profileSeeded: seededFields })
+    return NextResponse.json({ jobId: job.id, status: 'queued' }, { status: 202 })
   } catch (e: any) {
-    console.error('Error generating career orientation:', e?.diagnostic || e?.message || e)
-
-    const isProviderFailure = Boolean(e?.diagnostic)
-    const base = isProviderFailure
-      ? 'Os provedores de IA não responderam a tempo nesta tentativa. Clique em gerar novamente.'
-      : 'Ocorreu uma falha ao montar o diagnóstico vocacional.'
-
-    // Nada a estornar: a falha não custou nada. O currículo segue liberado e a
-    // orientação pode ser pedida de novo sem nova cobrança.
+    console.error('Error opening career orientation job:', e?.message || e)
     return NextResponse.json(
-      {
-        error: base,
-        code: isProviderFailure ? 'AI_PROVIDERS_UNAVAILABLE' : 'ORIENTATION_FAILED',
-      },
+      { error: 'Não foi possível iniciar o diagnóstico. Tente novamente em instantes.' },
       { status: 500 }
     )
   }
