@@ -64,6 +64,26 @@ test('resposta que não é JSON lança', () => {
   assert.throws(() => parseProfileExtraction('desculpe, não consegui'))
 })
 
+test('JSON com texto antes e depois é recuperado pelo maior bloco {...}', () => {
+  // Observado em produção (ver 2.34 na auditoria): o modelo às vezes responde
+  // rápido, mas com uma frase antes ou depois do objeto, além do que a
+  // limpeza de markdown cobre. Descartar isso manda a pessoa preencher tudo à
+  // mão por uma vaga sobra de texto, não por falta de dado real.
+  const s = parseProfileExtraction(`Aqui está a leitura do currículo:\n${completo}\nEspero ter ajudado!`)
+  assert.equal(s.currentTitle, 'Enfermeira Assistencial')
+  assert.equal(s.yearsExperience, 9)
+})
+
+test('bloco {...} encontrado mas ainda inválido continua lançando', () => {
+  // Tem chave e fecha-chave, mas o conteúdo não é JSON válido (chave e valor
+  // sem aspas) — o recuo tenta e falha de novo, sem mascarar como sucesso.
+  assert.throws(() => parseProfileExtraction('texto com {chave: sem aspas} no meio'))
+})
+
+test('sem chave nenhuma na resposta, nem tenta recuperar', () => {
+  assert.throws(() => parseProfileExtraction('texto com { chave sem fechar corretamente'))
+})
+
 test('campo ruim não derruba os bons', () => {
   const s = parseProfileExtraction(JSON.stringify({ seniority: 'inventado', field: 'logística' }))
   assert.equal(s.field, 'logística')

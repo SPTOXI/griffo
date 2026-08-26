@@ -1965,6 +1965,74 @@ problema diferente e já documentado (orçamento de raciocínio), não o de
 concorrência.
 
 Mudança de uma linha, sem novo teste dedicado (não há asserção de ordem de
-cadeia na suíte hoje); `tsc`/`eslint`/`npm test` continuam limpos com os
-mesmos 562. Efeito só é observável pelo `AiLog` depois do próximo deploy —
-sem cluster de falha do Claude para reproduzir sob demanda.
+cadeia na suíte hoje); `tsc`/`eslint`/`npm test` continuam limpos.
+
+### A continuação: `profile_extraction` tinha 80% de erro em 30 dias
+
+O usuário perguntou "então vai acontecer sempre?" sobre o `social_advice` e,
+diante da resposta ("não sempre, mas recorrente"), fechou a política do
+produto: **zero erro, zero pendência adiada — investigar até resolver, na
+mesma sessão.** Isso levou a verificar o modelo efetivamente usado pelo
+DeepSeek antes de responder a uma pergunta separada do usuário sobre qual
+modelo do DeepSeek é ideal para a extração de perfil — e apareceu um
+problema bem maior que o do `social_advice`: **8 das 10 chamadas de
+`profile_extraction` em 30 dias terminaram em `ALL_PROVIDERS_FAILED` (80%)**,
+contra os 40% do `social_advice`. É exatamente a função de "ler o currículo
+para preencher o Perfil Profissional" — a mesma que o usuário tinha
+mencionado no início desta investigação, antes de o log copiado apontar para
+`social_advice` em vez desta.
+
+Duas causas distintas nos 8 erros:
+
+1. **6 chamadas (20/08/2026, mesmo usuário, ~3h): DeepSeek respondeu RÁPIDO
+   (9,7-11,7s — não é truncamento) mas com JSON que não fechava.** O Agente
+   de Qualidade reprovou com "não veio em JSON válido", o Kimi (suplente da
+   época) deu timeout em seguida, e a chamada falhou por inteiro. Conferido
+   no `ProfessionalProfile` do usuário afetado: o registro existe, mas foi
+   **preenchido manualmente às 13:17**, entre duas tentativas que falharam
+   às 13:10 e 13:46 — a pessoa desistiu da extração automática e digitou
+   tudo à mão, o cenário exato que este recurso existe para evitar.
+2. **2 chamadas (24/08/2026): a mesma falha de orçamento de raciocínio já
+   corrigida em 25/08** (piso de tokens 4x maior, ver a entrada anterior a
+   este parágrafo) — já resolvida, listadas aqui só para registro completo
+   da amostra de 30 dias.
+
+**Três correções, não uma:**
+
+1. **`FALLBACK_CHAIN.deepseek` também trocou o Kimi de primeiro suplente
+   para segundo** (`['kimi','claude','gemini']` → `['claude','kimi',
+   'gemini']`). Mesma causa do Claude→Kimi: o Kimi como suplente do DeepSeek
+   falhou as mesmas 6 vezes que falhou como suplente do Claude — o teto de
+   3 requisições simultâneas por organização, estourado quando várias
+   tarefas caem para o suplente ao mesmo tempo. O Claude nunca falhou
+   `profile_extraction` nas tentativas observadas.
+2. **Recuperação de JSON malformado.** `lib/agents/quality-agent.ts` e
+   `lib/profile/extract.ts` agora tentam extrair o maior bloco `{...}` da
+   resposta antes de reprovar/lançar, quando o `JSON.parse` direto falha —
+   cobre o caso observado de texto extra antes/depois do objeto, sem mudar o
+   comportamento para uma resposta já bem formada. 4 testes novos entre os
+   dois arquivos (`quality-agent.test.ts` é o primeiro teste deste agente).
+3. **Modelo do DeepSeek passou a ser configurável por TAREFA, não só por
+   provedor.** Novo campo `modelOverride` em `AiTaskRequest`
+   (`lib/ai-router/types.ts`), honrado só na tentativa do provedor PRIMÁRIO
+   (`router.ts`), validado contra `CURRENT_MODELS` via `effectiveModel` —
+   um valor desconhecido é ignorado, não passa adiante. Existia essa lacuna
+   porque o modelo de um provedor era global: trocar o do DeepSeek no painel
+   mudava `free_preview` (alto volume, deliberadamente barato) e
+   `profile_extraction` (uma chamada por pessoa, onde uma leitura ruim custa
+   a pessoa preencher tudo à mão) ao mesmo tempo. `suggest/route.ts` agora
+   pede `deepseek-v4-pro` explicitamente para `profile_extraction`, mantendo
+   `free_preview` no `deepseek-v4-flash` padrão — a diferença de custo é
+   fração de centavo numa tarefa que roda uma vez por pessoa.
+
+**Regra do operador, registrada no código (`registry.ts`, acima de
+`FALLBACK_CHAIN`) e nesta auditoria: o Kimi só ocupa posição de primário ou
+de suplente real em funções SERIAIS** (`job_deduplication`, que processa um
+par de vagas por vez). Nenhuma tarefa que dispare chamadas em paralelo no
+mesmo pedido deve ter o Kimi como primeira alternativa — é exatamente
+quando seu teto de concorrência derruba o suplente no momento em que mais
+se precisa dele.
+
+9 testes novos no total desta rodada (571 no total), `tsc`/`eslint` limpos.
+Efeito das trocas de ordem só é observável pelo `AiLog` no próximo cluster
+de falha do provedor primário — sem como forçar a reprodução sob demanda.

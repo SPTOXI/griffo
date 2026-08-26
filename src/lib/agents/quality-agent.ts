@@ -157,15 +157,29 @@ export function auditQualityOfAiResult(taskType: string, content: string): Quali
    * cheia inventando. Quem descarta campo ruim é `lib/profile/extract.ts`.
    */
   if (taskType === 'profile_extraction') {
+    const stripped = text.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim()
+    let json: any
     try {
-      const json = JSON.parse(text.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim())
-      if (!json || typeof json !== 'object' || Array.isArray(json)) {
-        return { approved: false, score: 3, feedback: 'A leitura do currículo não veio como objeto JSON.' }
-      }
-      return { approved: true, score: 9.0 }
+      json = JSON.parse(stripped)
     } catch {
-      return { approved: false, score: 2, feedback: 'A leitura do currículo não veio em JSON válido.' }
+      // Texto antes/depois do JSON que a limpeza de markdown acima não cobre —
+      // tenta o maior bloco {...} da resposta antes de reprovar. Mesmo recuo
+      // em `lib/profile/extract.ts`, que faz a extração de verdade depois
+      // desta aprovação.
+      const match = stripped.match(/\{[\s\S]*\}/)
+      try {
+        json = match ? JSON.parse(match[0]) : undefined
+      } catch {
+        json = undefined
+      }
+      if (json === undefined) {
+        return { approved: false, score: 2, feedback: 'A leitura do currículo não veio em JSON válido.' }
+      }
     }
+    if (!json || typeof json !== 'object' || Array.isArray(json)) {
+      return { approved: false, score: 3, feedback: 'A leitura do currículo não veio como objeto JSON.' }
+    }
+    return { approved: true, score: 9.0 }
   }
 
   // Padrão para outros tipos de tarefas

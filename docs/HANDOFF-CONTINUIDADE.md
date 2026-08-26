@@ -27,8 +27,8 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 26/08/2026, ordem de suplente do roteador de IA corrigida (Claude→DeepSeek, não mais Claude→Kimi; ver 2.34 na auditoria) |
-| Suíte | 562 testes, `fail 0` — a regra da contagem está na seção 8 |
+| Última revisão | 26/08/2026, `profile_extraction` (80% de erro em 30d) e `social_advice` corrigidos: Kimi tirado da posição de suplente do Claude e do DeepSeek, JSON malformado agora é recuperado, `profile_extraction` passou a usar `deepseek-v4-pro` (ver 2.34 na auditoria) |
+| Suíte | 571 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão (`npm run build` também rodado, produção compila) |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |
 
@@ -75,15 +75,22 @@ o quanto confiar nele.
    uma execução real do `/api/cron/radar` em produção (orçamento de tempo
    dividido com as outras fontes, paginação sob o teto de 12s por fonte).
    Primeiro deploy que rodar o cron mostra isso; conferir o log dessa rodada.
-8. ~~Suplente do Claude no roteador de IA era o Kimi, que nunca salvava a
-   chamada~~ — ✅ **resolvido em 26/08/2026** (ver 2.34). `FALLBACK_CHAIN.claude`
-   trocou de `['kimi', 'deepseek', 'gemini']` para `['deepseek', 'kimi',
-   'gemini']`: em 30 dias de `AiLog`, o Kimi como segunda tentativa nunca
-   salvou uma chamada (0 em ~46), contra 32 de 32 do DeepSeek quando ele
-   ocupava essa posição. Efeito visível só depois do próximo cluster de
-   falha do Claude em produção — não há como forçar a reprodução sob
-   demanda; conferir `AiLog`/`AuditLog(action: 'failover')` quando um
-   ocorrer para confirmar que o suplente agora salva a chamada.
+8. ~~Suplente do Claude e do DeepSeek no roteador de IA era o Kimi, que
+   nunca salvava a chamada~~ — ✅ **resolvido em 26/08/2026** (ver 2.34).
+   `FALLBACK_CHAIN.claude` e `FALLBACK_CHAIN.deepseek` trocaram o Kimi de
+   primeiro suplente para segundo: em 30 dias de `AiLog`, o Kimi como
+   segunda tentativa nunca salvou uma chamada (0 em ~46, seja depois do
+   Claude ou do DeepSeek), contra 32 de 32 do DeepSeek quando ele ocupava
+   essa posição depois do Claude. Regra registrada em `registry.ts`: o Kimi
+   só ocupa posição de primário/suplente real em funções SERIAIS
+   (`job_deduplication`). Além disso, `profile_extraction` (que tinha 80%
+   de erro em 30 dias, pior que os 40% do `social_advice`) ganhou reparo de
+   JSON malformado e passou a usar `deepseek-v4-pro` (via o novo
+   `modelOverride` em `AiTaskRequest`) em vez do `deepseek-v4-flash`
+   padrão. Efeito das trocas de ordem só é visível depois do próximo
+   cluster de falha do provedor primário em produção — não há como forçar
+   a reprodução sob demanda; conferir `AiLog`/`AuditLog(action:
+   'failover')` quando um ocorrer.
 
 **O que NÃO está pendente e parece que está:**
 

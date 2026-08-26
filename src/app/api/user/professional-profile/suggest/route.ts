@@ -123,6 +123,19 @@ Responda APENAS o JSON do schema, sem texto antes ou depois.`
        * feliz continua sendo a extração barata de sempre.
        */
       maxProviderAttempts: 3,
+      /**
+       * V4-Pro, não o V4-Flash padrão do DeepSeek.
+       *
+       * O Flash é o certo para `free_preview` — alto volume, sem custo por
+       * pessoa que ainda não pagou. Esta rota é o oposto: uma chamada por
+       * pessoa, e uma leitura malformada não custa uma resposta pior, custa a
+       * pessoa preencher tudo à mão de novo. Em 30 dias o Flash produziu JSON
+       * inválido (não truncado — respondeu rápido e errado) em pelo menos uma
+       * leva de tentativas para o mesmo usuário; o Pro é o modelo maior do
+       * mesmo provedor, e a diferença de custo — frações de centavo nesta
+       * tarefa curta, uma vez por pessoa — não pesa. Ver 2.34 na auditoria.
+       */
+      modelOverride: 'deepseek-v4-pro',
     })
 
     const suggestion = parseProfileExtraction(aiResponse.content)

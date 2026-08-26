@@ -163,6 +163,18 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
  * Vale lembrar que só os dois primeiros candidatos são de fato tentados
  * (`MAX_PROVIDER_ATTEMPTS` no router): o terceiro e o quarto existem para o
  * caso em que o filtro de residência de dados elimina algum dos anteriores.
+ *
+ * **Regra do operador (26/08/2026): o Kimi só entra em funções SERIAIS.**
+ * `job_deduplication` é serial por natureza (`agent-dedup.ts` processa um par
+ * de vagas por vez) e é onde o Kimi continua como primário, sem restrição —
+ * nunca dispara chamadas concorrentes contra si mesmo. Para qualquer tarefa
+ * que dispare N chamadas em PARALELO no mesmo pedido (`analysis_segment`,
+ * `social_advice`) ou que sirva muitos usuários ao mesmo tempo, o Kimi não
+ * deve ocupar a primeira posição de suplente: seu teto de 3 requisições
+ * simultâneas por organização (comentário mais abaixo, no laço de chamada)
+ * é estourado justo quando várias tarefas caem para o suplente ao mesmo
+ * tempo — ver 2.34 na auditoria para os números que embasaram isto. O
+ * DeepSeek assume essa posição nas cadeias abaixo.
  */
 export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
   // DeepSeek como primeiro suplente do Claude, e não o Kimi — decisão
@@ -179,11 +191,20 @@ export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
   // quando várias análises caem para o suplente ao mesmo tempo e saturam esse
   // teto. Ver 2.34 na auditoria para os números completos.
   claude: ['deepseek', 'kimi', 'gemini'],
-  // Kimi como primeiro suplente do DeepSeek é decisão deliberada, não só
-  // ordem alfabética: quando o DeepSeek estoura o orçamento de raciocínio
-  // (ver JSON_TASK_TOKEN_FLOOR em router.ts), o Kimi é quem tenta em
-  // seguida, antes do Claude — mais caro por chamada.
-  deepseek: ['kimi', 'claude', 'gemini'],
+  // Era `['kimi', 'claude', 'gemini']` — Kimi em primeiro por ser mais barato
+  // que o Claude, decisão pensada para UM sintoma do DeepSeek: estourar o
+  // orçamento de raciocínio (`JSON_TASK_TOKEN_FLOOR` em router.ts). Esse
+  // sintoma específico já tem correção própria desde 25/08/2026 (piso de
+  // tokens 4x maior). O que sobrou sem explicação era outro sintoma —
+  // `profile_extraction` reprovado por "JSON inválido" mesmo respondendo
+  // rápido (não é truncamento) — e aí o Kimi como suplente falhou as mesmas
+  // vezes que falhou como suplente do Claude: mesma causa registrada em
+  // 2.34, o teto de 3 requisições simultâneas do Kimi por organização,
+  // saturado justo quando várias tarefas caem para o suplente ao mesmo
+  // tempo. Trocado em 26/08/2026 para o Claude primeiro — nunca falhou
+  // `profile_extraction` nas tentativas observadas — com o Kimi mantido só
+  // como segunda opção, mais barata, para quando o Claude também não servir.
+  deepseek: ['claude', 'kimi', 'gemini'],
   kimi: ['deepseek', 'gemini', 'claude'],
   gemini: ['kimi', 'deepseek', 'claude'],
 }

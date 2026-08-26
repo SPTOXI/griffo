@@ -2,10 +2,12 @@ import OpenAI from 'openai'
 import { db } from '../db'
 import { AiTaskRequest, AiTaskResult, ProviderId } from './types'
 import {
+  effectiveModel,
   FALLBACK_CHAIN,
   getProviderRuntimeConfig,
   getProvidersWithActiveKeys,
   INITIAL_TASK_ROUTING,
+  resolveModelPricing,
 } from './registry'
 import { after } from 'next/server'
 import { auditQualityOfAiResult } from '../agents/quality-agent'
@@ -150,10 +152,24 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
 
     // Reaproveita a do primário quando ele sobreviveu ao filtro de residência:
     // era a quarta consulta redundante ao banco por análise.
-    const runtime =
+    let runtime =
       currentProviderId === primaryProviderId
         ? primaryRuntime
         : await getProviderRuntimeConfig(currentProviderId)
+
+    // `modelOverride` só vale para o PRIMÁRIO: o suplente usa o modelo que o
+    // painel configurou para ele, não o pedido pela tarefa que estava tentando
+    // o primário. Ver o comentário do campo em types.ts.
+    if (currentProviderId === primaryProviderId && req.modelOverride) {
+      const overriddenModel = effectiveModel(currentProviderId, req.modelOverride)
+      if (overriddenModel !== runtime.model) {
+        runtime = {
+          ...runtime,
+          model: overriddenModel,
+          pricing: resolveModelPricing(overriddenModel) ?? runtime.pricing,
+        }
+      }
+    }
 
     // Skip provider if no API key is available
     if (!runtime.apiKey) {

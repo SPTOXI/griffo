@@ -122,6 +122,18 @@ export interface AiTaskRequest {
   /// vez de um sucesso. Nesses casos, declarar 1 troca a redundância por tempo,
   /// que é o recurso de que a tarefa realmente precisa.
   maxProviderAttempts?: number
+  /// Substitui o modelo do PROVEDOR PRIMÁRIO desta tarefa, quando ele é um dos
+  /// modelos correntes do provedor (ver `CURRENT_MODELS` em registry.ts) —
+  /// caso contrário é ignorado, pelo mesmo motivo que `effectiveModel`
+  /// substitui um modelo desatualizado do painel.
+  ///
+  /// Existe porque o modelo de um provedor é configurado por PROVEDOR, não por
+  /// tarefa: mudar o modelo do DeepSeek no painel afeta `free_preview`,
+  /// `profile_extraction`, `support_chat` e `normalization` ao mesmo tempo,
+  /// quando cada uma pode ter uma exigência de confiabilidade diferente. Não
+  /// vale para o suplente: um provedor que assume no failover usa o modelo
+  /// configurado dele, não este.
+  modelOverride?: string
 }
 
 export interface AiTaskResult {

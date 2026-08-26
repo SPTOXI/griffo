@@ -135,7 +135,18 @@ export function parseProfileExtraction(rawText: string): ProfileSuggestion {
   try {
     parsed = JSON.parse(cleaned)
   } catch {
-    throw new Error('A IA devolveu a leitura do currículo em formato inválido.')
+    // Texto antes/depois do JSON que a limpeza de markdown acima não cobre —
+    // tenta o maior bloco {...} da resposta antes de desistir. Mesmo recuo em
+    // `lib/agents/quality-agent.ts`, que valida esta mesma tarefa antes daqui.
+    const match = cleaned.match(/\{[\s\S]*\}/)
+    try {
+      parsed = match ? JSON.parse(match[0]) : undefined
+    } catch {
+      parsed = undefined
+    }
+    if (parsed === undefined) {
+      throw new Error('A IA devolveu a leitura do currículo em formato inválido.')
+    }
   }
 
   const suggestion: ProfileSuggestion = {}
