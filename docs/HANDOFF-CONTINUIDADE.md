@@ -27,7 +27,7 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 26/08/2026, adapter do JobBase (base própria, projeto Supabase irmão) ligado no Radar (ver 2.33 na auditoria) |
+| Última revisão | 26/08/2026, ordem de suplente do roteador de IA corrigida (Claude→DeepSeek, não mais Claude→Kimi; ver 2.34 na auditoria) |
 | Suíte | 562 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão (`npm run build` também rodado, produção compila) |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |
@@ -75,6 +75,15 @@ o quanto confiar nele.
    uma execução real do `/api/cron/radar` em produção (orçamento de tempo
    dividido com as outras fontes, paginação sob o teto de 12s por fonte).
    Primeiro deploy que rodar o cron mostra isso; conferir o log dessa rodada.
+8. ~~Suplente do Claude no roteador de IA era o Kimi, que nunca salvava a
+   chamada~~ — ✅ **resolvido em 26/08/2026** (ver 2.34). `FALLBACK_CHAIN.claude`
+   trocou de `['kimi', 'deepseek', 'gemini']` para `['deepseek', 'kimi',
+   'gemini']`: em 30 dias de `AiLog`, o Kimi como segunda tentativa nunca
+   salvou uma chamada (0 em ~46), contra 32 de 32 do DeepSeek quando ele
+   ocupava essa posição. Efeito visível só depois do próximo cluster de
+   falha do Claude em produção — não há como forçar a reprodução sob
+   demanda; conferir `AiLog`/`AuditLog(action: 'failover')` quando um
+   ocorrer para confirmar que o suplente agora salva a chamada.
 
 **O que NÃO está pendente e parece que está:**
 

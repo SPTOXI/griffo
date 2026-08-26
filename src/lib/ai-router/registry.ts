@@ -165,7 +165,20 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
  * caso em que o filtro de residência de dados elimina algum dos anteriores.
  */
 export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
-  claude: ['kimi', 'deepseek', 'gemini'],
+  // DeepSeek como primeiro suplente do Claude, e não o Kimi — decisão
+  // corrigida em 26/08/2026 a partir do log de 30 dias, não por preço (embora
+  // o DeepSeek também seja mais barato): quando o Claude falha como primário,
+  // `MAX_PROVIDER_ATTEMPTS = 2` dá à cadeia só UMA chance de suplente, e essa
+  // chance ia para o Kimi. Em 30 dias o Kimi tentado como segunda tentativa
+  // teve 0 sucessos em ~46 tentativas (sempre timeout) — contra 32 de 32
+  // sucessos do DeepSeek quando ele ocupava essa posição (usuários da UE, onde
+  // a residência de dados já excluía o Kimi do §13, deixando o DeepSeek em
+  // segundo por acidente). A causa mais provável está documentada logo abaixo,
+  // no laço de chamada: "o Kimi limita a 3 requisições simultâneas por
+  // organização" — exatamente o cenário de uma falha do Claude em cluster,
+  // quando várias análises caem para o suplente ao mesmo tempo e saturam esse
+  // teto. Ver 2.34 na auditoria para os números completos.
+  claude: ['deepseek', 'kimi', 'gemini'],
   // Kimi como primeiro suplente do DeepSeek é decisão deliberada, não só
   // ordem alfabética: quando o DeepSeek estoura o orçamento de raciocínio
   // (ver JSON_TASK_TOKEN_FLOOR em router.ts), o Kimi é quem tenta em

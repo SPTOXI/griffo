@@ -1916,3 +1916,55 @@ Registrado em `src/app/api/cron/radar/route.ts`, sempre ligado por padrão
 (ao lado dos boards remotos, que também não exigem configuração).
 
 17 testes novos (562 no total), `tsc`/`eslint` limpos.
+
+## 2.34 Ordem errada de suplente no roteador de IA — Kimi nunca salvava o Claude
+
+Usuário reportou um erro de `social_advice` (Claude e Kimi timeout aos
+~24,5s cada) e, ao investigar, pediu política de zero erro e zero pendência
+adiada: o achado tinha que virar correção nesta mesma sessão, não uma linha
+na lista de pendências.
+
+**A amostra de 7 dias mentia por ser pequena.** Ampliada para 30 dias, o
+`social_advice` tinha 6 erros em 15 chamadas (40%), sempre com a mesma
+assinatura: Claude estoura o timeout por volta de 24-25s, e o Kimi (segunda
+tentativa da cadeia `claude: ['kimi', 'deepseek', 'gemini']`) falha do
+mesmo jeito, quase sempre. O sistema inteiro tinha 82 erros em 271 chamadas
+(30%) no mesmo período, concentrados em `analysis_segment` (46) e
+`full_analysis` (18) — e cruzando os horários, os mesmos clusters de falha
+(ex.: 11/08 12h-17h, 5 falhas em 4h30 para o mesmo usuário) atingiam
+`full_analysis`, `ocr_extraction` e `rewrite` ao mesmo tempo — todos
+primário Claude, todos com o Kimi como segunda tentativa.
+
+**O dado que decidiu a correção:** em 30 dias, toda vez que o Kimi foi
+tentado como SEGUNDA tentativa depois do Claude falhar, ele também falhou —
+zero sucessos em ~46 tentativas reais (fora as puladas por falta de
+orçamento ou chave). No mesmo período, toda vez que o DeepSeek ocupou essa
+posição — o que só acontecia por acidente, quando o filtro de residência de
+dados (§13, `data-residency.ts`) excluía o Kimi por o usuário ser da UE —,
+ele salvou a chamada: **32 de 32**.
+
+**Causa mais provável, já documentada no próprio roteador**: "o Kimi limita
+a 3 requisições simultâneas por organização, devolvendo 429" (comentário em
+`router.ts`, sobre o backoff de 1,2s já existente). Uma falha do Claude
+raramente é isolada — ela vem em cluster, porque a causa costuma ser do lado
+do provedor, afetando várias análises simultâneas. É exatamente nesse
+momento que várias chamadas caem para o suplente ao mesmo tempo e saturam o
+teto de 3 do Kimi — o suplente falha precisamente quando mais se precisa
+dele.
+
+**Correção**: `FALLBACK_CHAIN.claude` em `lib/ai-router/registry.ts` passou
+de `['kimi', 'deepseek', 'gemini']` para `['deepseek', 'kimi', 'gemini']`.
+Como `MAX_PROVIDER_ATTEMPTS = 2` só dá uma chance de suplente à cadeia, essa
+troca faz o DeepSeek — mais barato, sem o teto de concorrência documentado
+do Kimi, e com histórico de 100% de sucesso na posição — ser o suplente real
+de todas as tarefas com Claude primário (`ocr_extraction`, `analysis_segment`,
+`full_analysis`, `rewrite`, `social_advice`, `career_orientation`,
+`cover_letter`). A cadeia do DeepSeek como primário (`deepseek: ['kimi',
+'claude', 'gemini']`) não foi tocada — seu Kimi em primeiro lugar resolve um
+problema diferente e já documentado (orçamento de raciocínio), não o de
+concorrência.
+
+Mudança de uma linha, sem novo teste dedicado (não há asserção de ordem de
+cadeia na suíte hoje); `tsc`/`eslint`/`npm test` continuam limpos com os
+mesmos 562. Efeito só é observável pelo `AiLog` depois do próximo deploy —
+sem cluster de falha do Claude para reproduzir sob demanda.
