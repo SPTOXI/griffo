@@ -391,16 +391,25 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
           /**
            * O teto de saída precisa caber o RACIOCÍNIO mais a resposta.
            *
-           * Nestes modelos `max_tokens` cobre os dois. Um teto calibrado só
-           * para a resposta — 1.200 para a extração de perfil, por exemplo —
-           * acaba durante o raciocínio, e a resposta nunca começa. O sintoma é
-           * JSON inválido, que aponta para o lado errado do problema.
+           * Nestes modelos o teto cobre os dois. Um teto calibrado só para a
+           * resposta — 1.200 para a extração de perfil, por exemplo — acaba
+           * durante o raciocínio, e a resposta nunca começa. O sintoma é JSON
+           * inválido, que aponta para o lado errado do problema.
            *
            * O piso é generoso porque teto folgado não custa nada: cobra-se
            * pelos tokens gerados, não pelo limite. O que ele evita é a resposta
            * ser cortada no meio.
+           *
+           * O NOME do parâmetro varia por provedor: a OpenAI recusa
+           * `max_tokens` nos modelos correntes — "Unsupported parameter:
+           * 'max_tokens' is not supported with this model. Use
+           * 'max_completion_tokens' instead." — observado ao cadastrar o
+           * gpt-5.6-luna (ver 2.36 na auditoria). Kimi/DeepSeek/Gemini
+           * continuam aceitando o nome antigo; não mexer nesses.
            */
-          max_tokens: Math.max(req.maxTokens ?? 3500, JSON_TASK_TOKEN_FLOOR),
+          ...(currentProviderId === 'openai'
+            ? { max_completion_tokens: Math.max(req.maxTokens ?? 3500, JSON_TASK_TOKEN_FLOOR) }
+            : { max_tokens: Math.max(req.maxTokens ?? 3500, JSON_TASK_TOKEN_FLOOR) }),
           // Estes provedores não aceitam JSON Schema; `json_object` garante
           // apenas que a saída é JSON válido. A conformidade com o formato é
           // verificada pelo chamador.

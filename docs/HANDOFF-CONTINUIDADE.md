@@ -27,7 +27,7 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 26/08/2026, modelos desatualizados nas chaves de IA já cadastradas corrigidos no banco (Claude/Gemini/DeepSeek apontavam para IDs antigos, silenciosamente substituídos em runtime mas exibidos errados no painel) — ver 2.37 na auditoria |
+| Última revisão | 26/08/2026, roteador corrigido para aceitar a OpenAI: `gpt-5.6-luna` recusava `max_tokens` ("use max_completion_tokens"), só a OpenAI usa o parâmetro novo agora (ver 2.38 na auditoria) |
 | Suíte | 583 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão (`npm run build` também rodado, produção compila) |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |

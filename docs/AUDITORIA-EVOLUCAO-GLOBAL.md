@@ -2200,3 +2200,26 @@ rótulos estáticos na tela que citavam os mesmos nomes antigos**:
 `admin-view.tsx` tinha "DeepSeek V3" no `<SelectItem>` de cadastro e "Claude
 3.5" no resumo do card "Roteamento Inteligente" (que também passou a citar
 os 5 provedores, incluindo a OpenAI do §2.36).
+
+## 2.38 OpenAI recusava `max_tokens` — primeira chamada real ao gpt-5.6-luna
+
+Primeiro teste de verdade da chave OpenAI cadastrada no §2.36 devolveu erro
+da própria API: *"Unsupported parameter: 'max_tokens' is not supported with
+this model. Use 'max_completion_tokens' instead."* Os modelos correntes da
+OpenAI substituíram o parâmetro clássico da Chat Completions API — o
+`gpt-5.6-luna` só aceita `max_completion_tokens`. Kimi, DeepSeek e Gemini
+(os outros três que passam pelo mesmo ramo do SDK compatível com OpenAI em
+`router.ts`) continuam aceitando o nome antigo — não foi mexido neles.
+
+**Correção em `lib/ai-router/router.ts`**, no `buildCompletionParams()` do
+ramo não-Claude: o nome do campo agora depende do `currentProviderId` —
+`max_completion_tokens` só para `openai`, `max_tokens` para os demais,
+mesmo teto calculado (`Math.max(req.maxTokens ?? 3500,
+JSON_TASK_TOKEN_FLOOR)`) dos dois lados. Não mexido: `temperature` —
+alguns modelos de raciocínio da OpenAI também recusam esse parâmetro, mas
+isso não foi observado ainda (só o erro do `max_tokens` foi reportado); é
+para quando/se aparecer, não uma correção preventiva sem evidência.
+
+`tsc`/`eslint`/`npm test`/`npm run build` limpos, 583 testes (sem teste
+novo dedicado — a lógica trocada é o parâmetro passado à chamada HTTP real
+do SDK, que este arquivo não testa isoladamente para nenhum provedor).
