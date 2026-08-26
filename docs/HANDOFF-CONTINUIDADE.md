@@ -27,7 +27,7 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 26/08/2026, quinto provedor de IA cadastrado — OpenAI (`gpt-5.6-luna`), disponível no painel, nenhuma tarefa migrada pra ele ainda (ver 2.36 na auditoria) |
+| Última revisão | 26/08/2026, modelos desatualizados nas chaves de IA já cadastradas corrigidos no banco (Claude/Gemini/DeepSeek apontavam para IDs antigos, silenciosamente substituídos em runtime mas exibidos errados no painel) — ver 2.37 na auditoria |
 | Suíte | 583 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão (`npm run build` também rodado, produção compila) |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |

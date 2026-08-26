@@ -2159,4 +2159,44 @@ Todas as IAs" (`admin-view.tsx`, mais abaixo) e sua rota
 grade, mas ausente do teste de verdade), uma inconsistência pré-existente que
 não foi criada nem corrigida agora.
 
+~~Não estendido~~ — **corrigido na sequência, a pedido do operador**: ver
+2.37 logo abaixo.
+
 1 teste novo (583 no total), `tsc`/`eslint`/`npm run build` limpos.
+
+## 2.37 Modelos desatualizados nas chaves já cadastradas — corrigido no banco
+
+O operador reportou que a tabela "APIs de IA Cadastradas no Sistema" (painel
+admin) mostrava modelo errado. Não era bug de tela: a própria tabela já
+tinha o aviso certo — badge vermelho "EM USO: X" sempre que
+`AiApiKey.model` (o texto salvo por quem cadastrou a chave) diverge do
+`effectiveModel` (o que `getProviderRuntimeConfig` de fato usa, ver
+`registry.ts`) — só que ninguém tinha corrigido a causa: três das quatro
+chaves cadastradas tinham o campo `model` desatualizado desde o cadastro
+inicial, muito antes desta sessão:
+
+| Chave | `model` salvo (errado) | Corrigido para |
+|---|---|---|
+| Claude 3.5 | `claude-3-5-sonnet` | `claude-sonnet-5` |
+| Gemini | `gemini-1.5-flash` | `gemini-2.0-flash` |
+| DeepSeek V3 | `deepseek v3` | `deepseek-v4-flash` |
+
+A Kimi K3 já estava certa (`kimi-k3`). Nenhuma chamada de IA mudou de
+comportamento — o roteador já vinha silenciosamente substituindo pelo
+`effectiveModel` certo em tempo de execução (é para isso que a função
+existe); a correção só faz o campo salvo dizer a verdade, em vez de o painel
+ficar mostrando um valor que nunca foi usado de fato. Os nomes de
+identificação das duas primeiras chaves também foram corrigidos ("Claude
+3.5" → "Claude Sonnet 5", "DeepSeek V3" → "DeepSeek V4 Flash"), pra não
+ficarem inconsistentes com o modelo ao lado.
+
+Update feito direto no banco (`AiApiKey.model`/`.name`), fora do painel —
+`clearProviderConfigCache()` não foi chamado, mas o cache dessa tabela tem
+TTL de 30s (`CONFIG_CACHE_TTL_MS` em `registry.ts`), então a correção já
+está em vigor.
+
+**Também corrigidos "em todos os locais" (pedido explícito do operador),
+rótulos estáticos na tela que citavam os mesmos nomes antigos**:
+`admin-view.tsx` tinha "DeepSeek V3" no `<SelectItem>` de cadastro e "Claude
+3.5" no resumo do card "Roteamento Inteligente" (que também passou a citar
+os 5 provedores, incluindo a OpenAI do §2.36).
