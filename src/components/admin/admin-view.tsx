@@ -370,6 +370,7 @@ function AdminViewContent() {
     else if (provider === 'anthropic') setNewKeyModel('claude-sonnet-5')
     else if (provider === 'deepseek') setNewKeyModel('deepseek-v4-flash')
     else if (provider === 'gemini') setNewKeyModel('gemini-2.0-flash')
+    else if (provider === 'openai') setNewKeyModel('gpt-5.6-luna')
   }
 
   // Register a new AI API Key
@@ -1472,7 +1473,7 @@ function AdminViewContent() {
                 <Plus className="w-5 h-5 text-emerald-600" /> Cadastrar Nova API de Inteligência Artificial
               </CardTitle>
               <CardDescription>
-                Cadastre e configure as chaves de API para os 4 provedores de IA (Kimi K3, Claude 3.5 Sonnet, DeepSeek V3 e Gemini).
+                Cadastre e configure as chaves de API para os 5 provedores de IA (Kimi K3, Claude Sonnet 5, DeepSeek, Gemini e OpenAI).
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1499,6 +1500,7 @@ function AdminViewContent() {
                         <SelectItem value="anthropic">Anthropic (Claude Sonnet 5)</SelectItem>
                         <SelectItem value="deepseek">DeepSeek (DeepSeek V3)</SelectItem>
                         <SelectItem value="gemini">Google (Gemini 2.0 Flash)</SelectItem>
+                        <SelectItem value="openai">OpenAI (GPT-5.6 Luna)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

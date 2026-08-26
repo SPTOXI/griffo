@@ -93,3 +93,9 @@ test('modelo sem preço por horário não muda com a hora nem com a data', () =>
 test('modelo desconhecido não tem preço — o chamador cai no do provedor', () => {
   assert.equal(resolveModelPricing('deepseek-chat', depois(12)), undefined)
 })
+
+test('gpt-5.6-luna (OpenAI, cadastrado em 26/08/2026) — preço fixo, sem tabela por horário', () => {
+  const luna = { inputPer1k: 0.0002, outputPer1k: 0.0012 } // $0,20 / $1,20 por 1M
+  assert.deepEqual(resolveModelPricing('gpt-5.6-luna', antes(2)), luna)
+  assert.deepEqual(resolveModelPricing('gpt-5.6-luna', depois(2)), luna)
+})

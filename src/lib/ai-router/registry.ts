@@ -56,6 +56,25 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
       outputPer1k: 0.0003, // $0.30 / 1M
     },
   },
+  openai: {
+    id: 'openai',
+    name: 'OpenAI',
+    // Cadastrado em 26/08/2026 a pedido do operador. Nenhuma tarefa foi
+    // roteada pra cá ainda — só disponibilizado no painel administrativo,
+    // pra ser atribuído depois. Ver 2.36 na auditoria.
+    defaultModel: 'gpt-5.6-luna',
+    baseURL: 'https://api.openai.com/v1',
+    // O .env local do operador tem a chave em `ChatGPT_KEY`, não neste nome —
+    // isso só importa se ninguém cadastrar a chave pelo painel (que decifra
+    // de `AiApiKey`/`SystemConfig` e tem prioridade sobre a variável de
+    // ambiente, ver `getProviderRuntimeConfig` abaixo). Cadastrando pelo
+    // painel, o nome da variável local não faz diferença nenhuma.
+    apiKeyEnvVar: 'OPENAI_API_KEY',
+    pricing: {
+      inputPer1k: 0.0002, // $0.20 / 1M (gpt-5.6-luna, contexto curto)
+      outputPer1k: 0.0012, // $1.20 / 1M
+    },
+  },
 }
 
 // A tabela de preços vive em ./pricing (sem dependência de banco, para poder
@@ -75,6 +94,7 @@ const CURRENT_MODELS: Record<ProviderId, string[]> = {
   // substituição existe.
   deepseek: ['deepseek-v4-flash', 'deepseek-v4-pro'],
   gemini: ['gemini-2.0-flash'],
+  openai: ['gpt-5.6-luna'],
 }
 
 // Normalize provider names that may differ between DB records and PROVIDER_CONFIGS keys
@@ -84,6 +104,7 @@ const PROVIDER_ALIASES: Record<string, ProviderId> = {
   anthropic: 'claude',
   google: 'gemini',
   'google-gemini': 'gemini',
+  chatgpt: 'openai',
 }
 
 /**
@@ -207,6 +228,11 @@ export const FALLBACK_CHAIN: Record<ProviderId, ProviderId[]> = {
   deepseek: ['claude', 'kimi', 'gemini'],
   kimi: ['deepseek', 'gemini', 'claude'],
   gemini: ['kimi', 'deepseek', 'claude'],
+  // Ninguém é primário aqui ainda (ver PROVIDER_CONFIGS.openai) — cadeia
+  // preenchida por completude do tipo. Kimi de fora por padrão, mesma regra
+  // acima: sem uso real ainda, não há como saber se uma tarefa que vier a
+  // usar OpenAI como primária vai disparar chamadas em paralelo.
+  openai: ['claude', 'deepseek', 'gemini'],
 }
 
 /**

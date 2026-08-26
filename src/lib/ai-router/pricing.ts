@@ -27,6 +27,12 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   // TIERED_MODEL_PRICING, logo abaixo.
   'deepseek-v4-flash': { inputPer1k: 0.00014, outputPer1k: 0.00028 },
   'deepseek-v4-pro': { inputPer1k: 0.000435, outputPer1k: 0.00087 },
+  // OpenAI — preço de contexto curto, tabela de 26/08/2026. Em contexto
+  // longo o gpt-5.6-luna sobe para $0,40/$1,80 por 1M; não modelado aqui
+  // (sem TieredPricing por tamanho de contexto, só por horário como o
+  // DeepSeek) porque o uso do Griffo — currículo, alguns milhares de
+  // tokens — fica bem abaixo do limiar de contexto longo.
+  'gpt-5.6-luna': { inputPer1k: 0.0002, outputPer1k: 0.0012 },
 }
 
 /**

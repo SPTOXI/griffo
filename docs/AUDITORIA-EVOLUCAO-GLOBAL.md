@@ -2110,3 +2110,53 @@ passo):
 582 testes no total (eram 562 no início desta rodada de sessão), `AnalysisJob`
 e `use-analysis-job.ts` do laudo principal permanecem exatamente como
 estavam — nenhuma linha tocada.
+
+## 2.36 Quinto provedor de IA cadastrado — OpenAI (GPT-5.6 Luna)
+
+Operador atualizou o `.env` local com uma chave da OpenAI (salva como
+`ChatGPT_KEY` — nome fora do padrão `{PROVEDOR}_API_KEY` dos outros quatro,
+mas sem efeito prático: quem cadastrar a chave pelo painel administrativo
+grava em `AiApiKey`/`SystemConfig`, que têm prioridade sobre a variável de
+ambiente em `getProviderRuntimeConfig`) e pediu para cadastrar o provedor,
+porque o painel só lista os quatro já conhecidos (Moonshot, Anthropic,
+DeepSeek, Gemini).
+
+**ID do modelo confirmado pelo operador direto da página de limites da
+OpenAI: `gpt-5.6-luna`.** Preço obtido da página de pricing (26/08/2026):
+US$ 0,20/1M de entrada, US$ 1,20/1M de saída, contexto curto — o que dá
+`inputPer1k: 0.0002` / `outputPer1k: 0.0012`. Contexto longo sobe para
+US$ 0,40/US$ 1,80 por 1M; não modelado (sem `TieredPricing` por tamanho de
+contexto, só por horário como o DeepSeek) porque o uso do Griffo — currículo,
+alguns milhares de tokens — fica bem abaixo do limiar de contexto longo.
+
+**Escopo desta rodada, por decisão do operador: só disponibilizar, sem trocar
+nenhuma tarefa de IA principal.** Nenhum `INITIAL_TASK_ROUTING` mudou —
+`gpt-5.6-luna` fica pronto no painel pra ser atribuído depois, com calma.
+
+Mudanças, todas aditivas (nenhum provedor existente foi tocado):
+- `lib/ai-router/types.ts`: `ProviderId` ganhou `'openai'`.
+- `lib/ai-router/pricing.ts`: `MODEL_PRICING['gpt-5.6-luna']`.
+- `lib/ai-router/registry.ts`: `PROVIDER_CONFIGS.openai`, `CURRENT_MODELS.openai`,
+  alias `chatgpt` → `openai`, e `FALLBACK_CHAIN.openai` (preenchido só por
+  completude do tipo — sem uso real ainda, o Kimi fica de fora da cadeia por
+  padrão, mesma régua do §2.34: não há como saber se uma tarefa que vier a
+  usar a OpenAI como primária vai disparar chamadas em paralelo).
+- `api/admin/ai-keys/route.ts`: `'openai'` na lista de provedores válidos.
+- `admin-view.tsx`: opção no formulário de cadastro, modelo padrão
+  auto-preenchido, texto da tela atualizado de "4" para "5 provedores"
+  (aproveitado pra também corrigir "Claude 3.5 Sonnet"/"DeepSeek V3", já
+  desatualizados ali).
+
+Como o roteador já trata qualquer provedor fora do Claude pelo SDK genérico
+compatível com OpenAI (`lib/ai-router/router.ts`, ramo `else`), a OpenAI de
+verdade passa pelo MESMO caminho que hoje serve Kimi/DeepSeek/Gemini — não
+foi preciso nenhuma lógica de chamada nova, só o cadastro.
+
+**Não estendido, por estar fora do pedido**: o painel de "Testar Conexão com
+Todas as IAs" (`admin-view.tsx`, mais abaixo) e sua rota
+`api/admin/ai-test/route.ts` continuam testando só `['kimi', 'deepseek',
+'claude']` — o Gemini já não era testado ali antes desta mudança (mostrado na
+grade, mas ausente do teste de verdade), uma inconsistência pré-existente que
+não foi criada nem corrigida agora.
+
+1 teste novo (583 no total), `tsc`/`eslint`/`npm run build` limpos.

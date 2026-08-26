@@ -59,9 +59,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Preencha nome, provedor, chave de API e modelo.' }, { status: 400 })
     }
 
-    const validProviders = ['moonshot', 'anthropic', 'deepseek', 'gemini']
+    const validProviders = ['moonshot', 'anthropic', 'deepseek', 'gemini', 'openai']
     if (!validProviders.includes(provider.toLowerCase())) {
-      return NextResponse.json({ error: 'Provedor de IA inválido. Escolha: Moonshot, Anthropic, DeepSeek ou Gemini.' }, { status: 400 })
+      return NextResponse.json({ error: 'Provedor de IA inválido. Escolha: Moonshot, Anthropic, DeepSeek, Gemini ou OpenAI.' }, { status: 400 })
     }
 
     const newKey = await db.aiApiKey.create({

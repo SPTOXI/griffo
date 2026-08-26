@@ -28,7 +28,7 @@ export type TaskType =
   /// Análise semântica de similaridade entre pares de vagas para deduplicação avançada.
   | 'job_deduplication'
 
-export type ProviderId = 'gemini' | 'deepseek' | 'claude' | 'kimi'
+export type ProviderId = 'gemini' | 'deepseek' | 'claude' | 'kimi' | 'openai'
 
 export interface ModelPricing {
   inputPer1k: number // USD per 1K input tokens

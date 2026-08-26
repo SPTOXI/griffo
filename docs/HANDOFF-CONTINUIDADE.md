@@ -27,8 +27,8 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 26/08/2026, progresso real (sem simulação de tempo) em 5 fluxos de IA — perfil social, perfil profissional, orientação, carta, reescrita (ver 2.35 na auditoria) |
-| Suíte | 582 testes, `fail 0` — a regra da contagem está na seção 8 |
+| Última revisão | 26/08/2026, quinto provedor de IA cadastrado — OpenAI (`gpt-5.6-luna`), disponível no painel, nenhuma tarefa migrada pra ele ainda (ver 2.36 na auditoria) |
+| Suíte | 583 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão (`npm run build` também rodado, produção compila) |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |
 
