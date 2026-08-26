@@ -27,8 +27,8 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 26/08/2026, `profile_extraction` (80% de erro em 30d) e `social_advice` corrigidos: Kimi tirado da posição de suplente do Claude e do DeepSeek, JSON malformado agora é recuperado, `profile_extraction` passou a usar `deepseek-v4-pro` (ver 2.34 na auditoria) |
-| Suíte | 571 testes, `fail 0` — a regra da contagem está na seção 8 |
+| Última revisão | 26/08/2026, progresso real (sem simulação de tempo) em 5 fluxos de IA — perfil social, perfil profissional, orientação, carta, reescrita (ver 2.35 na auditoria) |
+| Suíte | 582 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão (`npm run build` também rodado, produção compila) |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |
 
@@ -91,6 +91,14 @@ o quanto confiar nele.
    cluster de falha do provedor primário em produção — não há como forçar
    a reprodução sob demanda; conferir `AiLog`/`AuditLog(action:
    'failover')` quando um ocorrer.
+9. **Ver as 5 telas de progresso real na prática.** Implementado, testado
+   por `tsc`/`eslint`/`npm test`/`npm run build` (582 testes) e no ar desde
+   26/08/2026 (ver 2.35 na auditoria) — mas o agente não tem login pra abrir
+   o produto e ver as barras de verdade nas 5 telas (perfil social, perfil
+   profissional, orientação, carta, reescrita). Falta: percorrer as 5 no
+   dev server/preview, inclusive o caminho de erro (forçar falha do
+   provedor primário e conferir que "tentando modelo alternativo" aparece
+   nos 3 fluxos de chamada única, e que nada quebra se todos falharem).
 
 **O que NÃO está pendente e parece que está:**
 

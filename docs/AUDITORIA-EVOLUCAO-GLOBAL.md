@@ -2085,7 +2085,28 @@ genérico), um runner por `kind` em `lib/ai-jobs/runners/`, rota única
 Detalhe completo no plano salvo em
 `C:\Users\sptox\.claude\plans\snappy-jingling-pinwheel.md` desta máquina.
 
-Implementação em andamento, um fluxo por vez (Perfil Profissional primeiro,
-valida a infra ponta a ponta; Reescrita por último, o mais arriscado) —
-cada entrega desta rodada será registrada aqui como uma subseção própria
-conforme for concluída.
+**Concluído em 26/08/2026, um fluxo por vez, cada um commitado e verificado
+separadamente** (`tsc`/`eslint`/`npm test`/`npm run build` limpos a cada
+passo):
+
+1. Infraestrutura compartilhada (`AiJob`, callback `onProviderAttempt` no
+   roteador, `lib/ai-jobs/engine.ts`, rota de status genérica, hook
+   `use-ai-job.ts`).
+2. Perfil Profissional — primeiro fluxo, valida a infra inteira.
+3. Orientação Vocacional e Carta de Apresentação — reaproveitam o mesmo
+   runner de chamada única. Corrigiu de quebra, no caminho:
+   `checkProfileConflicts` em `analysis-view.tsx` também chamava a rota de
+   sugestão de perfil convertida no passo 2 esperando resposta síncrona —
+   ficaria quebrada sem o ajuste.
+4. Leitura de Perfil Social — primeiro fluxo com etapas reais
+   (`analyzeSocialPresence` ganhou `onStepSettled` opcional e aditivo).
+5. Reescrita do Currículo — decomposta em 3 seções fixas por categoria de
+   conteúdo, o fluxo mais arriscado, feito por último. Como efeito colateral
+   positivo, a divisão também tornou a reescrita mais confiável: cada seção
+   agora cabe com folga no teto por tentativa do roteador, o que devolveu o
+   suplente real (`maxProviderAttempts: 2`) que a chamada única de 8.000
+   tokens não podia se dar ao luxo de ter.
+
+582 testes no total (eram 562 no início desta rodada de sessão), `AnalysisJob`
+e `use-analysis-job.ts` do laudo principal permanecem exatamente como
+estavam — nenhuma linha tocada.
