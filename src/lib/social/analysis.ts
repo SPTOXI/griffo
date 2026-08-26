@@ -239,6 +239,14 @@ export async function analyzeSocialPresence(params: {
   userCountry: string | null
   /** Prazo restante da rota. Cada chamada paralela pode usá-lo por inteiro. */
   timeBudgetMs: number
+  /**
+   * Avisa, em tempo real, quando UM perfil (ou a avaliação geral) termina —
+   * sucesso ou falha, nunca lança. Existe para dar à leitura de perfil social
+   * progresso real por etapa (ver `lib/ai-jobs/runners/social-advice.ts` e a
+   * regra em HANDOFF-CONTINUIDADE.md, "Nunca dar sensação de travamento"),
+   * sem que quem chama sem passar isto note qualquer diferença.
+   */
+  onStepSettled?: (key: string) => void
 }): Promise<SocialAnalysisResult> {
   const { profiles, resumeExcerpt, ...rest } = params
 
@@ -254,9 +262,23 @@ export async function analyzeSocialPresence(params: {
     sharedContext: `CURRÍCULO DO CANDIDATO:\n${resumeExcerpt}`,
   }
 
+  // `finally`, não `then`: precisa disparar tanto no sucesso quanto na falha
+  // de cada chamada, sem alterar o valor ou o estado (fulfilled/rejected) que
+  // `Promise.allSettled` enxerga depois.
+  const tap = <T,>(promise: Promise<T>, key: string): Promise<T> => {
+    if (!rest.onStepSettled) return promise
+    return promise.finally(() => {
+      try {
+        rest.onStepSettled!(key)
+      } catch (e) {
+        console.warn('[social] onStepSettled lançou; ignorado:', e)
+      }
+    })
+  }
+
   const settled = await Promise.allSettled([
-    ...profiles.map((p) => analyzeOneProfile(p, ctx)),
-    buildOverallAssessment(profiles, ctx),
+    ...profiles.map((p, i) => tap(analyzeOneProfile(p, ctx), p.url || `${p.platform}_${i}`)),
+    tap(buildOverallAssessment(profiles, ctx), 'overall'),
   ])
 
   const profileResults = settled.slice(0, profiles.length) as PromiseSettledResult<SocialProfileAdvice>[]

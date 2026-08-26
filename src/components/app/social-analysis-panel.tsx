@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Progress } from '@/components/ui/progress'
 import {
   Share2, Loader2, Sparkles, CheckCircle2, AlertCircle, Upload, FileText, Github, Globe,
   Lock, ClipboardPaste, ChevronDown, ChevronUp, Info,
 } from 'lucide-react'
 import { internalFetch } from '@/lib/internal-fetch'
 import { toast } from 'sonner'
+import { useAiJob } from './use-ai-job'
 
 /** Procedência de cada perfil — o que foi lido de verdade e o que não foi. */
 interface SocialSource {
@@ -69,7 +71,6 @@ export function SocialAnalysisPanel({
   socialLinks: Record<string, string>
 }) {
   const [analysis, setAnalysis] = useState<SocialAnalysis | null>(initialAnalysis)
-  const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // O caminho manual deixou de depender de uma falha para aparecer. O LinkedIn
@@ -87,46 +88,39 @@ export function SocialAnalysisPanel({
     ([k, v]) => k.toLowerCase().includes('linkedin') || String(v).toLowerCase().includes('linkedin.com')
   )
 
-  const run = async () => {
-    setRunning(true)
-    setError(null)
-    try {
-      const body: Record<string, unknown> = { resumeId }
-      if (pastedText.trim()) body.linkedinPdfText = pastedText.trim()
-
-      const r = await internalFetch('/api/resume/social-analysis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      const data = await r.json()
-
-      if (!r.ok) {
-        // 422: nada pôde ser lido. Abre o caminho manual em vez de só falhar.
-        if (data.code === 'NO_PROFILE_CONTENT') {
-          setSourceNotes(data.profiles || [])
-          setManualOpen(true)
-          setError(data.error)
-          return
-        }
-        if (data.code === 'ANALYSIS_REQUIRED') {
-          // A auditoria de perfis não tem preço próprio: ela é um dos itens da
-          // Análise Completa deste currículo.
-          setError(data.error)
-          return
-        }
-        setError(data.error || 'Não foi possível concluir a análise.')
+  /**
+   * Progresso real via `useAiJob`: cada perfil (mais a avaliação geral) é
+   * uma etapa gravada assim que termina de verdade, não uma barra calibrada
+   * em tempo — ver `lib/ai-jobs/runners/social-advice.ts` e a regra em
+   * HANDOFF-CONTINUIDADE.md, "Nunca dar sensação de travamento".
+   */
+  const job = useAiJob<{ socialAnalysis: SocialAnalysis; analyzedCount: number }>({
+    startUrl: '/api/resume/social-analysis',
+    statusUrl: '/api/ai-jobs/status',
+    onCompleted: (result) => {
+      setError(null)
+      setAnalysis(result.socialAnalysis)
+      setSourceNotes(result.socialAnalysis?.sources || null)
+      toast.success(`Análise concluída sobre ${result.analyzedCount} perfil(is).`)
+    },
+    onFailed: (message, code, data) => {
+      // 422: nada pôde ser lido. Abre o caminho manual em vez de só falhar.
+      if (code === 'NO_PROFILE_CONTENT') {
+        setSourceNotes(data?.profiles || [])
+        setManualOpen(true)
+        setError(message)
         return
       }
+      setError(message || 'Não foi possível concluir a análise.')
+    },
+  })
+  const running = job.phase === 'starting' || job.phase === 'running'
 
-      setAnalysis(data.socialAnalysis)
-      setSourceNotes(data.socialAnalysis?.sources || null)
-      toast.success(`Análise concluída sobre ${data.analyzedCount} perfil(is).`)
-    } catch {
-      setError('Falha de conexão. Verifique sua internet e tente novamente — nada foi cobrado.')
-    } finally {
-      setRunning(false)
-    }
+  const run = () => {
+    setError(null)
+    const body: Record<string, unknown> = { resumeId }
+    if (pastedText.trim()) body.linkedinPdfText = pastedText.trim()
+    void job.start(body)
   }
 
   /**
@@ -270,11 +264,21 @@ export function SocialAnalysisPanel({
               className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold shadow-lg shadow-violet-600/20"
             >
               {running ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lendo seus perfis... (até 40s)</>
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lendo seus perfis...</>
               ) : (
                 <><Sparkles className="w-4 h-4 mr-2" /> Auditar presença digital</>
               )}
             </Button>
+            {running && (
+              <div className="max-w-xs mx-auto space-y-1.5">
+                <Progress value={job.progress} className="h-1.5" />
+                {/* Cada número aqui é uma etapa que de fato terminou — não uma
+                    estimativa de tempo. */}
+                <p className="text-xs text-slate-400">
+                  {job.completedSteps} de {job.totalSteps || '...'} perfil(is) lido(s)
+                </p>
+              </div>
+            )}
           </div>
         )}
 

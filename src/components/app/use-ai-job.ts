@@ -39,7 +39,14 @@ export interface UseAiJobOptions<TResult> {
   /** Rota de status — GET, recebe `?jobId=`. */
   statusUrl: string
   onCompleted?: (result: TResult) => void
-  onFailed?: (error: string, code: string | null) => void
+  /**
+   * `data` é o corpo bruto da resposta que falhou — só preenchido na falha de
+   * `start()` (antes de existir job), nunca na falha vinda do status. Existe
+   * para chamadores que precisam de mais que `error`/`code` num caso especial
+   * (ex.: a leitura de perfil social lê `data.profiles` no 422), sem duplicar
+   * a chamada só para inspecionar o corpo.
+   */
+  onFailed?: (error: string, code: string | null, data?: any) => void
 }
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms))
@@ -172,7 +179,7 @@ export function useAiJob<TResult = unknown>(options: UseAiJobOptions<TResult>) {
         if (!r.ok || !data.jobId) {
           const message = data.error || 'Não foi possível iniciar.'
           setState({ ...initialState<TResult>(), phase: 'failed', error: message, errorCode: data.code ?? null })
-          optionsRef.current.onFailed?.(message, data.code ?? null)
+          optionsRef.current.onFailed?.(message, data.code ?? null, data)
           return false
         }
 

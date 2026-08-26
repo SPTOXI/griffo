@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const maxDuration = 60
 
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
@@ -10,10 +10,10 @@ import { requireUnlockedResume } from '@/lib/entitlements'
 import { getRequestLanguage } from '@/lib/i18n/server'
 import { edgeCountry } from '@/lib/pricing/resolve'
 import { fetchAllProfiles, detectPlatform, type SocialProfileData } from '@/lib/social/fetchers'
-import { analyzeSocialPresence } from '@/lib/social/analysis'
 import { loadProfileContext } from '@/lib/profile/server'
 import { MAX_PDF_BASE64_CHARS, parsePdfBase64 } from '@/lib/pdf-text'
 import { MAX_SOCIAL_LINKS } from '@/lib/validation'
+import { processSocialAdviceJob, type SocialAdviceInput } from '@/lib/ai-jobs/runners/social-advice'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório.'),
@@ -41,21 +41,7 @@ const schema = z.object({
   linkedinPdfBase64: z.string().max(MAX_PDF_BASE64_CHARS).optional(),
 })
 
-/**
- * Prazo total da rota, em milissegundos, deixando folga dentro do
- * `maxDuration` de 60s para o reembolso e a resposta HTTP.
- *
- * Esta rota trabalha ANTES de chamar a IA — lê o PDF e busca os perfis, o que
- * pode levar 10s — e o roteador, sozinho, planejava em cima dos 52s cheios como
- * se a chamada começasse junto com a requisição. Somados, os dois estouravam o
- * limite da plataforma, que encerrava a função antes do `catch`: o usuário
- * pagava e não recebia nem o resultado nem a mensagem de erro.
- */
-const ROUTE_BUDGET_MS = 52_000
-
 export async function POST(req: Request) {
-  const routeStart = Date.now()
-
   try {
     const user = await getCurrentUser()
     if (!user) {
@@ -188,83 +174,64 @@ export async function POST(req: Request) {
       language: lang,
     })
 
-    // Uma chamada por perfil, em paralelo, mais a avaliação geral. O parecer
-    // inteiro numa chamada só estourava o teto de tempo por provedor — mesmo
-    // problema, e mesma solução, da análise do currículo. Ver lib/social/analysis.ts.
-    const analysis = await analyzeSocialPresence({
-      profiles,
-      resumeExcerpt: resume.originalContent.slice(0, 8000),
-      lang,
-      market,
-      userId: user.id,
-      resumeId: resume.id,
-      userCountry: edgeCountry(req),
-      // O que sobrou do prazo depois da leitura do PDF e da busca dos perfis.
-      // As chamadas são simultâneas, então cada uma pode usá-lo por inteiro.
-      timeBudgetMs: ROUTE_BUDGET_MS - (Date.now() - routeStart),
+    const inFlight = await db.aiJob.findFirst({
+      where: {
+        resumeId: resume.id,
+        userId: user.id,
+        kind: 'social_advice',
+        status: { in: ['queued', 'running'] },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, status: true },
     })
 
+    if (inFlight) {
+      return NextResponse.json({ jobId: inFlight.id, status: inFlight.status }, { status: 202 })
+    }
 
-    const stored = {
-      ...analysis,
-      // Guarda o que foi lido de fato: sem isso não há como auditar depois se
-      // uma recomendação veio de conteúdo real ou de orientação genérica.
+    // Entrada preparada AGORA — busca de perfil e PDF já feitas — e persistida
+    // pro `after()` reaproveitar sem refazer nada. Ver o comentário de
+    // `AiJob.inputJson` no schema.
+    const input: SocialAdviceInput = {
+      profiles,
+      resumeExcerpt: resume.originalContent.slice(0, 8000),
+      marketId: market.id,
       sources: profiles.map((p) => ({
         platform: p.platform,
         url: p.url,
         status: p.status,
         note: p.note,
       })),
-      analyzedAt: new Date().toISOString(),
     }
 
-    await db.resume.update({
-      where: { id: resume.id },
-      data: { socialAnalysisJson: JSON.stringify(stored) },
-    })
-
-    await db.auditLog.create({
+    const job = await db.aiJob.create({
       data: {
         userId: user.id,
         resumeId: resume.id,
-        action: 'social_analysis',
-        // Modelo e custo saem do AiLog agora: a auditoria virou N chamadas
-        // paralelas, cada uma com sua própria linha de telemetria, e repetir
-        // aqui o modelo de uma delas descreveria mal o conjunto.
-        meta: JSON.stringify({
-          analyzedCount,
-          totalProfiles: profiles.length,
-          aiCalls: profiles.length + 1,
-          failedProfiles: analysis.failedProfiles,
-        }),
+        kind: 'social_advice',
+        status: 'queued',
+        totalSteps: profiles.length + 1,
+        inputJson: JSON.stringify(input),
+        lang,
+        userCountry: edgeCountry(req),
       },
+      select: { id: true },
     })
 
-    return NextResponse.json({
-      success: true,
-      socialAnalysis: stored,
-      analyzedCount,
-    })
+    after(() =>
+      processSocialAdviceJob(job.id).catch((e) =>
+        console.error('[social-analysis] Falha ao processar job:', e)
+      )
+    )
+
+    return NextResponse.json({ jobId: job.id, status: 'queued' }, { status: 202 })
   } catch (e: any) {
-    console.error('social-analysis error:', e?.diagnostic || e?.message || e)
-
-    // Diz o que aconteceu e o que fazer. "Tente novamente em instantes" era o
-    // mesmo texto para toda causa possível, e o usuário repetia a operação sem
-    // saber se o problema era o conteúdo que ele enviou ou o provedor de IA.
-    const isProviderFailure = Boolean(e?.diagnostic)
-    const base = isProviderFailure
-      ? 'Os provedores de IA não responderam a tempo nesta tentativa. Nada do que você enviou foi perdido — ' +
-        'basta clicar em analisar de novo.'
-      : e?.message && typeof e.message === 'string' && e.message.length < 200
-        ? e.message
-        : 'Ocorreu uma falha durante o processamento da análise.'
-
-    // Nada a estornar: a falha não custou nada ao usuário.
+    // A partir daqui só sobra o que acontece ANTES de existir job — leitura de
+    // PDF, busca de perfil, banco. A falha de provedor de IA agora só existe
+    // dentro do job, e chega pela consulta de status, não por este `catch`.
+    console.error('social-analysis error:', e?.message || e)
     return NextResponse.json(
-      {
-        error: base,
-        code: isProviderFailure ? 'AI_PROVIDERS_UNAVAILABLE' : 'ANALYSIS_FAILED',
-      },
+      { error: 'Ocorreu uma falha durante o processamento. Nada do que você enviou foi perdido.', code: 'ANALYSIS_FAILED' },
       { status: 500 }
     )
   }

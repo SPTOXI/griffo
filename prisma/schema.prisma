@@ -477,6 +477,15 @@ model AiJob {
   resultJson   String?
   errorMessage String?
 
+  /// Entrada preparada pela rota ANTES de criar o job — por exemplo, os
+  /// perfis sociais já buscados (com conteúdo do LinkedIn em PDF ou colado à
+  /// mão) na leitura de perfil social. Existe porque essa preparação é cara e
+  /// específica do pedido: refazê-la dentro do `after()` duplicaria buscas
+  /// externas (GitHub, Jina) e perderia conteúdo que só existiu na requisição
+  /// original. Tarefas de chamada única não usam este campo — recarregam o
+  /// currículo pelo `resumeId`, que já basta.
+  inputJson String?
+
   /// Idioma e país capturados no pedido: quem retoma o trabalho numa invocação
   /// posterior não tem mais os cabeçalhos da requisição original.
   lang        String  @default("pt")
