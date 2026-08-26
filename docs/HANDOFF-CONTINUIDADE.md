@@ -27,7 +27,7 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 26/08/2026, roteador corrigido para aceitar a OpenAI: `gpt-5.6-luna` recusava `max_tokens` ("use max_completion_tokens"), só a OpenAI usa o parâmetro novo agora (ver 2.38 na auditoria) |
+| Última revisão | 26/08/2026, "erro geral" no Kimi/GPT/Gemini eram 3 causas distintas: Gemini com modelo aposentado pelo Google (gemini-2.0-flash → gemini-3.6-flash, quebrado sem ninguém notar), diagnóstico de conexão com timeout curto demais pro Kimi e cópia própria do bug do max_tokens da OpenAI — ver 2.39 na auditoria |
 | Suíte | 583 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão (`npm run build` também rodado, produção compila) |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |

@@ -48,12 +48,26 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   gemini: {
     id: 'gemini',
     name: 'Google Gemini',
-    defaultModel: 'gemini-2.0-flash',
+    // `gemini-2.0-flash` foi APOSENTADO pelo Google — descoberto em
+    // 26/08/2026 ao investigar "erro geral" no diagnóstico de conexão. O erro
+    // real (só visível chamando a API REST direto — o SDK da OpenAI engole o
+    // corpo do 404 do Gemini e mostra "404 status code (no body)") era:
+    // "This model models/gemini-2.0-flash is no longer available. Please
+    // update your code to use models/gemini-3.6-flash." Mesma classe do
+    // `deepseek-chat` retirado em 24/07/2026 — ver o comentário no DeepSeek
+    // logo abaixo. Zero chamada ao Gemini está registrada em `AiLog` desde
+    // sempre (só é candidato de suplente distante, quase nunca alcançado),
+    // então isto pode ter estado quebrado por um bom tempo sem ninguém notar.
+    defaultModel: 'gemini-3.6-flash',
     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
     apiKeyEnvVar: 'GEMINI_API_KEY',
+    // Preço herdado do `gemini-2.0-flash` — NÃO confirmado para o
+    // `gemini-3.6-flash`. Mantido como estimativa até alguém confirmar o
+    // valor real na página de pricing do Google; o painel de custo pode
+    // estar errado para este provedor até lá.
     pricing: {
-      inputPer1k: 0.000075, // $0.075 / 1M
-      outputPer1k: 0.0003, // $0.30 / 1M
+      inputPer1k: 0.000075, // $0.075 / 1M — herdado, não confirmado
+      outputPer1k: 0.0003, // $0.30 / 1M — herdado, não confirmado
     },
   },
   openai: {
@@ -93,7 +107,11 @@ const CURRENT_MODELS: Record<ProviderId, string[]> = {
   // substituída pelo padrão do provedor — que é exatamente para o que esta
   // substituição existe.
   deepseek: ['deepseek-v4-flash', 'deepseek-v4-pro'],
-  gemini: ['gemini-2.0-flash'],
+  // `gemini-2.0-flash` saiu da lista pelo mesmo motivo do `deepseek-chat`
+  // acima: aposentado pelo Google (descoberto em 26/08/2026, ver o
+  // cabeçalho de PROVIDER_CONFIGS.gemini). Mantê-lo aqui faria uma chave já
+  // cadastrada continuar chamando um ID que devolve 404.
+  gemini: ['gemini-3.6-flash'],
   openai: ['gpt-5.6-luna'],
 }
 

@@ -2223,3 +2223,43 @@ para quando/se aparecer, não uma correção preventiva sem evidência.
 `tsc`/`eslint`/`npm test`/`npm run build` limpos, 583 testes (sem teste
 novo dedicado — a lógica trocada é o parâmetro passado à chamada HTTP real
 do SDK, que este arquivo não testa isoladamente para nenhum provedor).
+
+## 2.39 "Erro geral" no Kimi/GPT/Gemini — três causas diferentes, uma por uma
+
+Operador reportou falha nos três ao testar a conexão. Nenhum `AiLog`
+recente (a rota de diagnóstico não grava lá) — a investigação foi replicar
+a chamada de cada provedor com a chave real, fora da rota, pra ver o erro
+verdadeiro em vez de adivinhar pela mensagem genérica da tela.
+
+1. **OpenAI**: o mesmo "Unsupported parameter: 'max_tokens'" do §2.38 — só
+   que na rota de PRODUÇÃO (`router.ts`) já estava corrigido; a rota de
+   DIAGNÓSTICO (`api/admin/ai-test/route.ts`) tem sua própria cópia da
+   chamada, que ficou pra trás. Corrigida agora do mesmo jeito.
+2. **Gemini**: não era timeout nem parâmetro — era 404. O SDK da OpenAI
+   engole o corpo do erro do Gemini e mostra só "404 status code (no
+   body)"; a chamada REST direta revelou a mensagem real do Google: *"This
+   model models/gemini-2.0-flash is no longer available. Please update
+   your code to use models/gemini-3.6-flash."* Mesma classe do
+   `deepseek-chat` aposentado em 24/07/2026. **Zero chamada ao Gemini
+   estava registrada em `AiLog` desde sempre** — é só suplente distante,
+   quase nunca alcançado — então isto pode ter estado quebrado há tempos
+   sem ninguém notar. Corrigido: `defaultModel`/`CURRENT_MODELS` do Gemini
+   em `registry.ts`, o `AiApiKey.model` já cadastrado (banco), e os
+   rótulos em `admin-view.tsx`. Preço do `gemini-3.6-flash` NÃO confirmado
+   — herdado do `gemini-2.0-flash` como estimativa, sinalizado no código.
+3. **Kimi**: nem parâmetro nem modelo — a rota de diagnóstico usava
+   `timeout: 10000`, ABAIXO do próprio piso que o roteador de produção
+   respeita (`MIN_PROVIDER_TIMEOUT_MS = 12_000`, "abaixo disto uma
+   tentativa não tem chance real de terminar"). O Kimi simplesmente
+   respondeu mais devagar que 10s — não é falha de configuração, é um
+   diagnóstico com prazo curto demais pra um provedor que este sistema já
+   sabe ser mais lento (ver 2.34). Corrigido: `TEST_TIMEOUT_MS = 15_000`, e
+   os 5 testes passaram a rodar em PARALELO em vez de sequencial (eram até
+   5×10s = 50s somados, quase estourando o `maxDuration` de 60s sozinhos —
+   paralelo abre espaço pra um prazo maior sem esse risco).
+
+Os quatro provedores (Kimi, DeepSeek, Gemini, OpenAI) foram testados de
+novo, em paralelo, com a chave real de cada um, fora da rota — os quatro
+responderam com sucesso depois das correções.
+
+`tsc`/`eslint`/`npm test`/`npm run build` limpos, 583 testes.
