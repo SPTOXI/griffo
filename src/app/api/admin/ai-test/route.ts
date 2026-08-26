@@ -13,7 +13,11 @@ export async function GET() {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 
-  const providers = ['kimi', 'deepseek', 'claude'] as const
+  // Gemini e OpenAI ficaram de fora desde sempre — a grade da tela já os
+  // mostrava (`admin-view.tsx`), mas o teste de verdade nunca os cobriu.
+  // Os dois passam pelo mesmo ramo genérico do Kimi/DeepSeek (SDK compatível
+  // com OpenAI), então entrar na lista já basta — nenhuma lógica nova.
+  const providers = ['kimi', 'deepseek', 'claude', 'gemini', 'openai'] as const
   const results: Record<string, any> = {}
 
   for (const pId of providers) {

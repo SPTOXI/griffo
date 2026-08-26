@@ -2347,13 +2347,14 @@ function AdminViewContent() {
             </CardHeader>
             <CardContent className="pt-2 pb-4">
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                {['kimi', 'deepseek', 'claude', 'gemini'].map((pId) => {
+                {['kimi', 'deepseek', 'claude', 'gemini', 'openai'].map((pId) => {
                   const res = aiTestResults?.[pId]
                   const provNames: Record<string, string> = {
                     kimi: 'Kimi (Moonshot)',
                     deepseek: 'DeepSeek AI',
                     claude: 'Claude (Anthropic)',
                     gemini: 'Google Gemini',
+                    openai: 'OpenAI (GPT-5.6 Luna)',
                   }
 
                   let statusBg = 'bg-slate-800/80 border-slate-700 text-slate-300'
