@@ -177,6 +177,16 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
       continue
     }
 
+    // Só a partir daqui é uma tentativa real — pulos por falta de chave não
+    // avisam. Nunca deixa uma implementação com bug derrubar a tarefa.
+    if (req.onProviderAttempt) {
+      try {
+        req.onProviderAttempt({ providerId: currentProviderId, attemptNumber: i + 1 })
+      } catch (callbackErr) {
+        console.warn('[AI Router] onProviderAttempt lançou; ignorado:', callbackErr)
+      }
+    }
+
     const startCallTime = Date.now()
     try {
       let content = ''

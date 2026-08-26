@@ -67,6 +67,7 @@ model User {
   incidents           SystemIncident[]
   sessions            Session[]
   analysisJobs        AnalysisJob[]
+  aiJobs              AiJob[]
   professionalProfile ProfessionalProfile?
   radarPreference     RadarPreference?
   radarAlerts         RadarAlert[]
@@ -281,6 +282,7 @@ model Resume {
 
   auditLogs    AuditLog[]
   analysisJobs AnalysisJob[]
+  aiJobs       AiJob[]
 
   @@index([userId, createdAt])
 }
@@ -440,6 +442,56 @@ model AnalysisJob {
   finishedAt DateTime?
 
   @@index([resumeId, createdAt])
+  @@index([userId, createdAt])
+  @@index([status, leaseUntil])
+}
+
+/// Execução em segundo plano para tarefas de IA fora do laudo principal —
+/// leitura de perfil social, extração de perfil, orientação vocacional,
+/// carta de apresentação e reescrita do currículo (ver HANDOFF-CONTINUIDADE.md,
+/// "Nunca dar sensação de travamento", e 2.35 na auditoria).
+///
+/// Mesmo desenho de concessão/retomada do `AnalysisJob`, mas genérico por
+/// `kind`: este model NÃO substitui o `AnalysisJob` do laudo — que continua
+/// intacto — e sim cobre os outros cinco fluxos, que antes respondiam de
+/// forma síncrona e mostravam só um spinner com aviso de tempo estimado.
+model AiJob {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId String
+  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  /// social_advice | profile_extraction | career_orientation | cover_letter | rewrite
+  kind   String
+  status String @default("queued") // queued | running | completed | failed
+
+  /// Progresso real por etapa, formato depende do `kind` — por exemplo,
+  /// `{ "linkedin": {...}, "overall": {...} }` na leitura de perfil social, ou
+  /// `{ "attempt_1": { "provider": "deepseek", "at": "..." } }` numa tarefa de
+  /// chamada única. É o que torna o número mostrado na tela um fato, não uma
+  /// estimativa — a mesma exigência que já vale para o `AnalysisJob`.
+  stepsJson  String?
+  totalSteps Int
+
+  resultJson   String?
+  errorMessage String?
+
+  /// Idioma e país capturados no pedido: quem retoma o trabalho numa invocação
+  /// posterior não tem mais os cabeçalhos da requisição original.
+  lang        String  @default("pt")
+  userCountry String?
+
+  /// Concessão de exclusividade, renovada a cada etapa concluída — mesmo
+  /// papel do `leaseUntil` do `AnalysisJob`.
+  leaseUntil DateTime?
+  attempts   Int       @default(0)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  finishedAt DateTime?
+
+  @@index([resumeId, kind, createdAt])
   @@index([userId, createdAt])
   @@index([status, leaseUntil])
 }

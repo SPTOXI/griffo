@@ -134,6 +134,17 @@ export interface AiTaskRequest {
   /// vale para o suplente: um provedor que assume no failover usa o modelo
   /// configurado dele, não este.
   modelOverride?: string
+  /// Avisa, em tempo real, quando uma tentativa real de provedor começa —
+  /// nunca chamado para candidatos pulados por falta de chave ou orçamento.
+  ///
+  /// Existe para dar às tarefas de CHAMADA ÚNICA (extração de perfil,
+  /// orientação vocacional, carta de apresentação) um marco de progresso
+  /// REAL sem precisar de streaming: "IA principal chamada" quando dispara
+  /// aqui a primeira vez, "tentando modelo alternativo" se disparar de novo.
+  /// Não recebe conteúdo nem resultado — só o fato de que a tentativa
+  /// começou. Nunca lança: uma implementação com bug aqui não pode derrubar
+  /// a tarefa que está tentando reportar.
+  onProviderAttempt?: (info: { providerId: ProviderId; attemptNumber: number }) => void
 }
 
 export interface AiTaskResult {
