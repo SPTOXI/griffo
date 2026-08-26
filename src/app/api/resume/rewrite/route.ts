@@ -2,26 +2,30 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const maxDuration = 60
 
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { executeAiTask } from '@/lib/ai-router/router'
 import { requireUnlockedResume } from '@/lib/entitlements'
 import { getRequestLanguage } from '@/lib/i18n/server'
-import { buildResumeContext } from '@/lib/analysis/resume-context'
-import { loadProfileContext } from '@/lib/profile/server'
 import { edgeCountry } from '@/lib/pricing/resolve'
+import { processRewriteJob } from '@/lib/ai-jobs/runners/rewrite'
+import { REWRITE_SEGMENT_IDS } from '@/lib/resume-rewrite/segments'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório'),
 })
 
-// A análise já corta a entrada em 15.000 caracteres; a reescrita enviava o
-// currículo inteiro. Como o upload não impõe teto de tamanho, um documento
-// muito grande fazia o custo e o tempo desta rota crescerem sem limite.
-const REWRITE_INPUT_LIMIT = 20000
-
+/**
+ * Abre a reescrita do currículo, em 3 seções paralelas, e responde na hora.
+ *
+ * Prompt, contexto e persistência movidos para
+ * `lib/ai-jobs/runners/rewrite.ts` e `lib/resume-rewrite/segments.ts` — a
+ * chamada única de até 8.000 tokens virou três chamadas menores, cada uma uma
+ * etapa real de progresso (ver 2.35 na auditoria e a regra em
+ * HANDOFF-CONTINUIDADE.md, "Nunca dar sensação de travamento"). A tela
+ * acompanha por `GET /api/ai-jobs/status`.
+ */
 export async function POST(req: Request) {
   try {
     const user = await getCurrentUser()
@@ -39,6 +43,7 @@ export async function POST(req: Request) {
 
     const resume = await db.resume.findFirst({
       where: { id: resumeId, userId: user.id },
+      select: { id: true },
     })
 
     if (!resume) {
@@ -55,102 +60,45 @@ export async function POST(req: Request) {
       )
     }
 
-    const lang = getRequestLanguage(req)
-
-    // O formato de currículo é a decisão mais dependente de mercado do produto:
-    // uma página nos EUA, foto no Lebenslauf alemão, CLT/PJ no Brasil. O mercado
-    // sai do Perfil Profissional quando declarado; sem ele, do país de acesso.
-    const { market, promptContext: profileContext } = await loadProfileContext(user.id, {
-      edgeCountry: edgeCountry(req),
-      language: lang,
+    const inFlight = await db.aiJob.findFirst({
+      where: {
+        resumeId: resume.id,
+        userId: user.id,
+        kind: 'rewrite',
+        status: { in: ['queued', 'running'] },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, status: true },
     })
 
-    // Extract ATS keywords from analysis if present
-    let keywordsHint = ''
-    if (resume.analysisJson) {
-      try {
-        const parsedAnalysis = JSON.parse(resume.analysisJson)
-        if (Array.isArray(parsedAnalysis.keywords) && parsedAnalysis.keywords.length > 0) {
-          keywordsHint = `\n\nPalavras-Chave Estratégicas (ATS) obrigatórias a serem incorporadas organicamente na reescrita: ${parsedAnalysis.keywords.join(', ')}.`
-        }
-      } catch {}
+    if (inFlight) {
+      return NextResponse.json({ jobId: inFlight.id, status: inFlight.status }, { status: 202 })
     }
 
-    // Execute via AI Router
-    const routerResult = await executeAiTask({
-      taskType: 'rewrite',
-      userId: user.id,
-      userCountry: edgeCountry(req),
-      /**
-       * Currículo, mercado e perfil vão no bloco cacheável — o mesmo que a
-       * carta de apresentação e a orientação vocacional montam. Quando a pessoa
-       * pede duas dessas entregas seguidas, a segunda lê o prefixo do cache.
-       *
-       * O papel e as diretrizes de reescrita ficam fora dele: variam por tarefa
-       * e, depois do marcador, variar não custa nada.
-       */
-      cacheableContext: buildResumeContext({
-        resumeContent: resume.originalContent.slice(0, REWRITE_INPUT_LIMIT),
-        targetJob: resume.targetJob,
-        targetJobDescription: resume.targetJobDescription,
-        lang,
-        market,
-        profileContext,
-      }),
-      systemPrompt: `Você é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas de triagem (ATS).\n\nSua função é reescrever o currículo COMPLETO de ponta a ponta sem cortar nada, utilizando marcações Markdown perfeitamente estruturadas (títulos H1/H2, marcadores de lista, negritos), respeitando as convenções do mercado descrito no contexto.`,
-      userPrompt: `REESCREVA O CURRÍCULO COMPLETO DO INÍCIO AO FIM SEM OMITIR NEM SINTETIZAR NENHUMA SEÇÃO OU EXPERIÊNCIA.
-
-Diretrizes Obrigatórias:
-1. Reescreva TODAS as seções presentes no currículo original: Dados Pessoais/Cabeçalho, Resumo Profissional, TODAS as Experiências Profissionais completas (com empresas, cargos, datas), Formação Acadêmica, Habilidades Técnicas/Comportamentais, Idiomas e Certificações.
-2. Em cada experiência, escreva realizações que tragam o RESULTADO alcançado, a EVIDÊNCIA desse resultado e a AÇÃO que o produziu — é o conteúdo das metodologias STAR e XYZ.
-   NÃO reproduza a fórmula como texto. As construções "medido por ..." e "fazendo ..." estão PROIBIDAS: repetidas em vinte itens seguidos, elas produzem um currículo de sintaxe idêntica do começo ao fim, que é exatamente o oposto do efeito pretendido. Varie a construção entre os itens e escreva em português natural, como um profissional sênior escreveria.
-3. Mantenha 100% da veracidade dos fatos originais. Só cite número, percentual ou indicador que exista no currículo original — quando não houver métrica, descreva o escopo real (tamanho da equipe, número de unidades, sistemas operados, porte da operação). Inventar métrica é falsificar o currículo do candidato.${keywordsHint}
-4. Estruture a resposta usando formatação Markdown rica (títulos '# ' e '## ', marcadores '- ', negritos '**').
-5. NÃO invente dados de contato. Se o currículo original não traz e-mail, telefone ou LinkedIn, omita o campo — nunca escreva marcadores como "[seu e-mail]" ou "[link]", que chegam ao recrutador exatamente assim, como se fossem o conteúdo.
-6. NÃO use emojis, ícones ou símbolos decorativos em nenhuma parte do documento. Ele é lido por sistemas de triagem (ATS), que os descartam ou corrompem, e a exportação em PDF não possui glifo para eles.
-
-O currículo original completo está no contexto acima. Reescreva-o.`,
-      maxTokens: 8000,
-      // Reescrever um currículo inteiro são milhares de tokens de saída, e
-      // geração é serial: esses tokens SÃO a latência. Com o raciocínio
-      // estendido ligado — o padrão do Sonnet 5 quando o parâmetro é omitido —
-      // ele ainda disputava o mesmo orçamento antes de a resposta começar.
-      disableThinking: true,
-      // Uma tentativa só, com o prazo inteiro. Duas tentativas de 25s garantiam
-      // duas falhas: nenhum provedor reescreve um currículo completo em 25s. A
-      // redundância aqui custava exatamente o recurso que faltava.
-      maxProviderAttempts: 1,
-    })
-
-    const updated = await db.resume.update({
-      where: { id: resume.id },
-      data: {
-        rewrittenContent: routerResult.content,
-      },
-    })
-
-    await db.auditLog.create({
+    const job = await db.aiJob.create({
       data: {
         userId: user.id,
         resumeId: resume.id,
-        action: 'rewrite',
-        meta: JSON.stringify({ usedModel: routerResult.usedModel, provider: routerResult.usedProvider, costUsd: routerResult.costUsd }),
+        kind: 'rewrite',
+        status: 'queued',
+        totalSteps: REWRITE_SEGMENT_IDS.length,
+        lang: getRequestLanguage(req),
+        userCountry: edgeCountry(req),
       },
+      select: { id: true },
     })
 
-    return NextResponse.json({
-      success: true,
-      rewrittenContent: routerResult.content,
-      resume: updated,
-      modelUsed: routerResult.usedModel,
-      provider: routerResult.usedProvider,
-    })
+    after(() =>
+      processRewriteJob(job.id).catch((e) =>
+        console.error('[rewrite] Falha ao processar job:', e)
+      )
+    )
+
+    return NextResponse.json({ jobId: job.id, status: 'queued' }, { status: 202 })
   } catch (e: any) {
-    console.error('rewrite error:', e?.diagnostic || e?.message || e)
-    // Não há estorno a fazer: a falha não custou nada ao usuário. O currículo
-    // continua liberado e ele pode pedir a reescrita de novo.
+    console.error('rewrite error:', e?.message || e)
     return NextResponse.json(
-      { error: 'Ocorreu um erro ao reescrever o currículo. Tente novamente em instantes.' },
+      { error: 'Não foi possível iniciar a reescrita. Tente novamente em instantes.' },
       { status: 500 }
     )
   }

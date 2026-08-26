@@ -9,7 +9,9 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useAiJob } from './use-ai-job'
 import {
   FileEdit, Loader2, AlertCircle, ShieldCheck, Lock, Sparkles, Check, X,
   RefreshCw, Download, ArrowRight, Eye, Key, Copy
@@ -34,7 +36,6 @@ export function RewriteView() {
   const [resume, setResume] = useState<Resume | null>(null)
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
-  const [rewriting, setRewriting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showOriginal, setShowOriginal] = useState(false)
   const [downloadingType, setDownloadingType] = useState<string | null>(null)
@@ -101,38 +102,39 @@ export function RewriteView() {
   }, [activeResumeId])
 
 
-  const requestRewrite = async () => {
+  /**
+   * Progresso real via `useAiJob`: a reescrita virou 3 seções paralelas, cada
+   * uma uma etapa de verdade (ver `lib/ai-jobs/runners/rewrite.ts` e a regra
+   * em HANDOFF-CONTINUIDADE.md, "Nunca dar sensação de travamento").
+   */
+  const rewriteJob = useAiJob<{ rewrittenContent: string }>({
+    startUrl: '/api/resume/rewrite',
+    statusUrl: '/api/ai-jobs/status',
+    onCompleted: () => {
+      setError(null)
+      toast.success(rw.rewriteSuccessToast)
+      if (resume) void loadResume(resume.id)
+    },
+    onFailed: (message, code) => {
+      if (code === 'PLAN_REQUIRED') {
+        setError(rw.planRequiredError)
+        toast.error(rw.planRequiredToast)
+        setTimeout(() => setView('plans'), 1500)
+        return
+      }
+      setError(message || rw.rewriteErrorFallback)
+    },
+  })
+  const rewriting = rewriteJob.phase === 'starting' || rewriteJob.phase === 'running'
+
+  const requestRewrite = () => {
     if (!resume) return
     if (!authorized) {
       setError(rw.authRequiredError)
       return
     }
-    setRewriting(true)
     setError(null)
-    try {
-      const r = await internalFetch('/api/resume/rewrite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeId: resume.id, authorized: true }),
-      })
-      const data = await r.json()
-      if (!r.ok) {
-        if (data.code === 'PLAN_REQUIRED') {
-          setError(rw.planRequiredError)
-          toast.error(rw.planRequiredToast)
-          setTimeout(() => setView('plans'), 1500)
-          return
-        }
-        setError(data.error || rw.rewriteErrorFallback)
-        return
-      }
-      toast.success(rw.rewriteSuccessToast)
-      await loadResume(resume.id)
-    } catch {
-      setError(rw.rewriteConnectionError)
-    } finally {
-      setRewriting(false)
-    }
+    void rewriteJob.start({ resumeId: resume.id, authorized: true })
   }
 
   const confirmRewrite = async () => {
@@ -265,6 +267,16 @@ export function RewriteView() {
                 <><Sparkles className="w-4 h-4 mr-2" /> {rw.rewriteButton}</>
               )}
             </Button>
+            {rewriting && (
+              <div className="space-y-1">
+                <Progress value={rewriteJob.progress} className="h-1.5" />
+                {/* Cada seção pronta é um fato — 3 seções reais (cabeçalho,
+                    experiências, formação), não uma barra calibrada em tempo. */}
+                <p className="text-xs text-slate-500">
+                  {rewriteJob.completedSteps} de {rewriteJob.totalSteps || 3} seções prontas
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
