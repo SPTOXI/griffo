@@ -218,6 +218,9 @@ export interface TranslationDictionary {
     cardDesc: string
     fillButton: string
     fillDesc: string
+    fillProgressCalling: string
+    fillProgressFallback: string
+    fillProgressFinishing: string
     marketInfoIntro: string
     marketInfoWithMarket: string
     marketInfoWithoutMarket: string
@@ -1018,6 +1021,9 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       cardDesc: 'É a partir daqui que o Griffo entende quem você é profissionalmente e para qual mercado deve trabalhar. Preencha aos poucos — nada é obrigatório.',
       fillButton: 'Preencher com o que já sei sobre você',
       fillDesc: 'Lê seu último currículo e seu diagnóstico vocacional e preenche só os campos vazios. Nada é salvo até você conferir e clicar em salvar.',
+      fillProgressCalling: 'Consultando a IA...',
+      fillProgressFallback: 'Tentando um modelo alternativo...',
+      fillProgressFinishing: 'Finalizando...',
       marketInfoIntro: 'O mercado que você declara aqui muda as recomendações: quais sistemas de triagem citamos, o formato esperado do currículo e o vocabulário dos cargos.',
       marketInfoWithMarket: 'Hoje suas análises usam {market}.',
       marketInfoWithoutMarket: 'Sem mercado declarado, usamos seu país de acesso como palpite.',
@@ -1798,6 +1804,9 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       cardDesc: 'This is where Griffo learns who you are professionally and which market you should be targeting. Fill it in gradually — nothing here is required.',
       fillButton: 'Fill in what I already know about you',
       fillDesc: 'Reads your latest resume and vocational diagnosis and fills in only the empty fields. Nothing is saved until you review and click save.',
+      fillProgressCalling: 'Consulting the AI...',
+      fillProgressFallback: 'Trying an alternate model...',
+      fillProgressFinishing: 'Finishing up...',
       marketInfoIntro: 'The market you declare here changes the recommendations: which screening systems we mention, the expected resume format, and job-title vocabulary.',
       marketInfoWithMarket: 'Your analyses currently use {market}.',
       marketInfoWithoutMarket: 'With no market declared, we use your access country as a guess.',
@@ -2578,6 +2587,9 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       cardDesc: 'Desde aquí Griffo entiende quién eres profesionalmente y para qué mercado debes trabajar. Complétalo poco a poco — nada es obligatorio.',
       fillButton: 'Completar con lo que ya sé sobre ti',
       fillDesc: 'Lee tu último currículum y tu diagnóstico vocacional y completa solo los campos vacíos. Nada se guarda hasta que revises y hagas clic en guardar.',
+      fillProgressCalling: 'Consultando la IA...',
+      fillProgressFallback: 'Probando un modelo alternativo...',
+      fillProgressFinishing: 'Finalizando...',
       marketInfoIntro: 'El mercado que declaras aquí cambia las recomendaciones: qué sistemas de selección mencionamos, el formato esperado del currículum y el vocabulario de los puestos.',
       marketInfoWithMarket: 'Hoy tus análisis usan {market}.',
       marketInfoWithoutMarket: 'Sin mercado declarado, usamos tu país de acceso como referencia.',

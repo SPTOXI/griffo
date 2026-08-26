@@ -9,7 +9,9 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Progress } from '@/components/ui/progress'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
+import { useAiJob } from './use-ai-job'
 import {
   Briefcase, Target, Globe2, Sliders, Languages, Loader2, Save, Info, X, Plus, Wand2,
 } from 'lucide-react'
@@ -289,8 +291,23 @@ export function ProfessionalProfileView() {
   const [profile, setProfile] = useState<ProfessionalProfile>({ ...EMPTY_PROFILE })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [filling, setFilling] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const fillJob = useAiJob<{ suggestion: Record<string, unknown>; conflicts: unknown[] }>({
+    startUrl: '/api/user/professional-profile/suggest',
+    statusUrl: '/api/ai-jobs/status',
+    onCompleted: (result) => {
+      const { profile: next, filled } = applySuggestion(profile, result?.suggestion || {})
+      if (filled.length === 0) {
+        toast.info(p.fillNothingToFill)
+        return
+      }
+      setProfile(next)
+      toast.success(
+        (filled.length === 1 ? p.fillSuccessOne : p.fillSuccessMany).replace('{n}', String(filled.length))
+      )
+    },
+    onFailed: (error) => toast.error(error || p.fillErrorFallback),
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -366,34 +383,19 @@ export function ProfessionalProfileView() {
    *
    * Também não sobrescreve o que já está escrito: `applySuggestion` só entra em
    * campo vazio. Quem digitou tem razão sobre si.
+   *
+   * Progresso real via `useAiJob`, não um spinner com aviso de tempo: cada
+   * marco vem de uma tentativa de provedor de verdade (ver
+   * `lib/ai-jobs/runners/single-call.ts`).
    */
-  const fillFromResume = async () => {
-    setFilling(true)
-    try {
-      const res = await internalFetch('/api/user/professional-profile/suggest', { method: 'POST' })
-      const data = await res.json().catch(() => null)
+  const fillFromResume = () => void fillJob.start({})
 
-      if (!res.ok) {
-        toast.error(data?.error || p.fillErrorFallback)
-        return
-      }
-
-      const { profile: next, filled } = applySuggestion(profile, data?.suggestion || {})
-
-      if (filled.length === 0) {
-        toast.info(p.fillNothingToFill)
-        return
-      }
-
-      setProfile(next)
-      toast.success(
-        (filled.length === 1 ? p.fillSuccessOne : p.fillSuccessMany).replace('{n}', String(filled.length))
-      )
-    } catch {
-      toast.error(p.fillConnectionError)
-    } finally {
-      setFilling(false)
-    }
+  const fillProgressLabel = (): string | null => {
+    if (fillJob.phase === 'starting') return p.fillProgressCalling
+    if (fillJob.phase !== 'running') return null
+    if (fillJob.completedSteps <= 1) return p.fillProgressCalling
+    if (fillJob.completedSteps === 2) return p.fillProgressFallback
+    return p.fillProgressFinishing
   }
 
   if (loading) {
@@ -463,15 +465,25 @@ export function ProfessionalProfileView() {
               type="button"
               variant="outline"
               onClick={fillFromResume}
-              disabled={filling}
+              disabled={fillJob.phase === 'starting' || fillJob.phase === 'running'}
               className="bg-white border-primary/30 text-primary hover:bg-primary/10 h-9 text-xs font-semibold"
             >
-              {filling ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5 mr-1.5" />}
+              {fillJob.phase === 'starting' || fillJob.phase === 'running' ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Wand2 className="w-3.5 h-3.5 mr-1.5" />
+              )}
               {p.fillButton}
             </Button>
             <p className="text-[11px] text-slate-600 leading-relaxed flex-1 min-w-[220px]">
               {p.fillDesc}
             </p>
+            {(fillJob.phase === 'starting' || fillJob.phase === 'running') && (
+              <div className="w-full space-y-1">
+                <Progress value={fillJob.progress} className="h-1.5" />
+                <p className="text-[11px] text-primary font-medium">{fillProgressLabel()}</p>
+              </div>
+            )}
           </div>
 
           <div className="flex items-start gap-2 text-[11px] text-slate-600 bg-white border border-emerald-100 rounded-lg p-3 leading-relaxed">

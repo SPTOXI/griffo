@@ -10,6 +10,6 @@ import 'server-only'
  * arriscaria dependência circular (runner → engine → runner).
  *
  * Runners entram aqui conforme cada fluxo é convertido (ver 2.35 na
- * auditoria) — hoje nenhum ainda.
+ * auditoria).
  */
-export {}
+import './profile-extraction'

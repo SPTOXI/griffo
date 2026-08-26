@@ -2,28 +2,31 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const maxDuration = 60
 
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { executeAiTask } from '@/lib/ai-router/router'
-import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
-import {
-  detectProfileConflicts,
-  parseProfileExtraction,
-  PROFILE_EXTRACTION_JSON_SCHEMA,
-} from '@/lib/profile/extract'
-import { fromRecord } from '@/lib/profile'
-import { parseStoredOrientation, rolesFromOrientation } from '@/lib/profile/from-orientation'
-import { EDUCATION_LEVELS, SENIORITY_LEVELS } from '@/lib/profile'
+import { getRequestLanguage } from '@/lib/i18n/server'
+import { edgeCountry } from '@/lib/pricing/resolve'
+import { processProfileExtractionJob } from '@/lib/ai-jobs/runners/profile-extraction'
 
 /**
- * Sugere o Perfil Profissional a partir do currículo mais recente.
+ * Abre a sugestão do Perfil Profissional a partir do currículo, e responde
+ * na hora.
  *
  * ## Por que
  *
  * O currículo já diz cargo, área, competências, formação e tempo de carreira. O
  * perfil pedia tudo de novo. Pior: `runRadar` só avalia quem TEM perfil, então
  * o formulário em branco não era só chateação — era a porta fechada do Radar.
+ *
+ * ## Progresso real, não um spinner com aviso de tempo
+ *
+ * Esta rota fazia a chamada de IA e respondia só no fim — um spinner sem
+ * nenhum sinal de que algo estava de fato acontecendo. Agora ela cria o job e
+ * devolve o `id`; a tela acompanha por `GET /api/ai-jobs/status`, que mostra
+ * um marco real a cada tentativa de provedor (ver
+ * `lib/ai-jobs/runners/single-call.ts` e a regra em
+ * `HANDOFF-CONTINUIDADE.md`, "Nunca dar sensação de travamento").
  *
  * ## Sugere, não grava
  *
@@ -65,7 +68,7 @@ export async function POST(req: Request) {
         ? { id: requestedId, userId: user.id }
         : { userId: user.id },
       orderBy: { createdAt: 'desc' },
-      select: { id: true, originalContent: true, careerOrientationJson: true },
+      select: { id: true, originalContent: true },
     })
 
     if (!resume || !resume.originalContent?.trim()) {
@@ -79,140 +82,52 @@ export async function POST(req: Request) {
       )
     }
 
-    const lang = getRequestLanguage(req)
-
-    const systemPrompt = `${LANGUAGE_DIRECTIVE[lang]}
-
-Você lê currículos e extrai o que ESTÁ ESCRITO neles. Você não avalia, não recomenda e não melhora nada.
-
-REGRA ÚNICA E INEGOCIÁVEL: se o currículo não diz, o campo é null (ou lista vazia). Não deduza, não estime, não complete com o que "costuma ser". Um campo nulo é uma resposta correta; um campo inventado corrompe o perfil da pessoa e muda as vagas que ela vai receber.
-
-CAMPOS:
-
-- "currentTitle": o cargo mais recente, exatamente como escrito. Se a pessoa está entre empregos, o último que teve.
-- "seniority": um de ${SENIORITY_LEVELS.join(', ')}. Baseie-se no cargo declarado e no tempo de carreira — NÃO em quão impressionante o currículo parece. Se o cargo não indica nível, null.
-- "field": a área de atuação em duas ou três palavras (ex: "enfermagem", "engenharia de software", "logística").
-- "specializations": até 8 subáreas ou domínios em que a pessoa efetivamente trabalhou.
-- "skills": até 20 competências, ferramentas e tecnologias CITADAS no currículo. Não acrescente as que "quem faz isso costuma ter".
-- "yearsExperience": anos de experiência profissional, somando os períodos declarados. Se as datas não permitem somar, null. Nunca arredonde para cima.
-- "educationLevel": um de ${EDUCATION_LEVELS.join(', ')} — a MAIOR formação CONCLUÍDA. Curso em andamento não conta.
-- "targetRoles": cargos que a pessoa declara buscar, se o currículo tiver objetivo profissional. Se não tiver, lista vazia — NÃO deduza a partir do cargo atual.
-
-Responda APENAS o JSON do schema, sem texto antes ou depois.`
-
-    const aiResponse = await executeAiTask({
-      taskType: 'profile_extraction',
-      userId: user.id,
-      resumeId: resume.id,
-      systemPrompt,
-      userPrompt: `CURRÍCULO:\n${resume.originalContent.slice(0, 14000)}`,
-      maxTokens: 1200,
-      disableThinking: true,
-      jsonSchema: PROFILE_EXTRACTION_JSON_SCHEMA,
-      /**
-       * Três tentativas, e não as duas do padrão.
-       *
-       * A cadeia desta tarefa é DeepSeek → Kimi → Claude. Com duas tentativas
-       * ela parava no Kimi, e o Claude — o único que nunca falhou nesta tarefa
-       * — jamais era alcançado: a rota falhava inteira com os dois provedores
-       * baratos, tendo um confiável na fila logo atrás.
-       *
-       * Cabe no prazo porque a tarefa é curta: o orçamento dividido por três
-       * ainda dá ~16s por tentativa, acima do mínimo do roteador. E o custo de
-       * chegar ao Claude só existe quando os dois primeiros falham — no caminho
-       * feliz continua sendo a extração barata de sempre.
-       */
-      maxProviderAttempts: 3,
-      /**
-       * V4-Pro, não o V4-Flash padrão do DeepSeek.
-       *
-       * O Flash é o certo para `free_preview` — alto volume, sem custo por
-       * pessoa que ainda não pagou. Esta rota é o oposto: uma chamada por
-       * pessoa, e uma leitura malformada não custa uma resposta pior, custa a
-       * pessoa preencher tudo à mão de novo. Em 30 dias o Flash produziu JSON
-       * inválido (não truncado — respondeu rápido e errado) em pelo menos uma
-       * leva de tentativas para o mesmo usuário; o Pro é o modelo maior do
-       * mesmo provedor, e a diferença de custo — frações de centavo nesta
-       * tarefa curta, uma vez por pessoa — não pesa. Ver 2.34 na auditoria.
-       */
-      modelOverride: 'deepseek-v4-pro',
+    // Uma sugestão já em andamento é devolvida em vez de duplicada — mesmo
+    // motivo do `analyze/route.ts`: um duplo clique não deve abrir dois jobs
+    // para o mesmo currículo.
+    const inFlight = await db.aiJob.findFirst({
+      where: {
+        resumeId: resume.id,
+        userId: user.id,
+        kind: 'profile_extraction',
+        status: { in: ['queued', 'running'] },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, status: true },
     })
 
-    const suggestion = parseProfileExtraction(aiResponse.content)
-
-    /**
-     * Os cargos-alvo vêm do diagnóstico vocacional, não da IA que lê o
-     * currículo — e sobrescrevem o que ela tiver dito.
-     *
-     * O diagnóstico é a recomendação do próprio produto, feita com mais
-     * contexto e já vista pela pessoa. Uma leitura de currículo adivinhando
-     * "para onde essa carreira vai" competiria com ela e às vezes ganharia,
-     * dizendo à pessoa algo diferente do que a tela do diagnóstico disse.
-     *
-     * Esta rota também serve quem rodou o diagnóstico ANTES de ele passar a
-     * semear o perfil sozinho: para essas pessoas, é por aqui que os cargos
-     * recomendados chegam ao perfil.
-     */
-    const roles = rolesFromOrientation(parseStoredOrientation(resume.careerOrientationJson))
-    if (roles.length > 0) suggestion.targetRoles = roles
-
-    if (Object.keys(suggestion).length === 0) {
-      return NextResponse.json(
-        {
-          error:
-            'Não consegui extrair nada aproveitável do seu currículo. Preencha o perfil à mão — é mais rápido que tentar de novo.',
-          code: 'empty_extraction',
-        },
-        { status: 422 }
-      )
+    if (inFlight) {
+      return NextResponse.json({ jobId: inFlight.id, status: inFlight.status }, { status: 202 })
     }
 
-    /**
-     * O que este currículo CONTRADIZ no perfil gravado.
-     *
-     * Vem junto da sugestão, e não numa rota própria, porque depende da mesma
-     * extração — que é uma chamada de IA. Separar em duas rotas faria a tela
-     * pagar duas vezes pela mesma leitura do mesmo currículo.
-     *
-     * Lista vazia é o caso comum e não é erro: quer dizer que o currículo
-     * combina com o perfil, ou que ainda não há perfil com que conflitar.
-     */
-    const record = await db.professionalProfile.findUnique({ where: { userId: user.id } })
-    const conflicts = detectProfileConflicts(fromRecord(record), suggestion)
-
-    return NextResponse.json({ suggestion, conflicts, resumeId: resume.id })
-  } catch (e: any) {
-    // `diagnostic` primeiro, e não `message`: o roteador de IA guarda em
-    // `message` um texto seguro para mostrar ao usuário — "Falha ao processar
-    // com as IAs ativas" — e em `diagnostic` o motivo por provedor, com código
-    // de status e latência de cada tentativa. Registrar só o primeiro produz um
-    // log que confirma a falha e não ajuda a resolvê-la, que foi exatamente o
-    // que aconteceu aqui: a rota falhou em produção e o log não dizia por quê.
-    console.error('[professional-profile/suggest]', e?.diagnostic || e?.message || e)
-    /**
-     * A mensagem que vai para a tela é ESCRITA, nunca a do erro.
-     *
-     * Esta rota devolvia `e?.message`, e o que chegava ao usuário era o texto
-     * interno do roteador de IA — "Falha ao processar com as IAs ativas", ou
-     * pior, o nome do modelo, o teto de `max_tokens` e o tamanho do raciocínio.
-     * Nada disso quer dizer coisa alguma para quem está montando o próprio
-     * perfil, e ainda expõe como o sistema é feito por dentro.
-     *
-     * O detalhe técnico não se perde: ele está no log desta rota, em
-     * `AiLog.errorMessage` e no painel de admin.
-     *
-     * O texto abaixo tem um trabalho a fazer além de avisar do erro — dizer
-     * que a pessoa não está travada. Preencher à mão continua disponível, e é
-     * o que ela precisa saber para não abandonar a tela.
-     */
-    return NextResponse.json(
-      {
-        error:
-          'Não consegui ler seu currículo agora — isso costuma ser temporário. ' +
-          'Tente de novo em alguns instantes, ou preencha os campos à mão: o perfil ' +
-          'funciona igual dos dois jeitos.',
-        code: 'SUGGESTION_FAILED',
+    const job = await db.aiJob.create({
+      data: {
+        userId: user.id,
+        resumeId: resume.id,
+        kind: 'profile_extraction',
+        status: 'queued',
+        // 4, e não o teto real de tentativas (3): evita que a divisão bata em
+        // 100% ENQUANTO ainda roda a última tentativa (ver o comentário de
+        // `describeAiJobProgress`, que só força 100% quando `status` já é
+        // 'completed'). Cada marco real ainda avança a barra normalmente.
+        totalSteps: 4,
+        lang: getRequestLanguage(req),
+        userCountry: edgeCountry(req),
       },
+      select: { id: true },
+    })
+
+    after(() =>
+      processProfileExtractionJob(job.id).catch((e) =>
+        console.error('[professional-profile/suggest] Falha ao processar job:', e)
+      )
+    )
+
+    return NextResponse.json({ jobId: job.id, status: 'queued' }, { status: 202 })
+  } catch (e: any) {
+    console.error('[professional-profile/suggest]', e?.message || e)
+    return NextResponse.json(
+      { error: 'Não foi possível iniciar a leitura do currículo. Tente novamente em instantes.' },
       { status: 500 }
     )
   }
