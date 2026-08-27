@@ -906,7 +906,7 @@ function AdminViewContent() {
             <Users className="w-5 h-5 text-blue-600" /> <span className="font-semibold text-sm">Gestão de Usuários</span>
           </TabsTrigger>
           <TabsTrigger value="ai-keys" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
-            <Key className="w-5 h-5 text-indigo-600" /> <span className="font-semibold text-sm">Cadastrar APIs de IA (4 IAs)</span>
+            <Key className="w-5 h-5 text-indigo-600" /> <span className="font-semibold text-sm">Cadastrar APIs de IA (5 IAs)</span>
           </TabsTrigger>
           <TabsTrigger value="pricing" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
             <Zap className="w-5 h-5 text-yellow-600" /> <span className="font-semibold text-sm">Monetização & Preços</span>
@@ -1464,7 +1464,7 @@ function AdminViewContent() {
           </Dialog>
         </TabsContent>
 
-        {/* AI KEYS MANAGER TAB (4 IAs) */}
+        {/* AI KEYS MANAGER TAB (5 IAs) */}
         <TabsContent value="ai-keys" className="space-y-6">
           {/* REGISTER NEW API KEY FORM */}
           <Card>
@@ -2346,7 +2346,7 @@ function AdminViewContent() {
               </Button>
             </CardHeader>
             <CardContent className="pt-2 pb-4">
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                 {['kimi', 'deepseek', 'claude', 'gemini', 'openai'].map((pId) => {
                   const res = aiTestResults?.[pId]
                   const provNames: Record<string, string> = {
