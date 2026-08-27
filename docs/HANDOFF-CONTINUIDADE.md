@@ -27,7 +27,7 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 26/08/2026, "erro geral" no Kimi/GPT/Gemini eram 3 causas distintas: Gemini com modelo aposentado pelo Google (gemini-2.0-flash → gemini-3.6-flash, quebrado sem ninguém notar), diagnóstico de conexão com timeout curto demais pro Kimi e cópia própria do bug do max_tokens da OpenAI — ver 2.39 na auditoria |
+| Última revisão | 27/08/2026, busca sistêmica por código morto (pedido do operador, sem utilidade atual ou futura): 10 itens removidos em 8 arquivos (toaster/use-toast do Radix nunca montado, funções sem chamador em auth.ts/data-residency.ts/entitlements.ts/analysis, reexports não usados em ai-jobs/ai-router) — ver 2.40 na auditoria |
 | Suíte | 583 testes, `fail 0` — a regra da contagem está na seção 8 |
 | `tsc`, `lint`, `build` | limpos nessa revisão (`npm run build` também rodado, produção compila) |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |
@@ -99,6 +99,15 @@ o quanto confiar nele.
    dev server/preview, inclusive o caminho de erro (forçar falha do
    provedor primário e conferir que "tentando modelo alternativo" aparece
    nos 3 fluxos de chamada única, e que nada quebra se todos falharem).
+10. **`REMOTIVE_LEGAL_NOTICE_KEY` (`remote-boards.ts`) — decisão do
+    operador.** Achado na busca por código morto de 27/08/2026 (ver 2.40):
+    a constante existe, mas só aparece em comentário — nunca é usada de
+    fato pra filtrar o aviso legal do Remotive dos resultados da API. Ou é
+    um filtro que ficou pela metade (bug: o aviso legal pode estar
+    vazando pra dentro dos resultados como se fosse vaga) ou é
+    resquício sem função nenhuma. Não decidido nesta rodada porque
+    implementar o filtro é mudança de comportamento, não limpeza — fica
+    para o operador escolher entre implementar ou remover a constante.
 
 **O que NÃO está pendente e parece que está:**
 

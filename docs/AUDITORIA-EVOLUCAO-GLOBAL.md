@@ -2263,3 +2263,68 @@ novo, em paralelo, com a chave real de cada um, fora da rota — os quatro
 responderam com sucesso depois das correções.
 
 `tsc`/`eslint`/`npm test`/`npm run build` limpos, 583 testes.
+
+## 2.40 Busca sistêmica por código morto — 10 itens removidos
+
+Pedido do operador: achar código sem nenhuma utilidade atual OU futura em
+todo o sistema, não só num arquivo. `knip` quebrou neste ambiente Windows
+(erro nativo de alocação de buffer no `oxc-parser`); `ts-prune` funcionou,
+mas com ruído pesado de falso-positivo específico de Next.js (toda rota
+exporta `GET`/`POST`/etc., que o framework consome por convenção de
+arquivo, não por import — `ts-prune` não enxerga isso e marca como "não
+usado"). Filtrado o ruído (exports de rota, "(used in module)",
+`components/ui/` do shadcn), sobraram ~14 candidatos reais, cada um
+verificado por `grep` antes de remover — nenhum apagado só pela contagem
+do `ts-prune`.
+
+Removidos (zero importador confirmado em todo `src/`):
+
+- `components/ui/toaster.tsx` + `hooks/use-toast.ts`: o par do Radix nunca
+  montado. Já era um caso documentado — `layout.tsx` tinha comentário de um
+  incidente anterior (`toast()` do Sonner sem lugar pra renderizar, "app
+  mudo") explicando por que os dois existiam lado a lado. Confirmado que o
+  Radix nunca foi de fato usado em lugar nenhum; removido, e o comentário
+  do `layout.tsx` virou passado.
+- `auth.ts`: `requireUser()` sem nenhuma chamada — toda rota faz
+  `getCurrentUser()` + checagem manual de 401 em vez de usar essa função.
+- `data-residency.ts`: `isProviderAllowedFor()` sem chamador — só
+  `filterProvidersByResidency()` é usada pelo `router.ts`.
+- `entitlements.ts` (arquivo sensível, §10 do HANDOFF — mexido aqui só
+  porque o pedido do operador foi explícito e abrangente o bastante pra
+  cobrir isto):
+  - `isResumeUnlocked()`: sem chamador real, apesar do próprio comentário
+    da função alegar que era "a única pergunta que as rotas derivadas
+    precisam fazer" — quem de fato é chamada por elas é
+    `requireUnlockedResume()` (mantida, intacta).
+  - `migrateCreditBalance()` + reexport de `CREDITS_PER_ANALYSIS`/
+    `analysesForCredits`: duplicata nunca ligada a nenhuma rota. O script
+    real de migração, `scripts/migrate-credits-to-analyses.ts` (documentado,
+    rodado via `npm run migrate:analyses`), tem sua PRÓPRIA implementação
+    independente, importando direto de `pricing/migration` — confirmado
+    lendo o script inteiro antes de remover, pra não quebrar a ferramenta
+    de verdade.
+- `analysis/job.ts`: `type JobStatus` nunca referenciado fora da própria
+  definição.
+- `analysis/segments.ts`: `getSegmentSpec()` nunca chamada.
+- `ai-jobs/engine.ts`: reexport de `readSteps` (só usado dentro do próprio
+  `progress.ts`/`progress.test.ts`, nunca via `engine.ts`) e a interface
+  `AiJobRow` (o único consumidor, `runners/single-call.ts`, declara seu
+  próprio tipo local em vez de importar este).
+- `ai-router/registry.ts`: reexport de `MODEL_PRICING`/
+  `TIERED_MODEL_PRICING` (só importados diretamente de `./pricing` em todo
+  o resto do sistema) — mantido no reexport só `resolveModelPricing`, que
+  `router.ts` de fato importa por este caminho.
+
+Dois candidatos identificados e **deliberadamente não removidos**, por não
+se encaixarem no pedido ("sem utilidade atual OU FUTURA"):
+
+- `onDemandAllowed` (`quota.server.ts`): feature futura já documentada
+  (§21 Etapa 9, "busca sob demanda") — tem utilidade futura explícita,
+  fica.
+- `REMOTIVE_LEGAL_NOTICE_KEY` (`remote-boards.ts`): referenciado só em
+  comentário, nunca usado de fato pra filtrar o aviso legal do Remotive dos
+  resultados — pode ser um filtro inacabado (bug), não código morto puro.
+  Decisão de implementar ou remover fica com o operador.
+
+`tsc --noEmit`, `eslint` nos arquivos tocados, `npm test` (583/583) e
+`npm run build` limpos após a remoção completa.
