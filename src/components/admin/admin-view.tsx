@@ -704,48 +704,6 @@ function AdminViewContent() {
     }
   }
 
-  const [syncingLemon, setSyncingLemon] = useState(false)
-  const [syncedLemonDetails, setSyncedLemonDetails] = useState<{ storeId?: string; count?: number; list?: string[] } | null>(null)
-
-  const handleSyncLemonSqueezy = async () => {
-    if (!configs.LEMON_API_KEY) {
-      toast.error('Insira a Lemon Squeezy API Key antes de sincronizar.')
-      return
-    }
-    setSyncingLemon(true)
-    try {
-      const r = await internalFetch('/api/admin/lemonsqueezy/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          apiKey: configs.LEMON_API_KEY,
-          webhookSecret: configs.LEMON_WEBHOOK_SECRET,
-        }),
-      })
-      const data = await r.json()
-      if (!r.ok) {
-        toast.error(data.error || 'Erro ao sincronizar com Lemon Squeezy.')
-        return
-      }
-      toast.success(data.message || 'Sincronização realizada com sucesso!')
-      if (data.updates) {
-        setConfigs((prev) => ({ ...prev, ...data.updates }))
-      }
-      if (data.variantsFoundList) {
-        setSyncedLemonDetails({
-          storeId: data.storeId,
-          count: data.variantsFoundCount,
-          list: data.variantsFoundList,
-        })
-      }
-      await loadData()
-    } catch {
-      toast.error('Falha de conexão durante a sincronização.')
-    } finally {
-      setSyncingLemon(false)
-    }
-  }
-
   const safeUsers = Array.isArray(users) ? users : []
   const safeSearch = (search || '').toLowerCase()
 

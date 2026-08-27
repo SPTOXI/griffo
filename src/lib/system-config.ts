@@ -20,9 +20,6 @@ export const SYSTEM_CONFIG_KEYS = {
   STRIPE_SECRET_KEY: { sensitive: true },
   STRIPE_WEBHOOK_SECRET: { sensitive: true },
   STRIPE_PUBLISHABLE_KEY: { sensitive: false },
-  LEMON_API_KEY: { sensitive: true },
-  LEMON_WEBHOOK_SECRET: { sensitive: true },
-  LEMON_VARIANT_PROFISSIONAL: { sensitive: false },
 
   // --- Precificação exibida no painel ---
   CREDIT_PRICE_BRL: { sensitive: false },
