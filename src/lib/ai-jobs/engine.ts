@@ -5,7 +5,7 @@ import { db } from '../db'
 // A tabela de progresso vive em ./progress (sem dependência de banco, para
 // poder ser testada). Reexportada aqui porque este é o módulo que o resto do
 // sistema importa.
-export { readSteps, describeAiJobProgress } from './progress'
+export { describeAiJobProgress } from './progress'
 
 /**
  * Motor genérico de jobs de IA fora do laudo principal (ver
@@ -30,18 +30,6 @@ export type AiJobKind =
   | 'career_orientation'
   | 'cover_letter'
   | 'rewrite'
-
-export interface AiJobRow {
-  id: string
-  userId: string
-  resumeId: string
-  kind: string
-  status: string
-  stepsJson: string | null
-  totalSteps: number
-  lang: string
-  userCountry: string | null
-}
 
 /** Roda um job até o fim. Um runner por `kind` implementa isto. */
 export type AiJobRunner = (jobId: string) => Promise<void>

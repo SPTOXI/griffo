@@ -53,8 +53,6 @@ const MAX_JOB_ATTEMPTS = 3
 /** Uma repetição por segmento cobre a falha esporádica sem dobrar o custo. */
 const SEGMENT_ATTEMPTS = 2
 
-export type JobStatus = 'queued' | 'running' | 'completed' | 'failed'
-
 // `reservationOf`, `settleReservation` e `releaseReservation` viviam aqui: o
 // job carregava uma reserva de crédito e precisava liquidá-la no fecho ou
 // estorná-la na falha. Nada disso existe mais. O que se compra é o destrave do

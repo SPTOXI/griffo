@@ -1,7 +1,6 @@
 import 'server-only'
 import { db } from './db'
 import { PACK_SIZE, type Tier } from './pricing/catalog'
-import { CREDITS_PER_ANALYSIS, analysesForCredits } from './pricing/migration'
 
 /**
  * Direito de uso, no lugar do saldo de créditos.
@@ -202,21 +201,6 @@ export async function unlockAnalysis(
   }
 }
 
-/**
- * O currículo está liberado?
- *
- * É a única pergunta que as rotas derivadas — reescrita, carta, orientação,
- * mídias sociais, download — precisam fazer. Nenhuma delas cobra nada.
- */
-export async function isResumeUnlocked(userId: string, resumeId: string): Promise<boolean> {
-  const [resume, user] = await Promise.all([
-    db.resume.findFirst({ where: { id: resumeId, userId }, select: { unlockedAt: true } }),
-    db.user.findUnique({ where: { id: userId }, select: { role: true } }),
-  ])
-  if (user?.role === 'admin') return true
-  return Boolean(resume?.unlockedAt)
-}
-
 export interface EntitlementCheck {
   ok: boolean
   status: number
@@ -250,51 +234,4 @@ export async function requireUnlockedResume(
   }
 }
 
-/**
- * Converte o saldo antigo de créditos de UM usuário.
- *
- * A regra de conversão vive em `pricing/migration.ts`, que é puro e pode ser
- * importado por scripts de linha de comando. Esta função é a parte que toca o
- * banco. Idempotente por `creditsMigratedAt`.
- */
-export async function migrateCreditBalance(userId: string): Promise<{
-  migrated: boolean
-  credits: number
-  analyses: number
-}> {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { credits: true, creditsMigratedAt: true },
-  })
-  if (!user || user.creditsMigratedAt) {
-    return { migrated: false, credits: user?.credits ?? 0, analyses: 0 }
-  }
-
-  const analyses = analysesForCredits(user.credits)
-
-  await db.$transaction(async (tx) => {
-    // A condição `creditsMigratedAt: null` é o que impede converter duas vezes
-    // se o script for executado em paralelo com ele mesmo.
-    const claimed = await tx.user.updateMany({
-      where: { id: userId, creditsMigratedAt: null },
-      data: { creditsMigratedAt: new Date(), analysisBalance: { increment: analyses } },
-    })
-    if (claimed.count === 1 && analyses > 0) {
-      await tx.analysisLedger.create({
-        data: {
-          userId,
-          type: 'migration',
-          delta: analyses,
-          description: `Conversão de ${user.credits} créditos em ${analyses} ${
-            analyses === 1 ? 'análise completa' : 'análises completas'
-          } (${CREDITS_PER_ANALYSIS} créditos = 1 análise, arredondado a favor do usuário)`,
-        },
-      })
-    }
-  })
-
-  return { migrated: true, credits: user.credits, analyses }
-}
-
 export { PACK_SIZE }
-export { CREDITS_PER_ANALYSIS, analysesForCredits }

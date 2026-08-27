@@ -50,11 +50,3 @@ export function filterProvidersByResidency(
   if (!isEuropeanUser(country)) return candidates
   return candidates.filter((id) => !NON_ADEQUATE_PROVIDERS.includes(id))
 }
-
-export function isProviderAllowedFor(
-  providerId: ProviderId,
-  country: string | null | undefined
-): boolean {
-  if (!isEuropeanUser(country)) return true
-  return !NON_ADEQUATE_PROVIDERS.includes(providerId)
-}

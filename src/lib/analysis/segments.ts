@@ -349,10 +349,6 @@ NÃO calcule nota geral: ela é derivada das oito dimensões pelo sistema.`,
 
 export const ANALYSIS_SEGMENTS: AnalysisSegmentSpec[] = SEGMENT_IDS.map((id) => SEGMENT_SPECS[id])
 
-export function getSegmentSpec(id: SegmentId): AnalysisSegmentSpec | null {
-  return SEGMENT_SPECS[id] ?? null
-}
-
 export interface SharedContextInput {
   resumeContent: string
   targetJob?: string | null

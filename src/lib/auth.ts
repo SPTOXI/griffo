@@ -139,14 +139,6 @@ export async function getCurrentUser() {
   }
 }
 
-export async function requireUser() {
-  const user = await getCurrentUser()
-  if (!user) {
-    throw new Error('UNAUTHORIZED')
-  }
-  return user
-}
-
 // Check if user has active plan (any of: day, monthly, annual) within validity window
 export function hasActivePlan(user: { plan: string; planStartsAt: Date | null; planEndsAt: Date | null }): boolean {
   if (user.plan === 'free') return false

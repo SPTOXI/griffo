@@ -94,7 +94,7 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
 // A tabela de preços vive em ./pricing (sem dependência de banco, para poder
 // ser testada). Reexportada aqui porque este é o módulo que o resto do
 // roteador importa.
-export { MODEL_PRICING, TIERED_MODEL_PRICING, resolveModelPricing } from './pricing'
+export { resolveModelPricing } from './pricing'
 
 // Modelos correntes por provedor. Um modelo configurado fora desta lista é
 // tratado como desatualizado e substituído pelo padrão do provedor.
