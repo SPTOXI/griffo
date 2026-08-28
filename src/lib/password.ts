@@ -55,14 +55,11 @@ export function validatePasswordStrength(password: string): { valid: boolean; me
   if (!password || typeof password !== 'string') {
     return { valid: false, message: 'Senha é obrigatória.' }
   }
-  if (password.length < 8) {
-    return { valid: false, message: 'A senha deve ter no mínimo 8 caracteres.' }
-  }
   if (password.length > 128) {
     return { valid: false, message: 'A senha deve ter no máximo 128 caracteres.' }
   }
-  if (password.trim().length === 0) {
-    return { valid: false, message: 'A senha não pode consistir apenas em espaços.' }
+  if (password.trim().length < 8) {
+    return { valid: false, message: 'A senha deve ter no mínimo 8 caracteres válidos (espaços nas pontas não contam).' }
   }
   return { valid: true }
 }
