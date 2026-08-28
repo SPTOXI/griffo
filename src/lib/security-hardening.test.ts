@@ -6,7 +6,7 @@ import {
   verifyPasswordConstantTime,
   validatePasswordStrength,
   DUMMY_PASSWORD_HASH,
-} from './auth'
+} from './password'
 import nextConfig from '../../next.config'
 
 test('validatePasswordStrength recusa senhas com menos de 8 caracteres', () => {
