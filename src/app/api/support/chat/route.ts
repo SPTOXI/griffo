@@ -7,6 +7,7 @@ import { executeAiTask } from '@/lib/ai-router/router'
 import { db } from '@/lib/db'
 import { runDiagnosticAndHealing } from '@/lib/agents/diagnostic-agent'
 import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
+import { DICTIONARIES } from '@/lib/i18n'
 import { edgeCountry, resolvePricingContext } from '@/lib/pricing/resolve'
 import { formatPrice, priceFor } from '@/lib/pricing/catalog'
 import { localMethodLabels } from '@/lib/pricing/payment-methods'
@@ -102,8 +103,8 @@ export async function POST(req: Request) {
 
     const { message, history } = parsed.data
 
-    // Detect if user is reporting a system error or failure
-    const isErrorReport = /(erro|falha|bug|travou|não funciona|quebrou|caiu|não consigo baixar|não carrega|problema|500)/i.test(message)
+    // Detect if user is reporting a system error or failure in PT, EN, or ES
+    const isErrorReport = /(erro|falha|bug|travou|não funciona|quebrou|caiu|não consigo baixar|não carrega|problema|500|error|crash|broken|stuck|failed|issue|fallo|bloqueado)/i.test(message)
     let incidentId: string | undefined
 
     if (isErrorReport) {
@@ -154,11 +155,12 @@ export async function POST(req: Request) {
       )
       .replace('{{PAYMENT_METHODS}}', localMethodLabels(pricingContext.country).join(', '))
 
+    const lang = getRequestLanguage(req)
     const routerResult = await executeAiTask({
       taskType: 'support_chat',
       userId: user.id,
       userCountry: edgeCountry(req),
-      systemPrompt: `${LANGUAGE_DIRECTIVE[getRequestLanguage(req)]}\n\n${supportPrompt}`,
+      systemPrompt: `${LANGUAGE_DIRECTIVE[lang]}\n\n${supportPrompt}`,
       userPrompt,
       maxTokens: 1000,
     })
@@ -166,7 +168,8 @@ export async function POST(req: Request) {
     let reply = routerResult.content.trim()
 
     if (isErrorReport) {
-      reply += '\n\n*(Sinalizei nossa equipe de Auto-Diagnóstico de Sistemas em tempo real. Uma verificação ativa foi iniciada automaticamente para identificar e solucionar o problema.)*'
+      const autoNote = DICTIONARIES[lang]?.support?.incidentAutoReportNote || DICTIONARIES.pt.support.incidentAutoReportNote
+      reply += `\n\n*(${autoNote})*`
     }
 
     return NextResponse.json({

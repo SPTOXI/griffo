@@ -5,6 +5,8 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { generateResumePdf, generateAnalysisReportPdf, sanitizeMarkdown } from '@/lib/pdf'
 import { requireUnlockedResume } from '@/lib/entitlements'
+import { getRequestLanguage } from '@/lib/i18n/server'
+import { type Language, localeForLang } from '@/lib/i18n'
 
 interface DownloadPayload {
   buf: Buffer
@@ -34,7 +36,7 @@ function safeBaseName(name: string | null | undefined, fallback: string): string
  * à exportação, senão o documento que o candidato leva embora perde justamente
  * a informação que diz o quanto confiar nele.
  */
-function buildSocialAdviceContent(socialAnalysis: any, asPlainText: boolean): string {
+function buildSocialAdviceContent(socialAnalysis: any, asPlainText: boolean, lang: Language = 'pt'): string {
   const profiles = Array.isArray(socialAnalysis?.profiles) ? socialAnalysis.profiles : []
   if (profiles.length === 0) {
     throw new DownloadError(
@@ -67,7 +69,7 @@ function buildSocialAdviceContent(socialAnalysis: any, asPlainText: boolean): st
   }
 
   if (socialAnalysis.analyzedAt) {
-    content += `Auditoria realizada em ${new Date(socialAnalysis.analyzedAt).toLocaleString('pt-BR')}\n`
+    content += `Auditoria realizada em ${new Date(socialAnalysis.analyzedAt).toLocaleString(localeForLang(lang))}\n`
   }
 
   return asPlainText
@@ -88,7 +90,8 @@ async function buildDownload(
     socialAnalysisJson: string | null
     updatedAt: Date
   },
-  userName: string | null
+  userName: string | null,
+  lang: Language = 'pt'
 ): Promise<DownloadPayload> {
   const requireRewritten = () => {
     if (!resume.rewrittenContent) {
@@ -144,7 +147,7 @@ async function buildDownload(
     case 'social_advice_txt':
     case 'social_advice_md': {
       const asPlainText = type === 'social_advice_txt'
-      const content = buildSocialAdviceContent(requireSocialAnalysis(), asPlainText)
+      const content = buildSocialAdviceContent(requireSocialAnalysis(), asPlainText, lang)
       return {
         buf: Buffer.from(content, 'utf-8'),
         mime: asPlainText ? 'text/plain; charset=utf-8' : 'text/markdown; charset=utf-8',
@@ -159,6 +162,7 @@ async function buildDownload(
           resumeId: resume.id,
           analysis: requireAnalysis(),
           createdAt: resume.updatedAt,
+          lang,
         }),
         mime: 'application/pdf',
         filename: `${safeBaseName(userName, 'analise')}_laudo.pdf`,
@@ -175,6 +179,7 @@ export async function GET(req: Request) {
     const user = await getCurrentUser()
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
+    const lang = getRequestLanguage(req)
     const url = new URL(req.url)
     const resumeId = url.searchParams.get('resumeId')
     const type = url.searchParams.get('type') || 'resume_pdf'
@@ -196,7 +201,7 @@ export async function GET(req: Request) {
 
     let payload: DownloadPayload
     try {
-      payload = await buildDownload(type, resume, user.name)
+      payload = await buildDownload(type, resume, user.name, lang)
     } catch (buildErr) {
       if (buildErr instanceof DownloadError) {
         return NextResponse.json({ error: buildErr.message }, { status: buildErr.status })

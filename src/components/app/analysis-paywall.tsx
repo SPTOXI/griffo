@@ -131,12 +131,12 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
   const localPayment = pricing
     ? t.pricing.localPayment
         .replace('{currency}', pricing.currency)
-        .replace('{methods}', pricing.paymentMethods.join(' ou '))
+        .replace('{methods}', pricing.paymentMethods.join(` ${t.pricing.conjunctionOr} `))
     : ''
 
   return (
     <div className="space-y-4 max-w-3xl">
-      <h1 className="text-2xl font-bold text-slate-900">Laudo de análise</h1>
+      <h1 className="text-2xl font-bold text-slate-900">{t.analysisPaywall.reportTitle}</h1>
 
       {/* PRÉVIA GRATUITA — só as notas */}
       <Card className="border-slate-200 shadow-sm">
@@ -144,17 +144,16 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
           <Badge variant="outline" className="w-fit border-emerald-300 bg-emerald-50 text-emerald-800 text-[11px] font-bold">
             {t.pricing.previewTitle}
           </Badge>
-          <CardTitle className="text-lg text-slate-900 pt-1">Suas notas nas 8 dimensões</CardTitle>
+          <CardTitle className="text-lg text-slate-900 pt-1">{t.analysisPaywall.cardTitle}</CardTitle>
           <CardDescription className="text-xs">
-            A nota é gratuita. O diagnóstico — o que está errado, por quê e como corrigir — vem na
-            Análise Completa.
+            {t.analysisPaywall.cardDesc}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {loadingPreview && (
             <div className="py-8 text-center space-y-2">
               <Loader2 className="w-7 h-7 text-emerald-600 animate-spin mx-auto" />
-              <p className="text-xs text-slate-500">Calculando suas notas...</p>
+              <p className="text-xs text-slate-500">{t.analysisPaywall.calculating}</p>
             </div>
           )}
 
@@ -176,7 +175,7 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
                   {loadingPreview
                     ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                     : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
-                  Calcular minha nota de novo
+                  {t.analysisPaywall.retryCalculate}
                 </Button>
               </AlertDescription>
             </Alert>
@@ -188,7 +187,7 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
                 <span className={`text-4xl font-black ${scoreColor(preview.overall)}`}>
                   {preview.overall.toFixed(1)}
                 </span>
-                <span className="text-sm text-slate-500">/ 10 — nota geral</span>
+                <span className="text-sm text-slate-500">{t.analysisPaywall.scoreOutOfTen}</span>
               </div>
 
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
@@ -205,8 +204,7 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
               <div className="flex items-start gap-2 rounded-lg bg-slate-50 border border-slate-200 p-3">
                 <Lock className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                 <p className="text-[11px] text-slate-600 leading-relaxed">
-                  O que cada nota significa, o que derrubou a sua e a lista do que mudar está no
-                  laudo completo.
+                  {t.analysisPaywall.lockNote}
                 </p>
               </div>
             </>
@@ -243,7 +241,7 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
               <ShoppingBag className="w-4 h-4 mr-2" />
             )}
             {balance > 0
-              ? `Liberar Análise Completa (${balance} ${balance === 1 ? 'disponível' : 'disponíveis'})`
+              ? t.analysisPaywall.unlockAvailable.replace('{count}', String(balance))
               : `${t.pricing.buyCta} — ${pricing?.single.formatted ?? ''}`}
           </Button>
 

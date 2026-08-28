@@ -4,21 +4,8 @@ import { useEffect, useState } from 'react'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { CheckCircle2, Loader2, Cpu, Sparkles } from 'lucide-react'
-import { ANALYSIS_STAGES, type SegmentId } from '@/lib/analysis/stages'
-
-/**
- * O andamento real da análise.
- *
- * A versão anterior animava uma barra por tempo decorrido: subia 3,5% a cada
- * 200ms até travar em 96%, sem qualquer relação com o que o servidor estava
- * fazendo. Quando a análise levava 82s e a função era encerrada aos 60s, o
- * usuário via 96% e depois um erro — o pior desfecho possível, porque a barra
- * tinha acabado de prometer que estava quase pronto.
- *
- * Agora cada etapa acende quando o segmento correspondente termina de verdade,
- * e as notas aparecem na tela conforme chegam. A espera continua existindo, mas
- * deixa de ser opaca: dá para ver o laudo sendo escrito.
- */
+import { ANALYSIS_STAGES, SEGMENT_DIMENSIONS, type SegmentId, type DimensionKey } from '@/lib/analysis/stages'
+import { useI18n } from '@/context/i18n-context'
 
 export interface UploadProgressModalProps {
   isOpen: boolean
@@ -29,15 +16,6 @@ export interface UploadProgressModalProps {
   partial?: { dimensions?: { label: string; score: number }[]; summary?: string } | null
   /** Texto do topo, para as fases que antecedem a análise (upload, gravação). */
   headline?: string
-  /**
-   * Mostra a lista das oito dimensões.
-   *
-   * Falso durante o envio do arquivo: ali nenhuma dimensão está sendo gerada, e
-   * exibir a lista inteira apagada faz a tela prometer um trabalho que ainda
-   * não começou. O usuário via a lista piscar e sumir sem nada acender —
-   * exatamente a impressão de travamento que este componente existe para
-   * evitar.
-   */
   showStages?: boolean
 }
 
@@ -49,6 +27,8 @@ export function UploadProgressModal({
   headline,
   showStages = true,
 }: UploadProgressModalProps) {
+  const { t } = useI18n()
+  const up = t.uploadProgress
   const elapsed = useElapsedSeconds(isOpen)
 
   if (!isOpen) return null
@@ -58,10 +38,54 @@ export function UploadProgressModal({
     (partial?.dimensions ?? []).map((d) => [d.label, d.score])
   )
 
-  // A primeira etapa ainda não concluída é a que aparece como "em andamento".
-  // Os cinco segmentos rodam em paralelo, então isto é uma escolha de
-  // apresentação: marcar todos como ativos de uma vez não ajudaria a ler a tela.
-  const currentIndex = ANALYSIS_STAGES.findIndex((s) => !done.has(s.segment))
+  const stageLookup: Record<string, { label: string; description: string }> = {
+    structure: { label: up.stageDimStructure, description: up.stageDimStructureHint },
+    summary: { label: up.stageDimSummary, description: up.stageDimSummaryHint },
+    impact: { label: up.stageDimImpact, description: up.stageDimImpactHint },
+    skills: { label: up.stageDimSkills, description: up.stageDimSkillsHint },
+    experience: { label: up.stageDimExperience, description: up.stageDimExperienceHint },
+    keywords: { label: up.stageDimKeywords, description: up.stageDimKeywordsHint },
+    career: { label: up.stageDimCareer, description: up.stageDimCareerHint },
+    upskilling: { label: up.stageDimUpskilling, description: up.stageDimUpskillingHint },
+    job_match: { label: up.stageJobMatch, description: up.stageJobMatchHint },
+    targeted_changes: { label: up.stageTargetedChanges, description: up.stageTargetedChangesHint },
+    executive: { label: up.stageExecutive, description: up.stageExecutiveHint },
+  }
+
+  const localizedStages = [
+    ...SEGMENT_DIMENSIONS.dimensions_a.map((key: DimensionKey) => ({
+      segment: 'dimensions_a' as SegmentId,
+      label: stageLookup[key]?.label || key,
+      description: stageLookup[key]?.description || '',
+      fallbackKey: key,
+    })),
+    ...SEGMENT_DIMENSIONS.dimensions_b.map((key: DimensionKey) => ({
+      segment: 'dimensions_b' as SegmentId,
+      label: stageLookup[key]?.label || key,
+      description: stageLookup[key]?.description || '',
+      fallbackKey: key,
+    })),
+    {
+      segment: 'job_match' as SegmentId,
+      label: stageLookup.job_match.label,
+      description: stageLookup.job_match.description,
+      fallbackKey: 'job_match',
+    },
+    {
+      segment: 'targeted_changes' as SegmentId,
+      label: stageLookup.targeted_changes.label,
+      description: stageLookup.targeted_changes.description,
+      fallbackKey: 'targeted_changes',
+    },
+    {
+      segment: 'executive' as SegmentId,
+      label: stageLookup.executive.label,
+      description: stageLookup.executive.description,
+      fallbackKey: 'executive',
+    },
+  ]
+
+  const currentIndex = localizedStages.findIndex((s) => !done.has(s.segment))
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
@@ -80,28 +104,19 @@ export function UploadProgressModal({
           </div>
           <h3 className="text-xl font-black tracking-tight text-white flex items-center justify-center gap-2">
             <Sparkles className="w-5 h-5 text-amber-400" />
-            Auditoria IA em Tempo Real
+            {up.title}
           </h3>
           <p className="text-xs text-slate-400 mt-2 max-w-sm mx-auto font-medium">
-            {headline ??
-              'As oito dimensões e o parecer executivo são gerados em paralelo. Cada etapa acende quando fica pronta.'}
+            {headline ?? up.desc}
           </p>
 
-          {/* Tempo DECORRIDO, nunca previsto. Uma animação sem número é
-              indistinguível de tela travada, e uma barra estimada mente: a
-              versão anterior chegava a 96% e terminava em "erro". */}
           <p className="text-[11px] text-slate-500 mt-3 font-mono">
-            {elapsed}s decorridos
+            {up.elapsed.replace('{s}', String(elapsed))}
           </p>
 
-          {/* A partir daqui a espera saiu do esperado, e calar sobre isso é o
-              que faz a pessoa achar que travou e fechar a aba. */}
           {elapsed >= 30 && (
             <p className="text-[11px] text-amber-300/90 mt-2 max-w-sm mx-auto leading-relaxed">
-              Está levando mais que o comum — currículos longos demoram mais.
-              {elapsed >= 60
-                ? ' O trabalho continua no servidor: se você fechar, ele termina e o resultado estará aqui quando voltar.'
-                : ' Continue nesta tela.'}
+              {elapsed >= 60 ? up.slow60 : up.slow30}
             </p>
           )}
         </div>
@@ -112,10 +127,8 @@ export function UploadProgressModal({
             <div className="flex justify-between items-center text-[11px] font-bold tracking-wider uppercase">
               <span className="text-blue-400 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                {currentIndex >= 0 ? ANALYSIS_STAGES[currentIndex].label : 'Consolidando laudo'}
+                {currentIndex >= 0 ? localizedStages[currentIndex].label : up.consolidating}
               </span>
-              {/* Sem segmento concluído não há progresso real a mostrar, e um
-                  número inventado aqui seria a barra falsa de volta. */}
               <span className="text-amber-400 font-mono text-sm">
                 {completedSegments.length > 0 ? `${Math.round(progress)}%` : '—'}
               </span>
@@ -133,14 +146,14 @@ export function UploadProgressModal({
 
           {showStages && (
           <div className="grid sm:grid-cols-2 gap-3 max-h-[260px] overflow-y-auto pr-2 custom-scrollbar">
-            {ANALYSIS_STAGES.map((stage, index) => {
+            {localizedStages.map((stage, index) => {
               const isCompleted = done.has(stage.segment)
               const isCurrent = index === currentIndex
-              const score = scoreByLabel.get(stage.label)
+              const score = scoreByLabel.get(stage.label) || scoreByLabel.get(ANALYSIS_STAGES[index]?.label)
 
               return (
                 <div
-                  key={stage.label}
+                  key={stage.fallbackKey}
                   className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-300 border ${
                     isCurrent
                       ? 'bg-blue-900/30 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/20'
@@ -174,7 +187,6 @@ export function UploadProgressModal({
                       >
                         {stage.label}
                       </p>
-                      {/* A nota real, assim que o segmento entrega. */}
                       {typeof score === 'number' && (
                         <span className="shrink-0 font-mono text-xs font-bold text-emerald-400 tabular-nums">
                           {score.toFixed(1)}
@@ -195,12 +207,10 @@ export function UploadProgressModal({
           </div>
           )}
 
-          {/* O parecer aparece assim que o segmento executivo termina, antes do
-              laudo completo estar montado. */}
           {partial?.summary && (
             <div className="rounded-xl border border-emerald-500/20 bg-emerald-900/10 p-4">
               <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-2">
-                Parecer executivo
+                {up.executiveReport}
               </p>
               <p className="text-xs text-slate-300 leading-relaxed line-clamp-4">{partial.summary}</p>
             </div>
@@ -209,9 +219,7 @@ export function UploadProgressModal({
           <div className="text-center pt-4 border-t border-white/10">
             <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase flex items-center justify-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-              {showStages
-                ? 'Pode fechar esta janela — o laudo continua sendo gerado'
-                : 'Preparando seu currículo'}
+              {showStages ? up.closingOk : up.preparing}
             </p>
           </div>
         </CardContent>

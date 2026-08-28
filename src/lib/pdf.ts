@@ -1,6 +1,7 @@
 import {
-  PDFDocument, PDFString, StandardFonts, rgb, PDFFont, PDFPage,
+  PDFDocument, StandardFonts, rgb, PDFFont,
 } from 'pdf-lib'
+import { DICTIONARIES, type Language, localeForLang } from './i18n'
 
 // Color helpers
 const hex = (h: string) => {
@@ -22,16 +23,6 @@ function sanitizeText(s: string): string {
     .replace(/→/g, '->')
     .replace(/•/g, '-')
     .replace(/●/g, '-')
-    // Emojis e pictogramas somem, em vez de virarem '?'.
-    //
-    // A Helvetica do PDF é codificada em WinAnsi e não tem glifo para eles, e a
-    // regra final desta função troca por '?' tudo que está fora do Latin-1. Um
-    // emoji ocupa DUAS unidades UTF-16, então cada um virava '??' no currículo
-    // entregue ao usuário: "?? RESUMO PROFISSIONAL", "?? São Paulo - SP".
-    //
-    // Remover é o comportamento certo, não substituir: o emoji era decoração e
-    // o '?' vira sujeira que o leitor interpreta como defeito. O `split(/\s+/)`
-    // do chamador descarta o espaço que sobra.
     .replace(/[\p{Extended_Pictographic}️‍]/gu, '')
     .replace(/[^\x20-\x7E\xA0-\xFF]/g, '?') // keep ASCII + Latin-1 only
 }
@@ -99,7 +90,6 @@ export async function generateResumePdf(markdownContent: string): Promise<Buffer
     const lh = opts.lineHeight || size * 1.35
     const maxWidth = opts.maxWidth || contentW - indent
 
-    // Normalize text - remove accents that Helvetica can't render? Actually pdf-lib Helvetica (WinAnsi) supports latin-1 accents.
     const safeText = sanitizeText(text)
     const words = safeText.split(/\s+/).filter(Boolean)
     const lines: string[] = []
@@ -109,7 +99,6 @@ export async function generateResumePdf(markdownContent: string): Promise<Buffer
       const width = f.widthOfTextAtSize(test, size)
       if (width > maxWidth) {
         if (current) lines.push(current)
-        // If single word too long, hard-break
         if (f.widthOfTextAtSize(w, size) > maxWidth) {
           let chunk = ''
           for (const ch of w) {
@@ -159,7 +148,6 @@ export async function generateResumePdf(markdownContent: string): Promise<Buffer
     }
 
     if (line.startsWith('# ') && !line.startsWith('## ')) {
-      // Name - centered large
       y -= 4
       writeParagraph(line.replace(/^#\s+/, ''), { font: fontBold, size: 22, color: COLORS.text, align: 'center', lineHeight: 26 })
       y -= 4
@@ -179,7 +167,6 @@ export async function generateResumePdf(markdownContent: string): Promise<Buffer
     } else if (/^\d+\.\s+/.test(line)) {
       writeParagraph(line, { font, size: 10, color: COLORS.body, indent: 12, lineHeight: 13 })
     } else if (/@|linkedin\.com|github\.com|\|\s|http/.test(line) && line.length < 140) {
-      // Contact line - center
       writeParagraph(line, { font, size: 9, color: COLORS.muted, align: 'center', lineHeight: 12 })
     } else {
       writeParagraph(line, { font, size: 10, color: COLORS.body, lineHeight: 13 })
@@ -195,17 +182,23 @@ export async function generateAnalysisReportPdf(opts: {
   resumeId: string
   analysis: any
   createdAt: Date
+  lang?: Language
 }): Promise<Buffer> {
+  const lang: Language = opts.lang || 'pt'
+  const dict = DICTIONARIES[lang]?.pdfReport || DICTIONARIES.pt.pdfReport
+  const locale = localeForLang(lang)
+
   const doc = await PDFDocument.create()
-  doc.setTitle('Laudo de Auditoria de IA')
-  doc.setAuthor('Griffo')
+  doc.setTitle(dict.docTitle)
+  doc.setAuthor(dict.docAuthor)
+  doc.setSubject(dict.docSubject)
   const font = await doc.embedFont(StandardFonts.Helvetica)
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold)
   const fontItalic = await doc.embedFont(StandardFonts.HelveticaOblique)
 
   const W = 595.28
   const H = 841.89
-  const MARGIN = 56
+  const MARGIN = 40
   const contentW = W - MARGIN * 2
 
   let page = doc.addPage([W, H])
@@ -218,33 +211,40 @@ export async function generateAnalysisReportPdf(opts: {
     }
   }
 
-  const writeParagraph = (text: string, opts: {
-    font?: PDFFont
-    size?: number
-    color?: ReturnType<typeof rgb>
-    indent?: number
-    align?: 'left' | 'center'
-    lineHeight?: number
-    maxWidth?: number
-  } = {}) => {
+  const writeParagraph = (
+    text: string,
+    opts: {
+      font?: typeof font
+      size?: number
+      color?: ReturnType<typeof rgb>
+      align?: 'left' | 'center'
+      lineHeight?: number
+      indent?: number
+      maxWidth?: number
+    } = {}
+  ) => {
     const f = opts.font || font
     const size = opts.size || 10
     const color = opts.color || COLORS.body
+    const lh = opts.lineHeight || size * 1.3
+    const maxW = opts.maxWidth || contentW
     const indent = opts.indent || 0
-    const lh = opts.lineHeight || size * 1.35
-    const maxWidth = opts.maxWidth || contentW - indent
 
-    const safeText = sanitizeText(text)
-    const words = safeText.split(/\s+/).filter(Boolean)
+    const clean = sanitizeText(text)
+    if (!clean) return
+
+    const words = clean.split(/\s+/)
     const lines: string[] = []
     let current = ''
+
     for (const w of words) {
       const test = current ? `${current} ${w}` : w
-      if (f.widthOfTextAtSize(test, size) > maxWidth) {
+      const width = f.widthOfTextAtSize(test, size)
+      if (width <= maxW - indent) {
+        current = test
+      } else {
         if (current) lines.push(current)
         current = w
-      } else {
-        current = test
       }
     }
     if (current) lines.push(current)
@@ -262,15 +262,16 @@ export async function generateAnalysisReportPdf(opts: {
   const scoreColor = score >= 8 ? COLORS.emerald : score >= 5 ? COLORS.amber : COLORS.red
 
   // HEADER
-  writeParagraph('Laudo de Auditoria de IA', { font: fontBold, size: 20, color: COLORS.text, lineHeight: 24 })
+  writeParagraph(dict.docTitle, { font: fontBold, size: 20, color: COLORS.text, lineHeight: 24 })
   y -= 4
-  writeParagraph(`Gerado em ${opts.createdAt.toLocaleString('pt-BR')}  •  ID: ${opts.resumeId}`, { font, size: 9, color: COLORS.muted, lineHeight: 11 })
+  const dateStr = dict.generatedAt.replace('{date}', opts.createdAt.toLocaleString(locale)) + `  •  ID: ${opts.resumeId}`
+  writeParagraph(dateStr, { font, size: 9, color: COLORS.muted, lineHeight: 11 })
   y -= 6
   page.drawLine({ start: { x: MARGIN, y }, end: { x: W - MARGIN, y }, thickness: 1.2, color: COLORS.text })
   y -= 16
 
   // OVERALL SCORE
-  writeParagraph('NOTA GERAL', { font: fontBold, size: 11, color: COLORS.text, lineHeight: 14 })
+  writeParagraph(dict.overallScore, { font: fontBold, size: 11, color: COLORS.text, lineHeight: 14 })
   y -= 4
   const scoreStr = `${score.toFixed(1)} / 10`
   page.drawText(scoreStr, { x: MARGIN, y: y - 48, size: 48, font: fontBold, color: scoreColor })
@@ -279,32 +280,29 @@ export async function generateAnalysisReportPdf(opts: {
   y -= 8
 
   // ATS
-  writeParagraph('Compatibilidade ATS', { font: fontBold, size: 11, color: COLORS.text, lineHeight: 14 })
+  writeParagraph(dict.atsTitle, { font: fontBold, size: 11, color: COLORS.text, lineHeight: 14 })
   y -= 2
   if (a.atsFriendly) {
-    writeParagraph('[OK] Amigavel para ATS - parseavel por sistemas de rastreamento de candidatos.', { font, size: 10, color: COLORS.emerald, lineHeight: 13 })
+    writeParagraph(`[OK] ${dict.atsPass}`, { font, size: 10, color: COLORS.emerald, lineHeight: 13 })
   } else {
-    writeParagraph('[X] Nao amigavel para ATS - pode ser rejeitado por filtros automaticos.', { font, size: 10, color: COLORS.red, lineHeight: 13 })
+    writeParagraph(`[X] ${dict.atsFail}`, { font, size: 10, color: COLORS.red, lineHeight: 13 })
   }
   y -= 8
 
   // DIMENSIONS
-  writeParagraph('Desempenho por Dimensão', { font: fontBold, size: 11, color: COLORS.text, lineHeight: 14 })
+  writeParagraph(dict.dimensionsTitle, { font: fontBold, size: 11, color: COLORS.text, lineHeight: 14 })
   y -= 4
   for (const d of a.dimensions || []) {
     const dScore = Number(d.score || 0)
     const dColor = dScore >= 8 ? COLORS.emerald : dScore >= 5 ? COLORS.amber : COLORS.red
     ensureSpace(50)
-    // Label + score
     page.drawText(sanitizeText(`${d.label || d.key}:`), { x: MARGIN, y: y - 10, size: 10, font: fontBold, color: COLORS.text })
     const scoreText = `${dScore.toFixed(1)} / 10`
     const scoreW = fontBold.widthOfTextAtSize(scoreText, 10)
     page.drawText(scoreText, { x: W - MARGIN - scoreW, y: y - 10, size: 10, font: fontBold, color: dColor })
     y -= 14
-    // Rationale
     writeParagraph(d.rationale || '', { font, size: 9, color: COLORS.muted, lineHeight: 11, indent: 0 })
     y -= 2
-    // Bar background
     ensureSpace(8)
     page.drawRectangle({ x: MARGIN, y: y - 4, width: contentW, height: 4, color: COLORS.bgSoft })
     page.drawRectangle({ x: MARGIN, y: y - 4, width: contentW * (dScore / 10), height: 4, color: dColor })
@@ -325,17 +323,17 @@ export async function generateAnalysisReportPdf(opts: {
     y -= 4
   }
 
-  writeList('Pontos Fortes', a.strengths || [], COLORS.emerald)
-  writeList('Pontos de Atenção', a.weaknesses || [], COLORS.red)
-  writeList('Recomendações', a.recommendations || [], COLORS.text)
+  writeList(dict.strengthsTitle, a.strengths || [], COLORS.emerald)
+  writeList(dict.weaknessesTitle, a.weaknesses || [], COLORS.red)
+  writeList(dict.recommendationsTitle, a.recommendations || [], COLORS.text)
   if (a.keywords?.length) {
-    writeList('Palavras-chave ATS sugeridas', [a.keywords.join(', ')], COLORS.sky)
+    writeList(dict.keywordsTitle, [a.keywords.join(', ')], COLORS.sky)
   }
 
   // Footer
   y -= 8
   ensureSpace(20)
-  writeParagraph('Este laudo foi gerado automaticamente por IA com base nas melhores práticas de RH e LinkedIn Talent Solutions. Use como orientação e revise antes de divulgar.', { font: fontItalic, size: 8, color: COLORS.light, lineHeight: 10 })
+  writeParagraph(dict.footerNote, { font: fontItalic, size: 8, color: COLORS.light, lineHeight: 10 })
 
   const bytes = await doc.save()
   return Buffer.from(bytes)

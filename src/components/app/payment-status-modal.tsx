@@ -6,11 +6,10 @@ import { Button } from '@/components/ui/button'
 import { internalFetch } from '@/lib/internal-fetch'
 import { Badge } from '@/components/ui/badge'
 import { notifyBalanceChanged } from '@/hooks/use-analyses'
+import { useI18n } from '@/context/i18n-context'
 
 interface PaymentStatusModalProps {
   sessionId: string
-  /// Disparado quando o pagamento é confirmado, com o currículo que originou a
-  /// compra (quando houve um).
   onConfirmed?: (resumeId: string | null) => void
   onClose: () => void
 }
@@ -18,6 +17,8 @@ interface PaymentStatusModalProps {
 type StepStatus = 'pending' | 'loading' | 'success' | 'error'
 
 export function PaymentStatusModal({ sessionId, onConfirmed, onClose }: PaymentStatusModalProps) {
+  const { t } = useI18n()
+  const pm = t.paymentModal
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [step1Status, setStep1Status] = useState<StepStatus>('success')
   const [step2Status, setStep2Status] = useState<StepStatus>('loading')
@@ -28,9 +29,6 @@ export function PaymentStatusModal({ sessionId, onConfirmed, onClose }: PaymentS
   const [newBalance, setNewBalance] = useState<number | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>('')
 
-  // Num ref para que trocar a função não reinicie a verificação — que
-  // consultaria a mesma sessão de novo na Stripe. A escrita vive num efeito
-  // próprio: mexer em `.current` durante o render não é seguro.
   const onConfirmedRef = useRef(onConfirmed)
   useEffect(() => {
     onConfirmedRef.current = onConfirmed
@@ -61,7 +59,7 @@ export function PaymentStatusModal({ sessionId, onConfirmed, onClose }: PaymentS
           if (!isMounted) return
           setStep2Status('error')
           setOverallStatus('failed')
-          setErrorMessage(data.error || 'Não foi possível validar a transação com o Stripe.')
+          setErrorMessage(data.error || pm.errorDefault)
           return
         }
 
@@ -85,15 +83,13 @@ export function PaymentStatusModal({ sessionId, onConfirmed, onClose }: PaymentS
         if (typeof data.balance === 'number') {
           setNewBalance(data.balance)
         }
-        // O saldo mudou: quem o exibe (cabeçalho, barra lateral, laudo) escuta
-        // este evento em vez de receber o número por propriedade.
         notifyBalanceChanged()
         onConfirmedRef.current?.(data.resumeId ?? null)
       } catch (err: any) {
         if (!isMounted) return
         setStep2Status('error')
         setOverallStatus('failed')
-        setErrorMessage(err.message || 'Falha de comunicação ao verificar o pagamento.')
+        setErrorMessage(err.message || pm.errorDefault)
       }
     }
 
@@ -102,7 +98,7 @@ export function PaymentStatusModal({ sessionId, onConfirmed, onClose }: PaymentS
     return () => {
       isMounted = false
     }
-  }, [sessionId])
+  }, [sessionId, pm.errorDefault])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -134,21 +130,21 @@ export function PaymentStatusModal({ sessionId, onConfirmed, onClose }: PaymentS
           </div>
 
           <h3 className="text-xl font-bold">
-            {overallStatus === 'validating' && 'Verificando Pagamento'}
-            {overallStatus === 'success' && 'Pagamento Confirmado! 🎉'}
-            {overallStatus === 'failed' && 'Falha na Validação'}
+            {overallStatus === 'validating' && pm.validatingTitle}
+            {overallStatus === 'success' && pm.successTitle}
+            {overallStatus === 'failed' && pm.errorTitle}
           </h3>
           <p className="text-xs text-white/80 mt-1">
-            {overallStatus === 'validating' && 'Acompanhe as etapas de verificação em tempo real'}
-            {overallStatus === 'success' && 'Sua Análise Completa já está disponível'}
-            {overallStatus === 'failed' && (errorMessage || 'Verifique seus dados ou tente novamente')}
+            {overallStatus === 'validating' && pm.stepValidating}
+            {overallStatus === 'success' && pm.successDesc}
+            {overallStatus === 'failed' && (errorMessage || pm.errorDefault)}
           </p>
         </div>
 
         {/* Traceability Steps */}
         <div className="p-6 space-y-4">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-            Rastreabilidade da Transação
+            Status
           </div>
 
           {/* Step 1 */}
@@ -165,11 +161,10 @@ export function PaymentStatusModal({ sessionId, onConfirmed, onClose }: PaymentS
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-800">1. Retorno Seguro do Gateway</p>
-              <p className="text-[11px] text-slate-500">Redirecionamento do Stripe efetuado</p>
+              <p className="text-xs font-semibold text-slate-800">{pm.stepReceived}</p>
             </div>
             <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
-              CONCLUÍDO
+              OK
             </Badge>
           </div>
 
@@ -202,24 +197,8 @@ export function PaymentStatusModal({ sessionId, onConfirmed, onClose }: PaymentS
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-800">2. Autenticação da Transação</p>
-              <p className="text-[11px] text-slate-500">Consulta direta de status com a API do Stripe</p>
+              <p className="text-xs font-semibold text-slate-800">{pm.stepValidating}</p>
             </div>
-            {step2Status === 'loading' && (
-              <Badge className="bg-indigo-100 text-indigo-800 border-none font-bold text-[10px] animate-pulse">
-                VALIDANDO...
-              </Badge>
-            )}
-            {step2Status === 'success' && (
-              <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
-                APROVADO
-              </Badge>
-            )}
-            {step2Status === 'error' && (
-              <Badge className="bg-rose-100 text-rose-800 border-none font-bold text-[10px]">
-                FALHOU
-              </Badge>
-            )}
           </div>
 
           {/* Step 3 */}
@@ -244,12 +223,11 @@ export function PaymentStatusModal({ sessionId, onConfirmed, onClose }: PaymentS
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-800">3. Liberação da Análise</p>
-              <p className="text-[11px] text-slate-500">Lançamento no saldo da conta</p>
+              <p className="text-xs font-semibold text-slate-800">{pm.stepCrediting}</p>
             </div>
             {step3Status === 'success' && (
               <Badge className="bg-emerald-600 text-white border-none font-bold text-[10px]">
-                + {analysesAdded} {analysesAdded === 1 ? 'ANÁLISE' : 'ANÁLISES'}
+                {pm.analysesCredited.replace('{n}', String(analysesAdded))}
               </Badge>
             )}
           </div>
@@ -257,7 +235,7 @@ export function PaymentStatusModal({ sessionId, onConfirmed, onClose }: PaymentS
           {/* Success summary box */}
           {overallStatus === 'success' && (
             <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-xl text-center space-y-1 animate-in zoom-in-95 duration-200">
-              <p className="text-xs text-emerald-800 font-medium">Análises disponíveis</p>
+              <p className="text-xs text-emerald-800 font-medium">{pm.newBalanceText}</p>
               <p className="text-2xl font-black text-emerald-700 font-mono">
                 {newBalance !== null ? newBalance : `+${analysesAdded}`}
               </p>
@@ -272,7 +250,7 @@ export function PaymentStatusModal({ sessionId, onConfirmed, onClose }: PaymentS
               onClick={onClose}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs w-full sm:w-auto"
             >
-              Começar minha análise <ArrowRight className="w-4 h-4 ml-1.5" />
+              {pm.continueToReport} <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           ) : overallStatus === 'failed' ? (
             <Button
@@ -280,11 +258,11 @@ export function PaymentStatusModal({ sessionId, onConfirmed, onClose }: PaymentS
               variant="outline"
               className="border-slate-300 text-slate-700 text-xs font-bold w-full"
             >
-              Fechar
+              {pm.closeBtn}
             </Button>
           ) : (
             <p className="text-[11px] text-slate-400 text-center w-full italic">
-              Aguarde a finalização da validação...
+              {pm.validatingTitle}
             </p>
           )}
         </div>

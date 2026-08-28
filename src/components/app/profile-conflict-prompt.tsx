@@ -6,30 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { internalFetch } from '@/lib/internal-fetch'
 import { toast } from 'sonner'
-
-/**
- * "Este currículo é de outra profissão. Atualizo seu perfil?"
- *
- * ## Por que perguntar, e não decidir
- *
- * O Perfil Profissional é um por usuário. Quando chega um currículo de outra
- * área, o perfil passa a descrever outra pessoa profissional — e ele governa a
- * orientação de carreira e a busca de vagas do Radar. Quem enviou um currículo
- * de advogado receberia vagas de biomedicina.
- *
- * Trocar sozinho está fora de questão: o §30 diz que o perfil não muda em
- * silêncio, e um perfil que se reescreve a cada upload apagaria o que a pessoa
- * ajustou à mão. Ignorar também não serve — o perfil errado continuaria
- * decidindo o que ela recebe. Sobra perguntar.
- *
- * ## A recusa é uma resposta, e é lembrada
- *
- * "Manter como está" é legítimo: alguém pode ter dois currículos de verdade e
- * saber muito bem qual perfil quer. Perguntar de novo no mesmo currículo
- * transformaria a resposta dela em nada, então a recusa fica registrada por
- * currículo, no próprio navegador — a decisão é da tela, e não vale a pena uma
- * coluna no banco para guardá-la.
- */
+import { useI18n } from '@/context/i18n-context'
 
 export interface ProfileConflict {
   field: 'currentTitle' | 'field'
@@ -57,6 +34,8 @@ export function ProfileConflictPrompt({
   conflicts: ProfileConflict[]
   onResolved: () => void
 }) {
+  const { t } = useI18n()
+  const pc = t.profileConflict
   const [saving, setSaving] = useState(false)
 
   if (conflicts.length === 0) return null
@@ -65,8 +44,7 @@ export function ProfileConflictPrompt({
     try {
       localStorage.setItem(dismissKey(resumeId), '1')
     } catch {
-      // Navegador sem armazenamento: a pergunta volta na próxima visita. É
-      // pior que lembrar, e melhor que travar a tela.
+      // Navegador sem armazenamento
     }
     onResolved()
   }
@@ -74,9 +52,6 @@ export function ProfileConflictPrompt({
   const apply = async () => {
     setSaving(true)
     try {
-      // Só os campos em conflito. Levar junto o resto da sugestão faria a
-      // pessoa aceitar mudanças que ela não viu — que é o mesmo defeito de
-      // mudar sozinho, disfarçado de confirmação.
       const patch: Record<string, string> = {}
       for (const c of conflicts) patch[c.field] = c.suggested
 
@@ -88,14 +63,14 @@ export function ProfileConflictPrompt({
 
       if (!r.ok) {
         const data = await r.json().catch(() => ({}))
-        toast.error(data.error || 'Não foi possível atualizar o perfil.')
+        toast.error(data.error || pc.updateError)
         return
       }
 
-      toast.success('Perfil atualizado. O Radar passa a buscar vagas desta área.')
+      toast.success(pc.updateSuccess)
       dismiss()
     } catch {
-      toast.error('Erro de conexão ao atualizar o perfil.')
+      toast.error(pc.updateConnectionError)
     } finally {
       setSaving(false)
     }
@@ -108,13 +83,10 @@ export function ProfileConflictPrompt({
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <p className="font-bold text-slate-900 text-sm">
-              Este currículo parece ser de outra área
+              {pc.title}
             </p>
             <p className="text-xs text-slate-700 leading-relaxed">
-              Seu Perfil Profissional ainda descreve a área anterior. Ele não afeta este
-              laudo — que foi feito só a partir do currículo enviado —, mas é ele que
-              orienta a carreira e decide{' '}
-              <strong>quais vagas o Radar procura para você</strong>.
+              {pc.desc.replace('{profileRole}', conflicts.find(c => c.field === 'currentTitle')?.current || '').replace('{resumeRole}', conflicts.find(c => c.field === 'currentTitle')?.suggested || '')}
             </p>
           </div>
         </div>
@@ -141,7 +113,7 @@ export function ProfileConflictPrompt({
             ) : (
               <Check className="w-3.5 h-3.5 mr-1" />
             )}
-            Atualizar meu perfil
+            {saving ? pc.updatingBtn : pc.updateBtn.replace('{role}', conflicts.find(c => c.field === 'currentTitle')?.suggested || '')}
           </Button>
           <Button
             variant="outline"
@@ -149,7 +121,7 @@ export function ProfileConflictPrompt({
             disabled={saving}
             className="text-xs font-semibold border-slate-300"
           >
-            <X className="w-3.5 h-3.5 mr-1" /> Manter como está
+            <X className="w-3.5 h-3.5 mr-1" /> {pc.keepBtn}
           </Button>
         </div>
       </CardContent>

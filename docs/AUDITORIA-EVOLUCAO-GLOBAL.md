@@ -2328,3 +2328,42 @@ se encaixarem no pedido ("sem utilidade atual OU FUTURA"):
 
 `tsc --noEmit`, `eslint` nos arquivos tocados, `npm test` (583/583) e
 `npm run build` limpos após a remoção completa.
+
+---
+
+## 2.36 Internacionalização Completa do Sistema e Paridade Multilíngue (PT, EN, ES)
+
+Auditoria e implementação de suporte integral a multi-idiomas (`pt`, `en`, `es`) em todas as camadas da aplicação (Frontend, Backend, geração de PDF, agentes de suporte e testes).
+
+### 1. Dicionários e Tipagem Estrita (`src/lib/i18n/index.ts`)
+- Expansão de `TranslationDictionary` com 100% de simetria de chaves em `DICTIONARIES.pt`, `DICTIONARIES.en` e `DICTIONARIES.es`.
+- Novos blocos estruturados: `analysisPaywall`, `socialPanel`, `paymentModal`, `profileConflict`, `uploadProgress`, `pdfReport`.
+- Campos adicionados nas seções existentes: `auth` (consentimento LGPD/GDPR, botão voltar, placeholder), `app` (itens de navegação, breadcrumbs, perfil, radar, suporte, crachá/modo admin master, toasts de pagamento), `pricing` (conjunções, histórico do livro-razão de análises), `support` (nota de auto-diagnóstico em tempo real), `rewrite` (progresso dinâmico de seções).
+- Exportação formal da constante `LANGUAGES` e validação do helper `detectLanguageFromCountry` e `localeForLang`.
+
+### 2. Telas e Componentes do Aplicativo
+- `src/components/app/app-shell.tsx`: navegação lateral dinâmica por idioma, cabeçalho responsivo, menu dropdown do usuário, crachá admin master e toasts de retorno do Stripe.
+- `src/components/app/analysis-view.tsx`: lookup prioritário de chaves dinâmicas no dicionário ativo (`(d.key && DIMENSION_LABELS[d.key]) || d.label || d.key`), garantindo atualização instantânea de rótulos ao alternar o idioma.
+- `src/components/app/rewrite-view.tsx`: contagem e progresso dinâmico de seções com template localizado.
+- `src/components/app/analysis-paywall.tsx`: paywall 100% migrado para chaves de internacionalização.
+- `src/components/app/plans-view.tsx`: histórico do livro-razão de análises, títulos, conjunções e formatação de datas via `localeForLang(lang)`.
+- `src/components/app/upload-progress-modal.tsx`: etapas de IA (8 dimensões, job match, targeted changes, resumo executivo), dicas de tempo e cronômetro.
+- `src/components/app/social-analysis-panel.tsx`: auditoria de pegada digital, sugestões de bios, títulos e ações recomendadas.
+- `src/components/app/payment-status-modal.tsx`: passos de verificação de checkout Stripe e fallbacks de erro.
+- `src/components/app/profile-conflict-prompt.tsx`: diálogo de resolução de divergência de cargos e áreas profissionais.
+- `src/components/auth/auth-screen.tsx`: termos de consentimento internacional de dados (LGPD/GDPR), botão de retorno e placeholders.
+
+### 3. Geração de PDF e Endpoints de Download Multilíngue
+- `src/lib/pdf.ts`: `generateAnalysisReportPdf` agora suporta parâmetro opcional `lang?: Language` com metadados do documento PDF, títulos de seções, status de compatibilidade ATS, e datas formatadas conforme o locale correspondente.
+- `src/app/api/resume/download/route.ts`: extração do idioma da requisição via `getRequestLanguage(req)` e propagação para o laudo em PDF e conselho de presença digital.
+
+### 4. Suporte e Auto-Diagnóstico de Incidentes
+- `src/app/api/support/chat/route.ts`: expansão de expressões regulares de detecção de incidentes e falhas em português, inglês e espanhol (`isErrorReport`), integrando a nota de auto-diagnóstico em tempo real localizada conforme o idioma do usuário.
+
+### 5. Verificação e Segurança
+- Criação da suíte `src/lib/i18n/i18n.test.ts` validando:
+  - Paridade estrutural estrita entre dicionários `pt`, `en` e `es`.
+  - Ausência de strings vazias ou nulas em todas as chaves nos 3 idiomas.
+  - Comportamento de geolocalização e mapeamento de locale.
+- Suíte completa de testes (`npm test`) com 617/617 testes aprovados (100% de sucesso, 0 regressões, conformidade OWASP ASVS mantida).
+

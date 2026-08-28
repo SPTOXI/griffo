@@ -14,6 +14,7 @@ import {
 import { internalFetch } from '@/lib/internal-fetch'
 import { toast } from 'sonner'
 import { useAiJob } from './use-ai-job'
+import { useI18n } from '@/context/i18n-context'
 
 /** Procedência de cada perfil — o que foi lido de verdade e o que não foi. */
 interface SocialSource {
@@ -56,9 +57,9 @@ type PdfState =
   | { phase: 'ok'; name: string; chars: number; method: 'text_layer' | 'ocr' }
   | { phase: 'error'; name: string; message: string }
 
-function copy(text: string, label: string) {
+function copy(text: string, label: string, copiedToast?: string) {
   navigator.clipboard.writeText(text)
-  toast.success(`${label} copiado!`)
+  toast.success(copiedToast || `${label} copiado!`)
 }
 
 export function SocialAnalysisPanel({
@@ -70,6 +71,8 @@ export function SocialAnalysisPanel({
   initialAnalysis: SocialAnalysis | null
   socialLinks: Record<string, string>
 }) {
+  const { t, lang } = useI18n()
+  const sp = t.socialPanel
   const [analysis, setAnalysis] = useState<SocialAnalysis | null>(initialAnalysis)
   const [error, setError] = useState<string | null>(null)
 
@@ -101,7 +104,7 @@ export function SocialAnalysisPanel({
       setError(null)
       setAnalysis(result.socialAnalysis)
       setSourceNotes(result.socialAnalysis?.sources || null)
-      toast.success(`Análise concluída sobre ${result.analyzedCount} perfil(is).`)
+      toast.success(sp.auditSuccessToast)
     },
     onFailed: (message, code, data) => {
       // 422: nada pôde ser lido. Abre o caminho manual em vez de só falhar.
@@ -111,7 +114,7 @@ export function SocialAnalysisPanel({
         setError(message)
         return
       }
-      setError(message || 'Não foi possível concluir a análise.')
+      setError(message || sp.auditErrorFallback)
     },
   })
   const running = job.phase === 'starting' || job.phase === 'running'
@@ -193,11 +196,10 @@ export function SocialAnalysisPanel({
             </div>
             <div>
               <CardTitle className="text-xl text-white font-black flex items-center gap-2 mb-1 tracking-tight">
-                🌐 Auditoria de Presença Digital
+                🌐 {sp.title}
               </CardTitle>
               <CardDescription className="text-sm text-violet-100/80 font-medium max-w-xl leading-relaxed">
-                Lemos o conteúdo real dos seus perfis — GitHub pela API oficial, portfólio e
-                blogs pela página publicada — e comparamos com o seu currículo.
+                {sp.subtitle}
               </CardDescription>
             </div>
           </div>
@@ -211,7 +213,7 @@ export function SocialAnalysisPanel({
               className="bg-transparent border-violet-500/40 text-violet-200 hover:bg-violet-500/10 hover:text-white text-sm font-bold shrink-0"
             >
               {running ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : null}
-              Refazer
+              {sp.reAuditBtn}
             </Button>
           )}
         </div>
@@ -246,15 +248,12 @@ export function SocialAnalysisPanel({
           <div className="text-center py-6 space-y-4">
             {!hasLinks ? (
               <p className="text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
-                Você ainda não cadastrou perfis profissionais. Adicione seu GitHub, portfólio ou
-                LinkedIn nas configurações da conta — ou cole o conteúdo do perfil no campo acima
-                para auditar mesmo assim.
+                {sp.subtitle}
               </p>
             ) : (
               <p className="text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
-                <strong className="text-white">{Object.keys(socialLinks).length} perfil(is) cadastrado(s).</strong>{' '}
-                A auditoria visita cada um, compara com o seu currículo e devolve headline e bio
-                prontos para copiar.
+                <strong className="text-white">{Object.keys(socialLinks).length} {sp.profilesFoundTitle.toLowerCase()}.</strong>{' '}
+                {sp.subtitle}
               </p>
             )}
             <Button
@@ -264,9 +263,9 @@ export function SocialAnalysisPanel({
               className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold shadow-lg shadow-violet-600/20"
             >
               {running ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lendo seus perfis...</>
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {sp.auditingBtn}</>
               ) : (
-                <><Sparkles className="w-4 h-4 mr-2" /> Auditar presença digital</>
+                <><Sparkles className="w-4 h-4 mr-2" /> {sp.startAuditBtn}</>
               )}
             </Button>
             {running && (
@@ -275,7 +274,7 @@ export function SocialAnalysisPanel({
                 {/* Cada número aqui é uma etapa que de fato terminou — não uma
                     estimativa de tempo. */}
                 <p className="text-xs text-slate-400">
-                  {job.completedSteps} de {job.totalSteps || '...'} perfil(is) lido(s)
+                  {job.completedSteps} de {job.totalSteps || '...'}
                 </p>
               </div>
             )}
@@ -287,7 +286,7 @@ export function SocialAnalysisPanel({
           <>
             <div className="p-4 rounded-xl bg-black/20 border border-white/10">
               <p className="text-xs font-black uppercase tracking-widest text-violet-300 mb-2">
-                Avaliação geral
+                {sp.overallTitle}
               </p>
               <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">
                 {analysis.overallAssessment}
@@ -310,21 +309,17 @@ export function SocialAnalysisPanel({
                       <span className="text-xs text-slate-400 font-mono truncate">{item.url}</span>
                     </div>
 
-                    {/* A distinção que sustenta a credibilidade do laudo: o que
-                        foi lido de fato e o que é orientação genérica. Era um
-                        selo de 10px que se perdia na página; agora tem o peso
-                        visual da informação que carrega. */}
                     {item.failed ? (
                       <span className="inline-flex items-center gap-1.5 rounded-lg bg-rose-500/20 border border-rose-400/50 px-3 py-1.5 text-xs font-bold text-rose-200 shrink-0">
-                        <AlertCircle className="w-4 h-4" /> Parecer não gerado — refaça a auditoria
+                        <AlertCircle className="w-4 h-4" /> {sp.auditErrorFallback}
                       </span>
                     ) : item.analyzed ? (
                       <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/20 border border-emerald-400/50 px-3 py-1.5 text-xs font-bold text-emerald-200 shrink-0">
-                        <CheckCircle2 className="w-4 h-4" /> Conteúdo real do perfil analisado
+                        <CheckCircle2 className="w-4 h-4" /> {sp.readProfileOk}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/20 border border-amber-400/50 px-3 py-1.5 text-xs font-bold text-amber-200 shrink-0">
-                        <AlertCircle className="w-4 h-4" /> Perfil não lido — orientação genérica
+                        <AlertCircle className="w-4 h-4" /> {sp.readProfileGeneric}
                       </span>
                     )}
                   </div>
@@ -332,7 +327,7 @@ export function SocialAnalysisPanel({
                   {item.findings && (
                     <div className="bg-black/20 p-4 rounded-xl border border-white/10">
                       <p className="text-xs font-black uppercase tracking-widest text-slate-300 mb-2">
-                        O que encontramos
+                        {sp.findingsTitle}
                       </p>
                       <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">
                         {item.findings}
@@ -342,27 +337,31 @@ export function SocialAnalysisPanel({
 
                   {item.headline && (
                     <CopyBlock
-                      label="💡 Título estratégico (SEO)"
+                      label={`💡 ${sp.headlineTitle}`}
                       accent="text-violet-300"
                       buttonAccent="text-violet-200"
                       value={item.headline}
+                      copyBtnText={sp.copyBtn}
+                      copiedToastText={sp.copiedToast}
                       bold
                     />
                   )}
 
                   {item.aboutSummary && (
                     <CopyBlock
-                      label='📝 Texto "Sobre" otimizado'
+                      label={`📝 ${sp.aboutTitle}`}
                       accent="text-blue-300"
                       buttonAccent="text-blue-200"
                       value={item.aboutSummary}
+                      copyBtnText={sp.copyBtn}
+                      copiedToastText={sp.copiedToast}
                     />
                   )}
 
                   {item.tips?.length > 0 && (
                     <div className="bg-black/20 p-4 rounded-xl border border-white/10">
                       <p className="text-xs font-black uppercase tracking-widest text-fuchsia-300 mb-2">
-                        🚀 Ações recomendadas
+                        🚀 {sp.tipsTitle}
                       </p>
                       <ul className="space-y-2">
                         {item.tips.map((tip, i) => (
@@ -380,7 +379,7 @@ export function SocialAnalysisPanel({
 
             {analysis.analyzedAt && (
               <p className="text-xs text-slate-400 text-center pt-2">
-                Auditoria realizada em {new Date(analysis.analyzedAt).toLocaleString('pt-BR')}
+                {sp.analyzedAt.replace('{date}', new Date(analysis.analyzedAt).toLocaleString(lang === 'pt' ? 'pt-BR' : lang === 'es' ? 'es-ES' : 'en-US'))}
               </p>
             )}
           </>
@@ -616,12 +615,16 @@ function CopyBlock({
   accent,
   buttonAccent,
   bold,
+  copyBtnText,
+  copiedToastText,
 }: {
   label: string
   value: string
   accent: string
   buttonAccent: string
   bold?: boolean
+  copyBtnText?: string
+  copiedToastText?: string
 }) {
   return (
     <div className="bg-black/20 p-4 rounded-xl border border-white/10">
@@ -631,9 +634,9 @@ function CopyBlock({
           variant="ghost"
           size="sm"
           className={`h-7 text-xs px-2.5 ${buttonAccent} hover:bg-white/10 hover:text-white font-bold shrink-0`}
-          onClick={() => copy(value, label.replace(/^\W+\s*/, ''))}
+          onClick={() => copy(value, label.replace(/^\W+\s*/, ''), copiedToastText)}
         >
-          Copiar
+          {copyBtnText || 'Copiar'}
         </Button>
       </div>
       <p

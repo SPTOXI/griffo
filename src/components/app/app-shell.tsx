@@ -28,24 +28,24 @@ import { LanguageSelector } from '../ui/language-selector'
 import { useI18n } from '@/context/i18n-context'
 import { useAnalyses } from '@/hooks/use-analyses'
 
-const NAV_ITEMS: { view: AppView; label: string; icon: any }[] = [
-  { view: 'dashboard', label: 'Painel', icon: LayoutDashboard },
-  { view: 'upload', label: 'Enviar currículo', icon: Upload },
-  { view: 'analysis', label: 'Laudo', icon: FileSearch },
-  { view: 'profile', label: 'Perfil Profissional', icon: Briefcase },
-  { view: 'radar', label: 'Radar', icon: RadarIcon },
-  { view: 'rewrite', label: 'Reescrita', icon: FileEdit },
-  { view: 'downloads', label: 'Downloads', icon: Download },
-  { view: 'history', label: 'Histórico', icon: History },
-  { view: 'plans', label: 'Comprar Análise', icon: CreditCard },
-  { view: 'support', label: 'Suporte & Dúvidas', icon: HelpCircle },
-  { view: 'settings', label: 'Configurações', icon: Settings },
-]
-
 export function AppShell({ onExit }: { onExit: () => void }) {
   const { lang, t } = useI18n()
   const { user, logout, hydrated } = useAuth()
   const { view, setView, openResume } = useNav()
+
+  const navItems: { view: AppView; label: string; icon: any }[] = [
+    { view: 'dashboard', label: t.app.dashboard, icon: LayoutDashboard },
+    { view: 'upload', label: t.app.upload, icon: Upload },
+    { view: 'analysis', label: t.app.analysis, icon: FileSearch },
+    { view: 'profile', label: t.app.profile, icon: Briefcase },
+    { view: 'radar', label: t.app.radar, icon: RadarIcon },
+    { view: 'rewrite', label: t.app.rewrite, icon: FileEdit },
+    { view: 'downloads', label: t.app.downloads, icon: Download },
+    { view: 'history', label: t.app.history, icon: History },
+    { view: 'plans', label: t.app.plans, icon: CreditCard },
+    { view: 'support', label: t.app.support, icon: HelpCircle },
+    { view: 'settings', label: t.app.settings, icon: Settings },
+  ]
 
   const appSubtitles: Record<string, string> = {
     pt: 'GLOBAL AI CAREER INTELLIGENCE',
@@ -76,14 +76,14 @@ export function AppShell({ onExit }: { onExit: () => void }) {
       setActivePaymentSession({ sessionId, resumeId })
       window.history.replaceState({}, document.title, window.location.pathname)
     } else if (paymentStatus === 'success' && !sessionId) {
-      toast.success('🎉 Pagamento confirmado!')
+      toast.success(t.app.paymentSuccessToast)
       window.history.replaceState({}, document.title, window.location.pathname)
       refreshBalance()
     } else if (paymentStatus === 'cancelled') {
-      toast.error('Pagamento cancelado.')
+      toast.error(t.app.paymentCancelledToast)
       window.history.replaceState({}, document.title, window.location.pathname)
     }
-  }, [openResume, refreshBalance])
+  }, [openResume, refreshBalance, t.app])
 
   const initials = (user?.name || user?.email || '?')
     .split(' ')
@@ -117,12 +117,12 @@ export function AppShell({ onExit }: { onExit: () => void }) {
         </button>
 
         <div className="hidden sm:flex items-center gap-1 ml-3 text-xs sm:text-sm text-slate-500 truncate">
-          <span className={view === 'dashboard' ? 'text-slate-900 font-medium' : undefined}>Painel</span>
+          <span className={view === 'dashboard' ? 'text-slate-900 font-medium' : undefined}>{t.app.dashboard}</span>
           {view !== 'dashboard' && (
             <>
               <ChevronRight className="w-3.5 h-3.5 shrink-0" />
               <span className="text-slate-900 font-medium capitalize truncate">
-                {NAV_ITEMS.find(n => n.view === view)?.label || (view === 'admin' ? 'Área Admin' : view)}
+                {navItems.find(n => n.view === view)?.label || (view === 'admin' ? t.app.admin : view)}
               </span>
             </>
           )}
@@ -138,7 +138,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
               className="bg-violet-700 hover:bg-violet-800 h-8 text-xs font-semibold gap-1 px-2 sm:px-3 shadow-xs"
             >
               <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300 shrink-0" />
-              <span className="hidden sm:inline">Análises Ilimitadas (Admin)</span>
+              <span className="hidden sm:inline">{t.app.adminBadge}</span>
               <span className="sm:hidden">Admin</span>
             </Button>
           ) : (
@@ -170,18 +170,18 @@ export function AppShell({ onExit }: { onExit: () => void }) {
               <DropdownMenuSeparator />
               {user?.role === 'admin' && (
                 <DropdownMenuItem onClick={() => setView('admin')} className="text-violet-600 font-semibold cursor-pointer">
-                  <Shield className="w-4 h-4 mr-2" /> Área Admin
+                  <Shield className="w-4 h-4 mr-2" /> {t.app.admin}
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={() => setView('settings')} className="cursor-pointer">
-                <Settings className="w-4 h-4 mr-2" /> Configurações
+                <Settings className="w-4 h-4 mr-2" /> {t.app.settings}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setView('plans')} className="cursor-pointer">
                 <CreditCard className="w-4 h-4 mr-2" /> {t.app.plans} ({balance})
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-700 cursor-pointer">
-                <LogOut className="w-4 h-4 mr-2" /> Sair
+                <LogOut className="w-4 h-4 mr-2" /> {t.app.logout}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -201,7 +201,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           transition-transform duration-200 ease-in-out
         `}>
           <div className="p-4 space-y-1">
-            <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Navegação</p>
+            <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">{t.app.navSection}</p>
             <nav className="space-y-1">
               {user?.role === 'admin' && (
                 <button
@@ -219,11 +219,11 @@ export function AppShell({ onExit }: { onExit: () => void }) {
                   `}
                 >
                   <Shield className={`w-4 h-4 ${view === 'admin' ? 'text-amber-300' : 'text-violet-600'}`} />
-                  <span>Área Admin (Painel Mestre)</span>
+                  <span>{t.app.adminMasterArea}</span>
                 </button>
               )}
 
-              {NAV_ITEMS.map((item) => {
+              {navItems.map((item) => {
                 const Icon = item.icon
                 const active = view === item.view
                 return (
@@ -254,11 +254,11 @@ export function AppShell({ onExit }: { onExit: () => void }) {
             {user?.role === 'admin' ? (
               <div className="rounded-xl bg-gradient-to-br from-violet-700 to-indigo-900 p-3 text-white space-y-2 shadow-md">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-violet-200">
-                  <Shield className="w-4 h-4 text-amber-300" /> Modo Administrador
+                  <Shield className="w-4 h-4 text-amber-300" /> {t.app.adminMode}
                 </div>
-                <p className="text-xl font-extrabold text-white">♾️ Análises Ilimitadas</p>
+                <p className="text-xl font-extrabold text-white">♾️ {t.app.adminBadge}</p>
                 <Button onClick={() => { setView('admin'); setSidebarOpen(false) }} size="sm" className="w-full bg-white text-violet-950 hover:bg-slate-100 font-bold text-xs h-8">
-                  Acessar Área Admin
+                  {t.app.adminAccessBtn}
                 </Button>
               </div>
             ) : (

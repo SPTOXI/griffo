@@ -50,7 +50,7 @@ export function PlansView() {
   const localPayment = pricing
     ? t.pricing.localPayment
         .replace('{currency}', pricing.currency)
-        .replace('{methods}', pricing.paymentMethods.join(' ou '))
+        .replace('{methods}', pricing.paymentMethods.join(` ${t.pricing.conjunctionOr} `))
     : ''
 
   return (
@@ -189,25 +189,25 @@ export function PlansView() {
       {ledger.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Histórico</CardTitle>
-            <CardDescription>Compras e análises liberadas na sua conta.</CardDescription>
+            <CardTitle className="text-base">{t.pricing.historyTitle}</CardTitle>
+            <CardDescription>{t.pricing.historyDesc}</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-left">
                 <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-y border-slate-200">
                   <tr>
-                    <th className="px-4 py-3">Data</th>
-                    <th className="px-4 py-3">Descrição</th>
-                    <th className="px-4 py-3">Valor pago</th>
-                    <th className="px-4 py-3">Análises</th>
+                    <th className="px-4 py-3">{t.pricing.colDate}</th>
+                    <th className="px-4 py-3">{t.pricing.colDesc}</th>
+                    <th className="px-4 py-3">{t.pricing.colAmount}</th>
+                    <th className="px-4 py-3">{t.pricing.colAnalyses}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {ledger.map((entry) => (
                     <tr key={entry.id} className="hover:bg-slate-50/50">
                       <td className="px-4 py-3 text-slate-500">
-                        {new Date(entry.createdAt).toLocaleString()}
+                        {new Date(entry.createdAt).toLocaleString(lang === 'pt' ? 'pt-BR' : lang === 'es' ? 'es-ES' : 'en-US')}
                       </td>
                       <td className="px-4 py-3 font-medium text-slate-800">{entry.description}</td>
                       <td className="px-4 py-3 font-mono text-slate-600">

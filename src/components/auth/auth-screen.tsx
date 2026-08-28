@@ -57,7 +57,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
       <header className="h-16 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
           <button onClick={onBack} className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900">
-            <ArrowLeft className="w-4 h-4" /> Voltar
+            <ArrowLeft className="w-4 h-4" /> {t.auth.back}
           </button>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2.5">
@@ -148,7 +148,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
                       <Input
                         id="profession"
                         type="text"
-                        placeholder="Ex: Engenheiro de Software"
+                        placeholder={t.auth.professionPlaceholder}
                         value={profession}
                         onChange={(e) => setProfession(e.target.value)}
                         className="pl-9"
@@ -166,10 +166,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
                       className="mt-0.5 shrink-0 accent-[#0B63E5]"
                     />
                     <span>
-                      Autorizo o processamento do meu currículo por serviços de
-                      inteligência artificial <strong>localizados no exterior</strong>,
-                      necessário para gerar a análise e a reescrita. Posso solicitar a
-                      exportação ou a exclusão dos meus dados a qualquer momento.
+                      {t.auth.dataTransferConsent}
                     </span>
                   </label>
                 )}

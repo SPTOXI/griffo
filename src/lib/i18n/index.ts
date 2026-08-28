@@ -1,4 +1,5 @@
 export type Language = 'pt' | 'en' | 'es'
+export const LANGUAGES: Language[] = ['pt', 'en', 'es']
 
 export interface TranslationDictionary {
   nav: {
@@ -138,6 +139,13 @@ export interface TranslationDictionary {
     businessTitle: string
     businessDesc: string
     businessCta: string
+    conjunctionOr: string
+    historyTitle: string
+    historyDesc: string
+    colDate: string
+    colDesc: string
+    colAmount: string
+    colAnalyses: string
   }
   faq: {
     badge: string
@@ -179,17 +187,31 @@ export interface TranslationDictionary {
     signupBtn: string
     noAccount: string
     hasAccount: string
+    back: string
+    professionPlaceholder: string
+    dataTransferConsent: string
   }
   app: {
     dashboard: string
     upload: string
     analysis: string
+    profile: string
+    radar: string
     rewrite: string
     downloads: string
     history: string
     plans: string
+    support: string
     settings: string
     admin: string
+    adminBadge: string
+    adminMasterArea: string
+    adminMode: string
+    adminAccessBtn: string
+    navSection: string
+    logout: string
+    paymentSuccessToast: string
+    paymentCancelledToast: string
     /// Saldo de análises completas. Era `credits`/`addCredits`.
     balance: string
     balanceUnit: string
@@ -432,6 +454,7 @@ export interface TranslationDictionary {
     officialBadge: string
     typingIndicator: string
     inputPlaceholder: string
+    incidentAutoReportNote: string
   }
   /** Tela de Downloads (`downloads-view.tsx`). */
   downloads: {
@@ -507,6 +530,7 @@ export interface TranslationDictionary {
     authorizeLabel: string
     rewritingButton: string
     rewriteButton: string
+    sectionsProgress: string
     successCardTitle: string
     successCardDesc: string
     keywordsCardTitle: string
@@ -806,6 +830,127 @@ export interface TranslationDictionary {
     ctaDesc: string
     ctaButton: string
   }
+  /** Paywall do Laudo (`analysis-paywall.tsx`). */
+  analysisPaywall: {
+    reportTitle: string
+    cardTitle: string
+    cardDesc: string
+    calculating: string
+    retryCalculate: string
+    scoreOutOfTen: string
+    lockNote: string
+    unlockAvailable: string
+  }
+  /** Painel de Presença Digital (`social-analysis-panel.tsx`). */
+  socialPanel: {
+    title: string
+    subtitle: string
+    startAuditBtn: string
+    reAuditBtn: string
+    auditingBtn: string
+    auditSuccessToast: string
+    auditErrorFallback: string
+    auditConnectionError: string
+    overallTitle: string
+    profilesFoundTitle: string
+    readProfileOk: string
+    readProfileGeneric: string
+    findingsTitle: string
+    headlineTitle: string
+    aboutTitle: string
+    tipsTitle: string
+    copyBtn: string
+    copiedToast: string
+    manualOptionTitle: string
+    manualOptionDesc: string
+    pasteLabel: string
+    pastePlaceholder: string
+    uploadPdfBtn: string
+    readingPdf: string
+    pdfSuccess: string
+    pdfError: string
+    saveManualBtn: string
+    savingManualBtn: string
+    analyzedAt: string
+    badgeAudit: string
+  }
+  /** Modal de validação de pagamento (`payment-status-modal.tsx`). */
+  paymentModal: {
+    validatingTitle: string
+    stepReceived: string
+    stepValidating: string
+    stepCrediting: string
+    successTitle: string
+    successDesc: string
+    errorTitle: string
+    errorDefault: string
+    newBalanceText: string
+    analysesCredited: string
+    continueToReport: string
+    closeBtn: string
+  }
+  /** Alerta de conflito de perfil (`profile-conflict-prompt.tsx`). */
+  profileConflict: {
+    title: string
+    desc: string
+    updateBtn: string
+    updatingBtn: string
+    keepBtn: string
+    updateSuccess: string
+    updateError: string
+    updateConnectionError: string
+  }
+  /** Modal de progresso da análise (`upload-progress-modal.tsx`). */
+  uploadProgress: {
+    title: string
+    desc: string
+    elapsed: string
+    slow30: string
+    slow60: string
+    consolidating: string
+    closingOk: string
+    preparing: string
+    executiveReport: string
+    stageDimStructure: string
+    stageDimStructureHint: string
+    stageDimSummary: string
+    stageDimSummaryHint: string
+    stageDimImpact: string
+    stageDimImpactHint: string
+    stageDimSkills: string
+    stageDimSkillsHint: string
+    stageDimExperience: string
+    stageDimExperienceHint: string
+    stageDimKeywords: string
+    stageDimKeywordsHint: string
+    stageDimCareer: string
+    stageDimCareerHint: string
+    stageDimUpskilling: string
+    stageDimUpskillingHint: string
+    stageJobMatch: string
+    stageJobMatchHint: string
+    stageTargetedChanges: string
+    stageTargetedChangesHint: string
+    stageExecutive: string
+    stageExecutiveHint: string
+  }
+  /** Laudo e Relatórios PDF (`src/lib/pdf.ts`). */
+  pdfReport: {
+    docTitle: string
+    docAuthor: string
+    docSubject: string
+    generatedAt: string
+    overallScore: string
+    atsTitle: string
+    atsPass: string
+    atsFail: string
+    dimensionsTitle: string
+    strengthsTitle: string
+    weaknessesTitle: string
+    recommendationsTitle: string
+    keywordsTitle: string
+    footerNote: string
+  }
 }
 
 export const DICTIONARIES: Record<Language, TranslationDictionary> = {
@@ -943,6 +1088,13 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       businessTitle: 'Empresas e RH',
       businessDesc: 'Volume, faturamento e soluções corporativas para processos seletivos.',
       businessCta: 'Falar com a equipe comercial',
+      conjunctionOr: 'ou',
+      historyTitle: 'Histórico',
+      historyDesc: 'Compras e análises liberadas para a sua conta.',
+      colDate: 'Data',
+      colDesc: 'Descrição',
+      colAmount: 'Valor pago',
+      colAnalyses: 'Análises',
     },
     faq: {
       badge: 'Perguntas Frequentes',
@@ -984,17 +1136,31 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       signupBtn: 'Criar minha conta grátis',
       noAccount: 'Ainda não tem uma conta? Cadastre-se grátis',
       hasAccount: 'Já possui uma conta? Faça login',
+      back: 'Voltar',
+      professionPlaceholder: 'Ex: Engenheiro de Software',
+      dataTransferConsent: 'Autorizo o processamento do meu currículo por serviços de inteligência artificial localizados no exterior, estritamente para fins de análise, reescrita e otimização profissional, em conformidade com a LGPD e GDPR.',
     },
     app: {
       dashboard: 'Painel',
       upload: 'Enviar currículo',
       analysis: 'Laudo',
+      profile: 'Perfil Profissional',
+      radar: 'Radar',
       rewrite: 'Reescrita',
       downloads: 'Downloads',
       history: 'Histórico',
       plans: 'Comprar Análise',
+      support: 'Suporte & Dúvidas',
       settings: 'Configurações',
       admin: 'Área Admin',
+      adminBadge: 'Análises Ilimitadas (Admin)',
+      adminMasterArea: 'Área Admin (Painel Mestre)',
+      adminMode: 'Modo Administrador',
+      adminAccessBtn: 'Acessar Área Administrativa',
+      navSection: 'Navegação',
+      logout: 'Sair',
+      paymentSuccessToast: 'Pagamento confirmado! Suas análises foram liberadas.',
+      paymentCancelledToast: 'Pagamento não concluído. Você pode tentar novamente a qualquer momento.',
       balance: 'Análises',
       balanceUnit: 'análises disponíveis',
       buyMore: '+ Comprar',
@@ -1231,6 +1397,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       officialBadge: 'Suporte Oficial',
       typingIndicator: 'Digitando resposta...',
       inputPlaceholder: 'Digite sua dúvida sobre o sistema ou cobrança...',
+      incidentAutoReportNote: '*(Sinalizei nossa equipe de Auto-Diagnóstico de Sistemas em tempo real. Uma verificação ativa foi iniciada automaticamente para identificar e solucionar o problema.)*',
     },
     downloads: {
       pageTitle: 'Downloads',
@@ -1304,6 +1471,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       authorizeLabel: 'Autorizo a IA a reescrever meu currículo com base no laudo de análise. Entendo que o resultado deve ser revisado por mim antes do download, e que sou responsável por confirmar a veracidade das informações.',
       rewritingButton: 'Reescrevendo… (15–30s)',
       rewriteButton: 'Reescrever meu currículo',
+      sectionsProgress: '{done} de {total} seções prontas',
       successCardTitle: 'Currículo reescrito com sucesso!',
       successCardDesc: 'Revise o conteúdo abaixo. Se estiver tudo OK, confirme para liberar o download.',
       keywordsCardTitle: '🧩 Palavras-Chave Estratégicas (ATS) Incorporadas',
@@ -1590,6 +1758,121 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       ctaDesc: 'Com sua autorização, reescrevemos o currículo aplicando todas as recomendações acima.',
       ctaButton: 'Reescrever currículo',
     },
+    analysisPaywall: {
+      reportTitle: 'Laudo de análise',
+      cardTitle: 'Suas notas nas 8 dimensões',
+      cardDesc: 'A nota é gratuita. O diagnóstico — o porquê de cada nota, trechos a corrigir, plano de ação contra a vaga e reescrita de experiências — vem na Análise Completa.',
+      calculating: 'Calculando suas notas...',
+      retryCalculate: 'Calcular minha nota de novo',
+      scoreOutOfTen: '/ 10 — nota geral',
+      lockNote: 'O laudo fecha quando você troca de tela.',
+      unlockAvailable: 'Liberar Análise Completa ({count} disponível)',
+    },
+    socialPanel: {
+      title: 'Auditoria de Presença Digital',
+      subtitle: 'Com base nas informações do seu currículo e nos seus perfis cadastrados, nossa IA avalia seu posicionamento profissional online.',
+      startAuditBtn: 'Iniciar Auditoria de Redes',
+      reAuditBtn: 'Refazer Auditoria de Redes',
+      auditingBtn: 'Auditando Presença Digital...',
+      auditSuccessToast: 'Auditoria de presença digital concluída com sucesso!',
+      auditErrorFallback: 'Não foi possível concluir a auditoria.',
+      auditConnectionError: 'Falha de conexão ao auditar presença digital.',
+      overallTitle: 'Diagnóstico Geral da Presença',
+      profilesFoundTitle: 'Perfis e Links Localizados',
+      readProfileOk: 'Perfil lido com sucesso.',
+      readProfileGeneric: 'Recomendações estratégicas para a plataforma.',
+      findingsTitle: 'O que encontramos na sua apresentação',
+      headlineTitle: 'Sugestão de Título (Headline)',
+      aboutTitle: 'Sugestão de Resumo "Sobre"',
+      tipsTitle: 'Dicas Práticas para o Algoritmo',
+      copyBtn: 'Copiar',
+      copiedToast: 'Copiado para a área de transferência!',
+      manualOptionTitle: 'Prefere enviar os perfis manualmente?',
+      manualOptionDesc: 'Se o acesso automático falhar ou você preferir salvar um arquivo PDF/texto do seu perfil:',
+      pasteLabel: 'Colar texto do perfil ou bio',
+      pastePlaceholder: 'Cole aqui o texto completo do seu perfil do LinkedIn, biografia ou resumo profissional...',
+      uploadPdfBtn: 'Carregar PDF do LinkedIn / Perfil',
+      readingPdf: 'Lendo PDF do perfil...',
+      pdfSuccess: 'PDF do perfil lido com sucesso!',
+      pdfError: 'Falha ao ler o PDF do perfil.',
+      saveManualBtn: 'Salvar e Gerar Auditoria',
+      savingManualBtn: 'Salvando e Auditando...',
+      analyzedAt: 'Auditado em {date}',
+      badgeAudit: 'Auditoria IA',
+    },
+    paymentModal: {
+      validatingTitle: 'Validando seu pagamento...',
+      stepReceived: 'Transação recebida pela plataforma',
+      stepValidating: 'Confirmando transação com a Stripe',
+      stepCrediting: 'Credenciando análises na sua conta',
+      successTitle: 'Pagamento Confirmado!',
+      successDesc: 'Suas análises foram liberadas com sucesso e já estão disponíveis para uso imediato.',
+      errorTitle: 'Aguardando confirmação',
+      errorDefault: 'O pagamento está sendo processado pela operadora. Assim que for confirmado, suas análises serão liberadas automaticamente.',
+      newBalanceText: 'Novo saldo disponível:',
+      analysesCredited: '+{n} análises liberadas',
+      continueToReport: 'Ir para o Laudo de Análise',
+      closeBtn: 'Fechar',
+    },
+    profileConflict: {
+      title: 'Este currículo parece ser de outra área',
+      desc: 'Seu perfil profissional está configurado como {profileRole}, mas este currículo é de {resumeRole}. Deseja atualizar seu perfil para refletir esta nova área?',
+      updateBtn: 'Atualizar meu perfil para {role}',
+      updatingBtn: 'Atualizando perfil...',
+      keepBtn: 'Manter como está',
+      updateSuccess: 'Perfil profissional atualizado com sucesso.',
+      updateError: 'Não foi possível atualizar o perfil.',
+      updateConnectionError: 'Falha de conexão ao atualizar o perfil.',
+    },
+    uploadProgress: {
+      title: 'Auditoria IA em Tempo Real',
+      desc: 'Examinando seu currículo em 8 dimensões estruturais e preparando o diagnóstico de carreira.',
+      elapsed: '{s}s decorridos',
+      slow30: 'Nossa inteligência profunda está avaliando detalhes de impacto e métricas...',
+      slow60: 'Consolidando dados com alta precisão e aplicando regras de triagem...',
+      consolidating: 'Consolidando laudo preditivo e métricas ATS...',
+      closingOk: 'Pode fechar esta janela se preferir: sua análise continuará rodando em segundo plano e ficará salva no seu histórico.',
+      preparing: 'Preparando seu currículo...',
+      executiveReport: 'Consolidando laudo...',
+      stageDimStructure: 'Estrutura & Compatibilidade ATS',
+      stageDimStructureHint: 'Avaliando formatação e parsing para sistemas de triagem.',
+      stageDimSummary: 'Resumo Profissional',
+      stageDimSummaryHint: 'Medindo clareza e posicionamento no topo do currículo.',
+      stageDimImpact: 'Impacto STAR / XYZ',
+      stageDimImpactHint: 'Verificando presença de contexto, ação e métricas quantificáveis.',
+      stageDimSkills: 'Habilidades & Competências',
+      stageDimSkillsHint: 'Confrontando equilíbrio entre hard e soft skills.',
+      stageDimExperience: 'Experiência Profissional',
+      stageDimExperienceHint: 'Analisando densidade, consistência e verbos de ação.',
+      stageDimKeywords: 'Palavras-Chave de Mercado',
+      stageDimKeywordsHint: 'Medindo aderência ao vocabulário da sua área.',
+      stageDimCareer: 'Trajetória & Senioridade',
+      stageDimCareerHint: 'Avaliando progressão profissional e coerência temporal.',
+      stageDimUpskilling: 'Cursos & Capacitação Recomendada',
+      stageDimUpskillingHint: 'Mapeando lacunas técnicas para o seu próximo nível.',
+      stageJobMatch: 'Aderência à Vaga Alvo',
+      stageJobMatchHint: 'Confrontando requisitos da vaga com o seu histórico.',
+      stageTargetedChanges: 'Trechos a Ajustar',
+      stageTargetedChangesHint: 'Identificando frases que prejudicam a triagem.',
+      stageExecutive: 'Parecer Executivo Final',
+      stageExecutiveHint: 'Calculando nota geral e consolidando o laudo.',
+    },
+    pdfReport: {
+      docTitle: 'Laudo de Auditoria de IA — GriffoWork',
+      docAuthor: 'GriffoWork IA (griffo.work)',
+      docSubject: 'Laudo de Auditoria Preditiva de Currículo',
+      generatedAt: 'Gerado em {date} • griffo.work',
+      overallScore: 'NOTA GERAL',
+      atsTitle: 'Compatibilidade ATS',
+      atsPass: 'APROVADO PARA FILTROS ATS',
+      atsFail: 'ATENÇÃO: RISCO DE REJEIÇÃO EM FILTROS ATS',
+      dimensionsTitle: 'Desempenho por Dimensão',
+      strengthsTitle: 'Pontos Fortes Identificados',
+      weaknessesTitle: 'Pontos de Atenção & Oportunidades',
+      recommendationsTitle: 'Recomendações Estratégicas',
+      keywordsTitle: 'Palavras-Chave Recomendadas para ATS',
+      footerNote: 'Documento confidencial gerado por Inteligência Artificial • GriffoWork • griffo.work',
+    },
   },
 
   en: {
@@ -1726,6 +2009,13 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       businessTitle: 'Companies & HR teams',
       businessDesc: 'Volume, invoicing and integration with your hiring process.',
       businessCta: 'Talk to sales',
+      conjunctionOr: 'or',
+      historyTitle: 'History',
+      historyDesc: 'Purchases and unlocked analyses for your account.',
+      colDate: 'Date',
+      colDesc: 'Description',
+      colAmount: 'Amount paid',
+      colAnalyses: 'Analyses',
     },
     faq: {
       badge: 'Frequently Asked Questions',
@@ -1767,17 +2057,31 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       signupBtn: 'Create Free Account',
       noAccount: "Don't have an account? Sign up free",
       hasAccount: 'Already have an account? Sign in',
+      back: 'Back',
+      professionPlaceholder: 'E.g.: Software Engineer',
+      dataTransferConsent: 'I authorize the processing of my resume by artificial intelligence services located abroad, strictly for analysis, rewrite, and career optimization purposes, in compliance with GDPR and international standards.',
     },
     app: {
       dashboard: 'Dashboard',
       upload: 'Upload Resume',
       analysis: 'Audit Report',
+      profile: 'Professional Profile',
+      radar: 'Radar',
       rewrite: 'AI Rewrite',
       downloads: 'Downloads',
       history: 'History',
       plans: 'Buy Analysis',
+      support: 'Support & Help',
       settings: 'Settings',
       admin: 'Admin Area',
+      adminBadge: 'Unlimited Analyses (Admin)',
+      adminMasterArea: 'Admin Area (Master Panel)',
+      adminMode: 'Administrator Mode',
+      adminAccessBtn: 'Access Admin Area',
+      navSection: 'Navigation',
+      logout: 'Sign Out',
+      paymentSuccessToast: 'Payment confirmed! Your analyses have been credited.',
+      paymentCancelledToast: 'Payment was not completed. You can try again anytime.',
       balance: 'Analyses',
       balanceUnit: 'analyses available',
       buyMore: '+ Buy',
@@ -2014,6 +2318,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       officialBadge: 'Official Support',
       typingIndicator: 'Typing a reply...',
       inputPlaceholder: 'Type your question about the system or billing...',
+      incidentAutoReportNote: '*(I have flagged our real-time System Auto-Diagnosis team. An active investigation was started automatically to identify and fix the issue.)*',
     },
     downloads: {
       pageTitle: 'Downloads',
@@ -2087,6 +2392,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       authorizeLabel: 'I authorize the AI to rewrite my resume based on the analysis report. I understand the result must be reviewed by me before downloading, and that I am responsible for confirming the accuracy of the information.',
       rewritingButton: 'Rewriting… (15–30s)',
       rewriteButton: 'Rewrite my resume',
+      sectionsProgress: '{done} of {total} sections ready',
       successCardTitle: 'Resume rewritten successfully!',
       successCardDesc: 'Review the content below. If everything looks good, confirm to unlock the download.',
       keywordsCardTitle: '🧩 Strategic ATS Keywords Incorporated',
@@ -2373,6 +2679,121 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       ctaDesc: 'With your authorization, we rewrite the resume applying all the recommendations above.',
       ctaButton: 'Rewrite resume',
     },
+    analysisPaywall: {
+      reportTitle: 'Audit Report',
+      cardTitle: 'Your scores across the 8 dimensions',
+      cardDesc: 'The score is free. The diagnostic report — why each score was given, line-by-line fixes, job match action plan, and experience rewrite — is included in the Complete Analysis.',
+      calculating: 'Calculating your scores...',
+      retryCalculate: 'Recalculate my score',
+      scoreOutOfTen: '/ 10 — overall score',
+      lockNote: 'The report closes when you switch screens.',
+      unlockAvailable: 'Unlock Complete Analysis ({count} available)',
+    },
+    socialPanel: {
+      title: 'Digital Footprint Audit',
+      subtitle: 'Based on your resume details and linked profiles, our AI audits your online professional positioning.',
+      startAuditBtn: 'Start Social Audit',
+      reAuditBtn: 'Re-audit Social Profiles',
+      auditingBtn: 'Auditing Digital Presence...',
+      auditSuccessToast: 'Digital presence audit completed successfully!',
+      auditErrorFallback: 'Could not complete the audit.',
+      auditConnectionError: 'Connection error while auditing digital presence.',
+      overallTitle: 'Overall Positioning Diagnosis',
+      profilesFoundTitle: 'Profiles & Links Identified',
+      readProfileOk: 'Profile parsed successfully.',
+      readProfileGeneric: 'Strategic positioning recommendations for this platform.',
+      findingsTitle: 'What we found in your profiles',
+      headlineTitle: 'Suggested Headline',
+      aboutTitle: 'Suggested "About" Bio',
+      tipsTitle: 'Actionable Algorithm Tips',
+      copyBtn: 'Copy',
+      copiedToast: 'Copied to clipboard!',
+      manualOptionTitle: 'Prefer to upload profiles manually?',
+      manualOptionDesc: 'If automatic access fails or you prefer uploading a PDF/text export of your profile:',
+      pasteLabel: 'Paste profile text or bio',
+      pastePlaceholder: 'Paste your full LinkedIn profile, bio, or summary here...',
+      uploadPdfBtn: 'Upload LinkedIn / Profile PDF',
+      readingPdf: 'Reading profile PDF...',
+      pdfSuccess: 'Profile PDF parsed successfully!',
+      pdfError: 'Failed to read profile PDF.',
+      saveManualBtn: 'Save & Generate Audit',
+      savingManualBtn: 'Saving and Auditing...',
+      analyzedAt: 'Audited on {date}',
+      badgeAudit: 'AI Audit',
+    },
+    paymentModal: {
+      validatingTitle: 'Validating your payment...',
+      stepReceived: 'Transaction received by platform',
+      stepValidating: 'Confirming transaction with Stripe',
+      stepCrediting: 'Crediting analyses to your account',
+      successTitle: 'Payment Confirmed!',
+      successDesc: 'Your analyses have been unlocked successfully and are ready for immediate use.',
+      errorTitle: 'Awaiting confirmation',
+      errorDefault: 'Payment is being processed by the payment provider. As soon as it is confirmed, your analyses will be released automatically.',
+      newBalanceText: 'New available balance:',
+      analysesCredited: '+{n} analyses unlocked',
+      continueToReport: 'Go to Audit Report',
+      closeBtn: 'Close',
+    },
+    profileConflict: {
+      title: 'This resume appears to be from a different field',
+      desc: 'Your professional profile is configured as {profileRole}, but this resume is for {resumeRole}. Would you like to update your profile to reflect this new target?',
+      updateBtn: 'Update my profile to {role}',
+      updatingBtn: 'Updating profile...',
+      keepBtn: 'Keep as is',
+      updateSuccess: 'Professional profile updated successfully.',
+      updateError: 'Could not update profile.',
+      updateConnectionError: 'Connection error while updating profile.',
+    },
+    uploadProgress: {
+      title: 'Real-Time AI Audit',
+      desc: 'Evaluating your resume across 8 structural dimensions and preparing your career diagnosis.',
+      elapsed: '{s}s elapsed',
+      slow30: 'Our deep intelligence is evaluating impact metrics and achievements...',
+      slow60: 'Consolidando data with precision and applying screening rules...',
+      consolidating: 'Consolidating predictive report and ATS metrics...',
+      closingOk: 'You can close this window if you like: your analysis will keep running in the background and will be saved in your history.',
+      preparing: 'Preparing your resume...',
+      executiveReport: 'Consolidating report...',
+      stageDimStructure: 'Structure & ATS Compatibility',
+      stageDimStructureHint: 'Evaluating formatting and layout for enterprise parsing engines.',
+      stageDimSummary: 'Professional Summary',
+      stageDimSummaryHint: 'Measuring clarity and top-of-fold positioning.',
+      stageDimImpact: 'STAR / XYZ Impact',
+      stageDimImpactHint: 'Checking context, action verbs, and quantifiable results.',
+      stageDimSkills: 'Skills & Core Competencies',
+      stageDimSkillsHint: 'Assessing the balance between technical and soft skills.',
+      stageDimExperience: 'Work Experience',
+      stageDimExperienceHint: 'Analyzing density, continuity, and executive impact.',
+      stageDimKeywords: 'Market Keywords',
+      stageDimKeywordsHint: 'Measuring alignment with current industry vocabulary.',
+      stageDimCareer: 'Career Trajectory & Seniority',
+      stageDimCareerHint: 'Evaluating progression and timeline consistency.',
+      stageDimUpskilling: 'Recommended Courses & Upskilling',
+      stageDimUpskillingHint: 'Mapping technical gaps for your next seniority level.',
+      stageJobMatch: 'Target Job Fit',
+      stageJobMatchHint: 'Comparing role requirements against your background.',
+      stageTargetedChanges: 'Targeted Tweaks',
+      stageTargetedChangesHint: 'Identifying phrases that harm automatic screening.',
+      stageExecutive: 'Final Executive Verdict',
+      stageExecutiveHint: 'Computing overall score and generating executive summary.',
+    },
+    pdfReport: {
+      docTitle: 'AI Audit Report — GriffoWork',
+      docAuthor: 'GriffoWork AI (griffo.work)',
+      docSubject: 'Predictive Resume Audit Report',
+      generatedAt: 'Generated on {date} • griffo.work',
+      overallScore: 'OVERALL SCORE',
+      atsTitle: 'ATS Compatibility',
+      atsPass: 'PASSED ATS SCREENING CRITERIA',
+      atsFail: 'WARNING: RISK OF ATS FILTER REJECTION',
+      dimensionsTitle: 'Performance by Dimension',
+      strengthsTitle: 'Identified Strengths',
+      weaknessesTitle: 'Areas of Attention & Gaps',
+      recommendationsTitle: 'Strategic Recommendations',
+      keywordsTitle: 'Recommended ATS Keywords',
+      footerNote: 'Confidential document generated by Artificial Intelligence • GriffoWork • griffo.work',
+    },
   },
 
   es: {
@@ -2509,6 +2930,13 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       businessTitle: 'Empresas y RR. HH.',
       businessDesc: 'Volumen, facturación e integración corporativa con tu proceso de selección.',
       businessCta: 'Hablar con el equipo comercial',
+      conjunctionOr: 'o',
+      historyTitle: 'Historial',
+      historyDesc: 'Compras y análisis desbloqueados para tu cuenta.',
+      colDate: 'Fecha',
+      colDesc: 'Descripción',
+      colAmount: 'Importe pagado',
+      colAnalyses: 'Análisis',
     },
     faq: {
       badge: 'Preguntas Frecuentes',
@@ -2550,17 +2978,31 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       signupBtn: 'Crear mi cuenta gratis',
       noAccount: '¿Aún no tienes cuenta? Regístrate gratis',
       hasAccount: '¿Ya tienes una cuenta? Inicia sesión',
+      back: 'Volver',
+      professionPlaceholder: 'Ej: Ingeniero de Software',
+      dataTransferConsent: 'Autorizo el procesamiento de mi currículum por servicios de inteligencia artificial ubicados en el exterior, estrictamente para fines de análisis, reescritura y optimización profesional, en conformidad con el RGPD y estándares internacionales.',
     },
     app: {
       dashboard: 'Panel',
       upload: 'Subir currículum',
       analysis: 'Informe',
+      profile: 'Perfil Profesional',
+      radar: 'Radar',
       rewrite: 'Reescritura',
       downloads: 'Descargas',
       history: 'Historial',
       plans: 'Comprar Análisis',
+      support: 'Soporte y Ayuda',
       settings: 'Configuración',
       admin: 'Área Admin',
+      adminBadge: 'Análisis Ilimitados (Admin)',
+      adminMasterArea: 'Área Admin (Panel Maestro)',
+      adminMode: 'Modo Administrador',
+      adminAccessBtn: 'Acceder al Área Administrativa',
+      navSection: 'Navegación',
+      logout: 'Cerrar sesión',
+      paymentSuccessToast: '¡Pago confirmado! Tus análisis han sido acreditados.',
+      paymentCancelledToast: 'El pago no se completó. Puedes intentarlo de nuevo en cualquier momento.',
       balance: 'Análisis',
       balanceUnit: 'análisis disponibles',
       buyMore: '+ Comprar',
@@ -2797,6 +3239,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       officialBadge: 'Soporte Oficial',
       typingIndicator: 'Escribiendo respuesta...',
       inputPlaceholder: 'Escribe tu duda sobre el sistema o la facturación...',
+      incidentAutoReportNote: '*(He notificado a nuestro equipo de Auto-Diagnóstico de Sistemas en tiempo real. Se ha iniciado una verificación activa automáticamente para identificar y solucionar el problema.)*',
     },
     downloads: {
       pageTitle: 'Descargas',
@@ -2870,6 +3313,7 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       authorizeLabel: 'Autorizo a la IA a reescribir mi currículum basándose en el informe de análisis. Entiendo que debo revisar el resultado antes de descargarlo, y que soy responsable de confirmar la veracidad de la información.',
       rewritingButton: 'Reescribiendo… (15–30s)',
       rewriteButton: 'Reescribir mi currículum',
+      sectionsProgress: '{done} de {total} secciones listas',
       successCardTitle: '¡Currículum reescrito con éxito!',
       successCardDesc: 'Revisa el contenido a continuación. Si todo está bien, confirma para habilitar la descarga.',
       keywordsCardTitle: '🧩 Palabras Clave Estratégicas (ATS) Incorporadas',
@@ -3155,6 +3599,121 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
       ctaTitle: '¿Listo para mejorar tu currículum?',
       ctaDesc: 'Con tu autorización, reescribimos el currículum aplicando todas las recomendaciones anteriores.',
       ctaButton: 'Reescribir currículum',
+    },
+    analysisPaywall: {
+      reportTitle: 'Informe de análisis',
+      cardTitle: 'Tus puntuaciones en las 8 dimensiones',
+      cardDesc: 'La puntuación es gratuita. El diagnóstico completo — el porqué de cada nota, los fragmentos a corregir, el plan de acción contra la vacante y la reescritura de experiencias — viene en el Análisis Completo.',
+      calculating: 'Calculando tus puntuaciones...',
+      retryCalculate: 'Calcular mi puntuación de nuevo',
+      scoreOutOfTen: '/ 10 — puntuación general',
+      lockNote: 'El informe se cierra cuando cambias de pantalla.',
+      unlockAvailable: 'Desbloquear Análisis Completo ({count} disponible)',
+    },
+    socialPanel: {
+      title: 'Auditoría de Presencia Digital',
+      subtitle: 'Con base en la información de tu currículum y tus perfiles registrados, nuestra IA evalúa tu posicionamiento profesional online.',
+      startAuditBtn: 'Iniciar Auditoría de Redes',
+      reAuditBtn: 'Rehacer Auditoría de Redes',
+      auditingBtn: 'Auditando Presencia Digital...',
+      auditSuccessToast: '¡Auditoría de presencia digital completada con éxito!',
+      auditErrorFallback: 'No fue posible completar la auditoría.',
+      auditConnectionError: 'Fallo de conexión al auditar la presencia digital.',
+      overallTitle: 'Diagnóstico General de Presencia',
+      profilesFoundTitle: 'Perfiles y Enlaces Localizados',
+      readProfileOk: 'Perfil leído con éxito.',
+      readProfileGeneric: 'Recomendaciones estratégicas para la plataforma.',
+      findingsTitle: 'Lo que encontramos en tu presentación',
+      headlineTitle: 'Sugerencia de Titular (Headline)',
+      aboutTitle: 'Sugerencia de Resumen "Sobre mí"',
+      tipsTitle: 'Consejos Prácticos para el Algoritmo',
+      copyBtn: 'Copiar',
+      copiedToast: '¡Copiado al portapapeles!',
+      manualOptionTitle: '¿Prefieres subir los perfiles manualmente?',
+      manualOptionDesc: 'Si el acceso automático falla o prefieres guardar un archivo PDF/texto de tu perfil:',
+      pasteLabel: 'Pegar texto del perfil o bio',
+      pastePlaceholder: 'Pega aquí el texto completo de tu perfil de LinkedIn, biografía o resumen profesional...',
+      uploadPdfBtn: 'Cargar PDF de LinkedIn / Perfil',
+      readingPdf: 'Leyendo PDF del perfil...',
+      pdfSuccess: '¡PDF del perfil leído con éxito!',
+      pdfError: 'Fallo al leer el PDF del perfil.',
+      saveManualBtn: 'Guardar y Generar Auditoría',
+      savingManualBtn: 'Guardando y Auditando...',
+      analyzedAt: 'Auditado el {date}',
+      badgeAudit: 'Auditoría IA',
+    },
+    paymentModal: {
+      validatingTitle: 'Validando tu pago...',
+      stepReceived: 'Transacción recibida por la plataforma',
+      stepValidating: 'Confirmando transacción con Stripe',
+      stepCrediting: 'Acreditando análisis en tu cuenta',
+      successTitle: '¡Pago Confirmado!',
+      successDesc: 'Tus análisis se han desbloqueado con éxito y ya están disponibles para su uso inmediato.',
+      errorTitle: 'Esperando confirmación',
+      errorDefault: 'El pago está siendo procesado por el proveedor. Tan pronto como se confirme, tus análisis se liberarán automáticamente.',
+      newBalanceText: 'Nuevo saldo disponible:',
+      analysesCredited: '+{n} análisis liberados',
+      continueToReport: 'Ir al Informe de Análisis',
+      closeBtn: 'Cerrar',
+    },
+    profileConflict: {
+      title: 'Este currículum parece ser de otra área',
+      desc: 'Tu perfil profesional está configurado como {profileRole}, pero este currículum es de {resumeRole}. ¿Deseas actualizar tu perfil para reflejar esta nueva área?',
+      updateBtn: 'Actualizar mi perfil a {role}',
+      updatingBtn: 'Actualizando perfil...',
+      keepBtn: 'Mantener como está',
+      updateSuccess: 'Perfil profesional actualizado con éxito.',
+      updateError: 'No fue posible actualizar el perfil.',
+      updateConnectionError: 'Fallo de conexión al actualizar el perfil.',
+    },
+    uploadProgress: {
+      title: 'Auditoría IA en Tiempo Real',
+      desc: 'Examinando tu currículum en 8 dimensiones estructurales y preparando el diagnóstico de carrera.',
+      elapsed: '{s}s transcurridos',
+      slow30: 'Nuestra inteligencia profunda está evaluando detalles de impacto y métricas...',
+      slow60: 'Consolidando datos con alta precisión y aplicando reglas de selección...',
+      consolidating: 'Consolidando informe predictivo y métricas ATS...',
+      closingOk: 'Puedes cerrar esta ventana si prefieres: tu análisis continuará ejecutándose en segundo plano y quedará guardado en tu historial.',
+      preparing: 'Preparando tu currículum...',
+      executiveReport: 'Consolidando informe...',
+      stageDimStructure: 'Estructura y Compatibilidad ATS',
+      stageDimStructureHint: 'Evaluando formato y maquetación para sistemas de selección.',
+      stageDimSummary: 'Resumen Profesional',
+      stageDimSummaryHint: 'Midiendo claridad y posicionamiento en la parte superior.',
+      stageDimImpact: 'Impacto STAR / XYZ',
+      stageDimImpactHint: 'Verificando presencia de contexto, acción y métricas cuantificables.',
+      stageDimSkills: 'Habilidades y Competencias',
+      stageDimSkillsHint: 'Evaluando el equilibrio entre hard y soft skills.',
+      stageDimExperience: 'Experiencia Profesional',
+      stageDimExperienceHint: 'Analizando densidad, coherencia y verbos de acción.',
+      stageDimKeywords: 'Palabras Clave de Mercado',
+      stageDimKeywordsHint: 'Midiendo alineación con el vocabulario de tu sector.',
+      stageDimCareer: 'Trayectoria y Seniority',
+      stageDimCareerHint: 'Evaluando progresión y consistencia temporal.',
+      stageDimUpskilling: 'Cursos y Capacitación Recomendada',
+      stageDimUpskillingHint: 'Mapeando brechas técnicas para tu próximo nivel.',
+      stageJobMatch: 'Ajuste a la Vacante Objetivo',
+      stageJobMatchHint: 'Comparando requisitos de la vacante con tu trayectoria.',
+      stageTargetedChanges: 'Fragmentos a Corregir',
+      stageTargetedChangesHint: 'Identificando frases que perjudican el cribado automático.',
+      stageExecutive: 'Veredicto Ejecutivo Final',
+      stageExecutiveHint: 'Calculando puntuación general y consolidando el informe.',
+    },
+    pdfReport: {
+      docTitle: 'Informe de Auditoría de IA — GriffoWork',
+      docAuthor: 'GriffoWork IA (griffo.work)',
+      docSubject: 'Informe de Auditoría Predictiva de Currículum',
+      generatedAt: 'Generado el {date} • griffo.work',
+      overallScore: 'PUNTUACIÓN GENERAL',
+      atsTitle: 'Compatibilidad ATS',
+      atsPass: 'APROBADO PARA FILTROS ATS',
+      atsFail: 'ATENCIÓN: RIESGO DE RECHAZO EN FILTROS ATS',
+      dimensionsTitle: 'Desempeño por Dimensión',
+      strengthsTitle: 'Fortalezas Identificadas',
+      weaknessesTitle: 'Puntos de Atención y Brechas',
+      recommendationsTitle: 'Recomendaciones Estratégicas',
+      keywordsTitle: 'Palabras Clave Recomendadas para ATS',
+      footerNote: 'Documento confidencial generado por Inteligencia Artificial • GriffoWork • griffo.work',
     },
   },
 }

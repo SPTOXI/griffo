@@ -548,7 +548,7 @@ export function AnalysisView() {
         .filter((x): x is { d: any; score: number } => x.score !== null)
         .map(({ d, score }) => ({
           key: d.key || d.name || 'dimension',
-          label: d.label || DIMENSION_LABELS[d.key] || d.key || 'Dimensão',
+          label: (d.key && DIMENSION_LABELS[d.key]) || d.label || d.key || 'Dimensão',
           score,
           rationale: d.rationale || '',
         }))

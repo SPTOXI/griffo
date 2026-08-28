@@ -273,7 +273,9 @@ export function RewriteView() {
                 {/* Cada seção pronta é um fato — 3 seções reais (cabeçalho,
                     experiências, formação), não uma barra calibrada em tempo. */}
                 <p className="text-xs text-slate-500">
-                  {rewriteJob.completedSteps} de {rewriteJob.totalSteps || 3} seções prontas
+                  {rw.sectionsProgress
+                    .replace('{done}', String(rewriteJob.completedSteps))
+                    .replace('{total}', String(rewriteJob.totalSteps || 3))}
                 </p>
               </div>
             )}
