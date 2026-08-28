@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { clientIpFrom } from '@/lib/request-ip'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { hashPassword, verifyPassword, createSession } from '@/lib/auth'
+import { hashPassword, verifyPassword, verifyPasswordConstantTime, createSession } from '@/lib/auth'
 import { isConfigError } from '@/lib/env'
 
 const schema = z.object({
@@ -30,7 +30,12 @@ export async function POST(req: Request) {
       where: { email: normalizedEmail },
     })
 
-    if (!user || !verifyPassword(password, user.passwordHash)) {
+    // Verificação em tempo constante: mesmo se o usuário não existir no banco,
+    // executa o scrypt com hash dummy para ter idêntico tempo de CPU,
+    // eliminando qualquer oráculo de tempo para enumeração de e-mails.
+    const passwordValid = verifyPasswordConstantTime(password, user?.passwordHash)
+
+    if (!user || !passwordValid) {
       return NextResponse.json({ error: 'E-mail ou senha incorretos.' }, { status: 401 })
     }
 

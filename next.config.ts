@@ -35,12 +35,33 @@ const securityHeaders = [
     value: "strict-origin-when-cross-origin",
   },
   {
+    // Isola o contexto de navegação da janela contra ataques XS-Leaks e Spectre (OWASP ASVS).
+    key: "Cross-Origin-Opener-Policy",
+    value: "same-origin",
+  },
+  {
+    // Impede que outros domínios carreguem recursos desta aplicação sem autorização explícita.
+    key: "Cross-Origin-Resource-Policy",
+    value: "same-origin",
+  },
+  {
+    // Impede vazamento de requisições DNS especulativas do navegador.
+    key: "X-DNS-Prefetch-Control",
+    value: "off",
+  },
+  {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+    value: "camera=(), microphone=(), geolocation=(), payment=(self 'https://js.stripe.com'), usb=(), interest-cohort=()",
   },
   {
     key: "Content-Security-Policy",
     value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
+      "connect-src 'self' https: wss:",
+      "img-src 'self' data: https: blob:",
+      "font-src 'self' data: https:",
+      "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
       "frame-ancestors 'none'",
       "object-src 'none'",
       "base-uri 'self'",

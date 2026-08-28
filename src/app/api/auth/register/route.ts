@@ -7,7 +7,11 @@ import { isConfigError } from '@/lib/env'
 const schema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(120),
   email: z.string().email('E-mail inválido'),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres').max(128),
+  password: z
+    .string()
+    .min(8, 'Senha deve ter no mínimo 8 caracteres')
+    .max(128, 'Senha deve ter no máximo 128 caracteres')
+    .refine((p) => p.trim().length >= 8, 'A senha não pode conter apenas espaços.'),
   profession: z.string().max(120).optional(),
   // Consentimento de transferência internacional. Obrigatório: o currículo é
   // processado por provedores de IA fora do país de origem, e sem base

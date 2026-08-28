@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { clientIpFrom } from '@/lib/request-ip'
 import { matchRule, type RateRule } from '@/lib/rate-rules'
+import { validateSameOrigin } from '@/lib/csrf-guard'
 import type { NextRequest } from 'next/server'
 
 /**
@@ -127,6 +128,24 @@ function check(key: string, rule: Rule): { allowed: boolean; retryAfterSec: numb
 
 export function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname
+
+  // 1. Defesa em profundidade contra CSRF para todas as mutações de estado (POST, PUT, PATCH, DELETE)
+  const isOriginAllowed = validateSameOrigin({
+    method: req.method,
+    pathname: path,
+    origin: req.headers.get('origin'),
+    host: req.headers.get('host') || req.nextUrl.host,
+    secFetchSite: req.headers.get('sec-fetch-site'),
+  })
+
+  if (!isOriginAllowed) {
+    return NextResponse.json(
+      { error: 'Requisição cross-origin não autorizada.' },
+      { status: 403 }
+    )
+  }
+
+  // 2. Rate limiting por IP nas rotas sensíveis
   const rule = matchRule(path, RULES)
   if (!rule) return NextResponse.next()
 

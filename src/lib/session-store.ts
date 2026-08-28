@@ -156,3 +156,31 @@ export async function revokeAllUserSessions(userId: string): Promise<number> {
     return 0
   }
 }
+
+/**
+ * Expurga sessões antigas já expiradas ou revogadas há mais de 7 dias.
+ * Mantém o banco limpo e evita acúmulo desnecessário de linhas de sessão.
+ */
+export async function cleanupExpiredSessions(retentionDays = 7): Promise<number> {
+  if (tableKnownMissing()) return 0
+  try {
+    const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000)
+    const result = await db.session.deleteMany({
+      where: {
+        OR: [
+          { expiresAt: { lt: cutoff } },
+          { revokedAt: { lt: cutoff } },
+        ],
+      },
+    })
+    tableMissingSince = 0
+    return result.count
+  } catch (e: any) {
+    if (isMissingTableError(e)) {
+      noteTableMissing()
+      return 0
+    }
+    console.error('[session-store] Falha na limpeza de sessões expiradas:', e?.message || e)
+    return 0
+  }
+}
