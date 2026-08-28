@@ -2367,3 +2367,27 @@ Auditoria e implementação de suporte integral a multi-idiomas (`pt`, `en`, `es
   - Comportamento de geolocalização e mapeamento de locale.
 - Suíte completa de testes (`npm test`) com 617/617 testes aprovados (100% de sucesso, 0 regressões, conformidade OWASP ASVS mantida).
 
+---
+
+## 2.37 Integração do Radar de Vagas à Proposta de Valor e Catálogo de Preços (PT, EN, ES)
+
+Alinhamento da comunicação comercial, planos de preços e catálogo de benefícios com o ecossistema do **Radar de Vagas**.
+
+### 1. Comunicação e Benefícios nos 3 Idiomas (`src/lib/i18n/index.ts`)
+- **Lista de Entregas (`pricing.items`)**:
+  - PT: `"Orientação Profissional e Radar de Vagas"`
+  - EN: `"Career Orientation & Job Radar"`
+  - ES: `"Orientación Profesional y Radar de Vacantes"`
+- **Descrição do Produto (`pricing.productDesc`)**:
+  - PT: `"Auditoria completa, reescrita estratégica e ativação do Radar de Vagas para acelerar sua contratação."`
+  - EN: `"Full ATS audit, strategic rewrite, and Job Radar activation to accelerate your hiring."`
+  - ES: `"Auditoría completa, reescritura estratégica y activación del Radar de Vacantes para acelerar tu contratación."`
+
+### 2. Base de Suporte e Prompt do Assistente (`src/app/api/support/chat/route.ts`)
+- Atualizada a base de conhecimento oficial do Griffo para instruir a IA a citar a ativação do Radar de Vagas e monitoramento de oportunidades reais junto à Orientação Profissional na Análise Completa.
+
+### 3. Validação e Integridade Comercial
+- Preservação da equivalência 1-para-1 com `ANALYSIS_DELIVERABLES` em `src/lib/pricing/catalog.ts`.
+- 617/617 testes automatizados aprovados sem regressões (`npm test`).
+
+
