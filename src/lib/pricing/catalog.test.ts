@@ -45,11 +45,11 @@ const ANCHOR_TOLERANCE = 0.15
  * Nada disso aparecia num teste, porque não havia teste que perguntasse.
  */
 describe('entregas da Análise Completa', () => {
-  test('a compra entrega exatamente nove itens', () => {
+  test('a compra entrega exatamente dez itens', () => {
     assert.equal(
       ANALYSIS_DELIVERABLES.length,
-      9,
-      'a lista de entregas mudou de tamanho — a landing, o checkout, o suporte e o setup da Stripe dizem nove'
+      10,
+      'a lista de entregas mudou de tamanho — a landing, o checkout, o suporte e o setup da Stripe dizem dez'
     )
   })
 
