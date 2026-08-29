@@ -850,6 +850,28 @@ export function AnalysisView() {
                 </p>
               )}
             </div>
+
+            {/* COMPARTILHAMENTO DE RESULTADO / VIRAL LINKEDIN */}
+            {hasScore && score >= 6.5 && (
+              <div className="mt-4 w-full pt-3 border-t border-slate-700/50">
+                <Button
+                  onClick={() => {
+                    const text = `Acabei de auditar meu currículo na GriffoWork e alcancei uma nota de compatibilidade ATS de ${score.toFixed(1)}/10 nas 8 dimensões executivas! 🚀 Quem quiser testar o seu: https://griffo.work`
+                    if (navigator.clipboard) {
+                      navigator.clipboard.writeText(text).catch(() => {})
+                    }
+                    toast.success('Texto copiado! Abrindo o LinkedIn para você compartilhar...')
+                    const shareUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text)}`
+                    window.open(shareUrl, '_blank', 'noopener,noreferrer')
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full bg-[#0A66C2]/20 border-[#0A66C2]/40 hover:bg-[#0A66C2]/30 text-blue-200 font-bold text-xs h-9 flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-xs"
+                >
+                  <Linkedin className="w-3.5 h-3.5 text-[#0A66C2]" /> Compartilhar no LinkedIn
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 

@@ -12,19 +12,29 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
+import { DICTIONARIES, type Language } from '@/lib/i18n'
 import { LanguageSelector } from '@/components/ui/language-selector'
 import { contactEmail, contactMailto, salesMailto } from '@/lib/i18n/contact'
 import { priceFor } from '@/lib/pricing/catalog'
 import { localMethodLabels } from '@/lib/pricing/payment-methods'
 
-export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | 'app') => void }) {
+export interface LandingProps {
+  onNavigate: (v: 'login' | 'signup' | 'app') => void
+  countryCode?: string
+  forcedLang?: Language
+}
+
+export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
   const { user } = useAuth()
-  const { t, lang, detectedCountry } = useI18n()
-  // O país da borda serve para ESCOLHER A MOEDA que a landing exibe, e para
+  const { t: contextT, lang: contextLang, detectedCountry: contextCountry } = useI18n()
+  const lang = forcedLang || contextLang || 'pt'
+  const t = DICTIONARIES[lang] || contextT || DICTIONARIES.pt
+  const effectiveCountry = countryCode || contextCountry || 'BR'
+  // O país da borda ou rota serve para ESCOLHER A MOEDA que a landing exibe, e para
   // nada além disso. Quem decide o que será cobrado é o país do meio de
   // pagamento, resolvido no servidor — ver lib/pricing/resolve.ts.
-  const price = priceFor(detectedCountry || 'US', 'single')
-  const paymentMethods = localMethodLabels(detectedCountry || 'US')
+  const price = priceFor(effectiveCountry, 'single')
+  const paymentMethods = localMethodLabels(effectiveCountry)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -510,6 +520,48 @@ export function Landing({ onNavigate }: { onNavigate: (v: 'login' | 'signup' | '
             </a>
           </div>
         </div>
+
+        {/* SEO INTERNAL LINKS — Mercados & Guias ATS */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4 border-t border-slate-200/60 text-xs text-slate-500 space-y-2.5">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-medium">
+            <span className="font-bold text-slate-700">Mercados:</span>
+            <a href="/br" className="hover:text-primary transition-colors">Brasil (BR)</a>
+            <a href="/us" className="hover:text-primary transition-colors">Estados Unidos (US)</a>
+            <a href="/pt" className="hover:text-primary transition-colors">Portugal (PT)</a>
+            <a href="/es" className="hover:text-primary transition-colors">Espanha (ES)</a>
+            <a href="/mx" className="hover:text-primary transition-colors">México (MX)</a>
+            <a href="/gb" className="hover:text-primary transition-colors">Reino Unido (GB)</a>
+            <a href="/ca" className="hover:text-primary transition-colors">Canadá (CA)</a>
+            <a href="/de" className="hover:text-primary transition-colors">Alemanha (DE)</a>
+            <a href="/fr" className="hover:text-primary transition-colors">França (FR)</a>
+            <a href="/it" className="hover:text-primary transition-colors">Itália (IT)</a>
+            <a href="/au" className="hover:text-primary transition-colors">Austrália (AU)</a>
+            <a href="/global" className="hover:text-primary transition-colors">Remoto Global</a>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-medium">
+            <span className="font-bold text-slate-700">Guias ATS:</span>
+            <a href="/ats/gupy" className="hover:text-primary transition-colors">Gupy ATS</a>
+            <a href="/ats/workday" className="hover:text-primary transition-colors">Workday HCM</a>
+            <a href="/ats/greenhouse" className="hover:text-primary transition-colors">Greenhouse</a>
+            <a href="/ats/lever" className="hover:text-primary transition-colors">Lever</a>
+            <a href="/ats/taleo" className="hover:text-primary transition-colors">Oracle Taleo</a>
+            <a href="/ats/solides" className="hover:text-primary transition-colors">Solides</a>
+            <a href="/ats/icims" className="hover:text-primary transition-colors">iCIMS</a>
+            <a href="/ats/ashby" className="hover:text-primary transition-colors">Ashby</a>
+            <a href="/ats/infojobs" className="hover:text-primary transition-colors">InfoJobs</a>
+            <a href="/ats/personio" className="hover:text-primary transition-colors">Personio</a>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-medium">
+            <span className="font-bold text-slate-700">Carreiras & Áreas:</span>
+            <a href="/carreiras/desenvolvedor-software" className="hover:text-primary transition-colors">Desenvolvedor de Software</a>
+            <a href="/carreiras/product-manager" className="hover:text-primary transition-colors">Product Manager</a>
+            <a href="/carreiras/analista-de-dados" className="hover:text-primary transition-colors">Analista de Dados</a>
+            <a href="/carreiras/ux-ui-designer" className="hover:text-primary transition-colors">UX/UI Designer</a>
+            <a href="/carreiras/tech-lead" className="hover:text-primary transition-colors">Tech Lead</a>
+            <a href="/carreiras/gerente-de-projetos" className="hover:text-primary transition-colors">Gerente de Projetos</a>
+          </div>
+        </div>
+
         <div className="border-t border-slate-200 py-4 text-center text-xs text-slate-500 font-medium">
           © {new Date().getFullYear()} {t.footer.rights}
         </div>

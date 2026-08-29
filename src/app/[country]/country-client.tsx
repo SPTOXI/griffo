@@ -5,10 +5,16 @@ import { useAuth, useNav } from '@/store/auth'
 import { Landing } from '@/components/landing/landing'
 import { AuthScreen } from '@/components/auth/auth-screen'
 import { AppShell } from '@/components/app/app-shell'
+import type { Language } from '@/lib/i18n'
 
 type Screen = 'landing' | 'login' | 'signup' | 'app'
 
-export default function Home() {
+export interface CountryPageClientProps {
+  countryCode: string
+  lang: Language
+}
+
+export function CountryPageClient({ countryCode, lang }: CountryPageClientProps) {
   const { user, hydrated, hydrate } = useAuth()
   const setNavView = useNav((s) => s.setView)
   const [screen, setScreen] = useState<Screen>('landing')
@@ -21,23 +27,17 @@ export default function Home() {
     if (hydrated && typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const v = params.get('view')
-      // `radar` entrou aqui para o e-mail do digest ter uma porta de entrada.
-      // A navegação do app vive em memória, sem rota própria, então sem este
-      // nome na lista o link do e-mail deixaria a pessoa no painel inicial —
-      // que não é onde o aviso dela está.
       if (v === 'admin' || v === 'upload' || v === 'analysis' || v === 'rewrite' || v === 'plans' || v === 'radar') {
         setNavView(v as any)
       }
     }
   }, [hydrated, setNavView])
 
-  // If user is logged in, force app screen
   const effectiveScreen: Screen = user ? 'app' : screen
 
-  // SSR e primeiro render: entrega o HTML completo da Landing Page para motores de busca,
-  // bots de IA (GPTBot, ClaudeBot, PerplexityBot) e visitantes sem flash de carregamento.
+  // Durante SSR e primeiro render: entrega a Landing Page localizada para o país
   if (!hydrated) {
-    return <Landing onNavigate={(v) => setScreen(v)} />
+    return <Landing onNavigate={(v) => setScreen(v)} countryCode={countryCode} forcedLang={lang} />
   }
 
   if (effectiveScreen === 'app') {
@@ -48,6 +48,5 @@ export default function Home() {
     return <AuthScreen initialMode={effectiveScreen} onBack={() => setScreen('landing')} />
   }
 
-  return <Landing onNavigate={(v) => setScreen(v)} />
+  return <Landing onNavigate={(v) => setScreen(v)} countryCode={countryCode} forcedLang={lang} />
 }
-
