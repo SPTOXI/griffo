@@ -30,6 +30,23 @@ export interface RewriteSegmentSpec {
   maxTokens: number
 }
 
+import type { Language } from '../i18n'
+
+const SECTION_TITLES: Record<Language, { summary: string; experience: string; education: string; skills: string; languages: string }> = {
+  pt: { summary: 'Resumo Profissional', experience: 'Experiência Profissional', education: 'Formação Acadêmica', skills: 'Habilidades Técnicas e Comportamentais', languages: 'Idiomas e Certificações' },
+  en: { summary: 'Professional Summary', experience: 'Professional Experience', education: 'Education', skills: 'Core Skills & Technical Proficiencies', languages: 'Languages & Certifications' },
+  es: { summary: 'Resumen Profesional', experience: 'Experiencia Profesional', education: 'Educación y Formación', skills: 'Habilidades Técnicas y Competencias', languages: 'Idiomas y Certificaciones' },
+  de: { summary: 'Berufliches Profil', experience: 'Berufserfahrung', education: 'Ausbildung & Studium', skills: 'Kenntnisse und Kernkompetenzen', languages: 'Sprachen & Zertifikate' },
+  fr: { summary: 'Profil Professionnel', experience: 'Expérience Professionnelle', education: 'Formation & Diplômes', skills: 'Compétences Techniques et Clés', languages: 'Langues & Certifications' },
+  it: { summary: 'Profilo Professionale', experience: 'Esperienza Professionale', education: 'Istruzione e Formazione', skills: 'Competenze Tecniche e Personali', languages: 'Lingue e Certificazioni' },
+  ja: { summary: '職務要約', experience: '職務経歴', education: '学歴', skills: '保有スキル・専門知識', languages: '語学力・保有資格' },
+  nl: { summary: 'Professioneel Profiel', experience: 'Werkervaring', education: 'Opleiding & Training', skills: 'Vaardigheden en Kerncompetenties', languages: 'Talenkennis & Certificaten' },
+  sv: { summary: 'Professionell Sammanfattning', experience: 'Arbetslivserfarenhet', education: 'Utbildning', skills: 'Kompetenser och Färdigheter', languages: 'Språk och Certifieringar' },
+  zh: { summary: '个人总结与求职意向', experience: '工作经历与项目经验', education: '教育背景', skills: '专业技能与核心专长', languages: '语言能力与资格认证' },
+  ar: { summary: 'الملخص المهني', experience: 'الخبرات المهنية', education: 'المؤهلات العلمية', skills: 'المهارات والكفاءات الأساسية', languages: 'اللغات والشهادات المهنية' },
+  ko: { summary: '직무 요약 및 핵심 역량', experience: '주요 경력 및 프로젝트', education: '학력 사항', skills: '전문 스킬 및 핵심 역량', languages: '어학 능력 및 자격증' },
+}
+
 /** Regras válidas para as três seções — idênticas às da chamada única anterior. */
 function sharedRules(keywordsHint: string): string {
   return `Você é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas de triagem (ATS).
@@ -42,7 +59,9 @@ REGRAS OBRIGATÓRIAS, válidas para o que você produzir:
 5. Responda APENAS a seção pedida, em Markdown puro, sem comentário antes ou depois.`
 }
 
-export function buildRewriteSegments(keywordsHint: string): RewriteSegmentSpec[] {
+export function buildRewriteSegments(keywordsHint: string, lang: Language = 'pt'): RewriteSegmentSpec[] {
+  const titles = SECTION_TITLES[lang] || SECTION_TITLES.pt
+
   return [
     {
       id: 'header',
@@ -53,7 +72,7 @@ SUA SEÇÃO: Cabeçalho e Resumo Profissional — e SÓ ela.
 
 - Comece com '# ' seguido do nome do candidato (se estiver no currículo original) ou do cargo principal.
 - Logo abaixo, os dados de contato disponíveis (sem inventar nenhum).
-- Em seguida, '## Resumo Profissional': um parágrafo de resumo executivo reescrito, direcionado à vaga/área do currículo original.
+- Em seguida, '## ${titles.summary}': um parágrafo de resumo executivo reescrito e otimizado, direcionado à vaga/área do currículo original e redigido no idioma de destino.
 
 NÃO produza experiências, formação, habilidades, idiomas ou certificações — isso é responsabilidade de outra seção.`,
     },
@@ -62,10 +81,10 @@ NÃO produza experiências, formação, habilidades, idiomas ou certificações 
       maxTokens: 5000,
       instruction: `${sharedRules(keywordsHint)}
 
-SUA SEÇÃO: '## Experiência Profissional' — e SÓ ela, completa, sem cortar nenhuma vaga do currículo original.
+SUA SEÇÃO: '## ${titles.experience}' — e SÓ ela, completa, sem cortar nenhuma vaga do currículo original.
 
-Reescreva TODAS as experiências profissionais do currículo original, com empresa, cargo e datas. Em cada uma, escreva realizações que tragam o RESULTADO alcançado, a EVIDÊNCIA desse resultado e a AÇÃO que o produziu — é o conteúdo das metodologias STAR e XYZ.
-NÃO reproduza a fórmula como texto. As construções "medido por ..." e "fazendo ..." estão PROIBIDAS: repetidas em várias experiências seguidas, elas produzem um currículo de sintaxe idêntica do começo ao fim, que é exatamente o oposto do efeito pretendido. Varie a construção entre as experiências e escreva em português natural, como um profissional sênior escreveria.
+Reescreva TODAS as experiências profissionais do currículo original, com empresa, cargo e datas, traduzindo e adaptando com fluência nativa e técnica para o idioma e mercado de destino. Em cada uma, escreva realizações que tragam o RESULTADO alcançado, a EVIDÊNCIA desse resultado e a AÇÃO que o produziu — é o conteúdo das metodologias STAR e XYZ.
+NÃO reproduza a fórmula como texto fixo artificial. Varie a construção entre as experiências e escreva em linguagem executiva natural e precisa, como um profissional sênior escreveria no mercado local.
 
 NÃO produza cabeçalho, resumo, formação, habilidades, idiomas ou certificações — isso é responsabilidade de outra seção.`,
     },
@@ -76,10 +95,10 @@ NÃO produza cabeçalho, resumo, formação, habilidades, idiomas ou certificaç
 
 SUA SEÇÃO: Formação Acadêmica, Habilidades e Idiomas/Certificações — e SÓ elas.
 
-Produza, nesta ordem, só o que o currículo original de fato tiver:
-- '## Formação Acadêmica'
-- '## Habilidades Técnicas e Comportamentais'
-- '## Idiomas e Certificações' (se houver)
+Produza, nesta ordem, só o que o currículo original de fato tiver, usando estes títulos:
+- '## ${titles.education}'
+- '## ${titles.skills}'
+- '## ${titles.languages}' (se houver)
 
 NÃO produza cabeçalho, resumo ou experiências profissionais — isso é responsabilidade de outra seção.`,
     },

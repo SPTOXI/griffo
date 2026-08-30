@@ -50,6 +50,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     fr: `GriffoWork ${cName} — Audit de CV par IA & Score de Compatibilité ATS`,
     it: `GriffoWork ${cName} — Analisi del Curriculum con IA & Punteggio ATS`,
     ja: `GriffoWork ${cName} — AI職務経歴書診断＆ATS適合度スコア`,
+    nl: `GriffoWork ${cName} — AI Cv-Analyse & ATS-Score Verificatie`,
+    sv: `GriffoWork ${cName} — AI CV-Granskning & ATS-Kompatibilitetstest`,
+    zh: `GriffoWork ${cName} — AI 简历智能诊断与 ATS 筛选适配评测`,
+    ar: `GriffoWork ${cName} — تدقيق السيرة الذاتية بالذكاء الاصطناعي واختبار توافق ATS`,
+    ko: `GriffoWork ${cName} — AI 이력서 정밀 기술 평가 및 ATS 채용 필터 검증`,
   }
 
   const descriptions: Record<string, string> = {
@@ -60,6 +65,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     fr: `Optimisez votre CV selon les standards de recrutement en ${cName}. Audit de compatibilité avec ${atsList} et rapport exécutif en 8 dimensions pour seulement ${price.formatted}.`,
     it: `Ottimizza il tuo curriculum per gli standard di selezione in ${cName}. Valutazione di compatibilità con ${atsList} e report esecutivo in 8 dimensioni per soli ${price.formatted}.`,
     ja: `${cName} の採用基準に合わせて職務経歴書を最適化。${atsList} のATS適合度判定と8次元診断レポートをわずか ${price.formatted} でご提供。`,
+    nl: `Optimaliseer je cv voor wervingsstandaarden in ${cName}. ATS-compatibiliteitstest voor ${atsList} en analyserapport in 8 dimensies voor slechts ${price.formatted}.`,
+    sv: `Optimera ditt CV för rekryteringsstandarder i ${cName}. ATS-kompatibilitetstest för ${atsList} och granskningsrapport i 8 dimensioner för endast ${price.formatted}.`,
+    zh: `针对 ${cName} 的主流招聘标准优化您的简历。全方位检测 ${atsList} 等主流 ATS 适配度并出具 8 维度评估报告，仅需 ${price.formatted}。`,
+    ar: `حسّن سيرتك الذاتية وفقاً لمعايير التوظيف في ${cName}. تقييم التوافق مع ${atsList} وتقرير تنفيذي في 8 أبعاد مقابل ${price.formatted} فقط.`,
+    ko: `${cName} 현지 채용 표준에 맞춰 이력서를 최적화하세요. ${atsList} ATS 호환성 검증과 8개 차원 정밀 진단 보고서를 단 ${price.formatted}에 제공합니다.`,
   }
 
   const title = titles[market.jobLanguage] || titles.en

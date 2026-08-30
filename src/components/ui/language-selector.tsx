@@ -19,6 +19,11 @@ const LANG_OPTIONS: { id: Language; label: string; flag: string }[] = [
   { id: 'fr', label: 'Français (FR)', flag: '🇫🇷' },
   { id: 'it', label: 'Italiano (IT)', flag: '🇮🇹' },
   { id: 'ja', label: '日本語 (JP)', flag: '🇯🇵' },
+  { id: 'nl', label: 'Nederlands (NL)', flag: '🇳🇱' },
+  { id: 'sv', label: 'Svenska (SE)', flag: '🇸🇪' },
+  { id: 'zh', label: '简体中文 (CN)', flag: '🇨🇳' },
+  { id: 'ar', label: 'العربية (AR)', flag: '🇦🇪' },
+  { id: 'ko', label: '한국어 (KR)', flag: '🇰🇷' },
 ]
 
 export function LanguageSelector({ variant = 'default' }: { variant?: 'default' | 'minimal' }) {

@@ -26,4 +26,9 @@ export const LANGUAGE_DIRECTIVE: Record<Language, string> = {
   fr: 'LANGUE DE RÉPONSE: Répondez entièrement en Français (fr-FR), y compris tous les textes à l\'intérieur du JSON.',
   it: 'LINGUA DI RISPOSTA: Rispondi interamente in Italiano (it-IT), inclusi tutti i testi all\'interno del JSON.',
   ja: '応答言語: すべてのJSON内テキストを含め、完全に日本語（ja-JP）で回答してください。',
+  nl: 'ANTWOORDTAAL: Antwoord volledig in het Nederlands (nl-NL), inclusief alle teksten binnen de JSON.',
+  sv: 'SVARSSPRÅK: Svara helt på svenska (sv-SE), inklusive all text inuti JSON.',
+  zh: '回答语言: 请完全使用简体中文（zh-CN）回答，包括 JSON 内部的所有文本。',
+  ar: 'لغة الإجابة: يرجى الإجابة بالكامل باللغة العربية الفصحى (ar)، بما في ذلك كافة النصوص داخل كائن JSON.',
+  ko: '응답 언어: JSON 내부의 모든 텍스트를 포함하여 반드시 한국어(ko-KR)로 응답해 주세요.',
 }

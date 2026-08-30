@@ -6,6 +6,11 @@ import { de } from './locales/de'
 import { fr } from './locales/fr'
 import { it } from './locales/it'
 import { ja } from './locales/ja'
+import { nl } from './locales/nl'
+import { sv } from './locales/sv'
+import { zh } from './locales/zh'
+import { ar } from './locales/ar'
+import { ko } from './locales/ko'
 
 export * from './types'
 
@@ -17,6 +22,11 @@ export const DICTIONARIES: Record<Language, TranslationDictionary> = {
   fr,
   it,
   ja,
+  nl,
+  sv,
+  zh,
+  ar,
+  ko,
 }
 
 // Country code to Language mapping helper
@@ -35,13 +45,38 @@ export function detectLanguageFromCountry(countryCode?: string | null): Language
   }
 
   // French countries
-  if (['FR', 'BE', 'LU', 'MC', 'SN', 'CI', 'CD', 'MG', 'CM'].includes(code)) {
+  if (['FR', 'MC', 'SN', 'CI', 'CD', 'MG', 'CM'].includes(code)) {
     return 'fr'
   }
 
   // Italian countries
   if (['IT', 'SM', 'VA'].includes(code)) {
     return 'it'
+  }
+
+  // Dutch countries
+  if (['NL', 'AW', 'CW', 'SX', 'SR'].includes(code)) {
+    return 'nl'
+  }
+
+  // Swedish / Nordic
+  if (['SE'].includes(code)) {
+    return 'sv'
+  }
+
+  // Chinese countries/regions
+  if (['CN', 'HK', 'MO', 'TW'].includes(code)) {
+    return 'zh'
+  }
+
+  // Arabic countries
+  if (['AE', 'SA', 'QA', 'KW', 'OM', 'BH', 'EG', 'MA', 'JO', 'LB', 'DZ', 'TN', 'IQ'].includes(code)) {
+    return 'ar'
+  }
+
+  // Korean
+  if (['KR'].includes(code)) {
+    return 'ko'
   }
 
   // Japanese
@@ -77,6 +112,11 @@ export function detectBrowserLanguage(): Language {
     if (langLower.startsWith('fr')) return 'fr'
     if (langLower.startsWith('it')) return 'it'
     if (langLower.startsWith('ja')) return 'ja'
+    if (langLower.startsWith('nl')) return 'nl'
+    if (langLower.startsWith('sv')) return 'sv'
+    if (langLower.startsWith('zh')) return 'zh'
+    if (langLower.startsWith('ar')) return 'ar'
+    if (langLower.startsWith('ko')) return 'ko'
     if (langLower.startsWith('en')) return 'en'
   }
 
@@ -91,6 +131,11 @@ const LOCALE_BY_LANG: Record<Language, string> = {
   fr: 'fr-FR',
   it: 'it-IT',
   ja: 'ja-JP',
+  nl: 'nl-NL',
+  sv: 'sv-SE',
+  zh: 'zh-CN',
+  ar: 'ar-AE',
+  ko: 'ko-KR',
 }
 
 /** Locale do `Intl`/`toLocaleDateString` para o idioma da tela — não é o mercado da vaga. */

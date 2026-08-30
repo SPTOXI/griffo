@@ -8,6 +8,11 @@ const CONTACT_EMAILS: Record<Language, string> = {
   fr: 'bonjour@griffo.work',
   it: 'contatto@griffo.work',
   ja: 'japan@griffo.work',
+  nl: 'hallo@griffo.work',
+  sv: 'hej@griffo.work',
+  zh: 'china@griffo.work',
+  ar: 'marhaba@griffo.work',
+  ko: 'korea@griffo.work',
 }
 
 export function contactEmail(lang: Language): string {
@@ -24,6 +29,11 @@ const SALES_SUBJECTS: Record<Language, string> = {
   fr: 'Griffo pour entreprises',
   it: 'Griffo per aziende',
   ja: '法人向けGriffoWork導入のご相談',
+  nl: 'Griffo voor bedrijven',
+  sv: 'Griffo för företag',
+  zh: 'GriffoWork 企业合作咨询',
+  ar: 'GriffoWork للشركات والمؤسسات',
+  ko: 'GriffoWork 기업 도입 및 제휴 문의',
 }
 
 export function salesMailto(lang: Language): string {

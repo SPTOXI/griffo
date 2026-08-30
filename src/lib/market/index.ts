@@ -379,6 +379,101 @@ export const MARKETS: MarketConfig[] = [
       workAuthorizationMatters: true,
     },
   },
+  {
+    id: 'NL',
+    name: 'Netherlands',
+    countries: ['NL'],
+    jobLanguage: 'nl',
+    salaryCurrency: 'EUR',
+    ats: ['Workday', 'Recruitee', 'Greenhouse', 'Teamtailor', 'LinkedIn Talent Solutions'],
+    jobSources: ['LinkedIn Jobs', 'Indeed Nederland', 'Nationale Vacaturebank', 'Monsterboard', 'Company career pages'],
+    socialPlatforms: ['LinkedIn', 'GitHub', 'Personal portfolio'],
+    resume: {
+      photo: 'optional',
+      maxPages: 2,
+      personalData: 'Name, email, phone with country code (+31), city and LinkedIn. Photo is common but optional; Dutch CVs value factual concise bullet points.',
+    },
+    employment: {
+      contractTypes: ['Vast contract (onbepaalde tijd)', 'Tijdelijk contract', 'ZZP / Freelance', 'Stage'],
+      workAuthorizationMatters: true,
+    },
+  },
+  {
+    id: 'SE',
+    name: 'Sweden',
+    countries: ['SE'],
+    jobLanguage: 'sv',
+    salaryCurrency: 'SEK',
+    ats: ['Teamtailor', 'Workday', 'Jobylon', 'Greenhouse', 'LinkedIn Talent Solutions'],
+    jobSources: ['LinkedIn Jobs', 'Platsbanken (Arbetsförmedlingen)', 'Indeed Sverige', 'Company career pages'],
+    socialPlatforms: ['LinkedIn', 'GitHub', 'Personal portfolio'],
+    resume: {
+      photo: 'optional',
+      maxPages: 2,
+      personalData: 'Name, email, phone, city and LinkedIn. Swedish CVs emphasize team collaboration and flat hierarchy values.',
+    },
+    employment: {
+      contractTypes: ['Tillsvidareanställning (permanent)', 'Visstidsanställning', 'Konsult / Egenanställd', 'Praktik'],
+      workAuthorizationMatters: true,
+    },
+  },
+  {
+    id: 'CN',
+    name: 'China',
+    countries: ['CN'],
+    jobLanguage: 'zh',
+    salaryCurrency: 'CNY',
+    ats: ['Beisen (北森)', 'Moka (摩卡)', 'Workday', 'SAP SuccessFactors', 'LinkedIn Talent Solutions'],
+    jobSources: ['Boss Zhipin (BOSS直聘)', 'Liepin (猎聘)', 'Zhaopin (智联招聘)', '51job (前程无忧)', 'LinkedIn Jobs'],
+    socialPlatforms: ['LinkedIn', 'GitHub', 'Gitee', 'Zhihu'],
+    resume: {
+      photo: 'expected',
+      maxPages: 2,
+      personalData: '姓名、电话、邮箱、现居城市、求职意向与核心项目经验。附正面职业照是常见惯例。',
+    },
+    employment: {
+      contractTypes: ['劳动合同制 (Full-time)', '劳务派遣', '实习协议', '顾问兼职'],
+      workAuthorizationMatters: true,
+    },
+  },
+  {
+    id: 'AE',
+    name: 'United Arab Emirates',
+    countries: ['AE', 'SA', 'QA', 'KW', 'OM', 'BH'],
+    jobLanguage: 'ar',
+    salaryCurrency: 'AED',
+    ats: ['Bayt RMS', 'Workday', 'Oracle Taleo', 'Sniperhire', 'LinkedIn Talent Solutions'],
+    jobSources: ['Bayt.com', 'GulfTalent', 'LinkedIn Jobs', 'Naukrigulf', 'Company career pages'],
+    socialPlatforms: ['LinkedIn', 'GitHub', 'Personal portfolio'],
+    resume: {
+      photo: 'optional',
+      maxPages: 2,
+      personalData: 'Full name, email, mobile phone with country code, current residency city/country and LinkedIn. Visa status (e.g. Golden Visa, Employment Visa) is frequently requested.',
+    },
+    employment: {
+      contractTypes: ['Unlimited Contract', 'Fixed-term Employment', 'Freelance Permit / Green Visa'],
+      workAuthorizationMatters: true,
+    },
+  },
+  {
+    id: 'KR',
+    name: 'South Korea',
+    countries: ['KR'],
+    jobLanguage: 'ko',
+    salaryCurrency: 'KRW',
+    ats: ['Ninehire (나인하이어)', 'Greeting (그리팅)', 'Workday', 'Greenhouse', 'LinkedIn Talent Solutions'],
+    jobSources: ['Wanted (원티드)', 'Remember (리멤버)', 'JobKorea (잡코리아)', 'Saramin (사람인)', 'LinkedIn Jobs'],
+    socialPlatforms: ['LinkedIn', 'GitHub', 'Wantedly', 'Personal portfolio'],
+    resume: {
+      photo: 'optional',
+      maxPages: 2,
+      personalData: '성명, 연락처(휴대전화), 이메일, 거주지, 포트폴리오 링크. 경력기술서(경력 중심)와 핵심 성과 위주 작성.',
+    },
+    employment: {
+      contractTypes: ['정규직 (Permanent)', '계약직 (Contract)', '프리랜서 / 개인사업자', '인턴십'],
+      workAuthorizationMatters: true,
+    },
+  },
 ]
 
 /** Padrão de mercado por idioma — o palpite mais fraco, e o último da fila. */
@@ -390,6 +485,11 @@ const MARKET_BY_LANGUAGE: Record<Language, MarketId> = {
   fr: 'FR',
   it: 'IT',
   ja: 'JP',
+  nl: 'NL',
+  sv: 'SE',
+  zh: 'CN',
+  ar: 'AE',
+  ko: 'KR',
 }
 
 const BY_COUNTRY: Map<string, MarketConfig> = (() => {

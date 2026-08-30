@@ -1,6 +1,6 @@
-export type Language = 'pt' | 'en' | 'es' | 'de' | 'fr' | 'it' | 'ja'
+export type Language = 'pt' | 'en' | 'es' | 'de' | 'fr' | 'it' | 'ja' | 'nl' | 'sv' | 'zh' | 'ar' | 'ko'
 
-export const LANGUAGES: Language[] = ['pt', 'en', 'es', 'de', 'fr', 'it', 'ja']
+export const LANGUAGES: Language[] = ['pt', 'en', 'es', 'de', 'fr', 'it', 'ja', 'nl', 'sv', 'zh', 'ar', 'ko']
 
 export interface TranslationDictionary {
   nav: {

@@ -14,11 +14,12 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useAiJob } from './use-ai-job'
 import {
   FileEdit, Loader2, AlertCircle, ShieldCheck, Lock, Sparkles, Check, X,
-  RefreshCw, Download, ArrowRight, Eye, Key, Copy
+  RefreshCw, Download, ArrowRight, Eye, Key, Copy, Globe
 } from 'lucide-react'
 import { toast } from 'sonner'
 import ReactMarkdown from 'react-markdown'
 import { useI18n } from '@/context/i18n-context'
+import type { Language } from '@/lib/i18n'
 
 interface Resume {
   id: string
@@ -28,8 +29,28 @@ interface Resume {
   analysis: any
 }
 
+const TARGET_MARKET_OPTIONS = [
+  { id: 'BR', lang: 'pt' as Language, label: 'Brasil (Português)', flag: '🇧🇷', format: 'Padrão CLT / PJ' },
+  { id: 'US', lang: 'en' as Language, label: 'United States (English)', flag: '🇺🇸', format: 'US Executive / ATS' },
+  { id: 'GB', lang: 'en' as Language, label: 'United Kingdom (English)', flag: '🇬🇧', format: 'UK Standard' },
+  { id: 'CA', lang: 'en' as Language, label: 'Canada (English)', flag: '🇨🇦', format: 'Canadian Standard' },
+  { id: 'DE', lang: 'de' as Language, label: 'Deutschland (Deutsch)', flag: '🇩🇪', format: 'Deutscher Lebenslauf' },
+  { id: 'FR', lang: 'fr' as Language, label: 'France (Français)', flag: '🇫🇷', format: 'Format Cadre' },
+  { id: 'IT', lang: 'it' as Language, label: 'Italia (Italiano)', flag: '🇮🇹', format: 'Formato Europeo' },
+  { id: 'ES', lang: 'es' as Language, label: 'España (Español)', flag: '🇪🇸', format: 'Estándar Profesional' },
+  { id: 'MX', lang: 'es' as Language, label: 'México (Español)', flag: '🇲🇽', format: 'Estándar LATAM' },
+  { id: 'PT', lang: 'pt' as Language, label: 'Portugal (Português)', flag: '🇵🇹', format: 'Padrão Europeu' },
+  { id: 'JP', lang: 'ja' as Language, label: '日本 (日本語)', flag: '🇯🇵', format: '職務経歴書 / Global' },
+  { id: 'NL', lang: 'nl' as Language, label: 'Nederland (Nederlands)', flag: '🇳🇱', format: 'Dutch Standard' },
+  { id: 'SE', lang: 'sv' as Language, label: 'Sverige (Svenska)', flag: '🇸🇪', format: 'Nordic Standard' },
+  { id: 'CN', lang: 'zh' as Language, label: '中国 (简体中文)', flag: '🇨🇳', format: '中文资深专业履历' },
+  { id: 'AE', lang: 'ar' as Language, label: 'الإمارات (العربية)', flag: '🇦🇪', format: 'معايير الخليج' },
+  { id: 'KR', lang: 'ko' as Language, label: '대한민국 (한국어)', flag: '🇰🇷', format: '경력기술서 표준' },
+  { id: 'GLOBAL', lang: 'en' as Language, label: 'Global Remote (English)', flag: '🌐', format: 'International Remote' },
+]
+
 export function RewriteView() {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const rw = t.rewrite
   const { activeResumeId, setView, openResume } = useNav()
   const { user } = useAuth()
@@ -39,6 +60,10 @@ export function RewriteView() {
   const [error, setError] = useState<string | null>(null)
   const [showOriginal, setShowOriginal] = useState(false)
   const [downloadingType, setDownloadingType] = useState<string | null>(null)
+  const [selectedMarket, setSelectedMarket] = useState<string>(() => {
+    const defaultMarket = TARGET_MARKET_OPTIONS.find((m) => m.lang === lang)?.id || 'BR'
+    return defaultMarket
+  })
 
   const downloadFile = async (type: 'resume_pdf' | 'resume_txt' | 'resume_md') => {
     if (!resume) return
@@ -129,12 +154,18 @@ export function RewriteView() {
 
   const requestRewrite = () => {
     if (!resume) return
-    if (!authorized) {
+    if (!authorized && !hasRewrite) {
       setError(rw.authRequiredError)
       return
     }
     setError(null)
-    void rewriteJob.start({ resumeId: resume.id, authorized: true })
+    const target = TARGET_MARKET_OPTIONS.find((m) => m.id === selectedMarket) || TARGET_MARKET_OPTIONS[0]
+    void rewriteJob.start({
+      resumeId: resume.id,
+      targetLang: target.lang,
+      targetMarket: target.id,
+      authorized: true,
+    })
   }
 
   const confirmRewrite = async () => {
@@ -230,6 +261,41 @@ export function RewriteView() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* International Target Market Selector */}
+            <div className="space-y-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-primary" />
+                  Mercado Alvo e Formato de Recrutamento
+                </label>
+                <span className="text-[11px] text-primary font-medium">1-Click AI Adaptation</span>
+              </div>
+              <p className="text-xs text-slate-500">
+                A IA traduz o currículo, ajusta as convenções locais (ex: Lebenslauf, Rirekisho, formato americano), incorpora métricas e alinha as palavras-chave com os ATS do país escolhido.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                {TARGET_MARKET_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setSelectedMarket(opt.id)}
+                    className={`flex items-center gap-2.5 p-2 rounded-lg border text-left text-xs transition-all cursor-pointer ${
+                      selectedMarket === opt.id
+                        ? 'border-primary bg-primary/10 text-primary font-bold shadow-2xs'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span className="text-lg leading-none shrink-0">{opt.flag}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-semibold">{opt.label}</div>
+                      <div className="text-[10px] text-slate-500 truncate">{opt.format}</div>
+                    </div>
+                    {selectedMarket === opt.id && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 space-y-2 text-sm text-slate-700">
               <p className="font-semibold text-slate-900">{rw.willDoTitle}</p>
               <ul className="space-y-1.5">
@@ -292,6 +358,41 @@ export function RewriteView() {
               <div className="flex-1">
                 <p className="text-sm font-semibold text-emerald-900">{rw.successCardTitle}</p>
                 <p className="text-xs text-emerald-700">{rw.successCardDesc}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* International Re-targeting bar */}
+          <Card className="border-slate-200 bg-slate-50/50">
+            <CardContent className="p-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-primary shrink-0" />
+                  <span className="text-xs font-bold text-slate-800">Adaptar para outro Mercado / Idioma:</span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <select
+                    value={selectedMarket}
+                    onChange={(e) => setSelectedMarket(e.target.value)}
+                    className="text-xs font-medium bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-slate-700 cursor-pointer"
+                  >
+                    {TARGET_MARKET_OPTIONS.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.flag} {opt.label} — ({opt.format})
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={requestRewrite}
+                    disabled={rewriting}
+                    className="text-xs h-8 bg-white border-primary/30 text-primary hover:bg-primary/5"
+                  >
+                    {rewriting ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 mr-1.5" />}
+                    Traduzir & Re-otimizar
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

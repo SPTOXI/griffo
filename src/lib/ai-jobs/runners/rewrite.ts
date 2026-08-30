@@ -72,7 +72,7 @@ export async function processRewriteJob(jobId: string): Promise<void> {
       profileContext,
     })
 
-    const specs = buildRewriteSegments(keywordsHint)
+    const specs = buildRewriteSegments(keywordsHint, lang)
     const done: Partial<Record<RewriteSegmentId, string>> = {}
 
     const outcomes = await Promise.allSettled(

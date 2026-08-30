@@ -23,12 +23,12 @@ function extractKeyPaths(obj: Record<string, any>, prefix = ''): string[] {
   return paths.sort()
 }
 
-test('todos os 7 idiomas suportados estão declarados em LANGUAGES', () => {
-  assert.deepEqual(LANGUAGES, ['pt', 'en', 'es', 'de', 'fr', 'it', 'ja'])
-  assert.equal(Object.keys(DICTIONARIES).length, 7)
+test('todos os 12 idiomas suportados estão declarados em LANGUAGES', () => {
+  assert.deepEqual(LANGUAGES, ['pt', 'en', 'es', 'de', 'fr', 'it', 'ja', 'nl', 'sv', 'zh', 'ar', 'ko'])
+  assert.equal(Object.keys(DICTIONARIES).length, 12)
 })
 
-test('paridade estrutural estrita entre dicionários pt, en, es, de, fr, it e ja', () => {
+test('paridade estrutural estrita entre dicionários pt, en, es, de, fr, it, ja, nl, sv, zh, ar, ko', () => {
   const ptKeys = extractKeyPaths(DICTIONARIES.pt)
 
   for (const lang of LANGUAGES) {
@@ -42,7 +42,7 @@ test('paridade estrutural estrita entre dicionários pt, en, es, de, fr, it e ja
   }
 })
 
-test('nenhuma chave de tradução possui string vazia em nenhum dos 7 idiomas', () => {
+test('nenhuma chave de tradução possui string vazia em nenhum dos 12 idiomas', () => {
   for (const lang of LANGUAGES) {
     const dict = DICTIONARIES[lang]
     const keys = extractKeyPaths(dict)
@@ -91,14 +91,29 @@ test('detecção de idioma por país funciona corretamente', () => {
 
   // Francês
   assert.equal(detectLanguageFromCountry('FR'), 'fr')
-  assert.equal(detectLanguageFromCountry('BE'), 'fr')
-  assert.equal(detectLanguageFromCountry('LU'), 'fr')
+  assert.equal(detectLanguageFromCountry('MC'), 'fr')
 
   // Italiano
   assert.equal(detectLanguageFromCountry('IT'), 'it')
 
   // Japonês
   assert.equal(detectLanguageFromCountry('JP'), 'ja')
+
+  // Holandês
+  assert.equal(detectLanguageFromCountry('NL'), 'nl')
+
+  // Sueco
+  assert.equal(detectLanguageFromCountry('SE'), 'sv')
+
+  // Chinês
+  assert.equal(detectLanguageFromCountry('CN'), 'zh')
+
+  // Árabe
+  assert.equal(detectLanguageFromCountry('AE'), 'ar')
+  assert.equal(detectLanguageFromCountry('SA'), 'ar')
+
+  // Coreano
+  assert.equal(detectLanguageFromCountry('KR'), 'ko')
 
   // Inglês
   assert.equal(detectLanguageFromCountry('US'), 'en')
@@ -111,7 +126,7 @@ test('detecção de idioma por país funciona corretamente', () => {
   assert.equal(detectLanguageFromCountry(undefined), 'pt')
 })
 
-test('mapeamento de locale para cada um dos 7 idiomas', () => {
+test('mapeamento de locale para cada um dos 12 idiomas', () => {
   assert.equal(localeForLang('pt'), 'pt-BR')
   assert.equal(localeForLang('en'), 'en-US')
   assert.equal(localeForLang('es'), 'es-ES')
@@ -119,4 +134,9 @@ test('mapeamento de locale para cada um dos 7 idiomas', () => {
   assert.equal(localeForLang('fr'), 'fr-FR')
   assert.equal(localeForLang('it'), 'it-IT')
   assert.equal(localeForLang('ja'), 'ja-JP')
+  assert.equal(localeForLang('nl'), 'nl-NL')
+  assert.equal(localeForLang('sv'), 'sv-SE')
+  assert.equal(localeForLang('zh'), 'zh-CN')
+  assert.equal(localeForLang('ar'), 'ar-AE')
+  assert.equal(localeForLang('ko'), 'ko-KR')
 })

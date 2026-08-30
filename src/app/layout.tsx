@@ -43,6 +43,11 @@ export const metadata: Metadata = {
       "fr-FR": "https://griffo.work/fr",
       "it-IT": "https://griffo.work/it",
       "ja-JP": "https://griffo.work/jp",
+      "nl-NL": "https://griffo.work/nl",
+      "sv-SE": "https://griffo.work/se",
+      "zh-CN": "https://griffo.work/cn",
+      "ar-AE": "https://griffo.work/ae",
+      "ko-KR": "https://griffo.work/kr",
     },
   },
   robots: {
@@ -96,7 +101,7 @@ const jsonLd = {
       "url": "https://griffo.work",
       "name": "GriffoWork",
       "description": "Plataforma de Global AI Career Intelligence e otimização de presença digital baseada nos melhores padrões de recrutamento.",
-      "inLanguage": ["pt-BR", "en-US", "es-ES", "de-DE", "fr-FR", "it-IT", "ja-JP"]
+      "inLanguage": ["pt-BR", "en-US", "es-ES", "de-DE", "fr-FR", "it-IT", "ja-JP", "nl-NL", "sv-SE", "zh-CN", "ar-AE", "ko-KR"]
     },
     {
       "@type": "Organization",

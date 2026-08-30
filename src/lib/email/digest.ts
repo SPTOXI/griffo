@@ -222,6 +222,111 @@ const STRINGS: Record<Language, Strings> = {
     unsubscribeNote: 'アカウントや診断履歴は保持されます。メール配信のみ停止されます。',
     signature: 'GriffoWork',
   },
+  nl: {
+    subjectOne: 'Radar heeft een passende vacature voor je profiel gevonden',
+    subjectMany: (n) => `Radar heeft ${n} passende vacatures voor je profiel gevonden`,
+    greetingNamed: (name) => `Hallo, ${name}.`,
+    greeting: 'Hallo.',
+    intro: (n) =>
+      n === 1
+        ? 'Er is één nieuwe vacature verschenen die aansluit bij jouw profiel:'
+        : `Er zijn ${n} nieuwe vacatures verschenen die aansluiten bij jouw profiel:`,
+    fit: {
+      strong: 'Hoge relevantie',
+      good: 'Goede relevantie',
+      partial: 'Gedeeltelijke relevantie',
+      weak: 'Lage relevantie',
+    },
+    seeAll: 'Bekijken in de Radar',
+    why: 'Je ontvangt deze e-mail omdat je de GriffoWork Vacatureradar hebt ingeschakeld.',
+    unsubscribe: 'Uitschrijven',
+    unsubscribeNote: 'Je account en analyses blijven behouden; alleen deze e-mailmeldingen stoppen.',
+    signature: 'GriffoWork',
+  },
+  sv: {
+    subjectOne: 'Radarn har hittat en matchande tjänst för din profil',
+    subjectMany: (n) => `Radarn har hittat ${n} matchande tjänster för din profil`,
+    greetingNamed: (name) => `Hej, ${name}.`,
+    greeting: 'Hej.',
+    intro: (n) =>
+      n === 1
+        ? 'Ett nytt jobb har publicerats som matchar dina kriterier:'
+        : `${n} nya jobb har publicerats som matchar dina kriterier:`,
+    fit: {
+      strong: 'Hög matchning',
+      good: 'God matchning',
+      partial: 'Delvis matchning',
+      weak: 'Låg matchning',
+    },
+    seeAll: 'Öppna i Radarn',
+    why: 'Du får detta meddelande eftersom du har aktiverat GriffoWork Jobbradar.',
+    unsubscribe: 'Avsluta prenumeration',
+    unsubscribeNote: 'Ditt konto och dina analyser sparas; endast e-postaviseringarna upphör.',
+    signature: 'GriffoWork',
+  },
+  zh: {
+    subjectOne: '求职雷达发现了与您的画像匹配的优质职位',
+    subjectMany: (n) => `求职雷达发现了 ${n} 个与您的画像匹配的优质职位`,
+    greetingNamed: (name) => `您好，${name}。`,
+    greeting: '您好。',
+    intro: (n) =>
+      n === 1
+        ? '自上次提醒后，发现 1 个符合您要求的新职位：'
+        : `自上次提醒后，发现 ${n} 个符合您要求的新职位：`,
+    fit: {
+      strong: '极高匹配',
+      good: '良好契合',
+      partial: '部分匹配',
+      weak: '低度匹配',
+    },
+    seeAll: '在求职雷达中查看',
+    why: '您收到此邮件是因为您开启了 GriffoWork 职位雷达提醒。',
+    unsubscribe: '退订提醒',
+    unsubscribeNote: '您的账户和评估记录将完整保留，仅停止接收邮件提醒。',
+    signature: 'GriffoWork',
+  },
+  ar: {
+    subjectOne: 'عثر رادار الوظائف على فرصة متوافقة مع ملفك المهني',
+    subjectMany: (n) => `عثر رادار الوظائف على ${n} فرص متوافقة مع ملفك المهني`,
+    greetingNamed: (name) => `أهلاً ${name}.`,
+    greeting: 'مرحباً.',
+    intro: (n) =>
+      n === 1
+        ? 'ظهرت فرصة عمل جديدة متوافقة مع معاييرك منذ آخر إشعار:'
+        : `ظهرت ${n} فرص عمل جديدة متوافقة مع معاييرك منذ آخر إشعار:`,
+    fit: {
+      strong: 'توافق عالي جداً',
+      good: 'توافق جيد',
+      partial: 'توافق جزئي',
+      weak: 'توافق منخفض',
+    },
+    seeAll: 'عرض في رادار الوظائف',
+    why: 'تتلقى هذه الرسالة لأنك قمت بتفعيل رادار الوظائف في GriffoWork.',
+    unsubscribe: 'إلغاء الاشتراك',
+    unsubscribeNote: 'سيبقى حسابك وتقاريرك كما هي — ستتوقف إشعارات البريد فقط.',
+    signature: 'GriffoWork',
+  },
+  ko: {
+    subjectOne: '채용 레이더가 회원님의 프로필에 부합하는 채용 공고를 발견했습니다',
+    subjectMany: (n) => `채용 레이더가 회원님의 프로필에 부합하는 ${n}건의 채용 공고를 발견했습니다`,
+    greetingNamed: (name) => `안녕하세요, ${name} 님.`,
+    greeting: '안녕하세요.',
+    intro: (n) =>
+      n === 1
+        ? '지난 알림 이후 회원님의 조건에 일치하는 1건의 새로운 공고가 등록되었습니다:'
+        : `지난 알림 이후 회원님의 조건에 일치하는 ${n}건의 새로운 공고가 등록되었습니다:`,
+    fit: {
+      strong: '최상 적합',
+      good: '우수 적합',
+      partial: '부분 적합',
+      weak: '낮은 적합',
+    },
+    seeAll: '채용 레이더에서 확인하기',
+    why: 'GriffoWork 채용 레이더 알림 설정을 활성화하셨기 때문에 발송된 메일입니다.',
+    unsubscribe: '수신 거부',
+    unsubscribeNote: '계정과 기존 진단 기록은 안전하게 유지되며, 이메일 알림만 중단됩니다.',
+    signature: 'GriffoWork',
+  },
 }
 
 /**
@@ -233,7 +338,7 @@ const STRINGS: Record<Language, Strings> = {
  */
 export function digestLanguage(declared: string | null | undefined): Language {
   const code = (declared || '').trim().toLowerCase().split(/[-_]/)[0] as Language
-  const supported: Language[] = ['pt', 'en', 'es', 'de', 'fr', 'it', 'ja']
+  const supported: Language[] = ['pt', 'en', 'es', 'de', 'fr', 'it', 'ja', 'nl', 'sv', 'zh', 'ar', 'ko']
   if (supported.includes(code)) return code
   return 'pt'
 }

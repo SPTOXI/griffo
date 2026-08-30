@@ -14,6 +14,8 @@ import { REWRITE_SEGMENT_IDS } from '@/lib/resume-rewrite/segments'
 
 const schema = z.object({
   resumeId: z.string().min(1, 'ID do currículo obrigatório'),
+  targetLang: z.enum(['pt', 'en', 'es', 'de', 'fr', 'it', 'ja', 'nl', 'sv', 'zh', 'ar', 'ko']).optional(),
+  targetMarket: z.string().max(10).optional(),
 })
 
 /**
@@ -39,7 +41,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
     }
 
-    const { resumeId } = parsed.data
+    const { resumeId, targetLang, targetMarket } = parsed.data
 
     const resume = await db.resume.findFirst({
       where: { id: resumeId, userId: user.id },
@@ -75,6 +77,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ jobId: inFlight.id, status: inFlight.status }, { status: 202 })
     }
 
+    const effectiveLang = targetLang || getRequestLanguage(req)
+    const effectiveCountry = targetMarket || edgeCountry(req)
+
     const job = await db.aiJob.create({
       data: {
         userId: user.id,
@@ -82,8 +87,8 @@ export async function POST(req: Request) {
         kind: 'rewrite',
         status: 'queued',
         totalSteps: REWRITE_SEGMENT_IDS.length,
-        lang: getRequestLanguage(req),
-        userCountry: edgeCountry(req),
+        lang: effectiveLang,
+        userCountry: effectiveCountry,
       },
       select: { id: true },
     })
