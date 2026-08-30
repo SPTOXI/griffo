@@ -8,7 +8,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { buildJobFit } from '@/lib/matching/job-fit'
 import { fromRecord as profileFromRecord } from '@/lib/profile'
 import { hasMatchableSignal } from '@/lib/matching/filters'
-import { summarizeDigest } from '@/lib/radar/curation'
+import { summarizeDigest, meetsMinimumFit, DEFAULT_RADAR_PREFERENCES, type RadarPreferences } from '@/lib/radar/curation'
 import type { MatchResult } from '@/lib/matching/compatibility'
 import type { NormalizedJob } from '@/lib/jobs/types'
 
@@ -67,7 +67,7 @@ export async function GET() {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 })
 
-  const [alerts, profileRow] = await Promise.all([
+  const [alerts, profileRow, prefRow] = await Promise.all([
     db.radarAlert.findMany({
       where: { userId: user.id },
       orderBy: [{ createdAt: 'desc' }],
@@ -75,18 +75,34 @@ export async function GET() {
       include: { job: true },
     }),
     db.professionalProfile.findUnique({ where: { userId: user.id } }),
+    db.radarPreference.findUnique({ where: { userId: user.id } }),
   ])
+
+  const minimumFit: RadarPreferences['minimumFit'] = (['strong', 'good', 'partial'] as const).includes(
+    prefRow?.minimumFit as any
+  )
+    ? (prefRow!.minimumFit as RadarPreferences['minimumFit'])
+    : DEFAULT_RADAR_PREFERENCES.minimumFit
 
   const profile = profileFromRecord(profileRow)
 
-  const opportunities = alerts.map((alert) => {
-    let match: MatchResult | null = null
-    try {
-      match = JSON.parse(alert.matchJson)
-    } catch {
-      match = null
-    }
+  const parsedAlerts = alerts
+    .map((alert) => {
+      let match: MatchResult | null = null
+      try {
+        match = JSON.parse(alert.matchJson)
+      } catch {
+        match = null
+      }
+      return { alert, match }
+    })
+    // Filtra pelo nível de compatibilidade mínimo configurado pelo usuário
+    .filter(({ match }) => {
+      if (!match) return false
+      return meetsMinimumFit(match, minimumFit)
+    })
 
+  const opportunities = parsedAlerts.map(({ alert, match }) => {
     const job = jobFromRow(alert.job)
 
     return {
@@ -103,21 +119,17 @@ export async function GET() {
   })
 
   const digest = summarizeDigest(
-    alerts
-      .map((a) => {
-        try {
-          return { job: null, jobId: a.jobId, match: JSON.parse(a.matchJson) as MatchResult }
-        } catch {
-          return null
-        }
-      })
-      .filter((o): o is { job: null; jobId: string; match: MatchResult } => o !== null)
+    parsedAlerts.map(({ alert, match }) => ({
+      job: null,
+      jobId: alert.jobId,
+      match: match!,
+    }))
   )
 
   return NextResponse.json({
     opportunities,
-    digest,
-    unseen: alerts.filter((a) => !a.seenAt).length,
+    digest: opportunities.length > 0 ? digest : null,
+    unseen: parsedAlerts.filter(({ alert }) => !alert.seenAt).length,
     hasProfile: Boolean(profileRow),
     /**
      * O perfil EXISTE é uma coisa; ele ter o que comparar é outra.
@@ -128,6 +140,7 @@ export async function GET() {
      * mercado esteja vazio, é que ainda não sabemos o que procurar.
      */
     profileMatchable: hasMatchableSignal(profileFromRecord(profileRow)),
+    minimumFit,
   })
 }
 

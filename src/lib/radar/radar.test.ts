@@ -203,3 +203,36 @@ test('rodadas silenciosas são contadas', () => {
   assert.equal(metrics.silenced, 2)
   assert.equal(metrics.alerted, 1)
 })
+
+/* ================================================================== *
+ * Filtro de Alta Compatibilidade (minimumFit = 'strong')
+ * ================================================================== */
+
+test('minimumFit = strong aceita apenas strong e rejeita good, partial e weak', () => {
+  assert.equal(meetsMinimumFit(match('strong'), 'strong'), true)
+  assert.equal(meetsMinimumFit(match('good'), 'strong'), false)
+  assert.equal(meetsMinimumFit(match('partial'), 'strong'), false)
+  assert.equal(meetsMinimumFit(match('weak'), 'strong'), false)
+})
+
+test('curate com minimumFit = strong silencia quando só existem vagas com compatibilidade boa ou parcial', () => {
+  const opps = [opp('a', 'good'), opp('b', 'partial')]
+  const result = curate(opps, { preferences: prefs({ minimumFit: 'strong' }) })
+  assert.equal(result.shouldAlert, false)
+  assert.equal(result.silenceReason, 'below_minimum_fit')
+  assert.equal(result.selected.length, 0)
+})
+
+test('filtragem de oportunidades respeita o corte de minimumFit', () => {
+  const all = [opp('1', 'strong'), opp('2', 'good'), opp('3', 'partial')]
+
+  const strongOnly = all.filter((o) => meetsMinimumFit(o.match, 'strong'))
+  assert.deepEqual(strongOnly.map((o) => o.jobId), ['1'])
+
+  const goodAndStrong = all.filter((o) => meetsMinimumFit(o.match, 'good'))
+  assert.deepEqual(goodAndStrong.map((o) => o.jobId), ['1', '2'])
+
+  const allAboveWeak = all.filter((o) => meetsMinimumFit(o.match, 'partial'))
+  assert.deepEqual(allAboveWeak.map((o) => o.jobId), ['1', '2', '3'])
+})
+

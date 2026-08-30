@@ -448,7 +448,7 @@ async function pruneUnfoundedAlerts(
 ): Promise<number> {
   const alerts = await db.radarAlert.findMany({
     where: { userId },
-    select: { id: true, job: true },
+    select: { id: true, job: true, overallFit: true, recommendation: true, matchJson: true },
   })
 
   if (alerts.length === 0) return 0
@@ -460,8 +460,23 @@ async function pruneUnfoundedAlerts(
       unfounded.push(alert.id)
       continue
     }
-    if (matchJob(profile, jobFromRow(alert.job)).overall === 'weak') {
+    const currentMatch = matchJob(profile, jobFromRow(alert.job))
+    if (currentMatch.overall === 'weak') {
       unfounded.push(alert.id)
+    } else if (
+      alert.overallFit !== currentMatch.overall ||
+      alert.recommendation !== currentMatch.recommendation
+    ) {
+      // Perfil mudou e o veredito atualizou: sincroniza o alerta gravado com o perfil atual
+      await db.radarAlert.update({
+        where: { id: alert.id },
+        data: {
+          overallFit: currentMatch.overall,
+          recommendation: currentMatch.recommendation,
+          matchJson: JSON.stringify(currentMatch),
+          signalScore: internalSignalScore(currentMatch),
+        },
+      })
     }
   }
 

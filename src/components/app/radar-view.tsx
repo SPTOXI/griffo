@@ -231,6 +231,8 @@ export function RadarView() {
 
       if (data?.alerted > 0) {
         toast.success((data.alerted === 1 ? rd.runSuccessOne : rd.runSuccessMany).replace('{n}', String(data.alerted)))
+      } else if (preferences?.minimumFit === 'strong') {
+        toast.info(rd.runNothingNewStrong || rd.runNothingNew)
       } else {
         toast.info(rd.runNothingNew)
       }
@@ -253,6 +255,8 @@ export function RadarView() {
       if (!res.ok) {
         const data = await res.json().catch(() => null)
         toast.error(data?.error || rd.savePrefsErrorFallback)
+      } else {
+        await load()
       }
     } catch {
       toast.error(rd.savePrefsConnectionError)
@@ -417,9 +421,11 @@ export function RadarView() {
         <Card className="border-slate-200">
           <CardContent className="p-8 text-center space-y-2">
             <RadarIcon className="w-10 h-10 text-slate-300 mx-auto" />
-            <p className="text-sm font-semibold text-slate-700">{rd.emptyTitle}</p>
+            <p className="text-sm font-semibold text-slate-700">
+              {preferences?.minimumFit === 'strong' ? rd.emptyHighFitTitle : rd.emptyTitle}
+            </p>
             <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-              {rd.emptyDesc}
+              {preferences?.minimumFit === 'strong' ? rd.emptyHighFitDesc : rd.emptyDesc}
             </p>
             <p className="text-[11px] text-slate-400 max-w-md mx-auto leading-relaxed pt-1">
               {rd.emptyHintPrefix}<strong>{rd.emptyHintBold}</strong>{rd.emptyHintSuffix}

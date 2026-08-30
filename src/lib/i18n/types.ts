@@ -558,6 +558,7 @@ export interface TranslationDictionary {
     runSuccessOne: string
     runSuccessMany: string
     runNothingNew: string
+    runNothingNewStrong: string
     runErrorFallback: string
     runConnectionError: string
     savePrefsErrorFallback: string
@@ -581,6 +582,8 @@ export interface TranslationDictionary {
     notMatchableButton: string
     emptyTitle: string
     emptyDesc: string
+    emptyHighFitTitle: string
+    emptyHighFitDesc: string
     emptyHintPrefix: string
     emptyHintBold: string
     emptyHintSuffix: string
