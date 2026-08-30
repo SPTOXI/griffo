@@ -46,6 +46,10 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
     pt: 'GLOBAL AI CAREER INTELLIGENCE',
     en: 'GLOBAL AI CAREER INTELLIGENCE',
     es: 'GLOBAL AI CAREER INTELLIGENCE',
+    de: 'GLOBAL AI CAREER INTELLIGENCE',
+    fr: 'GLOBAL AI CAREER INTELLIGENCE',
+    it: 'GLOBAL AI CAREER INTELLIGENCE',
+    ja: 'GLOBAL AI CAREER INTELLIGENCE',
   }
 
   return (

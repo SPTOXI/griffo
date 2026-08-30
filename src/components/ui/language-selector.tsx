@@ -3,7 +3,7 @@
 import React from 'react'
 import { useI18n } from '@/context/i18n-context'
 import { Language } from '@/lib/i18n'
-import { Globe, ChevronDown } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +15,10 @@ const LANG_OPTIONS: { id: Language; label: string; flag: string }[] = [
   { id: 'pt', label: 'Português (BR)', flag: '🇧🇷' },
   { id: 'en', label: 'English (US)', flag: '🇺🇸' },
   { id: 'es', label: 'Español (ES)', flag: '🇪🇸' },
+  { id: 'de', label: 'Deutsch (DE)', flag: '🇩🇪' },
+  { id: 'fr', label: 'Français (FR)', flag: '🇫🇷' },
+  { id: 'it', label: 'Italiano (IT)', flag: '🇮🇹' },
+  { id: 'ja', label: '日本語 (JP)', flag: '🇯🇵' },
 ]
 
 export function LanguageSelector({ variant = 'default' }: { variant?: 'default' | 'minimal' }) {
@@ -30,7 +34,7 @@ export function LanguageSelector({ variant = 'default' }: { variant?: 'default' 
           <ChevronDown className="w-3 h-3 text-slate-400" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44 bg-white border-slate-200">
+      <DropdownMenuContent align="end" className="w-48 bg-white border-slate-200">
         {LANG_OPTIONS.map((opt) => (
           <DropdownMenuItem
             key={opt.id}

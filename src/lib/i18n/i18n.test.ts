@@ -23,29 +23,26 @@ function extractKeyPaths(obj: Record<string, any>, prefix = ''): string[] {
   return paths.sort()
 }
 
-test('todos os idiomas suportados estão declarados em LANGUAGES', () => {
-  assert.deepEqual(LANGUAGES, ['pt', 'en', 'es'])
-  assert.equal(Object.keys(DICTIONARIES).length, 3)
+test('todos os 7 idiomas suportados estão declarados em LANGUAGES', () => {
+  assert.deepEqual(LANGUAGES, ['pt', 'en', 'es', 'de', 'fr', 'it', 'ja'])
+  assert.equal(Object.keys(DICTIONARIES).length, 7)
 })
 
-test('paridade estrutural estrita entre dicionários pt, en e es', () => {
+test('paridade estrutural estrita entre dicionários pt, en, es, de, fr, it e ja', () => {
   const ptKeys = extractKeyPaths(DICTIONARIES.pt)
-  const enKeys = extractKeyPaths(DICTIONARIES.en)
-  const esKeys = extractKeyPaths(DICTIONARIES.es)
 
-  assert.deepEqual(
-    enKeys,
-    ptKeys,
-    'Dicionário EN difere estruturalmente do dicionário PT'
-  )
-  assert.deepEqual(
-    esKeys,
-    ptKeys,
-    'Dicionário ES difere estruturalmente do dicionário PT'
-  )
+  for (const lang of LANGUAGES) {
+    if (lang === 'pt') continue
+    const langKeys = extractKeyPaths(DICTIONARIES[lang])
+    assert.deepEqual(
+      langKeys,
+      ptKeys,
+      `Dicionário '${lang.toUpperCase()}' difere estruturalmente do dicionário PT`
+    )
+  }
 })
 
-test('nenhuma chave de tradução possui string vazia', () => {
+test('nenhuma chave de tradução possui string vazia em nenhum dos 7 idiomas', () => {
   for (const lang of LANGUAGES) {
     const dict = DICTIONARIES[lang]
     const keys = extractKeyPaths(dict)
@@ -74,27 +71,52 @@ test('nenhuma chave de tradução possui string vazia', () => {
 })
 
 test('detecção de idioma por país funciona corretamente', () => {
+  // Português
   assert.equal(detectLanguageFromCountry('BR'), 'pt')
   assert.equal(detectLanguageFromCountry('PT'), 'pt')
   assert.equal(detectLanguageFromCountry('AO'), 'pt')
   assert.equal(detectLanguageFromCountry('MZ'), 'pt')
 
+  // Espanhol
   assert.equal(detectLanguageFromCountry('ES'), 'es')
   assert.equal(detectLanguageFromCountry('MX'), 'es')
   assert.equal(detectLanguageFromCountry('AR'), 'es')
   assert.equal(detectLanguageFromCountry('CO'), 'es')
   assert.equal(detectLanguageFromCountry('CL'), 'es')
 
+  // Alemão
+  assert.equal(detectLanguageFromCountry('DE'), 'de')
+  assert.equal(detectLanguageFromCountry('AT'), 'de')
+  assert.equal(detectLanguageFromCountry('CH'), 'de')
+
+  // Francês
+  assert.equal(detectLanguageFromCountry('FR'), 'fr')
+  assert.equal(detectLanguageFromCountry('BE'), 'fr')
+  assert.equal(detectLanguageFromCountry('LU'), 'fr')
+
+  // Italiano
+  assert.equal(detectLanguageFromCountry('IT'), 'it')
+
+  // Japonês
+  assert.equal(detectLanguageFromCountry('JP'), 'ja')
+
+  // Inglês
   assert.equal(detectLanguageFromCountry('US'), 'en')
   assert.equal(detectLanguageFromCountry('GB'), 'en')
   assert.equal(detectLanguageFromCountry('CA'), 'en')
-  assert.equal(detectLanguageFromCountry('DE'), 'en')
+  assert.equal(detectLanguageFromCountry('AU'), 'en')
+
+  // Fallbacks
   assert.equal(detectLanguageFromCountry(null), 'pt')
   assert.equal(detectLanguageFromCountry(undefined), 'pt')
 })
 
-test('mapeamento de locale para cada idioma', () => {
+test('mapeamento de locale para cada um dos 7 idiomas', () => {
   assert.equal(localeForLang('pt'), 'pt-BR')
   assert.equal(localeForLang('en'), 'en-US')
   assert.equal(localeForLang('es'), 'es-ES')
+  assert.equal(localeForLang('de'), 'de-DE')
+  assert.equal(localeForLang('fr'), 'fr-FR')
+  assert.equal(localeForLang('it'), 'it-IT')
+  assert.equal(localeForLang('ja'), 'ja-JP')
 })

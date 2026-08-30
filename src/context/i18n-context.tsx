@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { DICTIONARIES, Language, TranslationDictionary, detectBrowserLanguage } from '@/lib/i18n'
+import { DICTIONARIES, LANGUAGES, Language, TranslationDictionary, detectBrowserLanguage } from '@/lib/i18n'
 import { internalFetch } from '@/lib/internal-fetch'
 
 interface I18nContextType {
@@ -24,7 +24,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // 1. Check browser storage first
     const local = localStorage.getItem('griffo_lang') as Language
-    if (local && ['pt', 'en', 'es'].includes(local)) {
+    if (local && LANGUAGES.includes(local)) {
       setLangState(local)
       return
     }
@@ -34,7 +34,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       .then((r) => r.json())
       .then((data) => {
         if (data.country) setDetectedCountry(data.country)
-        if (data.lang && ['pt', 'en', 'es'].includes(data.lang)) {
+        if (data.lang && LANGUAGES.includes(data.lang)) {
           setLangState(data.lang)
         } else {
           setLangState(detectBrowserLanguage())

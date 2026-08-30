@@ -27,6 +27,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
           'es-ES': `${baseUrl}/es`,
           'es-MX': `${baseUrl}/mx`,
           'en-GB': `${baseUrl}/gb`,
+          'de-DE': `${baseUrl}/de`,
+          'fr-FR': `${baseUrl}/fr`,
+          'it-IT': `${baseUrl}/it`,
+          'ja-JP': `${baseUrl}/jp`,
         },
       },
     },
@@ -38,7 +42,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}/${country}`,
       lastModified,
       changeFrequency: 'weekly',
-      priority: country === 'br' || country === 'us' || country === 'pt' || country === 'es' || country === 'mx' ? 0.9 : 0.8,
+      priority: country === 'br' || country === 'us' || country === 'pt' || country === 'es' || country === 'mx' || country === 'de' || country === 'fr' || country === 'it' || country === 'jp' ? 0.9 : 0.8,
     })
   }
 

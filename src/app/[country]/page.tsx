@@ -46,12 +46,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     pt: `GriffoWork ${cName} — Análise de Currículo por IA e Pontuação ATS`,
     es: `GriffoWork ${cName} — Auditoría de Currículum con IA y Puntuación ATS`,
     en: `GriffoWork ${cName} — Global AI Career Intelligence & ATS Resume Audit`,
+    de: `GriffoWork ${cName} — KI-Lebenslauf-Analyse & ATS-Score-Prüfung`,
+    fr: `GriffoWork ${cName} — Audit de CV par IA & Score de Compatibilité ATS`,
+    it: `GriffoWork ${cName} — Analisi del Curriculum con IA & Punteggio ATS`,
+    ja: `GriffoWork ${cName} — AI職務経歴書診断＆ATS適合度スコア`,
   }
 
   const descriptions: Record<string, string> = {
     pt: `Otimize seu currículo para os padrões de recrutamento de ${cName}. Avaliação de compatibilidade com ${atsList} e laudo executivo em 8 dimensões por apenas ${price.formatted}.`,
     es: `Optimiza tu currículum para los estándares de contratación en ${cName}. Evaluación de compatibilidad con ${atsList} e informe ejecutivo en 8 dimensiones por solo ${price.formatted}.`,
     en: `Optimize your resume for hiring standards in ${cName}. Audit ATS compatibility with ${atsList} and get an 8-dimension executive career report for just ${price.formatted}.`,
+    de: `Optimieren Sie Ihren Lebenslauf für den Arbeitsmarkt in ${cName}. ATS-Kompatibilitätsprüfung für ${atsList} und 8-Dimensionen-Prüfbericht für nur ${price.formatted}.`,
+    fr: `Optimisez votre CV selon les standards de recrutement en ${cName}. Audit de compatibilité avec ${atsList} et rapport exécutif en 8 dimensions pour seulement ${price.formatted}.`,
+    it: `Ottimizza il tuo curriculum per gli standard di selezione in ${cName}. Valutazione di compatibilità con ${atsList} e report esecutivo in 8 dimensioni per soli ${price.formatted}.`,
+    ja: `${cName} の採用基準に合わせて職務経歴書を最適化。${atsList} のATS適合度判定と8次元診断レポートをわずか ${price.formatted} でご提供。`,
   }
 
   const title = titles[market.jobLanguage] || titles.en

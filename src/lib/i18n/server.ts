@@ -1,18 +1,13 @@
-import type { Language } from './index'
+import { Language, LANGUAGES } from './index'
 
 /**
  * Idioma e contexto de mercado para as rotas de IA.
- *
- * A interface já era trilíngue, mas nenhuma rota de IA recebia o idioma: três
- * prompts fixavam português, e a análise não declarava idioma nenhum — o que
- * deixava a saída indefinida quando o currículo vinha em outro idioma. Um
- * usuário em inglês recebia o currículo reescrito em português.
  *
  * O idioma chega pelo cabeçalho `X-Griffo-Lang`, que o `internalFetch` anexa
  * automaticamente em toda chamada do cliente.
  */
 
-const SUPPORTED: Language[] = ['pt', 'en', 'es']
+const SUPPORTED: Language[] = LANGUAGES
 
 export function getRequestLanguage(req: Request): Language {
   const header = req.headers.get('x-griffo-lang')?.toLowerCase().trim()
@@ -27,18 +22,8 @@ export const LANGUAGE_DIRECTIVE: Record<Language, string> = {
   pt: 'IDIOMA DA RESPOSTA: responda integralmente em Português do Brasil (pt-BR), inclusive os textos dentro do JSON.',
   en: 'RESPONSE LANGUAGE: respond entirely in English (en-US), including all text inside the JSON.',
   es: 'IDIOMA DE LA RESPUESTA: responde íntegramente en Español (es), incluidos los textos dentro del JSON.',
+  de: 'ANTWORTSPRACHE: Antworten Sie vollständig auf Deutsch (de-DE), einschließlich aller Texte innerhalb des JSON.',
+  fr: 'LANGUE DE RÉPONSE: Répondez entièrement en Français (fr-FR), y compris tous les textes à l\'intérieur du JSON.',
+  it: 'LINGUA DI RISPOSTA: Rispondi interamente in Italiano (it-IT), inclusi tutti i testi all\'interno del JSON.',
+  ja: '応答言語: すべてのJSON内テキストを含め、完全に日本語（ja-JP）で回答してください。',
 }
-
-/**
- * ATS e plataformas por mercado saíram daqui.
- *
- * Estavam indexados por `Language`, o que fazia o IDIOMA DA INTERFACE decidir
- * qual mercado de trabalho o produto descrevia. No caso mais comum de um
- * produto global — pessoa no Brasil, interface em português, mirando vaga nos
- * Estados Unidos — isso devolvia palavra-chave otimizada para a Gupy a quem
- * será triado pelo Workday.
- *
- * Agora quem responde por isso é `lib/market/`, que resolve o mercado a partir
- * do alvo profissional declarado, depois da residência, e só então do idioma.
- * Ver `resolveMarket` e `marketPromptContext`.
- */

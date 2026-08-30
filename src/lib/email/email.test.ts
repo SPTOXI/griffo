@@ -152,14 +152,19 @@ test('o idioma do e-mail sai do perfil, e o desconhecido cai no português', () 
   assert.equal(digestLanguage('en'), 'en')
   assert.equal(digestLanguage('pt-BR'), 'pt')
   assert.equal(digestLanguage('es_AR'), 'es')
+  assert.equal(digestLanguage('de-DE'), 'de')
+  assert.equal(digestLanguage('fr-FR'), 'fr')
+  assert.equal(digestLanguage('it-IT'), 'it')
+  assert.equal(digestLanguage('ja-JP'), 'ja')
   // Nem null, nem idioma que o produto não fala, viram um idioma "parecido".
   assert.equal(digestLanguage(null), 'pt')
-  assert.equal(digestLanguage('fr'), 'pt')
+  assert.equal(digestLanguage('ru'), 'pt')
+  assert.equal(digestLanguage('zh'), 'pt')
   assert.equal(digestLanguage(''), 'pt')
 })
 
 test('cada idioma produz um assunto próprio', () => {
-  const idiomas: Language[] = ['pt', 'en', 'es']
+  const idiomas: Language[] = ['pt', 'en', 'es', 'de', 'fr', 'it', 'ja']
   const assuntos = idiomas.map((lang) => digest({ lang }).subject)
   assert.equal(new Set(assuntos).size, idiomas.length, 'dois idiomas compartilham o mesmo assunto')
 })

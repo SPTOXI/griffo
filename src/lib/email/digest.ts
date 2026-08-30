@@ -138,18 +138,103 @@ const STRINGS: Record<Language, Strings> = {
     unsubscribeNote: 'Tu cuenta y tus análisis siguen igual; solo se detiene el aviso por correo.',
     signature: 'GriffoWork',
   },
+  de: {
+    subjectOne: 'Radar hat ein passendes Stellenangebot für Ihr Profil gefunden',
+    subjectMany: (n) => `Radar hat ${n} passende Stellenangebote für Ihr Profil gefunden`,
+    greetingNamed: (name) => `Hallo, ${name}.`,
+    greeting: 'Hallo.',
+    intro: (n) =>
+      n === 1
+        ? 'Ein neues Stellenangebot ist verfügbar, das zu Ihrem Profil passt:'
+        : `${n} neue Stellenangebote sind verfügbar, die zu Ihrem Profil passen:`,
+    fit: {
+      strong: 'Sehr hohe Übereinstimmung',
+      good: 'Gute Übereinstimmung',
+      partial: 'Teilweise Übereinstimmung',
+      weak: 'Geringe Übereinstimmung',
+    },
+    seeAll: 'Im Radar öffnen',
+    why: 'Sie erhalten diese Benachrichtigung, weil Sie das GriffoWork Radar aktiviert haben.',
+    unsubscribe: 'Abmelden',
+    unsubscribeNote: 'Ihr Konto und Ihre Analysen bleiben bestehen — nur die E-Mail-Benachrichtigungen enden.',
+    signature: 'GriffoWork',
+  },
+  fr: {
+    subjectOne: 'Le Radar a trouvé une opportunité correspondant à votre profil',
+    subjectMany: (n) => `Le Radar a trouvé ${n} opportunités correspondant à votre profil`,
+    greetingNamed: (name) => `Bonjour, ${name}.`,
+    greeting: 'Bonjour.',
+    intro: (n) =>
+      n === 1
+        ? 'Une nouvelle offre d\'emploi correspond à vos critères depuis la dernière alerte :'
+        : `${n} nouvelles offres d\'emploi correspondent à vos critères depuis la dernière alerte :`,
+    fit: {
+      strong: 'Forte correspondance',
+      good: 'Bonne correspondance',
+      partial: 'Correspondance partielle',
+      weak: 'Faible correspondance',
+    },
+    seeAll: 'Ouvrir dans le Radar',
+    why: 'Vous recevez cet e-mail car vous avez activé le Radar GriffoWork.',
+    unsubscribe: 'Se désinscrire',
+    unsubscribeNote: 'Votre compte et vos analyses restent intacts — seules les alertes par e-mail s\'arrêtent.',
+    signature: 'GriffoWork',
+  },
+  it: {
+    subjectOne: 'Il Radar ha trovato un\'opportunità compatibile con il tuo profilo',
+    subjectMany: (n) => `Il Radar ha trovato ${n} opportunità compatibili con il tuo profilo`,
+    greetingNamed: (name) => `Ciao, ${name}.`,
+    greeting: 'Ciao.',
+    intro: (n) =>
+      n === 1
+        ? 'Una nuova offerta di lavoro è compatibile con i tuoi criteri:'
+        : `${n} nuove offerte di lavoro sono compatibili con i tuoi criteri:`,
+    fit: {
+      strong: 'Alta compatibilità',
+      good: 'Buona compatibilità',
+      partial: 'Compatibilità parziale',
+      weak: 'Bassa compatibilità',
+    },
+    seeAll: 'Apri nel Radar',
+    why: 'Ricevi questa e-mail perché hai attivato il Radar di GriffoWork.',
+    unsubscribe: 'Disiscriviti',
+    unsubscribeNote: 'Il tuo account e le tue analisi restano invariati — si interrompono solo le notifiche via e-mail.',
+    signature: 'GriffoWork',
+  },
+  ja: {
+    subjectOne: '求人レーダーがあなたのプロファイルに合致する新着求人を発見しました',
+    subjectMany: (n) => `求人レーダーがあなたのプロファイルに合致する${n}件の新着求人を発見しました`,
+    greetingNamed: (name) => `${name} 様`,
+    greeting: 'こんにちは。',
+    intro: (n) =>
+      n === 1
+        ? '前回の通知以降、条件に一致する新しい求人が1件見つかりました：'
+        : `前回の通知以降、条件に一致する新しい求人が${n}件見つかりました：`,
+    fit: {
+      strong: '非常に高いマッチ度',
+      good: '好相性',
+      partial: '一部一致',
+      weak: '低いマッチ度',
+    },
+    seeAll: '求人レーダーで確認',
+    why: 'このメールはGriffoWork求人レーダーを設定されている方にお届けしています。',
+    unsubscribe: 'メール配信を停止する',
+    unsubscribeNote: 'アカウントや診断履歴は保持されます。メール配信のみ停止されます。',
+    signature: 'GriffoWork',
+  },
 }
 
 /**
  * O idioma da mensagem.
  *
  * `communicationLanguage` pode vir nulo (perfil antigo), com região (`pt-BR`)
- * ou com algo que o produto não fala. Nos três casos o português é o padrão —
- * é o idioma da maioria da base — e nunca se cai num idioma "parecido".
+ * ou com algo que o produto não fala. Nos casos suportados devolve o idioma correspondente,
+ * com fallback para português.
  */
 export function digestLanguage(declared: string | null | undefined): Language {
-  const code = (declared || '').trim().toLowerCase().split(/[-_]/)[0]
-  if (code === 'en' || code === 'es' || code === 'pt') return code
+  const code = (declared || '').trim().toLowerCase().split(/[-_]/)[0] as Language
+  const supported: Language[] = ['pt', 'en', 'es', 'de', 'fr', 'it', 'ja']
+  if (supported.includes(code)) return code
   return 'pt'
 }
 
