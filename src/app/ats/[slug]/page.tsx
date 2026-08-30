@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ATS_DATABASE, type AtsGuide } from '@/lib/ats/data'
+import { ATS_DATABASE } from '@/lib/ats/data'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   Sparkles, ShieldCheck, Target, CheckCircle2, ArrowRight, Brain,
-  AlertTriangle, Check, HelpCircle, ChevronRight, FileText, Globe
+  AlertTriangle, Check, HelpCircle, ChevronRight, Globe
 } from 'lucide-react'
 
 export const dynamicParams = false
@@ -28,19 +28,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!ats) return {}
 
-  const title = `Como passar na triagem do ATS ${ats.name} — Otimização e Nota de Currículo por IA | GriffoWork`
-  const description = `Guia completo de compatibilidade para ${ats.fullName}. Descubra os critérios de eliminação do robô e audite seu currículo em 8 dimensões executivas no GriffoWork.`
+  const title = `Compatibilidade com ATS ${ats.name} — Como Funciona a Triagem & Diagnóstico por IA | GriffoWork`
+  const description = `Entenda como o algoritmo de triagem do ${ats.fullName} analisa currículos e descubra como o GriffoWork audita e prepara seu documento em 8 dimensões executivas.`
 
   return {
     title,
     description,
     keywords: [
       `ats ${ats.name.toLowerCase()}`,
-      `como passar no ${ats.name.toLowerCase()}`,
-      `curriculo para ${ats.name.toLowerCase()}`,
+      `como funciona o ${ats.name.toLowerCase()}`,
       `triagem ${ats.name.toLowerCase()}`,
+      `compatibilidade ${ats.name.toLowerCase()}`,
       'analise de curriculo ia',
-      'pontuação ats',
+      'auditoria de curriculo ats',
       'griffowork',
     ],
     alternates: {
@@ -84,7 +84,7 @@ export default async function AtsPage({ params }: PageProps) {
       {
         '@type': 'TechArticle',
         '@id': `https://griffo.work/ats/${slug}#article`,
-        headline: `Guia de Otimização e Compatibilidade ATS para ${ats.fullName}`,
+        headline: `Guia de Funcionamento e Compatibilidade com o ATS ${ats.fullName}`,
         description: ats.description,
         author: {
           '@type': 'Organization',
@@ -125,7 +125,7 @@ export default async function AtsPage({ params }: PageProps) {
           {
             '@type': 'ListItem',
             position: 2,
-            name: 'Guias ATS',
+            name: 'Sistemas ATS',
             item: 'https://griffo.work/ats',
           },
           {
@@ -160,7 +160,7 @@ export default async function AtsPage({ params }: PageProps) {
                 griffo<span className="text-[#0B63E5]">work</span>
               </span>
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0B63E5] mt-0.5">
-                ATS INTELLIGENCE HUB
+                ATS COMPATIBILITY
               </span>
             </div>
           </Link>
@@ -180,7 +180,7 @@ export default async function AtsPage({ params }: PageProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 text-xs text-slate-500 font-medium">
           <Link href="/" className="hover:text-primary transition-colors">Home</Link>
           <ChevronRight className="w-3.5 h-3.5" />
-          <span>Guias ATS</span>
+          <span>Sistemas ATS</span>
           <ChevronRight className="w-3.5 h-3.5" />
           <span className="text-slate-900 font-bold">{ats.name}</span>
         </div>
@@ -190,11 +190,11 @@ export default async function AtsPage({ params }: PageProps) {
       <section className="relative pt-12 pb-16 md:py-20 overflow-hidden bg-gradient-to-b from-blue-50/50 via-white to-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
           <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary px-3.5 py-1 text-xs font-bold rounded-full">
-            <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary inline" /> Guia Técnico de Triagem & Pontuação ATS
+            <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary inline" /> Sistema de Triagem ATS & Diagnóstico por IA
           </Badge>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#0B192E] leading-tight">
-            Como passar no robô de triagem do <span className="text-[#0B63E5]">{ats.name}</span>
+            Como funciona o processo de triagem no <span className="text-[#0B63E5]">{ats.name}</span>
           </h1>
 
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
@@ -203,13 +203,13 @@ export default async function AtsPage({ params }: PageProps) {
 
           <div className="inline-flex items-center gap-2 bg-slate-100/80 border border-slate-200 px-4 py-2 rounded-xl text-xs font-semibold text-slate-700">
             <Globe className="w-4 h-4 text-primary shrink-0" />
-            <span>Mercado principal: <strong>{ats.marketName}</strong> ({ats.marketShare})</span>
+            <span>Mercado: <strong>{ats.marketName}</strong> ({ats.marketShare})</span>
           </div>
 
           <div className="pt-4">
             <Button asChild size="lg" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white text-base h-13 px-8 shadow-xl font-bold">
               <Link href="/">
-                Auditar meu currículo para {ats.name} <ArrowRight className="w-5 h-5 ml-2" />
+                Auditar meu currículo no GriffoWork <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             </Button>
           </div>
@@ -220,12 +220,12 @@ export default async function AtsPage({ params }: PageProps) {
       <section className="py-14 bg-white border-t border-slate-100">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="text-center max-w-2xl mx-auto">
-            <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs">Mecanismo do Software</Badge>
+            <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs">Mecanismo do Sistema</Badge>
             <h2 className="text-2xl sm:text-3xl font-bold text-[#0B192E] mt-2 mb-2">
-              Como o algoritmo do {ats.name} analisa seu currículo
+              Como o {ats.name} processa e classifica candidaturas
             </h2>
             <p className="text-sm text-slate-600">
-              Entenda os estágios técnicos pelos quais o seu documento passa antes de chegar à mesa do recrutador.
+              Conheça os critérios técnicos que o software utiliza para ler, ordenar e avaliar currículos.
             </p>
           </div>
 
@@ -245,13 +245,13 @@ export default async function AtsPage({ params }: PageProps) {
         </div>
       </section>
 
-      {/* ELIMINATION & TIPS */}
+      {/* ELIMINATION & GRIFFOWORK VALUE */}
       <section className="py-14 bg-slate-50 border-y border-slate-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-8">
           {/* ELIMINATION FACTORS */}
           <div className="bg-white rounded-2xl p-6 sm:p-7 border border-red-100 shadow-xs space-y-4">
             <div className="flex items-center gap-2 text-red-600 font-bold text-base">
-              <AlertTriangle className="w-5 h-5" /> Principais Motivos de Reprovação no {ats.name}
+              <AlertTriangle className="w-5 h-5" /> Principais Fatores de Descarte no {ats.name}
             </div>
             <ul className="space-y-3">
               {ats.eliminationFactors.map((factor, idx) => (
@@ -263,16 +263,16 @@ export default async function AtsPage({ params }: PageProps) {
             </ul>
           </div>
 
-          {/* OPTIMIZATION TIPS */}
-          <div className="bg-white rounded-2xl p-6 sm:p-7 border border-emerald-100 shadow-xs space-y-4">
-            <div className="flex items-center gap-2 text-emerald-700 font-bold text-base">
-              <CheckCircle2 className="w-5 h-5" /> Como Garantir Aprovação no {ats.name}
+          {/* HOW GRIFFOWORK HELPS */}
+          <div className="bg-white rounded-2xl p-6 sm:p-7 border border-blue-100 shadow-xs space-y-4">
+            <div className="flex items-center gap-2 text-[#0B63E5] font-bold text-base">
+              <Brain className="w-5 h-5" /> Como a IA do GriffoWork ajuda você
             </div>
             <ul className="space-y-3">
-              {ats.optimizationTips.map((tip, idx) => (
+              {ats.howGriffoWorkHelps.map((help, idx) => (
                 <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-700 leading-relaxed font-medium">
                   <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  {tip}
+                  {help}
                 </li>
               ))}
             </ul>
@@ -280,27 +280,27 @@ export default async function AtsPage({ params }: PageProps) {
         </div>
       </section>
 
-      {/* 8 DIMENSIONS AUDIT HIGHLIGHT */}
+      {/* 8 DIMENSIONS AUDIT */}
       <section className="py-14 bg-[#0B192E] text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
           <Badge className="bg-[#0B63E5]/20 text-blue-300 border-blue-500/30 px-3 py-1 font-bold">
-            Auditoria Multidimensional
+            Auditoria Executiva GriffoWork
           </Badge>
 
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold">
-            Como a IA do GriffoWork audita seu currículo para o {ats.name}
+            Diagnóstico completo em 8 dimensões para aprovação em ATS
           </h2>
 
           <p className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Não nos limitamos a contar palavras soltas. Avaliamos a densidade de impacto, concordância gramatical, estrutura cronológica, compatibilidade de cargos e o alinhamento com os algoritmos de triagem da plataforma.
+            O GriffoWork analisa a estrutura do seu documento, aderência de palavras-chave, densidade de métricas e posicionamento de carreira para garantir que seu perfil supere os filtros automatizados de recrutamento.
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
             {[
               'Compatibilidade ATS',
               'Impacto & Métricas',
-              'Palavras-Chave',
-              'Posicionamento Executivo',
+              'Densidade Semântica',
+              'Posicionamento de Carreira',
             ].map((dim, idx) => (
               <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
                 <Brain className="w-5 h-5 text-blue-400 mx-auto mb-2" />
@@ -312,7 +312,7 @@ export default async function AtsPage({ params }: PageProps) {
           <div className="pt-4">
             <Button asChild size="lg" className="bg-white text-[#0B192E] hover:bg-blue-50 font-extrabold h-12 px-8">
               <Link href="/">
-                Fazer teste gratuito agora <ArrowRight className="w-4 h-4 ml-2 text-primary" />
+                Fazer auditoria gratuita agora <ArrowRight className="w-4 h-4 ml-2 text-primary" />
               </Link>
             </Button>
           </div>
@@ -323,9 +323,9 @@ export default async function AtsPage({ params }: PageProps) {
       <section className="py-14 bg-slate-50 border-t border-slate-200">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="text-center">
-            <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs">Dúvidas Frequentes</Badge>
+            <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs">Perguntas Frequentes</Badge>
             <h2 className="text-2xl font-extrabold text-[#0B192E] mt-2">
-              Perguntas Frequentes sobre o ATS {ats.name}
+              Dúvidas sobre o {ats.name} e a Avaliação do GriffoWork
             </h2>
           </div>
 

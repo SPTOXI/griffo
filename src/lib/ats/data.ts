@@ -11,7 +11,7 @@ export interface AtsGuide {
     description: string
   }[]
   eliminationFactors: string[]
-  optimizationTips: string[]
+  howGriffoWorkHelps: string[]
   faqs: {
     question: string
     answer: string
@@ -25,45 +25,46 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     fullName: 'Gupy Recrutamento & Seleção (IA Gaia)',
     country: 'BR',
     marketName: 'Brasil',
-    description: 'A Gupy é a plataforma de recrutamento e IA mais utilizada pelas grandes empresas e multinacionais no Brasil. Sua inteligência artificial (Gaia) analisa e ranqueia candidatos com base na afinidade de palavras-chave, histórico profissional e testes.',
-    marketShare: 'Presente em mais de 70% das grandes vagas corporativas no Brasil.',
+    description: 'A Gupy é a plataforma de recrutamento e seleção mais utilizada por grandes empresas e multinacionais no Brasil. Sua inteligência artificial proprietária (Gaia) analisa, extrai e ranqueia automaticamente os currículos com base na afinidade semântica com a vaga.',
+    marketShare: 'Presente em mais de 70% das vagas corporativas e de grandes empresas no Brasil.',
     howItWorks: [
       {
         title: 'Extração e Leitura de Texto (Parsing)',
-        description: 'O algoritmo da Gupy converte seu arquivo de currículo em texto puro. Elementos visuais como colunas duplas, ícones, tabelas ou caixas de texto podem fazer o robô ignorar partes inteiras da sua experiência.',
+        description: 'O algoritmo da Gupy converte o arquivo de currículo em texto puro. Estruturas visuais não lineares, tabelas ou cabeçalhos complexos podem fazer o robô ignorar partes cruciais do histórico profissional.',
       },
       {
         title: 'Algoritmo de Afinidade e Ranking (IA Gaia)',
-        description: 'A IA compara as competências, ferramentas e responsabilidades descritas no seu currículo com a descrição da vaga, atribuindo uma nota de 0 a 100% de compatibilidade.',
+        description: 'A IA compara termos técnicos, ferramentas e responsabilidades descritas no documento com o perfil ideal da vaga, gerando um ranking percentual de compatibilidade.',
       },
       {
-        title: 'Filtros Eliminatórios Automáticos',
-        description: 'Perguntas eliminatórias (ex: pretensão, escolaridade, modelo presencial/híbrido) e requisitos obrigatórios da vaga descartam currículos antes mesmo da triagem do recrutador.',
+        title: 'Filtros Eliminatórios de Triagem',
+        description: 'Critérios pré-definidos pelos recrutadores (requisitos mandatórios, formação, modelo de trabalho) descartam automaticamente candidaturas antes da visualização humana.',
       },
     ],
     eliminationFactors: [
-      'Currículo salvo como imagem ou PDF não pesquisável (sem camada de texto OCR).',
-      'Uso de designs em colunas múltiplas, cabeçalhos ou rodapés complexos que quebram a ordem de leitura.',
-      'Ausência das palavras-chave exatas exigidas na descrição da vaga.',
-      'Falta de métricas e resultados concretos nas descrições de cargo.',
+      'Currículos salvos em formatos que impedem a extração de texto pelo algoritmo.',
+      'Ausência de correspondência semântica com os requisitos e competências da vaga.',
+      'Formatações que quebram a ordem cronológica de leitura do parser da Gupy.',
+      'Falta de contextualização e métricas que comprovem a experiência exigida.',
     ],
-    optimizationTips: [
-      'Utilize formato cronológico reverso com títulos de seções padronizados (Experiência Profissional, Formação Acadêmica, Competências).',
-      'Inclua tanto a sigla quanto o nome por extenso das tecnologias e metodologias (ex: "Search Engine Optimization (SEO)").',
-      'Use a análise do GriffoWork para mapear exatamente as lacunas de termos e pontuação da sua área na Gupy.',
+    howGriffoWorkHelps: [
+      'Simula o algoritmo de triagem da Gupy e aponta sua nota preditiva de compatibilidade.',
+      'Identifica exatamente quais termos técnicos e palavras-chave estão ausentes no seu documento.',
+      'Garante que a estrutura do documento seja 100% legível pelo parser da IA Gaia.',
+      'Audita 8 dimensões executivas para posicionar seu currículo no topo do ranking de candidatos.',
     ],
     faqs: [
       {
-        question: 'Como saber se meu currículo passa na IA da Gupy?',
-        answer: 'O GriffoWork simula os critérios de extração e ranqueamento semântico da Gupy, avaliando 8 dimensões executivas e apontando a nota ATS do seu documento antes do envio.',
+        question: 'O que é a IA Gaia da Gupy?',
+        answer: 'É o modelo de inteligência artificial da Gupy responsável por ler o conteúdo dos currículos, calcular a afinidade com a vaga e ordenar os candidatos para os recrutadores.',
+      },
+      {
+        question: 'Como o GriffoWork ajuda em processos na Gupy?',
+        answer: 'O GriffoWork avalia seu currículo antes do envio, apontando lacunas de palavras-chave, erros de formatação que confundem o robô e o nível de adequação para que você chegue à fase de entrevistas.',
       },
       {
         question: 'A Gupy descarta currículos automaticamente?',
-        answer: 'Sim. Candidatos que não atingem a pontuação mínima de afinidade ou erram requisitos eliminatórios ficam no final da fila de triagem e raramente são visualizados pelo recrutador humano.',
-      },
-      {
-        question: 'Qual o melhor formato de arquivo para enviar na Gupy?',
-        answer: 'PDF padrão de texto gerado por processador de texto, em layout de coluna única e sem elementos gráficos que impeçam a seleção de texto.',
+        answer: 'Sim. Candidatos com baixa pontuação algorítmica ou que não atendem aos filtros mandatórios ficam no final da fila de triagem e raramente são abertos pelos recrutadores.',
       },
     ],
   },
@@ -72,41 +73,42 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     name: 'Workday',
     fullName: 'Workday Recruiting / Human Capital Management',
     country: 'US',
-    marketName: 'Estados Unidos, Europa e Multinacionais',
-    description: 'O Workday é o sistema de gestão de talentos padrão das empresas da Fortune 500 e das maiores multinacionais do mundo. É conhecido por ter um dos parsers de currículo mais rígidos do mercado corporativo.',
-    marketShare: 'Adotado por mais de 50% das empresas da Fortune 500 globalmente.',
+    marketName: 'Estados Unidos, Europa e Multinacionais Globais',
+    description: 'O Workday é o sistema corporativo padrão adotado pela maioria das empresas da Fortune 500 e grandes multinacionais globais. É conhecido por ter um dos parsers mais rigorosos e padronizados do mercado de RH.',
+    marketShare: 'Adotado por mais de 50% das maiores corporações globais da Fortune 500.',
     howItWorks: [
       {
-        title: 'Parsing Estruturado por Campos',
-        description: 'O Workday tenta mapear automaticamente cada parágrafo para campos fixos: Cargo, Empresa, Data de Início, Data de Término e Descrição. Formatações fora do padrão causam perda de dados.',
+        title: 'Mapeamento Estruturado de Campos',
+        description: 'O Workday fragmenta o currículo em campos predefinidos: Empresa, Cargo, Período e Responsabilidades. Qualquer desalinhamento de formato causa perda de dados na triagem.',
       },
       {
-        title: 'Compatibilidade com Legislação Antidiscriminação',
-        description: 'Em processos nos EUA e Reino Unido, currículos com fotos, data de nascimento ou estado civil podem ser descartados automaticamente para evitar passivos trabalhistas.',
+        title: 'Triagem em Conformidade Internacional',
+        description: 'Filtra candidaturas considerando conformidades trabalhistas globais, exigindo clareza na progressão de carreira e senioridade.',
       },
       {
-        title: 'Validação de Senioridade e Trajetória',
-        description: 'O sistema calcula o tempo total de experiência relevante e a progressão de títulos de cargo para filtrar os candidatos que atendem ao perfil.',
+        title: 'Verificação de Métricas e Requisitos',
+        description: 'O sistema prioriza perfis que demonstram impacto mensurável alinhado às competências listadas na requisição de vaga.',
       },
     ],
     eliminationFactors: [
-      'Inclusão de fotos, gráficos ou dados pessoais sensíveis em vagas dos EUA/UK.',
-      'Datas com formatos inconsistentes (o ideal é sempre "Mês/Ano – Mês/Ano" ou "MM/AAAA").',
-      'Layout de duas colunas que embaralha a cronologia das experiências.',
+      'Formatos e leiautes não convencionais que corrompem o preenchimento automático dos campos.',
+      'Inconsistências de datas e períodos que impedem o cálculo de tempo de experiência.',
+      'Falta de clareza nos títulos de cargo em relação aos padrões internacionais de mercado.',
     ],
-    optimizationTips: [
-      'Mantenha o currículo em 1 página (ou no máximo 2 para cargos executivos).',
-      'Descreva cada conquista utilizando fórmulas de impacto orientadas a números (ex: método XYZ ou STAR).',
-      'Alinhe títulos de cargo com o padrão internacional de mercado (ex: "Senior Product Manager" em vez de nomenclaturas internas da empresa).',
+    howGriffoWorkHelps: [
+      'Garante que a hierarquia do seu currículo seja interpretada sem falhas pelo parser do Workday.',
+      'Avalia o alinhamento com padrões internacionais de contratação (EUA, Europa e Global).',
+      'Audita a densidade de métricas e realizações para atender aos filtros corporativos do sistema.',
+      'Gera a carta de apresentação direcionada para o processo seletivo.',
     ],
     faqs: [
       {
-        question: 'O Workday lê currículos em português?',
-        answer: 'Sim, mas para vagas internacionais e empresas globais, a triagem e o recrutamento ocorrem integralmente em inglês padrão.',
+        question: 'O que torna o Workday tão exigente?',
+        answer: 'Por receber milhares de aplicações por vaga em multinacionais, o Workday utiliza critérios estruturados que descartam currículos com formatação confusa ou informações difíceis de categorizar.',
       },
       {
-        question: 'Por que o Workday preencheu meus campos todos errados no formulário?',
-        answer: 'Isso acontece quando o arquivo contém tabelas, colunas duplas ou fontes não convencionais. Um currículo otimizado para ATS é preenchido perfeitamente no Workday.',
+        question: 'Como o GriffoWork prepara meu perfil para o Workday?',
+        answer: 'O GriffoWork analisa a clareza cronológica, formatação e presença de métricas executivas, assegurando que o Workday extraia seu histórico de forma impecável.',
       },
     ],
   },
@@ -116,32 +118,36 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     fullName: 'Greenhouse Hiring Platform',
     country: 'US',
     marketName: 'Tech Global, Startups & Scaleups',
-    description: 'O Greenhouse é o ATS favorito das principais empresas de tecnologia, unicórnios e startups de alto crescimento no Vale do Silício, Europa e Brasil. Foca em contratações estruturadas e baseadas em evidências.',
-    marketShare: 'Líder em empresas de tecnologia e startups em escala global.',
+    description: 'O Greenhouse é a plataforma de recrutamento mais utilizada no ecossistema global de tecnologia, startups em hipercrescimento e unicórnios, com foco em contratações baseadas em competências e evidências práticas.',
+    marketShare: 'Líder em empresas de tecnologia e inovação nos EUA, Europa e América Latina.',
     howItWorks: [
       {
-        title: 'Scorecards e Critérios Estruturados',
-        description: 'Recrutadores no Greenhouse avaliam candidatos contra scorecards de habilidades específicas. O currículo precisa comprovar claramente o domínio de cada ferramenta.',
+        title: 'Scorecards de Competências',
+        description: 'Avalia a aderência do candidato contra scorecards específicos de habilidades técnicas, ferramentas e liderança.',
       },
       {
-        title: 'Enriquecimento de Perfil Social',
-        description: 'A plataforma integra links para LinkedIn, GitHub, Behance e portfólios pessoais, permitindo que a equipe técnica avalie seu trabalho prático.',
+        title: 'Integração com Portfólios e Perfis',
+        description: 'Conecta informações do currículo com links profissionais (LinkedIn, GitHub, portfólios) para análise do time técnico.',
       },
     ],
     eliminationFactors: [
-      'Currículos genéricos que não citam o stack tecnológico e o impacto específico.',
-      'Falta de links clicáveis e válidos para perfis de trabalho (LinkedIn, GitHub).',
-      'Descrições de cargo focadas apenas em tarefas em vez de resultados de negócio.',
+      'Currículos genéricos que não comprovam o domínio prático das ferramentas e frameworks.',
+      'Ausência de resultados objetivos alcançados em experiências anteriores.',
+      'Falta de conexões claras entre projetos e impacto no negócio.',
     ],
-    optimizationTips: [
-      'Destaque suas principais tecnologias logo no resumo profissional e em cada experiência.',
-      'Inclua links formatados corretamente para o seu LinkedIn e repositórios de código/design.',
-      'Use verbos de ação fortes no início de cada marcador (ex: "Architected", "Spearheaded", "Scaled").',
+    howGriffoWorkHelps: [
+      'Mapeia a compatibilidade de competências técnicas e metodologias exigidas na vaga.',
+      'Audita seus perfis sociais e profissionais para garantir alinhamento com o currículo.',
+      'Calcula a nota de impacto e clareza para atender aos critérios de scorecard dos recrutadores.',
     ],
     faqs: [
       {
-        question: 'Como o Greenhouse avalia candidatos remotos internacionais?',
-        answer: 'O Greenhouse permite filtrar por fuso horário, proficiência em inglês e autorização de trabalho. Deixar esses pontos claros no currículo evita descartes prematuros.',
+        question: 'Por que o Greenhouse é tão popular em tecnologia?',
+        answer: 'Porque permite aos times de engenharia e produto avaliar competências de forma estruturada e colaborativa, reduzindo vieses na triagem inicial.',
+      },
+      {
+        question: 'O GriffoWork analisa vagas remotas internacionais no Greenhouse?',
+        answer: 'Sim, a inteligência do GriffoWork adapta o laudo para processos globais e requisitos internacionais.',
       },
     ],
   },
@@ -151,24 +157,30 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     fullName: 'Lever Talent Relationship Management',
     country: 'US',
     marketName: 'Scaleups & Big Tech',
-    description: 'O Lever combina recursos de ATS e CRM de recrutamento, permitindo que recrutadores proativamente pesquisem e qualifiquem candidatos dentro de sua base de talentos.',
-    marketShare: 'Ampla presença em empresas de tecnologia média e grande porte.',
+    description: 'O Lever combina recursos de rastreamento de candidatos (ATS) com gestão de relacionamento de talentos (CRM), permitindo que equipes de recrutamento busquem e qualifiquem candidatos continuamente em sua base de dados.',
+    marketShare: 'Amplamente adotado por empresas inovadoras de tecnologia de médio e grande porte.',
     howItWorks: [
       {
-        title: 'Busca Semântica Avançada',
-        description: 'Recrutadores buscam talentos usando filtros booleanos complexos no Lever. Ter as combinações certas de termos técnicos garante que seu currículo seja encontrado.',
+        title: 'Indexação Contínua de Talentos',
+        description: 'Armazena e indexa o histórico completo do candidato para cruzamento com vagas atuais e futuras.',
+      },
+      {
+        title: 'Busca Semântica por Habilidades',
+        description: 'Recrutadores filtram candidatos através de buscas semânticas detalhadas por ferramentas, cargos e formações.',
       },
     ],
     eliminationFactors: [
-      'Termos técnicos desatualizados ou ausência de competências complementares.',
+      'Falta de termos técnicos que permitam ao sistema encontrar o perfil em buscas temáticas.',
+      'Descrições vagas que não detalham a extensão do conhecimento do candidato.',
     ],
-    optimizationTips: [
-      'Crie uma seção dedicada de "Competências & Tecnologias" no início do documento.',
+    howGriffoWorkHelps: [
+      'Assegura a presença de palavras-chave estratégicas para que seu currículo seja encontrado nas buscas do Lever.',
+      'Aprimora o posicionamento profissional para retenção de longo prazo na base de talentos.',
     ],
     faqs: [
       {
-        question: 'Qual a diferença entre Lever e outros ATS?',
-        answer: 'O Lever mantém seu currículo indexado para vagas futuras de forma muito ativa. Um currículo bem pontuado pode ser chamado meses após a aplicação.',
+        question: 'Como funciona o banco de talentos do Lever?',
+        answer: 'O Lever mantém perfis arquivados e pesquisáveis. Um currículo com alta densidade de termos relevantes continua sendo localizado para novas oportunidades.',
       },
     ],
   },
@@ -177,27 +189,27 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     name: 'Oracle Taleo',
     fullName: 'Oracle Taleo Enterprise Edition',
     country: 'US',
-    marketName: 'Grandes Corporações, Bancos e Governos',
-    description: 'O Oracle Taleo é um dos ATS mais tradicionais do mundo, presente em grandes instituições financeiras, operadoras de telecomunicações e órgãos governamentais.',
-    marketShare: 'Dominante no setor financeiro, óleo & gás e telecom.',
+    marketName: 'Bancos, Governos & Grandes Corporações',
+    description: 'O Oracle Taleo é um dos sistemas de recrutamento corporativo mais consolidados do mundo, amplamente utilizado no setor financeiro, óleo e gás, telecomunicações e órgãos públicos.',
+    marketShare: 'Forte presença em corporações tradicionais e instituições financeiras globais.',
     howItWorks: [
       {
-        title: 'Parser Legado Baseado em Padrões Rígidos',
-        description: 'O Taleo utiliza regras rígidas de formatação e pode falhar ao interpretar PDFs modernos com elementos visuais complexos.',
+        title: 'Filtros Tradicionais de Triagem',
+        description: 'Aplica regras estruturadas de triagem baseadas em títulos formais, tempo de serviço e níveis de formação.',
       },
     ],
     eliminationFactors: [
-      'Fontes exóticas, ícones e formatação em tabelas.',
-      'Títulos de seções em linguagem criativa (ex: "Minha Jornada" em vez de "Experiência Profissional").',
+      'Títulos de seções não convencionais que o parser legado não consegue classificar.',
+      'Elementos gráficos que desestruturam a hierarquia das informações.',
     ],
-    optimizationTips: [
-      'Use fontes clássicas (Arial, Calibri, Helvetica, Times New Roman).',
-      'Mantenha cabeçalhos e títulos estritamente tradicionais.',
+    howGriffoWorkHelps: [
+      'Audita a estrutura formal do currículo para compatibilidade com o parser do Taleo.',
+      'Verifica o padrão de datas, cargos e seções clássicas exigidas por corporações tradicionais.',
     ],
     faqs: [
       {
-        question: 'O Taleo ainda é muito utilizado?',
-        answer: 'Sim, principalmente em corporações enterprise tradicionais e instituições de grande porte global.',
+        question: 'O Oracle Taleo ainda é amplamente usado?',
+        answer: 'Sim, especialmente em grandes bancos, indústrias e corporações que gerenciam milhares de colaboradores em todo o mundo.',
       },
     ],
   },
@@ -207,25 +219,26 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     fullName: 'Solides Gestão de RH & Recrutamento',
     country: 'BR',
     marketName: 'Brasil (PMEs e Médias Empresas)',
-    description: 'A Solides é líder em software de gestão de pessoas e recrutamento para pequenas e médias empresas no Brasil, integrando triagem curricular com mapeamento de perfil comportamental (Profiler).',
+    description: 'A Solides é uma das principais plataformas de RH e atração de talentos para pequenas e médias empresas no Brasil, integrando triagem curricular com análise de perfil comportamental (Profiler).',
     marketShare: 'Presente em mais de 25 mil empresas no Brasil.',
     howItWorks: [
       {
-        title: 'Triagem Integrada com Perfil Comportamental',
-        description: 'Avalia tanto a experiência técnica quanto o alinhamento de estilo de trabalho para a cultura da empresa.',
+        title: 'Triagem Integrada',
+        description: 'Combina a aderência às competências técnicas do anúncio com a análise de fit comportamental e cultural da vaga.',
       },
     ],
     eliminationFactors: [
-      'Incoerência entre a experiência relatada e o cargo pretendido.',
-      'Currículo com erros graves de português ou falta de contato atualizado.',
+      'Incompatibilidade evidente entre o histórico profissional relatado e o cargo pretendido.',
+      'Erros estruturais que dificultam a identificação rápida das competências-chave.',
     ],
-    optimizationTips: [
-      'Destaque tanto competências técnicas quanto habilidades de colaboração e liderança.',
+    howGriffoWorkHelps: [
+      'Equilibra a apresentação de competências técnicas e habilidades de colaboração e liderança.',
+      'Gera um laudo claro que destaca o posicionamento profissional adequado para PMEs e médias empresas.',
     ],
     faqs: [
       {
-        question: 'Como se preparar para processos na Solides?',
-        answer: 'Tenha seu currículo alinhado com as palavras-chave da vaga e preencha com atenção o mapeamento comportamental quando solicitado.',
+        question: 'Como a Solides avalia os candidatos?',
+        answer: 'A plataforma cruza as competências descritas no currículo com requisitos da vaga e testes de perfil aplicados durante o processo.',
       },
     ],
   },
@@ -235,24 +248,25 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     fullName: 'iCIMS Talent Cloud',
     country: 'US',
     marketName: 'Estados Unidos & Reino Unido',
-    description: 'O iCIMS é uma das plataformas de atração e triagem de talentos mais robustas do mercado corporativo americano e britânico, processando milhões de candidaturas anualmente.',
+    description: 'O iCIMS é uma das plataformas de triagem e gestão de talentos mais robustas do mercado corporativo americano e britânico, processando milhões de candidaturas anualmente.',
     marketShare: 'Mais de 4.000 grandes clientes corporativos nos EUA e Europa.',
     howItWorks: [
       {
-        title: 'Classificação Automatizada por Score de Requisitos',
-        description: 'O iCIMS calcula uma pontuação percentual baseada na aderência a cada requisito essencial e desejável da vaga.',
+        title: 'Pontuação de Requisitos',
+        description: 'Calcula o score de qualificação com base na correspondência dos requisitos essenciais e desejáveis da vaga.',
       },
     ],
     eliminationFactors: [
-      'Falta de palavras-chave exatas correspondentes aos requisitos listados.',
+      'Falta de correspondência direta com as palavras-chave listadas na descrição da vaga.',
     ],
-    optimizationTips: [
-      'Revise os requisitos da vaga e garanta que suas experiências demonstrem claramente cada um deles.',
+    howGriffoWorkHelps: [
+      'Compara seu currículo com a vaga desejada e aponta a taxa de aderência aos requisitos do iCIMS.',
+      'Sugere melhorias de clareza e impacto para elevar o score da candidatura.',
     ],
     faqs: [
       {
-        question: 'Como garantir nota alta no iCIMS?',
-        answer: 'Utilize o relatório de palavras-chave do GriffoWork para verificar a correspondência semântica com o anúncio da vaga.',
+        question: 'O iCIMS é muito utilizado no mercado americano?',
+        answer: 'Sim, é um dos ATS mais comuns em grandes corporações e setores como saúde, finanças e tecnologia nos EUA e Reino Unido.',
       },
     ],
   },
@@ -262,24 +276,25 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     fullName: 'Ashby All-in-One Recruiting',
     country: 'US',
     marketName: 'Startups Globais & Scaleups de IA',
-    description: 'O Ashby é a plataforma de recrutamento de crescimento mais rápido no ecossistema global de tecnologia e IA, conhecida por automações e analytics avançados.',
-    marketShare: 'Crescimento acelerado entre scaleups e empresas de tecnologia inovadoras.',
+    description: 'O Ashby é uma plataforma moderna de recrutamento de crescimento acelerado entre empresas inovadoras de tecnologia e inteligência artificial, focada em automações inteligentes e analytics.',
+    marketShare: 'Crescimento expressivo em scaleups de tecnologia e IA.',
     howItWorks: [
       {
-        title: 'Triagem Rápida e Foco em Métricas',
-        description: 'Recrutadores no Ashby analisam currículos com auxílio de sumários automatizados de impacto e senioridade.',
+        title: 'Triagem Rápida e Resumos com IA',
+        description: 'Disponibiliza sumários analíticos para que recrutadores identifiquem rapidamente o impacto e senioridade do candidato.',
       },
     ],
     eliminationFactors: [
-      'Currículo prolixo sem foco em entregas e realizações.',
+      'Currículos prolixos e sem foco nas principais realizações técnicas e entregas de impacto.',
     ],
-    optimizationTips: [
-      'Seja direto: destaque projetos de alto impacto, arquitetura de sistemas e liderança técnica.',
+    howGriffoWorkHelps: [
+      'Audita a síntese executiva do seu currículo para garantir leitura rápida e de alto impacto.',
+      'Destaca projetos complexos e liderança técnica para os filtros do Ashby.',
     ],
     faqs: [
       {
-        question: 'O Ashby usa IA para triagem?',
-        answer: 'Sim, o Ashby disponibiliza resumos inteligentes e filtros avançados para os times de recrutamento.',
+        question: 'O que diferencia o Ashby de outros sistemas?',
+        answer: 'O Ashby oferece dashboards analíticos e resumos automáticos que valorizam currículos objetivos e orientados a resultados.',
       },
     ],
   },
@@ -289,24 +304,25 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     fullName: 'InfoJobs (Brasil & Espanha / Adevinta)',
     country: 'ES',
     marketName: 'Espanha, Brasil e Itália',
-    description: 'O InfoJobs é um dos portais de emprego e triagem de candidatos mais tradicionais e acessados na Espanha, Itália e Brasil.',
-    marketShare: 'Líder histórico de vagas e candidaturas na Espanha e forte presença no Brasil.',
+    description: 'O InfoJobs é um dos portais de emprego e triagem de currículos mais tradicionais da Espanha, Itália e Brasil, utilizado por milhares de recrutadores de diversos setores da economia.',
+    marketShare: 'Líder histórico de candidaturas e vagas corporativas na Espanha.',
     howItWorks: [
       {
-        title: 'Filtros Diretos de Localização e Salário',
-        description: 'Recrutadores aplicam filtros duros por tempo de experiência, cidade e faixa salarial pretendida.',
+        title: 'Filtros Diretos de Recrutadores',
+        description: 'Permite aos recrutadores filtrar candidatos por localização, faixa salarial, formação e histórico recente.',
       },
     ],
     eliminationFactors: [
-      'Pretensão salarial fora do intervalo da vaga ou localização incompatível.',
+      'Falta de clareza nas informações de contato, localização e pretensão salarial.',
     ],
-    optimizationTips: [
-      'Mantenha seu perfil no InfoJobs perfeitamente sincronizado com o currículo enviado.',
+    howGriffoWorkHelps: [
+      'Verifica a completude de todas as seções obrigatórias para processos no InfoJobs.',
+      'Garante que as competências e histórico estejam alinhados com o mercado da Espanha e Brasil.',
     ],
     faqs: [
       {
-        question: 'Como me destacar no InfoJobs Espanha?',
-        answer: 'Inclua foto profissional conforme o padrão do mercado espanhol e certifique-se de preencher todas as experiências detalhadamente.',
+        question: 'Como funciona a busca de candidatos no InfoJobs?',
+        answer: 'Recrutadores filtram por palavras-chave e localização antes de abrir os currículos individualmente.',
       },
     ],
   },
@@ -316,24 +332,25 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     fullName: 'Personio HR Operating System',
     country: 'DE',
     marketName: 'Alemanha, Áustria, Suíça e Europa',
-    description: 'O Personio é a principal plataforma de RH e recrutamento para empresas de pequeno e médio porte em toda a Europa, especialmente na região DACH (Alemanha, Áustria, Suíça).',
+    description: 'O Personio é a principal plataforma de RH e recrutamento para empresas de pequeno e médio porte na Europa, com forte presença na região DACH (Alemanha, Áustria e Suíça).',
     marketShare: 'Líder em PMEs e empresas em expansão na União Europeia.',
     howItWorks: [
       {
-        title: 'Padrão Europeu de Triagem',
-        description: 'Interpreta candidaturas em alemão e inglês, analisando histórico cronológico sem lacunas não explicadas.',
+        title: 'Processamento em Padrão Europeu',
+        description: 'Processa candidaturas multilíngues (alemão e inglês) avaliando a consistência cronológica da trajetória profissional.',
       },
     ],
     eliminationFactors: [
-      'Lacunas longas na linha do tempo sem justificativa clara no Lebenslauf.',
+      'Estrutura incompatível com os formatos usuais de contratação do mercado europeu.',
     ],
-    optimizationTips: [
-      'Adote a estrutura clássica de currículo europeu ou Lebenslauf para processos na Alemanha.',
+    howGriffoWorkHelps: [
+      'Adapta a estrutura do currículo aos padrões e expectativas de contratação da Europa.',
+      'Assegura conformidade de dados e clareza da trajetória para empresas usuárias do Personio.',
     ],
     faqs: [
       {
-        question: 'Posso me candidatar em inglês no Personio na Alemanha?',
-        answer: 'Sim, para empresas de tecnologia e multinacionais baseadas em Berlim ou Munique o inglês é o padrão; para empresas tradicionais locais, o currículo em alemão é preferível.',
+        question: 'O Personio é compatível com currículos em inglês e alemão?',
+        answer: 'Sim, a plataforma processa ambos os idiomas conforme a exigência da vaga e país de contratação.',
       },
     ],
   },

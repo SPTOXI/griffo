@@ -539,26 +539,17 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
             <a href="/global" className="hover:text-primary transition-colors">Remoto Global</a>
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-medium">
-            <span className="font-bold text-slate-700">Guias ATS:</span>
-            <a href="/ats/gupy" className="hover:text-primary transition-colors">Gupy ATS</a>
-            <a href="/ats/workday" className="hover:text-primary transition-colors">Workday HCM</a>
+            <span className="font-bold text-slate-700">Compatibilidade ATS:</span>
+            <a href="/ats/gupy" className="hover:text-primary transition-colors">Gupy</a>
+            <a href="/ats/workday" className="hover:text-primary transition-colors">Workday</a>
             <a href="/ats/greenhouse" className="hover:text-primary transition-colors">Greenhouse</a>
             <a href="/ats/lever" className="hover:text-primary transition-colors">Lever</a>
-            <a href="/ats/taleo" className="hover:text-primary transition-colors">Oracle Taleo</a>
+            <a href="/ats/taleo" className="hover:text-primary transition-colors">Taleo</a>
             <a href="/ats/solides" className="hover:text-primary transition-colors">Solides</a>
             <a href="/ats/icims" className="hover:text-primary transition-colors">iCIMS</a>
             <a href="/ats/ashby" className="hover:text-primary transition-colors">Ashby</a>
             <a href="/ats/infojobs" className="hover:text-primary transition-colors">InfoJobs</a>
             <a href="/ats/personio" className="hover:text-primary transition-colors">Personio</a>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-medium">
-            <span className="font-bold text-slate-700">Carreiras & Áreas:</span>
-            <a href="/carreiras/desenvolvedor-software" className="hover:text-primary transition-colors">Desenvolvedor de Software</a>
-            <a href="/carreiras/product-manager" className="hover:text-primary transition-colors">Product Manager</a>
-            <a href="/carreiras/analista-de-dados" className="hover:text-primary transition-colors">Analista de Dados</a>
-            <a href="/carreiras/ux-ui-designer" className="hover:text-primary transition-colors">UX/UI Designer</a>
-            <a href="/carreiras/tech-lead" className="hover:text-primary transition-colors">Tech Lead</a>
-            <a href="/carreiras/gerente-de-projetos" className="hover:text-primary transition-colors">Gerente de Projetos</a>
           </div>
         </div>
 

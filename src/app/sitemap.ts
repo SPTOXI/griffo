@@ -1,6 +1,5 @@
 import type { MetadataRoute } from 'next'
 import { ATS_DATABASE } from '@/lib/ats/data'
-import { CAREERS_DATABASE } from '@/lib/careers/data'
 
 const COUNTRIES = [
   'br', 'us', 'pt', 'es', 'mx', 'gb', 'ca', 'de', 'at', 'fr', 'be', 'lu',
@@ -43,20 +42,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })
   }
 
-  // 3. ATS Guides & High-intent keyword pages
+  // 3. ATS Systems & High-intent compatibility pages
   for (const slug of Object.keys(ATS_DATABASE)) {
     routes.push({
       url: `${baseUrl}/ats/${slug}`,
-      lastModified,
-      changeFrequency: 'weekly',
-      priority: 0.85,
-    })
-  }
-
-  // 4. Career & Occupation Guides
-  for (const slug of Object.keys(CAREERS_DATABASE)) {
-    routes.push({
-      url: `${baseUrl}/carreiras/${slug}`,
       lastModified,
       changeFrequency: 'weekly',
       priority: 0.85,
