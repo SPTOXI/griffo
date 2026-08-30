@@ -109,7 +109,7 @@ export function getDigestFrom(): string {
  * ignorar os próximos.
  */
 export function getDigestReplyTo(): string {
-  return process.env.RADAR_DIGEST_REPLY_TO?.trim() || 'contato@griffo.work'
+  return process.env.RADAR_DIGEST_REPLY_TO?.trim() || 'contact@griffo.work'
 }
 
 /**

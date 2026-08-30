@@ -114,7 +114,7 @@ const jsonLd = {
       ],
       "contactPoint": {
         "@type": "ContactPoint",
-        "email": "contato@griffo.work",
+        "email": "contact@griffo.work",
         "contactType": "customer service"
       }
     },

@@ -1,25 +1,31 @@
 import type { Language } from './index'
 
-const CONTACT_EMAILS: Record<Language, string> = {
-  pt: 'contato@griffo.work',
-  es: 'contacto@griffo.work',
-  en: 'contact@griffo.work',
-  de: 'kontakt@griffo.work',
-  fr: 'bonjour@griffo.work',
-  it: 'contatto@griffo.work',
-  ja: 'japan@griffo.work',
-  nl: 'hallo@griffo.work',
-  sv: 'hej@griffo.work',
-  zh: 'china@griffo.work',
-  ar: 'marhaba@griffo.work',
-  ko: 'korea@griffo.work',
+export const CONTACT_EMAIL = 'contact@griffo.work'
+export const SALES_EMAIL = 'sales@griffo.work'
+
+export function contactEmail(_lang?: Language): string {
+  return CONTACT_EMAIL
 }
 
-export function contactEmail(lang: Language): string {
-  return CONTACT_EMAILS[lang] || CONTACT_EMAILS.pt
+const CONTACT_SUBJECTS: Record<Language, string> = {
+  pt: 'Contato - GriffoWork',
+  en: 'Contact - GriffoWork',
+  es: 'Contacto - GriffoWork',
+  de: 'Kontakt - GriffoWork',
+  fr: 'Contact - GriffoWork',
+  it: 'Contatto - GriffoWork',
+  ja: 'お問い合わせ - GriffoWork',
+  nl: 'Contact - GriffoWork',
+  sv: 'Kontakt - GriffoWork',
+  zh: '联系我们 - GriffoWork',
+  ar: 'اتصل بنا - GriffoWork',
+  ko: '문의하기 - GriffoWork',
 }
 
-export const SALES_EMAIL = 'comercial@griffo.work'
+export function contactMailto(lang: Language): string {
+  const subject = CONTACT_SUBJECTS[lang] || CONTACT_SUBJECTS.pt
+  return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`
+}
 
 const SALES_SUBJECTS: Record<Language, string> = {
   pt: 'Griffo para empresas',
@@ -39,8 +45,4 @@ const SALES_SUBJECTS: Record<Language, string> = {
 export function salesMailto(lang: Language): string {
   const subject = SALES_SUBJECTS[lang] || SALES_SUBJECTS.pt
   return `mailto:${SALES_EMAIL}?subject=${encodeURIComponent(subject)}`
-}
-
-export function contactMailto(lang: Language): string {
-  return `mailto:${contactEmail(lang)}`
 }

@@ -18,7 +18,7 @@ const SECRET = 'segredo-de-teste-nao-usar-em-producao'
 const RESEND: ResendConfig = {
   apiKey: 'chave-de-teste',
   from: 'GriffoWork <radar@send.griffo.work>',
-  replyTo: 'contato@griffo.work',
+  replyTo: 'contact@griffo.work',
 }
 
 const OPPORTUNITY: DigestOpportunity = {
@@ -237,7 +237,7 @@ test('o envio monta a requisição que o Resend espera', async () => {
   assert.deepEqual(corpo.to, ['pessoa@exemplo.com'])
   // O `Reply-To` existe porque `send.griffo.work` só envia: sem ele, quem
   // responder fala com o vazio e aprende a ignorar as próximas mensagens.
-  assert.equal(corpo.reply_to, 'contato@griffo.work')
+  assert.equal(corpo.reply_to, 'contact@griffo.work')
   // Texto E html: a versão em texto não é opcional.
   assert.equal(corpo.text, 'oi')
   assert.equal(corpo.html, '<p>oi</p>')
