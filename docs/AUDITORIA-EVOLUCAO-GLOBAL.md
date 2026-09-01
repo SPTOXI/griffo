@@ -2331,7 +2331,9 @@ se encaixarem no pedido ("sem utilidade atual OU FUTURA"):
 
 ---
 
-## 2.36 Internacionalização Completa do Sistema e Paridade Multilíngue (PT, EN, ES)
+## 2.41 Internacionalização Completa do Sistema e Paridade Multilíngue (PT, EN, ES)
+
+*(renumerado de um §2.36 duplicado — este era o estado de 3 idiomas, anterior à expansão para 12 do §2.44)*
 
 Auditoria e implementação de suporte integral a multi-idiomas (`pt`, `en`, `es`) em todas as camadas da aplicação (Frontend, Backend, geração de PDF, agentes de suporte e testes).
 
@@ -2369,7 +2371,9 @@ Auditoria e implementação de suporte integral a multi-idiomas (`pt`, `en`, `es
 
 ---
 
-## 2.37 Integração do Radar de Vagas à Proposta de Valor e Catálogo de Preços (PT, EN, ES)
+## 2.42 Integração do Radar de Vagas à Proposta de Valor e Catálogo de Preços (PT, EN, ES)
+
+*(renumerado de um §2.37 duplicado)*
 
 Alinhamento da comunicação comercial, planos de preços e catálogo de benefícios com o ecossistema do **Radar de Vagas**.
 
@@ -2389,5 +2393,173 @@ Alinhamento da comunicação comercial, planos de preços e catálogo de benefí
 ### 3. Validação e Integridade Comercial
 - Preservação da equivalência 1-para-1 com `ANALYSIS_DELIVERABLES` em `src/lib/pricing/catalog.ts`.
 - 617/617 testes automatizados aprovados sem regressões (`npm test`).
+
+## 2.43 SEO: SSR multi-país na landing, e as páginas de carreiras saem para o ATS explicar o produto
+
+Duas mudanças de SEO em sequência (commits `e3a62fc`, `752b943`, 29-30/08/2026).
+
+Primeiro, a landing passou a ser renderizada via SSR com roteamento por
+país (`src/app/[country]/page.tsx` + `country-client.tsx`), `sitemap.ts`
+e `robots.ts` expandidos, e compartilhamento formatado para LinkedIn.
+`layout.tsx` ganhou metadados por rota.
+
+Em seguida, as páginas estáticas de carreiras (`src/app/carreiras/[slug]`,
+345 linhas, e `src/lib/careers/data.ts`, 215 linhas) foram **removidas**
+— eram páginas de listagem de vagas por empresa, fora do escopo do
+produto. As páginas de ATS (`src/app/ats/[slug]/page.tsx` e
+`src/lib/ats/data.ts`) foram reescritas para explicar o que é o software
+de ATS e o valor do GriffoWork em vez de descrever vagas de terceiros.
+
+## 2.44 i18n salta de 3 para 12 idiomas, e o dicionário monolítico é quebrado em arquivos por locale
+
+Dois commits seguidos (`0abc45d`, `f3272eb`, 30/08/2026) que juntos
+levaram o sistema de `pt/en/es` (§2.41) para 12 idiomas: primeiro
+`+ de, fr, it, ja`, depois `+ ar, ko, nl, sv, zh`.
+
+O antigo `src/lib/i18n/index.ts` (3764 linhas, um único objeto com os
+três dicionários) foi refatorado em um arquivo por idioma —
+`src/lib/i18n/locales/{pt,en,es,de,fr,it,ja,ar,ko,nl,sv,zh}.ts`, ~920
+linhas cada — mais `types.ts` para o contrato comum. Criado
+`scripts/sync-i18n.ts` para checar paridade estrutural entre os 12
+dicionários (mesmas chaves, sem string vazia), reforçando o padrão que
+`i18n.test.ts` já cobria para 3 idiomas desde o §2.41.
+
+A cobertura foi além da UI: `src/lib/email/digest.ts` (assunto e corpo
+do digest do Radar por idioma), `src/lib/market/index.ts`, o endpoint
+novo `api/radar/unsubscribe`, e o fluxo de reescrita de currículo
+(`rewrite-view.tsx`, `resume-rewrite/segments.ts`, `api/resume/rewrite`)
+ganharam adaptação internacional de 1 clique — reescrever o currículo
+já adaptado ao idioma/mercado de destino, não só traduzido.
+
+**Pendência que isto reabre:** o item 6 do HANDOFF (§0) registrava as
+telas autenticadas traduzidas para pt/en/es em 25/08 — os 9 idiomas
+novos herdam a mesma estrutura de chaves via `sync-i18n.ts`, mas não
+foram verificados manualmente na tela (sem login disponível ao agente,
+mesma limitação já registrada nos outros itens do HANDOFF §0).
+
+## 2.45 E-mail de contato corporativo: uma única fonte de verdade em todos os idiomas
+
+Commit `56dfb2d` (30/08/2026). Antes da expansão de idiomas do §2.44,
+o e-mail de contato institucional variava por dicionário. Corrigido em
+`src/lib/i18n/contact.ts` (agora a fonte única, `contact@griffo.work`),
+propagado a `layout.tsx` e `env.ts`, com `contact.test.ts` reescrito
+para validar que os 12 idiomas resolvem para o mesmo endereço.
+
+## 2.46 Radar: filtro de compatibilidade mínima não estava sendo aplicado na listagem
+
+Commit `edda32a` (30/08/2026), o mais recente. Duas falhas relacionadas
+em `src/app/api/radar/route.ts`: o parâmetro `minimumFit` do perfil do
+usuário — usado para decidir que oportunidades entram no alerta — não
+estava sendo aplicado como filtro na listagem geral de oportunidades do
+Radar, e o veredito de compatibilidade dos alertas já disparados podia
+ficar dessincronizado do perfil atual (perfil mudou depois do alerta
+ser gerado, o veredito antigo continuava exibido). Corrigido em
+`route.ts` e `lib/radar/runner.ts`, com teste novo cobrindo os dois
+casos em `radar.test.ts`. Rótulos i18n dos 12 idiomas ganharam a
+string nova relacionada ao veredito sincronizado.
+
+## 2.47 Auditoria SEO/GEO externa — 2 acertos, 2 alarmes falsos, 3 bugs reais não listados no pedido
+
+Operador colou um prompt de auditoria técnica de SEO/GEO pronto (roteiro
+de 7 itens, aparentemente gerado por outra ferramenta) e pediu para só
+mexer no que fosse de fato necessário. Cada item foi verificado contra o
+código e, quando possível, contra o `next dev` rodando de verdade
+(`curl` real, não leitura de código) antes de qualquer alteração —
+seguindo a mesma disciplina do §2.39 (replicar a chamada real em vez de
+confiar na primeira leitura).
+
+**Item 1 do prompt (hreflang aponta para `/jp /nl /se /cn /ae /kr`, que
+"404 confirmado") — alarme falso.** `src/app/[country]/page.tsx` tem
+`dynamicParams = true`; a checagem `isKnown` aceita qualquer código
+presente em `COUNTRIES` (lista de ~150 países usada no seletor de
+perfil), não só os 40 em `SUPPORTED_COUNTRY_SLUGS` pré-gerados por SSG.
+`curl` contra `next dev` real confirmou `200` nas 12 rotas do hreflang
+E nas 6 do rodapé (`/pt /mx /gb /ca /au /global`) — nenhuma 404. O que
+era real: faltava `x-default`. Corrigido em `layout.tsx`, apontando
+para `/global` (a página sem preço/ATS de um país específico), com
+comentário explicando a escolha. **Não adicionado**: hreflang por
+região para `/pt /gb /ca /au /mx` como o prompt sugeria — essas rotas
+usam o MESMO `jobLanguage` de `/br /us /us /us /es` respectivamente
+(conteúdo textual idêntico, só muda preço/moeda/nome do país), então
+declarar `en-GB`/`en-CA`/`en-AU` como variantes de idioma seria uma
+alteração de comportamento de SEO sem uma decisão editorial por trás —
+fica para o operador decidir se essas páginas devem virar conteúdo
+distinto o bastante para merecer hreflang próprio.
+
+**Item 5 do prompt (preço fixo em BRL na página raiz) — alarme falso.**
+`landing.tsx` já resolve `priceFor(effectiveCountry)` a partir do país
+detectado por geo/rota (`lib/pricing/catalog.ts`, com moeda, tier e
+meios de pagamento locais); `[country]/page.tsx` já gera um segundo
+`Offer` no JSON-LD com preço e moeda do mercado específico, distinto do
+`Offer` gratuito fixo em USD "0" do layout raiz (esse sim
+intencionalmente fixo — é a oferta free). Nada alterado.
+
+**Item 3 do prompt (FAQ: só a 1ª resposta existe no HTML, as outras 4
+são removidas do DOM) — confirmado, e mais grave do que descrito: o
+JSON-LD `FAQPage` do `layout.tsx` também tinha 4 perguntas que **não
+eram as mesmas** exibidas na tela** (comparado com `q1..q5`/`a1..a5` de
+`i18n/locales/pt.ts`) — schema descrevendo conteúdo que o usuário nunca
+vê é o tipo de coisa que o Google pode simplesmente ignorar ou penalizar
+no rich result. Corrigido nos dois pontos:
+- `landing.tsx`: a resposta de cada pergunta do acordeão agora sempre
+  existe no DOM (`<div id="faq-answer-{i}">`), escondida via classe
+  `hidden` (`display:none`) quando fechada, em vez de
+  `{openFaq === index && (...)}`, que removia o nó inteiro. `curl` no
+  HTML bruto confirmou as 5 `faq-answer-N` presentes de saída.
+  `aria-expanded`/`aria-controls` adicionados no botão.
+- `layout.tsx`: as 4 perguntas do JSON-LD foram substituídas pelas 5
+  reais de `pt.ts` (fonte de verdade é a landing em pt-BR, consistente
+  com `<html lang="pt-BR">` do layout raiz).
+
+**Item 4 do prompt (twitter:image usa `/logo.png`, quadrado, formato
+errado para `summary_large_image`) — confirmado, e pior do que
+descrito: `og:image` apontava para `/og-image.jpg`, um arquivo **que
+não existe em `public/`** (`curl` local confirmou `404` no asset, não
+só no aspect ratio) — em `layout.tsx`, `[country]/page.tsx` E
+`ats/[slug]/page.tsx`, os três pontos que geram preview de
+compartilhamento do site inteiro. Não havia nenhum banner 1200x630 no
+projeto. Corrigido nos três arquivos: `og:image` e `twitter:image`
+passaram a apontar para `/logo-full.png` (693×694, a maior imagem real
+disponível) até existir um banner desenhado nas proporções corretas —
+**pendência de design, não de código**, registrada no HANDOFF.
+
+**Item 2 (auditoria de status/idioma/preço por rota) e item 7
+(validação final)** foram cobertos pela própria verificação acima
+(`curl` real nas 18 rotas + leitura de `priceFor`/`generateMetadata`),
+sem necessidade de ferramenta externa.
+
+**Item 6 do prompt (criar 5 a 10 páginas de conteúdo educacional
+novas)** não foi implementado — é feature nova, não correção, e o
+pedido do operador foi "só altere se necessário". Fica como sugestão
+não executada.
+
+`tsc --noEmit` limpo e `npm test` (618/618) depois das mudanças.
+
+## 2.48 Novo slogan — só na meta description, de propósito
+
+Operador colou sugestões de slogan/tagline de outra IA ("Audit. Align.
+Achieve.", variações com "Master"/"Elevate"/"Navegue") e pediu para
+decidir onde implementar pensando em geração de lead e venda, não só em
+gosto de frase.
+
+Decisão: **não** tocar no H1/subtítulo do hero, no kicker "GLOBAL AI
+CAREER INTELLIGENCE" (nav+rodapé) nem no CTA final — os três já fazem
+um trabalho específico de conversão (clareza concreta com prova
+——citando Gupy/Workday/Taleo e "8 dimensões"—— no hero; rótulo de
+categoria no kicker; pergunta + remoção de fricção "sem cartão de
+crédito" no CTA final) que uma frase de efeito substituiria por algo
+mais bonito e menos eficaz. Slogan/tagline é ferramenta de topo de
+funil (o que faz alguém clicar), não de copy on-page (o que faz alguém
+converter depois de já estar na página) — são funções diferentes.
+
+Implementado só em `layout.tsx`: a frase escolhida ("Do perfil social à
+vaga certa: audite, alinhe e conquiste sua carreira com a Griffo IA...",
+146 caracteres) entrou em `metadata.description`,
+`openGraph.description` e na descrição do `WebSite` no JSON-LD — os três
+pontos que controlam o que aparece no resultado do Google e no card de
+compartilhamento social, antes do clique. `twitter.description` (que já
+é mais específico, "8 dimensões executivas") não foi tocado.
+
+`tsc --noEmit` limpo.
 
 

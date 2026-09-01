@@ -30,7 +30,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://griffo.work"),
   title: "GriffoWork — Global AI Career Intelligence",
-  description: "Plataforma de Global AI Career Intelligence e otimização de presença digital baseada nos melhores padrões de recrutamento.",
+  description: "Do perfil social à vaga certa: audite, alinhe e conquiste sua carreira com a Griffo IA. Laudo de currículo por IA em 8 dimensões e Radar de Vagas.",
   keywords: ["griffowork", "currículo", "resume ai", "cv audit", "global ai career intelligence", "ATS", "RH", "carreira", "griffo.work"],
   authors: [{ name: "GriffoWork" }],
   alternates: {
@@ -48,6 +48,9 @@ export const metadata: Metadata = {
       "zh-CN": "https://griffo.work/cn",
       "ar-AE": "https://griffo.work/ae",
       "ko-KR": "https://griffo.work/kr",
+      // Fonte de verdade para tráfego sem correspondência de idioma/região:
+      // a página global (sem preço/ATS de um país específico), não a raiz em pt-BR.
+      "x-default": "https://griffo.work/global",
     },
   },
   robots: {
@@ -71,14 +74,14 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "GriffoWork — Global AI Career Intelligence",
-    description: "Plataforma de Global AI Career Intelligence e otimização de presença digital baseada nos melhores padrões de recrutamento.",
+    description: "Do perfil social à vaga certa: audite, alinhe e conquiste sua carreira com a Griffo IA. Laudo de currículo por IA em 8 dimensões e Radar de Vagas.",
     url: "https://griffo.work",
     siteName: "GriffoWork",
     images: [
       {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
+        url: "/logo-full.png",
+        width: 693,
+        height: 694,
         alt: "GriffoWork — Global AI Career Intelligence",
       },
     ],
@@ -88,7 +91,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "GriffoWork — Análise de Currículo por IA",
     description: "Laudo profissional de currículo por IA em 8 dimensões executivas.",
-    images: ['/logo.png'],
+    images: ['/logo-full.png'],
   },
 };
 
@@ -100,7 +103,7 @@ const jsonLd = {
       "@id": "https://griffo.work/#website",
       "url": "https://griffo.work",
       "name": "GriffoWork",
-      "description": "Plataforma de Global AI Career Intelligence e otimização de presença digital baseada nos melhores padrões de recrutamento.",
+      "description": "Do perfil social à vaga certa: audite, alinhe e conquiste sua carreira com a Griffo IA. Laudo de currículo por IA em 8 dimensões e Radar de Vagas.",
       "inLanguage": ["pt-BR", "en-US", "es-ES", "de-DE", "fr-FR", "it-IT", "ja-JP", "nl-NL", "sv-SE", "zh-CN", "ar-AE", "ko-KR"]
     },
     {
@@ -145,18 +148,26 @@ const jsonLd = {
       "mainEntity": [
         {
           "@type": "Question",
-          "name": "Como funciona o laudo profissional de currículo por IA?",
+          "name": "Como funciona a verificação de compatibilidade com sistemas ATS (Gupy, Workday, Taleo)?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Nossa IA avalia seu currículo em 8 dimensões executivas críticas (impacto, clareza, alinhamento ATS, liderança, métricas e competências) e gera um relatório detalhado com plano de ação imediato."
+            "text": "Nossa inteligência avalia a estrutura, legibilidade de seções, hierarquia de cabeçalhos e densidade de termos técnicos do seu documento segundo os critérios dos principais sistemas de triagem utilizados por grandes empresas."
           }
         },
         {
           "@type": "Question",
-          "name": "O que é pontuação ATS e por que ela importa?",
+          "name": "A IA inventa informações ou experiências no meu currículo?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Sistemas de Rastreamento de Candidatos (ATS) como Workday, Taleo e Greenhouse filtram mais de 70% dos currículos antes do olhar humano. O GriffoWork simula esses algoritmos para garantir que seu perfil chegue aos recrutadores."
+            "text": "Não. O GriffoWork segue uma diretriz rígida de veracidade: mantemos 100% das suas empresas, cargos, datas e formação reais. A IA reestrutura a escrita para valorizar suas conquistas reais com o máximo de clareza e impacto."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Como funciona a otimização de perfis (LinkedIn, GitHub, Behance)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Se você fornecer os links dos seus perfis com sua autorização, geramos títulos otimizados (Headlines), resumos estratégicos e sugestões de posicionamento para atrair mais recrutadores no seu mercado."
           }
         },
         {
@@ -164,15 +175,15 @@ const jsonLd = {
           "name": "Meus dados e meu currículo estão seguros?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Sim. Seguimos rigorosamente a LGPD e GDPR. Seus documentos são criptografados e não são utilizados para treinar modelos públicos de IA sem o seu consentimento explícito."
+            "text": "Totalmente. Trabalhamos em conformidade rigorosa com a LGPD e GDPR. Seus dados são criptografados e nunca são compartilhados ou comercializados com terceiros."
           }
         },
         {
           "@type": "Question",
-          "name": "A ferramenta suporta processos seletivos internacionais?",
+          "name": "Preciso assinar alguma coisa ou pagar mensalidade?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Sim. A inteligência do GriffoWork adapta terminologias, formatações e métricas para padrões dos EUA, Europa, América Latina e mercados globais."
+            "text": "Não. Você paga uma única vez pela Análise Completa daquele currículo e recebe todas as entregas. Não há mensalidade, renovação automática nem saldo para administrar — transparência total."
           }
         }
       ]

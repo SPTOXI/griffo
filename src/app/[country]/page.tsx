@@ -96,9 +96,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       siteName: 'GriffoWork',
       images: [
         {
-          url: '/og-image.jpg',
-          width: 1200,
-          height: 630,
+          url: '/logo-full.png',
+          width: 693,
+          height: 694,
           alt: title,
         },
       ],
@@ -108,7 +108,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       card: 'summary_large_image',
       title,
       description,
-      images: ['/logo.png'],
+      images: ['/logo-full.png'],
     },
   }
 }

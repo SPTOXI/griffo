@@ -439,16 +439,19 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
               <div key={index} className="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
                 <button
                   onClick={() => toggleFaq(index)}
+                  aria-expanded={openFaq === index}
+                  aria-controls={`faq-answer-${index}`}
                   className="w-full p-4 text-left font-bold text-[#0B192E] text-sm flex justify-between items-center hover:bg-slate-50 transition-colors"
                 >
                   <span className="pr-2">{faq.q}</span>
                   <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ${openFaq === index ? 'rotate-180 text-[#0B63E5]' : ''}`} />
                 </button>
-                {openFaq === index && (
-                  <div className="px-4 pb-4 pt-1 text-xs text-slate-600 leading-relaxed border-t border-slate-100">
-                    {faq.a}
-                  </div>
-                )}
+                <div
+                  id={`faq-answer-${index}`}
+                  className={`px-4 pb-4 pt-1 text-xs text-slate-600 leading-relaxed border-t border-slate-100 ${openFaq === index ? '' : 'hidden'}`}
+                >
+                  {faq.a}
+                </div>
               </div>
             ))}
           </div>

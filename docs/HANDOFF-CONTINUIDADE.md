@@ -27,9 +27,9 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 27/08/2026, busca sistêmica por código morto (pedido do operador, sem utilidade atual ou futura): 10 itens removidos em 8 arquivos (toaster/use-toast do Radix nunca montado, funções sem chamador em auth.ts/data-residency.ts/entitlements.ts/analysis, reexports não usados em ai-jobs/ai-router) — ver 2.40 na auditoria |
-| Suíte | 583 testes, `fail 0` — a regra da contagem está na seção 8 |
-| `tsc`, `lint`, `build` | limpos nessa revisão (`npm run build` também rodado, produção compila) |
+| Última revisão | 30/08/2026: auditoria SEO/GEO externa verificada item a item (§2.47) — `x-default` do hreflang, FAQ sem 4 respostas no HTML/JSON-LD dessincronizado da tela, e `og:image` 404 (asset nunca existiu) corrigidos; 2 dos 7 itens do pedido eram alarme falso (hreflang "404" e preço "fixo em BRL" já não procediam) |
+| Suíte | 618 testes, `fail 0` — reverificado após o §2.47; a regra da contagem está na seção 8 |
+| `tsc`, `build` | `tsc --noEmit` limpo após o §2.47; `npm run build` não rerodado nesta revisão — conferir antes de deploy |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |
 
 **Pendências que estão esperando alguém, não código:**
@@ -108,6 +108,14 @@ o quanto confiar nele.
     resquício sem função nenhuma. Não decidido nesta rodada porque
     implementar o filtro é mudança de comportamento, não limpeza — fica
     para o operador escolher entre implementar ou remover a constante.
+11. **Banner 1200×630 para redes sociais não existe no projeto.**
+    Achado no §2.47: `og:image`/`twitter:image` apontavam para um
+    arquivo (`/og-image.jpg`) que nunca existiu em `public/` — trocado
+    por `/logo-full.png` (693×694, a maior imagem real disponível) como
+    stopgap. Falta desenhar um banner de verdade nas proporções
+    corretas (1200×630) e trocar a referência nos três arquivos
+    (`layout.tsx`, `[country]/page.tsx`, `ats/[slug]/page.tsx`) — é
+    trabalho de design, não de código.
 
 **O que NÃO está pendente e parece que está:**
 
