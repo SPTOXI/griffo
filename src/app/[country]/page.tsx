@@ -3,17 +3,11 @@ import { notFound } from 'next/navigation'
 import { MARKETS, GLOBAL_MARKET, marketForCountry, marketById } from '@/lib/market'
 import { countryName, COUNTRIES } from '@/lib/market/countries'
 import { priceFor } from '@/lib/pricing/catalog'
+import { DICTIONARIES } from '@/lib/i18n'
+import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
 import { CountryPageClient } from './country-client'
 
 export const dynamicParams = true
-
-// Todos os mercados suportados diretamente para geração estática (SSG)
-const SUPPORTED_COUNTRY_SLUGS = [
-  'br', 'us', 'pt', 'es', 'mx', 'gb', 'ca', 'de', 'at', 'fr', 'be', 'lu',
-  'it', 'au', 'nz', 'in', 'jp', 'global',
-  'pl', 'cz', 'cl', 'my', 'tr', 'za', 'ae', 'co', 'ar', 'th', 'ro', 'bg',
-  'id', 'ph', 'vn', 'ng', 'eg', 'pk', 'bd', 'ke', 'sg', 'nl', 'ie'
-]
 
 export function generateStaticParams() {
   return SUPPORTED_COUNTRY_SLUGS.map((country) => ({
@@ -145,11 +139,32 @@ export default async function CountryPage({ params }: PageProps) {
     description: `AI Career Intelligence and ATS Optimization (${market.ats.join(', ')}) for ${isGlobal ? 'Global Remote' : countryName(code)}.`,
   }
 
+  // FAQPage no idioma real da rota — o layout raiz não tem como saber qual
+  // país está sendo servido, então não pode declarar isto sem fixar um
+  // idioma para toda a rota-dinâmica. Cada rota país gera a sua própria.
+  const dict = DICTIONARIES[market.jobLanguage] || DICTIONARIES.en
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: ([1, 2, 3, 4, 5] as const).map((n) => ({
+      '@type': 'Question',
+      name: dict.faq[`q${n}` as keyof typeof dict.faq],
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: dict.faq[`a${n}` as keyof typeof dict.faq],
+      },
+    })),
+  }
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(countryJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <CountryPageClient countryCode={effectiveCountry} lang={market.jobLanguage} />
     </>

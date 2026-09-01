@@ -27,8 +27,8 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 30/08/2026: auditoria SEO/GEO externa verificada item a item (§2.47) — `x-default` do hreflang, FAQ sem 4 respostas no HTML/JSON-LD dessincronizado da tela, e `og:image` 404 (asset nunca existiu) corrigidos; 2 dos 7 itens do pedido eram alarme falso (hreflang "404" e preço "fixo em BRL" já não procediam) |
-| Suíte | 618 testes, `fail 0` — reverificado após o §2.47; a regra da contagem está na seção 8 |
+| Última revisão | 30/08/2026: JSON-LD global que vazava português pra `/us /de /jp` corrigido (§2.49), e domínio nu passou a redirecionar por geo-IP pra rota de país certa (§2.50) — pendência 12 abaixo fechada |
+| Suíte | 627 testes, `fail 0` — reverificado após o §2.50 (inclui `middleware.test.ts`, novo); a regra da contagem está na seção 8 |
 | `tsc`, `build` | `tsc --noEmit` limpo após o §2.47; `npm run build` não rerodado nesta revisão — conferir antes de deploy |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |
 
@@ -116,6 +116,16 @@ o quanto confiar nele.
     corretas (1200×630) e trocar a referência nos três arquivos
     (`layout.tsx`, `[country]/page.tsx`, `ats/[slug]/page.tsx`) — é
     trabalho de design, não de código.
+12. ~~Domínio nu (`https://griffo.work/`, sem `/país`) sempre serve
+    português no primeiro HTML~~ — ✅ **resolvido em 30/08/2026**
+    (`src/middleware.ts`, ver §2.50). Redireciona (307) por geo-IP pra
+    rota de país certa, respeitando sessão logada e escolha manual de
+    idioma (cookies `ca_session`/`griffo_lang`), poupando bots/crawlers,
+    e desligável via `GEO_REDIRECT_ENABLED=false` sem reverter commit.
+    `<html lang="pt-BR">` do `layout.tsx` em si continua fixo — mas como
+    o visitante agora chega direto em `/país` (que passa `forcedLang`
+    pro componente certo), na prática deixa de ser alcançado pelo fluxo
+    normal; só afeta quem entra sem cookie/redirect (ex.: bot).
 
 **O que NÃO está pendente e parece que está:**
 

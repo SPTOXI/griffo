@@ -49,6 +49,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     setLangState(newLang)
     if (typeof window !== 'undefined') {
       localStorage.setItem('griffo_lang', newLang)
+      // Também em cookie: é o único dos dois que `middleware.ts` consegue
+      // ler no servidor. Sem isto, uma escolha manual de idioma seria
+      // sobrescrita pelo palpite de geo-IP toda vez que a pessoa voltasse
+      // ao domínio nu (`/`) numa aba/sessão nova.
+      document.cookie = `griffo_lang=${newLang}; path=/; max-age=31536000; samesite=lax`
     }
   }
 

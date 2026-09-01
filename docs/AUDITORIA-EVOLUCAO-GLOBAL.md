@@ -2562,4 +2562,127 @@ compartilhamento social, antes do clique. `twitter.description` (que já
 
 `tsc --noEmit` limpo.
 
+## 2.49 Regra reafirmada pelo operador: nada fixo em português, nem em código "global" — JSON-LD raiz vazava PT para todo idioma
+
+Operador perguntou se as correções do §2.47/§2.48 valiam para os 12
+idiomas. Resposta honesta expôs um problema real: o JSON-LD injetado em
+`layout.tsx` (`<script type="application/ld+json">` fora do sistema de
+`metadata`, que por isso NUNCA é sobrescrito por `generateMetadata` de
+rota-filha) tinha `FAQPage` com 5 perguntas em português, e o
+`WebSite.description` com o slogan novo do §2.48 — os dois presentes
+**identicamente em `/us`, `/de`, `/jp` e qualquer outra rota**, porque o
+layout raiz roda em toda requisição, independente do país/idioma da URL.
+
+Operador reagiu com uma regra que já valia antes (reescrita de
+currículo) e está sendo reafirmada de forma ampla: **nada no produto
+pode ficar fixo em português** — nem UI, nem conteúdo gerado por IA, nem
+dado estruturado invisível como este. Registrado como memória
+permanente (`feedback_no_hardcoded_portuguese`), porque é a segunda vez
+que a regra precisa ser repetida.
+
+**Corrigido:**
+- `FAQPage` removida do `@graph` global de `layout.tsx`. Cada rota país
+  agora gera a própria, em `[country]/page.tsx`, montada dinamicamente a
+  partir de `DICTIONARIES[market.jobLanguage].faq` — sem texto
+  hardcoded, sempre no idioma real da rota. Verificado com `curl` real:
+  `/us` gera perguntas em inglês, `/de` em alemão, `/br` continua em
+  português — cada um batendo com o FAQ visível na própria página.
+- `WebSite.description` (o slogan do §2.48) removida do JSON-LD global —
+  não tinha como ficar correta em todo idioma sem virar per-request.
+- `SoftwareApplication.description`/`featureList` do JSON-LD global
+  (que também eram fixos em português, achado no mesmo apanhado)
+  traduzidos para inglês — não por ser "o idioma certo" para todo mundo,
+  mas por já ser a língua franca escolhida pelo próprio `offers.description`
+  desse mesmo objeto ("Free executive resume preview..."), que sempre
+  esteve em inglês. Português nunca é o fallback neutro aceitável aqui.
+
+**Não corrigido, registrado como pendência aberta (arquitetural, não
+uma linha de texto):** o domínio nu `https://griffo.work/` (sem
+segmento de país) não tem detecção de idioma no servidor —
+`src/app/page.tsx` é client component sem `forcedLang`, então o
+primeiro HTML (SSR) sempre sai em português (`lang = forcedLang ||
+contextLang || 'pt'` em `landing.tsx`), e `<html lang="pt-BR">` do
+`layout.tsx` nunca muda por requisição. Corrigir de verdade exige uma
+decisão de arquitetura — redirecionamento por geo-IP no
+`src/middleware.ts` para a rota `/país` certa, ou cookie de idioma lido
+via `next/headers()` no layout raiz — e `middleware.ts` é arquivo de
+segurança (rate limit, CSRF); não alterado sem decisão explícita do
+operador sobre qual caminho seguir. Ficou fora desta rodada de
+propósito, não por descuido.
+
+`curl` real em `/us`, `/de`, `/br` confirmando o idioma correto no
+JSON-LD; `tsc --noEmit` limpo; `npm test` 618/618.
+
+## 2.50 Domínio nu passa a redirecionar por geo-IP — a pendência aberta no §2.49 fechada
+
+Operador pediu "solução automática para que o usuário não tenha sua
+experiência prejudicada" — resposta à pendência 12 do HANDOFF (o
+domínio nu sempre servia SSR em português, sem detectar país).
+
+**Decisão de arquitetura, e por quê:** entre redirecionar por geo-IP
+(URL muda) e usar cookie de idioma na mesma URL (layout raiz lê
+`headers()`/`cookies()`), foi escolhido o redirect. Motivo decisivo:
+ler cookie no layout raiz obrigaria TODA a árvore de rotas — inclusive
+as 40 rotas de país que acabaram de ganhar SSG no §2.43 — a virar
+dinâmica por requisição, regredindo silenciosamente uma otimização
+recente. Redirect fica isolado no `middleware.ts`, sem esse efeito
+colateral.
+
+**Implementado em `src/middleware.ts`** (`handleBareDomain`,
+`geoRedirectTarget`, `isGeoRedirectEnabled`, todos exportados e
+testados):
+- Dispara só no caminho exato `/`, método GET — nenhuma outra rota
+  (`/br`, `/global`, `/api/*`) casa com esse matcher, o que elimina por
+  construção qualquer risco de loop de redirecionamento.
+- País lido por `edgeCountry()` (extraída de `lib/pricing/resolve.ts`
+  para `lib/pricing/edge-country.ts`, SEM `import 'server-only'` — o
+  pacote `server-only` derruba qualquer teste rodado fora do pipeline de
+  build do Next porque a condição que ele verifica não existe em
+  execução via `tsx`; `resolve.ts` mantém `server-only` só nas funções
+  que de fato não podem vazar pro client). Mesma fonte de país que já
+  decide preço e que já teve um incidente registrado (`cf-ipcountry`
+  antes de `x-vercel-ip-country`, por causa do proxy do Cloudflare) —
+  reaproveitada, não duplicada.
+- País com rota própria (`SUPPORTED_COUNTRY_SLUGS`, extraída de
+  `[country]/page.tsx` para `lib/market/supported-slugs.ts` pelo mesmo
+  motivo de reuso) vira o destino; sem cobertura ou sem cabeçalho de
+  país cai em `/global` — mesma escolha já feita para o `x-default` do
+  hreflang no §2.47.
+- Três guardas para não prejudicar quem já tem contexto: cookie de
+  sessão (`ca_session`) presente pula o redirect (usuário logado troca
+  de tela sozinho ao hidratar, independente da rota); cookie
+  `griffo_lang` presente pula o redirect (escolha manual de idioma nunca
+  é sobrescrita por palpite de geo-IP — `i18n-context.tsx` passou a
+  gravar esse cookie além do `localStorage` só quando a pessoa troca de
+  idioma pelo seletor); User-Agent de bot/crawler conhecido
+  (Googlebot, GPTBot, ClaudeBot, PerplexityBot, geradores de preview de
+  redes sociais) pula o redirect — é a mitigação padrão pra
+  desaconselhamento do próprio Google contra prender rastreamento numa
+  única localidade por geo-IP.
+- Redirect é 307 (temporário), nunca 301/308 — o destino pode mudar
+  (VPN, viagem, ou a própria lista de países suportados), e um
+  permanente ficaria cacheado no navegador sobrevivendo a qualquer
+  correção futura.
+- Interruptor `GEO_REDIRECT_ENABLED`, mas ao contrário do
+  `RADAR_DIGEST_ENABLED` (que vem desligado até revisão de conteúdo):
+  este vem **ligado por padrão** — é o comportamento pedido, não uma
+  feature aguardando aprovação. `GEO_REDIRECT_ENABLED=false` desliga em
+  produção sem reverter commit, se algo se comportar mal.
+- Cada redirecionamento real grava `console.log` estruturado (país
+  detectado, destino) — aparece nos Runtime Logs da Vercel, para
+  observar o comportamento logo após o deploy sem precisar esperar dias
+  pelo Search Console.
+
+**Verificado com `curl` real** (não só teste unitário) contra
+`next dev`: sem cabeçalho de país → `/global`; `cf-ipcountry: DE` →
+`/de`; `cf-ipcountry: BR` → `/br`; User-Agent de Googlebot → `200` sem
+redirecionar; cookie `ca_session` → `200` sem redirecionar; cookie
+`griffo_lang` → `200` sem redirecionar; acesso direto a `/de` → `200`
+sem loop.
+
+Teste novo `src/middleware.test.ts` (9 casos, primeiro teste direto do
+`middleware.ts` no projeto) cobrindo os mesmos cenários de forma
+determinística. `tsc --noEmit` e `eslint` limpos nos arquivos tocados.
+`npm test`: 627/627 (618 + 9 novos).
+
 

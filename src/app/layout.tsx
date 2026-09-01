@@ -103,7 +103,6 @@ const jsonLd = {
       "@id": "https://griffo.work/#website",
       "url": "https://griffo.work",
       "name": "GriffoWork",
-      "description": "Do perfil social à vaga certa: audite, alinhe e conquiste sua carreira com a Griffo IA. Laudo de currículo por IA em 8 dimensões e Radar de Vagas.",
       "inLanguage": ["pt-BR", "en-US", "es-ES", "de-DE", "fr-FR", "it-IT", "ja-JP", "nl-NL", "sv-SE", "zh-CN", "ar-AE", "ko-KR"]
     },
     {
@@ -133,63 +132,23 @@ const jsonLd = {
         "priceCurrency": "USD",
         "description": "Free executive resume preview and AI career intelligence audit"
       },
-      "description": "Laudo profissional de currículo por IA em 8 dimensões executivas, otimização de ATS e presença profissional global.",
+      "description": "AI-powered resume audit across 8 executive dimensions, ATS optimization, and global professional presence.",
       "featureList": [
-        "Diagnóstico de ATS para Workday, Taleo, Greenhouse, Lever e Gupy",
-        "Análise em 8 dimensões executivas",
-        "Reescrita e orientação de carreira por IA",
-        "Otimização de presença social no LinkedIn e GitHub",
-        "Radar inteligente de vagas e compatibilidade"
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "@id": "https://griffo.work/#faq",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "Como funciona a verificação de compatibilidade com sistemas ATS (Gupy, Workday, Taleo)?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Nossa inteligência avalia a estrutura, legibilidade de seções, hierarquia de cabeçalhos e densidade de termos técnicos do seu documento segundo os critérios dos principais sistemas de triagem utilizados por grandes empresas."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "A IA inventa informações ou experiências no meu currículo?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Não. O GriffoWork segue uma diretriz rígida de veracidade: mantemos 100% das suas empresas, cargos, datas e formação reais. A IA reestrutura a escrita para valorizar suas conquistas reais com o máximo de clareza e impacto."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Como funciona a otimização de perfis (LinkedIn, GitHub, Behance)?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Se você fornecer os links dos seus perfis com sua autorização, geramos títulos otimizados (Headlines), resumos estratégicos e sugestões de posicionamento para atrair mais recrutadores no seu mercado."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Meus dados e meu currículo estão seguros?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Totalmente. Trabalhamos em conformidade rigorosa com a LGPD e GDPR. Seus dados são criptografados e nunca são compartilhados ou comercializados com terceiros."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Preciso assinar alguma coisa ou pagar mensalidade?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Não. Você paga uma única vez pela Análise Completa daquele currículo e recebe todas as entregas. Não há mensalidade, renovação automática nem saldo para administrar — transparência total."
-          }
-        }
+        "ATS diagnostics for Workday, Taleo, Greenhouse, Lever and Gupy",
+        "Audit across 8 executive dimensions",
+        "AI-powered resume rewrite and career orientation",
+        "Social presence optimization on LinkedIn and GitHub",
+        "Smart job radar and compatibility matching"
       ]
     }
   ]
 };
+
+// FAQPage removida daqui de propósito: este layout raiz é comum a TODAS as
+// rotas/idiomas, e o schema.org exige que o FAQPage descreva o texto
+// visível na própria página. Uma pergunta fixa em português nesta posição
+// vazava para /us, /de, /jp etc. — cada rota país gera a sua própria
+// FAQPage no idioma correto em `[country]/page.tsx`.
 
 export default function RootLayout({
   children,

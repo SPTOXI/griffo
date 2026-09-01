@@ -2,7 +2,64 @@ import { NextResponse } from 'next/server'
 import { clientIpFrom } from '@/lib/request-ip'
 import { matchRule, type RateRule } from '@/lib/rate-rules'
 import { validateSameOrigin } from '@/lib/csrf-guard'
+import { edgeCountry } from '@/lib/pricing/edge-country'
+import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
 import type { NextRequest } from 'next/server'
+
+/**
+ * Redirecionamento do domínio nu (`/`) para a rota de país certa.
+ *
+ * Por quê: `/` é renderizado por um client component sem detecção de
+ * idioma no servidor (`src/app/page.tsx`) — sem isto, todo visitante novo
+ * via domínio nu recebe SSR em português, seja qual for o país dele. Ver
+ * `feedback_no_hardcoded_portuguese` e §2.49 da auditoria.
+ *
+ * Três guardas para não prejudicar quem já tem uma preferência ou não é
+ * gente navegando:
+ * - `ca_session` presente: usuário logado. A tela muda para o app de
+ *   qualquer jeito assim que hidrata, independente da rota — redirecionar
+ *   só atrasaria a experiência dele.
+ * - `griffo_lang` presente: idioma escolhido manualmente pelo seletor
+ *   (`i18n-context.tsx` grava este cookie além do `localStorage`). Uma
+ *   escolha explícita nunca é sobrescrita por um palpite de geo-IP.
+ * - User-Agent de bot/crawler conhecido: motor de busca, gerador de
+ *   preview de compartilhamento (redes sociais) e bots de IA sempre veem
+ *   o domínio nu tal como é — é o que `hreflang`/`x-default` já declaram
+ *   como a versão de referência, e Google desaconselha explicitamente
+ *   prender o rastreamento a uma única localidade por geo-IP.
+ *
+ * Interruptor: `GEO_REDIRECT_ENABLED=false` desliga sem precisar reverter
+ * commit — mesmo padrão do `RADAR_DIGEST_ENABLED` em `lib/env.ts`, só que
+ * este vem LIGADO por padrão (é o comportamento pedido, não uma feature
+ * aguardando revisão de conteúdo).
+ */
+const BOT_USER_AGENT = /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|telegrambot|linkedinbot|slackbot|discordbot|embedly|preview|GPTBot|ClaudeBot|Claude-Web|PerplexityBot|ChatGPT-User|Applebot|ia_archiver/i
+
+export function isGeoRedirectEnabled(): boolean {
+  return (process.env.GEO_REDIRECT_ENABLED ?? 'true').trim().toLowerCase() !== 'false'
+}
+
+export function geoRedirectTarget(req: NextRequest): string {
+  const country = edgeCountry(req).toLowerCase()
+  return country && SUPPORTED_COUNTRY_SLUGS.includes(country) ? country : 'global'
+}
+
+export function handleBareDomain(req: NextRequest): Response | null {
+  if (req.nextUrl.pathname !== '/' || req.method !== 'GET') return null
+  if (!isGeoRedirectEnabled()) return null
+  if (req.cookies.get('ca_session')) return null
+  if (req.cookies.get('griffo_lang')) return null
+  if (BOT_USER_AGENT.test(req.headers.get('user-agent') || '')) return null
+
+  const slug = geoRedirectTarget(req)
+  // Observabilidade proposital: aparece nos Runtime Logs da Vercel.
+  console.log(JSON.stringify({ event: 'geo_redirect', country: edgeCountry(req) || null, slug }))
+
+  // 307: temporário. O destino pode mudar (VPN, viagem, ou a própria lista
+  // de países suportados) — um 301 ficaria cacheado no navegador para
+  // sempre, sobrevivendo a qualquer correção futura.
+  return NextResponse.redirect(new URL(`/${slug}`, req.url), 307)
+}
 
 /**
  * Rate limiting por IP nas rotas sensíveis.
@@ -129,6 +186,12 @@ function check(key: string, rule: Rule): { allowed: boolean; retryAfterSec: numb
 export function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname
 
+  // 0. Domínio nu sem país na URL: manda para a rota certa antes de
+  // qualquer outra checagem (CSRF/rate-limit não fazem sentido para uma
+  // navegação GET de página, e nenhuma regra abaixo casa com "/" mesmo).
+  const bareDomainRedirect = handleBareDomain(req)
+  if (bareDomainRedirect) return bareDomainRedirect
+
   // 1. Defesa em profundidade contra CSRF para todas as mutações de estado (POST, PUT, PATCH, DELETE)
   const isOriginAllowed = validateSameOrigin({
     method: req.method,
@@ -160,6 +223,12 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    // Domínio nu — único caminho de página no matcher, de propósito: evita
+    // que o middleware rode (e o CSRF/rate-limit sejam avaliados à toa) em
+    // toda navegação do site, e elimina por construção qualquer risco de
+    // loop de redirecionamento — nenhuma rota de destino (`/br`, `/global`,
+    // `/api/*`) é "/", então nenhuma delas casa com este matcher de novo.
+    '/',
     '/api/auth/:path*',
     '/api/resume/:path*',
     '/api/support/:path*',
