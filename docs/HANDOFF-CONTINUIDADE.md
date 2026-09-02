@@ -27,9 +27,9 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 01/09/2026: fase 1 do índice de temperatura de contratação por país (§2.51) — `LaborMarketPoint` no esquema, conectores reais do BLS JOLTS e do Eurostat, classificação de fase por curva própria de cada país. Sem tela, sem cron, sem tradução: é fase 2 (pendência 14) |
-| Suíte | 684 testes, `fail 0` — reverificado após o §2.51 (627 + 57 novos em `src/lib/hiring-index/`); a regra da contagem está na seção 8 |
-| `tsc`, `build` | `tsc --noEmit` e `eslint` limpos após o §2.51; `npm run build` não rerodado nesta revisão — conferir antes de deploy |
+| Última revisão | 02/09/2026: fase 2 do índice de temperatura de contratação (§2.52) — bloco `hiringIndex` nos 12 dicionários, cartão no laudo pago, rota `/api/hiring-index/[country]` e cron próprio `/api/cron/hiring-index` — seguida de revisão de código (§2.53) que corrigiu 3 bugs reais em `phase.ts` (o mais sério: buraco de calendário na série podia inverter a fase classificada em silêncio) e 2 duplicações. Faltam da pendência 14: (d) ILOSTAT/CEPALSTAT e (e) agregação por continente. O cron **não** está agendado no `vercel.json` — é decisão de plataforma, ver o TODO no cabeçalho da rota |
+| Suíte | 737 testes, `fail 0` — reverificado após o §2.53 (729 + 8 novos); a regra da contagem está na seção 8 |
+| `tsc`, `build` | `tsc --noEmit` e `eslint` limpos após o §2.53; `npm run build` não rerodado nesta revisão — conferir antes de deploy |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent`, `RadarAlert.notifiedAt` — ver 7.6 — e `LaborMarketPoint` do §2.51, empurrado em 01/09/2026) |
 
 **Pendências que estão esperando alguém, não código:**
@@ -136,26 +136,40 @@ o quanto confiar nele.
     só pelo log do script — a linha mais recente dos EUA bateu com o valor
     (`4.4`), o período (jul/2026) e a nota de rodapé (`P`, preliminar) vistos
     na resposta real da API no §2.51.
-14. **Fase 2 do índice de temperatura de contratação.** A fase 1 (§2.51)
-    entregou de propósito só o miolo. Falta, em ordem de dependência:
-    (a) **texto traduzido nos 12 idiomas** para os rótulos das fases
-    (`cooling`, `bottoming_out`, `recovering`, `heating_up`, `stable`) e para
-    o estado "dado insuficiente" — hoje NÃO existe uma única string de tela,
-    e é assim que a regra do §2.49 é respeitada; (b) **tela**, no laudo e/ou
-    no Radar; (c) **ligação no `/api/cron/radar`**, com orçamento de tempo
-    próprio como as fontes de vaga têm; (d) **conectores ILOSTAT e
-    CEPALSTAT**, que trazem o resto do mundo e a América Latina — e que
-    entram com `confidence: 'low'`, porque taxa de desemprego em economia
-    com setor informal grande conta quem trabalha informalmente como
-    "empregado", sem contratação formal nenhuma por trás; a coluna já aceita
-    isso desde a fase 1; (e) **agregação por continente**, que precisa
-    responder antes como se agrega uma série que o §2.51 diz não ser
-    comparável entre países (a resposta provável é agregar as *fases*, não
-    os valores).
+14. **Fase 2 do índice de temperatura de contratação** — ✅ **(a), (b) e (c)
+    resolvidos em 02/09/2026** (§2.52). (d) e (e) continuam abertos.
 
-    Ordem sugerida: (a) e (b) juntos, com as duas fontes que já existem,
-    antes de acrescentar fonte nova — é melhor descobrir que a tela não
-    convence com 30 países do que com 200.
+    - (a) ~~texto traduzido nos 12 idiomas para os rótulos das fases e para o
+      estado "dado insuficiente"~~ — feito: bloco `hiringIndex` em
+      `i18n/types.ts` e nos 12 locais, 22 chaves cada, 100% de paridade no
+      `scripts/sync-i18n.ts`. Nome de instituição (`Eurostat`, `BLS`) fica
+      FORA do dicionário de propósito — é nome próprio; nome de país sai de
+      `Intl.DisplayNames` no idioma ativo.
+    - (b) ~~tela~~ — feito: `components/app/hiring-index-card.tsx` no laudo
+      pago, acima do parecer executivo, com mercado-alvo vindo do
+      `primaryMarket` (recuo: `residenceCountry`). Regra do componente: ele
+      **nunca some**. Quatro desfechos com texto próprio — fase, coberto sem
+      histórico, sem cobertura, e falha de consulta.
+    - (c) ~~ligação no cron~~ — feito, mas **não** dentro do
+      `/api/cron/radar`: virou `/api/cron/hiring-index`, rota separada com
+      autenticação idêntica (`CRON_SECRET`). O Radar tem orçamento de 12s por
+      fonte dentro de 60s já divididos com o digest, e estatística oficial
+      publicada por mês/trimestre não tem por que disputar tempo com coleta
+      de vaga, que é diária. A lógica é compartilhada com o script manual em
+      `lib/hiring-index/collect.ts`. **Pendência de plataforma que sobrou
+      daqui:** o agendamento no `vercel.json` NÃO foi declarado — a conta é
+      Hobby, já tem dois crons, e qual dia/hora custa invocação e é decisão
+      do operador. A rota funciona e responde a `Bearer $CRON_SECRET`; o TODO
+      está no cabeçalho dela.
+    - (d) **conectores ILOSTAT e CEPALSTAT**, que trazem o resto do mundo e a
+      América Latina — e que entram com `confidence: 'low'`, porque taxa de
+      desemprego em economia com setor informal grande conta quem trabalha
+      informalmente como "empregado", sem contratação formal nenhuma por
+      trás; a coluna já aceita isso desde a fase 1, e `lookup.ts` já escolhe
+      entre séries de fontes diferentes sem emendá-las.
+    - (e) **agregação por continente**, que precisa responder antes como se
+      agrega uma série que o §2.51 diz não ser comparável entre países (a
+      resposta provável é agregar as *fases*, não os valores).
 
 **O que NÃO está pendente e parece que está:**
 

@@ -29,6 +29,7 @@ import { SocialAnalysisPanel, type SocialAnalysis } from './social-analysis-pane
 import { internalFetch } from '@/lib/internal-fetch'
 import { notifyBalanceChanged } from '@/hooks/use-analyses'
 import { AnalysisPaywall } from './analysis-paywall'
+import { HiringIndexCard, targetMarketOf } from './hiring-index-card'
 import { RepurchaseUpsell } from './repurchase-upsell'
 import { toast } from 'sonner'
 
@@ -348,6 +349,32 @@ export function AnalysisView() {
     autoTriggeredRef.current[resume.id] = true
     void reanalyze(resume)
   }, [resume])
+
+  /**
+   * O mercado-alvo, para o índice de temperatura de contratação (§2.52).
+   *
+   * Sai do Perfil Profissional pela rota que já existe — a mesma que
+   * `professional-profile-view.tsx` e `profile-conflict-prompt.tsx` usam. Sem
+   * mercado declarado e sem país de residência não há país sobre o qual dizer
+   * nada, e aí o cartão não é montado: é o único caso em que ele não aparece.
+   * Falha de rede também deixa `null`, pelo mesmo motivo — inventar um país
+   * padrão daria ao usuário a leitura de um mercado que não é o dele.
+   */
+  const [targetMarket, setTargetMarket] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    internalFetch('/api/user/professional-profile', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!alive || !data) return
+        setTargetMarket(targetMarketOf(data.profile))
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
 
 
   if (loading) {
@@ -899,6 +926,14 @@ export function AnalysisView() {
           </CardContent>
         </Card>
       </div>
+
+      {/* TEMPERATURA DE CONTRATAÇÃO DO MERCADO-ALVO (§2.52)
+
+          Só não aparece quando não há mercado declarado nem país de residência
+          no perfil — sem país não há o que dizer. Com país, aparece SEMPRE,
+          inclusive para dizer que não há dado: um widget que some quando falta
+          dado parece defeito. */}
+      {targetMarket && <HiringIndexCard country={targetMarket} />}
 
       {/* ANÁLISE DO PERFIL & VEREDITO EXECUTIVO */}
       <Card className="border-blue-200 bg-gradient-to-br from-white via-blue-50/20 to-slate-50 shadow-sm">

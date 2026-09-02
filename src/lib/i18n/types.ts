@@ -914,4 +914,48 @@ export interface TranslationDictionary {
     keywordsTitle: string
     footerNote: string
   }
+  /**
+   * Índice de temperatura de contratação (§2.51, §2.52).
+   *
+   * Os identificadores das fases (`cooling`, `heating_up`, ...) são chave de
+   * código, persistida e comparada — NUNCA texto de tela. Este bloco é o único
+   * lugar de onde sai o que o usuário lê, e existe nos 12 idiomas desde o
+   * primeiro dia da tela, não como tradução retroativa.
+   *
+   * `insufficientLabel`/`insufficientDesc` e `notCoveredDesc` não são estados
+   * de erro: são a resposta honesta quando a série do país não permite
+   * classificar, ou quando não há fonte oficial cobrindo aquele país. A tela
+   * mostra o texto em vez de sumir — sumir pareceria defeito, e inventar uma
+   * fase seria pior.
+   */
+  hiringIndex: {
+    title: string
+    /** Uma linha, sem jargão, sobre o que o indicador é. */
+    description: string
+    /** `{country}` = nome do país. */
+    marketLabel: string
+    phaseCooling: string
+    phaseCoolingHint: string
+    phaseBottomingOut: string
+    phaseBottomingOutHint: string
+    phaseRecovering: string
+    phaseRecoveringHint: string
+    phaseHeatingUp: string
+    phaseHeatingUpHint: string
+    phaseStable: string
+    phaseStableHint: string
+    insufficientLabel: string
+    insufficientDesc: string
+    notCoveredDesc: string
+    /** Aviso de impressão preliminar — ver `revised` em `LaborMarketPoint`. */
+    preliminaryNote: string
+    /** `{source}` = nome próprio da fonte, não traduzido. */
+    sourceLabel: string
+    /** `{period}` = período mais recente já formatado. */
+    periodLabel: string
+    /** Por que não existe comparação entre países aqui. */
+    comparisonNote: string
+    loading: string
+    unavailable: string
+  }
 }

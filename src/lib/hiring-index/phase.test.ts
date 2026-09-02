@@ -124,6 +124,63 @@ test('quebra recente demais devolve "não sei", com o motivo certo', () => {
   assert.equal(r.pointsUsed, 2)
 })
 
+test('QUEBRA NO PONTO MAIS ANTIGO NÃO SE CONFUNDE COM "NENHUMA QUEBRA"', () => {
+  // Índice 0 é ao mesmo tempo "o primeiro ponto" e, quando ele é a quebra, um
+  // resultado real — não o mesmo `0` que apareceria se não houvesse quebra
+  // nenhuma. Um sentinela que não distingue os dois casos rotula errado o
+  // motivo de "não sei", mesmo com o resultado (`phase: null`) já correto.
+  const pontos = serie([3.0, 3.1, 3.2])
+  pontos[0].seriesBreak = true
+
+  const r = classifyHiringPhase(pontos)
+  assert.equal(r.phase, null)
+  assert.equal(r.insufficientDataReason, 'series_break_too_recent')
+})
+
+// ---------------------------------------------------------------------------
+// Buraco de calendário não declarado
+// ---------------------------------------------------------------------------
+
+test('UM TRIMESTRE FALTANDO NÃO VIRA "VIZINHO" DO SEGUINTE', () => {
+  // O Eurostat falta trimestre de país de vez em quando, sem marcar quebra de
+  // série nenhuma (ver o cabeçalho de connectors/eurostat.ts). Sem detectar o
+  // buraco, a média móvel somaria os dois lados como se fossem consecutivos —
+  // e uma queda forte seguida de um salto de recuperação, com um buraco no
+  // meio, pareceria uma queda suave contínua.
+  const trimestral = (valores: number[], skipIndex: number): HiringSeriesPoint[] =>
+    valores
+      .map((value, i) => ({ period: new Date(Date.UTC(2020, i * 3, 1)), value }))
+      .filter((_, i) => i !== skipIndex)
+
+  // Sem buraco: queda de 5.0 a 3.0 em 4 trimestres é ESFRIANDO.
+  const semBuraco = classifyHiringPhase(serie([5.0, 4.5, 4.0, 3.5, 3.0, 2.8, 2.7, 2.6]))
+  assert.equal(semBuraco.phase, 'cooling')
+
+  // Mesmos 8 pontos, menos um no meio (o 3º trimestre, índice 2): sobram 7,
+  // ainda acima do mínimo — mas agora com um buraco de 2 trimestres no meio.
+  const comBuraco = classifyHiringPhase(trimestral([5.0, 4.5, 4.0, 3.5, 3.0, 2.8, 2.7, 2.6], 2))
+  // O buraco cai bem no início da série recortada por ele mesmo — sobra menos
+  // que o mínimo depois de descartar o lado de trás do buraco.
+  assert.equal(comBuraco.phase, null)
+  assert.equal(comBuraco.insufficientDataReason, 'irregular_series')
+})
+
+test('buraco no COMEÇO da série não atrapalha nada — só o trecho depois dele importa', () => {
+  const trimestral = (valores: number[]): HiringSeriesPoint[] =>
+    valores.map((value, i) => ({ period: new Date(Date.UTC(2020, i * 3, 1)), value }))
+
+  // Um ponto isolado, MUITO antes do resto (buraco de anos, não de um
+  // trimestre) — a série real, regular, começa depois e sozinha já basta.
+  const isolado = { period: new Date(Date.UTC(2010, 0, 1)), value: 99 }
+  const pontos = [isolado, ...trimestral([5.0, 4.8, 4.6, 4.4, 4.2, 4.0, 3.8])]
+
+  const r = classifyHiringPhase(pontos)
+  assert.equal(r.phase, 'cooling')
+  assert.equal(r.pointsUsed, 7)
+  // O 99 isolado não pode ter virado o topo da série.
+  assert.ok(Math.max(...r.movingAverage.map((p) => p.value)) < 6)
+})
+
 // ---------------------------------------------------------------------------
 // Preliminar, revisão e confiança
 // ---------------------------------------------------------------------------
@@ -188,6 +245,21 @@ test('UM SÓ PONTO DE BAIXA CONFIANÇA REBAIXA A ANÁLISE INTEIRA', () => {
   assert.equal(r.phase, 'cooling')
 
   assert.equal(classifyHiringPhase(serie([5.0, 4.8, 4.6, 4.4, 4.2, 4.0])).confidence, 'high')
+})
+
+test('CONFIANÇA DESCREVE O QUE A ANÁLISE USA, NÃO O QUE FOI DESCARTADO', () => {
+  // Um ponto de baixa confiança bem antigo, seguido de uma quebra de série e
+  // depois de dados limpos: a confiança tem que refletir só o trecho que
+  // sobrevive ao corte da quebra. Calculá-la sobre a série inteira (antes do
+  // corte) rebaixaria uma análise que, de fato, é toda de alta confiança.
+  const pontos = serie([9.9, 1.0, 1.0, 1.0, 5.0, 4.8, 4.6, 4.4, 4.2, 4.0])
+  pontos[0].confidence = 'low'
+  pontos[4].seriesBreak = true
+
+  const r = classifyHiringPhase(pontos)
+  assert.equal(r.pointsUsed, 6)
+  assert.equal(r.confidence, 'high')
+  assert.equal(r.phase, 'cooling')
 })
 
 // ---------------------------------------------------------------------------

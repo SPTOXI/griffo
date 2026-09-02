@@ -2816,3 +2816,237 @@ dos payloads reais como fixture — nenhum toca a rede. `tsc --noEmit` e
 `/api/cron/radar`, conectores ILOSTAT e CEPALSTAT, texto traduzido nos
 12 idiomas e agregação por continente. E o `npx prisma db push` do
 `LaborMarketPoint` ainda não foi rodado — ver a pendência 13 do HANDOFF.
+
+## 2.52 Índice de temperatura de contratação — fase 2: os 12 idiomas, a tela no laudo pago e um cron próprio
+
+Continuação direta do §2.51, na ordem que a pendência 14 do HANDOFF já
+tinha combinado: (a) tradução, (b) tela e (c) cron — **com as duas
+fontes que já existem**, antes de acrescentar fonte nova. É melhor
+descobrir que a tela não convence com 30 países do que com 200.
+ILOSTAT, CEPALSTAT e agregação por continente continuam fora, de
+propósito.
+
+**(a) O dicionário veio primeiro, e não por capricho de ordem.** A fase
+1 terminou sem uma única string de tela — os identificadores
+(`cooling`, `heating_up`) são chave de código, persistida e comparada.
+O bloco `hiringIndex` entrou nos 12 dicionários junto com a declaração
+em `i18n/types.ts`: 22 chaves por idioma, com rótulo e uma linha de
+explicação por fase, mais os estados sem classificação. Nenhum idioma
+entrou como tradução retroativa, que é como a dívida do §2.49 nasceu da
+primeira vez. `scripts/sync-i18n.ts`: 875/875 chaves, 100% de paridade
+nos 12.
+
+Duas coisas ficaram **fora** do dicionário, e isso é decisão, não
+esquecimento. O nome do órgão de estatística (`Eurostat`,
+`U.S. Bureau of Labor Statistics (JOLTS)`) é nome próprio: traduzi-lo
+inventaria uma entidade que não existe. Só o rótulo que o envolve
+(`Fonte: {source}`) é traduzido. E o nome do país sai de
+`Intl.DisplayNames` com o locale ativo — `lib/market/countries.ts` está
+em português por ser lista de formulário, e usá-la aqui colocaria
+português dentro das outras 11 telas.
+
+**(b) A tela mora no laudo pago, logo acima do parecer executivo.** O
+mercado-alvo sai do Perfil Profissional (`primaryMarket`, com
+`residenceCountry` de recuo — mesma ordem do `marketInputFrom` em
+`lib/profile`), lido pela rota que já existia; nenhum caminho novo de
+busca de perfil foi inventado. Nenhum país é tratado de forma especial:
+não há mercado padrão, e sem mercado nem residência declarados o cartão
+simplesmente não é montado — não há país sobre o qual dizer nada.
+
+A regra do componente é que **ele nunca fica vazio**. Não existe
+renderização condicional que o faça sumir quando falta dado: sumir
+parece defeito, e o silêncio deixaria a pessoa achando que a tela
+quebrou. Os quatro desfechos têm texto próprio, e são quatro porque as
+frases são diferentes:
+
+- fase classificada — rótulo traduzido, cor e ícone (`cooling`
+  vermelho, `heating_up` verde, `stable` cinza; mesma linguagem visual
+  do bloco de aderência à vaga, não um sistema de design novo);
+- **coberto sem histórico bastante** (`covered && phase === null`) —
+  "a série oficial deste país ainda não tem histórico suficiente";
+- **sem cobertura nenhuma** (`!covered`) — "nenhuma fonte oficial de
+  estatística do trabalho cobre este país no nosso índice hoje". O
+  índice cobre 30 países e o mundo tem quase 200; mesmo princípio de
+  `lib/market/countries.ts`, que prefere admitir que não há convenção
+  de currículo para um país a fingir cobertura;
+- **falha de consulta** — "não foi possível consultar o indicador
+  agora". Trocar isto por "sem dado para este país" seria afirmar algo
+  que não se sabe. Pelo mesmo motivo a rota responde 500 quando o banco
+  falha, em vez de devolver `covered: false`.
+
+A fonte aparece em toda leitura com série, sem tooltip nem "saiba
+mais". E quando a janela final ainda tem impressão preliminar, o aviso
+de revisão vem junto e **antes** da linha de fonte — é a ressalva que
+muda como o número deve ser lido, pelo motivo do §2.51 (a revisão da
+segunda divulgação do JOLTS vale ~180 mil vagas em média).
+
+**O quarto desfecho foi consertado por causa da conferência visual, não
+do teste.** O print mostrou o cartão de falha de rede exibindo o selo
+"Dado insuficiente" — uma afirmação sobre a série do país feita quando
+a requisição nem chegou. O selo deixou de existir nesse estado, e o
+teste que trava isso foi escrito depois de ver o defeito, não antes.
+
+`lookup.ts` é puro e testável; `lookup.server.ts` é um `findMany` e
+nada mais. A separação é a mesma de `phase.ts` versus script: `lib/db`
+carrega `server-only`, cujo `index.js` é um `throw`, e qualquer teste
+rodado por `tsx` que o importe morre no import. Pelo mesmo motivo o
+componente foi partido em `HiringIndexCard` (busca) e
+`HiringIndexCardView` (desenho): um componente que busca no `useEffect`
+não renderiza nenhum dos seus desfechos sob `renderToStaticMarkup`, e o
+desfecho é justamente o que precisa de trava.
+
+**A consulta traz TODAS as linhas do país, e escolhe a série depois.**
+Hoje cada país tem uma fonte só, mas a chave única sempre foi
+`country + source + metric + period`, e a fase 3 traz ILOSTAT com OUTRA
+métrica para países já cobertos. Um `where` que assumisse uma linha por
+país passaria a emendar duas medições diferentes na mesma série no dia
+em que a terceira fonte entrasse — o degrau artificial que `types.ts`
+proíbe. O critério (mais pontos; empate desempata por confiança e
+depois pelo período mais recente) fica em `lookup.ts`, onde o teste
+alcança, e não numa cláusula `where` onde nenhum teste chega.
+
+**(c) O cron é separado do Radar, e o agendamento NÃO foi decidido
+aqui.** `/api/cron/radar` tem teto de 12s por fonte dentro dos 60s que
+já divide com o digest; enfiar duas APIs de estatística ali faria a
+coleta de vagas — diária porque vaga expira — disputar tempo com uma
+coleta que não tem pressa nenhuma (o JOLTS publica por mês, o Eurostat
+por trimestre). São dois trabalhos com relógios diferentes.
+
+`/api/cron/hiring-index` autentica igual: `CRON_SECRET` no
+`Authorization`, 503 quando o segredo falta, 401 quando não confere. O
+teto de 20 requisições por 10 minutos do prefixo `/api/cron` no
+`middleware.ts` já valia para o caminho novo sem mudar nada lá. A
+lógica é compartilhada com o script manual
+(`lib/hiring-index/collect.ts`) em vez de duplicada: dois laços de
+coleta escritos em separado divergiriam, e o defeito apareceria num
+país só, meses depois. O cliente de banco chega por parâmetro porque os
+dois gatilhos usam clientes diferentes — o script instancia o seu, pela
+mesma razão do `server-only`.
+
+**Não foi declarado em `vercel.json`, de propósito.** Cron custa
+invocação, e a conta é Hobby — a tentativa de agendar o Radar de hora
+em hora já foi recusada no deploy com essa mensagem, e a conta já tem
+dois crons declarados (`radar` às 06:00, `dedup` às 18:00). Qual dia e
+qual hora é decisão de quem paga. Enquanto isso a rota funciona e pode
+ser chamada à mão com `Authorization: Bearer $CRON_SECRET`, e o script
+manual continua valendo. O TODO está no cabeçalho da rota.
+
+**Um número medido mudou o código.** A primeira execução real do cron
+levou **37s**, dos quais só ~2s foram as duas APIs: as 729 linhas
+gravadas uma a uma custaram ~35s de ida-e-volta de rede. Sob o teto de
+60s da função isso é margem curta demais para uma tabela que só cresce
+(cada divulgação acrescenta uma linha por país). Os `upsert` passaram a
+sair em lotes de 8 em paralelo — oito, e não o máximo possível, porque
+dividem o pool de conexões com as requisições de usuário e um cron
+noturno não deve poder segurar a tela de ninguém. A execução seguinte:
+**6,5s**, mesmas 729 linhas.
+
+**Conferido contra o banco de produção e com navegador, não só com
+teste.** O `summarizeHiringIndex` rodado sobre as 729 linhas reais
+reproduziu os quatro desfechos: EUA `stable` com janela preliminar (55
+pontos, jul/2026, BLS); Alemanha `cooling` (24 pontos, 2025-Q4,
+Eurostat); Reino Unido sem classificação por `too_few_points` (3
+pontos); Chéquia sem classificação por `series_break_too_recent`;
+Brasil, Japão e o código inexistente `ZZ` como não cobertos. As rotas
+foram batidas com `curl` real contra o `next dev`: `/api/hiring-index/US`
+sem sessão → 401; cron sem segredo e com segredo errado → 401; com o
+segredo certo → 200, `bls_jolts` e `eurostat_jvs` completos, 30 séries,
+729 gravadas, 2 sem classificação (exatamente Reino Unido e Chéquia).
+
+O cartão foi renderizado em navegador nos oito estados (as quatro
+situações, mais pt/en/ja, mais carregando e falha) — foi esse print que
+encontrou o defeito do selo. **Achado de bônus, que vale registrar:** o
+navegador continuou mostrando o selo já corrigido mesmo depois de
+apagar `.next` e reiniciar o servidor. O HTML servido por `curl` já
+estava certo; o que estava velho era o *chunk* de cliente em cache no
+navegador — é exatamente o efeito do aviso que o próprio Next imprime
+na subida ("Custom Cache-Control headers detected for `/_next/static/:path*`
+can break Next.js development behavior"). Quem for conferir tela em
+`next dev` neste projeto precisa saber disso, ou vai concluir que uma
+correção não funcionou quando ela funcionou.
+
+45 testes novos: `lookup.test.ts` (19 — escolha de série, os três
+desfechos de dado, e a trava de que o resumo nunca devolve texto de
+tela), `collect.test.ts` (12 — fonte que falha não grava um único
+ponto, fonte que lança não derruba as outras, o `update` reescreve
+valor e marcação de preliminar) e `hiring-index-card.test.ts` (14 — o
+cartão renderiza nos 12 idiomas, nenhum `{placeholder}` sobra, a fonte
+nunca some, e cada um dos quatro desfechos sai com o texto certo e só
+com o dele). `tsc --noEmit` e `eslint` limpos nos arquivos tocados.
+`npm test`: 729/729 (684 + 45).
+
+**Continua fora do escopo, de propósito:** página pública de marketing
+(a colocação é decisão de outra rodada), conectores ILOSTAT e
+CEPALSTAT, agregação por continente e o agendamento do cron no
+`vercel.json` — as três últimas são as pendências (d), (e) e o TODO
+acima.
+
+## 2.53 Revisão de código do índice de temperatura — 3 bugs reais, 2 duplicações
+
+Pedido do operador: revisar o código da fase 1 do zero, com o critério
+de não deixar nada pra depois ("resolve tudo, não protele nada,
+nunca"). A revisão (nível alto, `code-review`) achou 5 pontos em
+`phase.ts`, `collect.ts` e nos dois conectores. Todos corrigidos na
+mesma rodada.
+
+**1 — `confidence` calculado antes do corte da quebra de série.**
+`classifyHiringPhase` cortava a série na quebra mais recente (`series =
+all.slice(start)`) mas calculava `confidence` sobre `all`, a série
+INTEIRA, antes do corte. Um país com um ponto antigo de baixa
+confiança, seguido de quebra e depois de dados limpos, saía rotulado
+"baixa confiança" mesmo a análise real usando só os dados limpos —
+justamente o contrário do que a coluna existe para fazer (§2.51: "fica
+na coluna, e não num tooltip, para sobreviver a qualquer tela futura").
+Corrigido: `confidence` agora é calculado sobre `series`, depois dos
+dois cortes (quebra declarada e buraco de calendário, ver item 2).
+Teste novo reproduz o cenário exato.
+
+**2 — Média móvel e inclinação tratavam posição no array como se fosse
+tempo.** `movingAverage`/`trailingSlope` somam/regridem por ÍNDICE, não
+por data. O Eurostat documentadamente falta trimestre de país às vezes
+sem declarar quebra de série (`connectors/eurostat.ts`: "Dinamarca
+ausente") — um buraco no meio da série entrava na média móvel como se
+os dois lados fossem vizinhos, podendo inverter a fase classificada
+silenciosamente (uma queda-com-buraco-e-repique podia sair como
+"esfriando" contínuo). Este era o mais sério dos três: produzia uma
+fase plausível e ERRADA, sem nenhum sinal de que algo estava errado —
+o oposto exato da promessa de "nunca fabricar". Corrigido com
+`truncateAtLastGap`: a série é cortada de novo no último intervalo
+maior que 1,5× a mediana dos intervalos da própria série (o "ritmo
+esperado" não é parametrizado — mensal ou trimestral —, é inferido da
+própria série). Novo motivo de "não sei" (`irregular_series`),
+distinto de `series_break_too_recent` porque um é declarado pela fonte
+e o outro, descoberto pela própria série. Não exigiu nenhuma mudança
+de UI ou de i18n: os 12 dicionários e o cartão nunca diferenciaram por
+`insufficientDataReason`, só por "tem fase ou não" — confirmado antes
+de decidir que o novo valor era seguro de adicionar.
+
+**3 — `start = 0` usado tanto para "nenhuma quebra" quanto para "quebra
+no primeiro ponto".** Sentinela ambíguo: se o ponto mais antigo da
+janela pedida já fosse, ele mesmo, a quebra, o índice encontrado (`0`)
+era indistinguível do valor inicial usado quando não existe quebra
+nenhuma — o motivo de diagnóstico saía errado (`too_few_points` em vez
+de `series_break_too_recent`), embora o resultado mostrado ao usuário
+(`phase: null`) já estivesse certo nos dois casos. Corrigido com `-1`
+como sentinela de "não encontrado".
+
+**4 — BLS e Eurostat buscados em sequência.** Duas chamadas de rede
+independentes, cada uma com teto próprio de 30s, rodavam uma depois da
+outra — pior caso ~60s em vez de ~30s. Sem efeito funcional (só 2
+fontes existem hoje), mas cresceria mal quando ILOSTAT/CEPALSTAT
+entrarem (pendência (d)). `collectHiringIndexPoints` agora busca as
+fontes com `Promise.all`, preservando a ordem de saída de
+`sources`/`points` independente de qual responde primeiro.
+
+**5 — Lógica de timeout duplicada entre os dois conectores.** O mesmo
+`AbortController` + `setTimeout` + `try/catch/finally`, quase byte a
+byte, em `bls-jolts.ts` e `eurostat.ts` (a revisão notou que o mesmo
+padrão já existia antes em `lib/jobs/adapters/jobbase.ts` — só a
+duplicação ENTRE os dois conectores novos foi resolvida aqui, não a
+mais antiga, que é de outra feature). Extraído para
+`connectors/fetch-with-budget.ts`, com teste próprio.
+
+Testes novos: 4 (`fetch-with-budget.test.ts`) + 3 em `phase.test.ts`
+(buraco no meio da série, buraco no início não atrapalha, quebra no
+ponto mais antigo, confiança pós-corte). `tsc --noEmit` e `eslint`
+limpos. `npm test`: 737/737 (729 + 8).

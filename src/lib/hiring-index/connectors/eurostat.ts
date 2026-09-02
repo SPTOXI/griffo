@@ -51,6 +51,7 @@
  */
 
 import { isKnownCountry } from '../../market/countries'
+import { fetchJsonWithBudget } from './fetch-with-budget'
 import type {
   ConnectorResult,
   FetchContext,
@@ -312,39 +313,30 @@ export function createEurostatConnector(options: EurostatOptions = {}): LaborMar
         `&indic_em=JVR` +
         `&lastTimePeriod=${lastPeriods}`
 
-      const controller = new AbortController()
-      const timer = setTimeout(() => controller.abort(), Math.max(1000, context.timeBudgetMs))
+      const fetched = await fetchJsonWithBudget(url, {
+        timeBudgetMs: context.timeBudgetMs,
+        sourceName: 'Eurostat',
+        fetchImpl: doFetch,
+      })
 
-      try {
-        const response = await doFetch(url, { signal: controller.signal })
+      if (!fetched.ok) {
+        return { outcome: 'failed', points: [], error: fetched.error }
+      }
 
-        if (!response.ok) {
-          return { outcome: 'failed', points: [], error: `HTTP ${response.status} no Eurostat` }
-        }
+      const { points, problems } = parseEurostatPayload(fetched.json)
 
-        const { points, problems } = parseEurostatPayload(await response.json())
-
-        if (points.length === 0) {
-          return {
-            outcome: 'failed',
-            points: [],
-            error: problems.join('; ') || 'Eurostat respondeu sem nenhum ponto aproveitável',
-          }
-        }
-
-        return {
-          outcome: problems.length > 0 ? 'partial' : 'complete',
-          points,
-          error: problems.length > 0 ? problems.join('; ') : null,
-        }
-      } catch (e: any) {
+      if (points.length === 0) {
         return {
           outcome: 'failed',
           points: [],
-          error: e?.name === 'AbortError' ? 'Tempo esgotado no Eurostat' : e?.message || String(e),
+          error: problems.join('; ') || 'Eurostat respondeu sem nenhum ponto aproveitável',
         }
-      } finally {
-        clearTimeout(timer)
+      }
+
+      return {
+        outcome: problems.length > 0 ? 'partial' : 'complete',
+        points,
+        error: problems.length > 0 ? problems.join('; ') : null,
       }
     },
   }

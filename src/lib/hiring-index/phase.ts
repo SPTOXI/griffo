@@ -71,6 +71,11 @@ export type InsufficientDataReason =
   | 'too_few_points'
   /** A série tem quebra recente e sobrou pouco depois dela. */
   | 'series_break_too_recent'
+  /**
+   * Faltou um período no meio (nenhuma quebra declarada pela fonte), e sobrou
+   * pouco depois do buraco mais recente.
+   */
+  | 'irregular_series'
 
 /** Um ponto da série de UM país, para UMA métrica de UMA fonte. */
 export interface HiringSeriesPoint {
@@ -146,12 +151,18 @@ export interface PhaseOptions {
    * Quão perto do fundo é "no fundo", em fração do nível. Padrão 4%.
    */
   troughBand?: number
+  /**
+   * Quantas vezes o intervalo típico entre pontos um buraco precisa ser para
+   * contar como buraco. Ver `truncateAtLastGap` — padrão 1,5×.
+   */
+  gapTolerance?: number
 }
 
 export const DEFAULT_WINDOW = 3
 export const DEFAULT_MINIMUM_POINTS = 6
 export const DEFAULT_FLAT_SLOPE = 0.015
 export const DEFAULT_TROUGH_BAND = 0.04
+export const DEFAULT_GAP_TOLERANCE = 1.5
 
 function toDate(value: Date | string | number): Date | null {
   const date = value instanceof Date ? value : new Date(value)
@@ -237,6 +248,50 @@ export function movingAverage(
 }
 
 /**
+ * Corta a série no último buraco de calendário, e devolve só o trecho depois
+ * dele.
+ *
+ * `movingAverage` e `trailingSlope` somam/regridem por POSIÇÃO no array, não
+ * por data — é rápido e correto desde que os pontos sejam mesmo consecutivos.
+ * O Eurostat documentadamente falta trimestre de país de vez em quando (ver o
+ * cabeçalho de `connectors/eurostat.ts`: "Dinamarca ausente"), e sem este
+ * corte um buraco de um trimestre inteiro entraria na média móvel como se os
+ * dois lados fossem vizinhos — o mesmo defeito que a quebra de série
+ * declarada já tinha, só que sem a fonte avisar.
+ *
+ * O intervalo "esperado" não é um parâmetro (mensal, trimestral): é a MEDIANA
+ * dos intervalos da própria série. Undefined-de-propósito quanto a
+ * `periodType` — a série já sabe seu próprio ritmo.
+ */
+export function truncateAtLastGap<T extends { period: Date }>(
+  series: readonly T[],
+  gapTolerance = DEFAULT_GAP_TOLERANCE
+): { series: T[]; hadGap: boolean } {
+  if (series.length < 2) return { series: [...series], hadGap: false }
+
+  const gaps: number[] = []
+  for (let i = 1; i < series.length; i++) {
+    gaps.push(series[i].period.getTime() - series[i - 1].period.getTime())
+  }
+
+  const typical = median(gaps)
+  if (typical === null || typical <= 0) return { series: [...series], hadGap: false }
+
+  const threshold = typical * gapTolerance
+  let cut = 0
+  let hadGap = false
+
+  for (let i = 1; i < series.length; i++) {
+    if (series[i].period.getTime() - series[i - 1].period.getTime() > threshold) {
+      cut = i
+      hadGap = true
+    }
+  }
+
+  return { series: series.slice(cut), hadGap }
+}
+
+/**
  * Inclinação por mínimos quadrados sobre os últimos `count` pontos, em unidade
  * do valor por período.
  *
@@ -277,6 +332,7 @@ export function classifyHiringPhase(
   const minimumPoints = Math.max(window + 1, Math.floor(options.minimumPoints ?? DEFAULT_MINIMUM_POINTS))
   const flatSlope = Math.abs(options.flatSlope ?? DEFAULT_FLAT_SLOPE)
   const troughBand = Math.abs(options.troughBand ?? DEFAULT_TROUGH_BAND)
+  const gapTolerance = options.gapTolerance ?? DEFAULT_GAP_TOLERANCE
 
   const empty = (reason: InsufficientDataReason, used: number, confidence: ConfidenceTier): PhaseAnalysis => ({
     phase: null,
@@ -295,26 +351,38 @@ export function classifyHiringPhase(
   const all = normalizeSeries(points)
   if (all.length === 0) return empty('no_points', 0, 'high')
 
-  const confidence: ConfidenceTier = all.some((p) => p.confidence === 'low') ? 'low' : 'high'
-
-  // Quebra de série: o que veio antes dela não é comparável com o que veio
-  // depois, e comparar o país com a própria história é a única coisa que este
-  // módulo faz. A série começa na quebra mais recente.
-  let start = 0
+  // Quebra de série DECLARADA pela fonte: o que veio antes dela não é
+  // comparável com o que veio depois, e comparar o país com a própria
+  // história é a única coisa que este módulo faz. `-1` (não `0`) marca
+  // "nenhuma quebra encontrada" — `0` é um índice real quando o ponto mais
+  // antigo da janela pedida já é, ele mesmo, a quebra.
+  let breakIndex = -1
   for (let i = all.length - 1; i >= 0; i--) {
     if (all[i].seriesBreak) {
-      start = i
+      breakIndex = i
       break
     }
   }
-  const series = all.slice(start)
+  const afterBreak = breakIndex >= 0 ? all.slice(breakIndex) : all
+
+  // Buraco de calendário NÃO declarado (ver `truncateAtLastGap`): mesmo
+  // efeito da quebra declarada, descoberto pela própria série em vez de
+  // avisado pela fonte.
+  const { series, hadGap } = truncateAtLastGap(afterBreak, gapTolerance)
+
+  // Calculado depois dos dois cortes acima, e não sobre `all`: a confiança
+  // descreve os dados que a análise DE FATO usa. Um ponto antigo de baixa
+  // confiança que ficou pra trás de uma quebra ou de um buraco não pode
+  // rebaixar uma série atual inteira que é toda de alta confiança.
+  const confidence: ConfidenceTier = series.some((p) => p.confidence === 'low') ? 'low' : 'high'
 
   if (series.length < minimumPoints) {
-    return empty(
-      start > 0 ? 'series_break_too_recent' : 'too_few_points',
-      series.length,
-      confidence
-    )
+    const reason: InsufficientDataReason = hadGap
+      ? 'irregular_series'
+      : breakIndex >= 0
+        ? 'series_break_too_recent'
+        : 'too_few_points'
+    return empty(reason, series.length, confidence)
   }
 
   const ma = movingAverage(series, window)
