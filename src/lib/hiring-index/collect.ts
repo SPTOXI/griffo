@@ -27,7 +27,9 @@
  */
 
 import { createBlsJoltsConnector } from './connectors/bls-jolts'
+import { createCepalstatConnector } from './connectors/cepalstat'
 import { createEurostatConnector } from './connectors/eurostat'
+import { createIlostatConnector } from './connectors/ilostat'
 import { classifyHiringPhase } from './phase'
 import type { HiringPhase, InsufficientDataReason } from './phase'
 import type { ConfidenceTier, LaborMarketConnector, LaborMarketPointInput } from './types'
@@ -64,11 +66,25 @@ export interface CollectionResult {
   points: LaborMarketPointInput[]
 }
 
-/** Os dois conectores reais da fase 2. ILOSTAT e CEPALSTAT são fase 3. */
+/**
+ * As quatro fontes reais.
+ *
+ * Duas de vaga em aberto e confiança `high` (BLS, Eurostat) e duas de taxa de
+ * desemprego e confiança `low` (ILOSTAT, CEPALSTAT). A ordem aqui é só a de
+ * chegada das fases — não é prioridade, e nenhum país é ordenado primeiro.
+ *
+ * NÃO existe aqui, nem dentro dos conectores, filtro para evitar que ILOSTAT e
+ * CEPALSTAT tragam países que o BLS ou o Eurostat já cobrem. É de propósito:
+ * `selectSeries`, em `./lookup.ts`, já escolhe a série de mais pontos e maior
+ * confiança por país. Escrever a exclusão também aqui seria manter duas cópias
+ * da mesma regra, e um dia elas discordariam.
+ */
 export function defaultConnectors(blsApiKey: string | null | undefined): LaborMarketConnector[] {
   return [
     createBlsJoltsConnector({ registrationKey: blsApiKey ?? null }),
     createEurostatConnector(),
+    createIlostatConnector(),
+    createCepalstatConnector(),
   ]
 }
 

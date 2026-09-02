@@ -71,6 +71,11 @@ export interface LaborMarketRow {
 export const SOURCE_DISPLAY_NAMES: Record<string, string> = {
   bls_jolts: 'U.S. Bureau of Labor Statistics (JOLTS)',
   eurostat_jvs: 'Eurostat',
+  ilostat_une: 'ILOSTAT (International Labour Organization)',
+  // Em espanhol porque é assim que a instituição se chama. "Comissão Econômica
+  // para a América Latina" não é o nome dela traduzido: é um nome que não
+  // existe em documento nenhum.
+  cepalstat_une: 'CEPALSTAT (Comisión Económica para América Latina y el Caribe)',
 }
 
 /**

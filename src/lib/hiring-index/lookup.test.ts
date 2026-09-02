@@ -194,3 +194,60 @@ test('fonte conhecida vira nome próprio da instituição', () => {
 test('fonte desconhecida mostra o identificador em vez de esconder a origem', () => {
   assert.equal(sourceDisplayName('cepalstat_x'), 'cepalstat_x')
 })
+
+test('as quatro fontes reais têm nome de instituição, no idioma da instituição', () => {
+  // O mapa NÃO passa pelo dicionário de i18n: traduzir nome de órgão de
+  // estatística inventaria uma entidade que não existe.
+  assert.equal(sourceDisplayName('ilostat_une'), 'ILOSTAT (International Labour Organization)')
+  assert.equal(
+    sourceDisplayName('cepalstat_une'),
+    'CEPALSTAT (Comisión Económica para América Latina y el Caribe)'
+  )
+})
+
+// ---------------------------------------------------------------------------
+// O caso real da fase 3: a mesma Alemanha vinda de duas fontes
+// ---------------------------------------------------------------------------
+
+test('ALEMANHA COM EUROSTAT E ILOSTAT CONTINUA RESOLVENDO PARA O EUROSTAT', () => {
+  // É por causa disto que os conectores do ILOSTAT e do CEPALSTAT NÃO filtram
+  // países já cobertos: a exclusão já existe aqui, e escrevê-la duas vezes
+  // garantiria que um dia as duas cópias discordassem.
+  const eurostat = rows([2.7, 2.6, 2.5, 2.6, 2.4, 2.3, 2.2, 2.1], {
+    country: 'DE',
+    source: 'eurostat_jvs',
+    metric: 'job_vacancy_rate',
+    periodType: 'quarter',
+  })
+  const ilostat = rows([3.3, 3.4, 3.6, 3.2, 3.8, 3.8, 4.0, 3.7], {
+    country: 'DE',
+    source: 'ilostat_une',
+    metric: 'unemployment_rate',
+    periodType: 'quarter',
+    confidence: 'low',
+  })
+
+  const summary = summarizeHiringIndex('DE', [...ilostat, ...eurostat])
+  assert.equal(summary.source, 'eurostat_jvs')
+  assert.equal(summary.metric, 'job_vacancy_rate')
+  assert.equal(summary.confidence, 'high')
+})
+
+test('país que só o ILOSTAT cobre sai classificado, e com confiança baixa', () => {
+  // A razão de existir da fase 3: antes dela, a África do Sul não tinha linha
+  // nenhuma e a tela dizia "nenhuma fonte oficial cobre este país".
+  const summary = summarizeHiringIndex(
+    'ZA',
+    rows([32.6, 33.2, 31.8, 31.5, 32.6, 33.0, 33.4, 34.1], {
+      country: 'ZA',
+      source: 'ilostat_une',
+      metric: 'unemployment_rate',
+      periodType: 'quarter',
+      confidence: 'low',
+    })
+  )
+  assert.equal(summary.covered, true)
+  assert.ok(summary.phase !== null)
+  assert.equal(summary.source, 'ilostat_une')
+  assert.equal(summary.confidence, 'low')
+})

@@ -3050,3 +3050,237 @@ Testes novos: 4 (`fetch-with-budget.test.ts`) + 3 em `phase.test.ts`
 (buraco no meio da série, buraco no início não atrapalha, quebra no
 ponto mais antigo, confiança pós-corte). `tsc --noEmit` e `eslint`
 limpos. `npm test`: 737/737 (729 + 8).
+
+---
+
+## 2.54 Índice de temperatura de contratação — fase 3: ILOSTAT e CEPALSTAT, de 30 para 98 países
+
+Pendência 14 item (d). Antes desta rodada o índice cobria **30 países**
+— os EUA pelo BLS e 29 da UE/EEE pelo Eurostat —, e para todo o resto
+do mundo a tela dizia, com todas as letras, "nenhuma fonte oficial
+cobre este país". Depois dela são **98 países** e 2.757 pontos no
+banco: Japão, Índia, Austrália, África do Sul, Gana, Ruanda, Angola,
+Zâmbia, toda a América Latina.
+
+### As duas fontes, verificadas contra a API real em 01/09/2026
+
+**ILOSTAT (Organização Internacional do Trabalho)** — web service SDMX
+em `sdmx.ilo.org`, aberto e sem chave:
+
+```
+GET https://sdmx.ilo.org/rest/data/ILO,DF_UNE_DEAP_SEX_AGE_RT,1.0/
+    .Q.UNE_DEAP_RT.SEX_T.AGE_YTHADULT_YGE15
+    ?startPeriod=2020-Q4&dimensionAtObservation=AllDimensions
+Accept: application/vnd.sdmx.data+json;version=1.0
+Accept-Language: en
+```
+
+104 áreas, 1.826 observações. A ordem das dimensões da chave posicional
+(`REF_AREA.FREQ.MEASURE.SEX.AGE.TIME_PERIOD`) saiu de
+`GET /rest/datastructure/ILO/UNE_DEAP_SEX_AGE_RT`, não de suposição:
+numa chave SDMX, trocar duas dimensões de lugar não dá erro — dá
+resposta vazia, que é o defeito que o Eurostat já ensinou aqui (§2.51).
+
+**CEPALSTAT (CEPAL/ECLAC)** — API de dados abertos, também sem chave:
+
+```
+GET https://api-cepalstat.cepal.org/cepalstat/api/v1/indicator/2182/data
+    ?lang=en&format=json
+```
+
+803 registros, 2014-Q1 a 2025-Q2, 15 países da região mais três
+agregados. O identificador 2182 ("Unemployment rate by quarter") foi
+achado em `GET /cepalstat/api/v1/thematic-tree?lang=en&format=json`, no
+nó `Social > Labour > Unemployment` — não adivinhado.
+
+### Trimestral, e só trimestral — a decisão que definiu a cobertura
+
+Os dois fluxos publicam também em frequência anual, e é aí que estaria
+"o mundo todo". Ficou de fora, por duas razões que se somam:
+
+1. `periodType` do produto é `month | quarter`. Um ponto anual gravado
+   como se fosse mensal apareceria na tela formatado como "janeiro de
+   2024" — um período que ninguém publicou.
+2. Misturar frequências sob o mesmo `source|metric` seria pior que
+   inútil: `selectSeries` agrupa por fonte e métrica, não por ritmo, e
+   uma série com dois compassos faria a média móvel de 3 períodos somar
+   um trimestre com dois meses.
+
+E não se perde nada: conferido na resposta real, os **48 países com
+série mensal no ILOSTAT são um subconjunto exato dos 95 com série
+trimestral**. Nenhum país existe só em `M`.
+
+### Por que os dados relatados, e não as estimativas modeladas do ILO
+
+O ILOSTAT publica `DF_UNE_2EAP_SEX_AGE_RT`, "ILO modelled estimates",
+que chega perto de **190 países**. É exatamente aí que mora a diferença
+entre 98 e "o mundo inteiro", e é exatamente por isso que ele não foi
+usado: para um país sem pesquisa de força de trabalho, o número da série
+modelada é imputado por regressão a partir de covariáveis, não medido.
+Gravá-lo produziria "fase de contratação" para países onde ninguém
+contou nada — a mesma classe de erro do incidente da Adzuna (resposta
+vazia lida como "nenhuma vaga"), só que mais difícil de perceber, porque
+o número chega com aparência de dado.
+
+**Cobertura menor e verdadeira; não maior e inventada.** Registrado aqui
+porque a pergunta "por que não são 190?" vai voltar.
+
+### `confidence: 'low'` incondicional, inclusive para Alemanha e EUA
+
+Nenhum dos dois conectores decide confiança caso a caso. Todo ponto sai
+`low`, e a razão é a que já estava escrita no `schema.prisma` desde a
+fase 1: taxa de desemprego mede coisa diferente de taxa de vaga em
+aberto, e em economia com setor informal grande mede mal — quem trabalha
+informalmente conta como "empregado" sem que exista contratação formal
+nenhuma por trás. Um mercado formal parado e um aquecido podem devolver
+a mesma taxa. No caso do CEPALSTAT isso é mais agudo ainda: a própria
+definição do indicador diz que os dados "correspond to the open
+unemployment and **urban** coverage unless it is indicated".
+
+Conferido no banco depois da gravação: **0 linhas** das duas fontes
+novas com confiança diferente de `low`.
+
+### Nenhuma lógica de exclusão foi escrita — e isso foi verificado, não presumido
+
+ILOSTAT devolve Alemanha, França e EUA junto com o resto. Não há filtro
+nos conectores para evitá-los, de propósito: `selectSeries` (§2.51,
+`lookup.ts`) já escolhe por país a série de mais pontos, desempatando
+por confiança. Escrever a exclusão também no conector manteria duas
+cópias da mesma regra, e um dia elas discordariam.
+
+Conferido por consulta direta ao banco, não pelo log:
+
+| País | linhas na tabela | série escolhida | confiança |
+|---|---|---|---|
+| DE | 45 (eurostat_jvs + ilostat_une) | `eurostat_jvs` / `job_vacancy_rate` | high |
+| FR | 45 | `eurostat_jvs` / `job_vacancy_rate` | high |
+| US | 78 (bls_jolts + ilostat_une) | `bls_jolts` / `job_openings_rate` | high |
+| ZA | 19 (só ILOSTAT) | `ilostat_une` / `unemployment_rate` | low |
+| JP, IN, GH, RW | só ILOSTAT | `ilostat_une` | low |
+
+### Três descobertas que só a chamada real produziu
+
+**1 — `Accept-Language` é obrigatório, e o motivo é feio.** A mesma URL
+que responde 200 no `curl` respondia **HTTP 500** pelo `fetch` do Node,
+com um corpo de doze caracteres: `languageTag1`. O `curl` não manda
+`Accept-Language` nenhum; o `fetch` do Node manda `Accept-Language: *`
+por padrão, e o NSI Web Service (v8.19.6.0, o que o ILO usa) estoura ao
+interpretar `*` como etiqueta de idioma. `Accept-Language: en` resolve.
+Isso não está em documentação nenhuma e não sairia de leitura de código
+— apareceu na primeira coleta real, quando o ILOSTAT foi a única das
+quatro fontes a voltar `failed` enquanto o `curl` da mesma URL
+continuava respondendo 200.
+
+**2 — `errors: []` vem em toda resposta bem-sucedida do ILOSTAT.** E
+array vazio é *truthy* em JavaScript. A primeira versão testava só a
+presença da chave e rejeitou a coleta inteira em silêncio, com a
+mensagem `ILOSTAT devolveu erro: []`. Corrigido e coberto por teste.
+
+**3 — O `OBS_STATUS` do SDMX-JSON é índice, não código.** Os atributos
+da observação chegam como índices para listas que contêm **só os valores
+presentes naquela resposta**. Na leitura de 01/09/2026 a lista tinha um
+único elemento, `B` (quebra de série), então "índice 0 = quebra"
+funcionaria hoje e quebraria calado na primeira resposta que trouxesse
+`P` antes de `B`. O índice é sempre resolvido para o código, e há um
+teste que inverte a ordem da lista de propósito para provar isso.
+
+### Quebra de série: as duas fontes declaram, cada uma do seu jeito
+
+O ILOSTAT usa o código `B` do `OBS_STATUS`, marcado em pontos
+individuais (Guatemala em quatro trimestres seguidos, EUA em 2025-Q4).
+
+O CEPALSTAT não tem campo de status: ele traz `footnotes` com o texto de
+cada nota e, em cada registro, os `notes_ids` aplicáveis. Três notas
+dizem, com estas palavras, "New measurement since [ano]; data are not
+comparable with previous years" — e cada uma está presa a **um único**
+registro, o primeiro da medição nova (8604 na República Dominicana em
+2015, 8800 no Brasil em 2016, 8801 no Paraguai em 2017). Isso é
+exatamente `seriesBreak`.
+
+A leitura é pelo **texto**, não pelo `id` — um número de nota é chave
+interna que pode ser reemitida, a frase é o que a fonte afirma —, e o
+casamento é deliberadamente estreito: a nota 15092, presa a 46 registros
+da Argentina, também fala de comparabilidade ("INDEC ... recommends
+disregarding the series published between 2007 and 2015"), mas é
+ressalva geral do período inteiro, não ponto de corte; marcá-la como
+quebra faria `classifyHiringPhase` cortar a série argentina em 46
+lugares. É por isso que a chamada fixa `lang=en`.
+
+Resultado no banco: **16 pontos** com `seriesBreak: true` vindos das
+duas fontes novas.
+
+### `iso3.ts`: alfa-3 → alfa-2, na fronteira
+
+As duas fontes falam ISO 3166-1 alfa-3 (`BRA`, `DEU`); o produto guarda
+alfa-2. Sem tradução, o Brasil viraria dois países no banco — a mesma
+razão pela qual o Eurostat traduz `EL`→`GR` e `UK`→`GB` (§2.51). A
+tabela mora em `connectors/iso3.ts` porque **os dois** conectores
+precisam dela; copiada em dois arquivos, divergiria na primeira
+correção.
+
+Ela cobre exatamente os 173 países de `lib/market/countries.ts`, e a
+bijeção é garantida por teste (nenhum país do produto sem alfa-3, nenhum
+alfa-3 apontando para país que o produto não conhece). Cada par foi
+conferido contra os nomes oficiais em inglês da codelist `CL_AREA` do
+próprio ILOSTAT cruzados com `Intl.DisplayNames` — não escritos de
+memória.
+
+Código fora da tabela **não vira país**: devolve `null`, e o conector
+registra o descarte no `error` do resultado. Acontece de verdade — o
+ILOSTAT publica `KOS` (Kosovo, que não é ISO 3166-1) e `PSE`, `DJI`,
+`GRD`, `LCA`, `MAC`, `SYC` (que são ISO mas não estão na lista do
+produto). A coleta real sai `partial` por causa disso, com os sete
+códigos nomeados no aviso. Inventar um alfa-2 para eles gravaria país
+fantasma; silenciá-los esconderia perda de cobertura.
+
+### Nenhuma linha de UI, nenhuma chave de i18n
+
+Confirmado antes de escrever qualquer coisa, não depois: o cartão
+(`hiring-index-card.tsx`) e os 12 dicionários nunca ramificaram por
+fonte nem por métrica — só por "tem fase ou não". Duas fontes novas com
+uma métrica nova entraram sem tocar em nenhum dos treze arquivos. O
+único acréscimo de texto foi em `SOURCE_DISPLAY_NAMES`, que fica FORA do
+i18n de propósito (§2.52): nome de instituição não se traduz, e
+"Comissão Econômica para a América Latina" é um nome que não existe em
+documento nenhum — a entrada é
+`CEPALSTAT (Comisión Económica para América Latina y el Caribe)`.
+
+### Coleta real, contra o banco de produção
+
+```
+[bls_jolts]     complete —   55 ponto(s) em  659ms
+[eurostat_jvs]  complete —  674 ponto(s) em  720ms
+[ilostat_une]   partial  — 1746 ponto(s) em 1349ms
+  aviso: Códigos de país desconhecidos ignorados: DJI, GRD, KOS, LCA, MAC, PSE, SYC
+[cepalstat_une] complete —  282 ponto(s) em  938ms
+
+142 série(s) de país, 2757 ponto(s). 2757 ponto(s) gravado(s).
+```
+
+**Ponto de atenção para quem cuidar do cron:** a gravação passou de 729
+para 2.757 linhas, e a rodada inteira levou ~24s de ponta a ponta contra
+o banco de produção. O teto da função da Vercel é 60s
+(`maxDuration = 60` em `/api/cron/hiring-index`). Ainda cabe, mas a
+folga encolheu — a janela de 24 trimestres por fonte é o que segura esse
+número, e aumentá-la mexe direto nisso. `WRITE_CONCURRENCY = 8` não foi
+alterado: o número foi escolhido com medição no §2.52 e o pool de
+conexões é dividido com requisições de usuário.
+
+### Verificação
+
+`npx tsc --noEmit` e `npx eslint src/lib/hiring-index/` limpos.
+`npm test`: **790/790**, `fail 0` (737 + 53 novos — 20 em
+`ilostat.test.ts`, 19 em `cepalstat.test.ts`, 6 em `iso3.test.ts`, 5 em
+`lookup.test.ts`, 3 em `collect.test.ts`; nenhum toca a rede, todos com
+`fetch` injetado e recortes dos payloads reais).
+
+Conferência final feita por **consulta direta ao banco**, não pelo log
+do script — a cultura do §2.51 e da pendência 13: linhas por fonte,
+países distintos (98), amostras cruas de `ZA`, `BR` e `DE`, contagem de
+`seriesBreak` e `selectSeries` rodado sobre as linhas reais de onze
+países.
+
+**Fica aberto:** pendência 14 item (e), agregação por continente — que
+precisa responder antes como se agrega uma série que o §2.51 diz não ser
+comparável entre países. A resposta provável continua sendo agregar as
+*fases*, não os valores, e agora há 98 países para isso em vez de 30.

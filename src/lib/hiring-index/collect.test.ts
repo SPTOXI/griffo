@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   collectHiringIndexPoints,
+  defaultConnectors,
   persistHiringIndexPoints,
   summarizeCollection,
   type LaborMarketPointWriter,
@@ -233,4 +234,40 @@ test('a ordem do resumo é estável, independente da ordem da coleta', () => {
     summarizeCollection([...de, ...us]).map((s) => s.country)
   )
   assert.deepEqual(summarizeCollection([...us, ...de]).map((s) => s.country), ['DE', 'US'])
+})
+
+// ---------------------------------------------------------------------------
+// A lista real de fontes
+// ---------------------------------------------------------------------------
+
+test('AS QUATRO FONTES REAIS SÃO MONTADAS AQUI, E SÓ AQUI', () => {
+  // O script manual e o cron precisam coletar exatamente as mesmas fontes; a
+  // lista mora nesta função para que não haja uma segunda cópia dela.
+  const descriptors = defaultConnectors(null).map((c) => c.descriptor)
+
+  assert.deepEqual(
+    descriptors.map((d) => d.slug),
+    ['bls_jolts', 'eurostat_jvs', 'ilostat_une', 'cepalstat_une']
+  )
+})
+
+test('TAXA DE DESEMPREGO É SEMPRE CONFIANÇA BAIXA, TAXA DE VAGA É ALTA', () => {
+  // A diferença não é de grau: em economia com setor informal grande, quem
+  // trabalha informalmente conta como "empregado" sem contratação nenhuma por
+  // trás. Ver `prisma/schema.prisma` e `./types.ts`.
+  for (const d of defaultConnectors(null).map((c) => c.descriptor)) {
+    const expected = d.metric === 'unemployment_rate' ? 'low' : 'high'
+    assert.equal(d.confidence, expected, `${d.slug} deveria ser ${expected}`)
+  }
+})
+
+test('NENHUM CONECTOR DECLARA LISTA DE PAÍSES QUE NÃO SEJA A DA PRÓPRIA RESPOSTA', () => {
+  // Exceto o BLS, que cobre um país só por construção. Os outros três não
+  // filtram país nenhum: a escolha entre fontes que se sobrepõem é de
+  // `selectSeries`, em `./lookup.ts`, e não pode existir em dois lugares.
+  const descriptors = defaultConnectors(null).map((c) => c.descriptor)
+  assert.deepEqual(descriptors.find((d) => d.slug === 'bls_jolts')!.countries, ['US'])
+  assert.ok(
+    descriptors.filter((d) => d.slug !== 'bls_jolts').every((d) => d.countries === null)
+  )
 })

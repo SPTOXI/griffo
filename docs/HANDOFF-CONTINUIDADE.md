@@ -27,9 +27,9 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 02/09/2026: fase 2 do índice de temperatura de contratação (§2.52) — bloco `hiringIndex` nos 12 dicionários, cartão no laudo pago, rota `/api/hiring-index/[country]` e cron próprio `/api/cron/hiring-index` — seguida de revisão de código (§2.53) que corrigiu 3 bugs reais em `phase.ts` (o mais sério: buraco de calendário na série podia inverter a fase classificada em silêncio) e 2 duplicações. Faltam da pendência 14: (d) ILOSTAT/CEPALSTAT e (e) agregação por continente. O cron **não** está agendado no `vercel.json` — é decisão de plataforma, ver o TODO no cabeçalho da rota |
-| Suíte | 737 testes, `fail 0` — reverificado após o §2.53 (729 + 8 novos); a regra da contagem está na seção 8 |
-| `tsc`, `build` | `tsc --noEmit` e `eslint` limpos após o §2.53; `npm run build` não rerodado nesta revisão — conferir antes de deploy |
+| Última revisão | 02/09/2026: fase 3 do índice de temperatura de contratação (§2.54) — conectores ILOSTAT e CEPALSTAT, ambos `confidence: 'low'`, que levam a cobertura de **30 para 98 países** (2.757 linhas em `LaborMarketPoint`). Nenhum arquivo de UI ou de i18n foi tocado: o cartão e os 12 dicionários nunca ramificaram por fonte nem por métrica. Falta só da pendência 14: (e) agregação por continente. O cron **não** está agendado no `vercel.json` — é decisão de plataforma, ver o TODO no cabeçalho da rota |
+| Suíte | 790 testes, `fail 0` — reverificado após o §2.54 (737 + 53 novos); a regra da contagem está na seção 8 |
+| `tsc`, `build` | `tsc --noEmit` e `eslint` limpos após o §2.54; `npm run build` não rerodado nesta revisão — conferir antes de deploy |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent`, `RadarAlert.notifiedAt` — ver 7.6 — e `LaborMarketPoint` do §2.51, empurrado em 01/09/2026) |
 
 **Pendências que estão esperando alguém, não código:**
@@ -136,8 +136,9 @@ o quanto confiar nele.
     só pelo log do script — a linha mais recente dos EUA bateu com o valor
     (`4.4`), o período (jul/2026) e a nota de rodapé (`P`, preliminar) vistos
     na resposta real da API no §2.51.
-14. **Fase 2 do índice de temperatura de contratação** — ✅ **(a), (b) e (c)
-    resolvidos em 02/09/2026** (§2.52). (d) e (e) continuam abertos.
+14. **Fases 2 e 3 do índice de temperatura de contratação** — ✅ **(a), (b) e
+    (c) resolvidos em 02/09/2026** (§2.52); ✅ **(d) resolvido em 02/09/2026**
+    (§2.54). Só **(e)** continua aberto.
 
     - (a) ~~texto traduzido nos 12 idiomas para os rótulos das fases e para o
       estado "dado insuficiente"~~ — feito: bloco `hiringIndex` em
@@ -161,12 +162,21 @@ o quanto confiar nele.
       Hobby, já tem dois crons, e qual dia/hora custa invocação e é decisão
       do operador. A rota funciona e responde a `Bearer $CRON_SECRET`; o TODO
       está no cabeçalho dela.
-    - (d) **conectores ILOSTAT e CEPALSTAT**, que trazem o resto do mundo e a
-      América Latina — e que entram com `confidence: 'low'`, porque taxa de
-      desemprego em economia com setor informal grande conta quem trabalha
-      informalmente como "empregado", sem contratação formal nenhuma por
-      trás; a coluna já aceita isso desde a fase 1, e `lookup.ts` já escolhe
-      entre séries de fontes diferentes sem emendá-las.
+    - (d) ~~**conectores ILOSTAT e CEPALSTAT**~~ — ✅ **feito em 02/09/2026**
+      (§2.54). `connectors/ilostat.ts` (SDMX em `sdmx.ilo.org`, fluxo
+      `DF_UNE_DEAP_SEX_AGE_RT`, trimestral) e `connectors/cepalstat.ts`
+      (`api-cepalstat.cepal.org`, indicador 2182), mais
+      `connectors/iso3.ts` para a tradução alfa-3 → alfa-2 que as duas
+      precisam. Todo ponto sai `confidence: 'low'`, incondicionalmente — 0
+      linhas com outra coisa, conferido no banco. Cobertura de **30 para 98
+      países**, 2.757 linhas gravadas em produção. **Nenhum filtro de país
+      foi escrito nos conectores**, de propósito: `selectSeries` já prefere
+      BLS/Eurostat onde há sobreposição, e isso foi conferido contra o banco
+      (Alemanha continua em `eurostat_jvs`, EUA em `bls_jolts`). Nenhum
+      arquivo de UI nem de i18n precisou mudar. **Ponto de atenção:** a
+      gravação passou de 729 para 2.757 linhas e a coleta inteira leva ~24s
+      contra o teto de 60s da função do cron — a janela de 24 trimestres por
+      fonte é o que segura esse número.
     - (e) **agregação por continente**, que precisa responder antes como se
       agrega uma série que o §2.51 diz não ser comparável entre países (a
       resposta provável é agregar as *fases*, não os valores).
