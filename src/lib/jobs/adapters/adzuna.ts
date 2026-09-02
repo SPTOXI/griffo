@@ -14,6 +14,12 @@
  * Em 18/08/2026, contra
  * `api.adzuna.com/v1/api/jobs/br/search/1?what=enfermeiro`.
  *
+ * Em 02/09/2026, os dezenove países cobertos e nove não cobertos, um a um — a
+ * tabela com o que cada um respondeu está em `../adzuna-plan.ts`. Na mesma
+ * verificação: **sem `what`, a busca responde 200 com as 50 vagas mais recentes
+ * do país** (`br` declarou `count: 468.460` disponíveis). É o que a varredura
+ * de base usa.
+ *
  * ## A armadilha que quase entrou no banco
  *
  * O campo `salary_is_predicted` vale `"1"` quando o salário foi **estimado pela
@@ -31,11 +37,16 @@
  * extenso e em português — a mesma conversão que a Gupy precisa, e que por isso
  * mora em `lib/market/countries.ts` em vez de em cada adapter.
  *
- * ## É fonte de BUSCA
+ * ## É fonte de BUSCA — com uma exceção declarada
  *
- * Como a Gupy, precisa de termos, e eles vêm dos cargos que a orientação
+ * Como a Gupy, busca por termos, e eles vêm dos cargos que a orientação
  * profissional recomendou. E, como a Gupy, **não fecha vaga por ausência**: sair
  * do resultado de uma busca não é prova de encerramento.
+ *
+ * A exceção é a varredura de base (`baseline`), que roda sem termo nenhum nos
+ * países onde ninguém declarou morar. Ela não deixa de ser busca — continua sem
+ * fechar vaga por ausência —, mas o que ela devolve não é resposta a uma
+ * pergunta de ninguém: é o que o mercado publicou hoje.
  *
  * ## A URL de candidatura é um redirecionamento da Adzuna
  *
@@ -147,6 +158,18 @@ export function createAdzunaAdapter(options: {
   /** Código do país no formato da Adzuna: `br`, `gb`, `us`... */
   country: string
   terms: string[]
+  /**
+   * Sem termo, varre o mercado inteiro: as vagas mais recentes, sem `what`.
+   *
+   * Só tem efeito quando `terms` está vazio. Existe porque o corpo de vagas
+   * deixou de ser só insumo de match e passou a ser o dado de onde um dia sai o
+   * retrato por país — e um retrato feito só dos cargos que os usuários atuais
+   * pedem retrata os usuários atuais, não o mercado. Ver `adzuna-plan.ts`.
+   *
+   * Desligado por padrão: quem não pede varredura de base continua sem gastar
+   * requisição em país sem termo, que era o comportamento anterior.
+   */
+  baseline?: boolean
   fetchImpl?: typeof fetch
   maxPagesPerTerm?: number
   /** Quantidade máxima de dias atrás em que a vaga foi criada (padrão: 30). */
@@ -156,6 +179,14 @@ export function createAdzunaAdapter(options: {
   const maxPagesPerTerm = options.maxPagesPerTerm ?? 2
   const maxDaysOld = options.maxDaysOld ?? 30
   const country = options.country.toLowerCase()
+
+  /**
+   * O que a coleta vai pedir. `null` é a varredura de base — ausência de `what`,
+   * não busca por string vazia: `what=` filtraria por nada e não é o mesmo que
+   * não filtrar.
+   */
+  const queries: (string | null)[] =
+    options.terms.length > 0 ? options.terms : options.baseline ? [null] : []
 
   return {
     descriptor: {
@@ -173,7 +204,11 @@ export function createAdzunaAdapter(options: {
       let pagesFetched = 0
       let truncated = false
 
-      for (const term of options.terms) {
+      for (const term of queries) {
+        // Como a busca aparece no erro. A varredura de base não tem termo, e
+        // dizer `no termo ""` faria parecer que alguém pediu string vazia.
+        const label = term === null ? 'na varredura de base' : `no termo "${term}"`
+
         if (Date.now() - startedAt >= budget) {
           truncated = true
           break
@@ -190,7 +225,7 @@ export function createAdzunaAdapter(options: {
             `?app_id=${encodeURIComponent(options.credentials.appId)}` +
             `&app_key=${encodeURIComponent(options.credentials.appKey)}` +
             `&results_per_page=${PAGE_SIZE}` +
-            `&what=${encodeURIComponent(term)}` +
+            (term === null ? '' : `&what=${encodeURIComponent(term)}`) +
             `&max_days_old=${maxDaysOld}` +
             `&sort_by=date`
 
@@ -202,7 +237,7 @@ export function createAdzunaAdapter(options: {
             const response = await doFetch(url, { signal: controller.signal })
 
             if (!response.ok) {
-              errors.push(`HTTP ${response.status} no termo "${term}"`)
+              errors.push(`HTTP ${response.status} ${label}`)
               break
             }
 
@@ -213,7 +248,7 @@ export function createAdzunaAdapter(options: {
             // parecer um mercado vazio.
             const exception = (payload as { exception?: unknown })?.exception
             if (exception) {
-              errors.push(`${String(exception)} no termo "${term}"`)
+              errors.push(`${String(exception)} ${label}`)
               break
             }
 
@@ -229,8 +264,8 @@ export function createAdzunaAdapter(options: {
           } catch (e: any) {
             errors.push(
               e?.name === 'AbortError'
-                ? `Tempo esgotado no termo "${term}"`
-                : `${e?.message || String(e)} no termo "${term}"`
+                ? `Tempo esgotado ${label}`
+                : `${e?.message || String(e)} ${label}`
             )
             break
           } finally {
@@ -239,11 +274,11 @@ export function createAdzunaAdapter(options: {
         }
       }
 
-      if (options.terms.length === 0) {
+      if (queries.length === 0) {
         return { outcome: 'complete', jobs: [], pagesFetched: 0, error: null }
       }
 
-      if (errors.length >= options.terms.length && jobs.length === 0) {
+      if (errors.length >= queries.length && jobs.length === 0) {
         return { outcome: 'failed', jobs: [], error: errors.join('; '), pagesFetched }
       }
 

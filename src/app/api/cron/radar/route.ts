@@ -9,7 +9,7 @@ import { greenhouseAdapters } from '@/lib/jobs/adapters/greenhouse'
 import { leverAdapters } from '@/lib/jobs/adapters/lever'
 import { createGupyAdapter } from '@/lib/jobs/adapters/gupy'
 import { adzunaLastCollections, searchTermsByCountry, searchTermsFromProfiles } from '@/lib/jobs/search-terms.server'
-import { estimatedRequests, planAdzunaRound } from '@/lib/jobs/adzuna-plan'
+import { adzunaRoundInputs, estimatedRequests, planAdzunaRound } from '@/lib/jobs/adzuna-plan'
 import { recordQuotaUsage } from '@/lib/jobs/quota.server'
 import { careerPageAdapters } from '@/lib/jobs/adapters/jsonld'
 import { remoteBoardAdapters } from '@/lib/jobs/adapters/remote-boards'
@@ -96,26 +96,43 @@ const DIGEST_DEADLINE_MS = 54_000
 /**
  * O orçamento da Adzuna, em três números.
  *
- * A cota gratuita é de 2.500 requisições por mês, ~83 por dia. Multiplicados,
- * estes três dão **55 requisições por rodada** — 55 × 31 = 1.705/mês.
+ * A cota gratuita é de 2.500 requisições por mês, ~83 por dia. No PIOR caso —
+ * os oito países da rodada todos com cinco termos — dão **40 requisições por
+ * rodada**, 1.240/mês, metade da cota. Hoje o caso real é bem menor: um país
+ * com termos (Brasil) e sete de varredura de base, 12/rodada, 372/mês.
  *
- * Subiu de 4 países/3 termos/1 página (372/mês, ~15% da cota) em 25/08/2026,
- * depois de medir que a rodada original usava uma fração pequena da cota
- * disponível. Onze países — todos os que a Adzuna cobre, ver `ADZUNA_COUNTRIES`
- * — cabem numa rodada só: o rodízio deixa de escolher quem espera mais porque
- * ninguém mais espera, todo país é varrido todo dia. Cinco termos por país
- * (era três) para cobrir mais categorias de cargo por mercado — a página
- * continua em 1: aumentar pra 2 chegava perto demais do teto mensal (opção
- * descartada, ver seção 2.28 da auditoria).
+ * ## Por que oito, e não os dezenove
  *
- * A folga que sobra (2.500 − 1.705 = 795/mês) fica acima da reserva de 20%
- * (500) desenhada para a busca sob demanda — que ainda não foi implementada
- * (§21, Etapa 9), então essa folga hoje não tem quem dispute.
+ * Porque o limite que aperta é o RELÓGIO, não a cota. As fontes rodam em
+ * sequência dentro dos 45s de `RUN_BUDGET_MS`, e a Adzuna é a última da lista.
+ * Medido contra a API real em 02/09/2026: ~1,1s por requisição na mediana, 2,1s
+ * no pior dos oito países medidos. Com a gravação de até 50 vagas por país
+ * (~0,9s, seis idas ao banco), um país com cinco termos custa ~6s e um de
+ * varredura de base, ~2s. Dezenove países numa rodada pediriam ~40s só de
+ * Adzuna, e ela não tem 40s — os últimos da fila não rodariam.
+ *
+ * Estourar o tempo, ao contrário de estourar a cota, degrada em silêncio de um
+ * jeito específico: `runRadar` para de percorrer adapters, a rodada devolve
+ * `ranOutOfTime: true`, e o país que não rodou continua com `lastCollectionAt`
+ * nulo — ou seja, o rodízio o coloca na frente na rodada seguinte e se conserta
+ * sozinho. Não é perda de dado; é atraso. Ainda assim, dimensionar para caber é
+ * melhor que contar com o conserto: `recordQuotaUsage` grava o consumo PLANEJADO
+ * antes de rodar, então planejar o que não cabe infla o número da cota com
+ * requisições que nunca aconteceram.
+ *
+ * Oito por rodada cobrem os dezenove países em três dias — o mesmo compromisso
+ * de sempre: ninguém fica para trás, só espera. O `11` anterior dizia "todos
+ * todo dia", e isso deixou de ser verdade quando a lista passou de onze para
+ * dezenove.
+ *
+ * A folga (2.500 − 1.240 = 1.260/mês no pior caso) fica bem acima da reserva de
+ * 20% (500) desenhada para a busca sob demanda — que ainda não foi implementada
+ * (§21, Etapa 9).
  *
  * Mexer em qualquer um deles mexe direto na conta do mês. O teste de
  * `adzuna-plan.ts` trava o resultado para que a mudança seja consciente.
  */
-const ADZUNA_COUNTRIES_PER_RUN = 11
+const ADZUNA_COUNTRIES_PER_RUN = 8
 const ADZUNA_TERMS_PER_COUNTRY = 5
 const ADZUNA_PAGES_PER_TERM = 1
 
@@ -146,26 +163,27 @@ export async function GET(req: Request) {
   /**
    * A rodada da Adzuna.
    *
-   * Onze países (todos os que a Adzuna cobre), cinco termos por país, uma
-   * página por termo — todo mercado é varrido todo dia, não só quem esperou
-   * mais. Deixou de ser rodízio no sentido estrito (nenhum país fica de fora
-   * numa rodada), mas o nome do parâmetro (`ADZUNA_COUNTRIES_PER_RUN`) e
-   * `planAdzunaRound` continuam os mesmos — se um país novo for acrescentado a
-   * `ADZUNA_COUNTRIES` sem que este número acompanhe, o rodízio por
-   * `lastCollectionAt` volta a valer sozinho, sem quebrar nada.
+   * A fila é montada sobre TODOS os países cobertos, e não só sobre aqueles em
+   * que alguém declarou morar. Um país com termos é buscado por eles; um país
+   * sem ninguém é varrido sem termo — as vagas mais recentes daquele mercado.
+   *
+   * A regra anterior (só quem tem termo) produzia, com os quatro perfis
+   * existentes, todos no Brasil, uma única fonte Adzuna viva: `adzuna:br`. O
+   * porquê de isso ter mudado está em `adzuna-plan.ts`, em `adzunaRoundInputs`.
+   *
+   * O rodízio por `lastCollectionAt` voltou a valer de fato: dezenove países,
+   * oito por rodada, quem esperou mais na frente.
    */
   const [termsByCountry, lastCollections] = adzuna
     ? await Promise.all([searchTermsByCountry(), adzunaLastCollections()])
     : [new Map<string, string[]>(), new Map<string, Date | null>()]
 
-  const adzunaPlans = planAdzunaRound(
-    [...termsByCountry.entries()].map(([country, terms]) => ({
-      country: country.toLowerCase(),
-      terms,
-      lastCollectionAt: lastCollections.get(country.toLowerCase()) ?? null,
-    })),
-    { maxCountries: ADZUNA_COUNTRIES_PER_RUN, maxTermsPerCountry: ADZUNA_TERMS_PER_COUNTRY }
-  )
+  const adzunaPlans = adzuna
+    ? planAdzunaRound(adzunaRoundInputs(termsByCountry, lastCollections), {
+        maxCountries: ADZUNA_COUNTRIES_PER_RUN,
+        maxTermsPerCountry: ADZUNA_TERMS_PER_COUNTRY,
+      })
+    : []
 
   const adapters = [
     ...greenhouseAdapters(process.env.GREENHOUSE_BOARDS),
@@ -181,13 +199,15 @@ export async function GET(req: Request) {
     // Vaga remota internacional: sem chave, sem cota, e a ÚNICA fonte de quem
     // mora em Portugal ou no Japão — que a Adzuna não atende.
     ...remoteBoardAdapters(process.env.REMOTE_BOARDS),
-    // A Adzuna atende dez mercados, mas a cota gratuita não cabe todos toda
-    // noite. O rodízio escolhe quem esperou mais — ver `adzuna-plan.ts`.
+    // A Adzuna atende dezenove mercados, mas os 45s da invocação não cabem
+    // todos toda noite. O rodízio escolhe quem esperou mais — ver
+    // `adzuna-plan.ts`.
     ...adzunaPlans.map((plan) =>
       createAdzunaAdapter({
         credentials: adzuna!,
         country: plan.country,
         terms: plan.terms,
+        baseline: plan.baseline,
         maxPagesPerTerm: ADZUNA_PAGES_PER_TERM,
       })
     ),

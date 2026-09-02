@@ -117,6 +117,48 @@ export function groupedCountries(): { adapted: CountryOption[]; others: CountryO
   }
 }
 
+/**
+ * Como cada fonte ESCREVE o país, para além do nome em português.
+ *
+ * ## O silêncio que isto corrige
+ *
+ * A Adzuna devolve o país no idioma do mercado, e não em português. Enquanto só
+ * o Brasil era varrido, isso não aparecia: "Brasil" casa com a lista. Ao conferir
+ * a resposta real de cada país em 02/09/2026, o `area[0]` observado foi:
+ *
+ * | país | `area[0]`     | casava antes? |
+ * |------|---------------|---------------|
+ * | br   | Brasil        | sim           |
+ * | us   | US            | sim (ISO2)    |
+ * | mx   | México        | sim           |
+ * | it   | Italia        | sim (apelido) |
+ * | gb   | UK            | **não**       |
+ * | ca   | Canada        | **não**       |
+ * | es   | España        | **não**       |
+ * | de   | Deutschland   | **não**       |
+ * | fr   | France        | **não**       |
+ * | in   | India         | **não**       |
+ * | au   | Australia     | **não**       |
+ *
+ * `countryCodeFromName` devolve `null` para nome desconhecido — e `null` é o
+ * comportamento correto dela. O defeito era a tabela estar incompleta: a vaga
+ * entrava no banco sem país, portanto sem mercado (`marketForCountry` só é
+ * chamado quando há país), e o filtro duro a tratava como vaga de lugar nenhum.
+ * Sete dos onze mercados da Adzuna gravariam vaga sem país no dia em que fossem
+ * varridos.
+ *
+ * Cada linha abaixo foi **lida da resposta real**, não deduzida de tabela de
+ * idiomas: o valor observado em todos os 50 resultados de cada país, na mesma
+ * verificação que ampliou `ADZUNA_COUNTRIES`.
+ *
+ * ## Risco residual, declarado
+ *
+ * Bélgica e Suíça são multilíngues. Nos 50 resultados observados de cada uma, o
+ * `area[0]` foi sempre "België" e "Schweiz" — mas a Adzuna pode escrever
+ * "Belgique" ou "Suisse" em outro recorte. Não estão aqui porque não foram
+ * observadas, e este arquivo não registra suposição. A falha, se acontecer, é a
+ * segura: país nulo, mercado global, vaga preservada.
+ */
 const CODE_BY_NAME = new Map<string, string>([
   ...COUNTRIES.map((c) => [c.name.toLowerCase(), c.code] as [string, string]),
   // Fontes brasileiras escrevem "Brasil"; dados vindos de fora escrevem "Brazil".
@@ -126,6 +168,24 @@ const CODE_BY_NAME = new Map<string, string>([
   // A Adzuna no locale `it` devolve o nome do país em italiano ("Italia", sem
   // acento) — diferente do "Itália" em português já cadastrado em COUNTRIES.
   ['italia', 'IT'],
+  // --- Observados na resposta real da Adzuna em 02/09/2026 ---
+  // "UK" não é ISO2 (o ISO é GB), e por isso o atalho de duas letras não a
+  // resolvia: ele consulta a tabela ISO, onde "UK" não existe.
+  ['uk', 'GB'],
+  ['canada', 'CA'],
+  ['españa', 'ES'],
+  ['deutschland', 'DE'],
+  ['france', 'FR'],
+  ['india', 'IN'],
+  ['australia', 'AU'],
+  ['new zealand', 'NZ'],
+  ['south africa', 'ZA'],
+  ['polska', 'PL'],
+  ['nederland', 'NL'],
+  ['österreich', 'AT'],
+  ['belgië', 'BE'],
+  ['singapore', 'SG'],
+  ['schweiz', 'CH'],
 ])
 
 /**
@@ -137,14 +197,22 @@ const CODE_BY_NAME = new Map<string, string>([
  *
  * Nome desconhecido devolve `null`. Um país errado é pior que país nenhum,
  * porque o filtro duro age sobre ele.
+ *
+ * A tabela de nomes é consultada ANTES do atalho de duas letras, e não depois.
+ * A ordem inversa devolvia `null` para "UK": duas letras, mas não ISO — o atalho
+ * aceitava a forma, não achava o código, e desistia sem nunca perguntar à tabela
+ * de nomes, onde "uk" agora está. Nenhum nome de país tem duas letras, então
+ * perguntar primeiro à tabela não tira nada de ninguém.
  */
 export function countryCodeFromName(value: unknown): string | null {
   if (typeof value !== 'string') return null
   const key = value.trim().toLowerCase()
   if (!key) return null
+  const byName = CODE_BY_NAME.get(key)
+  if (byName) return byName
   if (/^[a-z]{2}$/.test(key)) {
     const upper = key.toUpperCase()
     return BY_CODE.has(upper) ? upper : null
   }
-  return CODE_BY_NAME.get(key) ?? null
+  return null
 }

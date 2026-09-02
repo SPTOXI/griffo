@@ -132,7 +132,7 @@ test('HTTP ruim é falha', async () => {
   assert.match(result.error!, /HTTP 429/)
 })
 
-test('sem termo, coleta vazia e bem-sucedida', async () => {
+test('sem termo e sem varredura de base, coleta vazia e bem-sucedida', async () => {
   const adapter = createAdzunaAdapter({
     credentials: creds,
     country: 'br',
@@ -141,6 +141,72 @@ test('sem termo, coleta vazia e bem-sucedida', async () => {
   })
   const result = await adapter.collect({ timeBudgetMs: 5000 })
   assert.equal(result.outcome, 'complete')
+})
+
+test('A VARREDURA DE BASE NÃO MANDA `what`', async () => {
+  // Verificado contra a API real em 02/09/2026: sem `what`, a busca devolve as
+  // vagas mais recentes do país. `what=` (string vazia) NÃO é o mesmo que não
+  // filtrar — mandá-lo faria a varredura buscar por nada.
+  const urls: string[] = []
+  const spyFetch = (async (url: string) => {
+    urls.push(String(url))
+    return { ok: true, status: 200, json: async () => pagina([vaga]) } as Response
+  }) as unknown as typeof fetch
+
+  const adapter = createAdzunaAdapter({
+    credentials: creds,
+    country: 'pl',
+    terms: [],
+    baseline: true,
+    maxPagesPerTerm: 1,
+    fetchImpl: spyFetch,
+  })
+  const result = await adapter.collect({ timeBudgetMs: 5000 })
+
+  assert.equal(urls.length, 1, 'a varredura de base é UMA requisição por página')
+  assert.ok(!urls[0].includes('what='), `a URL não pode ter what=: ${urls[0]}`)
+  assert.ok(urls[0].includes('/jobs/pl/search/1'))
+  assert.ok(urls[0].includes('sort_by=date'), 'as mais recentes, não as mais relevantes')
+  assert.equal(result.outcome, 'complete')
+  assert.equal(result.jobs.length, 1)
+})
+
+test('havendo termo, a varredura de base não roda', async () => {
+  // O sinalizador não substitui a busca de quem tem o que procurar: ele só
+  // preenche o vazio de quem não tem.
+  const urls: string[] = []
+  const spyFetch = (async (url: string) => {
+    urls.push(String(url))
+    return { ok: true, status: 200, json: async () => pagina([vaga]) } as Response
+  }) as unknown as typeof fetch
+
+  const adapter = createAdzunaAdapter({
+    credentials: creds,
+    country: 'br',
+    terms: ['enfermeiro'],
+    baseline: true,
+    maxPagesPerTerm: 1,
+    fetchImpl: spyFetch,
+  })
+  await adapter.collect({ timeBudgetMs: 5000 })
+
+  assert.equal(urls.length, 1)
+  assert.ok(urls[0].includes('what=enfermeiro'))
+})
+
+test('falha na varredura de base é falha, e o erro diz o que era', async () => {
+  // `no termo ""` faria parecer que alguém pediu string vazia.
+  const adapter = createAdzunaAdapter({
+    credentials: creds,
+    country: 'pl',
+    terms: [],
+    baseline: true,
+    fetchImpl: fakeFetch({}, false, 500),
+  })
+  const result = await adapter.collect({ timeBudgetMs: 5000 })
+  assert.equal(result.outcome, 'failed')
+  assert.match(result.error!, /varredura de base/)
+  assert.ok(!result.error!.includes('termo ""'))
 })
 
 test('a fonte NÃO fecha vaga por ausência', () => {
