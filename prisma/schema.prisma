@@ -842,3 +842,87 @@ model AnalyticsEvent {
   @@index([visitorId, createdAt])
   @@index([userId, createdAt])
 }
+
+/// Um ponto de série temporal de mercado de trabalho, por país.
+///
+/// Matéria-prima do índice de temperatura de contratação. Cada linha é um
+/// número que um órgão oficial de estatística publicou para um país num
+/// período — nunca um número calculado, interpolado ou estimado por nós.
+///
+/// **Esta tabela não sustenta ranking entre países, e isso é de propósito.**
+/// O próprio Eurostat não publica um total da UE para a taxa de postos vagos
+/// porque os países não são comparáveis: a amostra vai de ~2.500 empresas
+/// (Finlândia) a ~75.000 (Polônia), a taxa de resposta vai de 11,4%
+/// (Alemanha) a 98,8% (Romênia), e a França exclui administração pública e só
+/// pesquisa empresas com 10+ empregados. A única comparação válida é um país
+/// contra a própria história — e é só isso que `lib/hiring-index/phase.ts`
+/// faz.
+///
+/// Sem `country` no `@@unique`? Não: a chave é o quarteto inteiro. O mesmo
+/// período do mesmo país pode ser buscado muitas vezes (o JOLTS revisa a
+/// impressão anterior toda divulgação), e o `upsert` faz a leitura mais
+/// recente vencer sem duplicar o mês.
+model LaborMarketPoint {
+  id String @id @default(cuid())
+
+  /// ISO 3166-1 alfa-2. `GR`, nunca o `EL` do Eurostat; `GB`, nunca `UK`.
+  country String
+  /// Identificador estável do conector: `bls_jolts`, `eurostat_jvs`.
+  source  String
+  /// `job_openings_rate` | `job_vacancy_rate` | `unemployment_rate`
+  ///
+  /// Métricas diferentes NÃO se emendam na mesma série: a taxa do JOLTS e a do
+  /// Eurostat medem coisas parecidas com definições diferentes, e juntá-las
+  /// criaria um degrau artificial que a classificação de fase leria como
+  /// virada de mercado.
+  metric  String
+
+  value Float
+  /// `percent` hoje. Existe para o dia em que uma fonte devolver nível absoluto.
+  unit  String @default("percent")
+
+  /// Primeiro dia do período coberto, em UTC. Julho/2026 → `2026-07-01`.
+  period     DateTime
+  /// `month` | `quarter`
+  periodType String
+
+  /// `false` = impressão preliminar/provisória.
+  ///
+  /// A taxa de resposta do JOLTS caiu de 58% (2019) para ~30% e a revisão da
+  /// segunda divulgação passou a valer ~180 mil vagas em média, cerca do dobro
+  /// da norma histórica. A primeira impressão de um mês é a menos confiável da
+  /// série inteira, e nenhuma tela deve mostrá-la como "o" número.
+  revised Boolean @default(false)
+
+  /// A fonte declarou QUEBRA DE SÉRIE neste período.
+  ///
+  /// O campo mais importante desta tabela, e o menos óbvio. Quebra significa
+  /// que os valores antes e depois não são comparáveis ENTRE SI — e comparar o
+  /// país com o próprio passado é a única coisa que este produto faz. Sem isto,
+  /// uma mudança de metodologia do instituto apareceria na tela como um
+  /// mercado esfriando de repente.
+  seriesBreak Boolean @default(false)
+
+  /// `high` | `low`
+  ///
+  /// `high` — pesquisa direta com empregadores sobre vagas em aberto (JOLTS,
+  /// Eurostat). `low` — taxa derivada/modelada (ILOSTAT, CEPALSTAT, fase 2),
+  /// ou marcada pela própria fonte como pouco confiável. A diferença não é de
+  /// grau: em economias com setor informal grande, quem trabalha
+  /// informalmente conta como "empregado" sem contratação formal nenhuma por
+  /// trás. Fica na COLUNA, e não num tooltip, para sobreviver a qualquer tela
+  /// futura escrita por quem não leu isto.
+  confidence String @default("high")
+
+  /// Marcação crua da fonte (`p`, `b`, `d`, `e`, `u` no Eurostat; código de
+  /// nota de rodapé no BLS). Guardada como veio: é rastro de origem, não texto
+  /// de tela.
+  note String?
+
+  fetchedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([country, source, metric, period])
+  @@index([country, metric, period])
+  @@index([source, period])
+}

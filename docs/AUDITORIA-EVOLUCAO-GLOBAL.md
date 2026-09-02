@@ -2686,3 +2686,133 @@ determinística. `tsc --noEmit` e `eslint` limpos nos arquivos tocados.
 `npm test`: 627/627 (618 + 9 novos).
 
 
+
+## 2.51 Índice de temperatura de contratação por país — fase 1: esquema, dois conectores reais e a classificação de fase
+
+Pedido do operador: um sinal de "este mercado está esquentando ou
+esfriando agora", por país, para agregar valor à análise paga e ao
+Radar de Vagas. A inspiração declarada foi a curva de J da economia —
+um indicador cai depois de um choque, encontra o fundo, sobe, e por fim
+passa de onde estava.
+
+**A adaptação que muda tudo, e por quê:** não existe um choque comum. A
+tentação óbvia era montar "os mercados mais quentes do mundo" e ordenar
+a lista. Isso seria mentira estatística, e não uma pequena. O **próprio
+Eurostat não publica um total da UE** para a taxa de postos vagos
+porque os países não são comparáveis entre si: a amostra vai de ~2.500
+empresas (Finlândia) a ~75.000 (Polônia); a taxa de resposta vai de
+11,4% (Alemanha) a 98,8% (Romênia); a França pesquisa só empresas com
+10+ empregados e exclui administração pública, e por isso vem marcada
+`d` ("definição difere") em todos os trimestres; a Dinamarca usa outro
+recorte de setor.
+
+Uma taxa de 2,0% na França e 2,0% na Romênia não são o mesmo número
+medido duas vezes — são dois números diferentes com o mesmo nome. Então
+o índice é, por construção, **um país contra a própria história**, e
+nunca contra o vizinho. É a leitura honesta e é, por acaso, exatamente
+o que a metáfora da curva de J pede: cada mercado tem a curva dele.
+
+**Nada aqui recebeu texto de tela.** Identificador interno é chave de
+código (`cooling`, `heating_up`); rótulo que o usuário lê é outra
+coisa, vem do dicionário nos 12 idiomas e é fase 2. Nenhuma string em
+português entrou em caminho global — a regra do §2.49 vale aqui desde o
+primeiro arquivo.
+
+**O que entrou:**
+
+- `prisma/schema.prisma` — modelo `LaborMarketPoint`. Chave única
+  `(country, source, metric, period)`: a mesma competência do mesmo
+  país é buscada muitas vezes (o JOLTS revisa a impressão anterior toda
+  divulgação) e o `upsert` faz a leitura mais recente vencer sem
+  duplicar o mês. Campos que não são óbvios: `revised` (falso =
+  impressão preliminar), `seriesBreak` (a fonte declarou quebra de
+  série) e `confidence` (`high`/`low`).
+- `src/lib/hiring-index/types.ts` — o contrato comum. Deliberadamente
+  pequeno: buscar e devolver pontos. Sem retentativa, backoff ou
+  controle de cota, porque nenhuma das duas APIs reais precisa e uma
+  máquina de retentativa escrita antes de existir o problema é uma
+  máquina que ninguém sabe se funciona.
+- `src/lib/hiring-index/connectors/bls-jolts.ts` — Estados Unidos,
+  série `JTS000000000000000JOR` (vagas em aberto, total não agrícola,
+  **taxa**, com ajuste sazonal).
+- `src/lib/hiring-index/connectors/eurostat.ts` — UE/EEE numa chamada
+  só, `jvs_q_nace2`, taxa de postos vagos trimestral.
+- `src/lib/hiring-index/phase.ts` — média móvel de 3 períodos e a
+  classificação em `cooling` / `bottoming_out` / `recovering` /
+  `heating_up` / `stable`, ou `null` explícito.
+- `src/scripts/fetch-hiring-index.ts` — gatilho manual (`--dry-run`).
+  Não é o pipeline de produção: ligar no cron é fase 2, e a decisão é
+  de quem ler a saída daqui primeiro.
+
+**Verificado contra as APIs reais, não contra a documentação.** As duas
+descobertas que só apareceram assim:
+
+- No Eurostat, a primeira tentativa usou `indic_em=JOBRATE` e
+  `s_adj=SCA` — códigos plausíveis e errados. A API respondeu **200 com
+  `value: {}`**: filtro que não casa não dá erro, dá vazio. Os códigos
+  certos (`JVR`, `SA`) foram lidos de
+  `dimension.indic_em.category.index` numa chamada sem filtro. O
+  conector trata resposta sem valor nenhum como FALHA de coleta, nunca
+  como "Europa sem vagas" — o mesmo erro que a Adzuna já ensinou aqui
+  com o 200 + `exception`.
+- No BLS, `Number('')` é `0`, e `0` é finito. O teste do valor
+  suprimido (`"-"` e `""`, que a série publica) pegou um mês vazio
+  entrando como **"taxa de vagas em aberto de 0,0%"** — um número que
+  ninguém publicou. Corrigido antes de a primeira coleta acontecer.
+
+**A média móvel não é enfeite.** A taxa de resposta do JOLTS caiu de
+58% (2019) para ~30-32% (2023 em diante), e a revisão entre a primeira
+e a segunda divulgação passou a valer ~180 mil vagas em média, cerca do
+dobro da norma histórica. A impressão do mês recém-divulgado é a menos
+confiável da série inteira. Por isso **não existe caminho no módulo que
+classifique fase a partir do valor cru** — a média móvel é regra do
+módulo, não opção de quem chama —, e a janela final carrega
+`windowHasPreliminary` para a tela poder dizer que aquele trecho ainda
+pode mudar.
+
+**A marcação que mais importa é `b`, não `d`.** "Definição difere" (a
+França) NÃO rebaixa a confiança, e é proposital: incomparabilidade
+entre países é irrelevante num produto que não compara países, e uma
+definição própria e estável não atrapalha a série consigo mesma. Já
+"quebra de série" diz que antes e depois **não são comparáveis entre
+si** — que é justamente a única comparação feita aqui. `classifyHiringPhase`
+corta a série na quebra mais recente por causa disso, e a Chéquia (quebra
+em 2025-Q1) sai hoje como "sem classificação", não como um mercado que
+mudou de rumo. Só `u` ("baixa confiabilidade") rebaixa a confiança: é a
+fonte falando do próprio número.
+
+**`stable` existe, e não são só os quatro trechos da curva.** Uma série
+genuinamente parada num nível normal não é nenhum dos quatro; encaixá-la
+à força em "recuperando" ou "no fundo" seria inventar um movimento que o
+dado não mostra. E `phase: null` com motivo explícito
+(`no_points` / `too_few_points` / `series_break_too_recent`) é a resposta
+para menos de 6 períodos — mesmo princípio de `lib/market/countries.ts`,
+que prefere dizer "não existe convenção de currículo para este país" a
+fingir cobertura.
+
+O limiar de planura (1,5% do nível por período) foi **calibrado contra
+dois casos concretos**, não escolhido por ser redondo: uma série que
+oscila ±0,1 p.p. em torno de 2,5% sem ir a lugar nenhum produz
+inclinação ~0,013 e precisa sair `stable`; uma que cai 0,05 p.p. por
+trimestre de forma consistente produz ~0,019 e precisa sair `cooling`.
+Os dois estão no teste.
+
+**Execução real das duas APIs em 01/09/2026** (`npx tsx
+src/scripts/fetch-hiring-index.ts --dry-run`): `bls_jolts` completo com
+55 pontos em 482ms; `eurostat_jvs` completo com 674 pontos em 717ms; 30
+séries de país classificadas. EUA `stable` (mm 4,40, janela com
+preliminar); Alemanha, França, Países Baixos, Finlândia e Áustria
+`cooling`; Lituânia e Malta `heating_up`; Luxemburgo `bottoming_out`;
+Chéquia sem classificação por quebra de série; Reino Unido sem
+classificação por só ter 3 pontos. Agregados (`EU27_2020`, `EA20`,
+`EA21`) descartados, `EL`→`GR` e `UK`→`GB` traduzidos na fronteira.
+
+57 testes novos (`phase.test.ts`, `connectors/bls-jolts.test.ts`,
+`connectors/eurostat.test.ts`), todos com `fetch` injetado e recortes
+dos payloads reais como fixture — nenhum toca a rede. `tsc --noEmit` e
+`eslint` limpos nos arquivos tocados. `npm test`: 684/684 (627 + 57).
+
+**Fora do escopo desta fase, de propósito:** tela, ligação no
+`/api/cron/radar`, conectores ILOSTAT e CEPALSTAT, texto traduzido nos
+12 idiomas e agregação por continente. E o `npx prisma db push` do
+`LaborMarketPoint` ainda não foi rodado — ver a pendência 13 do HANDOFF.

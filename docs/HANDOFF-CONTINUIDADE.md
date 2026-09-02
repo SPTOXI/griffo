@@ -27,10 +27,10 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 30/08/2026: JSON-LD global que vazava português pra `/us /de /jp` corrigido (§2.49), e domínio nu passou a redirecionar por geo-IP pra rota de país certa (§2.50) — pendência 12 abaixo fechada |
-| Suíte | 627 testes, `fail 0` — reverificado após o §2.50 (inclui `middleware.test.ts`, novo); a regra da contagem está na seção 8 |
-| `tsc`, `build` | `tsc --noEmit` limpo após o §2.47; `npm run build` não rerodado nesta revisão — conferir antes de deploy |
-| Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent` e `RadarAlert.notifiedAt`, ver 7.6) |
+| Última revisão | 01/09/2026: fase 1 do índice de temperatura de contratação por país (§2.51) — `LaborMarketPoint` no esquema, conectores reais do BLS JOLTS e do Eurostat, classificação de fase por curva própria de cada país. Sem tela, sem cron, sem tradução: é fase 2 (pendência 14) |
+| Suíte | 684 testes, `fail 0` — reverificado após o §2.51 (627 + 57 novos em `src/lib/hiring-index/`); a regra da contagem está na seção 8 |
+| `tsc`, `build` | `tsc --noEmit` e `eslint` limpos após o §2.51; `npm run build` não rerodado nesta revisão — conferir antes de deploy |
+| Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent`, `RadarAlert.notifiedAt` — ver 7.6 — e `LaborMarketPoint` do §2.51, empurrado em 01/09/2026) |
 
 **Pendências que estão esperando alguém, não código:**
 
@@ -126,6 +126,36 @@ o quanto confiar nele.
     o visitante agora chega direto em `/país` (que passa `forcedLang`
     pro componente certo), na prática deixa de ser alcançado pelo fluxo
     normal; só afeta quem entra sem cookie/redirect (ex.: bot).
+
+13. ~~`npx prisma db push` do `LaborMarketPoint` (§2.51), e conferir que os
+    conectores gravam de verdade em produção.~~ — ✅ **resolvido em
+    01/09/2026.** Tabela criada (só adição). `npx tsx
+    src/scripts/fetch-hiring-index.ts` rodado sem `--dry-run` contra o banco
+    de produção: **729 linhas gravadas**, 30 séries de país (1 EUA via
+    BLS, 29 EU/EEE via Eurostat). Conferido por consulta direta ao banco, não
+    só pelo log do script — a linha mais recente dos EUA bateu com o valor
+    (`4.4`), o período (jul/2026) e a nota de rodapé (`P`, preliminar) vistos
+    na resposta real da API no §2.51.
+14. **Fase 2 do índice de temperatura de contratação.** A fase 1 (§2.51)
+    entregou de propósito só o miolo. Falta, em ordem de dependência:
+    (a) **texto traduzido nos 12 idiomas** para os rótulos das fases
+    (`cooling`, `bottoming_out`, `recovering`, `heating_up`, `stable`) e para
+    o estado "dado insuficiente" — hoje NÃO existe uma única string de tela,
+    e é assim que a regra do §2.49 é respeitada; (b) **tela**, no laudo e/ou
+    no Radar; (c) **ligação no `/api/cron/radar`**, com orçamento de tempo
+    próprio como as fontes de vaga têm; (d) **conectores ILOSTAT e
+    CEPALSTAT**, que trazem o resto do mundo e a América Latina — e que
+    entram com `confidence: 'low'`, porque taxa de desemprego em economia
+    com setor informal grande conta quem trabalha informalmente como
+    "empregado", sem contratação formal nenhuma por trás; a coluna já aceita
+    isso desde a fase 1; (e) **agregação por continente**, que precisa
+    responder antes como se agrega uma série que o §2.51 diz não ser
+    comparável entre países (a resposta provável é agregar as *fases*, não
+    os valores).
+
+    Ordem sugerida: (a) e (b) juntos, com as duas fontes que já existem,
+    antes de acrescentar fonte nova — é melhor descobrir que a tela não
+    convence com 30 países do que com 200.
 
 **O que NÃO está pendente e parece que está:**
 
