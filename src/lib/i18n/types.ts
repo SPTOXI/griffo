@@ -958,4 +958,56 @@ export interface TranslationDictionary {
     loading: string
     unavailable: string
   }
+
+  /**
+   * A página pública do mapa-múndi de temperatura de contratação
+   * (`/market-pulse`, §2.55).
+   *
+   * **Só o que é próprio da página mora aqui.** Rótulo de fase, "dado
+   * insuficiente", "fonte: {source}" e a nota sobre não comparar países
+   * continuam vindo de `hiringIndex` acima — são o mesmo texto dizendo a mesma
+   * coisa, e duplicá-los garantiria que um dia o cartão do laudo e o mapa
+   * público classificassem o mesmo país com palavras diferentes.
+   *
+   * A página é PÚBLICA e indexável, então cada uma destas chaves é lida por
+   * buscador e por motor de resposta no idioma do visitante. Nenhuma delas
+   * pode ter texto fixo em português — foi exatamente o defeito do JSON-LD do
+   * layout raiz, que vazava português para `/us` e `/de`.
+   */
+  hiringMap: {
+    /** `<title>` e `og:title`. */
+    pageTitle: string
+    /** `<meta name="description">`. `{count}` = países cobertos. */
+    metaDescription: string
+    /** `<h1>`. */
+    heading: string
+    /** Parágrafo de abertura. `{count}` = países cobertos. */
+    intro: string
+    /** Nome do agregado na tela. */
+    indexHeading: string
+    /** `{classified}` e `{tracked}`. */
+    indexSummary: string
+    netBreadthLabel: string
+    /** Como o escalar é calculado, em uma frase. */
+    netBreadthHint: string
+    legendHeading: string
+    /** O estado dos países que nenhuma fonte cobre. Nunca uma cor de fase. */
+    noDataLabel: string
+    noDataHint: string
+    /** `{date}` = data da última coleta, já formatada. */
+    updatedLabel: string
+    sourcesHeading: string
+    methodHeading: string
+    methodBody: string
+    /** `{country}` = nome do país no idioma ativo. */
+    countryLinkLabel: string
+    interactionHint: string
+    /** Crédito da base cartográfica. */
+    mapCredit: string
+    tableHeading: string
+    colCountry: string
+    colPhase: string
+    colSource: string
+    colPeriod: string
+  }
 }

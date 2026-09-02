@@ -27,9 +27,11 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 02/09/2026: fase 3 do índice de temperatura de contratação (§2.54) — conectores ILOSTAT e CEPALSTAT, ambos `confidence: 'low'`, que levam a cobertura de **30 para 98 países** (2.757 linhas em `LaborMarketPoint`). Nenhum arquivo de UI ou de i18n foi tocado: o cartão e os 12 dicionários nunca ramificaram por fonte nem por métrica. Falta só da pendência 14: (e) agregação por continente. O cron **não** está agendado no `vercel.json` — é decisão de plataforma, ver o TODO no cabeçalho da rota |
-| Suíte | 790 testes, `fail 0` — reverificado após o §2.54 (737 + 53 novos); a regra da contagem está na seção 8 |
-| `tsc`, `build` | `tsc --noEmit` e `eslint` limpos após o §2.54; `npm run build` não rerodado nesta revisão — conferir antes de deploy |
+| Última revisão | 02/09/2026: página pública `/market-pulse` — mapa-múndi de temperatura de contratação, rota pública `GET /api/hiring-index` e o "Índice GriffoWork" como **distribuição de fases**, nunca uma nota única (§2.56). Fecha a pendência 14(e). **O achado que importa não é o mapa:** a fase estava com o SINAL INVERTIDO para as duas fontes de taxa de desemprego (ILOSTAT/CEPALSTAT), ou seja 68 dos 98 países — desemprego caindo era classificado como `cooling` e o laudo pago dizia "a abertura de vagas vem caindo". Corrigido em `METRIC_ORIENTATION` (`lookup.ts`), com a trava sendo o TIPO `Record<LaborMetric, 1 \| -1>`: métrica nova sem decisão de sentido não compila. A distribuição real mudou de 39 para 21 países em `cooling` |
+| Anterior | 02/09/2026: cobertura da Adzuna de **11 para 19 países**, todos verificados contra a API real (§2.55). Junto vieram dois defeitos que só a verificação revelou: (1) a rodada só varria países onde algum perfil declarava morar — com os quatro perfis existentes, todos no Brasil, existia **uma única fonte Adzuna** (`adzuna:br`), e ampliar a lista sozinho não coletaria nada; (2) sete dos onze mercados gravariam vaga **sem país**, porque a Adzuna manda o nome no idioma do mercado ("UK", "Deutschland", "España"...) e a tabela de apelidos só tinha três. `ADZUNA_COUNTRIES_PER_RUN` **baixou** de 11 para 8 — o limite que aperta é o relógio dos 45s, não a cota |
+| Anterior (2) | 02/09/2026: fase 3 do índice de temperatura de contratação (§2.54) — conectores ILOSTAT e CEPALSTAT, ambos `confidence: 'low'`, que levam a cobertura de **30 para 98 países** (2.757 linhas em `LaborMarketPoint`). Nenhum arquivo de UI ou de i18n foi tocado: o cartão e os 12 dicionários nunca ramificaram por fonte nem por métrica. Falta só da pendência 14: (e) agregação por continente. O cron **não** está agendado no `vercel.json` — é decisão de plataforma, ver o TODO no cabeçalho da rota |
+| Suíte | 855 testes, `fail 0` — reverificado após o §2.56 (805 + 50 novos: 15 em `atlas.test.ts`, 13 em `map-model.test.ts`, 16 em `hiring-map.test.ts`, 6 em `lookup.test.ts` para o sinal da métrica); a regra da contagem está na seção 8 |
+| `tsc`, `build` | `tsc --noEmit` e `eslint` limpos após o §2.56; `npm run build` não rerodado nesta revisão — conferir antes de deploy |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent`, `RadarAlert.notifiedAt` — ver 7.6 — e `LaborMarketPoint` do §2.51, empurrado em 01/09/2026) |
 
 **Pendências que estão esperando alguém, não código:**
@@ -177,9 +179,62 @@ o quanto confiar nele.
       gravação passou de 729 para 2.757 linhas e a coleta inteira leva ~24s
       contra o teto de 60s da função do cron — a janela de 24 trimestres por
       fonte é o que segura esse número.
-    - (e) **agregação por continente**, que precisa responder antes como se
-      agrega uma série que o §2.51 diz não ser comparável entre países (a
-      resposta provável é agregar as *fases*, não os valores).
+    - (e) ~~**agregação**~~ — ✅ **feita em 02/09/2026** (§2.56), e a
+      resposta antecipada estava certa: agregam-se as **fases**, nunca os
+      valores. Mas **não por continente**, como a redação original dizia:
+      um continente não mede nada. A África reúne países cobertos pelo
+      ILOSTAT com países sem fonte alguma, e "África: 60% aquecendo" seria
+      uma afirmação sobre os 12 que têm dado apresentada como afirmação
+      sobre 54. O agregado é a **distribuição global** — quantos países em
+      cada fase, com `84 de 98` dito junto — mais um único escalar
+      declarado como o que é: `netBreadth = heating_up − cooling`,
+      contagem de países, não média de valores.
+
+15. **O sinal da métrica no índice de temperatura** — ✅ **resolvido em
+    02/09/2026** (§2.56), e registrado aqui porque a classe do erro vai
+    voltar. `classifyHiringPhase` lê uma CURVA: subindo é `heating_up`. Para
+    taxa de vaga em aberto está certo; para **taxa de desemprego é o
+    contrário**, e as duas fontes da fase 3 publicam taxa de desemprego —
+    68 dos 98 países. O Brasil, com desemprego caindo de 6,87% para 6,03%,
+    era classificado `cooling`, e o laudo pago dizia "a abertura de vagas
+    vem caindo". A correção nega o VALOR antes de classificar
+    (`METRIC_ORIENTATION` em `lookup.ts`), e não espelha a fase depois —
+    espelhar não é bijeção, porque `bottoming_out` espelhado viraria "parou
+    de subir perto do topo", que é o oposto de fundo de poço.
+
+    **A trava é o TIPO:** `Record<LaborMetric, 1 | -1>`. Uma métrica nova
+    em `types.ts` sem uma decisão de sentido não compila. Foi a falta dessa
+    trava que deixou a fase 3 entrar invertida, sem nenhum teste falhar.
+
+16. **"Profissões em alta por país" continua INVIÁVEL — e a ampliação da
+    Adzuna (§2.55) não a resolveu.** A ideia é usar o dado do próprio produto
+    (`Job.normalizedTitle`, de `lib/market/taxonomy.ts`), não estatística
+    oficial. O bloqueio é volume: 5.347 vagas totais, 1.035 só do Brasil, e a
+    maioria dos outros países em unidades ou dezenas — não dá recorte por
+    profissão em lugar nenhum.
+
+    **Pedido de novo, e recusado de novo, no §2.56.** O mapa público
+    `/market-pulse` foi pedido com um tooltip de "top 10 profissões em alta
+    por país" junto. Ele **não** foi construído, e a página é declaradamente
+    de países, sem nenhum recorte por ocupação — só 24,5% das vagas têm
+    profissão reconhecida e a taxonomia tem 12 categorias. Quando o volume
+    justificar, o lugar natural é o painel do país selecionado, que já
+    existe na tela.
+
+    O §2.55 atacou a **causa** desse número, não o número: a Adzuna passou de
+    11 para 19 países verificados, e a rodada deixou de varrer só os países
+    onde alguém declarou morar (o que a mantinha presa a `adzuna:br`).
+    Expectativa realista, não promessa: da ordem de **200 a 350 vagas novas
+    por dia** contra ~50 hoje, distribuídas por 19 países.
+
+    **Só reavalie depois de algumas semanas de coleta, e olhando o banco** —
+    contagem de `normalizedTitle` por país, com um piso declarado de vagas por
+    país antes de mostrar qualquer ranking. Estimar a viabilidade a partir da
+    projeção acima seria o mesmo erro de sempre.
+
+    Um limite que a coleta nova **não** remove: a varredura de base é amostra
+    do que foi publicado *naquele dia*, não do estoque do mercado. Serve para
+    série temporal; não responde "quantas vagas de X existem na Polônia".
 
 **O que NÃO está pendente e parece que está:**
 
@@ -304,12 +359,22 @@ ausência de ação. Ver 2.35 na auditoria para o desenho completo.
 | Lever | Empresas (variado) | Público | Sim |
 | Páginas de carreira (schema.org) | Quem for configurado | Padrão aberto | Sim |
 | Gupy | Brasil | **API interna — risco declarado** | Não |
-| Adzuna | 10 mercados | Público, com cota | Não |
+| Adzuna | 19 mercados (§2.55) | Público, com cota | Não |
 | Remotive | Remoto internacional | Público | Não |
 | RemoteOK | Remoto internacional | Público | Não |
 
 Portugal e Japão não têm fonte de busca por cargo; são atendidos pelas fontes de
-vaga remota.
+vaga remota. Verificado de novo em 02/09/2026: a Adzuna responde 404
+`UNSUPPORTED_COUNTRY` para os dois — e também para `ru`, `ie`, `se`, `no`, `dk`,
+`fi` e `ae`. Não existe endpoint de descoberta de países nesta assinatura; a
+lista só se descobre país a país, e é por isso que ela mora em
+`lib/jobs/adzuna-plan.ts` com a data da verificação.
+
+**Rodízio da Adzuna:** 19 países, 8 por rodada, ordenados por quem esperou mais
+(`lastCollectionAt`). Cobre todos em três dias. País onde ninguém declarou morar
+é varrido **sem termo** — as vagas mais recentes daquele mercado —, e não fica
+de fora como antes: a regra antiga fazia a coleta internacional inteira depender
+de onde os primeiros usuários calharam de morar.
 
 ---
 
@@ -431,7 +496,7 @@ lembrada.** Cada uma destas só apareceu ao olhar a resposta real:
 | Lever | O cargo está em `text`, não `title`. `createdAt` em **milissegundos** |
 | RemoteOK | O cargo está em `position`. `epoch` em **segundos**. Primeiro item do array é aviso legal. `salary_min: 0` significa "não informado" |
 | Gupy | `country` vem `"Brasil"` por extenso — comparar com `"BR"` eliminaria toda vaga brasileira |
-| Adzuna | `salary_is_predicted` marca salário **estimado por eles**. Responde **200 com `exception`** quando a cota acaba |
+| Adzuna | `salary_is_predicted` marca salário **estimado por eles**. Responde **200 com `exception`** quando a cota acaba. `location.area[0]` vem **no idioma do mercado** — "UK" (que nem é ISO2), "Deutschland", "España", "Polska", "Österreich"; comparar com o nome em português perde o país da vaga em silêncio (§2.55) |
 | Remotive | `salary` é texto livre (`"$120 - $170 /hour"`). Data **sem fuso** |
 | Greenhouse | `updated_at` é edição, não publicação — use `first_published` |
 

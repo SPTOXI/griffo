@@ -33,7 +33,7 @@
  */
 
 import { classifyHiringPhase, type HiringPhase, type HiringSeriesPoint, type InsufficientDataReason } from './phase'
-import type { ConfidenceTier } from './types'
+import type { ConfidenceTier, LaborMetric } from './types'
 
 /**
  * Uma linha de `LaborMarketPoint` como o Prisma a devolve.
@@ -187,11 +187,74 @@ export function selectSeries(rows: readonly LaborMarketRow[]): LaborMarketRow[] 
   return best
 }
 
-/** Uma linha do banco no formato que `classifyHiringPhase` entende. */
+/**
+ * O SENTIDO da métrica: `+1` quando subir significa mais contratação, `-1`
+ * quando significa menos.
+ *
+ * ## O defeito que isto corrige (§2.55)
+ *
+ * `classifyHiringPhase` classifica uma curva: subindo é `heating_up`, caindo é
+ * `cooling`. Isso está certo para taxa de vaga em aberto — mais vagas abertas é
+ * mais contratação. Para **taxa de desemprego é exatamente o contrário**, e as
+ * duas fontes da fase 3 (ILOSTAT e CEPALSTAT, §2.54) publicam taxa de
+ * desemprego: 68 dos 98 países cobertos.
+ *
+ * Sem esta correção, o Brasil — cuja taxa saiu de 6,87% para 6,03% no último
+ * ano, ou seja, MENOS desemprego — era classificado `cooling` e a tela dizia,
+ * com todas as letras, "a abertura de vagas vem caindo". A frase é falsa e o
+ * sinal está trocado. Conferido contra o banco de produção em 02/09/2026: 26
+ * dos 39 países em `cooling` vinham de série de desemprego.
+ *
+ * ## Por que negar o VALOR, e não espelhar a fase depois
+ *
+ * Porque espelhar não é bijeção. `cooling` ↔ `heating_up` até funcionaria, mas
+ * `bottoming_out` significa "parou de cair e está perto do fundo da própria
+ * série". Espelhado, viraria "parou de subir e está perto do topo" — que não é
+ * fundo de poço de contratação, é o oposto dele, e o produto não tem fase
+ * `topping_out` para receber isso.
+ *
+ * Negar o valor antes de classificar resolve os cinco casos de uma vez, porque
+ * todas as contas de `phase.ts` são consistentes sob negação: a mediana de
+ * `-U` é `-mediana(U)`, o mínimo de `-U` é `-máximo(U)`, e a inclinação
+ * relativa usa `|latest|`, que não muda de módulo. Uma série de desemprego
+ * parada perto do PICO vira, corretamente, contratação parada perto do fundo —
+ * que é `bottoming_out`, e é o que o mercado de fato está fazendo.
+ *
+ * ## O tipo é `Record<LaborMetric, ...>` de propósito
+ *
+ * É a trava real: uma métrica nova acrescentada em `types.ts` sem uma decisão
+ * de sentido aqui **não compila**. Foi a falta dessa trava que deixou a fase 3
+ * entrar com o sinal invertido.
+ */
+export const METRIC_ORIENTATION: Record<LaborMetric, 1 | -1> = {
+  job_openings_rate: 1,
+  job_vacancy_rate: 1,
+  unemployment_rate: -1,
+}
+
+/**
+ * O sentido da métrica gravada na linha.
+ *
+ * A coluna do banco é `String`, então uma métrica que não está na tabela acima
+ * é possível em tempo de execução. Ela cai em `+1` — a leitura de curva crua,
+ * que é o que `classifyHiringPhase` sempre fez — e quem impede que isso
+ * aconteça é o tipo de `METRIC_ORIENTATION`, não este recuo.
+ */
+export function metricOrientation(metric: string): 1 | -1 {
+  return METRIC_ORIENTATION[metric as LaborMetric] ?? 1
+}
+
+/**
+ * Uma linha do banco no formato que `classifyHiringPhase` entende.
+ *
+ * O valor sai orientado em **pressão de contratação**, não na unidade da fonte:
+ * ver `METRIC_ORIENTATION`. É por isso que `classifyHiringPhase` pode continuar
+ * sendo uma função de curva sem saber o que a curva mede.
+ */
 export function toSeriesPoint(row: LaborMarketRow): HiringSeriesPoint {
   return {
     period: row.period,
-    value: row.value,
+    value: metricOrientation(row.metric) * row.value,
     revised: row.revised,
     seriesBreak: row.seriesBreak,
     confidence: row.confidence === 'low' ? 'low' : 'high',

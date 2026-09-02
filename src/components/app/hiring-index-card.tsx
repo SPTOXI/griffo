@@ -9,7 +9,9 @@ import {
 } from 'lucide-react'
 import { useI18n } from '@/context/i18n-context'
 import { internalFetch } from '@/lib/internal-fetch'
-import { localeForLang } from '@/lib/i18n'
+// `displayCountry` e `formatPeriod` moraram aqui como funções privadas até o
+// mapa público (§2.55) precisar das duas. Ver `lib/hiring-index/display.ts`.
+import { displayCountry, formatPeriod } from '@/lib/hiring-index/display'
 import type { TranslationDictionary } from '@/lib/i18n'
 import type { HiringPhase } from '@/lib/hiring-index/phase'
 import type { HiringIndexSummary } from '@/lib/hiring-index/lookup'
@@ -286,36 +288,3 @@ export function HiringIndexCardView({
   )
 }
 
-/**
- * Nome do país no idioma ativo.
- *
- * `Intl.DisplayNames`, e não uma tabela própria: a única tabela de países do
- * projeto (`lib/market/countries.ts`) está em português por ser lista de um
- * formulário, e usá-la aqui colocaria português dentro das outras 11 telas. O
- * recuo é o próprio código ISO, que é o que se guarda de qualquer forma.
- */
-function displayCountry(code: string, lang: string): string {
-  try {
-    const names = new Intl.DisplayNames([localeForLang(lang as any)], { type: 'region' })
-    return names.of(code) ?? code
-  } catch {
-    return code
-  }
-}
-
-/** Mês ou trimestre, no calendário do idioma ativo. */
-function formatPeriod(iso: string, periodType: string | null, lang: string): string {
-  const date = new Date(iso)
-  if (!Number.isFinite(date.getTime())) return iso
-
-  const locale = localeForLang(lang as any)
-  try {
-    if (periodType === 'quarter') {
-      const quarter = Math.floor(date.getUTCMonth() / 3) + 1
-      return `${date.getUTCFullYear()} Q${quarter}`
-    }
-    return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'UTC' }).format(date)
-  } catch {
-    return iso.slice(0, 7)
-  }
-}

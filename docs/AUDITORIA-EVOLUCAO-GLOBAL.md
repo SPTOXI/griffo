@@ -3284,3 +3284,506 @@ países.
 precisa responder antes como se agrega uma série que o §2.51 diz não ser
 comparável entre países. A resposta provável continua sendo agregar as
 *fases*, não os valores, e agora há 98 países para isso em vez de 30.
+
+## 2.55 Adzuna: de 11 para 19 países verificados — e a descoberta de que a lista nunca foi o gargalo
+
+O pedido era estreito: o comentário em `/api/cron/radar/route.ts` dizia
+que os onze países de `ADZUNA_COUNTRIES` eram "todos os que a Adzuna
+cobre", e havia indício externo de que já não eram. Verificar e ampliar.
+
+A verificação confirmou o indício. A investigação que veio junto
+mostrou que ampliar a lista, sozinho, **não coletaria uma vaga a mais** —
+e é essa parte que importa.
+
+### A cobertura real, verificada contra a API em 02/09/2026
+
+Um `GET` por país em
+`api.adzuna.com/v1/api/jobs/{country}/search/1?results_per_page=50&max_days_old=30&sort_by=date`,
+com as credenciais desta instalação. Responderam **200 com 50
+resultados** dezenove países. O `count` declarado por cada um, como
+ordem de grandeza do mercado:
+
+| país | `count` | | país | `count` |
+|------|---------|-|------|---------|
+| us | 3.657.405 | | nl • | 99.342 |
+| de |   654.021 | | mx |  91.432 |
+| fr |   566.334 | | pl • | 83.726 |
+| br |   468.460 | | ch • | 66.897 |
+| gb |   377.272 | | za • | 61.377 |
+| au |   188.473 | | be • | 59.028 |
+| ca |   151.909 | | es |  50.377 |
+| it |   113.065 | | sg • | 29.557 |
+| in |   111.577 | | at • | 20.671 |
+|    |           | | nz • |  6.552 |
+
+Os oito marcados com • são os novos. Os oito candidatos apontados pela
+pesquisa externa se confirmaram, um a um — mas a confirmação veio da
+requisição, não da lista.
+
+**Responderam 404 com `exception: UNSUPPORTED_COUNTRY`:** `pt`, `jp`
+(já sabidos), `ru`, `ie`, `se`, `no`, `dk`, `fi`, `ae`. A Rússia entrou
+no teste justamente porque listas antigas da Adzuna a citam. Não é mais
+atendida. É o caso que sustenta a regra: "a documentação diz" não
+substitui a requisição.
+
+**Não existe endpoint de descoberta nesta assinatura.** `jobs/countries`
+e `countries` responderam 404 `UNKNOWN_METHOD`; `version` e
+`jobs/gb/categories` responderam 400. A "Intelligence API" que a Adzuna
+divulga é outro produto, com outro acesso. A lista de países só se
+descobre país a país — que é o motivo de ela morar no código, com data.
+
+### Descoberta 1: a fila nunca saiu da lista de países
+
+`planAdzunaRound` recebia como entrada apenas os países vindos de
+`searchTermsByCountry()` — ou seja, os países onde **algum perfil
+declarou morar**. E filtrava fora todo país sem termo, por uma regra que
+era boa no seu contexto: "gastar requisição numa busca vazia é gastar
+cota de quem tem o que procurar".
+
+Consulta ao banco de produção em 02/09/2026:
+
+```
+PERFIS POR PAIS: BR=4
+POR FONTE: jobbase=3909  gupy=623  adzuna:br=400  remoteok=293
+           greenhouse:vercel=98  remotive=24
+```
+
+Quatro perfis, todos no Brasil. Uma única fonte Adzuna existente no
+banco: `adzuna:br`. Nenhuma `adzuna:us`, nenhuma `adzuna:de`. Os onze
+países eram onze no papel e **um** na execução, e o comentário que
+declarava "55 requisições por rodada" descrevia um consumo que nunca
+aconteceu — o real era 5.
+
+Acrescentar oito códigos ao array teria mantido o número em 5. O
+gargalo nunca foi a lista.
+
+Isso também é, literalmente, o viés que a regra do operador proíbe: o
+corpo de vagas do produto acabou sendo o do Brasil porque foi de lá que
+vieram os primeiros usuários — sem que ninguém tenha decidido isso.
+
+### Descoberta 2: sete dos onze mercados gravariam vaga sem país
+
+A Adzuna devolve o país em `location.area[0]`, **no idioma do mercado**.
+O `area[0]` observado em cada país, contra os apelidos que
+`lib/market/countries.ts` tinha:
+
+| país | `area[0]` | casava? | | país | `area[0]` | casava? |
+|------|-----------|---------|-|------|-----------|---------|
+| br | Brasil | sim | | gb | **UK** | não |
+| us | US | sim (ISO2) | | ca | **Canada** | não |
+| mx | México | sim | | es | **España** | não |
+| it | Italia | sim (apelido) | | de | **Deutschland** | não |
+| | | | | fr | **France** | não |
+| | | | | in | **India** | não |
+| | | | | au | **Australia** | não |
+
+`countryCodeFromName` devolvia `null` para os sete — e `null` é o
+comportamento **correto** dela: nome desconhecido nunca vira palpite. O
+defeito era a tabela estar incompleta. Uma vaga sem país entra sem
+mercado (`marketForCountry` só é chamado quando há país) e o filtro duro
+a trata como vaga de lugar nenhum.
+
+Enquanto só o Brasil era varrido, isso era invisível: "Brasil" casa. No
+dia em que os outros mercados rodassem, sete dos onze gravariam vaga sem
+país — e ninguém veria erro nenhum, porque não há erro: há um campo
+nulo.
+
+"UK" tinha um agravante próprio. `countryCodeFromName` testava o atalho
+de duas letras **antes** da tabela de nomes: "UK" tem a forma de ISO2,
+não é ISO2 (o ISO do Reino Unido é `GB`), e a função desistia ali sem
+nunca consultar a tabela onde o apelido poderia estar. A ordem foi
+invertida — nenhum nome de país tem duas letras, então perguntar
+primeiro à tabela não tira nada de ninguém.
+
+Os quinze apelidos acrescentados saíram todos do `area[0]` observado nos
+50 resultados de cada país. Nenhum foi deduzido de tabela de idiomas.
+Bélgica e Suíça são multilíngues e só as formas observadas ("België",
+"Schweiz") entraram; "Belgique" e "Suisse" **não** estão lá, e há um
+teste que trava isso — se um dia aparecerem, a falha é a segura (país
+nulo, mercado global, vaga preservada).
+
+### A correção: varredura de base, sem termo inventado
+
+País coberto onde ninguém mora passa a ser varrido **sem `what`** — as
+vagas mais recentes daquele mercado. Verificado na mesma rodada: sem
+`what`, a busca responde 200 com as 50 mais recentes.
+
+A alternativa seria semear cada país com cargos escolhidos por nós.
+Seria inventar demanda: o corpo de vagas passaria a refletir o que
+*adivinhamos* que se procura na Polônia. Uma busca sem termo não escolhe
+profissão nenhuma — que é exatamente a propriedade necessária para um
+dia medir quais profissões crescem por país. E custa **uma** requisição
+contra as cinco de um país com termos.
+
+`what=` (string vazia) **não** é o mesmo que não mandar `what`. O
+parâmetro é omitido, e há teste sobre a URL montada.
+
+### O limite que aperta é o relógio, não a cota
+
+Os adapters rodam **em sequência** dentro dos 45s de `RUN_BUDGET_MS`, e
+a Adzuna é a última da lista. Medição contra a API real em 02/09/2026,
+oito requisições sequenciais:
+
+```
+br 1675ms · us 2072ms · gb 1366ms · nl 826ms
+pl 957ms · sg 853ms · za 1071ms · nz 1082ms
+mediana 1082ms | máx 2072ms
+```
+
+Com a gravação de até 50 vagas por país (~0,9s, seis idas ao banco),
+um país com cinco termos custa ~6s e um de varredura de base, ~2s.
+Dezenove países numa rodada pediriam ~40s **só de Adzuna**, e ela não
+tem 40s.
+
+Por isso `ADZUNA_COUNTRIES_PER_RUN` **baixou** de 11 para 8, e não
+subiu. O `11` significava "todos todo dia", e isso deixou de ser verdade
+quando a lista virou dezenove. Oito por rodada cobrem os dezenove em
+três dias — o compromisso de sempre: ninguém fica para trás, só espera.
+
+Estourar o tempo degrada de um jeito específico e benigno: `runRadar`
+para de percorrer adapters, a rodada devolve `ranOutOfTime: true`, e o
+país que não rodou continua com `lastCollectionAt` nulo — o rodízio o
+põe na frente na rodada seguinte, sozinho. Há teste para isso. Ainda
+assim, dimensionar para caber é melhor que contar com o conserto:
+`recordQuotaUsage` grava o consumo **planejado** antes de rodar, então
+planejar o que não cabe infla o número da cota com requisições que nunca
+aconteceram.
+
+### A conta do mês
+
+| | por rodada | por mês (×31) | % da cota (2.500) |
+|---|---|---|---|
+| Antes (declarado) | 55 | 1.705 | 68% |
+| Antes (real, só `br`) | 5 | 155 | 6% |
+| Depois, caso real de hoje | 12 | 372 | 15% |
+| Depois, pior caso | 40 | 1.240 | 50% |
+
+O "caso real de hoje" é um país com termos (Brasil) e sete de varredura
+de base. O "pior caso" é os oito países da rodada todos com cinco termos
+— o que só acontece quando houver perfis em oito mercados. A folga de
+1.260/mês fica bem acima da reserva de 20% (500) para a busca sob
+demanda, ainda não implementada (§21, Etapa 9).
+
+### O que isto é, e o que NÃO é
+
+É crescimento de **volume bruto**, e só. A expectativa realista, uma vez
+em produção: 8 países × 50 vagas por rodada, menos duplicatas e menos
+vagas descartadas por falta de empresa/título/URL — na ordem de **200 a
+350 vagas novas por dia**, contra as ~50 de hoje, distribuídas por
+dezenove países em vez de concentradas em um.
+
+**Não** habilita "profissões em alta por país". Aquilo continua
+inviável, pelo mesmo motivo de sempre: 5.347 vagas totais, com a maioria
+dos países em unidades. Isto ataca a causa daquele número — não o
+substitui. Só faz sentido reavaliar a viabilidade depois de algumas
+semanas de coleta, olhando `normalizedTitle` por país no banco, não
+estimativa.
+
+Vale registrar o que ficou por resolver: a varredura de base é uma
+amostra do que foi publicado **naquele dia**, não do mercado inteiro.
+Para série temporal isso é adequado; para "quantas vagas de X existem na
+Polônia", não é, e ninguém deve lê-la assim.
+
+### Verificação
+
+`npx tsc --noEmit` e `npx eslint` limpos nos sete arquivos tocados.
+`npm test`: **805/805**, `fail 0` (790 + 15 novos — 8 em
+`adzuna-plan.test.ts`, 3 em `adzuna.test.ts`, 5 em `countries.test.ts`,
+arquivo novo; nenhum toca a rede, todos com `fetch` injetado).
+
+As 47 requisições gastas na verificação saíram da cota do mês de
+setembro (~1,9%). Estão declaradas aqui porque não passaram por
+`recordQuotaUsage`: foram feitas por script fora da rodada.
+
+**Fica aberto:** as credenciais da Adzuna **não estão no `.env` local na
+forma que o código lê**. `ADZUNA_APP_ID` e `ADZUNA_APP_KEY` estão
+declarados no `.env.example`, mas o `.env` traz só uma linha solta
+`api key: ...` num bloco de comentário, e o `app_id` só existe embutido
+no `utm_source` dos `redirect_url` gravados em `adzuna.json`. Em produção
+funciona (as variáveis estão na Vercel), mas rodar a coleta localmente
+falha em silêncio: `adzunaCredentials` devolve `null` e a fonte
+simplesmente não entra na lista de adapters. Vale normalizar o `.env`
+local.
+
+---
+
+## 2.56 Mapa-múndi público de temperatura de contratação (`/market-pulse`) — e o sinal invertido que a conferência revelou
+
+Pendência 14 item (e), a última que restava do índice, fechada — mas
+**não** como "agregação por continente". Ver abaixo por que continente
+não é a unidade certa.
+
+O pedido era uma página pública com um mapa do mundo colorido pela fase
+de contratação de cada país, e um "Índice GriffoWork" que resumisse a
+tendência geral. A ordem dada foi explícita: **confiável e real
+primeiro, interessante depois** — um mapa menor e honesto vale mais que
+um impressionante e inflado.
+
+### O defeito que a página revelou: o sinal da métrica estava trocado
+
+Este é o achado mais importante da rodada, e ele não tem nada a ver com
+mapa. Foi descoberto na conferência contra o banco de produção, ao ver
+que **39 dos 84 países classificados apareciam em `cooling`** — número
+alto demais para ser verdade.
+
+`classifyHiringPhase` classifica uma CURVA: subindo é `heating_up`,
+caindo é `cooling`. Isso está certo para taxa de vaga em aberto (JOLTS,
+Eurostat) — mais vagas abertas é mais contratação. **Para taxa de
+desemprego é exatamente o contrário**, e as duas fontes da fase 3
+(ILOSTAT e CEPALSTAT, §2.54) publicam taxa de desemprego: são 68 dos 98
+países cobertos.
+
+O caso concreto, com os números que estavam no banco:
+
+| País | métrica | série (8 últimos) | fase ANTES | fase DEPOIS |
+|---|---|---|---|---|
+| BR | `unemployment_rate` | 6,87 → 6,03 (desemprego CAINDO) | `cooling` | `heating_up` |
+| ZA | `unemployment_rate` | 31,6 → 33,0 (desemprego SUBINDO) | `bottoming_out` | `cooling` |
+| DE | `job_vacancy_rate` | 3,5 → 2,6 | `cooling` | `cooling` (inalterada) |
+| US | `job_openings_rate` | 4,0 → 4,4 | `stable` | `stable` (inalterada) |
+
+A tela do laudo pago dizia, com todas as letras, *"Esfriando — a
+abertura de vagas vem caindo nos últimos períodos"* para um país onde o
+desemprego tinha caído quase um ponto percentual. Não é imprecisão: é
+uma afirmação falsa, e estava em produção desde o §2.54 para dois terços
+da cobertura.
+
+**A correção nega o VALOR antes de classificar** (`METRIC_ORIENTATION`
+em `lookup.ts`), e não espelha a fase depois. Espelhar não é bijeção:
+`cooling` ↔ `heating_up` até funcionaria, mas `bottoming_out` significa
+"parou de cair e está perto do fundo da própria série" — espelhado
+viraria "parou de subir perto do topo", que não é fundo de poço de
+contratação, é o oposto dele, e não existe fase `topping_out` para
+recebê-lo. Negar o valor resolve os cinco casos de uma vez porque todas
+as contas de `phase.ts` são consistentes sob negação: a mediana de `-U`
+é `-mediana(U)`, o mínimo de `-U` é `-máximo(U)`, e a inclinação
+relativa usa `|latest|`, que não muda de módulo. Uma série de desemprego
+parada perto do PICO vira, corretamente, contratação parada perto do
+fundo — `bottoming_out`.
+
+A trava contra a reincidência é de tipo, não de teste:
+`METRIC_ORIENTATION` é `Record<LaborMetric, 1 | -1>`, então **uma
+métrica nova acrescentada em `types.ts` sem uma decisão de sentido não
+compila**. Foi a falta exata dessa trava que deixou a fase 3 entrar
+invertida.
+
+Efeito na distribuição real (98 países, banco de produção, 02/09/2026):
+
+```
+antes  cooling 39 · bottoming_out 10 · recovering  2 · heating_up  8 · stable 25
+depois cooling 21 · bottoming_out  3 · recovering  2 · heating_up 26 · stable 32
+```
+
+Em ambos: 98 rastreados, 84 classificados, 14 sem histórico bastante.
+
+### O "Índice GriffoWork" é uma DISTRIBUIÇÃO, não uma nota
+
+O pedido falava em um número. Ele não existe, e não por falta de
+vontade.
+
+`phase.ts` já explica por que os valores de dois países não se comparam:
+os institutos europeus medem a mesma taxa com amostras de 2.500 a 75.000
+empresas e taxas de resposta de 11,4% a 98,8%, e o próprio Eurostat não
+publica um total da UE por causa disso. Somando o §2.54, metade da
+cobertura é taxa de desemprego, que mede outra coisa e mede mal onde há
+setor informal grande. Uma média ponderada de 98 números medidos por
+quatro réguas diferentes teria três casas decimais e nenhum significado.
+
+O que **é** comparável é a FASE, porque cada uma já saiu da comparação
+do país com ele mesmo. "Está subindo" é a mesma afirmação em Portugal e
+no Quênia, mesmo que 4,1% e 4,1% não sejam a mesma coisa. Então o índice
+é uma contagem: quantos países em cada fase, com o total dito junto.
+
+Existe **um** escalar, e ele é declarado como o que é:
+
+```
+netBreadth = (países em heating_up) − (países em cooling)
+```
+
+Inteiro, não média. Chama-se AMPLITUDE (*breadth*) e não intensidade
+porque é isso que mede: em quantos mercados a mais a curva está subindo
+acima do próprio normal do que caindo. `+5` quer dizer "cinco países a
+mais aquecendo do que esfriando", frase que se confere contando linhas
+na tabela. `recovering`, `bottoming_out` e `stable` ficam de fora do
+escalar de propósito — são estados intermediários, e incluí-los exigiria
+pesá-los uns contra os outros, que é o arbítrio que a distribuição
+evita. Eles continuam visíveis na distribuição, que é a leitura
+principal.
+
+**Por que não por continente**, que era a redação da pendência: um
+continente não mede nada. A África reúne países cobertos pelo ILOSTAT
+com países sem fonte alguma, e "África: 60% aquecendo" seria uma
+afirmação sobre os 12 que têm dado apresentada como afirmação sobre 54.
+A distribuição global diz o total junto (`84 de 98`) e não sugere
+cobertura que não existe.
+
+### O mapa: fonte, licença e projeção
+
+**Natural Earth 1:110m Admin 0**, tag `v5.1.2` de
+`github.com/nvkelso/natural-earth-vector` — Countries (polígonos) mais
+Tiny Countries (pontos). **Domínio público**, com estas palavras no
+`LICENSE.md`: *"Everything here is public domain"* e *"No permission is
+needed to use Natural Earth. Crediting the authors is unnecessary."* O
+crédito aparece na tela mesmo assim, por política desta base de código.
+
+A geometria é **gerada e versionada**, não baixada em tempo de execução:
+`src/scripts/build-world-map.ts` projeta e escreve
+`lib/hiring-index/world-map.ts` (118 KB, 174 polígonos + 28 pontos). As
+alternativas prontas foram descartadas com motivo: o `worldMapSvg` do
+Stephan Wagner tem 13,5 MB no `world.svg`, e o `simple-world-map` é
+CC BY-SA — cujo *ShareAlike* é uma pergunta jurídica que uma página de
+marketing de produto proprietário não precisa fazer. Renderizar TopoJSON
+resolveria a licença mas traria `d3-geo` + `topojson-client` para o
+pacote do cliente por causa de uma página. Gerar dá as três coisas:
+domínio público, ~100 KB de `path`, zero dependência nova.
+
+Projeção **Miller cilíndrica** (`y = 1,25·ln(tan(π/4 + 0,4·φ))`),
+fórmula fechada, sem biblioteca. Miller e não Mercator porque Mercator
+faz a Groenlândia parecer maior que a África — numa tela cujo assunto é
+"quantos países estão em cada fase", inflar países grandes e frios
+distorce a leitura. Antártida fora (nenhum instituto mede força de
+trabalho lá) e latitude cortada em −58°, ao sul do ponto mais austral do
+Chile continental.
+
+**Os quatro países pequenos que sumiriam.** Barbados, Malta, Maurício e
+Singapura têm dado real no índice e não têm polígono em 1:110m. Entram
+pela camada `tiny_countries` do próprio Natural Earth — que é uma camada
+de PONTOS publicada exatamente para isso — como círculos. Sem ela,
+quatro países cobertos ficariam invisíveis, e ausente é indistinguível
+de sem dado.
+
+### O país sem cobertura tem DESENHO próprio, não uma cor mais fraca
+
+Hachura diagonal, não cinza claro. Cinza seria só mais uma cor da escala
+e a pessoa leria "morno"; a hachura não se confunde com nenhuma das
+cinco fases nem em preto e branco nem para quem não distingue vermelho
+de verde. São 119 formas hachuradas contra 84 coloridas — o mapa mostra,
+sem escrever, o tamanho do que ainda não é coberto.
+
+O terceiro estado também existe e é distinto dos outros dois: país com
+fonte oficial mas sem histórico bastante (14 hoje) sai em cinza sólido,
+com o rótulo "dado insuficiente" que já existia nos 12 idiomas.
+
+### Dois defeitos de renderização que só o navegador revelou
+
+Nenhum dos dois aparece em `tsc`, `eslint` ou `npm test`. Os dois foram
+encontrados abrindo a página no dev server, que é a razão de a
+conferência visual estar na lista de obrigações.
+
+**1 — A CSP do projeto bloqueia atributo `style`.** `next.config.ts`
+declara `default-src 'self'` e não declara `style-src`, então
+`style="background-color: ..."` é bloqueado pelo navegador. A primeira
+versão da tela usava `style={{ backgroundColor }}` na legenda, nas
+barras e nos ~100 pontos da tabela: **~130 erros de CSP no console**, e
+a cor só aparecia depois que o React reaplicava pelo CSSOM na
+hidratação — numa página cujo público é justamente quem lê o HTML antes
+de qualquer JavaScript rodar. Dentro do `<svg>` o problema não existe
+(`fill` é atributo de apresentação, não estilo), então **toda cor
+calculada da tela virou SVG**, inclusive as barras da distribuição, e o
+que sobrou usa classe do Tailwind. Há teste que falha se um `style=`
+reaparecer no HTML.
+
+**2 — As tabelas de idioma do Node e do navegador discordam.** Em
+alemão, `Intl.DisplayNames` devolve `Falklandinseln` no Node e
+`Falklandinseln (Malwinen)` no Chrome. Uma palavra de diferença fez o
+React declarar `Hydration failed` e **descartar a árvore inteira vinda
+do servidor**, refazendo-a no cliente: o mapa que o servidor entregou
+pronto era jogado fora por causa do nome de uma ilha.
+
+A correção é estrutural: `lib/hiring-index/map-model.ts` monta TUDO que
+depende de idioma — nome de país, ordem da tabela, período formatado,
+data da coleta, contagens — **uma vez, no servidor**, e o componente só
+desenha o que recebe. `HiringMapView` deixou de chamar `Intl` no render.
+De quebra, o modelo é puro e testável sem subir servidor, que é a mesma
+separação de `lookup.ts` / `lookup.server.ts`.
+
+### A rota pública, e por que ela não exige sessão
+
+`/api/hiring-index/[country]` explica no cabeçalho que a sessão dela não
+protege o dado — estatística oficial não é de ninguém — mas evita uma
+consulta ao Postgres por requisição anônima. A rota nova
+`GET /api/hiring-index` tem outro freio: `loadHiringAtlas`
+(`atlas.server.ts`) guarda o resultado **uma hora na memória do
+processo**, no mesmo padrão de `ai-router/registry.ts`. Mil visitantes
+numa hora custam UMA varredura das 2.757 linhas, não mil.
+
+Uma hora, e não um dia, para um dado que muda por mês: o processo é
+reciclado a cada deploy e em toda instância fria, então TTL longo não
+compra tanto quanto parece, e o curto garante que uma coleta manual
+apareça na página pública no mesmo expediente sem ninguém lembrar de
+purgar nada. Falha de consulta **não** é cacheada e **não** vira atlas
+vazio — um corpo com zero país seria lido como "nenhum país do mundo tem
+fonte oficial", que é uma afirmação, e falsa.
+
+### SEO/GEO: a página é HTML de verdade
+
+`generateMetadata` por idioma (título, descrição, OpenGraph, canônica e
+12 `hreflang` para `?lang=`), JSON-LD `Dataset` com cobertura
+geográfica, fontes, `dateModified` e `temporalCoverage`, e entrada no
+`sitemap.ts` com `changeFrequency: 'monthly'` — o ritmo real das fontes,
+não um `daily` que ensinaria o rastreador a desconfiar do arquivo.
+
+**Nenhum número do JSON-LD é escrito à mão**: cobertura, fontes e datas
+saem do mesmo atlas que a tela desenha. Um JSON-LD que afirmasse
+cobertura maior que a real seria a mesma fabricação que o produto recusa
+na tela, só que dita para uma máquina.
+
+A tabela abaixo do mapa lista **os 98 países cobertos com link para
+`/{código}`** — a página de país que já existe. É por onde rastreador e
+leitor de tela chegam a cada mercado, e é a razão de o clique no mapa
+NÃO navegar: no celular só existe o toque, e um toque que levasse embora
+da página impediria de ler a leitura do país.
+
+### Idioma
+
+23 chaves novas no bloco `hiringMap`, em `i18n/types.ts` e nos 12
+locais, 100% de paridade no `scripts/sync-i18n.ts` e no
+`i18n/i18n.test.ts`. **Os rótulos de fase NÃO foram duplicados**: vêm do
+bloco `hiringIndex` que o cartão do laudo já usa, porque duas telas do
+mesmo produto não podem nomear a mesma fase de dois jeitos.
+
+O recuo de idioma da página é **inglês**, e não o `'pt'` que
+`detectLanguageFromCountry` devolve para entrada vazia. Sem sinal
+nenhum, o padrão certo é o que o `x-default` do `layout.tsx` já declara.
+A ordem é `?lang=` → cookie `griffo_lang` → país da borda
+(`cf-ipcountry`, depois `x-vercel-ip-country`) → `en`.
+
+### Nenhum mercado privilegiado
+
+Verificado, não presumido: `summarizeAtlas` ordena por código ISO,
+`buildHiringMapModel` ordena a tabela pelo NOME no idioma ativo com
+`Intl.Collator`, e há teste que trava as duas ordens. Nenhum país tem
+cor, tamanho, posição ou texto diferente dos outros.
+
+### O que NÃO foi feito, e continua registrado
+
+**"Top 10 profissões em alta por país"** foi pedido junto e **não foi
+construído** — ver pendência 16 do handoff. O volume não permite: 5.347
+vagas totais, 1.035 só do Brasil, 24,5% com profissão reconhecida e 12
+categorias na taxonomia. Esta página é de países, sem recorte por
+ocupação, e assim seguirá até o banco justificar o contrário.
+
+### Verificação
+
+`npx tsc --noEmit` e `npx eslint` limpos. `npm test`: **855/855**,
+`fail 0` — 805 + 50 novos (15 em `atlas.test.ts`, 13 em
+`map-model.test.ts`, 16 em `hiring-map.test.ts`, 6 acrescentados a
+`lookup.test.ts` para o sinal da métrica).
+
+Conferência contra o banco, não contra o log:
+
+- `SELECT COUNT(DISTINCT country)` = **98**, igual ao `tracked` da rota.
+- A distribuição servida por `GET /api/hiring-index` bate número a
+  número com a mesma consulta rodada por fora, via `tsx`.
+- O HTML servido tem **26 formas `#059669`, 32 `#94a3b8`, 21 `#dc2626`,
+  2 `#0284c7`, 3 `#d97706`** — exatamente a distribuição do banco — e
+  119 formas hachuradas (202 formas − 84 coloridas, mais o quadrado da
+  legenda).
+- `GET /api/hiring-index` sem cookie nenhum: **200**, 30.808 bytes, 98
+  países. `GET /api/hiring-index/US` sem sessão continua **401**.
+- Página aberta no navegador em `?lang=en` e `?lang=de`: título, `h1`,
+  descrição, legenda e tabela no idioma certo; 98 links `/xx`; JSON-LD
+  `Dataset` com `spatialCoverage` de 98 países; **zero erro de
+  hidratação** e zero erro de CSP vindo da página (os que sobram vêm do
+  injetor de CSS do Turbopack e do overlay de desenvolvimento, que não
+  existem em produção).

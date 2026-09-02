@@ -41,7 +41,39 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ]
 
-  // 2. Country / Market specific pages
+  // 2. Mapa público de temperatura de contratação (§2.55).
+  //
+  // `changeFrequency: 'monthly'` porque é o ritmo REAL da fonte: BLS publica
+  // mensalmente, Eurostat/ILOSTAT/CEPALSTAT por trimestre. Declarar 'daily'
+  // aqui seria pedir rastreamento para uma página que não muda — e ensinar o
+  // rastreador a desconfiar do resto do arquivo.
+  //
+  // As alternativas de idioma apontam para `?lang=`, que é como a própria
+  // página resolve o idioma quando não há país na URL.
+  routes.push({
+    url: `${baseUrl}/market-pulse`,
+    lastModified,
+    changeFrequency: 'monthly',
+    priority: 0.8,
+    alternates: {
+      languages: {
+        'pt-BR': `${baseUrl}/market-pulse?lang=pt`,
+        'en-US': `${baseUrl}/market-pulse?lang=en`,
+        'es-ES': `${baseUrl}/market-pulse?lang=es`,
+        'de-DE': `${baseUrl}/market-pulse?lang=de`,
+        'fr-FR': `${baseUrl}/market-pulse?lang=fr`,
+        'it-IT': `${baseUrl}/market-pulse?lang=it`,
+        'ja-JP': `${baseUrl}/market-pulse?lang=ja`,
+        'nl-NL': `${baseUrl}/market-pulse?lang=nl`,
+        'sv-SE': `${baseUrl}/market-pulse?lang=sv`,
+        'zh-CN': `${baseUrl}/market-pulse?lang=zh`,
+        'ar-AE': `${baseUrl}/market-pulse?lang=ar`,
+        'ko-KR': `${baseUrl}/market-pulse?lang=ko`,
+      },
+    },
+  })
+
+  // 3. Country / Market specific pages
   for (const country of COUNTRIES) {
     routes.push({
       url: `${baseUrl}/${country}`,
@@ -51,7 +83,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })
   }
 
-  // 3. ATS Systems & High-intent compatibility pages
+  // 4. ATS Systems & High-intent compatibility pages
   for (const slug of Object.keys(ATS_DATABASE)) {
     routes.push({
       url: `${baseUrl}/ats/${slug}`,

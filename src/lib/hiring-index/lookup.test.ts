@@ -5,6 +5,7 @@ import {
   selectSeries,
   sourceDisplayName,
   summarizeHiringIndex,
+  metricOrientation,
   toSeriesPoint,
   type LaborMarketRow,
 } from './lookup'
@@ -250,4 +251,104 @@ test('país que só o ILOSTAT cobre sai classificado, e com confiança baixa', (
   assert.ok(summary.phase !== null)
   assert.equal(summary.source, 'ilostat_une')
   assert.equal(summary.confidence, 'low')
+})
+
+// ---------------------------------------------------------------------------
+// O SENTIDO da métrica — o defeito corrigido no §2.55
+// ---------------------------------------------------------------------------
+
+test('taxa de vaga em aberto sobe quando contrata mais; desemprego, ao contrário', () => {
+  assert.equal(metricOrientation('job_openings_rate'), 1)
+  assert.equal(metricOrientation('job_vacancy_rate'), 1)
+  assert.equal(metricOrientation('unemployment_rate'), -1)
+  // Métrica que a tabela não conhece cai na leitura de curva crua. Quem impede
+  // que isso aconteça é o tipo de `METRIC_ORIENTATION`, não este recuo.
+  assert.equal(metricOrientation('metrica_que_nao_existe'), 1)
+})
+
+test('DESEMPREGO CAINDO é mercado esquentando, nunca esfriando', () => {
+  // Os valores são os do Brasil no banco de produção em 02/09/2026. Antes da
+  // correção, esta série saía `cooling`, e a tela afirmava "a abertura de vagas
+  // vem caindo" para um país onde o desemprego tinha caído de 6,87% para 6,03%.
+  const summary = summarizeHiringIndex(
+    'BR',
+    rows([6.865, 6.328, 6.133, 6.972, 5.734, 5.555, 5.05, 6.031], {
+      country: 'BR',
+      source: 'cepalstat_une',
+      metric: 'unemployment_rate',
+      periodType: 'quarter',
+      confidence: 'low',
+    })
+  )
+
+  assert.notEqual(summary.phase, 'cooling')
+  assert.ok(summary.phase === 'heating_up' || summary.phase === 'recovering')
+})
+
+test('DESEMPREGO SUBINDO é mercado esfriando', () => {
+  const summary = summarizeHiringIndex(
+    'AA',
+    rows([4.0, 4.3, 4.7, 5.2, 5.8, 6.5, 7.1, 7.9], {
+      country: 'AA',
+      source: 'ilostat_une',
+      metric: 'unemployment_rate',
+      periodType: 'quarter',
+      confidence: 'low',
+    })
+  )
+
+  assert.equal(summary.phase, 'cooling')
+})
+
+test('a MESMA série dá fases opostas conforme o que ela mede', () => {
+  const valores = [3.0, 3.2, 3.5, 3.9, 4.4, 5.0, 5.7, 6.5]
+
+  const vagas = summarizeHiringIndex(
+    'AA',
+    rows(valores, { country: 'AA', source: 'eurostat_jvs', metric: 'job_vacancy_rate' })
+  )
+  const desemprego = summarizeHiringIndex(
+    'AB',
+    rows(valores, { country: 'AB', source: 'ilostat_une', metric: 'unemployment_rate' })
+  )
+
+  assert.equal(vagas.phase, 'heating_up')
+  assert.equal(desemprego.phase, 'cooling')
+})
+
+test('desemprego parado perto do PICO é contratação no fundo do poço', () => {
+  // É o caso que prova por que a correção nega o valor em vez de espelhar a
+  // fase: espelhar `bottoming_out` daria "parou de subir perto do topo", que
+  // não é fundo de poço de contratação — é o oposto dele.
+  const summary = summarizeHiringIndex(
+    'AA',
+    rows([24.0, 26.5, 29.0, 31.0, 32.4, 32.6, 32.5, 32.7], {
+      country: 'AA',
+      source: 'ilostat_une',
+      metric: 'unemployment_rate',
+      periodType: 'quarter',
+      confidence: 'low',
+    })
+  )
+
+  assert.equal(summary.phase, 'bottoming_out')
+})
+
+test('a orientação não mexe em nada além do sentido', () => {
+  const linhas = rows([5.0, 4.8, 4.6, 4.4, 4.2, 4.0, 3.8, 3.6], {
+    country: 'AA',
+    source: 'ilostat_une',
+    metric: 'unemployment_rate',
+    periodType: 'quarter',
+    confidence: 'low',
+  })
+  const summary = summarizeHiringIndex('AA', linhas)
+
+  // Fonte, confiança, período e contagem de pontos continuam descrevendo o
+  // dado como a fonte o publicou.
+  assert.equal(summary.source, 'ilostat_une')
+  assert.equal(summary.confidence, 'low')
+  assert.equal(summary.periodType, 'quarter')
+  assert.equal(summary.pointsUsed, 8)
+  assert.equal(summary.latestPeriod, linhas[linhas.length - 1].period.toISOString())
 })
