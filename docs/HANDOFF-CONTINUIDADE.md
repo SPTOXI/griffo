@@ -27,13 +27,14 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 03/09/2026: Índice GriffoWork na home, versão leve (§2.58) — `HiringIndexTeaser` em `landing.tsx`, link `nav.marketPulse` pra `/market-pulse`. **Lição de processo, não de código**: a primeira verificação em `next dev` (já com dezenas de edições na mesma sessão) mostrou o widget em inglês numa página em português — parecia bug real, sobreviveu a `rm -rf .next` e restart do dev server. Só um `npm run build && npm run start` limpo provou que o código estava certo (era corrupção de estado do Fast Refresh, com `Hydration failed` no console do dev). Daqui pra frente: sintoma que a leitura do código não explica, depois de muitas edições no mesmo `next dev`, manda pro build de produção antes de mexer mais no código |
-| Anterior | 03/09/2026: dois defeitos achados pelo operador testando de verdade, logado e no celular (§2.57) — `/market-pulse` não tinha link em lugar nenhum do site (corrigido: `nav.marketPulse` nos 12 idiomas, no menu desktop/mobile e no rodapé); e o bloco "Where & Why to Adjust" do laudo (`analysis-view.tsx`) estourava a largura no celular por falta de `break-words`/`min-w-0` em texto livre gerado por IA dentro de um grid. Suíte 855/855 mantida |
-| Anterior (2) | 02/09/2026: página pública `/market-pulse` — mapa-múndi de temperatura de contratação, rota pública `GET /api/hiring-index` e o "Índice GriffoWork" como **distribuição de fases**, nunca uma nota única (§2.56). Fecha a pendência 14(e). **O achado que importa não é o mapa:** a fase estava com o SINAL INVERTIDO para as duas fontes de taxa de desemprego (ILOSTAT/CEPALSTAT), ou seja 68 dos 98 países — desemprego caindo era classificado como `cooling` e o laudo pago dizia "a abertura de vagas vem caindo". Corrigido em `METRIC_ORIENTATION` (`lookup.ts`), com a trava sendo o TIPO `Record<LaborMetric, 1 \| -1>`: métrica nova sem decisão de sentido não compila. A distribuição real mudou de 39 para 21 países em `cooling` |
-| Anterior (3) | 02/09/2026: cobertura da Adzuna de **11 para 19 países**, todos verificados contra a API real (§2.55). Junto vieram dois defeitos que só a verificação revelou: (1) a rodada só varria países onde algum perfil declarava morar — com os quatro perfis existentes, todos no Brasil, existia **uma única fonte Adzuna** (`adzuna:br`), e ampliar a lista sozinho não coletaria nada; (2) sete dos onze mercados gravariam vaga **sem país**, porque a Adzuna manda o nome no idioma do mercado ("UK", "Deutschland", "España"...) e a tabela de apelidos só tinha três. `ADZUNA_COUNTRIES_PER_RUN` **baixou** de 11 para 8 — o limite que aperta é o relógio dos 45s, não a cota |
-| Anterior (4) | 02/09/2026: fase 3 do índice de temperatura de contratação (§2.54) — conectores ILOSTAT e CEPALSTAT, ambos `confidence: 'low'`, que levam a cobertura de **30 para 98 países** (2.757 linhas em `LaborMarketPoint`). Nenhum arquivo de UI ou de i18n foi tocado: o cartão e os 12 dicionários nunca ramificaram por fonte nem por métrica. Falta só da pendência 14: (e) agregação por continente. O cron **não** está agendado no `vercel.json` — é decisão de plataforma, ver o TODO no cabeçalho da rota |
-| Suíte | 855 testes, `fail 0` — reverificado após o §2.58 (sem teste novo: `HiringIndexTeaser` é decorativo, mesmo precedente de UI não testada de `hiring-index-card.tsx`); a regra da contagem está na seção 8 |
-| `tsc`, `build` | `tsc --noEmit` e `eslint` limpos após o §2.56; `npm run build` não rerodado nesta revisão — conferir antes de deploy |
+| Última revisão | 03/09/2026: **recorte por continente no mapa de contratação (§2.59) — a pendência 14 fecha por inteiro, (a) a (e)**. O §2.56 tinha recusado o corte continental com razão ("África: 60% aquecendo" seria uma frase sobre 12 países dita como se fosse sobre 54); ele volta porque agora carrega o DENOMINADOR junto: `ContinentSummary` traz `totalCountries` e `uncovered` no mesmo objeto da distribuição, e a barra da tela tem como denominador o continente inteiro — o pedaço sem fonte sai hachurado, com a mesma hachura do mapa. Tabela país→continente nova (`lib/hiring-index/continents.ts`, 173 pares) pela regra **UN M49**, conferida contra DOIS conjuntos independentes que publicam o M49 da UNSD (concordaram em 172/173; a exceção é Taiwan, que a UNSD não lista em separado). Nome de continente vem do dicionário nos 12 idiomas, **nunca** de `Intl.DisplayNames` — a lição do `Falklandinseln` aplicada antes do defeito |
+| Anterior | 03/09/2026: Índice GriffoWork na home, versão leve (§2.58) — `HiringIndexTeaser` em `landing.tsx`, link `nav.marketPulse` pra `/market-pulse`. **Lição de processo, não de código**: a primeira verificação em `next dev` (já com dezenas de edições na mesma sessão) mostrou o widget em inglês numa página em português — parecia bug real, sobreviveu a `rm -rf .next` e restart do dev server. Só um `npm run build && npm run start` limpo provou que o código estava certo (era corrupção de estado do Fast Refresh, com `Hydration failed` no console do dev). Daqui pra frente: sintoma que a leitura do código não explica, depois de muitas edições no mesmo `next dev`, manda pro build de produção antes de mexer mais no código |
+| Anterior (2) | 03/09/2026: dois defeitos achados pelo operador testando de verdade, logado e no celular (§2.57) — `/market-pulse` não tinha link em lugar nenhum do site (corrigido: `nav.marketPulse` nos 12 idiomas, no menu desktop/mobile e no rodapé); e o bloco "Where & Why to Adjust" do laudo (`analysis-view.tsx`) estourava a largura no celular por falta de `break-words`/`min-w-0` em texto livre gerado por IA dentro de um grid. Suíte 855/855 mantida |
+| Anterior (3) | 02/09/2026: página pública `/market-pulse` — mapa-múndi de temperatura de contratação, rota pública `GET /api/hiring-index` e o "Índice GriffoWork" como **distribuição de fases**, nunca uma nota única (§2.56). Fecha a pendência 14(e). **O achado que importa não é o mapa:** a fase estava com o SINAL INVERTIDO para as duas fontes de taxa de desemprego (ILOSTAT/CEPALSTAT), ou seja 68 dos 98 países — desemprego caindo era classificado como `cooling` e o laudo pago dizia "a abertura de vagas vem caindo". Corrigido em `METRIC_ORIENTATION` (`lookup.ts`), com a trava sendo o TIPO `Record<LaborMetric, 1 \| -1>`: métrica nova sem decisão de sentido não compila. A distribuição real mudou de 39 para 21 países em `cooling` |
+| Anterior (4) | 02/09/2026: cobertura da Adzuna de **11 para 19 países**, todos verificados contra a API real (§2.55). Junto vieram dois defeitos que só a verificação revelou: (1) a rodada só varria países onde algum perfil declarava morar — com os quatro perfis existentes, todos no Brasil, existia **uma única fonte Adzuna** (`adzuna:br`), e ampliar a lista sozinho não coletaria nada; (2) sete dos onze mercados gravariam vaga **sem país**, porque a Adzuna manda o nome no idioma do mercado ("UK", "Deutschland", "España"...) e a tabela de apelidos só tinha três. `ADZUNA_COUNTRIES_PER_RUN` **baixou** de 11 para 8 — o limite que aperta é o relógio dos 45s, não a cota |
+| Anterior (5) | 02/09/2026: fase 3 do índice de temperatura de contratação (§2.54) — conectores ILOSTAT e CEPALSTAT, ambos `confidence: 'low'`, que levam a cobertura de **30 para 98 países** (2.757 linhas em `LaborMarketPoint`). Nenhum arquivo de UI ou de i18n foi tocado: o cartão e os 12 dicionários nunca ramificaram por fonte nem por métrica. Falta só da pendência 14: (e) agregação por continente. O cron **não** está agendado no `vercel.json` — é decisão de plataforma, ver o TODO no cabeçalho da rota |
+| Suíte | **884 testes, `fail 0`** — 855 + 29 do §2.59 (11 em `continents.test.ts`, 8 em `atlas.test.ts`, 6 em `map-model.test.ts`, 4 em `hiring-map.test.ts`); a regra da contagem está na seção 8 |
+| `tsc`, `build` | `tsc --noEmit` e `eslint` limpos após o §2.59. **`npm run build` rerodado limpo** (`rm -rf .next`) e a página conferida em `npm run start` — não em dev, pela lição do §2.58 |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent`, `RadarAlert.notifiedAt` — ver 7.6 — e `LaborMarketPoint` do §2.51, empurrado em 01/09/2026) |
 
 **Pendências que estão esperando alguém, não código:**
@@ -140,9 +141,11 @@ o quanto confiar nele.
     só pelo log do script — a linha mais recente dos EUA bateu com o valor
     (`4.4`), o período (jul/2026) e a nota de rodapé (`P`, preliminar) vistos
     na resposta real da API no §2.51.
-14. **Fases 2 e 3 do índice de temperatura de contratação** — ✅ **(a), (b) e
-    (c) resolvidos em 02/09/2026** (§2.52); ✅ **(d) resolvido em 02/09/2026**
-    (§2.54). Só **(e)** continua aberto.
+14. **Fases 2 e 3 do índice de temperatura de contratação** — ✅ **FECHADA POR
+    INTEIRO.** (a), (b) e (c) resolvidos em 02/09/2026 (§2.52); (d) em
+    02/09/2026 (§2.54); (e) em 02/09/2026 (§2.56) e **complementado em
+    03/09/2026 com o recorte por continente que a redação original pedia**
+    (§2.59). Nada desta pendência continua aberto.
 
     - (a) ~~texto traduzido nos 12 idiomas para os rótulos das fases e para o
       estado "dado insuficiente"~~ — feito: bloco `hiringIndex` em
@@ -191,6 +194,29 @@ o quanto confiar nele.
       cada fase, com `84 de 98` dito junto — mais um único escalar
       declarado como o que é: `netBreadth = heating_up − cooling`,
       contagem de países, não média de valores.
+
+      ✅ **E por continente também, desde 03/09/2026** (§2.59) — sem
+      desdizer nada do parágrafo acima. O corte continental voltou porque
+      passou a carregar o DENOMINADOR: `ContinentSummary` traz
+      `totalCountries` (os países daquele continente que
+      `lib/market/countries.ts` conhece) e `uncovered` no mesmo objeto da
+      distribuição, e a barra da tela tem como denominador o continente
+      inteiro — o pedaço sem fonte sai hachurado, com a mesma hachura do
+      mapa. Nenhuma percentagem aparece sozinha: a linha da África diz
+      "16 de 48 países com fonte oficial" antes de qualquer cor.
+      `continentBreakdown` **reaproveita `phaseDistribution`**, não
+      reconta — a soma dos seis continentes bate com o agregado global
+      por construção, e há teste que falha se deixar de bater.
+
+      A tabela país→continente é `lib/hiring-index/continents.ts`, 173
+      pares pela regra **UN M49** (`Americas` dividida pela região
+      intermediária: *South America* de um lado, *Northern America* +
+      *Central America* + *Caribbean* do outro), conferida par a par
+      contra dois conjuntos independentes que publicam o M49 da UNSD —
+      concordaram em 172/173, e a exceção é Taiwan, que a UNSD não lista
+      em separado. **Não é para trocar por `Intl.DisplayNames`**: nome de
+      continente vem do bloco `continents` do dicionário nos 12 idiomas,
+      pelo mesmo motivo que derrubou a hidratação do mapa uma vez.
 
 15. **O sinal da métrica no índice de temperatura** — ✅ **resolvido em
     02/09/2026** (§2.56), e registrado aqui porque a classe do erro vai

@@ -198,7 +198,15 @@ export default async function MarketPulsePage({ searchParams }: PageProps) {
              de país no cliente fazia o React descartar a árvore inteira vinda
              do servidor, porque as tabelas de idioma do Node e do navegador
              discordam em alguns nomes. */
-          <HiringMapView model={buildHiringMapModel(atlas, lang, dict.hiringMap, dict.hiringIndex)} />
+          <HiringMapView
+            model={buildHiringMapModel(
+              atlas,
+              lang,
+              dict.hiringMap,
+              dict.hiringIndex,
+              dict.continents
+            )}
+          />
         ) : (
           /* Consulta falhou. A página diz isso, e NÃO desenha um mapa inteiro
              sem cor — um mapa todo hachurado afirmaria que nenhum país do

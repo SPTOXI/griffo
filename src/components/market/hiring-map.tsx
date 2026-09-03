@@ -3,7 +3,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowUpRight, Info } from 'lucide-react'
-import { NO_DATA_PATTERN, type HiringMapModel } from '@/lib/hiring-index/map-model'
+import {
+  CONTINENT_NO_DATA_PATTERN,
+  NO_DATA_PATTERN,
+  type HiringMapModel,
+} from '@/lib/hiring-index/map-model'
 import { WORLD_MAP_MARKERS, WORLD_MAP_SHAPES, WORLD_MAP_VIEWBOX } from '@/lib/hiring-index/world-map'
 
 /**
@@ -260,6 +264,93 @@ export function HiringMapView({ model }: HiringMapViewProps) {
             </div>
           )}
         </div>
+      </section>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Por continente — a distribuição SEMPRE ao lado da cobertura        */}
+      {/*                                                                    */}
+      {/* O §2.56 recusou este recorte com um argumento certo: "África: 60%  */}
+      {/* aquecendo" seria uma afirmação sobre os 12 países medidos          */}
+      {/* apresentada como afirmação sobre 54. Ele volta aqui só porque a    */}
+      {/* barra tem como denominador o CONTINENTE INTEIRO, não os países     */}
+      {/* cobertos: o pedaço sem fonte sai hachurado, com a mesma hachura do */}
+      {/* mapa, e a contagem absoluta fica na coluna ao lado. Uma barra      */}
+      {/* quase toda hachurada é uma frase, e é a frase verdadeira.          */}
+      {/* ------------------------------------------------------------------ */}
+      <section aria-label={t.continentHeading} className="space-y-3">
+        <h2 className="text-lg font-bold text-brand-navy">{t.continentHeading}</h2>
+
+        {/* A hachura desta seção, declarada por ela. Ver
+            `CONTINENT_NO_DATA_PATTERN`: depender do `<defs>` do mapa faria as
+            barras perderem exatamente o pedaço que elas existem para mostrar
+            se o mapa saísse do ar ou mudasse de lugar. */}
+        <svg width="0" height="0" aria-hidden="true" className="absolute h-0 w-0">
+          <defs>
+            <pattern
+              id={CONTINENT_NO_DATA_PATTERN}
+              width="6"
+              height="6"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(45)"
+            >
+              <rect width="6" height="6" fill="#eef2f7" />
+              <line x1="0" y1="0" x2="0" y2="6" stroke="#cbd5e1" strokeWidth="2" />
+            </pattern>
+          </defs>
+        </svg>
+
+        <div className="overflow-x-auto rounded-2xl border border-slate-200">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-slate-600">
+              <tr>
+                <th scope="col" className="text-start font-semibold px-3 py-2">{t.colContinent}</th>
+                <th scope="col" className="text-start font-semibold px-3 py-2">{t.colPhase}</th>
+                <th scope="col" className="text-start font-semibold px-3 py-2 whitespace-nowrap">
+                  {t.colCoverage}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {model.continents.map((row) => (
+                <tr key={row.continent} className="border-t border-slate-100">
+                  <td className="px-3 py-2 font-medium text-slate-800 whitespace-nowrap">
+                    {row.name}
+                  </td>
+                  <td className="px-3 py-2 min-w-[10rem]">
+                    {/* SVG, e não `<div style={{width}}>`: a CSP do projeto não
+                        declara `style-src` e bloqueia estilo em linha. */}
+                    <svg
+                      className="w-full h-2.5"
+                      preserveAspectRatio="none"
+                      role="img"
+                      aria-label={row.barLabel}
+                    >
+                      <title>{row.barLabel}</title>
+                      <rect width="100%" height="100%" rx="4" fill="#f1f5f9" />
+                      {row.bar.map((segment, i) => (
+                        <rect
+                          key={`${segment.kind}-${i}`}
+                          x={`${segment.xPercent}%`}
+                          width={`${segment.widthPercent}%`}
+                          height="100%"
+                          fill={segment.fill}
+                        />
+                      ))}
+                    </svg>
+                  </td>
+                  <td className="px-3 py-2 text-slate-600 whitespace-nowrap tabular-nums">
+                    {row.coverageLabel}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="flex items-start gap-2 text-[11px] text-slate-500 leading-relaxed">
+          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span>{t.continentHint}</span>
+        </p>
       </section>
 
       {/* ------------------------------------------------------------------ */}

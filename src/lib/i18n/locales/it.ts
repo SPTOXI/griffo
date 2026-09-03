@@ -972,5 +972,20 @@ export const it: TranslationDictionary = {
     colSource: "Fonte",
     colPeriod: "Ultimo periodo",
     viewFullMapCta: "Vedi la mappa completa",
+
+    // -- Recorte por continente (§2.59) --
+    continentHeading: "Per continente",
+    continentCoverage: "{tracked} paesi su {total} con fonte ufficiale",
+    continentHint: "La barra mostra la copertura reale di ogni continente: la parte tratteggiata sono i paesi che nessuna fonte ufficiale copre. La parte colorata è il conteggio dei paesi per fase, mai un punteggio del continente, che non esiste.",
+    colContinent: "Continente",
+    colCoverage: "Copertura",
+  },
+  continents: {
+    africa: "Africa",
+    asia: "Asia",
+    europe: "Europa",
+    northAmerica: "America del Nord",
+    oceania: "Oceania",
+    southAmerica: "America del Sud",
   },
 }

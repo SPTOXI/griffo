@@ -972,5 +972,20 @@ export const zh: TranslationDictionary = {
     colSource: "来源",
     colPeriod: "最新周期",
     viewFullMapCta: "查看完整地图",
+
+    // -- Recorte por continente (§2.59) --
+    continentHeading: "按大洲",
+    continentCoverage: "{total} 个国家中有 {tracked} 个拥有官方来源",
+    continentHint: "长条显示每个大洲的真实覆盖情况：斜线部分是没有任何官方来源覆盖的国家。彩色部分是各阶段的国家数量，而不是该大洲的单一评分——这样的评分并不存在。",
+    colContinent: "大洲",
+    colCoverage: "覆盖情况",
+  },
+  continents: {
+    africa: "非洲",
+    asia: "亚洲",
+    europe: "欧洲",
+    northAmerica: "北美洲",
+    oceania: "大洋洲",
+    southAmerica: "南美洲",
   },
 }

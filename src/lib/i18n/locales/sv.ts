@@ -972,5 +972,20 @@ export const sv: TranslationDictionary = {
     colSource: "Källa",
     colPeriod: "Senaste period",
     viewFullMapCta: "Visa hela kartan",
+
+    // -- Recorte por continente (§2.59) --
+    continentHeading: "Per världsdel",
+    continentCoverage: "{tracked} av {total} länder med officiell källa",
+    continentHint: "Stapeln visar varje världsdels faktiska täckning: den streckade delen är de länder som ingen officiell källa täcker. Den färgade delen är antalet länder per fas, aldrig ett betyg för världsdelen, som inte finns.",
+    colContinent: "Världsdel",
+    colCoverage: "Täckning",
+  },
+  continents: {
+    africa: "Afrika",
+    asia: "Asien",
+    europe: "Europa",
+    northAmerica: "Nordamerika",
+    oceania: "Oceanien",
+    southAmerica: "Sydamerika",
   },
 }

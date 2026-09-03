@@ -1,6 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { PHASES, phaseByCountry, phaseDistribution, summarizeAtlas } from './atlas'
+import {
+  PHASES,
+  continentBreakdown,
+  phaseByCountry,
+  phaseDistribution,
+  summarizeAtlas,
+} from './atlas'
+import { CONTINENTS, COUNTRIES_PER_CONTINENT } from './continents'
 import { summarizeHiringIndex, type HiringIndexSummary, type LaborMarketRow } from './lookup'
 import type { HiringPhase } from './phase'
 
@@ -252,6 +259,176 @@ test('país coberto sem histórico bastante conta como coberto, não como fase',
 // ---------------------------------------------------------------------------
 // A consulta que o desenho do mapa faz
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// O recorte por continente (§2.59)
+//
+// O que estes testes protegem é o DENOMINADOR, não a aritmética. O §2.56 tinha
+// recusado o corte continental porque "África: 60% aquecendo" seria uma frase
+// sobre 12 países dita como se fosse sobre 54. Ele voltou com a cobertura
+// obrigatória ao lado — e é isso que não pode se perder numa refatoração.
+// ---------------------------------------------------------------------------
+
+/** Um conjunto pequeno com país em cinco continentes, e um sexto vazio. */
+function espalhados(): HiringIndexSummary[] {
+  return [
+    // Europa: dois classificados e um coberto sem histórico bastante.
+    summary({ country: 'DE', phase: 'cooling' }),
+    summary({ country: 'FR', phase: 'heating_up' }),
+    summary({ country: 'PT', phase: null, insufficientDataReason: 'too_few_points' }),
+    // América do Sul.
+    summary({ country: 'BR', phase: 'heating_up' }),
+    summary({ country: 'AR', phase: 'stable' }),
+    // África, Ásia e América do Norte, um cada.
+    summary({ country: 'KE', phase: 'recovering' }),
+    summary({ country: 'JP', phase: 'bottoming_out' }),
+    summary({ country: 'US', phase: 'heating_up' }),
+    // Oceania fica de fora de propósito: continente sem nenhum país coberto.
+  ]
+}
+
+const byCode = (rows: ReturnType<typeof continentBreakdown>) =>
+  Object.fromEntries(rows.map((r) => [r.continent, r]))
+
+test('a distribuição de cada continente conta só os países DELE', () => {
+  const c = byCode(continentBreakdown(espalhados()))
+
+  assert.equal(c.EU.distribution.tracked, 3)
+  assert.equal(c.EU.distribution.counts.cooling, 1)
+  assert.equal(c.EU.distribution.counts.heating_up, 1)
+  assert.equal(c.EU.distribution.unclassified, 1)
+  assert.equal(c.EU.distribution.classified, 2)
+  assert.equal(c.EU.distribution.netBreadth, 0)
+
+  assert.equal(c.SA.distribution.tracked, 2)
+  assert.equal(c.SA.distribution.counts.heating_up, 1)
+  assert.equal(c.SA.distribution.counts.stable, 1)
+
+  assert.equal(c.AF.distribution.counts.recovering, 1)
+  assert.equal(c.AS.distribution.counts.bottoming_out, 1)
+  assert.equal(c.NA.distribution.counts.heating_up, 1)
+})
+
+test('O DENOMINADOR É O CONTINENTE INTEIRO, não os países medidos', () => {
+  // É a linha que separa "12 de 48" de "60% aquecendo". Sem ela, a barra da
+  // África encheria com um país só.
+  const c = byCode(continentBreakdown(espalhados()))
+
+  assert.equal(c.EU.totalCountries, COUNTRIES_PER_CONTINENT.EU)
+  assert.equal(c.EU.totalCountries, 42)
+  assert.equal(c.EU.uncovered, 42 - 3)
+
+  assert.equal(c.AF.totalCountries, 48)
+  assert.equal(c.AF.uncovered, 47)
+
+  assert.equal(c.SA.totalCountries, 12)
+  assert.equal(c.SA.uncovered, 10)
+
+  // A conta que a tela nunca precisa refazer: coberto + sem cobertura = total.
+  for (const linha of continentBreakdown(espalhados())) {
+    assert.equal(linha.distribution.tracked + linha.uncovered, linha.totalCountries)
+  }
+})
+
+test('continente sem nenhum país coberto NÃO some da lista', () => {
+  // Omitir a Oceania faria a tela parecer completa. Ela aparece zerada, que é
+  // a frase "aqui não medimos nada" dita com número.
+  const c = byCode(continentBreakdown(espalhados()))
+
+  assert.ok(c.OC, 'Oceania sumiu do recorte')
+  assert.equal(c.OC.distribution.tracked, 0)
+  assert.equal(c.OC.distribution.classified, 0)
+  assert.equal(c.OC.uncovered, c.OC.totalCountries)
+  assert.equal(c.OC.totalCountries, 5)
+})
+
+test('os seis continentes saem sempre, na ordem alfabética do código', () => {
+  const vazio = continentBreakdown([])
+  assert.deepEqual(vazio.map((c) => c.continent), [...CONTINENTS])
+  // Nenhum continente é listado primeiro por tamanho ou por mercado.
+  assert.deepEqual([...CONTINENTS], ['AF', 'AS', 'EU', 'NA', 'OC', 'SA'])
+  // Sem nenhum país coberto, tudo zero — e nenhum NaN disfarçado.
+  for (const linha of vazio) {
+    assert.equal(linha.distribution.tracked, 0)
+    assert.equal(linha.distribution.netBreadth, 0)
+    assert.equal(linha.uncovered, linha.totalCountries)
+  }
+})
+
+test('país SEM COBERTURA não entra na contagem de continente nenhum', () => {
+  const c = byCode(
+    continentBreakdown([
+      summary({ country: 'DE', phase: 'heating_up' }),
+      summary({
+        country: 'FR',
+        covered: false,
+        source: null,
+        sourceName: null,
+        metric: null,
+        phase: null,
+        latestPeriod: null,
+        periodType: null,
+        pointsUsed: 0,
+      }),
+    ])
+  )
+
+  assert.equal(c.EU.distribution.tracked, 1)
+  // E a França volta para o lado sem cobertura do denominador.
+  assert.equal(c.EU.uncovered, c.EU.totalCountries - 1)
+})
+
+test('país fora da lista do produto não estoura o denominador de ninguém', () => {
+  // A coluna `country` do banco é texto livre. Um código que a lista não
+  // conhece continua no agregado global — a fonte oficial o cobre de verdade —
+  // mas somá-lo a um continente produziria "19 de 18".
+  const resumos = [summary({ country: 'US', phase: 'heating_up' }), summary({ country: 'ZZ', phase: 'cooling' })]
+  const c = byCode(continentBreakdown(resumos))
+
+  assert.equal(c.NA.distribution.tracked, 1)
+  const somaContinentes = CONTINENTS.reduce((acc, k) => acc + c[k].distribution.tracked, 0)
+  assert.equal(somaContinentes, 1)
+  // O global continua contando os dois.
+  assert.equal(phaseDistribution(resumos).tracked, 2)
+})
+
+test('a soma dos continentes bate com o agregado global quando todo país é conhecido', () => {
+  const resumos = espalhados()
+  const global = phaseDistribution(resumos)
+  const linhas = continentBreakdown(resumos)
+
+  assert.equal(
+    linhas.reduce((acc, l) => acc + l.distribution.tracked, 0),
+    global.tracked
+  )
+  for (const phase of PHASES) {
+    assert.equal(
+      linhas.reduce((acc, l) => acc + l.distribution.counts[phase], 0),
+      global.counts[phase],
+      `a fase ${phase} não fecha entre o global e os continentes`
+    )
+  }
+  assert.equal(
+    linhas.reduce((acc, l) => acc + l.distribution.unclassified, 0),
+    global.unclassified
+  )
+})
+
+test('o atlas já sai com o recorte por continente pronto', () => {
+  const atlas = summarizeAtlas([
+    ...rows(RISING, { country: 'BR' }),
+    ...rows(FALLING, { country: 'DE', source: 'eurostat_jvs' }),
+  ])
+  const c = byCode(atlas.byContinent)
+
+  assert.equal(atlas.byContinent.length, 6)
+  assert.equal(c.SA.distribution.counts.heating_up, 1)
+  assert.equal(c.EU.distribution.counts.cooling, 1)
+  assert.equal(c.SA.uncovered, c.SA.totalCountries - 1)
+  // E nenhuma nota por continente foi inventada no caminho.
+  assert.equal('score' in c.SA, false)
+  assert.equal('average' in c.SA, false)
+})
 
 test('phaseByCountry só responde por país coberto', () => {
   const atlas = summarizeAtlas([

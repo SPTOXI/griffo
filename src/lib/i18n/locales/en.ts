@@ -973,5 +973,20 @@ export const en: TranslationDictionary = {
       colSource: "Source",
       colPeriod: "Latest period",
       viewFullMapCta: "View full map",
+
+      // -- Recorte por continente (§2.59) --
+      continentHeading: "By continent",
+      continentCoverage: "{tracked} of {total} countries with an official source",
+      continentHint: "The bar shows each continent's real coverage: the hatched part is the countries no official source covers. The coloured part is the count of countries per phase — never a score for the continent, which does not exist.",
+      colContinent: "Continent",
+      colCoverage: "Coverage",
+    },
+    continents: {
+      africa: "Africa",
+      asia: "Asia",
+      europe: "Europe",
+      northAmerica: "North America",
+      oceania: "Oceania",
+      southAmerica: "South America",
     },
 }

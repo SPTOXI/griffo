@@ -24,6 +24,21 @@
  * Era a saída já antecipada em §2.54 ("a resposta provável continua sendo
  * agregar as *fases*, não os valores").
  *
+ * ## E por continente? Sim — mas com o denominador junto
+ *
+ * O §2.56 recusou o corte continental com um argumento certo: *"África: 60%
+ * aquecendo" seria uma afirmação sobre os 12 países que têm dado apresentada
+ * como afirmação sobre 54*. `continentBreakdown` só existe porque devolve o
+ * denominador junto: `totalCountries` (quantos países daquele continente a
+ * lista do produto conhece) e `uncovered` (quantos deles nenhuma fonte cobre)
+ * saem no MESMO objeto que a distribuição, e não como algo que quem chama
+ * calcula depois se lembrar. Um continente com 12 de 54 diz "12 de 54" antes
+ * de dizer qualquer percentagem — que é a diferença entre um recorte e uma
+ * insinuação de cobertura.
+ *
+ * Continua não havendo nota por continente, pelo mesmo motivo de não haver
+ * nota global: os valores não se somam. O que se conta é país.
+ *
  * ## O único número escalar que existe aqui, e como ele é calculado
  *
  * `netBreadth = (países em heating_up) − (países em cooling)`.
@@ -49,6 +64,12 @@
 
 import type { HiringPhase } from './phase'
 import { summarizeHiringIndex, type HiringIndexSummary, type LaborMarketRow } from './lookup'
+import {
+  CONTINENTS,
+  COUNTRIES_PER_CONTINENT,
+  continentOf,
+  type Continent,
+} from './continents'
 
 /** As cinco fases, na ordem da curva. Ordem de leitura, não de importância. */
 export const PHASES: readonly HiringPhase[] = [
@@ -75,6 +96,38 @@ export interface PhaseDistribution {
   netBreadth: number
 }
 
+/**
+ * Um continente: a distribuição dos países cobertos DELE, e a cobertura real.
+ *
+ * Os três números de cobertura são ditos por extenso de propósito. Ver o
+ * cabeçalho: uma distribuição de continente sem o denominador ao lado vira uma
+ * afirmação sobre países que ninguém mediu.
+ */
+export interface ContinentSummary {
+  continent: Continent
+  /**
+   * A MESMA `PhaseDistribution` do agregado global, restrita aos países
+   * cobertos deste continente. `distribution.tracked` é quantos países daqui
+   * têm fonte oficial.
+   */
+  distribution: PhaseDistribution
+  /**
+   * Quantos países deste continente a lista do produto conhece — o
+   * denominador honesto. Não é "quantos países existem no mundo" nem "quantos
+   * têm linha no banco": ver o cabeçalho de `continents.ts`.
+   */
+  totalCountries: number
+  /**
+   * `totalCountries − distribution.tracked`. Países deste continente que
+   * nenhuma fonte oficial cobre.
+   *
+   * Sai calculado daqui, e não da tela, porque é o número que a tela seria
+   * tentada a esquecer — e esquecê-lo é exatamente o defeito que o §2.56
+   * apontou ao recusar o corte por continente.
+   */
+  uncovered: number
+}
+
 export interface HiringAtlas {
   /**
    * Um resumo por país COBERTO, em ordem alfabética de código ISO.
@@ -85,6 +138,15 @@ export interface HiringAtlas {
    */
   countries: HiringIndexSummary[]
   distribution: PhaseDistribution
+  /**
+   * Os seis continentes povoados, sempre os seis, na ordem alfabética do
+   * código.
+   *
+   * Continente sem nenhum país coberto **não some da lista**: ele sai com a
+   * distribuição zerada e `uncovered === totalCountries`, que é a frase "aqui
+   * não medimos nada" dita com número. Omiti-lo faria a tela parecer completa.
+   */
+  byContinent: ContinentSummary[]
   /** Período mais recente presente em qualquer série, em ISO. */
   latestPeriod: string | null
   /** Quando a coleta gravou pela última vez, em ISO. Vem do banco. */
@@ -118,6 +180,49 @@ export function phaseDistribution(summaries: readonly HiringIndexSummary[]): Pha
     classified: tracked - unclassified,
     netBreadth: counts.heating_up - counts.cooling,
   }
+}
+
+/**
+ * A mesma contagem, recortada por continente, com a cobertura junto.
+ *
+ * Reaproveita `phaseDistribution` — chamada uma vez por continente com os
+ * resumos daquele continente — em vez de recontar. Duas contagens da mesma
+ * coisa divergiriam na primeira correção feita só numa delas, e a soma dos
+ * continentes deixaria de bater com o total global sem ninguém perceber.
+ *
+ * País cujo código a lista do produto não conhece **não entra em continente
+ * nenhum**: ele continua no agregado global (a fonte oficial o cobre de
+ * verdade), mas somá-lo a um continente estouraria o denominador daquele
+ * continente, e "31 de 30" é pior que a omissão. Hoje isso não acontece — os
+ * conectores já descartam código fora da lista (`iso3.ts`) —, mas a coluna do
+ * banco é texto livre e a garantia não é estrutural.
+ */
+export function continentBreakdown(
+  summaries: readonly HiringIndexSummary[]
+): ContinentSummary[] {
+  const byContinent = new Map<Continent, HiringIndexSummary[]>(
+    CONTINENTS.map((continent) => [continent, [] as HiringIndexSummary[]])
+  )
+
+  for (const summary of summaries) {
+    const continent = continentOf(summary.country)
+    if (!continent) continue
+    byContinent.get(continent)!.push(summary)
+  }
+
+  return CONTINENTS.map((continent) => {
+    const distribution = phaseDistribution(byContinent.get(continent)!)
+    const totalCountries = COUNTRIES_PER_CONTINENT[continent]
+    return {
+      continent,
+      distribution,
+      totalCountries,
+      // `Math.max` é um cinto de segurança contra o único jeito de isto ficar
+      // negativo: um país coberto que a lista do produto conhece deixar de ser
+      // conhecido. Melhor `0` do que uma tela dizendo "−2 países sem fonte".
+      uncovered: Math.max(0, totalCountries - distribution.tracked),
+    }
+  })
 }
 
 /**
@@ -156,6 +261,7 @@ export function summarizeAtlas(
   return {
     countries,
     distribution: phaseDistribution(countries),
+    byContinent: continentBreakdown(countries),
     latestPeriod,
     updatedAt: toIso(updatedAt),
   }

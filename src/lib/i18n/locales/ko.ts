@@ -972,5 +972,20 @@ export const ko: TranslationDictionary = {
     colSource: "출처",
     colPeriod: "최근 기간",
     viewFullMapCta: "전체 지도 보기",
+
+    // -- Recorte por continente (§2.59) --
+    continentHeading: "대륙별",
+    continentCoverage: "{total}개국 중 {tracked}개국에 공식 출처 있음",
+    continentHint: "막대는 각 대륙의 실제 포함 범위를 보여줍니다. 빗금 부분은 어떤 공식 출처도 다루지 않는 국가입니다. 색이 칠해진 부분은 단계별 국가 수이며, 대륙을 하나로 묶은 점수가 아닙니다. 그런 점수는 존재하지 않습니다.",
+    colContinent: "대륙",
+    colCoverage: "포함 범위",
+  },
+  continents: {
+    africa: "아프리카",
+    asia: "아시아",
+    europe: "유럽",
+    northAmerica: "북아메리카",
+    oceania: "오세아니아",
+    southAmerica: "남아메리카",
   },
 }

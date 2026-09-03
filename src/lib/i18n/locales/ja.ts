@@ -972,5 +972,20 @@ export const ja: TranslationDictionary = {
     colSource: "ソース",
     colPeriod: "最新期間",
     viewFullMapCta: "完全な地図を見る",
+
+    // -- Recorte por continente (§2.59) --
+    continentHeading: "大陸別",
+    continentCoverage: "{total}か国中{tracked}か国に公式ソースあり",
+    continentHint: "バーは各大陸の実際のカバー範囲を示します。斜線部分は公式ソースがない国です。色の付いた部分はフェーズ別の国数であり、大陸をまとめた単一のスコアではありません。そのようなスコアは存在しません。",
+    colContinent: "大陸",
+    colCoverage: "カバー範囲",
+  },
+  continents: {
+    africa: "アフリカ",
+    asia: "アジア",
+    europe: "ヨーロッパ",
+    northAmerica: "北アメリカ",
+    oceania: "オセアニア",
+    southAmerica: "南アメリカ",
   },
 }

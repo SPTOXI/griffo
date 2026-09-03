@@ -1012,5 +1012,44 @@ export interface TranslationDictionary {
     colPeriod: string
     /** Link do teaser da home para a página cheia (`/market-pulse`). */
     viewFullMapCta: string
+
+    // -- Recorte por continente (§2.59) ------------------------------------
+    /** Título da seção por continente. */
+    continentHeading: string
+    /**
+     * Cobertura de um continente, em números absolutos.
+     *
+     * `{tracked}` = países com fonte oficial, `{total}` = países daquele
+     * continente que o produto conhece. **Os dois sempre juntos**: uma
+     * percentagem sozinha faria 12 de 54 parecer uma leitura do continente.
+     */
+    continentCoverage: string
+    /** Como ler a barra: a parte hachurada é o que não é medido. */
+    continentHint: string
+    colContinent: string
+    colCoverage: string
+  }
+
+  /**
+   * Os seis continentes povoados, por extenso.
+   *
+   * **Deliberadamente um dicionário, e não `Intl.DisplayNames`.** É a mesma
+   * armadilha que já custou a árvore inteira do servidor no mapa: as tabelas
+   * ICU/CLDR do Node e as do navegador não são a mesma versão e discordam
+   * (`Falklandinseln` contra `Falklandinseln (Malwinen)` em alemão — ver o
+   * cabeçalho de `lib/hiring-index/map-model.ts`). Nome de continente tem
+   * cobertura ainda mais irregular entre versões de ICU que nome de país.
+   * Seis palavras fixas por idioma não têm versão.
+   *
+   * A chave é o código de `lib/hiring-index/continents.ts` escrito por
+   * extenso, para que uma tradução errada seja visível na leitura.
+   */
+  continents: {
+    africa: string
+    asia: string
+    europe: string
+    northAmerica: string
+    oceania: string
+    southAmerica: string
   }
 }

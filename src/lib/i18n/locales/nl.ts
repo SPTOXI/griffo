@@ -972,5 +972,20 @@ export const nl: TranslationDictionary = {
     colSource: "Bron",
     colPeriod: "Laatste periode",
     viewFullMapCta: "Volledige kaart bekijken",
+
+    // -- Recorte por continente (§2.59) --
+    continentHeading: "Per continent",
+    continentCoverage: "{tracked} van {total} landen met een officiële bron",
+    continentHint: "De balk toont de werkelijke dekking van elk continent: het gearceerde deel zijn de landen die geen enkele officiële bron dekt. Het gekleurde deel is de telling van landen per fase, nooit een cijfer voor het continent, want dat bestaat niet.",
+    colContinent: "Continent",
+    colCoverage: "Dekking",
+  },
+  continents: {
+    africa: "Afrika",
+    asia: "Azië",
+    europe: "Europa",
+    northAmerica: "Noord-Amerika",
+    oceania: "Oceanië",
+    southAmerica: "Zuid-Amerika",
   },
 }

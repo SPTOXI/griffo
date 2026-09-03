@@ -71,13 +71,35 @@ function atlas() {
 function render(lang: (typeof LANGUAGES)[number] = 'pt') {
   return renderToStaticMarkup(
     createElement(HiringMapView, {
-      model: buildHiringMapModel(atlas(), lang, DICTIONARIES[lang].hiringMap, DICTIONARIES[lang].hiringIndex),
+      model: buildHiringMapModel(
+        atlas(),
+        lang,
+        DICTIONARIES[lang].hiringMap,
+        DICTIONARIES[lang].hiringIndex,
+        DICTIONARIES[lang].continents
+      ),
     })
   )
 }
 
-/** Texto visível, sem as tags — é o que a pessoa lê. */
-const textOf = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+/**
+ * Texto visível, sem as tags — é o que a pessoa lê.
+ *
+ * As entidades voltam ao caractere de origem porque o React escapa `'`, `"` e
+ * `&` no HTML (`qu&#x27;aucune`), e o que se compara aqui é a string do
+ * dicionário. Sem isto, qualquer tradução com apóstrofo — francês, inglês,
+ * italiano — reprovaria por um defeito que não existe na tela.
+ */
+const textOf = (html: string) =>
+  html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim()
 
 /** O `fill` do `<path>`/`<circle>` de um país, lido do HTML gerado. */
 function fillOf(html: string, code: string): string | null {
@@ -180,6 +202,65 @@ test('a amplitude líquida vem sempre acompanhada de como ela é calculada', () 
 test('a nota de que países não são comparáveis entre si está na página', () => {
   const text = textOf(render('en'))
   assert.ok(text.includes(DICTIONARIES.en.hiringIndex.comparisonNote))
+})
+
+// ---------------------------------------------------------------------------
+// O recorte por continente (§2.59)
+// ---------------------------------------------------------------------------
+
+test('NENHUM CONTINENTE APARECE SEM A CONTAGEM ABSOLUTA DE COBERTURA', () => {
+  // A regra inteira desta seção. O §2.56 recusou o corte continental porque uma
+  // distribuição sozinha faria 12 países medidos passarem por 54. Se a
+  // contagem sumir da tela, este teste tem de cair.
+  const html = render('en')
+  const text = textOf(html)
+
+  // O atlas de teste tem DE, IE, PT e SE na Europa e US na América do Norte.
+  assert.ok(text.includes('4 of 42 countries with an official source'))
+  assert.ok(text.includes('1 of 18 countries with an official source'))
+  // E os continentes sem nenhum país medido dizem zero, em vez de sumir.
+  assert.ok(text.includes('0 of 48 countries with an official source'))
+  assert.ok(text.includes('0 of 5 countries with an official source'))
+})
+
+test('a parte não coberta da barra é HACHURA, não espaço vazio', () => {
+  const html = render('en')
+  // O padrão da seção é declarado por ela — não depende do `<defs>` do mapa.
+  assert.ok(html.includes('id="gw-continent-no-data"'))
+  assert.ok(html.includes('fill="url(#gw-continent-no-data)"'))
+  // E a hachura nunca é uma das cinco cores de fase.
+  for (const cor of Object.values(PHASE_FILL)) {
+    assert.notEqual(`url(#gw-continent-no-data)`, cor)
+  }
+})
+
+test('os seis continentes estão na tela, no idioma ativo', () => {
+  for (const lang of LANGUAGES) {
+    const text = textOf(render(lang))
+    for (const nome of Object.values(DICTIONARIES[lang].continents)) {
+      assert.ok(text.includes(nome), `continente "${nome}" ausente em ${lang}`)
+    }
+    assert.ok(text.includes(DICTIONARIES[lang].hiringMap.continentHeading))
+    assert.ok(text.includes(DICTIONARIES[lang].hiringMap.continentHint))
+  }
+})
+
+test('nenhuma nota por continente é inventada — só contagem', () => {
+  // A seção não pode ganhar um escalar por continente numa refatoração
+  // distraída: os valores de dois países não se somam, e por continente
+  // tampouco. Ver o cabeçalho de `atlas.ts`.
+  const m = buildHiringMapModel(
+    atlas(),
+    'en',
+    DICTIONARIES.en.hiringMap,
+    DICTIONARIES.en.hiringIndex,
+    DICTIONARIES.en.continents
+  )
+  for (const linha of m.continents) {
+    assert.equal('score' in linha, false)
+    assert.equal('average' in linha, false)
+    assert.equal(Number.isInteger(Number(linha.trackedLabel)), true)
+  }
 })
 
 // ---------------------------------------------------------------------------

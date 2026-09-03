@@ -972,5 +972,20 @@ export const ar: TranslationDictionary = {
     colSource: "المصدر",
     colPeriod: "آخر فترة",
     viewFullMapCta: "عرض الخريطة الكاملة",
+
+    // -- Recorte por continente (§2.59) --
+    continentHeading: "حسب القارة",
+    continentCoverage: "{tracked} من أصل {total} بلداً لديه مصدر رسمي",
+    continentHint: "يُظهر الشريط التغطية الفعلية لكل قارة: الجزء المخطط هو البلدان التي لا يغطيها أي مصدر رسمي. أما الجزء الملوّن فهو عدد البلدان في كل مرحلة، وليس درجة واحدة للقارة، فهذه لا وجود لها.",
+    colContinent: "القارة",
+    colCoverage: "التغطية",
+  },
+  continents: {
+    africa: "أفريقيا",
+    asia: "آسيا",
+    europe: "أوروبا",
+    northAmerica: "أمريكا الشمالية",
+    oceania: "أوقيانوسيا",
+    southAmerica: "أمريكا الجنوبية",
   },
 }

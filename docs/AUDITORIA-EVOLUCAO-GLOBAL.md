@@ -3878,3 +3878,190 @@ de produção limpo — não mais uma tentativa de remendo no código.
 
 `tsc --noEmit`, `eslint` e `npm test` (855/855) limpos. Verificado em
 build de produção real (`npm run build && npm run start`), não em dev.
+
+## 2.59 Agregação por continente — a pendência 14(e) na redação original dela, e o que mudou para ela virar honesta
+
+A pendência 14(e) dizia "agregação por continente". O §2.56 fechou a
+agregação, e **recusou o continente**, com um argumento que continua
+inteiramente correto:
+
+> A África reúne países cobertos pelo ILOSTAT com países sem fonte
+> alguma, e "África: 60% aquecendo" seria uma afirmação sobre os 12 que
+> têm dado apresentada como afirmação sobre 54.
+
+Nada nesse raciocínio mudou. O que mudou é o **denominador**: o recorte
+por continente volta porque agora ele carrega, no mesmo objeto e na
+mesma linha da tela, quantos países daquele continente **não** têm
+fonte. A frase "África: 60% aquecendo" não existe em lugar nenhum;
+existe "África — 16 de 48 países com fonte oficial", com a distribuição
+ao lado e o resto da barra hachurado.
+
+Continua não havendo nota por continente, pelo mesmo motivo de não
+haver nota global (§2.56): valores medidos por réguas diferentes não se
+somam. O que se conta é país.
+
+### A tabela país → continente: regra declarada, não bom senso caso a caso
+
+`lib/hiring-index/continents.ts`, 173 pares — a lista inteira de
+`lib/market/countries.ts`, e não só os 98 cobertos. É de propósito: o
+numerador sai do banco, o denominador sai da lista do produto, e a
+pergunta "quantos países existem na Ásia?" tem a resposta honesta
+*quantos o produto conhece*, não quantos o mundo tem nem quantos têm
+linha em `LaborMarketPoint`.
+
+A regra é **UN M49**, com uma única redução declarada: o M49 tem
+*Americas* como região única e o produto precisa de seis continentes
+povoados, então a divisão usa a própria hierarquia do M49 — região
+intermediária *South America* vira América do Sul; *Northern America*,
+*Central America* e *Caribbean* vão para América do Norte.
+
+Uma regra só, aplicada a todos, é o ponto inteiro. País
+transcontinental é exatamente onde a atribuição "de bom senso" vira
+preferência de quem escreve o código:
+
+| país | M49 | aqui | o que se abre mão |
+|---|---|---|---|
+| Rússia | Europe / Eastern Europe | **EU** | a maior parte do território é asiática |
+| Turquia, Cazaquistão, Geórgia, Armênia, Azerbaijão | Asia / Western e Central Asia | **AS** | — |
+| Chipre | Asia / Western Asia | **AS** | é membro da União Europeia |
+| Egito | Africa / Northern Africa | **AF** | o Sinai é asiático |
+| Timor-Leste | Asia / South-eastern Asia | **AS** | o esquema CIA/GeoNames o põe na Oceania |
+| México, Panamá, Cuba, Porto Rico, Trinidad | Americas / Central America e Caribbean | **NA** | — |
+
+**Conferido contra fonte, não escrito de memória** — mesma disciplina
+de `connectors/iso3.ts`. Os 173 pares foram derivados de
+`datasets/country-codes` (`data/country-codes.csv`, colunas
+`Region Name` / `Sub-region Name` / `Intermediate Region Name`, lida em
+03/09/2026) e depois conferidos par a par contra um segundo conjunto de
+outro mantenedor, `lukes/ISO-3166-Countries-with-Regional-Codes`
+(`all/all.csv`). Os dois publicam o M49 da UNSD e concordaram em **172
+de 173**.
+
+A única diferença é **Taiwan**, e não é erro de nenhum dos dois: a UNSD
+não dá entrada própria a Taiwan no M49 (o território é contado dentro
+do código 156, China), então o segundo conjunto o deixa sem região.
+Fica `AS`, que é onde a China está e onde a geografia o põe — a
+ambiguidade do M49 ali é de status político, não de continente.
+
+A coluna `Continent` do primeiro conjunto (esquema CIA/GeoNames)
+discorda do M49 em dois casos, e o M49 prevalece por ser a regra
+declarada: **Chipre** (`EU` lá, `AS` aqui) e **Timor-Leste** (`OC` lá,
+`AS` aqui).
+
+### A saída: distribuição e cobertura no mesmo objeto
+
+`continentBreakdown` (em `atlas.ts`) **reaproveita
+`phaseDistribution`** — uma chamada por continente, com os resumos
+daquele continente — em vez de recontar. Duas contagens da mesma coisa
+divergiriam na primeira correção feita só numa delas, e a soma dos
+continentes deixaria de bater com o total global sem ninguém perceber.
+
+```ts
+interface ContinentSummary {
+  continent: 'AF' | 'AS' | 'EU' | 'NA' | 'OC' | 'SA'
+  distribution: PhaseDistribution  // a MESMA do agregado global
+  totalCountries: number           // o denominador honesto
+  uncovered: number                // totalCountries - distribution.tracked
+}
+```
+
+`uncovered` sai calculado daqui e **não** da tela, porque é o número
+que a tela seria tentada a esquecer — e esquecê-lo é literalmente o
+defeito que o §2.56 apontou. `byContinent` entra em `HiringAtlas`,
+portanto sai de graça em `GET /api/hiring-index`: é uma VISTA derivada
+do mesmo atlas, não dado novo, e não ganhou rota própria. O cache de
+uma hora de `atlas.server.ts` continua fazendo o mesmo sentido — o
+custo acrescentado é uma varredura de 98 resumos e seis
+`phaseDistribution` sobre partições, contra as 2.757 linhas lidas do
+Postgres e as 98 execuções de `classifyHiringPhase` que já existiam.
+
+**Os seis continentes saem sempre, mesmo zerados.** Oceania hoje tem 2
+de 5. Omitir um continente sem cobertura faria a tela parecer completa;
+zerado, ele diz "aqui não medimos quase nada" com número.
+
+### A barra: o denominador é o continente, não os países medidos
+
+É a decisão de desenho que impede a tela de repetir o defeito. Cada
+largura é calculada sobre `totalCountries`, então o pedaço sem fonte
+sobra e sai com **a mesma hachura diagonal do mapa**. Com o denominador
+nos países cobertos, a África (16 medidos) sairia com a barra cheia e
+pareceria tão lida quanto a Europa (37 de 42). Com o denominador no
+continente inteiro, uma barra quase toda hachurada é uma frase, e é a
+frase verdadeira. A contagem absoluta fica na coluna ao lado, sempre —
+nunca uma percentagem sozinha.
+
+A hachura da seção tem `id` próprio (`gw-continent-no-data`) e um
+`<defs>` próprio, em vez de referenciar o do `<svg>` do mapa. Funciona
+das duas formas em SVG embutido em HTML, mas depender do `<defs>` do
+mapa faria as barras perderem exatamente o pedaço que elas existem para
+mostrar no dia em que o mapa mudasse de lugar ou não renderizasse.
+Tudo em `fill` de SVG, e nada em `style` — a CSP do projeto declara
+`default-src 'self'` sem `style-src` e bloqueia estilo em linha (§2.56).
+
+### O nome do continente NÃO vem de `Intl.DisplayNames`
+
+Bloco `continents` novo em `i18n/types.ts` e nos 12 locais: seis
+palavras por idioma, mais cinco chaves em `hiringMap`
+(`continentHeading`, `continentCoverage`, `continentHint`,
+`colContinent`, `colCoverage`). 11 chaves novas por idioma, paridade
+100% em `sync-i18n.ts` e em `i18n.test.ts` (911 chaves por dicionário,
+12 de 12).
+
+A recusa do `Intl` é a lição do §2.56 aplicada antes de o defeito
+acontecer: as tabelas ICU/CLDR do Node e as do navegador não são a
+mesma versão e discordam — foi `Falklandinseln` contra
+`Falklandinseln (Malwinen)` que fez o React declarar `Hydration failed`
+e descartar a árvore inteira vinda do servidor. Cobertura de nome de
+continente entre versões de ICU é pelo menos tão irregular quanto a de
+nome de país. Seis palavras fixas num dicionário não têm versão.
+
+### Um defeito de teste que a tradução revelou
+
+O helper `textOf` de `hiring-map.test.ts` comparava o HTML renderizado
+com a string do dicionário sem desfazer as entidades que o React
+escapa. Passou despercebido até agora porque nenhuma chave da tela
+tinha apóstrofo; `continentHint` tem, em inglês, francês e italiano
+(`qu&#x27;aucune`). O helper passou a desfazer `&#x27;`, `&quot;`,
+`&lt;`, `&gt;` e `&amp;` — o defeito era do teste, não da tela.
+
+### Verificação
+
+`npx tsc --noEmit` e `npx eslint` limpos. `npm test`: **884/884**,
+`fail 0` — 855 + 29 novos (11 em `continents.test.ts`, 8 em
+`atlas.test.ts`, 6 em `map-model.test.ts` e 4 em `hiring-map.test.ts`);
+as 11 chaves novas nos 12 idiomas são cobertas pelos testes de paridade
+que já existiam.
+
+Conferência contra o banco, não contra o log — a distribuição servida
+bate número a número com um `SELECT DISTINCT country` agrupado por
+continente por fora, via `tsx`:
+
+```
+                 tracked/total  cooling bottoming recovering heating stable  s/hist.
+África              16 / 48        0        0          1        3      5        7
+Ásia                22 / 48        6        0          0        6      7        3
+Europa              37 / 42       15        2          0        7     12        1
+América do Norte    11 / 18        0        0          1        3      5        2
+Oceania              2 /  5        0        1          0        0      1        0
+América do Sul      10 / 12        0        0          0        7      2        1
+                    ------        --       --         --       --     --       --
+soma                98            21        3          2       26     32       14
+```
+
+A última linha é o agregado global do §2.56, sem uma unidade de
+diferença: 98 países rastreados, 84 classificados, 14 sem histórico
+bastante.
+
+**Verificado em build de produção limpo**, não em dev — a lição do
+§2.58 seguida por padrão desta vez, e não depois de perseguir um
+fantasma. `rm -rf .next && npm run build && npm run start`, com a
+página aberta em `?lang=en`, `?lang=de` e `?lang=pt`: a seção sai com
+os seis continentes, os números acima, o nome de cada continente no
+idioma certo e a ordem pelo nome no idioma ativo (em português América
+do Norte e América do Sul vêm antes de Ásia; em inglês, não). Nenhum
+`style=` no HTML servido, **zero erro de hidratação** e nenhum erro de
+CSP vindo da página — os dois que sobram no console vêm de um chunk do
+próprio Next e aparecem igualmente em `/de`, que não tem uma linha
+deste trabalho.
+
+Com isto a **pendência 14 fecha por inteiro**: (a), (b), (c), (d) e (e).
