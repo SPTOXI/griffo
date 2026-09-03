@@ -11,6 +11,7 @@ export const zh: TranslationDictionary = {
     signup: '免费诊断',
     myPanel: '我的控制台',
     freeAnalysis: '免费诊断',
+    marketPulse: '招聘热度地图',
   },
   hero: {
     badge: 'AI + Workday、Greenhouse、LinkedIn 与全球招聘标准',

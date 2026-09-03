@@ -3787,3 +3787,45 @@ Conferência contra o banco, não contra o log:
   hidratação** e zero erro de CSP vindo da página (os que sobram vêm do
   injetor de CSS do Turbopack e do overlay de desenvolvimento, que não
   existem em produção).
+
+## 2.57 Dois defeitos achados pelo operador ao testar de verdade — página órfã e texto estourando a tela
+
+Duas coisas que nenhuma verificação automatizada do §2.56 pegou, porque
+as duas só aparecem testando o produto de verdade, logado, num
+celular — exatamente o que o operador fez.
+
+**`/market-pulse` não estava linkada em lugar nenhum.** A página existia,
+funcionava, estava no `sitemap.ts` — mas nenhum nav, menu ou rodapé
+apontava pra ela. Um crawler acharia via sitemap; uma pessoa, não.
+Corrigido: link novo em `nav.marketPulse` (chave nova, 12 idiomas,
+parceira das que já existem em `t.nav`), colocado no menu desktop, no
+menu mobile e no rodapé de `landing.tsx` — os três lugares onde as
+outras âncoras da home (`#faq`, `#how`...) já apareciam. Verificado por
+`curl` real contra `/br`: os dois links que renderizam no HTML do
+servidor (desktop + rodapé) aparecem; o do menu mobile só monta quando
+`mobileMenuOpen` é `true` (estado de React), mesmo comportamento dos
+outros itens desse menu — não é bug, é como o menu mobile inteiro já
+funcionava antes desta mudança.
+
+**A seção "Where & Why to Adjust" do laudo estourava a tela no celular.**
+Achado do operador ao abrir o laudo logado. Em
+`components/app/analysis-view.tsx`, o bloco que mostra o texto atual
+(❌) contra o sugerido (✨) lado a lado usa `font-mono text-xs` sem
+`break-words` — texto gerado por IA sem espaço (URL, termo técnico
+composto, e-mail) não quebra sozinho nessa fonte, e o item de grid não
+tinha `min-w-0`. Os dois juntos são a combinação clássica que faz um
+`grid md:grid-cols-2` estourar a largura do container mesmo o container
+pai sendo responsivo — `break-words` sozinho não bastaria, porque um
+item de grid/flex tem `min-width: auto` por padrão e não encolhe abaixo
+do conteúdo. Corrigido nos três textos do bloco (texto atual, sugerido,
+justificativa): `break-words` + `min-w-0` nos dois cartões do grid.
+
+Não verificado visualmente com dado real (exigiria rodar uma análise de
+currículo completa até gerar `targetedChanges`, fora do escopo desta
+correção pontual) — a correção é o par de classes CSS correto e
+conhecido para esta classe exata de estouro, aplicado nos três pontos
+onde o mesmo padrão (`font-mono`/texto livre sem quebra dentro de grid)
+aparece.
+
+`tsc --noEmit`, `eslint` e `npm test` (855/855, paridade i18n 12/12)
+limpos depois das duas correções.

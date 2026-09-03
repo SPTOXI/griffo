@@ -11,6 +11,7 @@ export const de: TranslationDictionary = {
     signup: 'Kostenlos analysieren',
     myPanel: 'Mein Dashboard',
     freeAnalysis: 'Kostenlos analysieren',
+    marketPulse: 'Einstellungsklima',
   },
   hero: {
     badge: 'KI + Standards für Workday, Personio, LinkedIn & globale Rekrutierung',

@@ -11,6 +11,7 @@ export const nl: TranslationDictionary = {
     signup: 'Gratis analyse',
     myPanel: 'Mijn dashboard',
     freeAnalysis: 'Gratis analyse',
+    marketPulse: 'Aannameklimaat',
   },
   hero: {
     badge: 'AI + Workday, LinkedIn, Greenhouse & Wereldwijde Wervingsstandaarden',

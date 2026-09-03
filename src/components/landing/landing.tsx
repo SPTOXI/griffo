@@ -76,6 +76,7 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
             <a href="#how" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a>
             <a href="#pricing" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.plans}</a>
             <a href="#faq" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.faq}</a>
+            <a href="/market-pulse" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.marketPulse}</a>
           </nav>
 
           {/* DESKTOP CTAS & LANGUAGE SELECTOR */}
@@ -120,6 +121,7 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
               <a href="#how" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">{t.nav.howItWorks}</a>
               <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">{t.nav.plans}</a>
               <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">{t.nav.faq}</a>
+              <a href="/market-pulse" className="px-3 py-2 rounded-md hover:bg-slate-50">{t.nav.marketPulse}</a>
             </nav>
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
               {user ? (
@@ -497,6 +499,7 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
               <li><a href="#social" className="hover:text-[#0B63E5] transition-colors">{t.nav.social}</a></li>
               <li><a href="#pricing" className="hover:text-[#0B63E5] transition-colors">{t.nav.plans}</a></li>
               <li><a href="#how" className="hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a></li>
+              <li><a href="/market-pulse" className="hover:text-[#0B63E5] transition-colors">{t.nav.marketPulse}</a></li>
             </ul>
           </div>
           <div>

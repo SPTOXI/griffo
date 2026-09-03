@@ -11,6 +11,7 @@ export const it: TranslationDictionary = {
     signup: 'Analisi gratuita',
     myPanel: 'La mia dashboard',
     freeAnalysis: 'Analisi gratuita',
+    marketPulse: 'Clima delle Assunzioni',
   },
   hero: {
     badge: 'IA + Standard Workday, InfoJobs, LinkedIn & Selezione Globale',

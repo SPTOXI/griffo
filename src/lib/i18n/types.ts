@@ -13,6 +13,7 @@ export interface TranslationDictionary {
     signup: string
     myPanel: string
     freeAnalysis: string
+    marketPulse: string
   }
   hero: {
     badge: string

@@ -11,6 +11,7 @@ export const sv: TranslationDictionary = {
     signup: 'Gratis analys',
     myPanel: 'Min översikt',
     freeAnalysis: 'Gratis analys',
+    marketPulse: 'Anställningsklimat',
   },
   hero: {
     badge: 'AI + Workday, LinkedIn, Greenhouse & Globala Rekryteringsstandarder',

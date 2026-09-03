@@ -11,6 +11,7 @@ export const pt: TranslationDictionary = {
       signup: 'Analisar grátis',
       myPanel: 'Meu painel',
       freeAnalysis: 'Analisar grátis',
+      marketPulse: 'Mapa de Contratação',
     },
     hero: {
       badge: 'IA + Padrões Gupy, LinkedIn & Recrutamento Global',

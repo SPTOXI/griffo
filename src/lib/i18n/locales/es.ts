@@ -11,6 +11,7 @@ export const es: TranslationDictionary = {
       signup: 'Analizar gratis',
       myPanel: 'Mi Panel',
       freeAnalysis: 'Analizar gratis',
+      marketPulse: 'Mapa de Contratación',
     },
     hero: {
       badge: 'IA + Estándares Globales de Reclutamiento, LinkedIn y ATS',

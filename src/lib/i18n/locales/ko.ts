@@ -11,6 +11,7 @@ export const ko: TranslationDictionary = {
     signup: '무료 진단',
     myPanel: '내 대시보드',
     freeAnalysis: '무료 진단',
+    marketPulse: '채용 온도 지도',
   },
   hero: {
     badge: 'AI + Workday, LinkedIn, Greenhouse 및 글로벌 채용 표준',

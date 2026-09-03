@@ -1292,13 +1292,13 @@ export function AnalysisView() {
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-3 text-xs">
-                  <div className="p-3 rounded-lg bg-rose-50/70 border border-rose-100 text-rose-950 space-y-1">
+                  <div className="p-3 rounded-lg bg-rose-50/70 border border-rose-100 text-rose-950 space-y-1 min-w-0">
                     <p className="font-bold text-[10px] uppercase text-rose-800">❌ {an.currentTextLabel}</p>
-                    <p className="font-mono text-xs leading-relaxed">"{tc.originalText}"</p>
+                    <p className="font-mono text-xs leading-relaxed break-words">"{tc.originalText}"</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-100 text-emerald-950 space-y-1">
+                  <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-100 text-emerald-950 space-y-1 min-w-0">
                     <p className="font-bold text-[10px] uppercase text-emerald-800">✨ {an.suggestedTextLabel}</p>
-                    <p className="font-mono text-xs leading-relaxed">"{tc.suggestedText}"</p>
+                    <p className="font-mono text-xs leading-relaxed break-words">"{tc.suggestedText}"</p>
                   </div>
                 </div>
 
@@ -1306,7 +1306,7 @@ export function AnalysisView() {
                   <p className="font-bold text-[10px] uppercase text-amber-800 flex items-center gap-1">
                     <Lightbulb className="w-3.5 h-3.5" /> {an.rationaleLabel}
                   </p>
-                  <p className="leading-relaxed text-slate-700">{tc.rationale}</p>
+                  <p className="leading-relaxed text-slate-700 break-words">{tc.rationale}</p>
                 </div>
               </div>
             ))}

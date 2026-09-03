@@ -11,6 +11,7 @@ export const ar: TranslationDictionary = {
     signup: 'تحليل مجاني',
     myPanel: 'لوحة التحكم',
     freeAnalysis: 'تحليل مجاني',
+    marketPulse: 'خريطة التوظيف',
   },
   hero: {
     badge: 'الذكاء الاصطناعي + معايير Workday و Greenhouse و LinkedIn والتوظيف العالمي',
