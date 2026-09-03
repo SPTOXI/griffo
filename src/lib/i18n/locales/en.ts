@@ -972,5 +972,6 @@ export const en: TranslationDictionary = {
       colPhase: "Phase",
       colSource: "Source",
       colPeriod: "Latest period",
+      viewFullMapCta: "View full map",
     },
 }

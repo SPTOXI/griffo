@@ -971,5 +971,6 @@ export const ko: TranslationDictionary = {
     colPhase: "단계",
     colSource: "출처",
     colPeriod: "최근 기간",
+    viewFullMapCta: "전체 지도 보기",
   },
 }

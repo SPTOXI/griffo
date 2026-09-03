@@ -971,5 +971,6 @@ export const ja: TranslationDictionary = {
     colPhase: "フェーズ",
     colSource: "ソース",
     colPeriod: "最新期間",
+    viewFullMapCta: "完全な地図を見る",
   },
 }

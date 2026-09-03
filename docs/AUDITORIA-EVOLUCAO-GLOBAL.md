@@ -3829,3 +3829,52 @@ aparece.
 
 `tsc --noEmit`, `eslint` e `npm test` (855/855, paridade i18n 12/12)
 limpos depois das duas correções.
+
+## 2.58 Índice GriffoWork na home — versão leve, e uma lição sobre confiar no dev server
+
+Pedido do operador: levar o Índice GriffoWork pra página inicial como
+atrativo a mais, sem ser o mapa inteiro (que é pesado demais pra
+competir com o CTA principal da home). Construído
+`HiringIndexTeaser` (`components/landing/hiring-index-teaser.tsx`):
+busca `/api/hiring-index` (a mesma rota pública do §2.56, cache de 1h
+já embutido), mostra o nome do agregado, a contagem
+"{classificados} de {rastreados} países", uma barra proporcional das 5
+fases e um link "Ver mapa completo" pra `/market-pulse`. Sem dado (fetch
+falhou ou zero país rastreado), o componente devolve `null` — é decoração,
+não a fonte de verdade, então some em vez de ocupar espaço com erro.
+
+A barra é `<svg>` com `<rect fill=...>`, não `<div style={{width}}>`: a
+CSP do projeto não declara `style-src` e bloqueia `style` em linha — o
+mesmo problema que `map-model.ts` já resolveu pro mapa cheio (§2.56),
+resolvido aqui do mesmo jeito.
+
+Link novo (`nav.marketPulse`, 12 idiomas) no menu desktop, menu mobile e
+rodapé da `landing.tsx`.
+
+**A parte que valeu registrar não é o componente, é o processo de
+verificação.** A primeira tentativa de conferir visualmente (`next dev`
+já vinha recebendo edições sucessivas havia várias rodadas, dentro da
+mesma sessão do Turbopack) mostrou o teaser inteiro em **inglês**, numa
+página inteira em português — parecia um bug real de propagação de
+idioma (o componente chegou a ser reescrito uma vez, trocando
+`useI18n()` por `t` recebido como prop, pensando que o defeito era
+esse). O sintoma sobreviveu a `rm -rf .next` e a um restart completo do
+`npm run dev`. O que finalmente provou que o código estava certo foi
+**parar de testar em dev**: `npm run build && npm run start` renderizou
+tudo em português, sem nenhum erro de hidratação, no primeiro
+carregamento. O console do dev mode, checado depois, tinha um `Error:
+Hydration failed` bem em cima do `<nav>` e um `TypeError: Cannot read
+properties of undefined (reading 'hiringMap')` — sintoma de corrupção
+de estado do Fast Refresh depois de dezenas de edições consecutivas no
+mesmo processo, não de lógica errada. A troca pra receber `t` por prop
+em vez de `useI18n()` foi mantida mesmo assim: é a correção estruturalmente
+certa (evita o componente ler `contextLang` e ignorar o `forcedLang` de
+uma rota de país), só não era a causa do sintoma observado.
+
+**Lição prática**: quando um componente novo se comporta de um jeito
+que a leitura do próprio código não explica, depois de várias dezenas
+de edições no mesmo `next dev` ainda de pé, o próximo passo é um build
+de produção limpo — não mais uma tentativa de remendo no código.
+
+`tsc --noEmit`, `eslint` e `npm test` (855/855) limpos. Verificado em
+build de produção real (`npm run build && npm run start`), não em dev.

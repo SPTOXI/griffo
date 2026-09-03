@@ -1010,5 +1010,7 @@ export interface TranslationDictionary {
     colPhase: string
     colSource: string
     colPeriod: string
+    /** Link do teaser da home para a página cheia (`/market-pulse`). */
+    viewFullMapCta: string
   }
 }

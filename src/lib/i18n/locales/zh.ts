@@ -971,5 +971,6 @@ export const zh: TranslationDictionary = {
     colPhase: "阶段",
     colSource: "来源",
     colPeriod: "最新周期",
+    viewFullMapCta: "查看完整地图",
   },
 }

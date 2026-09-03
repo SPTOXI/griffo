@@ -971,5 +971,6 @@ export const ar: TranslationDictionary = {
     colPhase: "المرحلة",
     colSource: "المصدر",
     colPeriod: "آخر فترة",
+    viewFullMapCta: "عرض الخريطة الكاملة",
   },
 }

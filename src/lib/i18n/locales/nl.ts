@@ -971,5 +971,6 @@ export const nl: TranslationDictionary = {
     colPhase: "Fase",
     colSource: "Bron",
     colPeriod: "Laatste periode",
+    viewFullMapCta: "Volledige kaart bekijken",
   },
 }

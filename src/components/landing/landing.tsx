@@ -17,6 +17,7 @@ import { LanguageSelector } from '@/components/ui/language-selector'
 import { contactEmail, contactMailto, salesMailto } from '@/lib/i18n/contact'
 import { priceFor } from '@/lib/pricing/catalog'
 import { localMethodLabels } from '@/lib/pricing/payment-methods'
+import { HiringIndexTeaser } from './hiring-index-teaser'
 
 export interface LandingProps {
   onNavigate: (v: 'login' | 'signup' | 'app') => void
@@ -371,6 +372,8 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
           </div>
         </div>
       </section>
+
+      <HiringIndexTeaser t={t} />
 
       {/* PRICING & CREDIT PACKAGES */}
       <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">

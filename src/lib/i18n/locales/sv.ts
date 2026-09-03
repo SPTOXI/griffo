@@ -971,5 +971,6 @@ export const sv: TranslationDictionary = {
     colPhase: "Fas",
     colSource: "Källa",
     colPeriod: "Senaste period",
+    viewFullMapCta: "Visa hela kartan",
   },
 }
