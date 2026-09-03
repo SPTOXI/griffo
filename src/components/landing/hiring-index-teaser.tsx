@@ -42,6 +42,17 @@ import type { TranslationDictionary } from '@/lib/i18n'
  * `forcedLang` — e mostraria inglês numa página inteira em português. Foi
  * exatamente o defeito visto ao testar `/br` sem idioma salvo no
  * `localStorage`: o resto da página em português, este bloco em inglês.
+ *
+ * ## Por que logo abaixo do hero, e com fundo escuro
+ *
+ * Pedido do operador: o índice precisa "ficar nos olhos" de quem abre a
+ * página, não só existir em algum lugar dela. Mora entre a faixa de
+ * estatísticas e a seção de Presença Digital — é o segundo bloco que
+ * aparece, sem entrar DENTRO do hero e disputar espaço com o CTA principal.
+ * O fundo em gradiente escuro repete a mesma linguagem visual do bloco de
+ * "Pronto para transformar..." no fim da página — o único outro lugar que já
+ * usa esse contraste — para que o índice pareça algo que a empresa quer
+ * mostrar, não um rodapé de informação.
  */
 export function HiringIndexTeaser({ t }: { t: TranslationDictionary }) {
   const hi = t.hiringMap
@@ -93,16 +104,22 @@ export function HiringIndexTeaser({ t }: { t: TranslationDictionary }) {
   )
 
   return (
-    <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-[#0B192E] text-white flex items-center justify-center shrink-0">
-              <Globe2 className="w-5 h-5" />
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <div className="rounded-3xl bg-gradient-to-br from-[#0B192E] via-slate-900 to-[#0B63E5] text-white shadow-2xl p-6 sm:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/15 text-white flex items-center justify-center shrink-0">
+              <Globe2 className="w-7 h-7" />
             </div>
             <div className="min-w-0">
-              <p className="font-bold text-[#0B192E] text-sm">{hi.indexHeading}</p>
-              <p className="text-xs text-slate-600 truncate">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                </span>
+                <p className="font-extrabold text-white text-lg sm:text-xl truncate">{hi.indexHeading}</p>
+              </div>
+              <p className="text-sm text-blue-100/90 truncate">
                 {hi.indexSummary
                   .replace('{classified}', String(distribution.classified))
                   .replace('{tracked}', String(distribution.tracked))}
@@ -111,16 +128,16 @@ export function HiringIndexTeaser({ t }: { t: TranslationDictionary }) {
           </div>
           <a
             href="/market-pulse"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0B63E5] hover:underline shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 text-sm font-bold bg-white text-[#0B192E] hover:bg-blue-50 rounded-full px-5 py-2.5 shadow-lg shrink-0 transition-colors"
           >
             {hi.viewFullMapCta} <ArrowRight className="w-4 h-4" />
           </a>
         </div>
 
-        <svg viewBox="0 0 100 6" preserveAspectRatio="none" className="w-full h-2.5 mt-4 rounded-full overflow-hidden">
-          <rect x={0} y={0} width={100} height={6} fill="#e2e8f0" />
+        <svg viewBox="0 0 100 8" preserveAspectRatio="none" className="w-full h-3.5 mt-6 rounded-full overflow-hidden">
+          <rect x={0} y={0} width={100} height={8} fill="rgba(255,255,255,0.12)" />
           {segments.map((s) => (
-            <rect key={s.phase} x={s.x} y={0} width={s.width} height={6} fill={PHASE_FILL[s.phase]}>
+            <rect key={s.phase} x={s.x} y={0} width={s.width} height={8} fill={PHASE_FILL[s.phase]}>
               <title>
                 {phaseLabels[s.phase]}: {s.count}
               </title>
@@ -128,10 +145,10 @@ export function HiringIndexTeaser({ t }: { t: TranslationDictionary }) {
           ))}
         </svg>
 
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
           {segments.map((s) => (
-            <span key={s.phase} className="inline-flex items-center gap-1.5 text-[11px] text-slate-600">
-              <svg viewBox="0 0 8 8" className="w-2 h-2 shrink-0">
+            <span key={s.phase} className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-50/90">
+              <svg viewBox="0 0 8 8" className="w-2.5 h-2.5 shrink-0">
                 <circle cx={4} cy={4} r={4} fill={PHASE_FILL[s.phase]} />
               </svg>
               {phaseLabels[s.phase]} · {s.count}

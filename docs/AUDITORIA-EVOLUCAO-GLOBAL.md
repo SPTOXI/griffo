@@ -4104,3 +4104,53 @@ corrigível por código deste repositório — fica registrado aqui como o
 que resta da cadeia, não como pendência esquecida.
 
 `tsc --noEmit`, `eslint` e `npm test` (884/884) limpos.
+
+## 2.61 Índice GriffoWork discreto demais na home, e aviso de idioma escondido dentro de um acordeão fechado
+
+Operador trouxe dois pontos depois de usar o produto: o teaser do
+Índice GriffoWork na home "precisa ficar nos olhos de quem abre a
+página", e a frase de aviso em Perfil Profissional → Idiomas ("O
+idioma da tela não decide o idioma do seu currículo...") estava
+escondida.
+
+**Teaser da home (`src/components/landing/hiring-index-teaser.tsx` e
+`landing.tsx`)**: o componente existia mas era um cartão claro e
+discreto, posicionado depois da seção "Como funciona" — quase no meio
+da página. Refeito como cartão de fundo em gradiente escuro
+(`from-[#0B192E] via-slate-900 to-[#0B63E5]`), reaproveitando a mesma
+linguagem visual do bloco "Pronto para transformar..." no rodapé — o
+único outro lugar da página que já usa esse contraste — com indicador
+"ao vivo" pulsante (`animate-ping`), tipografia maior e CTA em botão
+branco de alto contraste. Reposicionado para logo depois da faixa de
+estatísticas do hero, virando o segundo bloco visível da página (antes
+de "Presença Digital"), sem entrar dentro do próprio hero e disputar
+espaço com o CTA principal de análise de currículo. A barra de
+distribuição das fases continua em SVG com `fill`/`x`/`width` como
+atributos de apresentação — a CSP do projeto não declara `style-src` e
+bloqueia `style` em linha, o mesmo cuidado já documentado em
+`map-model.ts`.
+
+**Aviso de idioma escondido (`src/components/app/professional-profile-view.tsx`)**:
+a causa raiz não era o texto em si, mas onde ele morava. O acordeão de
+Perfil Profissional (`defaultOpenSections`) abre por padrão só as
+seções que o usuário ainda **não** preencheu (`.filter((key) =>
+!sectionFilled[key])) — ou seja, justamente quem já configurou um
+idioma vê essa seção **fechada** ao entrar na página, e o aviso vivia
+dentro do `AccordionContent`, invisível até alguém expandir de novo.
+É exatamente para quem já preencheu que o aviso mais importa: é quem
+está prestes a mudar de idioma sem saber que currículo e interface são
+independentes. Corrigido movendo o aviso para fora do
+`AccordionContent`, como irmão direto logo após o `AccordionTrigger`
+— sempre renderizado, seção aberta ou fechada — reestilizado como caixa
+de atenção (fundo âmbar, ícone `Info`) em vez do texto simples que
+antes passava despercebido dentro do conteúdo recolhido.
+
+Verificado com build de produção limpo (`rm -rf .next && npm run
+build && npm run start`, não `next dev`) e screenshot Playwright em
+desktop (1280×900) e mobile (390×844) em `/br`: teaser aparece logo
+após as estatísticas do hero, sem overflow em nenhuma largura; aviso
+de idiomas visível mesmo com a seção de idiomas fechada por padrão.
+
+`tsc --noEmit`, `eslint` e `npm test` (884/884) limpos — mudança
+puramente visual, sem lógica nova a testar (mesmo padrão já usado para
+`hiring-index-card.tsx`).

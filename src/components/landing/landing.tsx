@@ -264,6 +264,8 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
         </div>
       </section>
 
+      <HiringIndexTeaser t={t} />
+
       {/* GLOBAL SOCIAL PRESENCE FEATURE HIGHLIGHT */}
       <section id="social" className="py-14 sm:py-20 md:py-24 bg-gradient-to-br from-[#0B192E] via-slate-950 to-[#0B192E] text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 sm:w-96 h-80 sm:h-96 bg-[#0B63E5]/10 rounded-full blur-3xl pointer-events-none" />
@@ -372,8 +374,6 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
           </div>
         </div>
       </section>
-
-      <HiringIndexTeaser t={t} />
 
       {/* PRICING & CREDIT PACKAGES */}
       <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">

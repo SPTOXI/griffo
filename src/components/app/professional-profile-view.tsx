@@ -827,10 +827,15 @@ export function ProfessionalProfileView() {
                 )}
               </div>
             </AccordionTrigger>
+            {/* Aviso fora do `AccordionContent` de propósito: seções já preenchidas
+                começam FECHADAS (ver `defaultOpenSections`), e é exatamente quem já
+                preencheu idioma que mais precisa ver isto antes de mudar de novo —
+                dentro do conteúdo recolhido, ninguém via. */}
+            <div className="mb-3 flex items-start gap-2 text-[11px] text-slate-700 bg-amber-50/70 border border-amber-200 rounded-lg p-3 leading-relaxed">
+              <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <p className="font-medium">{p.hintLanguagesIntro}</p>
+            </div>
             <AccordionContent className="space-y-4">
-          <p className="text-[11px] text-slate-600 -mt-2">
-            {p.hintLanguagesIntro}
-          </p>
           <div className="grid sm:grid-cols-2 gap-4">
           <Choice
             label={p.fieldResumeLanguage}
