@@ -4154,3 +4154,77 @@ de idiomas visível mesmo com a seção de idiomas fechada por padrão.
 `tsc --noEmit`, `eslint` e `npm test` (884/884) limpos — mudança
 puramente visual, sem lógica nova a testar (mesmo padrão já usado para
 `hiring-index-card.tsx`).
+
+## 2.62 Limpeza de código morto — 39 arquivos e 38 dependências nunca usadas em produção
+
+Operador pediu para apagar arquivos e código "que não serão nunca mais
+utilizados". Em vez de apagar por suspeita, cada item foi verificado
+antes: `npx knip` (varredura de grafo de import) para o levantamento
+inicial, e depois `grep` cruzado item a item confirmando zero
+referência real em `src/` antes de qualquer exclusão — a mesma
+disciplina de "nada sai sem verificação" já seguida pro resto do
+projeto.
+
+**Scaffold de template abandonado, já citado como "não usado" numa
+auditoria anterior do próprio projeto (`docs/AUDITORIA.md`, item P3-6)**:
+`examples/websocket/` (2 arquivos), `.zscripts/` (6 shell scripts de
+build/dev de um template genérico, sem qualquer referência em
+`package.json` ou no build real na Vercel), `mini-services/` (pasta
+vazia, só `.gitkeep`).
+
+**Scripts CLI substituídos por UI de admin**: `src/scripts/save-stripe-configs.ts`
+e `save-webhook-secret.ts` gravavam `STRIPE_SECRET_KEY`/`STRIPE_PUBLISHABLE_KEY`/
+`STRIPE_WEBHOOK_SECRET` direto na tabela `SystemConfig` via linha de
+comando. `admin-view.tsx` (~linha 2096-2210) já faz exatamente isso por
+uma tela de admin, gravando na mesma tabela — os scripts eram uma via
+paralela e obsoleta pro mesmo dado.
+
+**Cluster de 27 componentes shadcn/ui nunca ligados ao app** (`alert-dialog`,
+`aspect-ratio`, `breadcrumb`, `calendar`, `carousel`, `chart`,
+`collapsible`, `command`, `context-menu`, `drawer`, `form`,
+`hover-card`, `input-otp`, `menubar`, `navigation-menu`, `pagination`,
+`popover`, `radio-group`, `resizable`, `separator`, `sheet`,
+`sidebar`, `slider`, `table`, `toast`, `toggle-group`, `toggle`,
+`tooltip`, todos em `src/components/ui/`) mais `src/hooks/use-mobile.ts`
+— scaffold em massa (típico de gerar todo o catálogo do shadcn/ui de
+uma vez) que nunca foi importado por nenhuma tela real. Conferido que
+as únicas referências entre eles eram uns componentes mortos
+importando outros componentes mortos (`sidebar.tsx` importava
+`separator`/`sheet`/`tooltip`/`use-mobile`, `toggle-group.tsx`
+importava `toggle`) — nenhum tinha uso de verdade.
+
+**38 dependências órfãs removidas do `package.json`** (`npm uninstall`,
+323 pacotes a menos em `node_modules`): as que ficaram sem consumidor
+depois da limpeza acima (`@radix-ui/react-*` dos componentes apagados,
+`cmdk`, `date-fns`, `react-day-picker`, `embla-carousel-react`,
+`input-otp`, `vaul`, `react-hook-form`, `@hookform/resolvers`,
+`react-resizable-panels`, `@tanstack/react-table`) e outras já
+sinalizadas como não usadas numa auditoria anterior do próprio projeto
+mas nunca removidas (`puppeteer` — ~300 MB sozinho —, `pdfkit`,
+`sharp` como dependência direta, `@mdxeditor/editor`, `next-intl`,
+`react-syntax-highlighter`, `@tanstack/react-query`, `@dnd-kit/*`,
+`uuid`, `framer-motion`, `@reactuses/core`) e o devDependency `shx`.
+Cada uma foi conferida por `grep` de import antes da remoção — em
+especial as que soam a peça de infraestrutura (`pdfkit`, `sharp`,
+`next-intl`, `puppeteer`, `uuid`, `date-fns`), justamente pra não
+derrubar algo usado só dinamicamente. Nenhuma tinha `@types/*`
+correspondente para remover junto.
+
+**O que foi deixado de propósito**: os arquivos `*.test.ts` que o
+`knip` também apontou como "não usados" são falso positivo — rodam
+via glob em `npm test` (`tsx --test "src/**/*.test.ts"`), não por
+import direto, e o `knip` não entende essa forma de invocação.
+`scripts/sync-i18n.ts`, `src/scripts/fetch-hiring-index.ts` e
+`src/scripts/build-world-map.ts` também apareceram como "não usados"
+pela mesma razão — são ferramentas de CLI documentadas e ativamente
+usadas (ver §2.51, §2.54), disparadas manualmente via `npx tsx`, não
+importadas por outro arquivo. As 74 exportações e 36 tipos exportados
+que o `knip` listou como não usados dentro de arquivos que **são**
+usados ficaram intocados — remover export-a-export dentro de arquivo
+vivo é um risco alto (efeito colateral em consumidor não óbvio) pra um
+ganho baixo (não reduz peso de bundle nem de instalação), diferente de
+apagar arquivo/dependência inteira.
+
+Verificado depois da limpeza inteira: `tsc --noEmit` limpo, `eslint`
+limpo, `npm test` 884/884, e build de produção limpo (`rm -rf .next &&
+npm run build`) sem erro de módulo faltando.
