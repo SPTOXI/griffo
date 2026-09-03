@@ -4065,3 +4065,42 @@ próprio Next e aparecem igualmente em `/de`, que não tem uma linha
 deste trabalho.
 
 Com isto a **pendência 14 fecha por inteiro**: (a), (b), (c), (d) e (e).
+
+## 2.60 Lighthouse mobile no domínio nu apontou o próprio redirecionamento por geo-IP como o maior custo — trocado por rewrite
+
+Operador rodou o PageSpeed Insights (mobile, 4G lenta) contra
+`griffo.work` e trouxe o relatório: Desempenho 72, LCP 6,0s, FCP 2,4s,
+e o maior ganho apontado era "Latência da solicitação de documentos —
+economia estimada de 1.270ms".
+
+Medido contra produção de verdade (`curl` real, não suposição): a
+cadeia do domínio nu tinha **dois redirecionamentos** antes do HTML
+começar — `griffo.work` → 308 da Cloudflare pro `www` (não é código
+deste projeto, é configuração de domínio) → **307 do nosso próprio
+middleware** (§2.50) pro país da borda → `/br`. Isolado o custo do
+307 sozinho: ~0,52s de resposta, contra 0,68s pra ir direto em `/br`
+sem passar por ele — a diferença bate quase exatamente com os 1.270ms
+que o Lighthouse apontou.
+
+**Corrigido em `src/middleware.ts`**: `handleBareDomain` trocou
+`NextResponse.redirect(url, 307)` por `NextResponse.rewrite(url)`. Um
+rewrite serve o conteúdo do país na MESMA resposta — sem round-trip de
+rede extra, sem `Location`, sem o navegador precisar de uma segunda
+requisição. A barra de endereço continua mostrando o domínio nu; o
+HTML que chega já é o do país certo. Nenhuma das guardas do §2.50 muda
+de comportamento: bot, sessão logada (`ca_session`) e escolha manual de
+idioma (`griffo_lang`) continuam pulando isto do mesmo jeito — só o
+"como" servir o conteúdo certo deixou de custar uma viagem de rede
+inteira.
+
+Verificado contra build de produção real (`npm run build && npm run
+start`, não `next dev` — a lição do §2.58 seguida à risca desta vez):
+`cf-ipcountry: DE` no domínio nu devolve `200` (nunca `307`) com o
+`<title>` e o texto de nav já em alemão; bot e cookie de idioma manual
+continuam recebendo o conteúdo padrão sem reescrita, como antes.
+
+O primeiro salto (Cloudflare, apex → `www`) continua existindo e não é
+corrigível por código deste repositório — fica registrado aqui como o
+que resta da cadeia, não como pendência esquecida.
+
+`tsc --noEmit`, `eslint` e `npm test` (884/884) limpos.

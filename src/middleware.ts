@@ -55,10 +55,17 @@ export function handleBareDomain(req: NextRequest): Response | null {
   // Observabilidade proposital: aparece nos Runtime Logs da Vercel.
   console.log(JSON.stringify({ event: 'geo_redirect', country: edgeCountry(req) || null, slug }))
 
-  // 307: temporário. O destino pode mudar (VPN, viagem, ou a própria lista
-  // de países suportados) — um 301 ficaria cacheado no navegador para
-  // sempre, sobrevivendo a qualquer correção futura.
-  return NextResponse.redirect(new URL(`/${slug}`, req.url), 307)
+  // `rewrite`, não `redirect`: um 307 mede ~0,5s a mais na cadeia real contra
+  // produção (griffo.work → 308 da Cloudflare pro www → 307 daqui pro país —
+  // dois saltos antes do HTML começar), medido depois que o Lighthouse
+  // apontou justamente "latência da solicitação de documentos" como o maior
+  // ganho disponível de LCP no domínio nu. `rewrite` serve o conteúdo do país
+  // na mesma resposta, sem round-trip extra — a barra de endereço continua
+  // mostrando o domínio nu, mas o HTML que chega já é o certo. Nenhuma das
+  // guardas acima muda: bot, sessão logada e escolha manual de idioma
+  // continuam pulando isto do mesmo jeito, só o "como" de servir o conteúdo
+  // certo é que deixou de custar uma viagem de rede inteira.
+  return NextResponse.rewrite(new URL(`/${slug}`, req.url))
 }
 
 /**

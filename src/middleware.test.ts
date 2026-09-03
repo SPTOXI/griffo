@@ -33,11 +33,16 @@ test('geoRedirectTarget: país com rota própria vira o slug; desconhecido cai e
   assert.equal(geoRedirectTarget(req({})), 'global')
 })
 
-test('handleBareDomain: redireciona visitante novo do domínio nu para o país da borda', () => {
+test('handleBareDomain: serve o país da borda por rewrite, sem round-trip de redirect', () => {
   const res = handleBareDomain(req({ headers: { 'cf-ipcountry': 'DE' } }))
-  assert.ok(res, 'deveria redirecionar')
-  assert.equal(res!.status, 307)
-  assert.equal(new URL((res as Response).headers.get('location')!).pathname, '/de')
+  assert.ok(res, 'deveria reescrever')
+  // `rewrite` responde 200 e carrega o destino em `x-middleware-rewrite` — não
+  // é um 307 com `location`. Ver o comentário em `handleBareDomain` sobre por
+  // que isto deixou de ser redirect: um 307 mede round-trip extra de verdade
+  // contra produção, e o Lighthouse apontou exatamente essa latência.
+  assert.equal(res!.status, 200)
+  assert.equal(res!.headers.get('location'), null)
+  assert.equal(new URL(res!.headers.get('x-middleware-rewrite')!).pathname, '/de')
 })
 
 test('handleBareDomain: nunca dispara fora do caminho exato "/" (evita loop de redirecionamento)', () => {
