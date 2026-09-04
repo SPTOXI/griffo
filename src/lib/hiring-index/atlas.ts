@@ -54,6 +54,33 @@
  * contra os outros — que é justamente o arbítrio que a distribuição evita. Eles
  * continuam visíveis na distribuição, que é a leitura principal.
  *
+ * ## §2.68 — de número pra termo, sem inventar fronteira
+ *
+ * Pedido do operador: `+5` na tela não diz nada por si só sem parar pra fazer
+ * conta, e ele queria um TERMO, dentro de uma escala fiel à realidade. O risco
+ * era exatamente o que o §2.56 e o parágrafo acima já recusaram uma vez: cortar
+ * um número contínuo em faixas ("moderado", "forte") é decidir uma fronteira, e
+ * fronteira decidida por gosto é a mesma arbitrariedade que a distribuição
+ * inteira existe pra evitar.
+ *
+ * A saída que não inventa nada: normalizar `netBreadth` pelo total
+ * CLASSIFICADO antes de cortar em faixas — `netBreadth / classified`, nunca o
+ * número bruto. A razão é dupla: (1) o número bruto se desloca sozinho quando
+ * o produto passa a cobrir mais países — `+12` de 30 classificados e `+12` de
+ * 90 não significam a mesma coisa, e um corte em faixas sobre o número bruto
+ * ficaria errado no dia em que a cobertura crescesse, sem ninguém tocar o
+ * código; (2) o percentual tem teto e piso conhecidos e simétricos por
+ * definição (-100% a +100%, os extremos onde TODO classificado está numa única
+ * fase), o que torna a fronteira uma fração desse intervalo total — não um
+ * palpite sobre "quantos países seriam muitos". As fronteiras (±20%, ±60%)
+ * dividem esse intervalo em três blocos iguais por lado (equilíbrio, predomínio,
+ * generalizado) — a divisão mais neutra possível dado que só há uma reta pra
+ * cortar, sem dado histórico do índice ainda existente pra calibrar contra uma
+ * distribuição observada.
+ *
+ * `classified === 0` devolve `null`: nenhum termo é menos errado do que um
+ * termo inventado sobre zero país.
+ *
  * ## O que este arquivo não faz
  *
  * Não fala com o banco (ver o cabeçalho de `lookup.ts`: `server-only` derruba
@@ -180,6 +207,29 @@ export function phaseDistribution(summaries: readonly HiringIndexSummary[]): Pha
     classified: tracked - unclassified,
     netBreadth: counts.heating_up - counts.cooling,
   }
+}
+
+/** As cinco faixas do §2.68. Ordem de leitura: de mais frio a mais quente. */
+export type NetBreadthTerm =
+  | 'strongly_cooling'
+  | 'mostly_cooling'
+  | 'balanced'
+  | 'mostly_heating'
+  | 'strongly_heating'
+
+/**
+ * `netBreadth` normalizado pelo total classificado, cortado em cinco faixas
+ * simétricas de largura igual (±20%, ±60%) — ver a justificativa no cabeçalho
+ * deste arquivo (§2.68). `null` quando não há país classificado: nenhum termo
+ * é menos errado do que um termo sobre zero país.
+ */
+export function netBreadthTerm(netBreadth: number, classified: number): NetBreadthTerm | null {
+  if (classified <= 0) return null
+  const percent = (netBreadth / classified) * 100
+  const magnitude = Math.abs(percent)
+  if (magnitude < 20) return 'balanced'
+  if (magnitude < 60) return percent > 0 ? 'mostly_heating' : 'mostly_cooling'
+  return percent > 0 ? 'strongly_heating' : 'strongly_cooling'
 }
 
 /**

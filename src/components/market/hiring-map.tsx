@@ -105,10 +105,22 @@ export function HiringMapView({ model }: HiringMapViewProps) {
             <h2 className="text-lg font-bold text-brand-navy">{t.indexHeading}</h2>
             <p className="text-xs text-slate-600 mt-1">{t.indexSummary}</p>
           </div>
-          <div className="text-start sm:text-end">
-            <div className="text-3xl font-bold text-brand-navy tabular-nums">{t.netBreadth}</div>
-            <div className="text-xs font-semibold text-slate-600">{t.netBreadthLabel}</div>
-          </div>
+          {t.netBreadthTerm && (
+            <div className="text-start sm:text-end">
+              <div className="flex items-baseline gap-2 sm:justify-end">
+                <span className="text-xl font-bold text-brand-navy">{t.netBreadthTerm}</span>
+                {/* Percentual pequeno ao lado do termo: a leitura principal é
+                    o termo, mas quem quiser conferir a conta não precisa
+                    sair da tela. Ver a justificativa em `atlas.ts` (§2.68). */}
+                {t.netBreadthPercent && (
+                  <span className="text-sm font-semibold text-slate-500 tabular-nums">
+                    {t.netBreadthPercent}
+                  </span>
+                )}
+              </div>
+              <div className="text-xs font-semibold text-slate-600">{t.netBreadthLabel}</div>
+            </div>
+          )}
         </div>
       </section>
 

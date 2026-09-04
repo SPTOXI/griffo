@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   PHASES,
   continentBreakdown,
+  netBreadthTerm,
   phaseByCountry,
   phaseDistribution,
   summarizeAtlas,
@@ -153,6 +154,42 @@ test('a amplitude é contagem de países — nunca uma média de valores', () =>
   assert.equal(atlas.distribution.counts.heating_up, 2)
   assert.equal(atlas.distribution.netBreadth, 2)
   assert.equal(Number.isInteger(atlas.distribution.netBreadth), true)
+})
+
+// ---------------------------------------------------------------------------
+// netBreadthTerm — termo, não número (§2.68)
+// ---------------------------------------------------------------------------
+
+test('netBreadthTerm normaliza pelo CLASSIFICADO, nunca pelo número bruto', () => {
+  // +10 de 100 classificados (10%) e +2 de 20 classificados (10%) são a MESMA
+  // faixa — é exatamente por isso que a fronteira é sobre o percentual.
+  assert.equal(netBreadthTerm(10, 100), netBreadthTerm(2, 20))
+  assert.equal(netBreadthTerm(10, 100), 'balanced')
+})
+
+test('as cinco faixas, e as fronteiras exatas em ±20% e ±60%', () => {
+  // Equilíbrio: |percentual| < 20%.
+  assert.equal(netBreadthTerm(0, 100), 'balanced')
+  assert.equal(netBreadthTerm(19, 100), 'balanced')
+  assert.equal(netBreadthTerm(-19, 100), 'balanced')
+
+  // Exatamente 20% já é predomínio, não equilíbrio — o corte é "< 20", não "<= 20".
+  assert.equal(netBreadthTerm(20, 100), 'mostly_heating')
+  assert.equal(netBreadthTerm(-20, 100), 'mostly_cooling')
+  assert.equal(netBreadthTerm(59, 100), 'mostly_heating')
+  assert.equal(netBreadthTerm(-59, 100), 'mostly_cooling')
+
+  // Exatamente 60% já é generalizado.
+  assert.equal(netBreadthTerm(60, 100), 'strongly_heating')
+  assert.equal(netBreadthTerm(-60, 100), 'strongly_cooling')
+  assert.equal(netBreadthTerm(100, 100), 'strongly_heating')
+  assert.equal(netBreadthTerm(-100, 100), 'strongly_cooling')
+})
+
+test('zero país classificado devolve null — nenhum termo, não "equilíbrio" por omissão', () => {
+  assert.equal(netBreadthTerm(0, 0), null)
+  // Caso defensivo: negativo não devia acontecer, mas não devia fingir termo.
+  assert.equal(netBreadthTerm(0, -1), null)
 })
 
 // ---------------------------------------------------------------------------

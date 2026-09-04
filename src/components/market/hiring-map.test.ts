@@ -189,8 +189,11 @@ test('a distribuição mostrada é a contagem real do atlas', () => {
   assert.equal(a.distribution.netBreadth, 1)
 
   assert.ok(text.includes('4 of 5 countries'))
-  // A amplitude aparece com sinal: `+1` é uma frase, `1` é ambíguo.
-  assert.ok(text.includes('+1'))
+  // Amplitude líquida em termo (§2.68), não número: +1 de 4 classificados =
+  // +25%, dentro de [20%, 60%) → "mostly heating". O percentual aparece do
+  // lado do termo, não sozinho.
+  assert.ok(text.includes(DICTIONARIES.en.hiringMap.netBreadthMostlyHeating))
+  assert.ok(text.includes('+25%'))
 })
 
 test('o rótulo da amplitude líquida está na página', () => {

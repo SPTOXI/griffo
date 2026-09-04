@@ -991,6 +991,16 @@ export interface TranslationDictionary {
     netBreadthLabel: string
     /** Como o escalar é calculado, em uma frase. */
     netBreadthHint: string
+    /**
+     * As cinco faixas do §2.68 — `netBreadth` normalizado pelo total
+     * classificado, nunca o número bruto (ver `netBreadthTerm` em `atlas.ts`).
+     * Ordem de leitura: de mais frio a mais quente.
+     */
+    netBreadthStronglyCooling: string
+    netBreadthMostlyCooling: string
+    netBreadthBalanced: string
+    netBreadthMostlyHeating: string
+    netBreadthStronglyHeating: string
     legendHeading: string
     /** O estado dos países que nenhuma fonte cobre. Nunca uma cor de fase. */
     noDataLabel: string

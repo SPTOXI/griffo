@@ -150,9 +150,13 @@ test('as barras somam 100% dos países classificados, e a contagem é a real', (
   assert.equal(m.text.unclassifiedCount, '1')
 })
 
-test('a amplitude líquida sai com sinal explícito', () => {
-  // Dois esquentando (US, IE) contra um esfriando (DE): +2 − 1 = +1.
-  assert.equal(model().text.netBreadth, '+1')
+test('a amplitude líquida sai como termo (§2.68), com o percentual ao lado', () => {
+  // Dois esquentando (US, IE) contra um esfriando (DE), de 3 classificados
+  // (PT fica de fora, sem histórico bastante): +2 − 1 = +1 → +1/3 ≈ +33%,
+  // dentro da faixa [20%, 60%) → "mostly heating".
+  const m = model()
+  assert.equal(m.text.netBreadthTerm, DICTIONARIES.en.hiringMap.netBreadthMostlyHeating)
+  assert.equal(m.text.netBreadthPercent, '+33%')
 })
 
 test('sem data de coleta, a linha de atualização simplesmente não existe', () => {

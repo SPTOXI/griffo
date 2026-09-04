@@ -4457,3 +4457,63 @@ tabela fechada, depois clicada e aberta, confirmando a seta girando e
 as linhas aparecendo. `tsc --noEmit`, `eslint` e `npm test` (883/883,
 um teste reescrito pra não travar mais o texto do `netBreadthHint`
 removido) limpos.
+
+## 2.68 "+5" virou termo ("Equilíbrio") — normalizado por percentual, não por número bruto
+
+Operador pediu pra trocar o número da Amplitude líquida (`+5`) por um
+termo, "dentro de uma escala que represente fielmente... a realidade".
+O risco de fazer isso mal era concreto: o `atlas.ts` já documenta, em
+dois pontos (§2.54, §2.56), que o projeto recusou de propósito um
+score único pro índice global — cortar um número contínuo em faixas
+("moderado", "forte") é decidir uma fronteira, e fronteira decidida a
+gosto é a mesma arbitrariedade que a distribuição inteira existe pra
+evitar. `recovering`/`bottoming_out`/`stable` já ficam de fora do
+`netBreadth` por essa exata razão.
+
+**A saída sem inventar fronteira**: normalizar `netBreadth` pelo total
+CLASSIFICADO antes de cortar em faixas (`netBreadth / classified`),
+nunca pelo número bruto. Duas razões: (1) o número bruto se desloca
+sozinho quando o produto passa a cobrir mais países — `+12` de 30
+classificados e `+12` de 90 não significam a mesma coisa, e uma faixa
+sobre o bruto ficaria errada no dia em que a cobertura crescesse sem
+ninguém tocar o código; (2) o percentual tem teto e piso conhecidos e
+simétricos por definição (−100% a +100%, os extremos onde TODO
+classificado está numa única fase) — a fronteira vira uma fração desse
+intervalo, não um palpite sobre "quantos países seriam muitos".
+
+**A escala**: 5 faixas simétricas de largura igual, cortando o
+intervalo −100%/+100% em blocos de 40 pontos por lado (±20%, ±60%):
+"Esfriamento generalizado" / "Predomínio de esfriamento" /
+"Equilíbrio" / "Predomínio de aquecimento" / "Aquecimento
+generalizado". Com o dado real de hoje (26 aquecendo − 21 esfriando =
++5, de 84 classificados → +5,95% ≈ **+6%**), cai em "Equilíbrio" — o
+que bate com a realidade: 26 contra 21 de 84 não é domínio claro de
+nenhum lado.
+
+`classified === 0` devolve `null`, não "Equilíbrio" por omissão:
+nenhum termo é menos errado do que um termo inventado sobre zero país
+(mesma disciplina do resto do arquivo — ver `continentOf` recusando
+chutar continente pra código desconhecido).
+
+**Implementação**: `netBreadthTerm(netBreadth, classified)` nova em
+`atlas.ts`, pura e testada isoladamente (fronteiras exatas em ±20% e
+±60%, normalização por percentual conferida com dois pares
+proporcionais diferentes, caso `classified <= 0`). `map-model.ts`
+expõe `netBreadthTerm: string | null` (o termo traduzido) e
+`netBreadthPercent: string | null` (o percentual formatado com sinal,
+`Intl.NumberFormat` com `signDisplay: 'exceptZero'`) em vez do antigo
+`netBreadth: string`. `hiring-map.tsx` mostra o termo em destaque com
+o percentual pequeno ao lado — a leitura principal é o termo, mas quem
+quiser conferir a conta não precisa sair da tela. 5 chaves novas no
+dicionário (`netBreadthStronglyCooling`…`netBreadthStronglyHeating`)
+nas 12 línguas; no árabe, alinhadas ao vocabulário de
+aceleração/desaceleração que as fases já usam lá (`في تسارع`/`في
+تباطؤ`), não à metáfora de temperatura usada nas outras 11 línguas —
+único idioma onde a fase em si não usa temperatura, então o termo novo
+segue a mesma régua já estabelecida, não a das outras línguas.
+
+Verificado com build de produção e Playwright em `/br/market-pulse`,
+desktop e mobile: "Equilíbrio +6%" renderiza correto, sem quebra.
+`tsc --noEmit`, `eslint` e `npm test` (886/886 — 3 testes novos pra
+`netBreadthTerm`, 2 reescritos nos arquivos que checavam o `+1`/`+25%`
+antigo) limpos.

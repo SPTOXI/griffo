@@ -38,7 +38,7 @@
  * idioma não têm versão.
  */
 
-import { PHASES, type HiringAtlas } from './atlas'
+import { PHASES, netBreadthTerm, type HiringAtlas, type NetBreadthTerm } from './atlas'
 import type { Continent } from './continents'
 import { displayCountry, formatDate, formatPeriod } from './display'
 import type { HiringPhase } from './phase'
@@ -200,7 +200,13 @@ export interface HiringMapModel {
     intro: string
     indexHeading: string
     indexSummary: string
-    netBreadth: string
+    /**
+     * Termo (§2.68), não número — ver `netBreadthTerm` em `atlas.ts`. `null`
+     * só quando `classified` é zero: nenhum termo é menos errado do que um
+     * termo inventado sobre zero país.
+     */
+    netBreadthTerm: string | null
+    netBreadthPercent: string | null
     netBreadthLabel: string
     netBreadthHint: string
     unclassifiedLabel: string
@@ -266,6 +272,15 @@ export function buildHiringMapModel(
     recovering: { label: index.phaseRecovering, hint: index.phaseRecoveringHint },
     heating_up: { label: index.phaseHeatingUp, hint: index.phaseHeatingUpHint },
     stable: { label: index.phaseStable, hint: index.phaseStableHint },
+  }
+
+  /** As cinco faixas do §2.68 — ver `netBreadthTerm` em `atlas.ts`. */
+  const NET_BREADTH_LABELS: Record<NetBreadthTerm, string> = {
+    strongly_cooling: map.netBreadthStronglyCooling,
+    mostly_cooling: map.netBreadthMostlyCooling,
+    balanced: map.netBreadthBalanced,
+    mostly_heating: map.netBreadthMostlyHeating,
+    strongly_heating: map.netBreadthStronglyHeating,
   }
 
   // -------------------------------------------------------------------------
@@ -427,11 +442,23 @@ export function buildHiringMapModel(
       indexSummary: map.indexSummary
         .replace('{classified}', number(distribution.classified))
         .replace('{tracked}', number(distribution.tracked)),
-      // Com sinal explícito: `+12` é uma frase ("doze países a mais aquecendo
-      // do que esfriando"); `12` sozinho é ambíguo.
-      netBreadth: new Intl.NumberFormat(locale, { signDisplay: 'exceptZero' }).format(
-        distribution.netBreadth
-      ),
+      // Termo, não número (§2.68) — a fronteira é sobre o PERCENTUAL do
+      // classificado, nunca o número bruto. Ver a justificativa completa no
+      // cabeçalho de `atlas.ts`. `null` (zero país classificado) não vira
+      // "Equilíbrio" por omissão: seria inventar um termo sobre nada.
+      netBreadthTerm: (() => {
+        const term = netBreadthTerm(distribution.netBreadth, distribution.classified)
+        return term ? NET_BREADTH_LABELS[term] : null
+      })(),
+      // Sinal explícito e sempre visível ao lado do termo, pequeno: o termo é
+      // a leitura principal, mas quem quiser conferir a conta não devia
+      // precisar sair da tela. `null` só quando `classified` é zero.
+      netBreadthPercent:
+        distribution.classified > 0
+          ? new Intl.NumberFormat(locale, { signDisplay: 'exceptZero', maximumFractionDigits: 0 }).format(
+              (distribution.netBreadth / distribution.classified) * 100
+            ) + '%'
+          : null,
       netBreadthLabel: map.netBreadthLabel,
       netBreadthHint: map.netBreadthHint,
       unclassifiedLabel: index.insufficientLabel,
