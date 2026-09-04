@@ -397,24 +397,9 @@ export function HiringMapView({ model }: HiringMapViewProps) {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Método, fontes e créditos                                          */}
+      {/* Créditos                                                           */}
       {/* ------------------------------------------------------------------ */}
-      <section className="space-y-4 text-sm text-slate-700">
-        <div className="space-y-2">
-          <h2 className="text-lg font-bold text-brand-navy">{t.methodHeading}</h2>
-          <p className="leading-relaxed max-w-3xl">{t.methodBody}</p>
-          <p className="leading-relaxed max-w-3xl text-slate-600">{t.comparisonNote}</p>
-        </div>
-
-        <div className="space-y-2">
-          <h2 className="text-lg font-bold text-brand-navy">{t.sourcesHeading}</h2>
-          <ul className="list-disc ps-5 space-y-1 text-slate-600">
-            {model.sources.map((source) => (
-              <li key={source}>{source}</li>
-            ))}
-          </ul>
-        </div>
-
+      <section className="text-sm text-slate-700">
         <p className="text-xs text-slate-500 space-x-2">
           {t.updatedLine && <span>{t.updatedLine}</span>}
           <span>{t.mapCredit}</span>

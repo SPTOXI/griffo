@@ -4365,3 +4365,37 @@ PT e EN, mobile (390×844) — confirmando a ordem alfabética prevista em
 cada idioma e nenhum truncamento com o nome mais longo. `tsc --noEmit`,
 `eslint` e `npm test` (884/884, mesma contagem — só reescrita de
 asserções existentes, nenhum teste novo) limpos.
+
+## 2.66 Removida a seção "Como isto é calculado" / "Fontes oficiais" de `/market-pulse`
+
+Operador achou desnecessário o bloco de metodologia e fontes no fim da
+página pública do mapa — o texto explicando a média móvel de três
+períodos comparada com mediana/mínimo da série, mais a lista de
+fontes oficiais (CEPALSTAT, Eurostat, ILOSTAT, BLS JOLTS) repetida por
+extenso.
+
+Removido de `src/components/market/hiring-map.tsx`: os dois blocos
+(`methodHeading`+`methodBody`+`comparisonNote`, e
+`sourcesHeading`+lista de `model.sources`). Mantida a linha final —
+"Coleta mais recente" (`updatedLine`) e o crédito cartográfico
+(`mapCredit`, "Base cartográfica: Natural Earth") — que o operador não
+citou e que segue cumprindo uma função diferente (transparência de
+atualização e atribuição legal do mapa, não explicação de metodologia).
+
+**Deixado de propósito**: as chaves do dicionário (`methodHeading`,
+`methodBody`, `sourcesHeading`, `comparisonNote`) continuam existindo
+em `i18n/types.ts` e nas 12 locales — `comparisonNote` ainda é usada
+em outro lugar (`hiring-index-card.tsx`, o cartão do laudo pago, um
+contexto diferente onde a mesma frase justifica a leitura pra quem já
+pagou pelo relatório) e `methodBody` alimenta o `measurementTechnique`
+do JSON-LD (`schema.org/Dataset`) em `market-pulse/page.tsx` — dado
+estruturado pra buscador, não texto visível, fora do escopo do pedido.
+Remover essas chaves do dicionário exigiria mexer em 12 arquivos de
+locale e no schema de SEO por um ganho que o pedido não pediu.
+
+`tsc --noEmit`, `eslint` e `npm test` (883/883 — um teste a menos, o
+que travava a presença do `comparisonNote` na página, removido porque
+protegia um texto que devia mesmo sumir) limpos. Verificado com build
+de produção e Playwright em `/br/market-pulse`: a página termina
+direto na linha de coleta/crédito, sem espaço vazio nem seção
+remanescente.

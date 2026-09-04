@@ -199,11 +199,6 @@ test('a amplitude líquida vem sempre acompanhada de como ela é calculada', () 
   assert.ok(text.includes(DICTIONARIES.en.hiringMap.netBreadthHint))
 })
 
-test('a nota de que países não são comparáveis entre si está na página', () => {
-  const text = textOf(render('en'))
-  assert.ok(text.includes(DICTIONARIES.en.hiringIndex.comparisonNote))
-})
-
 // ---------------------------------------------------------------------------
 // O recorte por continente (§2.59)
 // ---------------------------------------------------------------------------
