@@ -930,7 +930,7 @@ export const pt: TranslationDictionary = {
       marketLabel: 'Mercado analisado: {country}',
       phaseCooling: 'Esfriando',
       phaseCoolingHint: 'A abertura de vagas vem caindo nos últimos períodos.',
-      phaseBottomingOut: 'No fundo',
+      phaseBottomingOut: 'Tocando o fundo',
       phaseBottomingOutHint: 'Parou de cair e está perto do ponto mais baixo da própria série.',
       phaseRecovering: 'Em recuperação',
       phaseRecoveringHint: 'Voltou a subir, mas ainda está abaixo do nível habitual do país.',

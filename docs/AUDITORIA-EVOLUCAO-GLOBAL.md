@@ -4228,3 +4228,31 @@ apagar arquivo/dependência inteira.
 Verificado depois da limpeza inteira: `tsc --noEmit` limpo, `eslint`
 limpo, `npm test` 884/884, e build de produção limpo (`rm -rf .next &&
 npm run build`) sem erro de módulo faltando.
+
+## 2.63 "No fundo" (fase `bottoming_out`) trocado por "Tocando o fundo" no dicionário PT
+
+Operador achou os termos das fases do Índice GriffoWork ruins.
+Conferido os 5 rótulos (`phaseCooling`/`phaseBottomingOut`/
+`phaseRecovering`/`phaseHeatingUp`/`phaseStable`) nas 12 línguas: em
+inglês, espanhol, francês, alemão, italiano e japonês já eram
+vocabulário de imprensa financeira de verdade ("bottoming out",
+"tocando fondo", "Bodenbildung", "底打ち"). O único fraco era o
+português: `phaseBottomingOut: 'No fundo'`. Sem verbo, "no fundo" em
+português coloquial também significa "basicamente/na essência" (ex:
+"no fundo, ele sabia") — numa legenda curta e fora de contexto, dá pra
+ler como esse idiomatismo em vez de "tocou o fundo do ciclo".
+
+Trocado para `'Tocando o fundo'` — espelha o espanhol `'Tocando
+fondo'`, o verbo tira a ambiguidade, e mantém o paralelismo gramatical
+com os outros quatro rótulos (todos descrevem um ESTADO do mercado:
+"Esfriando", "Em recuperação", "Esquentando", "Estável" — todos
+completam "o mercado está ___"). Uma alternativa mais técnica, "Fundo
+do ciclo", foi descartada por ser substantivo/lugar em vez de estado
+(quebra esse paralelismo) e por introduzir "ciclo", termo que não
+aparece em nenhum outro texto do índice. Só `phaseBottomingOut` mudou
+— `phaseBottomingOutHint` já era uma frase completa sem a mesma
+ambiguidade ("Parou de cair e está perto do ponto mais baixo da
+própria série.").
+
+`tsc --noEmit`, `eslint` e `npm test` (884/884) limpos — troca de uma
+string, sem lógica nova.
