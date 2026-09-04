@@ -4256,3 +4256,49 @@ própria série.").
 
 `tsc --noEmit`, `eslint` e `npm test` (884/884) limpos — troca de uma
 string, sem lógica nova.
+
+## 2.64 Os 6 rótulos do índice em PT trocados por vocabulário de mercado financeiro (supera o §2.63)
+
+Operador propôs um conjunto novo pros 5 rótulos de fase mais o "sem
+dado": **aquecido, viés de alta, estável, viés de baixa, em baixa, sem
+dados**. Melhor que o patch pontual do §2.63 (que só trocava "No
+fundo"): resolve de vez a mistura de metáforas que os termos antigos
+tinham (temperatura + posição física + saúde) usando um único
+vocabulário nativo da imprensa financeira brasileira ("ações com viés
+de alta", "mercado aquecido") — e o mais importante, esse vocabulário
+separa TENDÊNCIA (viés de alta/baixa: ainda subindo/caindo, não chegou
+no extremo) de ESTADO JÁ ATINGIDO (aquecido/em baixa: já passou do
+nível habitual do país, ou já está no mínimo da própria série), o que
+bate exatamente com a definição do algoritmo em `phase.ts` — algo que
+nenhuma versão anterior do rótulo capturava.
+
+Mapeamento em `pt.ts` (`hiringIndex`):
+- `phaseCooling`: "Esfriando" → **"Viés de baixa"**
+- `phaseBottomingOut`: "Tocando o fundo" (§2.63) → **"Em baixa"**
+- `phaseRecovering`: "Em recuperação" → **"Viés de alta"**
+- `phaseHeatingUp`: "Esquentando" → **"Aquecido"**
+- `phaseStable`: sem mudança ("Estável")
+
+E em `pt.ts` (`hiringMap`):
+- `noDataLabel`: "Sem dado oficial" → **"Sem dados"**
+
+Os `*Hint` (frases completas explicando cada fase) não mudaram —
+continuam corretos e sem a ambiguidade que só existia nos rótulos
+curtos. Deixado de propósito sem mudar: `hiringIndex.insufficientLabel`
+("Dado insuficiente") — é um conceito DIFERENTE de `noDataLabel`
+("Sem dados"): o primeiro é país com fonte oficial mas histórico
+curto demais pra classificar (14 dos 98 países rastreados), o segundo
+é país sem nenhuma fonte oficial cobrindo (a área hachurada do mapa,
+75 dos 173 países existentes). O operador pediu 6 termos, e a
+"Legenda" do mapa (`map-model.ts`, array `legend`) tem exatamente 6
+itens — as 5 fases mais `noDataLabel` — confirmando que era esse o
+alvo, não o `insufficientLabel` do cartão de distribuição no topo da
+página.
+
+Verificado com build de produção limpo e Playwright em `/market-pulse`
+e no teaser da home, desktop (1280×1000) e mobile (390×844): a
+legenda de 6 itens cabe numa linha só no desktop e quebra em duas
+linhas limpas no mobile, sem truncar; a coluna "Fase" da tabela de 98
+países não trunca com os rótulos mais longos ("Viés de alta"/"Viés de
+baixa"); a barra do teaser da home também renderiza correta com os 5
+rótulos novos. `tsc --noEmit`, `eslint` e `npm test` (884/884) limpos.
