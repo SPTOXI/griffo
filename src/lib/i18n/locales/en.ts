@@ -963,7 +963,7 @@ export const en: TranslationDictionary = {
       updatedLabel: "Last collected: {date}",
       sourcesHeading: "Official sources",
       methodHeading: "How this is calculated",
-      methodBody: "Each country's phase comes from a three-period moving average of its own official series, compared with the median and the lowest point of that same series. Countries are never compared with one another: different statistics institutes measure with different samples and response rates, which is why the aggregate is a count of countries per phase and not a single score.",
+      methodBody: "The index is calculated from the trend of the average of the last months of official data available for each country.",
       countryLinkLabel: "Open the {country} page",
       interactionHint: "Hover or tap a country to see its reading.",
       mapCredit: "Base map: Natural Earth (public domain).",

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowUpRight, Info } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, Info } from 'lucide-react'
 import {
   CONTINENT_NO_DATA_PATTERN,
   NO_DATA_PATTERN,
@@ -110,44 +110,6 @@ export function HiringMapView({ model }: HiringMapViewProps) {
             <div className="text-xs font-semibold text-slate-600">{t.netBreadthLabel}</div>
           </div>
         </div>
-
-        <ul className="space-y-2">
-          {model.bars.map((bar) => (
-            <li key={bar.phase} className="flex items-center gap-3">
-              <Swatch fill={bar.fill} size={12} />
-              <span className="text-xs font-medium text-slate-700 w-32 sm:w-40 shrink-0">
-                {bar.label}
-              </span>
-              {/* Barra em SVG: a largura é calculada, e atributo de
-                  apresentação do SVG passa pela CSP — `style` não passa. */}
-              <svg className="flex-1 h-2" preserveAspectRatio="none" aria-hidden="true">
-                <rect width="100%" height="100%" rx="4" fill="#f1f5f9" />
-                <rect width={`${bar.sharePercent}%`} height="100%" rx="4" fill={bar.fill} />
-              </svg>
-              <span className="text-xs tabular-nums text-slate-600 w-24 text-end shrink-0">
-                {bar.countLabel} · {bar.shareLabel}
-              </span>
-            </li>
-          ))}
-
-          {/* Coberto mas sem histórico bastante. Não é fase, e não é "sem
-              fonte" — as três frases são diferentes e as três aparecem. */}
-          <li className="flex items-center gap-3 pt-1 border-t border-slate-100">
-            <Swatch fill="#cbd5e1" size={12} />
-            <span className="text-xs font-medium text-slate-700 w-32 sm:w-40 shrink-0">
-              {t.unclassifiedLabel}
-            </span>
-            <span className="flex-1" />
-            <span className="text-xs tabular-nums text-slate-600 w-24 text-end shrink-0">
-              {t.unclassifiedCount}
-            </span>
-          </li>
-        </ul>
-
-        <p className="flex items-start gap-2 text-[11px] text-slate-500 leading-relaxed">
-          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-          <span>{t.netBreadthHint}</span>
-        </p>
       </section>
 
       {/* ------------------------------------------------------------------ */}
@@ -354,52 +316,79 @@ export function HiringMapView({ model }: HiringMapViewProps) {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Tabela — todos os países cobertos, com link para a página de cada   */}
+      {/* Tabela — todos os países cobertos, com link para a página de cada.  */}
+      {/*                                                                    */}
+      {/* `<details>` nativo, não JS: fechada por padrão (a tabela de ~98    */}
+      {/* linhas pesava visualmente demais aberta o tempo todo), mas o HTML  */}
+      {/* inteiro — TODOS os `<a href>` — continua na resposta do servidor,  */}
+      {/* fechada ou não. É a mesma razão de o componente inteiro evitar     */}
+      {/* client-side rendering condicional: rastreador e leitor de tela não */}
+      {/* executam clique, e não podem depender de um estado aberto.        */}
       {/* ------------------------------------------------------------------ */}
-      <section aria-label={t.tableHeading} className="space-y-3">
-        <h2 className="text-lg font-bold text-brand-navy">{t.tableHeading}</h2>
-        <div className="overflow-x-auto rounded-2xl border border-slate-200">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                <th scope="col" className="text-start font-semibold px-3 py-2">{t.colCountry}</th>
-                <th scope="col" className="text-start font-semibold px-3 py-2">{t.colPhase}</th>
-                <th scope="col" className="text-start font-semibold px-3 py-2">{t.colSource}</th>
-                <th scope="col" className="text-start font-semibold px-3 py-2">{t.colPeriod}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {model.ordered.map((code) => {
-                const country = model.countries[code]
-                return (
-                  <tr key={code} className="border-t border-slate-100">
-                    <td className="px-3 py-2">
-                      <Link href={country.href} className="font-medium text-primary hover:underline">
-                        {country.name}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Swatch fill={country.fill} size={10} />
-                        {country.statusLabel}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-slate-600">{country.sourceName ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-600 whitespace-nowrap">
-                      {country.periodLabel ?? '—'}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+      <section aria-label={t.tableHeading}>
+        <details className="group rounded-2xl border border-slate-200">
+          <summary className="flex items-center justify-between gap-2 px-4 py-3 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+            <h2 className="text-lg font-bold text-brand-navy">{t.tableHeading}</h2>
+            <ChevronDown
+              className="w-5 h-5 text-slate-400 shrink-0 transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            />
+          </summary>
+          <div className="overflow-x-auto border-t border-slate-200">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-slate-600">
+                <tr>
+                  <th scope="col" className="text-start font-semibold px-3 py-2">{t.colCountry}</th>
+                  <th scope="col" className="text-start font-semibold px-3 py-2">{t.colPhase}</th>
+                  <th scope="col" className="text-start font-semibold px-3 py-2">{t.colSource}</th>
+                  <th scope="col" className="text-start font-semibold px-3 py-2">{t.colPeriod}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {model.ordered.map((code) => {
+                  const country = model.countries[code]
+                  return (
+                    <tr key={code} className="border-t border-slate-100">
+                      <td className="px-3 py-2">
+                        <Link href={country.href} className="font-medium text-primary hover:underline">
+                          {country.name}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className="inline-flex items-center gap-1.5">
+                          <Swatch fill={country.fill} size={10} />
+                          {country.statusLabel}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-slate-600">{country.sourceName ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-600 whitespace-nowrap">
+                        {country.periodLabel ?? '—'}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </details>
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Créditos                                                           */}
+      {/* Método, fontes e créditos — versão compacta (§2.67)                */}
+      {/*                                                                    */}
+      {/* Uma linha só, sem os dois `<h2>` que existiam antes do §2.66: o    */}
+      {/* pedido era menos texto na tela, não zero explicação. `methodBody`  */}
+      {/* também alimenta o JSON-LD (`market-pulse/page.tsx`), então esta é  */}
+      {/* a MESMA frase que o buscador recebe como `measurementTechnique` —  */}
+      {/* uma fonte de verdade, não duas descrições que podem divergir.      */}
       {/* ------------------------------------------------------------------ */}
-      <section className="text-sm text-slate-700">
+      <section className="text-sm text-slate-700 space-y-2">
+        <p className="flex items-start gap-2 text-[11px] text-slate-500 leading-relaxed max-w-3xl">
+          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
+          <span>
+            {t.methodBody} {t.sourcesHeading}: {model.sources.join(', ')}.
+          </span>
+        </p>
         <p className="text-xs text-slate-500 space-x-2">
           {t.updatedLine && <span>{t.updatedLine}</span>}
           <span>{t.mapCredit}</span>

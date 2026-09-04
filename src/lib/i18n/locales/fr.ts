@@ -962,7 +962,7 @@ export const fr: TranslationDictionary = {
     updatedLabel: "Dernière collecte : {date}",
     sourcesHeading: "Sources officielles",
     methodHeading: "Comment cela est calculé",
-    methodBody: "La phase d'un pays provient d'une moyenne mobile sur trois périodes de sa propre série officielle, comparée à la médiane et au point le plus bas de cette même série. Les pays ne sont jamais comparés entre eux : les instituts statistiques mesurent avec des échantillons et des taux de réponse différents. C'est pourquoi l'agrégat est un décompte de pays par phase, et non une note unique.",
+    methodBody: "L'indice est calculé à partir de la tendance de la moyenne des derniers mois de données officielles disponibles pour chaque pays.",
     countryLinkLabel: "Ouvrir la page {country}",
     interactionHint: "Survolez ou touchez un pays pour voir sa lecture.",
     mapCredit: "Fond de carte : Natural Earth (domaine public).",

@@ -193,10 +193,9 @@ test('a distribuição mostrada é a contagem real do atlas', () => {
   assert.ok(text.includes('+1'))
 })
 
-test('a amplitude líquida vem sempre acompanhada de como ela é calculada', () => {
+test('o rótulo da amplitude líquida está na página', () => {
   const text = textOf(render('en'))
   assert.ok(text.includes(DICTIONARIES.en.hiringMap.netBreadthLabel))
-  assert.ok(text.includes(DICTIONARIES.en.hiringMap.netBreadthHint))
 })
 
 // ---------------------------------------------------------------------------

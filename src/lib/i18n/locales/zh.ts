@@ -962,7 +962,7 @@ export const zh: TranslationDictionary = {
     updatedLabel: "最近采集：{date}",
     sourcesHeading: "官方来源",
     methodHeading: "计算方式",
-    methodBody: "每个国家的阶段来自其自身官方序列的三期移动平均，并与同一序列的中位数和最低点比较。国家之间从不互相比较：不同统计机构的样本量与回收率各不相同。因此总体结果是各阶段的国家数量，而不是单一评分。",
+    methodBody: "该指数根据各国可获得的最近几个月官方数据平均值的趋势计算得出。",
     countryLinkLabel: "打开 {country} 页面",
     interactionHint: "将鼠标悬停或点触某个国家即可查看其判定结果。",
     mapCredit: "底图：Natural Earth（公有领域）。",

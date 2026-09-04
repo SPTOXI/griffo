@@ -4399,3 +4399,61 @@ protegia um texto que devia mesmo sumir) limpos. Verificado com build
 de produção e Playwright em `/br/market-pulse`: a página termina
 direto na linha de coleta/crédito, sem espaço vazio nem seção
 remanescente.
+
+## 2.67 Índice enxuto, tabela de países retrátil, e metodologia/fontes de volta — só que curtas
+
+Operador pediu três ajustes em `/market-pulse` depois de ver a página
+com as mudanças do §2.66 no ar: (1) o cartão "Índice GriffoWork" só
+devia mostrar o índice, não a lista de fase-por-fase; (2) a tabela
+"Todos os países cobertos" estava feia — precisava de layout melhor ou
+ficar retrátil, mas SEM prejudicar SEO; (3) repensou a remoção do
+§2.66 e quer de volta, ao menos, as fontes de dados e uma frase
+dizendo que o índice vem da tendência da média dos últimos meses de
+dados disponíveis.
+
+**(1) Cartão do índice**: removida a lista de 6 linhas (`model.bars` +
+`unclassifiedLabel`/`unclassifiedCount`) e o `netBreadthHint` de
+`hiring-map.tsx`. Ficou só cabeçalho, resumo ("84 de 98 países...") e
+o número "+5 / Amplitude líquida" — o mesmo card que já existia,
+sem a barra-lista de baixo. As chaves do dicionário continuam
+existindo (mesma razão do §2.66: baixo custo, outros consumidores
+podem usar).
+
+**(2) Tabela retrátil sem custo de SEO**: embrulhada em `<details>`/
+`<summary>` NATIVO do HTML, fechada por padrão — não um
+`useState`/`display:none` condicionado a JavaScript. A diferença
+importa: `<details>` fechado ainda manda o conteúdo INTEIRO (as ~98
+linhas, com todos os `<a href="/{código}">`) na resposta HTML do
+servidor — só o CSS visual esconde até o clique. Conferido direto no
+HTML cru, sem executar nenhum JS (`curl` puro): os `href="/al"`,
+`/ao"`, `/ar"` etc. de cada país aparecem no HTML da primeira resposta
+com a tabela fechada. Rastreador de busca e leitor de tela continuam
+enxergando o mesmo conteúdo de antes; só quem usa o mouse/toque vê a
+tabela dobrada por padrão. Ícone de seta (`ChevronDown` do
+`lucide-react`) gira com `group-open:rotate-180` — classe Tailwind
+estática, não `style` inline, então passa pela CSP do projeto.
+
+**(3) Metodologia e fontes, versão curta**: `methodBody` reescrito
+nas 12 línguas — de um parágrafo técnico (`"uma média móvel de três
+períodos... comparada com a mediana e o ponto mais baixo..."`) para
+uma frase, no espírito exato do que o operador pediu: em PT, "O
+índice é calculado pela tendência da média dos últimos meses de dados
+oficiais disponíveis para cada país." Reaproveitada a MESMA chave que
+já alimentava o JSON-LD (`measurementTechnique` em
+`market-pulse/page.tsx`) — uma frase de verdade, não duas descrições
+que podem divergir com o tempo. Reinstalado em `hiring-map.tsx` como
+UMA linha compacta (ícone `Info` + texto pequeno, mesmo estilo visual
+do resto dos avisos da página), com `sourcesHeading` + a lista de
+fontes (`model.sources.join(', ')`) na MESMA frase — sem os dois
+`<h2>` de heading que existiam antes do §2.66. `comparisonNote`
+("países nunca são comparados entre si") não voltou: o operador só
+pediu fontes + a frase da tendência, e não citou essa nota ao pedir a
+volta.
+
+Verificado com build de produção limpo, `curl` no HTML cru (prova de
+que os links de país sobrevivem à tabela fechada) e Playwright em
+`/br/market-pulse` — desktop (1280×900) e mobile (390×844) — com a
+tabela fechada, depois clicada e aberta, confirmando a seta girando e
+as linhas aparecendo. `tsc --noEmit`, `eslint` e `npm test` (883/883,
+um teste reescrito pra não travar mais o texto do `netBreadthHint`
+removido) limpos.

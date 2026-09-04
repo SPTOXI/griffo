@@ -962,7 +962,7 @@ export const nl: TranslationDictionary = {
     updatedLabel: "Laatste verzameling: {date}",
     sourcesHeading: "Officiële bronnen",
     methodHeading: "Hoe dit wordt berekend",
-    methodBody: "De fase van een land komt uit een voortschrijdend gemiddelde over drie perioden van zijn eigen officiële reeks, vergeleken met de mediaan en het laagste punt van diezelfde reeks. Landen worden nooit met elkaar vergeleken: statistiekbureaus meten met verschillende steekproeven en responspercentages. Daarom is het totaalbeeld een telling van landen per fase en geen enkel cijfer.",
+    methodBody: "De index wordt berekend op basis van de trend van het gemiddelde van de laatste beschikbare maanden officiële gegevens per land.",
     countryLinkLabel: "Open de pagina van {country}",
     interactionHint: "Beweeg over een land of tik erop om de meting te zien.",
     mapCredit: "Basiskaart: Natural Earth (publiek domein).",

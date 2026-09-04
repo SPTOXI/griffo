@@ -962,7 +962,7 @@ export const sv: TranslationDictionary = {
     updatedLabel: "Senaste insamling: {date}",
     sourcesHeading: "Officiella källor",
     methodHeading: "Så räknas det fram",
-    methodBody: "Ett lands fas kommer från ett glidande medelvärde över tre perioder av landets egen officiella serie, jämfört med medianen och den lägsta punkten i samma serie. Länder jämförs aldrig med varandra: olika statistikmyndigheter mäter med olika urval och svarsfrekvenser. Därför är helhetsbilden ett antal länder per fas, inte ett enda betyg.",
+    methodBody: "Indexet beräknas utifrån trenden i genomsnittet av de senaste tillgängliga månadernas officiella data för varje land.",
     countryLinkLabel: "Öppna sidan för {country}",
     interactionHint: "Håll muspekaren över eller tryck på ett land för att se dess läsning.",
     mapCredit: "Kartunderlag: Natural Earth (public domain).",

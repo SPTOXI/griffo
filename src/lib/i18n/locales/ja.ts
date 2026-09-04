@@ -962,7 +962,7 @@ export const ja: TranslationDictionary = {
     updatedLabel: "最終取得: {date}",
     sourcesHeading: "公式ソース",
     methodHeading: "算出方法",
-    methodBody: "各国のフェーズは、その国の公式系列の3期移動平均を、同じ系列の中央値と最低値と比べて判定します。国どうしを比較することはありません。統計機関ごとに標本も回収率も異なるためです。だからこそ全体像はフェーズ別の国数であり、単一のスコアではありません。",
+    methodBody: "この指数は、各国で入手可能な直近数か月分の公式データの平均の傾向から算出されます。",
     countryLinkLabel: "{country}のページを開く",
     interactionHint: "国にカーソルを合わせるか、タップすると判定が表示されます。",
     mapCredit: "ベースマップ: Natural Earth（パブリックドメイン）。",

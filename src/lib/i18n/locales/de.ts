@@ -962,7 +962,7 @@ export const de: TranslationDictionary = {
     updatedLabel: "Letzte Erhebung: {date}",
     sourcesHeading: "Amtliche Quellen",
     methodHeading: "Wie das berechnet wird",
-    methodBody: "Die Phase eines Landes ergibt sich aus einem gleitenden Dreiperiodendurchschnitt seiner eigenen amtlichen Zeitreihe, verglichen mit dem Median und dem Tiefpunkt derselben Reihe. Länder werden nie miteinander verglichen: verschiedene Statistikämter messen mit unterschiedlichen Stichproben und Rücklaufquoten. Deshalb ist die Gesamtsicht eine Anzahl von Ländern je Phase und keine einzelne Kennzahl.",
+    methodBody: "Der Index wird aus dem Trend des Durchschnitts der letzten verfügbaren Monate amtlicher Daten für jedes Land berechnet.",
     countryLinkLabel: "Seite zu {country} öffnen",
     interactionHint: "Fahren Sie über ein Land oder tippen Sie es an, um seine Einschätzung zu sehen.",
     mapCredit: "Kartengrundlage: Natural Earth (gemeinfrei).",

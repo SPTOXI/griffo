@@ -962,7 +962,7 @@ export const ko: TranslationDictionary = {
     updatedLabel: "최근 수집: {date}",
     sourcesHeading: "공식 출처",
     methodHeading: "산출 방식",
-    methodBody: "각 국가의 단계는 해당 국가 공식 시계열의 3기간 이동평균을 같은 시계열의 중앙값 및 최저점과 비교해 결정합니다. 국가끼리는 결코 비교하지 않습니다. 통계 기관마다 표본과 응답률이 다르기 때문입니다. 그래서 전체 결과는 단계별 국가 수이지 하나의 점수가 아닙니다.",
+    methodBody: "이 지수는 각 국가에서 이용 가능한 최근 몇 개월간의 공식 데이터 평균 추세로 산출됩니다.",
     countryLinkLabel: "{country} 페이지 열기",
     interactionHint: "국가에 마우스를 올리거나 탭하면 판정을 볼 수 있습니다.",
     mapCredit: "기본 지도: Natural Earth(퍼블릭 도메인).",

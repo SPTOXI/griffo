@@ -963,7 +963,7 @@ export const pt: TranslationDictionary = {
       updatedLabel: "Coleta mais recente: {date}",
       sourcesHeading: "Fontes oficiais",
       methodHeading: "Como isto é calculado",
-      methodBody: "A fase de cada país sai de uma média móvel de três períodos da série oficial dele, comparada com a mediana e o ponto mais baixo dessa mesma série. Países nunca são comparados entre si: institutos de estatística diferentes medem com amostras e taxas de resposta diferentes, e por isso o agregado é uma contagem de países por fase, e não uma nota única.",
+      methodBody: "O índice é calculado pela tendência da média dos últimos meses de dados oficiais disponíveis para cada país.",
       countryLinkLabel: "Ver a página de {country}",
       interactionHint: "Passe o mouse ou toque num país para ver a leitura dele.",
       mapCredit: "Base cartográfica: Natural Earth (domínio público).",
