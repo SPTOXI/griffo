@@ -984,6 +984,7 @@ export const en: TranslationDictionary = {
     continents: {
       africa: "Africa",
       asia: "Asia",
+      centralAmericaCaribbean: "Central America and the Caribbean",
       europe: "Europe",
       northAmerica: "North America",
       oceania: "Oceania",

@@ -983,6 +983,7 @@ export const ar: TranslationDictionary = {
   continents: {
     africa: "أفريقيا",
     asia: "آسيا",
+    centralAmericaCaribbean: "أمريكا الوسطى ومنطقة البحر الكاريبي",
     europe: "أوروبا",
     northAmerica: "أمريكا الشمالية",
     oceania: "أوقيانوسيا",

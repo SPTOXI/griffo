@@ -19,10 +19,12 @@
  *
  * ## A regra de atribuição, e por que ela é uma regra e não uma opinião por país
  *
- * **UN M49** (o geoesquema da Divisão de Estatística das Nações Unidas), com
- * uma única redução declarada: o M49 tem *Americas* como uma região só, e o
- * produto precisa de seis continentes povoados. A redução usa a própria
- * hierarquia do M49, sem inventar critério:
+ * **UN M49** (o geoesquema da Divisão de Estatística das Nações Unidas), sem
+ * redução nenhuma a partir do §2.65: cada região intermediária do M49 dentro
+ * de *Americas* vira um continente próprio do produto — inclusive *Central
+ * America* e *Caribbean*, que antes do §2.65 ficavam junto de *Northern
+ * America* só porque o produto tinha seis caixas e não sete. A hierarquia do
+ * M49 é seguida sem inventar critério:
  *
  * | região M49 | vira |
  * |---|---|
@@ -30,8 +32,14 @@
  * | Asia | Ásia |
  * | Europe | Europa |
  * | Oceania | Oceania |
+ * | Americas, região intermediária *Northern America* | América do Norte |
+ * | Americas, *Central America* + *Caribbean* (M49 as separa; aqui somadas) | América Central e Caribe |
  * | Americas, região intermediária *South America* | América do Sul |
- * | Americas, o resto (*Northern America*, *Central America*, *Caribbean*) | América do Norte |
+ *
+ * A única redução que resta é juntar *Central America* com *Caribbean* — o
+ * M49 as trata como duas sub-regiões distintas, mas nenhuma das duas sozinha
+ * justificaria um oitavo continente na tela, e as duas já viviam juntas desde
+ * o §2.59. É a mesma disciplina de antes, só que com uma costura a menos.
  *
  * Uma regra única aplicada a todos, e não caso a caso, é o ponto: país
  * transcontinental é onde a atribuição "de bom senso" vira preferência de quem
@@ -47,8 +55,8 @@
  * | Chipre (CY) | Asia / Western Asia | **AS** | membro da UE, mas o M49 é geográfico |
  * | Egito (EG) | Africa / Northern Africa | **AF** | o Sinai não muda a região M49 |
  * | Timor-Leste (TL) | Asia / South-eastern Asia | **AS** | |
- * | México (MX), Panamá (PA) | Americas / Central America | **NA** | |
- * | Porto Rico (PR), Cuba, Jamaica, Barbados, Trinidad… | Americas / Caribbean | **NA** | |
+ * | México (MX), Panamá (PA) | Americas / Central America | **CA** | não é Northern America no M49, apesar do senso comum |
+ * | Porto Rico (PR), Cuba, Jamaica, Barbados, Trinidad… | Americas / Caribbean | **CA** | |
  * | Guiana (GY), Suriname (SR) | Americas / South America | **SA** | |
  *
  * **O que a regra NÃO tenta resolver.** Chipre é membro da União Europeia e a
@@ -56,6 +64,21 @@
  * discorda de uma leitura política ou de uma leitura de área. É o preço de ter
  * uma regra só, e é mais barato que 173 decisões individuais que ninguém
  * consegue reconferir depois.
+ *
+ * ## §2.65 — por que a separação, e por que não é "correção de um erro"
+ *
+ * O operador apontou que juntar *América do Norte* com *América Central e
+ * Caribe* sob um rótulo só ("América do Norte") estava errado. A investigação
+ * mostrou uma distinção que vale registrar: pela geografia FÍSICA (onde a
+ * maioria dos atlas escolares traça a linha, na fronteira Panamá–Colômbia),
+ * Central America e Caribbean SÃO parte do continente América do Norte — os
+ * 18 países de antes do §2.65 não eram um erro de continente. O problema era
+ * outro: o M49 (citado como regra deste arquivo) não é uma classificação de
+ * continente, é uma convenção ESTATÍSTICA da ONU que agrupa Central America e
+ * Caribbean junto de South America sob "Latin America and the Caribbean" —
+ * uma categoria socioeconômica, não geográfica. Como o arquivo já cita o M49
+ * como a regra e não a geografia física, a separação em sete continentes é a
+ * aplicação mais fiel dessa MESMA regra, não uma opinião nova por cima dela.
  *
  * ## Conferência: dois conjuntos independentes, não memória
  *
@@ -89,7 +112,7 @@
 import { COUNTRIES } from '../market/countries'
 
 /**
- * Os seis continentes povoados.
+ * Os sete continentes povoados.
  *
  * A Antártida não está aqui porque nenhum país da lista fica nela — e um
  * continente sempre vazio na tela seria uma linha afirmando cobertura zero de
@@ -98,7 +121,7 @@ import { COUNTRIES } from '../market/countries'
  * A ordem é a alfabética do código, e não a de tamanho, população ou mercado.
  * Nenhum continente é listado primeiro.
  */
-export const CONTINENTS = ['AF', 'AS', 'EU', 'NA', 'OC', 'SA'] as const
+export const CONTINENTS = ['AF', 'AS', 'CA', 'EU', 'NA', 'OC', 'SA'] as const
 
 export type Continent = (typeof CONTINENTS)[number]
 
@@ -137,10 +160,13 @@ export const CONTINENT_BY_COUNTRY: Readonly<Record<string, Continent>> = {
   ME: 'EU', MK: 'EU', MT: 'EU', NL: 'EU', NO: 'EU', PL: 'EU', PT: 'EU',
   RO: 'EU', RS: 'EU', RU: 'EU', SE: 'EU', SI: 'EU', SK: 'EU', UA: 'EU',
 
-  // América do Norte — 18 (inclui América Central e Caribe, ver o cabeçalho)
-  BB: 'NA', BS: 'NA', BZ: 'NA', CA: 'NA', CR: 'NA', CU: 'NA', DO: 'NA',
-  GT: 'NA', HN: 'NA', HT: 'NA', JM: 'NA', MX: 'NA', NI: 'NA', PA: 'NA',
-  PR: 'NA', SV: 'NA', TT: 'NA', US: 'NA',
+  // América do Norte — 2 (M49 Northern America; ver §2.65 no cabeçalho)
+  CA: 'NA', US: 'NA',
+
+  // América Central e Caribe — 16 (M49 Central America + Caribbean, ver §2.65)
+  BB: 'CA', BS: 'CA', BZ: 'CA', CR: 'CA', CU: 'CA', DO: 'CA', GT: 'CA',
+  HN: 'CA', HT: 'CA', JM: 'CA', MX: 'CA', NI: 'CA', PA: 'CA', PR: 'CA',
+  SV: 'CA', TT: 'CA',
 
   // Oceania — 5
   AU: 'OC', FJ: 'OC', NZ: 'OC', PF: 'OC', PG: 'OC',

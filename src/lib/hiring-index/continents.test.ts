@@ -47,7 +47,7 @@ test('a tabela tem exatamente um continente por país — nenhum código repetid
   assert.equal(codigos.length, COUNTRIES.length)
 })
 
-test('todo valor da tabela é um dos seis continentes povoados', () => {
+test('todo valor da tabela é um dos sete continentes povoados', () => {
   const validos = new Set<string>(CONTINENTS)
   for (const [code, continent] of Object.entries(CONTINENT_BY_COUNTRY)) {
     assert.match(code, /^[A-Z]{2}$/)
@@ -55,8 +55,8 @@ test('todo valor da tabela é um dos seis continentes povoados', () => {
   }
   // A Antártida não entra: nenhum país fica nela, e um continente sempre vazio
   // seria uma linha na tela afirmando cobertura zero de nada.
-  assert.equal(CONTINENTS.length, 6)
-  assert.equal(new Set(CONTINENTS).size, 6)
+  assert.equal(CONTINENTS.length, 7)
+  assert.equal(new Set(CONTINENTS).size, 7)
 })
 
 // ---------------------------------------------------------------------------
@@ -85,13 +85,17 @@ test('as Américas se dividem pela região intermediária do M49, não por gosto
   assert.equal(continentOf('BR'), 'SA')
   assert.equal(continentOf('GY'), 'SA')
   assert.equal(continentOf('SR'), 'SA')
-  // *Northern America*, *Central America* e *Caribbean* vão todas para o norte.
+  // *Northern America* vira América do Norte — só Canadá e EUA na lista do
+  // produto (Bermudas, Groenlândia e Saint-Pierre-et-Miquelon não estão nela).
   assert.equal(continentOf('US'), 'NA')
-  assert.equal(continentOf('MX'), 'NA')
-  assert.equal(continentOf('PA'), 'NA')
-  assert.equal(continentOf('CU'), 'NA')
-  assert.equal(continentOf('PR'), 'NA')
-  assert.equal(continentOf('TT'), 'NA')
+  assert.equal(continentOf('CA'), 'NA')
+  // *Central America* e *Caribbean* vão para América Central e Caribe — desde
+  // o §2.65, e não mais junto de Northern America (ver o cabeçalho).
+  assert.equal(continentOf('MX'), 'CA')
+  assert.equal(continentOf('PA'), 'CA')
+  assert.equal(continentOf('CU'), 'CA')
+  assert.equal(continentOf('PR'), 'CA')
+  assert.equal(continentOf('TT'), 'CA')
 })
 
 test('código desconhecido devolve null em vez de cair num continente qualquer', () => {
@@ -123,7 +127,7 @@ test('a contagem por continente soma a lista inteira do produto', () => {
 test('o denominador é calculado da lista, e não escrito à mão', () => {
   // Recontado aqui por outro caminho: se alguém trocar `COUNTRIES_PER_CONTINENT`
   // por uma constante literal, este teste passa a falhar no primeiro país novo.
-  const esperado: Record<Continent, number> = { AF: 0, AS: 0, EU: 0, NA: 0, OC: 0, SA: 0 }
+  const esperado: Record<Continent, number> = { AF: 0, AS: 0, CA: 0, EU: 0, NA: 0, OC: 0, SA: 0 }
   for (const country of COUNTRIES) {
     const continent = continentOf(country.code)
     assert.ok(continent, `${country.code} sem continente`)

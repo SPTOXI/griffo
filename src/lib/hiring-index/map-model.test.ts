@@ -218,9 +218,9 @@ test('a cobertura absoluta acompanha TODA barra — nunca só a percentagem', ()
   assert.equal(oc.bar[0].kind, 'uncovered')
 })
 
-test('os seis continentes saem, e o rótulo do leitor de tela diz a cobertura primeiro', () => {
+test('os sete continentes saem, e o rótulo do leitor de tela diz a cobertura primeiro', () => {
   const m = model()
-  assert.equal(m.continents.length, 6)
+  assert.equal(m.continents.length, 7)
   for (const linha of m.continents) {
     assert.ok(linha.barLabel.startsWith(linha.name))
     assert.ok(linha.barLabel.includes(linha.coverageLabel))
@@ -230,7 +230,7 @@ test('os seis continentes saem, e o rótulo do leitor de tela diz a cobertura pr
 test('O NOME DO CONTINENTE VEM DO DICIONÁRIO, NUNCA DE `Intl`', () => {
   // Nome de país por ICU já custou a árvore inteira vinda do servidor aqui
   // (`Falklandinseln` contra `Falklandinseln (Malwinen)`). Continente é um
-  // conjunto de seis palavras fixas, e é assim que ele fica.
+  // conjunto de sete palavras fixas, e é assim que ele fica.
   for (const lang of LANGUAGES) {
     const dict = DICTIONARIES[lang].continents
     const nomes = model(lang).continents.map((c) => c.name).sort()
@@ -239,15 +239,18 @@ test('O NOME DO CONTINENTE VEM DO DICIONÁRIO, NUNCA DE `Intl`', () => {
 })
 
 test('a ordem dos continentes é pelo nome no idioma ativo, sem privilegiado', () => {
-  // Em inglês: Africa, Asia, Europe, North America, Oceania, South America.
+  // Em inglês: Africa, Asia, Central America and the Caribbean, Europe,
+  // North America, Oceania, South America.
   assert.deepEqual(
     model('en').continents.map((c) => c.continent),
-    ['AF', 'AS', 'EU', 'NA', 'OC', 'SA']
+    ['AF', 'AS', 'CA', 'EU', 'NA', 'OC', 'SA']
   )
-  // Em português a ordem muda: América do Norte e América do Sul vêm antes.
+  // Em português a ordem muda: os quatro nomes de "América" vêm antes de
+  // Ásia, e "América Central e Caribe" vem antes de "do Norte"/"do Sul"
+  // porque "Central" começa com C, antes de "d" de "do".
   assert.deepEqual(
     model('pt').continents.map((c) => c.continent),
-    ['AF', 'NA', 'SA', 'AS', 'EU', 'OC']
+    ['AF', 'CA', 'NA', 'SA', 'AS', 'EU', 'OC']
   )
 })
 

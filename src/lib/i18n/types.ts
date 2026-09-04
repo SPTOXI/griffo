@@ -1039,7 +1039,7 @@ export interface TranslationDictionary {
    * (`Falklandinseln` contra `Falklandinseln (Malwinen)` em alemão — ver o
    * cabeçalho de `lib/hiring-index/map-model.ts`). Nome de continente tem
    * cobertura ainda mais irregular entre versões de ICU que nome de país.
-   * Seis palavras fixas por idioma não têm versão.
+   * Sete palavras fixas por idioma não têm versão.
    *
    * A chave é o código de `lib/hiring-index/continents.ts` escrito por
    * extenso, para que uma tradução errada seja visível na leitura.
@@ -1047,6 +1047,7 @@ export interface TranslationDictionary {
   continents: {
     africa: string
     asia: string
+    centralAmericaCaribbean: string
     europe: string
     northAmerica: string
     oceania: string

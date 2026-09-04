@@ -983,6 +983,7 @@ export const ko: TranslationDictionary = {
   continents: {
     africa: "아프리카",
     asia: "아시아",
+    centralAmericaCaribbean: "중앙아메리카 및 카리브해",
     europe: "유럽",
     northAmerica: "북아메리카",
     oceania: "오세아니아",

@@ -215,9 +215,10 @@ test('NENHUM CONTINENTE APARECE SEM A CONTAGEM ABSOLUTA DE COBERTURA', () => {
   const html = render('en')
   const text = textOf(html)
 
-  // O atlas de teste tem DE, IE, PT e SE na Europa e US na América do Norte.
+  // O atlas de teste tem DE, IE, PT e SE na Europa e US na América do Norte
+  // (que desde o §2.65 tem só Canadá e EUA, 2 países — não mais 18).
   assert.ok(text.includes('4 of 42 countries with an official source'))
-  assert.ok(text.includes('1 of 18 countries with an official source'))
+  assert.ok(text.includes('1 of 2 countries with an official source'))
   // E os continentes sem nenhum país medido dizem zero, em vez de sumir.
   assert.ok(text.includes('0 of 48 countries with an official source'))
   assert.ok(text.includes('0 of 5 countries with an official source'))
@@ -234,7 +235,7 @@ test('a parte não coberta da barra é HACHURA, não espaço vazio', () => {
   }
 })
 
-test('os seis continentes estão na tela, no idioma ativo', () => {
+test('os sete continentes estão na tela, no idioma ativo', () => {
   for (const lang of LANGUAGES) {
     const text = textOf(render(lang))
     for (const nome of Object.values(DICTIONARIES[lang].continents)) {

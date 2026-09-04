@@ -983,6 +983,7 @@ export const zh: TranslationDictionary = {
   continents: {
     africa: "非洲",
     asia: "亚洲",
+    centralAmericaCaribbean: "中美洲和加勒比地区",
     europe: "欧洲",
     northAmerica: "北美洲",
     oceania: "大洋洲",

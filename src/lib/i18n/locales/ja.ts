@@ -983,6 +983,7 @@ export const ja: TranslationDictionary = {
   continents: {
     africa: "アフリカ",
     asia: "アジア",
+    centralAmericaCaribbean: "中央アメリカ・カリブ海地域",
     europe: "ヨーロッパ",
     northAmerica: "北アメリカ",
     oceania: "オセアニア",

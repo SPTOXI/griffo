@@ -269,7 +269,7 @@ test('país coberto sem histórico bastante conta como coberto, não como fase',
 // obrigatória ao lado — e é isso que não pode se perder numa refatoração.
 // ---------------------------------------------------------------------------
 
-/** Um conjunto pequeno com país em cinco continentes, e um sexto vazio. */
+/** Um conjunto pequeno com país em cinco continentes, e dois vazios. */
 function espalhados(): HiringIndexSummary[] {
   return [
     // Europa: dois classificados e um coberto sem histórico bastante.
@@ -283,7 +283,8 @@ function espalhados(): HiringIndexSummary[] {
     summary({ country: 'KE', phase: 'recovering' }),
     summary({ country: 'JP', phase: 'bottoming_out' }),
     summary({ country: 'US', phase: 'heating_up' }),
-    // Oceania fica de fora de propósito: continente sem nenhum país coberto.
+    // Oceania e América Central e Caribe ficam de fora de propósito:
+    // continentes sem nenhum país coberto.
   ]
 }
 
@@ -342,11 +343,11 @@ test('continente sem nenhum país coberto NÃO some da lista', () => {
   assert.equal(c.OC.totalCountries, 5)
 })
 
-test('os seis continentes saem sempre, na ordem alfabética do código', () => {
+test('os sete continentes saem sempre, na ordem alfabética do código', () => {
   const vazio = continentBreakdown([])
   assert.deepEqual(vazio.map((c) => c.continent), [...CONTINENTS])
   // Nenhum continente é listado primeiro por tamanho ou por mercado.
-  assert.deepEqual([...CONTINENTS], ['AF', 'AS', 'EU', 'NA', 'OC', 'SA'])
+  assert.deepEqual([...CONTINENTS], ['AF', 'AS', 'CA', 'EU', 'NA', 'OC', 'SA'])
   // Sem nenhum país coberto, tudo zero — e nenhum NaN disfarçado.
   for (const linha of vazio) {
     assert.equal(linha.distribution.tracked, 0)
@@ -421,7 +422,7 @@ test('o atlas já sai com o recorte por continente pronto', () => {
   ])
   const c = byCode(atlas.byContinent)
 
-  assert.equal(atlas.byContinent.length, 6)
+  assert.equal(atlas.byContinent.length, 7)
   assert.equal(c.SA.distribution.counts.heating_up, 1)
   assert.equal(c.EU.distribution.counts.cooling, 1)
   assert.equal(c.SA.uncovered, c.SA.totalCountries - 1)

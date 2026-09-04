@@ -30,11 +30,12 @@
  *
  * ## O nome do continente também não vem de `Intl`
  *
- * O recorte por continente (§2.59) recebe os seis nomes pelo dicionário
- * (`TranslationDictionary['continents']`), como qualquer outro texto da tela.
- * A cobertura de nome de continente varia entre versões de ICU pelo menos
- * tanto quanto a de nome de país — e é nome de país que já custou a árvore
- * inteira do servidor aqui. Seis palavras fixas por idioma não têm versão.
+ * O recorte por continente (§2.59, sete continentes desde o §2.65) recebe os
+ * nomes pelo dicionário (`TranslationDictionary['continents']`), como
+ * qualquer outro texto da tela. A cobertura de nome de continente varia entre
+ * versões de ICU pelo menos tanto quanto a de nome de país — e é nome de país
+ * que já custou a árvore inteira do servidor aqui. Sete palavras fixas por
+ * idioma não têm versão.
  */
 
 import { PHASES, type HiringAtlas } from './atlas'
@@ -228,7 +229,7 @@ export interface HiringMapModel {
     updatedLine: string | null
   }
   bars: HiringMapBar[]
-  /** Os SEIS continentes, sempre os seis. Ver `HiringAtlas.byContinent`. */
+  /** Os SETE continentes, sempre os sete. Ver `HiringAtlas.byContinent`. */
   continents: HiringMapContinentRow[]
   legend: { fill: string; label: string }[]
   /** Uma entrada para CADA forma do mapa, coberta ou não. */
@@ -354,6 +355,7 @@ export function buildHiringMapModel(
   const CONTINENT_LABELS: Record<Continent, string> = {
     AF: continentNames.africa,
     AS: continentNames.asia,
+    CA: continentNames.centralAmericaCaribbean,
     EU: continentNames.europe,
     NA: continentNames.northAmerica,
     OC: continentNames.oceania,

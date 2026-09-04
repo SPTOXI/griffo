@@ -4302,3 +4302,66 @@ linhas limpas no mobile, sem truncar; a coluna "Fase" da tabela de 98
 países não trunca com os rótulos mais longos ("Viés de alta"/"Viés de
 baixa"); a barra do teaser da home também renderiza correta com os 5
 rótulos novos. `tsc --noEmit`, `eslint` e `npm test` (884/884) limpos.
+
+## 2.65 América Central e Caribe separam de América do Norte — sétimo continente no recorte
+
+Operador apontou que juntar América do Norte com América Central e o
+Caribe sob um rótulo só ("América do Norte", 18 países) estava errado.
+Investigação (com busca real, não memória — ver fontes) mostrou uma
+distinção que muda a resposta: pela geografia FÍSICA (a linha que a
+maioria dos atlas escolares traça na fronteira Panamá–Colômbia),
+Central America e Caribbean SÃO parte do continente América do Norte
+— os 18 países de antes não eram, em si, um erro de continente. O
+problema real é que a regra que este projeto já cita como autoridade
+(**UN M49**) não é uma classificação de continente: é uma convenção
+ESTATÍSTICA da ONU que agrupa *Central America* e *Caribbean* junto de
+*South America* sob "Latin America and the Caribbean" — uma categoria
+socioeconômica da ONU, não geográfica (confirmado contra
+[UN M49 — Wikipedia](https://en.wikipedia.org/wiki/UN_M49) e
+[UNSD M49 Methodology](https://unstats.un.org/unsd/methods/m49/m49regin.htm)).
+Como o arquivo já declara o M49 como a regra e não a geografia física,
+separar em sete continentes é a aplicação mais fiel da MESMA regra —
+não uma opinião nova por cima dela.
+
+**Mudança em `src/lib/hiring-index/continents.ts`**: novo continente
+`CA` ("América Central e Caribe"), `CONTINENTS` de seis para sete
+(`['AF', 'AS', 'CA', 'EU', 'NA', 'OC', 'SA']`). América do Norte cai
+de 18 para **2 países** (só Canadá e EUA — a *Northern America* real
+do M49; Bermudas, Groenlândia e Saint-Pierre-et-Miquelon não estão na
+lista de 173 do produto). América Central e Caribe fica com os outros
+**16**: Belize, Costa Rica, Cuba, El Salvador, Guatemala, Haiti,
+Honduras, Jamaica, México, Nicarágua, Panamá, Porto Rico, República
+Dominicana, Bahamas, Barbados, Trinidad e Tobago — México e Panamá
+inclusive, que o M49 classifica em *Central America*, não *Northern
+America*, apesar do senso comum. Reaproveitado o código `CA` mesmo
+colidindo com o ISO2 do Canadá — o arquivo já tinha esse padrão de
+colisão aceito (`AF` continente vs. Afeganistão, `NA` continente vs.
+Namíbia, `SA` continente vs. Arábia Saudita).
+
+**i18n**: nova chave `continents.centralAmericaCaribbean` em
+`i18n/types.ts` e nas 12 línguas (`"América Central e Caribe"` em PT,
+`"Central America and the Caribbean"` em EN, e equivalentes nativos
+nas outras 10 — nenhuma tradução veio de `Intl.DisplayNames`, mesma
+regra do resto do dicionário de continentes).
+
+**Efeito colateral correto, não bug**: como a ordem dos continentes na
+tela é alfabética pelo NOME no idioma ativo (não pelo código), o novo
+continente muda a posição dos outros em alguns idiomas — em português,
+"América Central e Caribe" entra entre "África" e "América do Norte"
+(porque "Central" vem antes de "do" alfabeticamente). Os testes que
+travavam a ordem exata (`map-model.test.ts`) foram recalculados e
+atualizados, não relaxados.
+
+Atualizados: `continents.ts` (dados + cabeçalho), `map-model.ts`
+(`CONTINENT_LABELS` + comentários "seis"→"sete"), `i18n/types.ts`,
+as 12 locales, e os testes que hardcodavam contagem/ordem de seis
+continentes (`continents.test.ts`, `atlas.test.ts`,
+`map-model.test.ts`, `hiring-map.test.ts` — este último tinha
+`'1 of 18 countries...'` fixado no atlas de teste, agora `'1 of 2'`).
+
+Verificado com build de produção limpo e Playwright em `/market-pulse`
+nos três locais que mostram continente — tabela "Por continente" em
+PT e EN, mobile (390×844) — confirmando a ordem alfabética prevista em
+cada idioma e nenhum truncamento com o nome mais longo. `tsc --noEmit`,
+`eslint` e `npm test` (884/884, mesma contagem — só reescrita de
+asserções existentes, nenhum teste novo) limpos.
