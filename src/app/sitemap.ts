@@ -13,31 +13,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date()
 
   // 1. Root page
+  //
+  // Sem `alternates.languages` aqui de propósito (tinha, mas incompleto e não
+  // bidirecional — o Google descarta hreflang assim). A raiz reescreve pro
+  // país da borda (`middleware.ts`) e renderiza a MESMA página de
+  // `[country]/page.tsx`, que agora carrega o hreflang completo das 41 rotas
+  // via `generateMetadata` — uma fonte só, não duas listas que podem divergir.
   const routes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified,
       changeFrequency: 'daily',
       priority: 1.0,
-      alternates: {
-        languages: {
-          'pt-BR': `${baseUrl}/br`,
-          'en-US': `${baseUrl}/us`,
-          'pt-PT': `${baseUrl}/pt`,
-          'es-ES': `${baseUrl}/es`,
-          'es-MX': `${baseUrl}/mx`,
-          'en-GB': `${baseUrl}/gb`,
-          'de-DE': `${baseUrl}/de`,
-          'fr-FR': `${baseUrl}/fr`,
-          'it-IT': `${baseUrl}/it`,
-          'ja-JP': `${baseUrl}/jp`,
-          'nl-NL': `${baseUrl}/nl`,
-          'sv-SE': `${baseUrl}/se`,
-          'zh-CN': `${baseUrl}/cn`,
-          'ar-AE': `${baseUrl}/ae`,
-          'ko-KR': `${baseUrl}/kr`,
-        },
-      },
     },
   ]
 

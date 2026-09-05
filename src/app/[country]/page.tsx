@@ -9,6 +9,38 @@ import { CountryPageClient } from './country-client'
 
 export const dynamicParams = true
 
+/**
+ * hreflang completo das 41 rotas de país, derivado de `SUPPORTED_COUNTRY_SLUGS`
+ * + `marketForCountry` — nunca uma lista copiada à mão.
+ *
+ * Antes desta correção (achado ao investigar por que o site não tinha
+ * NENHUMA página indexada), o único hreflang do site vivia numa entrada do
+ * `sitemap.ts` (a home, com 15 pares) e não existia em nenhuma página real —
+ * nem sequer apontava de volta pra si mesma. A documentação oficial do
+ * Google é direta sobre o que isso significa na prática: "If two pages
+ * don't both point to each other, the tags will be ignored" — ou seja, o
+ * hreflang inteiro estava sendo descartado, não só incompleto.
+ *
+ * Esta tabela corrige isso construindo o conjunto INTEIRO — cada uma das 41
+ * rotas listando a si mesma e todas as outras, bidirecionalmente, porque
+ * `generateMetadata` usa a MESMA constante em toda página. `global` vira
+ * `x-default`, exatamente o uso que o Google recomenda para essa chave: é
+ * literalmente a página de fallback internacional do produto.
+ */
+const HREFLANG_ALTERNATES: Record<string, string> = (() => {
+  const alternates: Record<string, string> = {}
+  for (const slug of SUPPORTED_COUNTRY_SLUGS) {
+    if (slug === 'global') {
+      alternates['x-default'] = `https://griffo.work/${slug}`
+      continue
+    }
+    const code = slug.toUpperCase()
+    const market = marketForCountry(code)
+    alternates[`${market.jobLanguage}-${code}`] = `https://griffo.work/${slug}`
+  }
+  return alternates
+})()
+
 export function generateStaticParams() {
   return SUPPORTED_COUNTRY_SLUGS.map((country) => ({
     country,
@@ -82,6 +114,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ],
     alternates: {
       canonical: `https://griffo.work/${slug}`,
+      languages: HREFLANG_ALTERNATES,
     },
     openGraph: {
       title,

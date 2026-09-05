@@ -4517,3 +4517,63 @@ desktop e mobile: "Equilíbrio +6%" renderiza correto, sem quebra.
 `tsc --noEmit`, `eslint` e `npm test` (886/886 — 3 testes novos pra
 `netBreadthTerm`, 2 reescritos nos arquivos que checavam o `+1`/`+25%`
 antigo) limpos.
+
+## 2.69 Zero páginas indexadas: 4 domínios duplicados + hreflang que o Google descartava por inteiro
+
+Operador pediu urgência em tráfego orgânico ("estamos sem tráfego
+orgânico"). Investigação com dado real, não suposição: `site:griffo.work`
+não retornava NENHUMA página — nem a home. `robots.txt`, `meta robots`
+e resposta ao Googlebot (testado com `curl -A "Googlebot/2.1..."`)
+estavam todos corretos, então o bloqueio não era ali. Duas causas reais
+foram confirmadas, uma de infraestrutura (fora deste repositório) e
+uma de código.
+
+**Causa 1 — quatro domínios servindo o MESMO conteúdo, sem redirecionamento
+nenhum entre eles.** `griffo.work`, `www.griffo.work`, `griffowork.com`
+e `www.griffowork.com` respondiam todos com `200` e o mesmo `Etag`
+(mesmo deploy da Vercel, quatro hostnames). O Search Console tinha
+`www.griffo.work` indexado (de uma configuração antiga, com redirect
+apex→www da Cloudflare que o operador removeu) e `griffo.work` marcado
+como "problema de redirecionamento" — o Google com o status antigo em
+cache, de antes da mudança. Corrigido na Vercel (Project → Settings →
+Domains): os três domínios secundários configurados como "Redirect to"
+`griffo.work`, permanente, preservando caminho e query — conferido com
+`curl -IL` num caminho real (`/us?nocache=...`) que os três convergem
+com `301` e o caminho intacto, não caem todos na home.
+
+**Causa 2 — hreflang existia só na home do `sitemap.ts` (15 pares) e
+nunca era bidirecional; nenhuma página de país tinha uma tag `hreflang`
+sequer.** A documentação oficial do Google
+([developers.google.com/search/docs/specialty/international/localized-versions](https://developers.google.com/search/docs/specialty/international/localized-versions))
+é direta: *"If two pages don't both point to each other, the tags will
+be ignored"* e *"Each language version must list itself as well as
+all other language versions"*. O hreflang do site inteiro estava sendo
+descartado, não só incompleto.
+
+Corrigido em `src/app/[country]/page.tsx`: `HREFLANG_ALTERNATES`, uma
+constante derivada de `SUPPORTED_COUNTRY_SLUGS` + `marketForCountry`
+— nunca uma lista copiada à mão, para não divergir da lista real de
+rotas. Cada uma das 41 páginas de país agora lista a si mesma e todas
+as outras 40, bidirecionalmente (`pt-BR`↔`en-US`↔`de-AT`↔... até
+`ko-KR`), mais `x-default` apontando pra `/global` — o uso que o
+próprio Google recomenda para essa chave, e que aqui é literal: `/global`
+já É a página de fallback internacional do produto. País que herda
+mercado de outro (Áustria de `DE`, Bélgica/Luxemburgo de `FR`, Nova
+Zelândia de `AU`) usa o idioma do mercado herdado com o PRÓPRIO código
+de país (`de-AT`, `fr-BE`, `fr-LU`, `en-NZ`) — nunca o país âncora.
+
+Removido o bloco de hreflang incompleto que existia na entrada da home
+em `sitemap.ts`: a raiz reescreve pro país da borda e renderiza a
+MESMA página de `[country]/page.tsx` (`middleware.ts`), que agora já
+carrega o hreflang completo — manter os dois seria duas fontes de
+verdade competindo, exatamente o problema que causou isto.
+
+Verificado com build de produção limpo e `curl` direto no HTML (sem
+JS): `/br` sai com as 41 tags `<link rel="alternate" hreflang="...">`,
+incluindo a autorreferência (`pt-BR` apontando pra si mesma); `/us`
+tem a entrada de volta pra `/br` (bidirecionalidade real, não só na
+direção óbvia); `x-default` aponta pra `/global`; `/global` também sai
+com as 41. Canonical intacto, sem mudança. `tsc --noEmit`, `eslint` e
+`npm test` (886/886, sem teste novo — página de rota, não módulo de
+`lib/`, mesmo padrão de cobertura já usado pro resto de `src/app`)
+limpos.
