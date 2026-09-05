@@ -1,11 +1,22 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useAuth, useNav } from '@/store/auth'
 import { Landing } from '@/components/landing/landing'
-import { AuthScreen } from '@/components/auth/auth-screen'
-import { AppShell } from '@/components/app/app-shell'
 import type { Language } from '@/lib/i18n'
+
+// Mesmo motivo de `src/app/page.tsx`: `AppShell` puxa o app autenticado
+// inteiro (dashboard, laudo com `recharts`, admin), e isto AQUI é a segunda
+// entrada estática pro mesmo import que explicava o achado do
+// PageSpeed/Search Console — corrigir só `page.tsx` não bastava porque o
+// bundler compartilha o chunk entre as duas páginas que o referenciam.
+const AuthScreen = dynamic(() => import('@/components/auth/auth-screen').then((m) => m.AuthScreen), {
+  ssr: false,
+})
+const AppShell = dynamic(() => import('@/components/app/app-shell').then((m) => m.AppShell), {
+  ssr: false,
+})
 
 type Screen = 'landing' | 'login' | 'signup' | 'app'
 

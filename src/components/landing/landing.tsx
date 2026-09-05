@@ -62,6 +62,8 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
             <img
               src="/logo-icon.png"
               alt="GriffoWork Logo"
+              width={553}
+              height={424}
               className="h-13 sm:h-16 md:h-18 w-auto object-contain shrink-0 transition-transform duration-200 group-hover:scale-105"
             />
             <div className="flex flex-col leading-none">
@@ -485,7 +487,7 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-sm">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <img src="/logo-icon.png" alt="GriffoWork Logo" className="h-11 sm:h-12 w-auto object-contain shrink-0" />
+              <img src="/logo-icon.png" alt="GriffoWork Logo" width={553} height={424} className="h-11 sm:h-12 w-auto object-contain shrink-0" />
               <div className="flex flex-col leading-none">
                 <span className="font-extrabold text-[#0B192E] text-xl tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
                 <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#0B63E5] mt-0.5">{appSubtitles[lang] || appSubtitles.pt}</span>

@@ -153,6 +153,8 @@ export default async function AtsPage({ params }: PageProps) {
             <img
               src="/logo-icon.png"
               alt="GriffoWork Logo"
+              width={553}
+              height={424}
               className="h-12 w-auto object-contain transition-transform group-hover:scale-105"
             />
             <div className="flex flex-col leading-none">
@@ -348,7 +350,7 @@ export default async function AtsPage({ params }: PageProps) {
       <footer className="mt-auto border-t border-slate-200 bg-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-medium">
           <div className="flex items-center gap-2">
-            <img src="/logo-icon.png" alt="GriffoWork Logo" className="h-6 w-auto object-contain" />
+            <img src="/logo-icon.png" alt="GriffoWork Logo" width={553} height={424} className="h-6 w-auto object-contain" />
             <span>© {new Date().getFullYear()} GriffoWork — Global AI Career Intelligence.</span>
           </div>
           <div className="flex items-center gap-4">

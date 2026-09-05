@@ -4577,3 +4577,65 @@ com as 41. Canonical intacto, sem mudança. `tsc --noEmit`, `eslint` e
 `npm test` (886/886, sem teste novo — página de rota, não módulo de
 `lib/`, mesmo padrão de cobertura já usado pro resto de `src/app`)
 limpos.
+
+## 2.70 O app autenticado inteiro (com `recharts`) ia no JS de todo visitante anônimo — achado real do PageSpeed/Search Console
+
+Operador trouxe três apontamentos do Search Console mobile: "reduza o
+JavaScript não usado" (303 KiB estimados, um chunk de 320 KiB
+transferidos com 256 KiB nunca usados), imagens sem `width`/`height`
+explícitos (CLS) e uma tarefa longa de 186ms na thread principal —
+tudo apontando pro MESMO chunk (`0qpw58snw4ar9.js` no relatório deles).
+
+**CLS — resolvido em 6 lugares**: todo `<img src="/logo-icon.png">`
+do site (`landing.tsx` ×2, `auth-screen.tsx`, `app-shell.tsx`,
+`ats/[slug]/page.tsx` ×2) não tinha `width`/`height`. Lidas as
+dimensões reais do arquivo direto do cabeçalho PNG (`553×424`, sem
+adivinhar) e adicionadas como atributos HTML em todos os seis — o
+navegador reserva o espaço certo antes do CSS carregar, e as classes
+Tailwind (`h-13`, `w-auto` etc.) continuam controlando o tamanho
+exibido normalmente.
+
+**JS não usado + tarefa longa — a causa era arquitetural, não uma
+lib solta**: `src/app/page.tsx` e `src/app/[country]/country-client.tsx`
+são componentes cliente que trocam de "tela" (`Landing`/`AuthScreen`/
+`AppShell`) por estado em memória, não por rota do Next.js — e os
+três eram `import` estático no topo dos dois arquivos. Isso significa
+que **todo visitante anônimo baixava e processava o app autenticado
+inteiro** (dashboard, admin, e o laudo de análise com a biblioteca de
+gráficos `recharts`) mesmo nunca fazendo login. Confirmado direto no
+bundle: o chunk de 1,24 MB carregado por padrão na home tinha 44
+ocorrências de `recharts` e 485 de `zod` — o app inteiro, não só a
+Landing.
+
+Corrigido com `next/dynamic({ ssr: false })` em `AuthScreen` e
+`AppShell`, nos dois arquivos. A primeira tentativa (`dynamic()` sem
+`ssr: false`) NÃO bastou — o chunk continuava saindo como
+`<script async>` no HTML da primeira resposta, porque o App Router
+inclui o import dinâmico no grafo de hidratação crítico por padrão a
+menos que `ssr: false` seja explícito. Só depois de adicionar isso nos
+DOIS arquivos (havia duas entradas estáticas independentes pro mesmo
+import — corrigir só `page.tsx` não bastou, porque o bundler
+compartilhava o chunk com `country-client.tsx`) o `recharts` sumiu de
+verdade da lista de chunks carregados na home: **zero ocorrências**,
+contra 44 antes. Total de JS bruto na home caiu de ~2,43 MB pra
+~1,46 MB (~40% a menos) — o `Landing` continua `import` estático de
+propósito (é o que sai pronto no HTML da primeira resposta pra
+buscador e bot de IA).
+
+Verificado com Playwright: clique em "Já tenho conta" carrega e
+renderiza o `AuthScreen` normalmente sob demanda, sem flash nem erro
+novo no console (os mesmos 6 erros de CSP de sempre, framework do
+Next.js, nenhum novo). Mobile conferido, logo sem distorção.
+
+**Achado à parte, fora do escopo de hoje**: `/us` (e provavelmente
+outras páginas de país fora do PT) sai com o título
+"GriffoWork **Estados Unidos** — Global AI Career Intelligence..." —
+nome do país em português misturado com tagline em inglês, confirmado
+com `curl` sem cookie nenhum. É `countryName()` não respeitando
+`market.jobLanguage` na hora de montar o título. Não corrigido agora
+por não fazer parte do que foi pedido — registrado aqui pra não se
+perder.
+
+`tsc --noEmit`, `eslint` e `npm test` (886/886, sem teste novo —
+mudança de bundling/carregamento, não de lógica testável em `lib/`)
+limpos.

@@ -1,10 +1,26 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useAuth, useNav } from '@/store/auth'
 import { Landing } from '@/components/landing/landing'
-import { AuthScreen } from '@/components/auth/auth-screen'
-import { AppShell } from '@/components/app/app-shell'
+
+// `AuthScreen` e, principalmente, `AppShell` puxam a árvore inteira do app
+// autenticado (dashboard, laudo com `recharts`, admin) — código que quem só
+// está vendo a home nunca executa. Antes, os três eram `import` estático no
+// topo do arquivo: todo visitante anônimo baixava e processava esse JS
+// (achado real do PageSpeed/Search Console: um chunk de 1,24 MB, ~255 KiB
+// "não usado" de 320 KiB transferidos, e uma tarefa longa de 186ms na thread
+// principal). `dynamic()` cria um chunk à parte, buscado só quando
+// `effectiveScreen` deixa de ser `'landing'` — a `Landing` continua import
+// estático de propósito, porque é ela que sai pronta no HTML da primeira
+// resposta para buscador e bot de IA (ver o comentário mais abaixo).
+const AuthScreen = dynamic(() => import('@/components/auth/auth-screen').then((m) => m.AuthScreen), {
+  ssr: false,
+})
+const AppShell = dynamic(() => import('@/components/app/app-shell').then((m) => m.AppShell), {
+  ssr: false,
+})
 
 type Screen = 'landing' | 'login' | 'signup' | 'app'
 
