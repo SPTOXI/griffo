@@ -4752,3 +4752,43 @@ Verificado com build de produção limpo, `curl` (headline correto em
 tagline, headline e CTA renderizando corretos nas duas resoluções
 depois do fix do botão. `tsc --noEmit`, `eslint` e `npm test`
 (886/886) limpos.
+
+## 2.73 IndexNow (Bing + demais motores participantes)
+
+Operador trouxe uma chave IndexNow (`5aa728fe6a274c0d8fb10530a78312fa`)
+e o protocolo oficial, pedindo pra implementar a indexação via Bing.
+IndexNow é um protocolo compartilhado — um único POST no endpoint
+genérico (`api.indexnow.org`) distribui a notificação pra todos os
+motores participantes (Bing, Yandex, Seznam, Naver...), não só o Bing;
+não existe um endpoint "só Bing" a mais que valha a pena chamar
+separado.
+
+**Hospedagem da chave (passo 2, opção 1 do protocolo)**:
+`public/5aa728fe6a274c0d8fb10530a78312fa.txt`, contendo só a chave —
+fica servido em `https://griffo.work/5aa728fe6a274c0d8fb10530a78312fa.txt`
+assim que o deploy for ao ar, sem rota nem código adicional (é
+`public/`, Next serve estático).
+
+**Código (passo 3)**: `lib/seo/indexnow.ts` expõe
+`submitUrlsToIndexNow(urls, fetchImpl?)` — `fetchImpl` recebido por
+parâmetro pelo mesmo motivo de `lib/email/send.ts` (§7.3): a chamada
+real ao endpoint nunca foi observada em teste, só a documentação
+oficial, então o teste injeta um fetch falso em vez de bater na rede.
+`scripts/submit-indexnow.ts` é o gatilho MANUAL — reaproveita
+`app/sitemap.ts` como única fonte da lista de URLs (mesmo princípio
+de `[country]/page.tsx` reaproveitar `SUPPORTED_COUNTRY_SLUGS`: uma
+lista de rotas só, nunca duas que podem divergir). `npm run
+indexnow:submit` roda o script.
+
+**Não criado**: cron automático. O projeto já documenta (pendência 14c
+do handoff) que o plano Hobby da Vercel limita quantos crons cabem em
+`vercel.json`, e que rota nova sem esse limite resolvido fica sem
+agendamento até decisão do operador — mesma régua aplicada aqui: o
+gatilho manual cobre o pedido (bulk agora, e depois de qualquer
+mudança grande de conteúdo), agendamento automático fica em aberto
+pra quando fizer sentido, sem gastar o orçamento de cron sem decisão.
+
+Testado com 2 casos em `indexnow.test.ts` (corpo da requisição
+correto — `host`, `key`, `keyLocation`, `urlList`; e o caminho de
+recusa, `403`, devolvendo `ok: false`). `tsc --noEmit`, `eslint` e
+`npm test` (888/888) limpos.
