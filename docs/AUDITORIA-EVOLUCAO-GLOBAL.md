@@ -4687,3 +4687,68 @@ mistura de idioma em nenhuma. JSON-LD de `/de` conferido também:
 "GriffoWork Germany", "for Germany market" — inglês consistente, sem
 "Deutschland" no meio da frase em inglês. `tsc --noEmit`, `eslint` e
 `npm test` (886/886) limpos.
+
+## 2.72 Reposicionamento da home: tagline sem "IA/Global", CTA e headline novos, nas 12 línguas
+
+Operador trouxe uma análise de posicionamento com 5 pontos e pediu
+pra executar 3 deles (os que são texto puro, sem depender de feature
+nova — os outros 2 ficam pro planejamento de conteúdo/campanha).
+Antes de escrever qualquer copy, investiguei uma afirmação factual da
+própria análise: que "o prompt de indicações (âncora/lateral/salto) já
+é o produto central". Não é — `career-orientation.ts` devolve 3 áreas
+com % de encaixe, sem essa categorização em três tipos de movimento.
+Essa investigação separou o que era proposta de MARKETING (que segue
+abaixo) do que seria proposta de PRODUTO NOVO (não pedida, não feita).
+
+**1. Tagline sem "IA"/"Global"** — `appSubtitles` em `landing.tsx`
+tinha um problema próprio, achado no caminho: só 7 das 12 línguas
+estavam preenchidas (`pt, en, es, de, fr, it, ja`), e as 5 que faltavam
+(`nl, sv, zh, ar, ko`) caíam no fallback `|| appSubtitles.pt` — sem
+consequência visível até agora porque as 7 preenchidas eram todas a
+MESMA string em inglês ("GLOBAL AI CAREER INTELLIGENCE"). Trocar por
+textos DIFERENTES por idioma sem completar as 12 teria vazado inglês
+pras 5 línguas que faltavam — exatamente o defeito que o projeto evita
+há sessões. Corrigido preenchendo as 12, cada uma com o equivalente
+nativo de "Inteligência de Carreira" (`KARRIERE-INTELLIGENZ`,
+`キャリア・インテリジェンス`, `职业智能`, etc.), sem menção a IA nem a
+"global" em nenhuma. O "AI"/"Global" continuam nos `<title>` de SEO
+(`[country]/page.tsx`, inalterado) — tagline visual e `<title>` de
+busca são textos diferentes, e o volume de busca por "AI" ainda
+importa lá.
+
+**2. CTA — "Descobrir minhas melhores direções profissionais"** e
+**5. Headline — "Sua experiência vale mais do que o cargo no seu
+currículo"**: `hero.title1`/`titleAccent`/`title2`/`ctaPrimary`
+reescritos nas 12 línguas, mantendo a palavra em destaque (gradiente)
+sobre "experiência" (ou equivalente) em vez de "currículo" — o oposto
+do que a home dizia até agora. No árabe, `title1` ficou vazio na
+primeira tentativa (a frase começa pela palavra em destaque) e o teste
+de paridade (`i18n.test.ts`) corretamente recusou string vazia;
+corrigido com `'إنّ '` (partícula de ênfase formal), gramaticalmente
+correto e sem alterar o sentido.
+
+**Achado de layout ao verificar no mobile**: o CTA novo, mais longo
+que o antigo, estourava a largura do botão — `whitespace-nowrap` vem
+embutido nas classes base do componente `Button` (`components/ui/button.tsx`),
+e a página tem `overflow-x-hidden` no container raiz, então o excesso
+não virava scroll, virava corte silencioso de texto. Corrigido só
+nesta instância do botão (`whitespace-normal` + `h-auto min-h-12` no
+lugar de `h-12` fixo, `shrink-0` na seta) — o componente `Button`
+global não foi tocado, então nenhum outro botão do site foi afetado.
+O H1 (headline) nunca teve esse problema: quebra de linha normal,
+sem clipping — a suspeita inicial de bug ali era falsa, descartada
+depois de reconferir com screenshot limpo.
+
+**Deixado para confirmação do operador**: o badge/pílula acima do
+headline ("IA + Padrões Gupy, LinkedIn & Recrutamento Global") também
+menciona "IA" e "Global", mas é um texto DIFERENTE da tagline
+(`hero.badge`, não `appSubtitles`) e não foi citado no pedido — não
+alterado, por não ter sido pedido, mas fica registrado como
+inconsistência em potencial com a decisão de tirar esses termos da
+tagline.
+
+Verificado com build de produção limpo, `curl` (headline correto em
+`/br`, `/us`, `/de`, `/ae`) e Playwright em desktop e mobile —
+tagline, headline e CTA renderizando corretos nas duas resoluções
+depois do fix do botão. `tsc --noEmit`, `eslint` e `npm test`
+(886/886) limpos.

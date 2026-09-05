@@ -43,14 +43,24 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
     setOpenFaq(openFaq === index ? null : index)
   }
 
+  // Tagline da marca, sem "AI"/"Global" — decisão de posicionamento do
+  // operador: o produto continua global e usa IA, mas a marca não precisa
+  // dizer isso na tagline. O "AI"/"Global" continuam nos `<title>` de SEO
+  // (`[country]/page.tsx`), que é texto diferente da tagline visual e onde
+  // esse volume de busca ainda importa.
   const appSubtitles: Record<string, string> = {
-    pt: 'GLOBAL AI CAREER INTELLIGENCE',
-    en: 'GLOBAL AI CAREER INTELLIGENCE',
-    es: 'GLOBAL AI CAREER INTELLIGENCE',
-    de: 'GLOBAL AI CAREER INTELLIGENCE',
-    fr: 'GLOBAL AI CAREER INTELLIGENCE',
-    it: 'GLOBAL AI CAREER INTELLIGENCE',
-    ja: 'GLOBAL AI CAREER INTELLIGENCE',
+    pt: 'INTELIGÊNCIA DE CARREIRA',
+    en: 'CAREER INTELLIGENCE',
+    es: 'INTELIGENCIA DE CARRERA',
+    de: 'KARRIERE-INTELLIGENZ',
+    fr: 'INTELLIGENCE DE CARRIÈRE',
+    it: 'INTELLIGENZA DI CARRIERA',
+    ja: 'キャリア・インテリジェンス',
+    ko: '커리어 인텔리전스',
+    nl: 'CARRIÈRE-INTELLIGENTIE',
+    sv: 'KARRIÄRINTELLIGENS',
+    zh: '职业智能',
+    ar: 'الذكاء المهني',
   }
 
   return (
@@ -170,8 +180,8 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 pt-1">
-                <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white text-base h-12 sm:h-13 px-8 shadow-lg shadow-primary/25 font-bold">
-                  {t.hero.ctaPrimary} <ArrowRight className="w-5 h-5 ml-2" />
+                <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white text-base h-auto min-h-12 sm:min-h-13 py-3 px-8 shadow-lg shadow-primary/25 font-bold whitespace-normal">
+                  {t.hero.ctaPrimary} <ArrowRight className="w-5 h-5 ml-2 shrink-0" />
                 </Button>
                 <Button onClick={() => onNavigate('login')} size="lg" variant="outline" className="w-full sm:w-auto text-base h-12 sm:h-13 px-7 border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold">
                   {t.hero.ctaSecondary}
