@@ -70,6 +70,54 @@ test('nenhuma chave de tradução possui string vazia em nenhum dos 12 idiomas',
   }
 })
 
+function extractPlaceholders(str: string): string[] {
+  return [...new Set(str.match(/\{[a-zA-Z0-9_]+\}/g) || [])].sort()
+}
+
+test('todo placeholder {xxx} usado no PT existe nos outros 11 idiomas na mesma chave', () => {
+  // Achado real (§2.76): reportOf/lastUpdated tinham "{date}" só em pt/en/es —
+  // nos outros 9 idiomas a data era descartada em silêncio por `.replace()`
+  // não encontrar o token. Isto pega essa classe de bug pra sempre: um
+  // idioma pode traduzir a FRASE como quiser, mas não pode perder um
+  // placeholder que o valor real (data, contagem, nome) depende de receber.
+  // Exceção real, não preguiça: nestas 3 chaves a variante "One" só é escolhida
+  // quando a contagem É exatamente 1 (`count === 1 ? xOne : xMany` em
+  // professional-profile-view.tsx e radar-view.tsx), e o PT usa "{n}" nelas de
+  // forma redundante — escrever o "1" fixo, como de/fr/it/... já faziam, é
+  // igualmente correto e não perde informação nenhuma.
+  const SINGULAR_LITERAL_OK = new Set([
+    'profile.saveSuccessWithRadarOne',
+    'profile.fillSuccessOne',
+    'radar.runSuccessOne',
+  ])
+
+  const ptKeys = extractKeyPaths(DICTIONARIES.pt)
+  const mismatches: string[] = []
+
+  for (const path of ptKeys) {
+    if (SINGULAR_LITERAL_OK.has(path)) continue
+    const parts = path.split('.')
+    const ptValue = parts.reduce((cur: any, part) => cur[part], DICTIONARIES.pt)
+    if (typeof ptValue !== 'string') continue
+    const ptPlaceholders = extractPlaceholders(ptValue)
+    if (ptPlaceholders.length === 0) continue
+
+    for (const lang of LANGUAGES) {
+      if (lang === 'pt') continue
+      const value = parts.reduce((cur: any, part) => cur[part], DICTIONARIES[lang])
+      if (typeof value !== 'string') continue
+      const placeholders = extractPlaceholders(value)
+      if (placeholders.join(',') !== ptPlaceholders.join(',')) {
+        mismatches.push(
+          `'${lang}'.${path}: esperado [${ptPlaceholders.join(', ')}], achou [${placeholders.join(', ')}]`
+        )
+      }
+    }
+  }
+
+  assert.deepEqual(mismatches, [], `Placeholders divergentes:\n${mismatches.join('\n')}`)
+})
+
 test('detecção de idioma por país funciona corretamente', () => {
   // Português
   assert.equal(detectLanguageFromCountry('BR'), 'pt')

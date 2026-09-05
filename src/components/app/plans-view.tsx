@@ -110,7 +110,7 @@ export function PlansView() {
             <Button
               onClick={() => handleBuy('single')}
               disabled={buying !== null}
-              className="w-full h-11 text-sm font-bold bg-primary hover:bg-primary/90 text-white shadow-md"
+              className="w-full h-auto min-h-11 py-2 text-sm font-bold bg-primary hover:bg-primary/90 text-white shadow-md whitespace-normal"
             >
               {buying === 'single' ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -147,7 +147,7 @@ export function PlansView() {
                 <Button
                   onClick={() => handleBuy('pack5')}
                   disabled={buying !== null}
-                  className="w-full h-10 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950"
+                  className="w-full h-auto min-h-10 py-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 whitespace-normal"
                 >
                   {buying === 'pack5' ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-1.5" />

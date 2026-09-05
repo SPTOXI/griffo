@@ -4953,3 +4953,119 @@ sem reload — e continua em alemão depois de um reload de verdade
 (persistência via `localStorage`/cookie já existente, agora
 efetivamente lida na re-renderização). `tsc --noEmit`, `eslint` e `npm
 test` (888/888) limpos.
+
+## 2.76 36 chaves de i18n perdendo dado real em 9 de 12 idiomas — placeholder ausente ou trocado
+
+Pedido do operador: auditar layout de `/market-pulse` e das telas
+autenticadas (item 4) e trocar o emoji de bandeira do seletor (item
+5). O item 4 revelou um problema muito maior do que layout.
+
+**`/market-pulse` em si: limpo.** Varredura em 12 idiomas × 2
+resoluções não achou nenhuma sobreposição — a tabela de 98 países
+"vazando" da viewport no mobile é o padrão CORRETO
+(`overflow-x-auto` na `<div>` que envolve a `<table>`, confirmado por
+`document.documentElement.scrollWidth` não crescer): tabela larga
+rola dentro da própria caixa, não é a página inteira que estoura.
+
+**O achado real começou com um `truncate` isolado.** Investigando o
+mesmo padrão de risco do §2.74 em `dashboard.tsx` (cartão de
+histórico, `flex items-center gap-4 min-w-0` idêntico ao do índice
+que já tinha quebrado), notei que `t.dashboard.reportOf` e
+`lastUpdated` faziam `.replace('{date}', date)` — mas alemão, francês,
+italiano, japonês, holandês, sueco, chinês, árabe e coreano não tinham
+NENHUM `{date}` na tradução. `.replace()` sem encontrar o token não
+faz nada: a data que o produto mostra pra dizer QUAL versão do
+currículo é aquela — desaparecia em silêncio, pros 9 idiomas.
+
+**Escrito um teste pra medir o tamanho real do problema**
+(`i18n.test.ts`): compara, para toda chave em `pt` que contém um
+`{placeholder}`, se as outras 11 traduções têm o MESMO conjunto de
+placeholders. Resultado da primeira rodada: **36 chaves**, todas
+faltando o placeholder exatamente nos MESMOS 9 idiomas (alemão,
+francês, italiano, japonês, holandês, sueco, chinês, árabe, coreano —
+nunca em espanhol, que tem paridade com pt/en). Não é ruído disperso:
+é um padrão sistemático de como essas 9 traduções foram produzidas.
+
+Três formas diferentes do mesmo defeito, cada uma exigindo um
+tratamento distinto:
+
+1. **Placeholder com nome trocado** (3 chaves: `saveSuccessWithRadarMany`,
+   `fillSuccessMany`, `runSuccessMany`) — os 9 idiomas escreveram
+   `{count}`, mas o código sempre chama `.replace('{n}', ...)`
+   (`professional-profile-view.tsx`, `radar-view.tsx`). Não é só "sem
+   efeito": o usuário via literalmente `{count}` sem substituir na
+   tela, texto quebrado à mostra. Corrigido só renomeando o token — a
+   tradução em si já estava certa.
+
+2. **Placeholder genuinamente ausente** (a maioria, ~29 chaves) — a
+   frase toda ficou mais curta e genérica, sem o dado. Ex.:
+   `dashboard.greeting` em alemão era só `"Guten Tag"` (pt: `"Olá,
+   {name} 👋"`); `radar.compatibilityBadge` era `"Matching-Score"` (pt:
+   `"Compatibilidade {level}"`); `upload.contentTooShortError` tinha
+   `"100"` OU `"50.000"` **fixos na frase**, em vez de `{min}`/`{max}` —
+   coincidentemente corretos hoje, mas silenciosamente errados no dia
+   em que o limite mudar no código, porque só pt/en/es acompanhariam.
+
+3. **Conteúdo semanticamente diferente, não só sem placeholder** (achado
+   ao ler o `pt`/`en` ao lado do valor quebrado, não só contar
+   `{}`): três casos onde os 9 idiomas descreviam uma coisa DIFERENTE
+   da que o componente realmente mostra:
+   - `radar.prepareRedirected`: os 9 diziam "Redirecionando para a
+     vaga..." (uma mensagem de carregamento); o toast real
+     (`radar-view.tsx:199`) é um AVISO de que o currículo trocou de
+     vaga-alvo — "Estava direcionado a '{target}'. Agora aponta pra
+     esta vaga." Sentido totalmente diferente.
+   - `analysisPaywall.unlockAvailable`: os 9 mostravam um texto de
+     marketing genérico ("Pagamento único • Acesso imediato") no
+     lugar exato onde o código (`analysis-paywall.tsx:243-245`) só
+     entra quando a pessoa JÁ TEM saldo pago (`balance > 0`) — a
+     tradução nunca dizia quantas análises a pessoa já tinha
+     disponíveis pra usar agora.
+   - `profileConflict.desc`: os 9 descreviam "currículo tem info mais
+     recente que o perfil salvo"; o componente
+     (`profile-conflict-prompt.tsx`) é sobre CONFLITO DE CARGO — perfil
+     configurado como X, currículo é de Y — e o `title` ao lado já
+     fala em "área diferente". Sem os dois cargos nomeados, a pessoa
+     via um prompt de "atualizar perfil" sem saber pra quê.
+
+**Como foi corrigido**: como envolvia editar a mesma chave em 9
+arquivos repetidamente (243 substituições mecânicas), escrevi um
+script de uma vez (`fix-placeholders-tmp.mjs`, descartado depois de
+rodar) que aplicava cada par exato "texto atual → texto novo" e
+CONFERIA que o texto atual aparecia exatamente 1 vez no arquivo antes
+de trocar — o mesmo padrão de segurança do `Edit` de string única,
+só que em lote. Duas chaves (`dashboard.greeting`, que existe em dois
+lugares do dicionário com o mesmo texto) precisaram de correção
+manual por causa dessa ambiguidade, com uma linha de contexto a mais
+pra mirar só a certa.
+
+**3 falsos positivos aceitos, não corrigidos**: `saveSuccessWithRadarOne`,
+`fillSuccessOne` e `runSuccessOne` (as variantes "1 resultado", nunca
+"N") têm `{n}` no pt de forma redundante — o código escolhe entre
+`...One`/`...Many` justamente quando a contagem JÁ é 1, então escrever
+"1" fixo (como os 9 idiomas sempre fizeram) é igualmente correto.
+Documentado como exceção deliberada no teste (`SINGULAR_LITERAL_OK`),
+não como pendência.
+
+**Efeito colateral corrigido antes que virasse o mesmo bug do §2.74**:
+como vários dos textos consertados ficaram mais LONGOS (ex.:
+`unlockAvailable`, `packCta` com preço embutido), os botões que os
+usam (`analysis-paywall.tsx`, `plans-view.tsx`, `repurchase-upsell.tsx`)
+ganharam o mesmo tratamento preventivo do hero (`whitespace-normal` +
+`h-auto min-h-*`) — sem isso, o próprio conserto do texto teria
+recriado o bug de corte silencioso em botões de compra.
+
+**Item 5 — bandeira do seletor**: `language-selector.tsx` usava emoji
+de bandeira (🇩🇪 etc.) tanto no gatilho fechado quanto na lista. No
+Windows, o Segoe UI Emoji não tem o glifo de bandeira composta e cai
+no par de letras do Regional Indicator por baixo — o emoji "🇩🇪"
+renderiza como o texto literal "DE", duplicando o código do idioma
+que já aparece do lado ("DE DE"). Trocado por um ícone `Languages`
+(lucide-react, mesmo em qualquer plataforma) no gatilho, e removido o
+emoji da lista (o `label` já traz o código entre parênteses — "Deutsch
+(DE)" —, nenhuma informação se perde).
+
+Verificado: `tsc --noEmit`, `eslint` e `npm test` (889/889, +1 do
+teste novo de paridade de placeholders) limpos. Testado ao vivo no
+navegador: seletor mostra "🌐 DE" sem duplicação, em qualquer
+resolução.

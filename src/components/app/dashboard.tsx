@@ -203,7 +203,7 @@ function ResumeRow({
           <FileSearch className="w-5 h-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-base font-extrabold text-slate-900 truncate tracking-tight group-hover:text-brand-navy transition-colors">{d.reportOf.replace('{date}', date)}</p>
+          <p className="text-base font-extrabold text-slate-900 tracking-tight group-hover:text-brand-navy transition-colors">{d.reportOf.replace('{date}', date)}</p>
           <p className="text-xs text-slate-500 font-medium mt-0.5">{d.lastUpdated.replace('{date}', new Date(resume.updatedAt).toLocaleString(locale))}</p>
         </div>
       </div>

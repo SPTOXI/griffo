@@ -73,7 +73,7 @@ export function RepurchaseUpsell({ resumeId }: { resumeId: string }) {
         <Button
           onClick={handleBuy}
           disabled={buying}
-          className="h-10 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shrink-0"
+          className="h-auto min-h-10 py-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shrink-0 whitespace-normal"
         >
           {buying ? (
             <Loader2 className="w-4 h-4 animate-spin mr-1.5" />

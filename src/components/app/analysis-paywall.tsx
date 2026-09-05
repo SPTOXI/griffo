@@ -233,7 +233,7 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
           <Button
             onClick={handleUnlock}
             disabled={unlocking || loadingBalance}
-            className="w-full h-11 text-sm font-bold bg-primary hover:bg-primary/90 text-white shadow-md"
+            className="w-full h-auto min-h-11 py-2 text-sm font-bold bg-primary hover:bg-primary/90 text-white shadow-md whitespace-normal"
           >
             {unlocking ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
