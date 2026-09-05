@@ -4869,3 +4869,87 @@ inteira (mobile 390px E desktop 1280px) em `de, nl, sv, fr, it, jp, ae,
 us, br, es` — zero elementos com texto extrapolando a viewport depois
 do fix, nas duas resoluções, nos 10 idiomas. `tsc --noEmit`, `eslint` e
 `npm test` (888/888) limpos.
+
+## 2.75 Cabeçalho sobrepondo no desktop em alemão/outras línguas + seletor de idioma sem efeito nenhum
+
+Operador reportou dois problemas novos depois do §2.74 (achados numa
+sessão à parte, não durante a varredura anterior — o script do §2.74 só
+procurava texto vazando pra FORA da viewport; este defeito é
+sobreposição vertical DENTRO do próprio cabeçalho, forma diferente do
+mesmo tipo geral de problema).
+
+**1. Cabeçalho: "Funktionen" sobrepondo "KARRIERE-INTELLIGENZ" no
+desktop, em QUALQUER largura, não só janela estreita.** Reproduzido em
+`/de` de 768px a 1440px — inclusive 1440px, o que descartava de cara
+"falta de espaço na tela": o container tem `max-w-7xl` (1280px), então
+telas maiores que isso não ajudam em nada.
+
+Causa real: o `<nav>` do menu desktop (`flex items-center gap-8`, 6
+links) não tinha `flex-wrap`, e cada `<a>` não tinha `whitespace-nowrap`.
+Quando a LARGURA NATURAL somada dos 6 links (que em alemão passa de
+750px com os gaps — bem mais que em português/inglês) excede o espaço
+que sobra entre logo e botões de CTA dentro do container de 1280px, o
+flexbox força cada link a encolher **até a largura da sua palavra mais
+longa** (esse é o "tamanho mínimo automático" de texto que pode
+quebrar linha — different do §2.74, que era `nowrap`; aqui o texto
+QUEBRA, só que quebra demais). "Digitale Präsenz" vira 2 linhas, "So
+funktioniert es" vira 3, e como o cabeçalho tinha altura FIXA (`h-20
+sm:h-22`) e os itens são `items-center`, os links de várias linhas
+ficam centralizados por cima da faixa do logo — literalmente
+sobrepondo o texto da tagline.
+
+Corrigido em 3 pontas coordenadas, para o conteúdo se reajustar em vez
+de quebrar palavra por palavra:
+- `<nav>`: `flex-wrap` acrescentado, gap reduzido de `gap-8` fixo pra
+  `gap-x-6 lg:gap-x-8 gap-y-1.5` (menos aperto quando cabe em 1 linha,
+  respiro vertical quando quebra pra 2).
+- Cada `<a>` do nav: `whitespace-nowrap` — agora quando não cabe, a
+  FRASE INTEIRA pula pra próxima linha (como uma palavra), nunca quebra
+  no meio de "funktioniert".
+- Container do cabeçalho: `h-20 sm:h-22` (altura fixa) virou `min-h-20
+  sm:min-h-22 py-2` (altura mínima) — se o nav precisar de 2 linhas, o
+  cabeçalho cresce pra acomodar, em vez de cortar/sobrepor. Efeito
+  colateral aceito e correto: em alemão/francês/holandês, o cabeçalho
+  vira 2 fileiras (logo numa, nav+CTA ou nav sozinho na outra) em vez
+  de 1 — mas sempre legível, sem sobreposição, em qualquer largura.
+  Português/inglês continuam cabendo numa fileira só (nada mudou pra
+  quem já funcionava).
+
+Confirmado sem sobreposição em `de, fr, nl, ae` (RTL também) de 768 a
+1440px, e sem regressão em `en`/`us` (continua 1 fileira em telas
+largas). Mobile (`md:hidden`, menu hambúrguer) nunca foi afetado —
+usa uma estrutura totalmente separada — e foi conferido mesmo assim.
+
+**2. Seletor de idioma clicava e a página não mudava** — bug real,
+distinto do #1, achado ao testar a consequência do próprio operador
+("mudei pra alemão e não houve mudança"). Causa: `Landing` resolvia o
+idioma como `forcedLang || contextLang || 'pt'`
+(`components/landing/landing.tsx`), e `forcedLang` — o idioma fixo da
+ROTA de país (`/br` → `pt`, sempre) — é uma string sempre verdadeira
+nas páginas de país, então SEMPRE vencia, não importa o que a pessoa
+escolhesse no seletor (que só atualiza `contextLang`). O comentário já
+existente em `hiring-index-teaser.tsx` explicava por que essa ordem
+existe: impedir que um PALPITE automático (geo-IP/navegador) mude o
+idioma de uma rota de país sozinho — ex.: `/br` não pode virar inglês
+só porque o Chrome da pessoa está em inglês. Essa regra está correta;
+o problema é que ela também bloqueava a ESCOLHA manual, que deveria
+valer exatamente o oposto.
+
+Corrigido distinguindo as duas origens do mesmo estado
+(`i18n-context.tsx`): `langManuallySet`, um booleano que só vira `true`
+dentro de `setLang()` (clique no seletor) ou quando o idioma já veio de
+`localStorage` no carregamento (porque só `setLang()` grava lá — a
+detecção automática por geo-IP/navegador nunca escreve em
+`localStorage`, então a PRÓPRIA PRESENÇA de um valor salvo já é prova
+de escolha anterior, não de palpite). `Landing` passou a resolver:
+`langManuallySet && contextLang ? contextLang : forcedLang || contextLang
+|| 'pt'` — palpite automático continua sem poder virar o idioma da
+rota sozinho, mas escolha manual (agora ou salva de visita anterior)
+vence de verdade, sem precisar recarregar a página.
+
+Testado ao vivo: `/br` (que teria `forcedLang: 'pt'`) com o seletor
+clicado em "Deutsch" muda a `<h1>` e o nav pra alemão instantaneamente,
+sem reload — e continua em alemão depois de um reload de verdade
+(persistência via `localStorage`/cookie já existente, agora
+efetivamente lida na re-renderização). `tsc --noEmit`, `eslint` e `npm
+test` (888/888) limpos.

@@ -27,8 +27,13 @@ export interface LandingProps {
 
 export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
   const { user } = useAuth()
-  const { t: contextT, lang: contextLang, detectedCountry: contextCountry } = useI18n()
-  const lang = forcedLang || contextLang || 'pt'
+  const { t: contextT, lang: contextLang, detectedCountry: contextCountry, langManuallySet } = useI18n()
+  // Palpite automático (geo-IP/navegador) nunca vence o idioma da rota de
+  // país — é assim que `/br` não vira inglês sozinho pro visitante com
+  // Chrome em inglês. Mas ESCOLHA MANUAL (seletor de idioma, ou preferência
+  // já salva de uma visita anterior) precisa vencer, senão o seletor clica e
+  // a página não muda — era exatamente esse o defeito antes desta linha.
+  const lang = langManuallySet && contextLang ? contextLang : forcedLang || contextLang || 'pt'
   const t = DICTIONARIES[lang] || contextT || DICTIONARIES.pt
   const effectiveCountry = countryCode || contextCountry || 'BR'
   // O país da borda ou rota serve para ESCOLHER A MOEDA que a landing exibe, e para
@@ -67,8 +72,8 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
     <div className="min-h-screen flex flex-col bg-white font-sans selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
       {/* NAV */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-slate-200/80 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 sm:h-22 flex items-center justify-between transition-all">
-          <div className="flex items-center gap-3.5 sm:gap-4 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-20 sm:min-h-22 py-2 flex items-center justify-between gap-4 flex-wrap transition-all">
+          <div className="flex items-center gap-3.5 sm:gap-4 cursor-pointer group shrink-0" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <img
               src="/logo-icon.png"
               alt="GriffoWork Logo"
@@ -83,17 +88,17 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
           </div>
 
           {/* DESKTOP NAV */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <a href="#features" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.features}</a>
-            <a href="#social" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.social}</a>
-            <a href="#how" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a>
-            <a href="#pricing" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.plans}</a>
-            <a href="#faq" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.faq}</a>
-            <a href="/market-pulse" className="text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.marketPulse}</a>
+          <nav className="hidden md:flex flex-wrap items-center justify-end gap-x-6 lg:gap-x-8 gap-y-1.5 text-sm font-medium">
+            <a href="#features" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.features}</a>
+            <a href="#social" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.social}</a>
+            <a href="#how" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a>
+            <a href="#pricing" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.plans}</a>
+            <a href="#faq" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.faq}</a>
+            <a href="/market-pulse" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.marketPulse}</a>
           </nav>
 
           {/* DESKTOP CTAS & LANGUAGE SELECTOR */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3 shrink-0 flex-wrap justify-end">
             <LanguageSelector />
 
             {user ? (

@@ -9,23 +9,32 @@ interface I18nContextType {
   t: TranslationDictionary
   setLang: (lang: Language) => void
   detectedCountry?: string
+  langManuallySet: boolean
 }
 
 const I18nContext = createContext<I18nContextType>({
   lang: 'pt',
   t: DICTIONARIES.pt,
   setLang: () => {},
+  langManuallySet: false,
 })
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Language>('pt')
   const [detectedCountry, setDetectedCountry] = useState<string>('BR')
+  // Diferencia idioma ESCOLHIDO (localStorage já tem valor, ou o seletor foi
+  // usado) de idioma ADIVINHADO (geo-IP/navegador). Só o primeiro pode
+  // vencer o `forcedLang` de uma rota de país em `Landing` — do contrário o
+  // seletor de idioma clica e não muda nada, porque o palpite automático e a
+  // escolha manual ficavam indistinguíveis no mesmo estado.
+  const [langManuallySet, setLangManuallySet] = useState(false)
 
   useEffect(() => {
     // 1. Check browser storage first
     const local = localStorage.getItem('griffo_lang') as Language
     if (local && LANGUAGES.includes(local)) {
       setLangState(local)
+      setLangManuallySet(true)
       return
     }
 
@@ -47,6 +56,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   const setLang = (newLang: Language) => {
     setLangState(newLang)
+    setLangManuallySet(true)
     if (typeof window !== 'undefined') {
       localStorage.setItem('griffo_lang', newLang)
       // Também em cookie: é o único dos dois que `middleware.ts` consegue
@@ -64,6 +74,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         t: DICTIONARIES[lang] || DICTIONARIES.pt,
         setLang,
         detectedCountry,
+        langManuallySet,
       }}
     >
       {children}

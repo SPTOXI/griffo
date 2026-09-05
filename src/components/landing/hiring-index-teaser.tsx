@@ -35,13 +35,15 @@ import type { TranslationDictionary } from '@/lib/i18n'
  *
  * ## Por que `t` chega por prop, e não de `useI18n()` aqui dentro
  *
- * `Landing` resolve o idioma como `forcedLang || contextLang || 'pt'` — é
- * assim que uma rota de país (`forcedLang` fixo) não muda de idioma se o
- * contexto do navegador detectar outro. Um componente que chamasse
- * `useI18n()` por conta própria leria só `contextLang`, ignorando o
- * `forcedLang` — e mostraria inglês numa página inteira em português. Foi
- * exatamente o defeito visto ao testar `/br` sem idioma salvo no
- * `localStorage`: o resto da página em português, este bloco em inglês.
+ * `Landing` resolve o idioma como `forcedLang` (rota de país), a menos que
+ * `langManuallySet` diga que a pessoa escolheu outro no seletor — é assim
+ * que uma rota de país não muda de idioma sozinha por PALPITE de navegador,
+ * mas muda de verdade quando é ESCOLHA (ver `i18n-context.tsx`). Um
+ * componente que chamasse `useI18n()` por conta própria leria só
+ * `contextLang`, sem essa distinção — e mostraria inglês numa página inteira
+ * em português sempre que o navegador palpitasse inglês. Foi exatamente o
+ * defeito visto ao testar `/br` sem idioma salvo no `localStorage`: o resto
+ * da página em português, este bloco em inglês.
  *
  * ## Por que logo abaixo do hero, e com fundo escuro
  *
