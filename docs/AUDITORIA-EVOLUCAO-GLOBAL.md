@@ -4639,3 +4639,51 @@ perder.
 `tsc --noEmit`, `eslint` e `npm test` (886/886, sem teste novo —
 mudança de bundling/carregamento, não de lógica testável em `lib/`)
 limpos.
+
+## 2.71 Nome do país no título e no JSON-LD virou português fixo em toda página não-PT
+
+Corrigido o achado à parte do §2.70. `countryName()` de
+`lib/market/countries.ts` é documentado no próprio arquivo como "nome
+em português, para leitura" — é a lista da tela de perfil, com nome
+em UM idioma só de propósito (guardar o nome traduzido junto do dado
+seria guardar tradução que um dia muda). `[country]/page.tsx` usava
+essa mesma função pra montar o título/description de CADA página, sem
+considerar `market.jobLanguage` — daí `/us` sair "GriffoWork **Estados
+Unidos** — Global AI Career Intelligence...", nome em português
+grudado numa frase em inglês.
+
+**Duas tabelas, não uma reforma do dicionário inteiro.** Criar um
+bloco `countries` de 173 nomes × 12 idiomas no `TranslationDictionary`
+resolveria isto também, mas seria uma reforma desproporcional ao
+problema: cada
+uma das 41 páginas só precisa do PRÓPRIO nome, no idioma que ELA já
+renderiza — não dos outros 172 países nos outros 11 idiomas. Duas
+tabelas pequenas em `[country]/page.tsx` resolvem exatamente o que
+está quebrado:
+
+- `COUNTRY_NAME_BY_SLUG` — as 40 rotas não-`global`, cada uma no
+  idioma que a própria página usa (`Deutschland` pra `/de`, `日本` pra
+  `/jp`, `الإمارات العربية المتحدة` pra `/ae`, `United States` pra
+  `/us`...). Usada no título/description/OpenGraph.
+- `COUNTRY_NAME_EN_BY_SLUG` — só os 10 casos onde o nome em inglês
+  diverge do nativo (`Brasil`→`Brazil`, `Deutschland`→`Germany`,
+  `Österreich`→`Austria`, etc.). Usada no JSON-LD
+  (`SoftwareApplication`/`Offer`), cujo texto ao redor já é em inglês
+  fixo independente do idioma da página — outra frente do mesmo
+  problema, não corrigida por inteiro agora (o JSON-LD nunca varia por
+  `market.jobLanguage`, só o nome do país precisava parar de
+  contradizer o resto da frase).
+
+`countryName(code)` continua como fallback nas duas tabelas, pra
+nenhuma rota ficar sem nome se uma faltar por engano — mas hoje as 40
+estão cobertas.
+
+Verificado com build de produção e `curl` direto: `/us` → "United
+States", `/de` e `/at` → "Deutschland"/"Österreich" (mercado
+compartilhado, país certo cada um), `/fr` → "France", `/nl` →
+"Nederland", `/jp` → "日本", `/ae` → "الإمارات العربية المتحدة", `/pl`
+(sem mercado próprio, cai no idioma global) → "Poland" — nenhuma
+mistura de idioma em nenhuma. JSON-LD de `/de` conferido também:
+"GriffoWork Germany", "for Germany market" — inglês consistente, sem
+"Deutschland" no meio da frase em inglês. `tsc --noEmit`, `eslint` e
+`npm test` (886/886) limpos.

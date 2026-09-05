@@ -10,6 +10,89 @@ import { CountryPageClient } from './country-client'
 export const dynamicParams = true
 
 /**
+ * Nome do país de cada rota, no idioma que a PRÓPRIA página usa
+ * (`market.jobLanguage`) — nunca em português fixo.
+ *
+ * Achado ao investigar por que `/us` saía com o título "GriffoWork Estados
+ * Unidos" (nome em português) grudado numa tagline em inglês: `countryName()`
+ * de `lib/market/countries.ts` só tem nome em português, por design — é a
+ * lista da tela de perfil, documentada como tal ali. Usá-la aqui, onde a
+ * página muda de idioma por rota, misturava os dois.
+ *
+ * Cobre só as 40 rotas não-`global` de `SUPPORTED_COUNTRY_SLUGS` — não as
+ * 173 da lista de perfil — porque é só disso que o título/description de
+ * CADA página precisa: o nome de SI MESMA, no idioma que ela já renderiza.
+ */
+const COUNTRY_NAME_BY_SLUG: Record<string, string> = {
+  br: 'Brasil',
+  us: 'United States',
+  pt: 'Portugal',
+  es: 'España',
+  mx: 'México',
+  gb: 'United Kingdom',
+  ca: 'Canada',
+  de: 'Deutschland',
+  at: 'Österreich',
+  fr: 'France',
+  be: 'Belgique',
+  lu: 'Luxembourg',
+  it: 'Italia',
+  au: 'Australia',
+  nz: 'New Zealand',
+  in: 'India',
+  jp: '日本',
+  pl: 'Poland',
+  cz: 'Czech Republic',
+  cl: 'Chile',
+  my: 'Malaysia',
+  tr: 'Turkey',
+  za: 'South Africa',
+  ae: 'الإمارات العربية المتحدة',
+  co: 'Colombia',
+  ar: 'Argentina',
+  th: 'Thailand',
+  ro: 'Romania',
+  bg: 'Bulgaria',
+  id: 'Indonesia',
+  ph: 'Philippines',
+  vn: 'Vietnam',
+  ng: 'Nigeria',
+  eg: 'Egypt',
+  pk: 'Pakistan',
+  bd: 'Bangladesh',
+  ke: 'Kenya',
+  sg: 'Singapore',
+  nl: 'Nederland',
+  ie: 'Ireland',
+}
+
+/**
+ * Só os casos em que o nome em inglês diverge do nativo acima — usada no
+ * JSON-LD (`SoftwareApplication`/`Offer`) mais abaixo neste arquivo, cujo
+ * texto ao redor já é em inglês fixo independente do idioma da página (outra
+ * frente do mesmo problema, não corrigida agora por ser escopo maior: o
+ * JSON-LD inteiro não varia por `market.jobLanguage`, só o nome do país
+ * precisava parar de contradizer o resto da frase).
+ */
+const COUNTRY_NAME_EN_BY_SLUG: Partial<Record<string, string>> = {
+  br: 'Brazil',
+  es: 'Spain',
+  mx: 'Mexico',
+  de: 'Germany',
+  at: 'Austria',
+  be: 'Belgium',
+  it: 'Italy',
+  jp: 'Japan',
+  ae: 'United Arab Emirates',
+  nl: 'Netherlands',
+}
+
+/** Nome do país em inglês, pra texto que é sempre em inglês (o JSON-LD). */
+function countryNameEn(slug: string, code: string): string {
+  return COUNTRY_NAME_EN_BY_SLUG[slug] ?? COUNTRY_NAME_BY_SLUG[slug] ?? countryName(code) ?? code
+}
+
+/**
  * hreflang completo das 41 rotas de país, derivado de `SUPPORTED_COUNTRY_SLUGS`
  * + `marketForCountry` — nunca uma lista copiada à mão.
  *
@@ -64,7 +147,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const market = isGlobal ? GLOBAL_MARKET : marketForCountry(code)
-  const cName = isGlobal ? 'Global' : countryName(code) || code
+  const cName = isGlobal ? 'Global' : COUNTRY_NAME_BY_SLUG[slug] || countryName(code) || code
   const price = priceFor(isGlobal ? 'US' : code, 'single')
   const atsList = market.ats.slice(0, 4).join(', ')
 
@@ -160,16 +243,16 @@ export default async function CountryPage({ params }: PageProps) {
   const countryJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: `GriffoWork ${isGlobal ? 'Global' : countryName(code)}`,
+    name: `GriffoWork ${isGlobal ? 'Global' : countryNameEn(slug, code)}`,
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'All',
     offers: {
       '@type': 'Offer',
       price: String(price.amount),
       priceCurrency: price.currency,
-      description: `Complete executive resume audit in 8 dimensions for ${isGlobal ? 'Global Remote' : countryName(code)} market.`,
+      description: `Complete executive resume audit in 8 dimensions for ${isGlobal ? 'Global Remote' : countryNameEn(slug, code)} market.`,
     },
-    description: `AI Career Intelligence and ATS Optimization (${market.ats.join(', ')}) for ${isGlobal ? 'Global Remote' : countryName(code)}.`,
+    description: `AI Career Intelligence and ATS Optimization (${market.ats.join(', ')}) for ${isGlobal ? 'Global Remote' : countryNameEn(slug, code)}.`,
   }
 
   // FAQPage no idioma real da rota — o layout raiz não tem como saber qual
