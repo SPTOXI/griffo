@@ -119,7 +119,7 @@ export function HiringIndexTeaser({ t }: { t: TranslationDictionary }) {
                 </span>
                 <p className="font-extrabold text-white text-lg sm:text-xl truncate">{hi.indexHeading}</p>
               </div>
-              <p className="text-sm text-blue-100/90 truncate">
+              <p className="text-sm text-blue-100/90">
                 {hi.indexSummary
                   .replace('{classified}', String(distribution.classified))
                   .replace('{tracked}', String(distribution.tracked))}

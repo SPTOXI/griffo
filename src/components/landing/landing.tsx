@@ -485,8 +485,8 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
             {t.ctaFinal.subtitle}
           </p>
           <div className="pt-2">
-            <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-white text-[#0B192E] hover:bg-blue-50 h-12 sm:h-13 px-8 text-base font-extrabold shadow-lg">
-              {t.ctaFinal.button} <ArrowRight className="w-5 h-5 ml-2 text-[#0B63E5]" />
+            <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-white text-[#0B192E] hover:bg-blue-50 h-auto min-h-12 sm:min-h-13 py-3 px-8 text-base font-extrabold shadow-lg whitespace-normal">
+              {t.ctaFinal.button} <ArrowRight className="w-5 h-5 ml-2 text-[#0B63E5] shrink-0" />
             </Button>
           </div>
         </div>

@@ -4804,3 +4804,68 @@ IndexNow (aceito para processamento; `submitUrlsToIndexNow` trata
 que o Bing efetivamente indexou fica pro Bing Webmaster Tools (passo 4
 do protocolo, fora do que dá pra automatizar sem login) — pendência
 igual à do Search Console no §2.69/§2.71, registrada como tal.
+
+## 2.74 Dois cortes reais de layout em idiomas com frase mais longa (achado ao investigar "sobreposição de texto e imagens")
+
+Operador reportou texto sobrepondo imagem em "alguns idiomas". Achar
+o caso real exigiu descartar dois falsos positivos do próprio ambiente
+de teste antes de chegar ao defeito de verdade:
+
+**Falso positivo 1 — cache do Turbopack dev**: `.next` tinha um build
+de produção de mais cedo na sessão; limpar (`rm -rf .next`) e reiniciar
+o `next dev` não bastou sozinho.
+
+**Falso positivo 2 — cache HTTP imutável do navegador**: os chunks de
+`_next/static/chunks/` saem com `Cache-Control: public, max-age=31536000,
+immutable`, e no Turbopack dev o nome do arquivo NÃO muda por conteúdo
+(é derivado do caminho, estável) — diferente da produção, onde o nome
+muda por hash. Resultado: o mesmo Chrome (perfil persistente do
+Playwright) continuou servindo, do próprio disco, uma versão JS de
+horas atrás, mesmo depois do servidor reiniciado do zero — `curl`
+provava conteúdo novo, o DOM renderizado mostrava conteúdo velho. Só
+`Network.setCacheDisabled` + `Network.clearBrowserCache` via CDP
+resolveu. Isto é uma armadilha de AMBIENTE DE TESTE, não do produto —
+produção usa nome de arquivo por hash de conteúdo, e um usuário real
+não fica com o MESMO nome de chunk apontando pra conteúdo diferente
+entre deploys.
+
+**O defeito real, confirmado em `/de` (alemão) e pela forma da causa,
+replicável em qualquer idioma cuja frase seja longa o bastante**: dois
+elementos com `white-space: nowrap` (via classe `truncate` num, via
+`whitespace-nowrap` embutido no `<Button>` base no outro) forçam a
+CAIXA inteira — não só o texto — a crescer além da viewport quando a
+tradução não cabe. A página tem `overflow-x-hidden` na raiz (decisão
+antiga, documentada no §2.72 pro botão do hero), que evita o scroll
+horizontal só ESCONDENDO o excesso — sem `text-overflow:ellipsis`
+funcionar (`truncate` só corta quando a CAIXA em si é forçada a ficar
+menor que o conteúdo; aqui a caixa cresceu junto, então nunca chegou a
+cortar) e sem quebra de linha. Resultado visual: frase cortada no meio
+da palavra, sem reticências, sangrando pra fora do cartão.
+
+Dois pontos achados, mesma causa:
+1. `components/landing/hiring-index-teaser.tsx`: `<p className="...
+   truncate">` no resumo do índice (`"{classified} von {tracked}
+   Ländern mit klassifizierter Phase"`, 44 caracteres em alemão) —
+   `truncate` removido; o cartão tem espaço vertical de sobra, então a
+   frase simplesmente quebra em 2 linhas agora, sem cortar nada.
+2. `components/landing/landing.tsx`, botão final da página
+   (`t.ctaFinal.button`, "Kostenlose Lebenslauf-Diagnose starten" em
+   alemão) — mesmo fix do hero no §2.72: `whitespace-normal` +
+   `h-auto min-h-12 sm:min-h-13 py-3` no lugar de `h-12` fixo,
+   `shrink-0` na seta, sem tocar no componente `Button` global.
+
+**Por que não um fix na raiz (tentado e descartado)**: cheguei a testar
+`min-w-0` no wrapper raiz e depois um seletor `[&>*]:min-w-0` — nenhum
+dos dois mudou o layout renderizado, porque o crescimento não vem de
+`min-width:auto` num item flex (a seção em si mede 375px sozinha); vem
+do conteúdo `nowrap` que se recusa a encolher, ponto final. Confirmado
+isolando a variável certa: forçar `white-space:normal` só no parágrafo
+problemático (via `element.style` no DevTools, antes de tocar no
+código) já devolvia a seção a 375px — a prova de que o ponto certo do
+fix é o elemento com `nowrap`, não um ancestral genérico.
+
+**Varredura de confirmação**: script no console percorrendo a página
+inteira (mobile 390px E desktop 1280px) em `de, nl, sv, fr, it, jp, ae,
+us, br, es` — zero elementos com texto extrapolando a viewport depois
+do fix, nas duas resoluções, nos 10 idiomas. `tsc --noEmit`, `eslint` e
+`npm test` (888/888) limpos.
