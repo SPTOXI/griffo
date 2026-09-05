@@ -4792,3 +4792,15 @@ Testado com 2 casos em `indexnow.test.ts` (corpo da requisição
 correto — `host`, `key`, `keyLocation`, `urlList`; e o caminho de
 recusa, `403`, devolvendo `ok: false`). `tsc --noEmit`, `eslint` e
 `npm test` (888/888) limpos.
+
+**Rodado de verdade, contra o endpoint real, depois do deploy**: `curl`
+confirmou `https://griffo.work/5aa728fe6a274c0d8fb10530a78312fa.txt`
+servindo a chave em produção (levou 5 tentativas de 15s pra sair de
+404 pra 200 — tempo normal de propagação do deploy da Vercel), e só
+então `npm run indexnow:submit` enviou as 53 URLs do `sitemap.ts` de
+uma vez. Resposta: `202` — código de sucesso do próprio protocolo
+IndexNow (aceito para processamento; `submitUrlsToIndexNow` trata
+`200`-`299` como `ok`, então isto não exigiu ajuste). Confirmação de
+que o Bing efetivamente indexou fica pro Bing Webmaster Tools (passo 4
+do protocolo, fora do que dá pra automatizar sem login) — pendência
+igual à do Search Console no §2.69/§2.71, registrada como tal.
