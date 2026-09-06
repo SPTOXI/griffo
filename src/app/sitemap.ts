@@ -44,21 +44,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified,
     changeFrequency: 'monthly',
     priority: 0.8,
+    // Derivado de `LANGUAGES`, e não escrito à mão. Os 12 pares literais que
+    // ficavam aqui eram idênticos ao que a derivação produz — conferido par a
+    // par antes da troca —, mas nada os obrigava a continuar assim: um 13º
+    // idioma entraria em `LANGUAGES`, passaria no `i18n.test.ts`, ganharia
+    // `/ats` e `/hiring` funcionando, e sumiria calado deste bloco. Um
+    // hreflang incompleto é o defeito que o §2.69 já custou a este projeto.
     alternates: {
-      languages: {
-        'pt-BR': `${baseUrl}/market-pulse?lang=pt`,
-        'en-US': `${baseUrl}/market-pulse?lang=en`,
-        'es-ES': `${baseUrl}/market-pulse?lang=es`,
-        'de-DE': `${baseUrl}/market-pulse?lang=de`,
-        'fr-FR': `${baseUrl}/market-pulse?lang=fr`,
-        'it-IT': `${baseUrl}/market-pulse?lang=it`,
-        'ja-JP': `${baseUrl}/market-pulse?lang=ja`,
-        'nl-NL': `${baseUrl}/market-pulse?lang=nl`,
-        'sv-SE': `${baseUrl}/market-pulse?lang=sv`,
-        'zh-CN': `${baseUrl}/market-pulse?lang=zh`,
-        'ar-AE': `${baseUrl}/market-pulse?lang=ar`,
-        'ko-KR': `${baseUrl}/market-pulse?lang=ko`,
-      },
+      languages: Object.fromEntries(
+        LANGUAGES.map((l) => [localeForLang(l), `${baseUrl}/market-pulse?lang=${l}`])
+      ),
     },
   })
 

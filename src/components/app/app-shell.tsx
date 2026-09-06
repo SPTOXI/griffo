@@ -26,6 +26,8 @@ import { AdminView } from '../admin/admin-view'
 import { PaymentStatusModal } from './payment-status-modal'
 import { LanguageSelector } from '../ui/language-selector'
 import { useI18n } from '@/context/i18n-context'
+import { DocumentLanguage } from '@/components/i18n/document-language'
+import { dirForLang } from '@/lib/i18n'
 import { useAnalyses } from '@/hooks/use-analyses'
 
 export function AppShell({ onExit }: { onExit: () => void }) {
@@ -98,7 +100,8 @@ export function AppShell({ onExit }: { onExit: () => void }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 overflow-x-hidden">
+    <div dir={dirForLang(lang)} className="min-h-screen flex flex-col bg-slate-50 overflow-x-hidden">
+      <DocumentLanguage lang={lang} />
       {/* TOP BAR */}
       <header className="sticky top-0 z-30 bg-white border-b border-slate-200 h-14 flex items-center px-3 sm:px-4 gap-2.5">
         <button

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { MARKETS, GLOBAL_MARKET, marketForCountry, marketById } from '@/lib/market'
 import { countryName, COUNTRIES } from '@/lib/market/countries'
 import { priceFor } from '@/lib/pricing/catalog'
-import { DICTIONARIES } from '@/lib/i18n'
+import { DICTIONARIES, dirForLang } from '@/lib/i18n'
 import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
 import { resumeTermFor } from '@/lib/market/regional-terms'
 import { CountryPageClient } from './country-client'
@@ -290,7 +290,15 @@ export default async function CountryPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      <CountryPageClient countryCode={effectiveCountry} lang={market.jobLanguage} />
+      {/* `dir` aqui, e não no `<html>`: o layout raiz é estático e compartilhado
+          por todas as rotas, então ele não tem como saber que idioma esta rota
+          serve sem virar dinâmico e derrubar o SSG das 41 páginas de país. Como
+          `dir` é herdado, declará-lo no elemento que embrulha a página inteira
+          tem o mesmo efeito visual — e vale também para o app autenticado, que
+          o `CountryPageClient` monta neste mesmo lugar depois de hidratar. */}
+      <div dir={dirForLang(market.jobLanguage)}>
+        <CountryPageClient countryCode={effectiveCountry} lang={market.jobLanguage} />
+      </div>
     </>
   )
 }

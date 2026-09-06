@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { rootHreflang, declaredLocales } from "@/lib/i18n/hreflang";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 // Sonner, e não `ui/toaster`. Os dois chegaram a existir no projeto, mas o
@@ -35,23 +36,11 @@ export const metadata: Metadata = {
   authors: [{ name: "GriffoWork" }],
   alternates: {
     canonical: "https://griffo.work",
-    languages: {
-      "pt-BR": "https://griffo.work/br",
-      "en-US": "https://griffo.work/us",
-      "es-ES": "https://griffo.work/es",
-      "de-DE": "https://griffo.work/de",
-      "fr-FR": "https://griffo.work/fr",
-      "it-IT": "https://griffo.work/it",
-      "ja-JP": "https://griffo.work/jp",
-      "nl-NL": "https://griffo.work/nl",
-      "sv-SE": "https://griffo.work/se",
-      "zh-CN": "https://griffo.work/cn",
-      "ar-AE": "https://griffo.work/ae",
-      "ko-KR": "https://griffo.work/kr",
-      // Fonte de verdade para tráfego sem correspondência de idioma/região:
-      // a página global (sem preço/ATS de um país específico), não a raiz em pt-BR.
-      "x-default": "https://griffo.work/global",
-    },
+    // Os 12 pares + `x-default` saem de `lib/i18n/hreflang.ts`, cobertos por
+    // teste. Enquanto viviam escritos aqui, nada obrigava um idioma novo a
+    // aparecer neste bloco — e hreflang que não fecha é descartado inteiro
+    // pelo Google (§2.69).
+    languages: rootHreflang(),
   },
   robots: {
     index: true,
@@ -103,7 +92,7 @@ const jsonLd = {
       "@id": "https://griffo.work/#website",
       "url": "https://griffo.work",
       "name": "GriffoWork",
-      "inLanguage": ["pt-BR", "en-US", "es-ES", "de-DE", "fr-FR", "it-IT", "ja-JP", "nl-NL", "sv-SE", "zh-CN", "ar-AE", "ko-KR"]
+      "inLanguage": declaredLocales()
     },
     {
       "@type": "Organization",

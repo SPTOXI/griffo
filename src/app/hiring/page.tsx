@@ -5,9 +5,11 @@ import {
   DICTIONARIES,
   LANGUAGES,
   detectLanguageFromCountry,
+  dirForLang,
   localeForLang,
   type Language,
 } from '@/lib/i18n'
+import { DocumentLanguage } from '@/components/i18n/document-language'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowRight, CheckCircle2, FileSearch, ListOrdered, UserCheck } from 'lucide-react'
@@ -99,7 +101,8 @@ export default async function HiringPage({ searchParams }: PageProps) {
   ]
 
   return (
-    <div className="min-h-screen flex flex-col bg-white font-sans overflow-x-hidden">
+    <div dir={dirForLang(lang)} className="min-h-screen flex flex-col bg-white font-sans overflow-x-hidden">
+      <DocumentLanguage lang={lang} />
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-slate-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-2 flex items-center justify-between gap-4 flex-wrap">
           <Link href="/" className="flex items-center gap-2.5 shrink-0">

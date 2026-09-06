@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { cookies, headers } from 'next/headers'
-import { DICTIONARIES, LANGUAGES, detectLanguageFromCountry, localeForLang, type Language } from '@/lib/i18n'
+import { DICTIONARIES, LANGUAGES, detectLanguageFromCountry, dirForLang, localeForLang, type Language } from '@/lib/i18n'
 import { loadHiringAtlas } from '@/lib/hiring-index/atlas.server'
 import { displayCountry } from '@/lib/hiring-index/display'
 import { buildHiringMapModel } from '@/lib/hiring-index/map-model'
 import { HiringMapView } from '@/components/market/hiring-map'
+import { DocumentLanguage } from '@/components/i18n/document-language'
 import type { HiringAtlas } from '@/lib/hiring-index/atlas'
 
 /**
@@ -190,9 +191,11 @@ export default async function MarketPulsePage({ searchParams }: PageProps) {
 
   return (
     <main
-      dir={lang === 'ar' ? 'rtl' : 'ltr'}
+      dir={dirForLang(lang)}
       className="min-h-screen bg-white text-slate-900"
     >
+      <DocumentLanguage lang={lang} />
+
       {atlas && (
         <script
           type="application/ld+json"

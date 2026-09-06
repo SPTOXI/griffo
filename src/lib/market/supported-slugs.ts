@@ -10,5 +10,12 @@ export const SUPPORTED_COUNTRY_SLUGS = [
   'br', 'us', 'pt', 'es', 'mx', 'gb', 'ca', 'de', 'at', 'fr', 'be', 'lu',
   'it', 'au', 'nz', 'in', 'jp', 'global',
   'pl', 'cz', 'cl', 'my', 'tr', 'za', 'ae', 'co', 'ar', 'th', 'ro', 'bg',
-  'id', 'ph', 'vn', 'ng', 'eg', 'pk', 'bd', 'ke', 'sg', 'nl', 'ie'
+  'id', 'ph', 'vn', 'ng', 'eg', 'pk', 'bd', 'ke', 'sg', 'nl', 'ie',
+  // `se`, `cn` e `kr` entraram depois: o `hreflang` da raiz já as declarava
+  // como a casa do sueco, do chinês e do coreano, mas elas eram as ÚNICAS
+  // três das doze que não estavam aqui — respondiam 200 por `dynamicParams`,
+  // renderizando a cada requisição em vez de serem geradas no build. Anunciar
+  // uma rota como canônica de um idioma e não pré-gerá-la é incoerência
+  // gratuita: os dados de mercado já resolviam as três corretamente.
+  'se', 'cn', 'kr'
 ]

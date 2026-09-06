@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label'
 import { FileText, ArrowLeft, Mail, Lock, User, Briefcase, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
+import { DocumentLanguage } from '@/components/i18n/document-language'
+import { dirForLang } from '@/lib/i18n'
 import { LanguageSelector } from '@/components/ui/language-selector'
 import { internalFetch } from '@/lib/internal-fetch'
 
@@ -23,7 +25,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const { hydrate } = useAuth()
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,7 +55,8 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50/50 via-white to-white">
+    <div dir={dirForLang(lang)} className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50/50 via-white to-white">
+      <DocumentLanguage lang={lang} />
       <header className="h-16 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
           <button onClick={onBack} className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900">

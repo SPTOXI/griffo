@@ -142,3 +142,29 @@ const LOCALE_BY_LANG: Record<Language, string> = {
 export function localeForLang(lang: Language): string {
   return LOCALE_BY_LANG[lang] || 'pt-BR'
 }
+
+/**
+ * Idiomas escritos da direita para a esquerda.
+ *
+ * Existe como conjunto nomeado, e não como `lang === 'ar'` espalhado, porque
+ * era exatamente assim que estava: `/market-pulse` fazia a comparação inline e
+ * era o ÚNICO arquivo do projeto a fazê-la. `/ae`, `/hiring?lang=ar` e as 67
+ * páginas de `/ats` serviam árabe sem nenhum `dir` no HTML — a página inteira
+ * espelhada errada, com a pontuação no lado errado da frase.
+ *
+ * Com o conjunto aqui, um idioma RTL novo (`he`, `fa`, `ur`) entra num lugar
+ * só, e o teste de `i18n.test.ts` cobra a decisão em vez de deixá-la passar em
+ * silêncio como aconteceu com o árabe.
+ */
+const RTL_LANGUAGES = new Set<Language>(['ar'])
+
+/**
+ * Direção do texto para o atributo `dir`.
+ *
+ * Devolve `'ltr'` explícito em vez de `undefined` para o caso comum: `dir`
+ * ausente herda do ancestral, e o `<html>` da raiz é estático — então uma
+ * página que omitisse o atributo ficaria à mercê do que o layout declarasse.
+ */
+export function dirForLang(lang: Language): 'rtl' | 'ltr' {
+  return RTL_LANGUAGES.has(lang) ? 'rtl' : 'ltr'
+}

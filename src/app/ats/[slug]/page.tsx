@@ -9,9 +9,11 @@ import {
   DICTIONARIES,
   LANGUAGES,
   detectLanguageFromCountry,
+  dirForLang,
   localeForLang,
   type Language,
 } from '@/lib/i18n'
+import { DocumentLanguage } from '@/components/i18n/document-language'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -195,7 +197,8 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white font-sans overflow-x-hidden">
+    <div dir={dirForLang(lang)} className="min-h-screen flex flex-col bg-white font-sans overflow-x-hidden">
+      <DocumentLanguage lang={lang} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
