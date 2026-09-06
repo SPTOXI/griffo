@@ -5190,3 +5190,57 @@ idêntico entre rotas do mesmo idioma, porque o texto vem de
 override por mercado em cima do dicionário por idioma, não é troca de
 string. O ganho de busca maior (o termo no `<title>`/description, que
 é o que aparece no resultado do Google) já está capturado.
+
+## 2.80 Item "Information Gain": um número falso achado em produção, e o dado próprio que ainda não existe
+
+O item 4 do relatório de GEO (§2.77) pedia transformar as páginas de
+`/ats/*` e `/market-pulse` em fonte de dado proprietário — benchmarks
+reais de parsing por ATS, estatística de rejeição algorítmica. A
+lógica está certa (IA não cita quem repete a Wikipédia; cita quem tem
+dado primário), mas executar exigia PESQUISA, não redação. Operador
+mandou investigar as duas frentes.
+
+**Frente 1 — dado próprio a partir do produto: inviável hoje, e o
+banco é que disse isso.** Consulta de volume (só leitura) devolveu
+**64 currículos, 39 com análise, 8 usuários** — provavelmente na
+maioria teste interno. Publicar "X% dos currículos falham na dimensão
+de estrutura" com essa base seria fabricar autoridade estatística, o
+mesmo defeito do §43 numa roupa nova. Não foi feito, e a decisão do
+operador (que tinha escolhido essa opção) foi contrariada com o dado
+na mão em vez de produzir o número frágil. **Revisitar** quando houver
+centenas de currículos de usuários reais distintos — a consulta em si
+é trivial.
+
+**Frente 2 — auditoria dos números que JÁ estavam no ar.** Achado ao
+abrir `lib/ats/data.ts` pra avaliar a frente 1: as 10 páginas de ATS
+já traziam alegações de mercado, 4 delas numéricas, nenhuma com
+fonte. Verificadas uma a uma contra fonte pública:
+
+- **Gupy — "presente em mais de 70% das vagas corporativas e de
+  grandes empresas no Brasil": FALSA, corrigida.** Os ~75% que
+  circulam em fonte pública são de adoção de ATS **em geral** por
+  médias e grandes empresas brasileiras — não da fatia da Gupy.
+  Atribuir o número da CATEGORIA a uma EMPRESA é o erro que, conferido
+  por um recrutador ou concorrente, derruba a credibilidade da página
+  inteira, não só daquela frase. Trocada por descrição de posição sem
+  percentual, com comentário no código registrando o porquê (pra
+  ninguém recolocar depois sem saber).
+- **Workday — "mais de 50% da Fortune 500": sustenta**, e é
+  conservadora: o 8-K da própria Workday na SEC (FY2024) diz **mais de
+  60%**.
+- **Solides — "mais de 25 mil empresas": sustenta**, também
+  conservadora (fontes indicam 35–55 mil, variando por data).
+- **iCIMS — "mais de 4.000 clientes": sustenta** (~4.000, confirmado
+  em múltiplas fontes).
+- Os outros 6 são qualitativos ("líder em", "forte presença",
+  "crescimento expressivo") — não falsificáveis, risco baixo.
+
+**Padrão que ficou registrado**: número de fornecedor varia entre
+fontes e ENVELHECE (iCIMS aparece como "40% da Fortune 100" numa
+fonte e "quase 20%" noutra). Manter percentual em página pública só
+se sustenta citando fonte primária COM DATA — senão o dado certo de
+hoje vira o errado do ano que vem sem ninguém perceber. Pendência
+aberta, não resolvida nesta rodada: as 3 alegações que sobreviveram
+continuam sem citar fonte na tela.
+
+`tsc --noEmit` e `npm test` (895/895) limpos.
