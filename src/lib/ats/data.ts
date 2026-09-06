@@ -26,7 +26,13 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     country: 'BR',
     marketName: 'Brasil',
     description: 'A Gupy é a plataforma de recrutamento e seleção mais utilizada por grandes empresas e multinacionais no Brasil. Sua inteligência artificial proprietária (Gaia) analisa, extrai e ranqueia automaticamente os currículos com base na afinidade semântica com a vaga.',
-    marketShare: 'Presente em mais de 70% das vagas corporativas e de grandes empresas no Brasil.',
+    // Antes: "Presente em mais de 70% das vagas corporativas e de grandes
+    // empresas no Brasil." Retirado por não se sustentar: os ~75% que
+    // circulam em fontes públicas são de adoção de ATS EM GERAL por médias e
+    // grandes empresas brasileiras, não da fatia da Gupy — atribuir o número
+    // da categoria a uma empresa é o tipo de erro que, conferido por alguém,
+    // derruba a credibilidade da página inteira.
+    marketShare: 'Líder do mercado brasileiro de recrutamento e seleção, com milhares de empresas clientes.',
     howItWorks: [
       {
         title: 'Extração e Leitura de Texto (Parsing)',
