@@ -996,7 +996,7 @@ export const ja: TranslationDictionary = {
     southAmerica: "南アメリカ",
   },
   atsPage: {
-    metaTitle: '{ats}のATS適合度 — 選考の仕組みとAI診断 | GriffoWork',
+    metaTitle: '{ats}（ATS）を通過する{resume}の書き方 — 選考の仕組み | GriffoWork',
     metaDescription: '{fullName}（ATS＝採用管理システム）の選考アルゴリズムが職務経歴書をどう読み取るのか、そしてGriffoWorkが8つの次元でどう診断するのかを解説します。',
     breadcrumbHome: 'ホーム',
     breadcrumbSystems: 'ATSシステム',

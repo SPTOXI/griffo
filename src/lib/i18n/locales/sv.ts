@@ -996,7 +996,7 @@ export const sv: TranslationDictionary = {
     southAmerica: "Sydamerika",
   },
   atsPage: {
-    metaTitle: '{ats} ATS-kompatibilitet — Så fungerar gallringen & AI-granskning | GriffoWork',
+    metaTitle: '{resume} för {ats} (ATS) — Så fungerar gallringen | GriffoWork',
     metaDescription: 'Förstå hur algoritmen i {fullName} — ett ATS, rekryteringssystem som gallrar CV:n — läser din ansökan, och hur GriffoWork granskar ditt dokument i 8 dimensioner.',
     breadcrumbHome: 'Hem',
     breadcrumbSystems: 'ATS-system',

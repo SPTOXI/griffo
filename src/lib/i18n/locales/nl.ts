@@ -996,7 +996,7 @@ export const nl: TranslationDictionary = {
     southAmerica: "Zuid-Amerika",
   },
   atsPage: {
-    metaTitle: '{ats} ATS-compatibiliteit — Zo werkt de selectie & AI-analyse | GriffoWork',
+    metaTitle: '{resume} voor {ats} (ATS) — Zo werkt de selectie | GriffoWork',
     metaDescription: 'Ontdek hoe het algoritme van {fullName} — een ATS, recruitmentsoftware die cv\'s filtert — jouw sollicitatie leest, en hoe GriffoWork je document op 8 dimensies analyseert.',
     breadcrumbHome: 'Home',
     breadcrumbSystems: 'ATS-systemen',

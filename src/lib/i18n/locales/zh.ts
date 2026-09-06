@@ -996,7 +996,7 @@ export const zh: TranslationDictionary = {
     southAmerica: "南美洲",
   },
   atsPage: {
-    metaTitle: '{ats} ATS 兼容性 — 筛选机制与 AI 诊断详解 | GriffoWork',
+    metaTitle: '{ats}（ATS）{resume}筛选机制 — 如何通过自动筛选 | GriffoWork',
     metaDescription: '了解 {fullName}（ATS，即招聘管理系统）的简历筛选系统如何解析简历，以及 GriffoWork 如何从 8 个维度诊断您的简历。',
     breadcrumbHome: '首页',
     breadcrumbSystems: 'ATS 系统',

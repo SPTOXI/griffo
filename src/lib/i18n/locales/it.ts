@@ -996,7 +996,7 @@ export const it: TranslationDictionary = {
     southAmerica: "America del Sud",
   },
   atsPage: {
-    metaTitle: 'Compatibilità ATS {ats} — Come Funziona la Selezione & Audit IA | GriffoWork',
+    metaTitle: '{resume} per ATS {ats} — Come funziona la selezione | GriffoWork',
     metaDescription: 'Scopri come l\'algoritmo di {fullName} — un ATS, software di selezione del personale — filtra i curriculum, e come GriffoWork analizza il tuo documento su 8 dimensioni.',
     breadcrumbHome: 'Home',
     breadcrumbSystems: 'Sistemi ATS',

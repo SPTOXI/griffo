@@ -996,7 +996,7 @@ export const ko: TranslationDictionary = {
     southAmerica: "남아메리카",
   },
   atsPage: {
-    metaTitle: '{ats} ATS 호환성 — 서류 필터링 방식과 AI 진단 | GriffoWork',
+    metaTitle: '{ats}(ATS) {resume} 통과 방법 — 서류 필터링 방식 | GriffoWork',
     metaDescription: '{fullName}(ATS, 채용관리시스템)의 서류 필터링 알고리즘이 이력서를 어떻게 읽는지, 그리고 GriffoWork가 8개 차원에서 어떻게 진단하는지 알아보세요.',
     breadcrumbHome: '홈',
     breadcrumbSystems: 'ATS 시스템',

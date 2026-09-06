@@ -4,6 +4,7 @@ import { cookies, headers } from 'next/headers'
 import Link from 'next/link'
 import { ATS_META } from '@/lib/ats/meta'
 import { atsContentFor, atsLanguagesFor } from '@/lib/ats/content'
+import { resumeTermFor } from '@/lib/market/regional-terms'
 import {
   DICTIONARIES,
   LANGUAGES,
@@ -86,7 +87,12 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   if (!meta || !lang || !content) return {}
 
   const t = DICTIONARIES[lang].atsPage
-  const title = t.metaTitle.replace('{ats}', meta.name)
+  // O termo que o candidato digita é sempre a combinação das duas coisas —
+  // "currículo ATS", "ATS resume", "CV ATS". A palavra do documento vem de
+  // `resumeTermFor`, a mesma fonte única do §2.79, para não repetir aqui a
+  // decisão de "CV" vs "resume" por idioma.
+  const term = resumeTermFor(meta.country, lang)
+  const title = t.metaTitle.replace('{ats}', meta.name).replace('{resume}', term.noun)
   const description = t.metaDescription.replace('{fullName}', meta.fullName)
 
   // hreflang só entre os idiomas que a página REALMENTE tem. Declarar um

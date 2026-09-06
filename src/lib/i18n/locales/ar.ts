@@ -996,7 +996,7 @@ export const ar: TranslationDictionary = {
     southAmerica: "أمريكا الجنوبية",
   },
   atsPage: {
-    metaTitle: 'توافق {ats} مع أنظمة ATS — كيف تعمل التصفية والتدقيق بالذكاء الاصطناعي | GriffoWork',
+    metaTitle: '{resume} لنظام {ats} (ATS) — كيف تعمل التصفية | GriffoWork',
     metaDescription: 'افهم كيف يقرأ {fullName} — وهو نظام ATS لفرز السير الذاتية — سيرتك الذاتية، وكيف يدقّق GriffoWork مستندك عبر 8 أبعاد.',
     breadcrumbHome: 'الرئيسية',
     breadcrumbSystems: 'أنظمة ATS',
