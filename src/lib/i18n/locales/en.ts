@@ -998,7 +998,7 @@ export const en: TranslationDictionary = {
     },
     atsPage: {
       metaTitle: '{resume} for {ats} ATS — How screening works | GriffoWork',
-      metaDescription: 'Understand how the {fullName} screening algorithm — an ATS (Applicant Tracking System) — reads resumes, and how GriffoWork audits your document across 8 dimensions.',
+      metaDescription: 'How the hiring process works at companies using {fullName} — an ATS (Applicant Tracking System) that screens resumes — and how GriffoWork audits your document across 8 dimensions.',
       breadcrumbHome: 'Home',
       breadcrumbSystems: 'ATS Systems',
       heroBadge: 'ATS (Applicant Tracking System) Screening & AI Audit',

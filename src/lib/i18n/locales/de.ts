@@ -997,7 +997,7 @@ export const de: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{resume} für {ats} (ATS) — So funktioniert das Screening | GriffoWork',
-    metaDescription: 'Erfahren Sie, wie der Screening-Algorithmus von {fullName} — ein ATS (Bewerbermanagementsystem) — Lebensläufe liest, und wie GriffoWork Ihr Dokument in 8 Dimensionen prüft.',
+    metaDescription: 'Wie der Einstellungsprozess in Unternehmen mit {fullName} abläuft — einem ATS (Bewerbermanagementsystem), das Lebensläufe vorsortiert — und wie GriffoWork Ihr Dokument in 8 Dimensionen prüft.',
     breadcrumbHome: 'Start',
     breadcrumbSystems: 'ATS-Systeme',
     heroBadge: 'ATS-Screening (Bewerbermanagementsystem) & KI-Analyse',

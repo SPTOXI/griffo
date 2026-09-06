@@ -997,7 +997,7 @@ export const ar: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{resume} لنظام {ats} (ATS) — كيف تعمل التصفية | GriffoWork',
-    metaDescription: 'افهم كيف يقرأ {fullName} — وهو نظام ATS لفرز السير الذاتية — سيرتك الذاتية، وكيف يدقّق GriffoWork مستندك عبر 8 أبعاد.',
+    metaDescription: 'كيف تسير عملية التوظيف في الشركات التي تستخدم {fullName} — وهو نظام ATS لفرز السير الذاتية — وكيف يدقّق GriffoWork مستندك عبر 8 أبعاد.',
     breadcrumbHome: 'الرئيسية',
     breadcrumbSystems: 'أنظمة ATS',
     heroBadge: 'الفرز عبر نظام ATS (فرز السير الذاتية) وتدقيق بالذكاء الاصطناعي',

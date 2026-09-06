@@ -997,7 +997,7 @@ export const it: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{resume} per ATS {ats} — Come funziona la selezione | GriffoWork',
-    metaDescription: 'Scopri come l\'algoritmo di {fullName} — un ATS, software di selezione del personale — filtra i curriculum, e come GriffoWork analizza il tuo documento su 8 dimensioni.',
+    metaDescription: 'Come funziona il processo di selezione nelle aziende che usano {fullName} — un ATS, software di selezione del personale che filtra i curriculum — e come GriffoWork analizza il tuo documento su 8 dimensioni.',
     breadcrumbHome: 'Home',
     breadcrumbSystems: 'Sistemi ATS',
     heroBadge: 'Selezione tramite ATS (software di selezione del personale) & analisi IA',

@@ -997,7 +997,7 @@ export const nl: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{resume} voor {ats} (ATS) — Zo werkt de selectie | GriffoWork',
-    metaDescription: 'Ontdek hoe het algoritme van {fullName} — een ATS, recruitmentsoftware die cv\'s filtert — jouw sollicitatie leest, en hoe GriffoWork je document op 8 dimensies analyseert.',
+    metaDescription: 'Hoe het sollicitatieproces verloopt bij bedrijven die {fullName} gebruiken — een ATS, recruitmentsoftware die cv\'s filtert — en hoe GriffoWork je document op 8 dimensies analyseert.',
     breadcrumbHome: 'Home',
     breadcrumbSystems: 'ATS-systemen',
     heroBadge: 'ATS-selectie (recruitmentsoftware) & AI-analyse',

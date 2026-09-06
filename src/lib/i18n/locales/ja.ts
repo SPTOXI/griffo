@@ -997,7 +997,7 @@ export const ja: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{ats}（ATS）を通過する{resume}の書き方 — 選考の仕組み | GriffoWork',
-    metaDescription: '{fullName}（ATS＝採用管理システム）の選考アルゴリズムが職務経歴書をどう読み取るのか、そしてGriffoWorkが8つの次元でどう診断するのかを解説します。',
+    metaDescription: '{fullName}（ATS＝採用管理システム）を使う企業の採用プロセスと書類選考の仕組み、そしてGriffoWorkが職務経歴書を8つの次元で診断する方法を解説します。',
     breadcrumbHome: 'ホーム',
     breadcrumbSystems: 'ATSシステム',
     heroBadge: 'ATS（採用管理システム）による選考とAI診断',

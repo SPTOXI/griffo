@@ -997,7 +997,7 @@ export const zh: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{ats}（ATS）{resume}筛选机制 — 如何通过自动筛选 | GriffoWork',
-    metaDescription: '了解 {fullName}（ATS，即招聘管理系统）的简历筛选系统如何解析简历，以及 GriffoWork 如何从 8 个维度诊断您的简历。',
+    metaDescription: '使用 {fullName}（ATS，即招聘管理系统）的企业招聘流程与简历筛选机制，以及 GriffoWork 如何从 8 个维度诊断您的简历。',
     breadcrumbHome: '首页',
     breadcrumbSystems: 'ATS 系统',
     heroBadge: 'ATS（简历筛选系统）筛选与 AI 诊断',

@@ -105,8 +105,13 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   return {
     title,
     description,
+    // O candidato digita a COMBINAÇÃO — "currículo ATS Workday", nunca só a
+    // sigla. `resumeTermFor` dá a palavra do documento no idioma da rota
+    // (§2.79); antes daqui as keywords não traziam nenhuma delas.
     keywords: [
       `ats ${meta.name.toLowerCase()}`,
+      `${term.nounLower.toLowerCase()} ${meta.name.toLowerCase()}`,
+      `${term.nounLower.toLowerCase()} ats`,
       `${meta.name.toLowerCase()} ${t.breadcrumbSystems.toLowerCase()}`,
       'griffowork',
     ],

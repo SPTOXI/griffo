@@ -998,7 +998,7 @@ export const es: TranslationDictionary = {
     },
     atsPage: {
       metaTitle: '{resume} para ATS {ats} — Cómo funciona el filtrado | GriffoWork',
-      metaDescription: 'Descubre cómo el algoritmo de {fullName} — un ATS (sistema de seguimiento de candidatos) — filtra currículums, y cómo GriffoWork audita tu documento en 8 dimensiones.',
+      metaDescription: 'Cómo funciona el proceso de selección en las empresas que usan {fullName} — un ATS (sistema de seguimiento de candidatos) que filtra currículums — y cómo GriffoWork audita tu documento en 8 dimensiones.',
       breadcrumbHome: 'Inicio',
       breadcrumbSystems: 'Sistemas ATS',
       heroBadge: 'Filtrado por ATS (sistema de seguimiento de candidatos) y auditoría por IA',

@@ -997,7 +997,7 @@ export const sv: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{resume} för {ats} (ATS) — Så fungerar gallringen | GriffoWork',
-    metaDescription: 'Förstå hur algoritmen i {fullName} — ett ATS, rekryteringssystem som gallrar CV:n — läser din ansökan, och hur GriffoWork granskar ditt dokument i 8 dimensioner.',
+    metaDescription: 'Så fungerar rekryteringsprocessen på företag som använder {fullName} — ett ATS, rekryteringssystem som gallrar CV:n — och hur GriffoWork granskar ditt dokument i 8 dimensioner.',
     breadcrumbHome: 'Hem',
     breadcrumbSystems: 'ATS-system',
     heroBadge: 'ATS-gallring (rekryteringssystem) & AI-granskning',

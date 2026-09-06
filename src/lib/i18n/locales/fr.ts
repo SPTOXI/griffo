@@ -997,7 +997,7 @@ export const fr: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{resume} pour ATS {ats} — Comment fonctionne le tri | GriffoWork',
-    metaDescription: 'Comprenez comment l\'algorithme de {fullName} — un ATS, logiciel de recrutement qui trie les CV — lit votre candidature, et comment GriffoWork audite votre document sur 8 dimensions.',
+    metaDescription: 'Comment se déroule le processus de recrutement dans les entreprises qui utilisent {fullName} — un ATS, logiciel de recrutement qui trie les CV — et comment GriffoWork audite votre document sur 8 dimensions.',
     breadcrumbHome: 'Accueil',
     breadcrumbSystems: 'Systèmes ATS',
     heroBadge: 'Tri par ATS (logiciel de recrutement) & audit par IA',
