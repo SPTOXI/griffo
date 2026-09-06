@@ -4,6 +4,15 @@ import { ATS_META } from './meta'
 import { atsPt } from './locales/pt'
 import { atsEn } from './locales/en'
 import { atsDe } from './locales/de'
+import { atsEs } from './locales/es'
+import { atsFr } from './locales/fr'
+import { atsIt } from './locales/it'
+import { atsJa } from './locales/ja'
+import { atsNl } from './locales/nl'
+import { atsSv } from './locales/sv'
+import { atsZh } from './locales/zh'
+import { atsAr } from './locales/ar'
+import { atsKo } from './locales/ko'
 
 /**
  * Conteúdo dos guias de ATS, por idioma.
@@ -15,7 +24,16 @@ import { atsDe } from './locales/de'
 const LOCALES: Partial<Record<Language, AtsLocale>> = {
   pt: atsPt,
   en: atsEn,
+  es: atsEs,
   de: atsDe,
+  fr: atsFr,
+  it: atsIt,
+  ja: atsJa,
+  nl: atsNl,
+  sv: atsSv,
+  zh: atsZh,
+  ar: atsAr,
+  ko: atsKo,
 }
 
 /**
