@@ -5428,3 +5428,66 @@ ali trata tudo como um bloco de risco difuso e inacionável. Uma parte
 era verificável sozinha, e continha um defeito real que estava no ar.
 A ressalva continua válida para tom e registro; para terminologia,
 havia trabalho a fazer, não só um aviso a dar.
+
+## 2.84 `/hiring`: a primeira porta de entrada, e a direção invertida da palavra
+
+Operador pediu para usar "hiring" na captação de leads, porque a palavra
+aparece muito nos perfis de recrutadores no Instagram.
+
+**Antes disso, um erro meu que precisa ficar registrado.** Na mensagem
+anterior ele disse só "estamos esquecendo o termo muito usado hiring".
+Eu supus que significasse "processo de contratação", e saí aplicando
+`hiring process` / `processo seletivo` nas 67 páginas de ATS sem
+perguntar o que ele queria dizer. Ele então explicou que se referia a
+outra coisa (selo do LinkedIn, hiring manager, empresa homônima), e
+depois precisou pedir duas vezes que eu dissesse o que havia entendido
+antes de a confusão ficar clara. A instrução que veio foi direta:
+**"nunca invente nada"**. Registrada como memória permanente
+(`feedback_never_assume_intent`), porque o defeito não foi de
+implementação — foi agir sobre uma suposição em vez de perguntar.
+
+O trabalho do §2.83 anterior (processo seletivo nas descrições) segue
+válido por mérito próprio — as páginas só diziam "triagem", que é o
+termo estreito —, mas foi feito pelo motivo errado.
+
+**A direção da palavra é o que define a página.** `#hiring` é um sinal
+que vai DO EMPREGADOR PARA O CANDIDATO: quem publica está oferecendo
+vaga. O GriffoWork não oferece vaga nenhuma. Verificado em fonte que as
+hashtags do lado oposto — de quem procura — são outras (`#hireme`,
+`#jobhunting`, `#opentowork`). Competir por `#hiring` como se fôssemos
+anunciante atrairia gente que quer ver uma vaga e entregaria um serviço:
+tráfego que não converte, e sinal ruim para o buscador.
+
+O que a palavra captura de verdade é o **instante seguinte**: a pessoa
+viu o anúncio, se candidatou, e ficou com a dúvida "meu currículo
+passa?". Essa dúvida é literalmente o que o produto responde. Daí o H1
+ser *"Você respondeu à vaga. Seu currículo chega até uma pessoa?"* — e
+não "temos vagas".
+
+**Implementação:** `app/hiring/page.tsx`, SSR, 12 idiomas, seguindo o
+mesmo padrão de `?lang=` + canonical + hreflang de `/market-pulse`
+(§2.55) e `/ats` (§2.82) — não se inventou um quarto esquema de URL.
+Bloco `hiringPage` no dicionário, 17 chaves × 12 idiomas.
+
+No `sitemap.ts`, os 12 alternates saem de `LANGUAGES`, **não** de lista
+literal — diferente do bloco do `/market-pulse` logo acima, que ainda
+tem os 12 pares escritos à mão e vai divergir no dia em que entrar um
+13º idioma. O novo já nasceu certo; o antigo fica como dívida
+conhecida.
+
+**Sem estatística, de propósito.** Circula muito "X% dos currículos
+nunca chegam a um humano" — é exatamente o número que converteria bem
+numa página de captação. Nenhum deles foi verificado por nós, e o §43
+vale aqui como vale no laudo. A página descreve o mecanismo em três
+etapas (o sistema lê o arquivo → compara com a vaga → só então alguém
+abre) sem afirmar magnitude nenhuma.
+
+**Erro pego na própria geração:** o CTA em japonês saiu com caracteres
+cirílicos misturados (`無料диагノーシス`) — ruído meu ao gerar os 12
+blocos. Corrigido, e depois varridos os 12 arquivos procurando qualquer
+alfabeto fora do lugar (cirílico em qualquer um, kana fora do `ja`,
+hangul fora do `ko`, árabe fora do `ar`). Nenhuma outra ocorrência.
+
+Verificado no HTML real em pt/en/de/ja, 12 tags de hreflang, entrada
+correta no sitemap, zero overflow em mobile (390px) e desktop (1280px).
+`tsc --noEmit`, `eslint` e `npm test` (903/903) limpos.
