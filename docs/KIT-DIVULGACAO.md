@@ -170,7 +170,154 @@ de verdade, é melhor pular esta frente e investir nas outras duas.
 
 ---
 
-## 7. Como saber se funcionou
+## 7. Onde estão os jornalistas que JÁ estão pedindo material
+
+Disparar release para `redacao@` tem taxa de resposta baixíssima — o e-mail
+chega numa caixa que recebe centenas por dia, sem ninguém tê-lo pedido.
+
+Há um caminho melhor, e ele é o inverso: plataformas onde **jornalistas
+publicam o que estão procurando** e você responde. Quem responde a um pedido
+existente não é intruso, é fonte — e a taxa de aproveitamento é outra.
+
+| Plataforma | Custo | Observação |
+|---|---|---|
+| **Source of Sources (SoS)** | Grátis | Criada em 2024 pelo fundador original do HARO. Modelo por e-mail: chegam 1 a 3 e-mails por dia com pedidos de jornalistas. É o ponto de partida de menor atrito. |
+| **Qwoted** | Tier grátis | Base de usuários menor que o HARO, ou seja, **menos concorrência por pedido**. Considerada hoje a substituta mais direta. |
+| **Help a B2B Writer** | Grátis para fontes | Nicho B2B. Relevante para a porta "Empresas e RH". |
+| **Featured.com** | Freemium | Absorveu o HARO/Connectively. Formato de perguntas curadas em vez de caixa de entrada caótica. |
+
+**Contexto que evita perda de tempo:** o HARO original foi descontinuado em
+dez/2024, reaberto em 2025 e depois absorvido pelo Featured. Se você
+encontrar material antigo recomendando "HARO", é esse o histórico.
+
+**Como usar bem:** os pedidos relevantes para o GriffoWork são sobre mercado
+de trabalho, tendência de contratação, recrutamento e triagem por IA. A
+resposta deve trazer **o dado**, não o produto — o link vem no crédito da
+fonte, que é exatamente o objetivo.
+
+**O que só você pode fazer:** criar as contas. Todas exigem cadastro e
+verificação por e-mail.
+
+---
+
+## 8. Release em formato de assessoria — pronto para distribuir
+
+Formato padrão (pirâmide invertida, boilerplate, contato). Serve tanto para
+envio direto quanto para colar em resposta nas plataformas do item 7.
+
+### Versão em português
+
+---
+
+**PARA DIVULGAÇÃO IMEDIATA**
+
+# Mercado de trabalho esfria na Europa Ocidental e aquece na América Latina, aponta índice que cobre 98 países
+
+**Levantamento baseado em estatística oficial classifica 84 países por fase
+do ciclo de contratação; Alemanha, França e Holanda aparecem em
+desaceleração, Brasil e Colômbia em aceleração**
+
+São Paulo — O Índice GriffoWork, que acompanha a tendência do mercado de
+trabalho de 98 países a partir de estatística oficial, aponta um contraste
+entre a Europa Ocidental e a América Latina no corte mais recente, com dados
+de referência de julho de 2026.
+
+Dos 98 países rastreados, 84 têm fase classificada. Destes, 26 aparecem em
+aceleração, 21 em desaceleração e 32 estáveis. Os 14 restantes são países
+cobertos, mas sem histórico suficiente para classificação — e permanecem
+declarados como tal, sem estimativa.
+
+Entre os países em desaceleração estão Alemanha, França, Itália, Holanda,
+Bélgica, Áustria, Dinamarca, Finlândia, Noruega e Islândia, além de Índia,
+Coreia do Sul, Filipinas e Bangladesh. Em aceleração aparecem Brasil,
+Colômbia, Bolívia, Equador, Costa Rica e Jamaica, além de Egito, Israel,
+Jordânia e Angola.
+
+O índice é calculado a partir de séries oficiais — Bureau of Labor Statistics
+(EUA), Eurostat (Europa), ILOSTAT (Organização Internacional do Trabalho) e
+CEPALSTAT (Comissão Econômica para a América Latina e o Caribe) — e mede a
+tendência de cada país **contra a própria série histórica**, não em
+comparação com os demais. Um país classificado como "aquecendo" melhorou em
+relação a si mesmo no período recente; a classificação não afirma que seu
+mercado seja melhor que o de outro país.
+
+Os dados são públicos e podem ser consultados no mapa interativo, disponível
+em 12 idiomas, ou baixados em formato JSON.
+
+- Mapa: https://griffo.work/market-pulse
+- Dados: https://griffo.work/api/hiring-index
+
+**Sobre o GriffoWork**
+O GriffoWork é uma plataforma de inteligência de carreira que audita a
+compatibilidade de currículos com sistemas de triagem automatizada (ATS) e
+mantém o Índice GriffoWork, um levantamento público sobre a temperatura de
+contratação em 98 países.
+
+**Contato para imprensa**
+contact@griffo.work · https://griffo.work
+
+---
+
+### Versão em inglês (a pauta é sobre a Europa; o release em inglês amplia o alcance)
+
+---
+
+**FOR IMMEDIATE RELEASE**
+
+# Hiring cools across Western Europe while Latin America heats up, index covering 98 countries finds
+
+**Analysis based on official labour statistics classifies 84 countries by
+hiring cycle phase; Germany, France and the Netherlands show slowdown, Brazil
+and Colombia show acceleration**
+
+The GriffoWork Index, which tracks labour market trends across 98 countries
+using official statistics, shows a marked contrast between Western Europe and
+Latin America in its most recent reading, with reference data from July 2026.
+
+Of the 98 countries tracked, 84 have a classified phase: 26 accelerating, 21
+slowing and 32 stable. The remaining 14 are covered but lack sufficient
+history for classification, and are reported as such rather than estimated.
+
+Countries showing slowdown include Germany, France, Italy, the Netherlands,
+Belgium, Austria, Denmark, Finland, Norway and Iceland, alongside India, South
+Korea, the Philippines and Bangladesh. Those showing acceleration include
+Brazil, Colombia, Bolivia, Ecuador, Costa Rica and Jamaica, alongside Egypt,
+Israel, Jordan and Angola.
+
+The index draws on official series — the Bureau of Labor Statistics (US),
+Eurostat (Europe), ILOSTAT (International Labour Organization) and CEPALSTAT
+(Economic Commission for Latin America and the Caribbean) — and measures each
+country **against its own historical series**, not against other countries. A
+country classified as "heating up" has improved relative to its own recent
+past; the classification makes no claim that its market is better than
+another's.
+
+The data is public and available as an interactive map in 12 languages, or as
+a JSON download.
+
+- Map: https://griffo.work/market-pulse
+- Data: https://griffo.work/api/hiring-index
+
+**About GriffoWork**
+GriffoWork is a career intelligence platform that audits resume compatibility
+with applicant tracking systems (ATS) and maintains the GriffoWork Index, a
+public reading of hiring temperature across 98 countries.
+
+**Press contact**
+contact@griffo.work · https://griffo.work
+
+---
+
+**Nota sobre o que este release NÃO afirma, e por quê:** não há número de
+usuários, de currículos analisados nem de precisão do produto. A base de
+usuários hoje é pequena, e qualquer número inflado seria conferível e
+destruiria a credibilidade do dado — que é o ativo real sendo oferecido. O
+release vende o levantamento, não a empresa; a menção à empresa é o crédito
+da fonte, que é onde o link nasce.
+
+---
+
+## 9. Como saber se funcionou
 
 No Search Console, o que muda quando link externo começa a entrar:
 
