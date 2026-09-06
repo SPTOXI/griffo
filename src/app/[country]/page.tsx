@@ -5,6 +5,7 @@ import { countryName, COUNTRIES } from '@/lib/market/countries'
 import { priceFor } from '@/lib/pricing/catalog'
 import { DICTIONARIES } from '@/lib/i18n'
 import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
+import { resumeTermFor } from '@/lib/market/regional-terms'
 import { CountryPageClient } from './country-client'
 
 export const dynamicParams = true
@@ -150,11 +151,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const cName = isGlobal ? 'Global' : COUNTRY_NAME_BY_SLUG[slug] || countryName(code) || code
   const price = priceFor(isGlobal ? 'US' : code, 'single')
   const atsList = market.ats.slice(0, 4).join(', ')
+  // "CV" no Reino Unido/Austrália, "Resume" nos EUA/Canadá — o mesmo
+  // documento com o nome que a pessoa daquele mercado realmente digita na
+  // busca. Só muda dentro do inglês; ver `regional-terms.ts`.
+  const term = resumeTermFor(isGlobal ? 'US' : code, market.jobLanguage)
 
   const titles: Record<string, string> = {
     pt: `GriffoWork ${cName} — Análise de Currículo por IA e Pontuação ATS`,
     es: `GriffoWork ${cName} — Auditoría de Currículum con IA y Puntuación ATS`,
-    en: `GriffoWork ${cName} — Global AI Career Intelligence & ATS Resume Audit`,
+    en: `GriffoWork ${cName} — AI Career Intelligence & ATS ${term.noun} Audit`,
     de: `GriffoWork ${cName} — KI-Lebenslauf-Analyse & ATS-Score-Prüfung`,
     fr: `GriffoWork ${cName} — Audit de CV par IA & Score de Compatibilité ATS`,
     it: `GriffoWork ${cName} — Analisi del Curriculum con IA & Punteggio ATS`,
@@ -169,7 +174,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const descriptions: Record<string, string> = {
     pt: `Otimize seu currículo para os padrões de recrutamento de ${cName}. Avaliação de compatibilidade com ${atsList} e laudo executivo em 8 dimensões por apenas ${price.formatted}.`,
     es: `Optimiza tu currículum para los estándares de contratación en ${cName}. Evaluación de compatibilidad con ${atsList} e informe ejecutivo en 8 dimensiones por solo ${price.formatted}.`,
-    en: `Optimize your resume for hiring standards in ${cName}. Audit ATS compatibility with ${atsList} and get an 8-dimension executive career report for just ${price.formatted}.`,
+    en: `Optimize your ${term.nounLower} for hiring standards in ${cName}. Audit ATS compatibility with ${atsList} and get an 8-dimension executive career report for just ${price.formatted}.`,
     de: `Optimieren Sie Ihren Lebenslauf für den Arbeitsmarkt in ${cName}. ATS-Kompatibilitätsprüfung für ${atsList} und 8-Dimensionen-Prüfbericht für nur ${price.formatted}.`,
     fr: `Optimisez votre CV selon les standards de recrutement en ${cName}. Audit de compatibilité avec ${atsList} et rapport exécutif en 8 dimensions pour seulement ${price.formatted}.`,
     it: `Ottimizza il tuo curriculum per gli standard di selezione in ${cName}. Valutazione di compatibilità con ${atsList} e report esecutivo in 8 dimensioni per soli ${price.formatted}.`,
@@ -190,8 +195,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     keywords: [
       'griffowork',
       `griffowork ${cName.toLowerCase()}`,
-      `curriculo ${cName.toLowerCase()}`,
-      `resume ${cName.toLowerCase()}`,
+      // O termo do documento no idioma/mercado da rota, não "curriculo" +
+      // "resume" fixos em toda página (que deixava `/gb` sem "CV" e `/de`
+      // sem "Lebenslauf" — as duas palavras que aquele público digita).
+      `${term.nounLower.toLowerCase()} ${cName.toLowerCase()}`,
+      `${term.nounLower.toLowerCase()} ATS`,
       'ATS score',
       ...market.ats,
     ],

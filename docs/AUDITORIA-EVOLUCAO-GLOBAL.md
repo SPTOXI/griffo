@@ -5136,3 +5136,57 @@ Verificado ao vivo em `/de` (a versão mais longa, mobile e desktop):
 cabe numa linha só, sem quebra nem corte — o mesmo tipo de bug do
 §2.74/§2.75 que uma frase mais longa poderia ter reaberto aqui.
 `tsc --noEmit`, `eslint` e `npm test` (889/889) limpos.
+
+## 2.79 "CV" vs "resume" por mercado, e o termo nativo nas keywords de todo idioma
+
+Operador decidiu diferenciar as rotas regionais priorizando captação
+("melhor captar leads sempre"), depois de eu explicar que o risco de
+"conteúdo duplicado" que o relatório externo levantava é folclore
+neste caso — o Google não pune variantes por país com hreflang
+correto (que o §2.69 já arrumou); ele escolhe qual mostrar. O custo
+real de não diferenciar não é penalidade, é intenção de busca que
+passa batido.
+
+**Metade do pedido já estava feita, e eu confirmei antes de mexer:** o
+`<title>`/description de cada rota JÁ interpolam `market.ats`, então
+`/gb` já dizia "Teamtailor", `/us` "iCIMS", `/de` "Personio" — os ATS
+regionais que o relatório pedia já apareciam no resultado de busca.
+
+**O que faltava de verdade era o vocabulário.** Quem procura emprego
+no Reino Unido digita "CV"; nos EUA, "resume". A página inteira em
+inglês só dizia "resume", então a busca por "CV ATS checker" não
+batia com nada. Pior: as `keywords` eram `curriculo {país}` +
+`resume {país}` FIXOS em toda rota — nenhuma página não-PT/EN
+declarava a própria palavra (`/de` não tinha "Lebenslauf", `/jp` não
+tinha "職務経歴書").
+
+Novo `lib/market/regional-terms.ts` com `resumeTermFor(país, idioma)`,
+usado no título, na description e nas keywords:
+- **Dentro do inglês**, divide por país: `CV_MARKETS` = GB, IE, AU, NZ,
+  ZA (convenção britânica); EUA e Canadá seguem em "Resume".
+- **Fora do inglês**, devolve o termo nativo (`Lebenslauf`,
+  `職務経歴書`, `السيرة الذاتية`...) — sem variação por país, porque
+  não existe: `Lebenslauf` serve DE e AT, `currículo` serve BR e PT.
+
+**Deliberadamente NÃO adivinha onde a convenção é ambígua**: Índia,
+Singapura, Filipinas e Nigéria usam os dois termos conforme o setor,
+então ficam no padrão em vez de eu escolher um lado — a mesma regra
+contra inventar dado, aplicada a vocabulário. Há teste que trava isso
+explicitamente, para ninguém "completar a lista" depois sem
+pesquisar.
+
+6 testes novos (`regional-terms.test.ts`), incluindo uma trava para
+idioma novo entrar em `LANGUAGES` sem termo nativo declarado — sem
+ela, uma língua 13ª sairia com keywords em inglês sem ninguém notar.
+Verificado com `curl` no HTML real: `/gb /au /nz /ie /za` → "ATS CV
+Audit"; `/us /ca` → "ATS Resume Audit"; `/de` → "Lebenslauf" nas
+keywords; `/jp` → "職務経歴書". `tsc --noEmit`, `eslint` e `npm test`
+(895/895) limpos.
+
+**O que fica de fora desta rodada, por ser outro tamanho de
+trabalho:** o CORPO da página (H1, subtítulo, features, FAQ) continua
+idêntico entre rotas do mesmo idioma, porque o texto vem de
+`DICTIONARIES[jobLanguage]` — diferenciar ali exige uma camada de
+override por mercado em cima do dicionário por idioma, não é troca de
+string. O ganho de busca maior (o termo no `<title>`/description, que
+é o que aparece no resultado do Google) já está capturado.
