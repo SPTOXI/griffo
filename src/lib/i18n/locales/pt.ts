@@ -14,7 +14,7 @@ export const pt: TranslationDictionary = {
       marketPulse: 'Mapa de Contratação',
     },
     hero: {
-      badge: 'IA + Padrões Gupy, LinkedIn & Recrutamento Global',
+      badge: 'Padrões Gupy, Workday, Taleo & LinkedIn',
       title1: 'Sua ',
       titleAccent: 'experiência',
       title2: ' vale mais do que o cargo no seu currículo.',

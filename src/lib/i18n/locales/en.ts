@@ -14,7 +14,7 @@ export const en: TranslationDictionary = {
       marketPulse: 'Hiring Map',
     },
     hero: {
-      badge: 'AI + Global ATS, LinkedIn & Recruiter Standards',
+      badge: 'Workday, Taleo, Greenhouse & LinkedIn Standards',
       title1: 'Your ',
       titleAccent: 'experience',
       title2: ' is worth more than the job title on your resume.',

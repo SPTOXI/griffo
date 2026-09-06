@@ -14,7 +14,7 @@ export const it: TranslationDictionary = {
     marketPulse: 'Clima delle Assunzioni',
   },
   hero: {
-    badge: 'IA + Standard Workday, InfoJobs, LinkedIn & Selezione Globale',
+    badge: 'Standard Workday, Taleo, Greenhouse e LinkedIn',
     title1: 'La tua ',
     titleAccent: 'esperienza',
     title2: ' vale più del titolo nel tuo curriculum.',

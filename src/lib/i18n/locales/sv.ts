@@ -14,7 +14,7 @@ export const sv: TranslationDictionary = {
     marketPulse: 'Anställningsklimat',
   },
   hero: {
-    badge: 'AI + Workday, LinkedIn, Greenhouse & Globala Rekryteringsstandarder',
+    badge: 'Workday-, Taleo-, Greenhouse- & LinkedIn-standarder',
     title1: 'Din ',
     titleAccent: 'erfarenhet',
     title2: ' är värd mer än jobbtiteln i ditt CV.',

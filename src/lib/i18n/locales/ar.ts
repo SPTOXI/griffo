@@ -14,7 +14,7 @@ export const ar: TranslationDictionary = {
     marketPulse: 'خريطة التوظيف',
   },
   hero: {
-    badge: 'الذكاء الاصطناعي + معايير Workday و Greenhouse و LinkedIn والتوظيف العالمي',
+    badge: 'معايير Workday وTaleo وGreenhouse وLinkedIn',
     title1: 'إنّ ',
     titleAccent: 'خبرتك',
     title2: ' تساوي أكثر من المسمى الوظيفي في سيرتك الذاتية.',

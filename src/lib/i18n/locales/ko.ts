@@ -14,7 +14,7 @@ export const ko: TranslationDictionary = {
     marketPulse: '채용 온도 지도',
   },
   hero: {
-    badge: 'AI + Workday, LinkedIn, Greenhouse 및 글로벌 채용 표준',
+    badge: 'Workday, Taleo, Greenhouse & LinkedIn 표준',
     title1: '당신의 ',
     titleAccent: '경험',
     title2: '은 이력서의 직함보다 더 가치 있습니다.',

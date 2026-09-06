@@ -5110,3 +5110,29 @@ competir visualmente com a copy de conversão que já faz esse
 trabalho. Testado ao vivo em `/de` (mobile e desktop), `/ae` (RTL) e
 `/jp`: sem sobreposição, sem overflow, legível nas quatro
 combinações. `tsc --noEmit`, `eslint` e `npm test` (889/889) limpos.
+
+## 2.78 Badge do hero: fora "IA"/"Global", dentro mais prova de ATS real
+
+Fechando a pendência que o próprio §2.72 tinha deixado em aberto
+("IA + Padrões Gupy, LinkedIn & Recrutamento Global" continuava
+citando os dois termos que a tagline já tinha abandonado). Dei 4
+opções ao operador (texto técnico sem marca, ecoar "Inteligência de
+Carreira" da tagline, mais nomes de ATS, ou frase própria) — escolhida
+"mais nomes de ATS": preserva o que o badge já fazia de valioso (citar
+marca real como prova, não é só enfeite) e troca só os dois termos
+problemáticos.
+
+Nas 12 línguas, o badge passou a citar o MESMO trio de ATS que o
+subtítulo logo abaixo já usa (não um nome novo introduzido só no
+badge) + LinkedIn — ex.: PT "Padrões Gupy, Workday, Taleo & LinkedIn",
+EN "Workday, Taleo, Greenhouse & LinkedIn Standards", DE "Standards
+von Workday, Personio, Taleo & LinkedIn" (Personio porque é o que o
+subtítulo alemão já cita, não Gupy). Duas línguas tinham ATS
+divergente entre badge e subtítulo antes desta correção (IT citava
+"InfoJobs" no badge contra "Workday, Taleo, Greenhouse" no subtítulo;
+FR só citava "Workday" sozinho) — alinhados aos dois.
+
+Verificado ao vivo em `/de` (a versão mais longa, mobile e desktop):
+cabe numa linha só, sem quebra nem corte — o mesmo tipo de bug do
+§2.74/§2.75 que uma frase mais longa poderia ter reaberto aqui.
+`tsc --noEmit`, `eslint` e `npm test` (889/889) limpos.

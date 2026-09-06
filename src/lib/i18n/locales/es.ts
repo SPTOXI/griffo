@@ -14,7 +14,7 @@ export const es: TranslationDictionary = {
       marketPulse: 'Mapa de Contratación',
     },
     hero: {
-      badge: 'IA + Estándares Globales de Reclutamiento, LinkedIn y ATS',
+      badge: 'Estándares Workday, Taleo, Gupy y LinkedIn',
       title1: 'Tu ',
       titleAccent: 'experiencia',
       title2: ' vale más que el puesto en tu currículum.',

@@ -14,7 +14,7 @@ export const zh: TranslationDictionary = {
     marketPulse: '招聘热度地图',
   },
   hero: {
-    badge: 'AI + Workday、Greenhouse、LinkedIn 与全球招聘标准',
+    badge: 'Workday、Taleo、Greenhouse 与 LinkedIn 标准',
     title1: '您的',
     titleAccent: '经验',
     title2: '比简历上的职位名称更有价值。',

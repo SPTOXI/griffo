@@ -14,7 +14,7 @@ export const nl: TranslationDictionary = {
     marketPulse: 'Aannameklimaat',
   },
   hero: {
-    badge: 'AI + Workday, LinkedIn, Greenhouse & Wereldwijde Wervingsstandaarden',
+    badge: 'Workday-, Taleo-, Greenhouse- & LinkedIn-standaarden',
     title1: 'Jouw ',
     titleAccent: 'ervaring',
     title2: ' is meer waard dan de functietitel op je cv.',

@@ -14,7 +14,7 @@ export const fr: TranslationDictionary = {
     marketPulse: "Climat d'Embauche",
   },
   hero: {
-    badge: 'IA + Standards Workday, LinkedIn & Recrutement International',
+    badge: 'Normes Workday, Taleo, Greenhouse & LinkedIn',
     title1: 'Votre ',
     titleAccent: 'expérience',
     title2: " vaut plus que l'intitulé de poste sur votre CV.",

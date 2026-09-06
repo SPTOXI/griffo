@@ -14,7 +14,7 @@ export const de: TranslationDictionary = {
     marketPulse: 'Einstellungsklima',
   },
   hero: {
-    badge: 'KI + Standards für Workday, Personio, LinkedIn & globale Rekrutierung',
+    badge: 'Standards von Workday, Personio, Taleo & LinkedIn',
     title1: 'Ihre ',
     titleAccent: 'Erfahrung',
     title2: ' zählt mehr als die Jobbezeichnung in Ihrem Lebenslauf.',

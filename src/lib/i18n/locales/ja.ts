@@ -14,7 +14,7 @@ export const ja: TranslationDictionary = {
     marketPulse: '採用温度マップ',
   },
   hero: {
-    badge: 'AI ＋ Workday・Greenhouse・LinkedIn・グローバル採用基準',
+    badge: 'Workday・Taleo・Greenhouse・LinkedIn基準',
     title1: 'あなたの',
     titleAccent: '経験',
     title2: 'は、職務経歴書の役職名より価値があります。',
