@@ -997,10 +997,10 @@ export const ko: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{ats} ATS 호환성 — 서류 필터링 방식과 AI 진단 | GriffoWork',
-    metaDescription: '{fullName}의 서류 필터링 알고리즘이 이력서를 어떻게 읽는지, 그리고 GriffoWork가 8개 차원에서 어떻게 진단하고 다듬는지 알아보세요.',
+    metaDescription: '{fullName}(ATS, 채용관리시스템)의 필터링 알고리즘이 이력서를 어떻게 읽는지, 그리고 GriffoWork가 8개 차원에서 어떻게 진단하는지 알아보세요.',
     breadcrumbHome: '홈',
     breadcrumbSystems: 'ATS 시스템',
-    heroBadge: 'ATS 필터링 시스템 및 AI 진단',
+    heroBadge: 'ATS(채용관리시스템) 필터링 및 AI 진단',
     heroTitle: '{ats}의 서류 필터링 방식',
     marketLabel: '시장',
     sourceLabel: '출처',

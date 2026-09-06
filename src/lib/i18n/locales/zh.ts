@@ -997,10 +997,10 @@ export const zh: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{ats} ATS 兼容性 — 筛选机制与 AI 诊断详解 | GriffoWork',
-    metaDescription: '了解 {fullName} 的筛选算法如何解析简历，以及 GriffoWork 如何从 8 个维度诊断并优化您的简历。',
+    metaDescription: '了解 {fullName}（ATS，即招聘管理系统）的筛选算法如何解析简历，以及 GriffoWork 如何从 8 个维度诊断您的简历。',
     breadcrumbHome: '首页',
     breadcrumbSystems: 'ATS 系统',
-    heroBadge: 'ATS 筛选机制与 AI 诊断',
+    heroBadge: 'ATS（招聘管理系统）筛选与 AI 诊断',
     heroTitle: '{ats} 的简历筛选机制',
     marketLabel: '市场',
     sourceLabel: '来源',

@@ -997,10 +997,10 @@ export const ar: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: 'توافق {ats} مع أنظمة ATS — كيف تعمل التصفية والتدقيق بالذكاء الاصطناعي | GriffoWork',
-    metaDescription: 'افهم كيف تقرأ خوارزمية التصفية في {fullName} السير الذاتية، وكيف يدقّق GriffoWork مستندك ويجهّزه عبر 8 أبعاد.',
+    metaDescription: 'افهم كيف تقرأ خوارزمية {fullName} — وهو نظام ATS (نظام تتبع المتقدمين) — السير الذاتية، وكيف يدقّق GriffoWork مستندك عبر 8 أبعاد.',
     breadcrumbHome: 'الرئيسية',
     breadcrumbSystems: 'أنظمة ATS',
-    heroBadge: 'نظام تصفية ATS وتدقيق بالذكاء الاصطناعي',
+    heroBadge: 'تصفية عبر ATS (نظام تتبع المتقدمين) وتدقيق بالذكاء الاصطناعي',
     heroTitle: 'كيف تعمل عملية التصفية في {ats}',
     marketLabel: 'السوق',
     sourceLabel: 'المصدر',

@@ -997,10 +997,10 @@ export const nl: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{ats} ATS-compatibiliteit — Zo werkt de selectie & AI-analyse | GriffoWork',
-    metaDescription: 'Ontdek hoe het selectiealgoritme van {fullName} cv\'s leest en hoe GriffoWork jouw document op 8 dimensies analyseert en voorbereidt.',
+    metaDescription: 'Ontdek hoe het algoritme van {fullName} — een ATS (sollicitantvolgsysteem) — cv\'s leest, en hoe GriffoWork jouw document op 8 dimensies analyseert.',
     breadcrumbHome: 'Home',
     breadcrumbSystems: 'ATS-systemen',
-    heroBadge: 'ATS-selectie & AI-analyse',
+    heroBadge: 'ATS-selectie (sollicitantvolgsysteem) & AI-analyse',
     heroTitle: 'Zo werkt de selectie in {ats}',
     marketLabel: 'Markt',
     sourceLabel: 'Bron',

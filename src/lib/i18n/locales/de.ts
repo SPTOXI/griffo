@@ -997,10 +997,10 @@ export const de: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{ats} ATS-Kompatibilität — So funktioniert das Screening & KI-Analyse | GriffoWork',
-    metaDescription: 'Erfahren Sie, wie der Screening-Algorithmus von {fullName} Lebensläufe liest und wie GriffoWork Ihr Dokument in 8 Dimensionen prüft und vorbereitet.',
+    metaDescription: 'Erfahren Sie, wie der Screening-Algorithmus von {fullName} — ein ATS (Bewerbermanagementsystem) — Lebensläufe liest, und wie GriffoWork Ihr Dokument in 8 Dimensionen prüft.',
     breadcrumbHome: 'Start',
     breadcrumbSystems: 'ATS-Systeme',
-    heroBadge: 'ATS-Screening & KI-Analyse',
+    heroBadge: 'ATS-Screening (Bewerbermanagementsystem) & KI-Analyse',
     heroTitle: 'So funktioniert das Screening bei {ats}',
     marketLabel: 'Markt',
     sourceLabel: 'Quelle',

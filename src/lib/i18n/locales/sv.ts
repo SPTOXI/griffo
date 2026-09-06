@@ -997,10 +997,10 @@ export const sv: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{ats} ATS-kompatibilitet — Så fungerar gallringen & AI-granskning | GriffoWork',
-    metaDescription: 'Förstå hur {fullName} gallringsalgoritm läser CV:n och hur GriffoWork granskar och förbereder ditt dokument i 8 dimensioner.',
+    metaDescription: 'Förstå hur algoritmen i {fullName} — ett ATS (kandidathanteringssystem) — läser CV:n, och hur GriffoWork granskar ditt dokument i 8 dimensioner.',
     breadcrumbHome: 'Hem',
     breadcrumbSystems: 'ATS-system',
-    heroBadge: 'ATS-gallring & AI-granskning',
+    heroBadge: 'ATS-gallring (kandidathanteringssystem) & AI-granskning',
     heroTitle: 'Så fungerar gallringen i {ats}',
     marketLabel: 'Marknad',
     sourceLabel: 'Källa',

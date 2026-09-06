@@ -997,10 +997,10 @@ export const fr: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: 'Compatibilité ATS {ats} — Fonctionnement du Filtrage & Audit IA | GriffoWork',
-    metaDescription: 'Comprenez comment l\'algorithme de filtrage de {fullName} lit les CV, et comment GriffoWork audite et prépare votre document sur 8 dimensions.',
+    metaDescription: 'Comprenez comment l\'algorithme de {fullName} — un ATS (logiciel de suivi des candidatures) — lit les CV, et comment GriffoWork audite votre document sur 8 dimensions.',
     breadcrumbHome: 'Accueil',
     breadcrumbSystems: 'Systèmes ATS',
-    heroBadge: 'Filtrage ATS & Audit par IA',
+    heroBadge: 'Filtrage ATS (suivi des candidatures) & audit par IA',
     heroTitle: 'Comment fonctionne le filtrage sur {ats}',
     marketLabel: 'Marché',
     sourceLabel: 'Source',

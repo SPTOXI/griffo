@@ -997,10 +997,10 @@ export const ja: TranslationDictionary = {
   },
   atsPage: {
     metaTitle: '{ats}のATS適合度 — 選考の仕組みとAI診断 | GriffoWork',
-    metaDescription: '{fullName}の選考アルゴリズムが職務経歴書をどう読み取るのか、そしてGriffoWorkが8つの次元でどう診断・最適化するのかを解説します。',
+    metaDescription: '{fullName}（ATS＝採用管理システム）の選考アルゴリズムが職務経歴書をどう読み取るのか、そしてGriffoWorkが8つの次元でどう診断するのかを解説します。',
     breadcrumbHome: 'ホーム',
     breadcrumbSystems: 'ATSシステム',
-    heroBadge: 'ATS選考システムとAI診断',
+    heroBadge: 'ATS（採用管理システム）による選考とAI診断',
     heroTitle: '{ats}の選考プロセスの仕組み',
     marketLabel: '市場',
     sourceLabel: '出典',
