@@ -12,6 +12,7 @@ export const ja: TranslationDictionary = {
     myPanel: 'マイダッシュボード',
     freeAnalysis: '無料診断を始める',
     marketPulse: '採用温度マップ',
+    hiring: '書類は通る？',
   },
   hero: {
     badge: 'Workday・Taleo・Greenhouse・LinkedIn基準',

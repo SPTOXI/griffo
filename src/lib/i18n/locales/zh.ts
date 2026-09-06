@@ -12,6 +12,7 @@ export const zh: TranslationDictionary = {
     myPanel: '我的控制台',
     freeAnalysis: '免费诊断',
     marketPulse: '招聘热度地图',
+    hiring: '我的简历能通过吗？',
   },
   hero: {
     badge: 'Workday、Taleo、Greenhouse 与 LinkedIn 标准',

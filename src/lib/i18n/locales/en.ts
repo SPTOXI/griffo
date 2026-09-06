@@ -12,6 +12,7 @@ export const en: TranslationDictionary = {
       myPanel: 'Dashboard',
       freeAnalysis: 'Analyze Free',
       marketPulse: 'Hiring Map',
+      hiring: 'Will my resume pass?',
     },
     hero: {
       badge: 'Workday, Taleo, Greenhouse & LinkedIn Standards',

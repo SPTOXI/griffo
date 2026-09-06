@@ -12,6 +12,7 @@ export const ar: TranslationDictionary = {
     myPanel: 'لوحة التحكم',
     freeAnalysis: 'تحليل مجاني',
     marketPulse: 'خريطة التوظيف',
+    hiring: 'هل تجتاز سيرتي؟',
   },
   hero: {
     badge: 'معايير Workday وTaleo وGreenhouse وLinkedIn',

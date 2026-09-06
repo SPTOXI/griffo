@@ -12,6 +12,7 @@ export const ko: TranslationDictionary = {
     myPanel: '내 대시보드',
     freeAnalysis: '무료 진단',
     marketPulse: '채용 온도 지도',
+    hiring: '내 이력서 통과할까?',
   },
   hero: {
     badge: 'Workday, Taleo, Greenhouse & LinkedIn 표준',

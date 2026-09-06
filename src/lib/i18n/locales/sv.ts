@@ -12,6 +12,7 @@ export const sv: TranslationDictionary = {
     myPanel: 'Min översikt',
     freeAnalysis: 'Gratis analys',
     marketPulse: 'Anställningsklimat',
+    hiring: 'Klarar mitt CV gallringen?',
   },
   hero: {
     badge: 'Workday-, Taleo-, Greenhouse- & LinkedIn-standarder',

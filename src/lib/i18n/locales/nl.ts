@@ -12,6 +12,7 @@ export const nl: TranslationDictionary = {
     myPanel: 'Mijn dashboard',
     freeAnalysis: 'Gratis analyse',
     marketPulse: 'Aannameklimaat',
+    hiring: 'Komt mijn cv erdoor?',
   },
   hero: {
     badge: 'Workday-, Taleo-, Greenhouse- & LinkedIn-standaarden',

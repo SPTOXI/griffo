@@ -531,6 +531,13 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
               <li><a href="#pricing" className="hover:text-[#0B63E5] transition-colors">{t.nav.plans}</a></li>
               <li><a href="#how" className="hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a></li>
               <li><a href="/market-pulse" className="hover:text-[#0B63E5] transition-colors">{t.nav.marketPulse}</a></li>
+              {/* Link interno para `/hiring` — sem ele a página fica ÓRFÃ
+                  (só no sitemap), e o Google despriorriza fortemente URL que
+                  nenhuma página referencia. Confirmado no Search Console:
+                  32 URLs paradas em "Detectada, mas não indexada", que é
+                  exatamente o estado de quem foi descoberto pelo sitemap e
+                  não tem link apontando. */}
+              <li><a href="/hiring" className="hover:text-[#0B63E5] transition-colors">{t.nav.hiring}</a></li>
             </ul>
           </div>
           <div>

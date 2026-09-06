@@ -12,6 +12,7 @@ export const de: TranslationDictionary = {
     myPanel: 'Mein Dashboard',
     freeAnalysis: 'Kostenlos analysieren',
     marketPulse: 'Einstellungsklima',
+    hiring: 'Kommt mein Lebenslauf durch?',
   },
   hero: {
     badge: 'Standards von Workday, Personio, Taleo & LinkedIn',

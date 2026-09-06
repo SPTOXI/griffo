@@ -12,6 +12,7 @@ export const pt: TranslationDictionary = {
       myPanel: 'Meu painel',
       freeAnalysis: 'Analisar grátis',
       marketPulse: 'Mapa de Contratação',
+      hiring: 'Passei pelo ATS?',
     },
     hero: {
       badge: 'Padrões Gupy, Workday, Taleo & LinkedIn',

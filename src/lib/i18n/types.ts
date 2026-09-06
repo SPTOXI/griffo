@@ -14,6 +14,7 @@ export interface TranslationDictionary {
     myPanel: string
     freeAnalysis: string
     marketPulse: string
+    hiring: string
   }
   hero: {
     badge: string
