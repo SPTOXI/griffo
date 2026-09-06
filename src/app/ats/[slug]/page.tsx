@@ -203,9 +203,23 @@ export default async function AtsPage({ params }: PageProps) {
             {ats.description}
           </p>
 
-          <div className="inline-flex items-center gap-2 bg-slate-100/80 border border-slate-200 px-4 py-2 rounded-xl text-xs font-semibold text-slate-700">
+          <div className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-slate-100/80 border border-slate-200 px-4 py-2 rounded-xl text-xs font-semibold text-slate-700">
             <Globe className="w-4 h-4 text-primary shrink-0" />
-            <span>Mercado: <strong>{ats.marketName}</strong> ({ats.marketShare})</span>
+            <span>Mercado: <strong>{ats.marketName}</strong> ({ats.marketShare.text})</span>
+            {/* Toda afirmação com número mostra de onde veio e de quando é.
+                Sem a data, o dado certo de hoje vira o errado do ano que vem
+                sem quem lê ter como perceber — ver `MarketShare` em
+                `lib/ats/data.ts`. */}
+            {ats.marketShare.kind === 'sourced' && (
+              <a
+                href={ats.marketShare.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-normal text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-primary transition-colors"
+              >
+                Fonte: {ats.marketShare.source}, {ats.marketShare.asOf}
+              </a>
+            )}
           </div>
 
           <div className="pt-4">

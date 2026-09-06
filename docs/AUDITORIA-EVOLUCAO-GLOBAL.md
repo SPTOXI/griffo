@@ -5244,3 +5244,64 @@ aberta, não resolvida nesta rodada: as 3 alegações que sobreviveram
 continuam sem citar fonte na tela.
 
 `tsc --noEmit` e `npm test` (895/895) limpos.
+
+## 2.81 Fonte e data viram obrigação de tipo, não de disciplina (fecha a pendência 17)
+
+Operador pediu a melhor solução para a pendência aberta no §2.80 (as 3
+alegações numéricas que se sustentam, mas não citavam fonte na tela).
+
+**A solução não podia ser só "adicionar as 3 fontes".** Isso conserta
+o texto de hoje e deixa o mecanismo intacto — a alegação falsa da Gupy
+entrou e ficou meses no ar justamente porque `marketShare: string` não
+exigia nada de quem escrevesse um percentual novo. Consertar as 3 e
+seguir seria tratar o sintoma.
+
+`marketShare` virou união discriminada (`MarketShare` em
+`lib/ats/data.ts`):
+- `{ kind: 'qualitative', text }` — descrição de posição sem número,
+  que não precisa de fonte porque não afirma quantidade.
+- `{ kind: 'sourced', text, source, sourceUrl, asOf }` — afirmação com
+  número, onde **fonte e data são obrigatórias por construção**: não
+  compila sem. Mesma trava por tipo que `hiring-index/lookup.ts` usa
+  para o sentido das métricas (§2.56), pelo mesmo motivo: o dado novo
+  sem a decisão junto não passa pelo compilador.
+
+**`asOf` é obrigatório, não opcional, de propósito.** Número de
+fornecedor envelhece: a Workday declarou "mais de 30% da Fortune 500"
+em 2017 e "mais de 60%" em 2024. Sem a data na tela, quem lê não tem
+como saber qual dos dois está vendo — e o dado certo de hoje vira o
+errado do ano que vem em silêncio.
+
+**A brecha que o tipo sozinho NÃO fecha**, e o teste que fecha: nada
+impede escrever "70%" dentro de um `qualitative`. `data.test.ts` roda
+uma regex de "isto parece estatística" (percentual, milhar, "Fortune
+N") sobre todo `qualitative` e falha com mensagem dizendo o que fazer.
+Conferido que a trava PEGA o caso real: reintroduzi o texto original
+da Gupy no arquivo e o teste falhou nomeando o slug; só então
+restaurei. Teste que passa sem nunca ter detectado nada não prova
+nada.
+
+**As 3 alegações, agora com fonte primária na tela** (link + ano,
+`target="_blank" rel="noopener noreferrer"`):
+- Workday: 8-K na SEC, 2024. Mantido "mais de 50%" embora a fonte diga
+  60% — afirmação conservadora continua verdadeira se o número cair
+  antes de alguém revisar a página.
+- Sólides: site oficial, 2026. Mesma lógica ("mais de 25 mil" contra
+  dezenas de milhares declaradas).
+- iCIMS: site oficial, 2026. **Recorte geográfico retirado** ("nos EUA
+  e Europa"): a fonte dá ~4.000 clientes no total, sem quebra por
+  região — afirmar a região seria acrescentar precisão que a fonte não
+  tem.
+
+Verificado no HTML real (`curl` em `/ats/workday`): a linha sai
+"Adotado por mais de 50% das corporações da Fortune 500. Fonte:
+Workday (Form 8-K, SEC), 2024" com o link do arquivo da SEC. 3 testes
+novos. `tsc --noEmit`, `eslint` e `npm test` (898/898) limpos.
+
+**Achado à parte, NÃO corrigido, registrado como pendência:** as 10
+páginas de `/ats/*` são **só em português** — nenhum `useI18n`, nenhum
+`DICTIONARIES`, título e corpo fixos em PT. São páginas públicas e
+indexáveis, então isto viola a regra permanente de nada fixo em
+português (§2.49) no lugar mais visível possível. Não corrigido aqui
+porque é outro tamanho de trabalho (10 guias × 12 idiomas de conteúdo
+técnico), e misturar com esta correção esconderia as duas.

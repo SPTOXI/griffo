@@ -1,3 +1,42 @@
+/**
+ * Posição de mercado de um ATS, na tela pública.
+ *
+ * ## Por que isto é um tipo em união, e não uma string
+ *
+ * A página da Gupy afirmou por meses "presente em mais de 70% das vagas
+ * corporativas do Brasil" — número que não se sustenta (os ~75% de fonte
+ * pública são de adoção de ATS EM GERAL por médias e grandes empresas, não
+ * da fatia da Gupy). Removido no §2.80, mas remover uma frase não impede a
+ * próxima: enquanto isto era `marketShare: string`, nada exigia fonte de
+ * quem escrevesse um percentual novo.
+ *
+ * Agora um número só entra como `sourced`, que **obriga** `source`,
+ * `sourceUrl` e `asOf` no mesmo objeto — não compila sem. É a mesma trava
+ * por tipo que `hiring-index/lookup.ts` usa para o sentido das métricas:
+ * o dado novo sem a decisão junto não passa pelo compilador.
+ *
+ * ## Por que `asOf` é obrigatório e não opcional
+ *
+ * Número de fornecedor ENVELHECE. A Workday declarou "mais de 30% da
+ * Fortune 500" em 2017 e "mais de 60%" em 2024; o iCIMS aparece como "40%
+ * da Fortune 100" numa fonte e "quase 20%" noutra. Sem a data na tela, o
+ * dado certo de hoje vira o errado do ano que vem sem ninguém perceber —
+ * e quem lê não tem como saber qual dos dois está vendo.
+ */
+export type MarketShare =
+  /** Descrição de posição sem número — não precisa de fonte porque não afirma quantidade. */
+  | { kind: 'qualitative'; text: string }
+  /** Afirmação quantitativa. Fonte e data são obrigatórias por construção. */
+  | {
+      kind: 'sourced'
+      text: string
+      /** Quem publicou o número. Ex.: 'Workday (Form 8-K, SEC)'. */
+      source: string
+      sourceUrl: string
+      /** Ano/data a que o número se refere. Ex.: '2024'. */
+      asOf: string
+    }
+
 export interface AtsGuide {
   slug: string
   name: string
@@ -5,7 +44,7 @@ export interface AtsGuide {
   country: string
   marketName: string
   description: string
-  marketShare: string
+  marketShare: MarketShare
   howItWorks: {
     title: string
     description: string
@@ -32,7 +71,10 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     // grandes empresas brasileiras, não da fatia da Gupy — atribuir o número
     // da categoria a uma empresa é o tipo de erro que, conferido por alguém,
     // derruba a credibilidade da página inteira.
-    marketShare: 'Líder do mercado brasileiro de recrutamento e seleção, com milhares de empresas clientes.',
+    marketShare: {
+      kind: 'qualitative',
+      text: 'Líder do mercado brasileiro de recrutamento e seleção, com milhares de empresas clientes.',
+    },
     howItWorks: [
       {
         title: 'Extração e Leitura de Texto (Parsing)',
@@ -81,7 +123,17 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     country: 'US',
     marketName: 'Estados Unidos, Europa e Multinacionais Globais',
     description: 'O Workday é o sistema corporativo padrão adotado pela maioria das empresas da Fortune 500 e grandes multinacionais globais. É conhecido por ter um dos parsers mais rigorosos e padronizados do mercado de RH.',
-    marketShare: 'Adotado por mais de 50% das maiores corporações globais da Fortune 500.',
+    marketShare: {
+      kind: 'sourced',
+      // A própria Workday declara "mais de 60%" no 8-K; mantido "mais de
+      // 50%" de propósito — afirmação conservadora continua verdadeira se o
+      // número cair um pouco antes de alguém revisar esta página.
+      text: 'Adotado por mais de 50% das corporações da Fortune 500.',
+      source: 'Workday (Form 8-K, SEC)',
+      sourceUrl:
+        'https://www.sec.gov/Archives/edgar/data/1327811/000132781124000089/wday-04302024x991.htm',
+      asOf: '2024',
+    },
     howItWorks: [
       {
         title: 'Mapeamento Estruturado de Campos',
@@ -125,7 +177,10 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     country: 'US',
     marketName: 'Tech Global, Startups & Scaleups',
     description: 'O Greenhouse é a plataforma de recrutamento mais utilizada no ecossistema global de tecnologia, startups em hipercrescimento e unicórnios, com foco em contratações baseadas em competências e evidências práticas.',
-    marketShare: 'Líder em empresas de tecnologia e inovação nos EUA, Europa e América Latina.',
+    marketShare: {
+      kind: 'qualitative',
+      text: 'Líder em empresas de tecnologia e inovação nos EUA, Europa e América Latina.',
+    },
     howItWorks: [
       {
         title: 'Scorecards de Competências',
@@ -164,7 +219,10 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     country: 'US',
     marketName: 'Scaleups & Big Tech',
     description: 'O Lever combina recursos de rastreamento de candidatos (ATS) com gestão de relacionamento de talentos (CRM), permitindo que equipes de recrutamento busquem e qualifiquem candidatos continuamente em sua base de dados.',
-    marketShare: 'Amplamente adotado por empresas inovadoras de tecnologia de médio e grande porte.',
+    marketShare: {
+      kind: 'qualitative',
+      text: 'Amplamente adotado por empresas inovadoras de tecnologia de médio e grande porte.',
+    },
     howItWorks: [
       {
         title: 'Indexação Contínua de Talentos',
@@ -197,7 +255,10 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     country: 'US',
     marketName: 'Bancos, Governos & Grandes Corporações',
     description: 'O Oracle Taleo é um dos sistemas de recrutamento corporativo mais consolidados do mundo, amplamente utilizado no setor financeiro, óleo e gás, telecomunicações e órgãos públicos.',
-    marketShare: 'Forte presença em corporações tradicionais e instituições financeiras globais.',
+    marketShare: {
+      kind: 'qualitative',
+      text: 'Forte presença em corporações tradicionais e instituições financeiras globais.',
+    },
     howItWorks: [
       {
         title: 'Filtros Tradicionais de Triagem',
@@ -226,7 +287,16 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     country: 'BR',
     marketName: 'Brasil (PMEs e Médias Empresas)',
     description: 'A Solides é uma das principais plataformas de RH e atração de talentos para pequenas e médias empresas no Brasil, integrando triagem curricular com análise de perfil comportamental (Profiler).',
-    marketShare: 'Presente em mais de 25 mil empresas no Brasil.',
+    marketShare: {
+      kind: 'sourced',
+      // A Sólides publica número maior (dezenas de milhares, variando por
+      // data de consulta); "mais de 25 mil" fica abaixo do declarado de
+      // propósito, pelo mesmo motivo da Workday acima.
+      text: 'Presente em mais de 25 mil empresas no Brasil.',
+      source: 'Sólides (site oficial)',
+      sourceUrl: 'https://solides.com.br/sobre-nos/',
+      asOf: '2026',
+    },
     howItWorks: [
       {
         title: 'Triagem Integrada',
@@ -255,7 +325,16 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     country: 'US',
     marketName: 'Estados Unidos & Reino Unido',
     description: 'O iCIMS é uma das plataformas de triagem e gestão de talentos mais robustas do mercado corporativo americano e britânico, processando milhões de candidaturas anualmente.',
-    marketShare: 'Mais de 4.000 grandes clientes corporativos nos EUA e Europa.',
+    marketShare: {
+      kind: 'sourced',
+      // Recorte geográfico ("EUA e Europa") retirado: a fonte diz ~4.000
+      // clientes no total, sem quebra por região — afirmar a região seria
+      // acrescentar precisão que a fonte não dá.
+      text: 'Mais de 4.000 clientes corporativos.',
+      source: 'iCIMS (site oficial)',
+      sourceUrl: 'https://www.icims.com/icims-talent-cloud-3/',
+      asOf: '2026',
+    },
     howItWorks: [
       {
         title: 'Pontuação de Requisitos',
@@ -283,7 +362,10 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     country: 'US',
     marketName: 'Startups Globais & Scaleups de IA',
     description: 'O Ashby é uma plataforma moderna de recrutamento de crescimento acelerado entre empresas inovadoras de tecnologia e inteligência artificial, focada em automações inteligentes e analytics.',
-    marketShare: 'Crescimento expressivo em scaleups de tecnologia e IA.',
+    marketShare: {
+      kind: 'qualitative',
+      text: 'Crescimento expressivo em scaleups de tecnologia e IA.',
+    },
     howItWorks: [
       {
         title: 'Triagem Rápida e Resumos com IA',
@@ -311,7 +393,10 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     country: 'ES',
     marketName: 'Espanha, Brasil e Itália',
     description: 'O InfoJobs é um dos portais de emprego e triagem de currículos mais tradicionais da Espanha, Itália e Brasil, utilizado por milhares de recrutadores de diversos setores da economia.',
-    marketShare: 'Líder histórico de candidaturas e vagas corporativas na Espanha.',
+    marketShare: {
+      kind: 'qualitative',
+      text: 'Líder histórico de candidaturas e vagas corporativas na Espanha.',
+    },
     howItWorks: [
       {
         title: 'Filtros Diretos de Recrutadores',
@@ -339,7 +424,10 @@ export const ATS_DATABASE: Record<string, AtsGuide> = {
     country: 'DE',
     marketName: 'Alemanha, Áustria, Suíça e Europa',
     description: 'O Personio é a principal plataforma de RH e recrutamento para empresas de pequeno e médio porte na Europa, com forte presença na região DACH (Alemanha, Áustria e Suíça).',
-    marketShare: 'Líder em PMEs e empresas em expansão na União Europeia.',
+    marketShare: {
+      kind: 'qualitative',
+      text: 'Líder em PMEs e empresas em expansão na União Europeia.',
+    },
     howItWorks: [
       {
         title: 'Processamento em Padrão Europeu',
