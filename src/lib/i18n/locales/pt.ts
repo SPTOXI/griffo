@@ -998,10 +998,10 @@ export const pt: TranslationDictionary = {
     },
     atsPage: {
       metaTitle: 'Compatibilidade com ATS {ats} — Como Funciona a Triagem & Diagnóstico por IA | GriffoWork',
-      metaDescription: 'Entenda como o algoritmo de triagem do {fullName} — um ATS (sistema de rastreamento de candidatos) — analisa currículos, e como o GriffoWork audita seu documento em 8 dimensões.',
+      metaDescription: 'Entenda como o algoritmo do {fullName} — um ATS, sistema de triagem automática de currículos — analisa candidaturas, e como o GriffoWork audita seu documento em 8 dimensões.',
       breadcrumbHome: 'Início',
       breadcrumbSystems: 'Sistemas ATS',
-      heroBadge: 'Triagem por ATS (rastreamento de candidatos) & Diagnóstico por IA',
+      heroBadge: 'Triagem automática por ATS & Diagnóstico por IA',
       heroTitle: 'Como funciona o processo de triagem no {ats}',
       marketLabel: 'Mercado',
       sourceLabel: 'Fonte',
