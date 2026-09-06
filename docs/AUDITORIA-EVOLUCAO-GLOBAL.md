@@ -5305,3 +5305,83 @@ indexáveis, então isto viola a regra permanente de nada fixo em
 português (§2.49) no lugar mais visível possível. Não corrigido aqui
 porque é outro tamanho de trabalho (10 guias × 12 idiomas de conteúdo
 técnico), e misturar com esta correção esconderia as duas.
+
+## 2.82 Páginas de ATS multilíngues, com escopo por relevância (fecha a pendência 19)
+
+Operador pediu "a melhor opção para atingir todos os mercados". A
+resposta honesta **não** era 10 × 12 = 120 páginas.
+
+**Por que o escopo é por relevância, e não o produto cartesiano.** Cada
+guia já declarava seu alcance em `marketName`: a Gupy e a Sólides só
+operam no Brasil, o InfoJobs em Espanha/Brasil/Itália, o Personio no
+eixo DACH, o iCIMS em EUA/Reino Unido. Traduzir tudo para tudo geraria
+~50 páginas sem leitor possível (`/ats/gupy` em coreano) — e um bloco
+de 120 páginas quase idênticas, metade sem audiência, é exatamente o
+padrão que o sistema de conteúdo útil do Google mira. Gerar todas
+prejudicaria o alcance em vez de ampliá-lo. O recorte dá **67 páginas,
+todas com público real**, cobrindo os 12 idiomas.
+
+**Arquitetura.** Separado o que NÃO traduz (nome do produto, país,
+fonte da alegação de mercado) em `lib/ats/meta.ts`, do que traduz
+(descrição, mecanismo, fatores de descarte, FAQ) em
+`lib/ats/locales/{lang}.ts` — espelhando o padrão que `lib/i18n` já
+usa. Nome próprio fica fora do conteúdo traduzível pelo mesmo motivo
+que `Eurostat`/`BLS` ficam fora do dicionário: "Workday" é "Workday"
+em alemão.
+
+O PT existente foi migrado **por script**, não à mão: são 148 campos, e
+transcrever convidaria erro silencioso de copia-e-cola. O script usou o
+parser real do TypeScript (via `tsx`) em vez de regex, porque
+apóstrofo escapado dentro de string portuguesa já quebrou regex neste
+projeto antes.
+
+**URL: `?lang=`, não esquema novo.** Seguiu o padrão que
+`/market-pulse` já estabeleceu (§2.55), em vez de inventar um terceiro.
+Preserva as URLs `/ats/{slug}` que já estavam no sitemap e possivelmente
+indexadas. Canonical aponta sempre para a URL sem parâmetro.
+
+**Rota, sitemap e hreflang saem da INTERSEÇÃO** entre o que o meta
+declara (intenção editorial) e os locales escritos (realidade). Declarar
+a intenção apontaria hreflang para 404, e hreflang que não fecha faz o
+Google descartar o bloco INTEIRO — defeito que o §2.69 já custou uma
+vez aqui.
+
+**Regressão que a separação criou, e foi corrigida antes do commit:**
+ao mover iCIMS para `en` e Personio para `de` no meta, os dois passaram
+a dar 404, porque o conteúdo só existia em português. Foi o que motivou
+escrever `en` e `de` já na primeira etapa em vez de deixar para depois.
+Conferido rodando a lista de rotas e vendo os dois marcados `*** 404
+***`.
+
+**Comportamento de `?lang=` inválido, corrigido no COMENTÁRIO, não no
+código.** Escrevi que combinação inexistente seria 404; ao testar,
+`/ats/gupy?lang=de` devolvia 200 com recuo para português. Investiguei
+antes de "consertar": o recuo é seguro e melhor — o canonical aponta
+para `/ats/gupy` e o hreflang só lista `pt`, então o buscador nunca vê
+a combinação inválida, e quem digitou à mão não leva 404 na cara. O
+comentário é que estava errado; foi ele que mudou.
+
+**Travas.** Sete testes, incluindo dois que só existem porque o tipo
+sozinho não basta:
+- **conteúdo órfão**: existe no locale mas nenhum meta declara.
+  `atsContentFor` filtra pelo meta, então um órfão jamais apareceria
+  numa página nem quebraria um teste. Verificado falhando antes de
+  limpar os 2 casos reais que a migração deixou (iCIMS e Personio em
+  PT, agora inalcançáveis).
+- **paridade meta↔locale**: idioma declarado sem conteúdo escrito
+  sumiria do sitemap em silêncio.
+
+A trava de estatística sem fonte (§2.81) agora roda nos **12 idiomas**,
+não só no português onde o defeito da Gupy apareceu.
+
+Verificado no HTML real: títulos corretos em japonês, árabe, chinês,
+coreano e francês; InfoJobs em italiano; 12 tags `hreflang` no Workday
+e nenhuma no Personio (idioma único, como deve ser); sitemap com os
+`xhtml:link` corretos. `tsc --noEmit`, `eslint` e `npm test` (903/903)
+limpos.
+
+**Ressalva declarada ao operador antes de executar:** a tradução técnica
+de recrutamento em japonês, coreano, árabe, chinês, sueco e holandês foi
+produzida sem revisão nativa — mesmo padrão dos 12 dicionários que o
+produto já usa, portanto consistente, mas revisão por falante nativo
+agregaria em páginas públicas que representam a marca.
