@@ -5385,3 +5385,46 @@ de recrutamento em japonês, coreano, árabe, chinês, sueco e holandês foi
 produzida sem revisão nativa — mesmo padrão dos 12 dicionários que o
 produto já usa, portanto consistente, mas revisão por falante nativo
 agregaria em páginas públicas que representam a marca.
+
+## 2.83 A ressalva de "sem revisão nativa" virou um defeito concreto e corrigido
+
+Operador perguntou sobre a ressalva do §2.82. Em vez de repeti-la,
+separei o risco em três tipos e testei o único que é **mensurável**:
+
+- **Gramática/fluência** — risco baixo, construções corretas.
+- **Registro/tom** — risco médio, principalmente japonês e coreano de
+  negócios, que são altamente convencionalizados. Não verificável sem
+  falante nativo.
+- **Terminologia técnica** — o que de fato importa, porque decide se a
+  página aparece na busca. **Verificável em fonte pública**, e foi.
+
+**O defeito encontrado.** Consultado o uso corrente do termo "ATS" em
+alemão, japonês e espanhol, o padrão é sempre **sigla + termo nativo**:
+"ATS (Bewerbermanagementsystem)", "ATS（採用管理システム）", "ATS
+(sistema de seguimiento de candidatos)" — na Wikipédia em espanhol o
+termo nativo é inclusive o TÍTULO do verbete, não uma nota de rodapé.
+Todo o conteúdo que eu tinha escrito usava só a sigla. Quem busca pelo
+termo do próprio mercado — que é a maioria — não encontrava nenhuma
+das 67 páginas.
+
+Isso não é questão de estilo: é intenção de busca perdida, exatamente
+a mesma classe do §2.79 ("CV" vs "resume"), só que descoberta por outro
+caminho.
+
+**Corrigido** em duas chaves por idioma — `metaDescription` (o texto que
+aparece no resultado da busca) e `heroBadge` (primeira menção visível na
+página). Conferido no HTML real em `/ats/workday` nos três idiomas
+verificados.
+
+**Distinção que fica registrada, e não deve ser apagada:** os termos de
+`de`, `ja` e `es` foram conferidos contra fonte pública nesta sessão.
+Os outros nove usam o termo padrão corrente, **sem verificação em
+fonte** — são plausíveis, não confirmados. Apresentá-los como
+igualmente checados seria o mesmo tipo de imprecisão que o §2.80 pegou
+na alegação da Gupy. Quem for revisar, comece por esses nove.
+
+**O que a ressalva original errava.** Dizer "sem revisão nativa" e parar
+ali trata tudo como um bloco de risco difuso e inacionável. Uma parte
+era verificável sozinha, e continha um defeito real que estava no ar.
+A ressalva continua válida para tom e registro; para terminologia,
+havia trabalho a fazer, não só um aviso a dar.
