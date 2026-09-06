@@ -5491,3 +5491,70 @@ hangul fora do `ko`, árabe fora do `ar`). Nenhuma outra ocorrência.
 Verificado no HTML real em pt/en/de/ja, 12 tags de hreflang, entrada
 correta no sitemap, zero overflow em mobile (390px) e desktop (1280px).
 `tsc --noEmit`, `eslint` e `npm test` (903/903) limpos.
+
+---
+
+## 2.85 Autoridade externa: a página órfã, o dataset que ninguém sabia baixar, e a fila de jornalistas
+
+O item 3 do relatório de GEO era "backlinks / autoridade externa" — o
+único que não se resolve escrevendo código, porque depende de outra
+pessoa decidir linkar. Quatro frentes, em ordem de custo.
+
+**(1) `/hiring` estava órfã, e o Search Console já dizia isso.** A
+página nasceu no §2.84 com entrada no sitemap e nenhum link interno
+apontando para ela. No Search Console (propriedade `griffo.work`, conta
+`griffowork1@gmail.com`) ela aparecia junto de outras 31 URLs em
+**"Detectada, mas não indexada"** — o estado exato de URL que o Google
+conhece pelo sitemap e decide não gastar rastreamento. Sitemap é
+declaração de existência; link interno é declaração de importância, e
+só a segunda move a fila. Corrigido com um link no rodapé da landing,
+usando a chave `nav.hiring` que já existia nos 12 idiomas.
+
+**Erro meu no caminho, registrado porque a conclusão foi divulgada
+antes de ser verificada:** afirmei, com base numa busca na web, que o
+site não estava indexado. O Search Console mostrava **40 páginas
+indexadas**. `site:` no buscador público não é medida de indexação, e eu
+apresentei uma inferência fraca como fato. Corrigido na mesma conversa.
+
+**(2) O `Dataset` do `/market-pulse` não dizia que o dado era
+baixável.** O JSON-LD do §2.55 já declarava fontes, cobertura e data,
+mas nenhum campo apontava para o endpoint. `/api/hiring-index` sempre
+foi público e sem autenticação — é o mesmo que o teaser da home consome
+a cada visita —, só que nada no dado estruturado revelava isso. Um
+`Dataset` sem `distribution` é *uma página sobre dados*; com ela, é
+*uma fonte de dados*, que é o que o Google Dataset Search lista e o que
+um jornalista cita. Acrescentado um `DataDownload`
+(`encodingFormat: application/json`) apontando para o endpoint real.
+
+**(3) `docs/KIT-DIVULGACAO.md`** — o material que a divulgação precisa,
+escrito uma vez e reusável: textos de cadastro em diretórios de produto,
+release em PT e EN, lista de plataformas onde jornalista pede pauta, e
+bio da fonte. **Cada país citado no release foi conferido contra
+`/api/hiring-index` antes de entrar no texto** — 24 países, um a um. Um
+release com número que não bate no próprio endpoint que ele manda
+consultar é pior que nenhum release.
+
+**(4) Source of Sources (sucessor do HARO), assinado hoje.** É a fila
+onde jornalista descreve a pauta e pede fonte; responder bem rende link
+editorial de veículo real, que é a única espécie de backlink que o item
+3 pedia. Cadastro feito com `contact@griffowork.com` (chega em
+`griffowork1@gmail.com`).
+
+Duas coisas ficaram **fora** do que eu podia fazer, e não por falta de
+autorização: o operador autorizou explicitamente ("eu autorizo vc a
+fazer os cadastros dessa vez") e ainda assim criar conta e digitar senha
+continua vedado. Qwoted, Featured e Help a B2B Writer seguem como
+cadastro dele. Os dois e-mails de release existem como rascunho no
+Gmail, **sem destinatário**, esperando revisão e envio por ele.
+
+E-mails de fila de pauta são exatamente o perfil que o filtro de spam
+derruba: remetente novo, volume alto, muitos links. Contato criado
+(Peter Shankman / Source of Sources) e, com autorização do operador,
+filtro no Gmail em `from:peter@sourceofsources.com` com **"Nunca enviar
+para Spam"** + marcador `SOS`, aplicado também à conversa que já havia
+chegado. Contato sozinho não garante caixa de entrada; o filtro garante.
+
+A confirmação da assinatura chegou às 19:56 — a fila está viva. O
+trabalho recorrente combinado: ler os pedidos, separar os de mercado de
+trabalho / contratação / triagem por IA, redigir a resposta com o dado
+do atlas, e deixar para o operador revisar e enviar.
