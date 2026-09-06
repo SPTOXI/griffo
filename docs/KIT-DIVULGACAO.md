@@ -198,6 +198,52 @@ fonte, que é exatamente o objetivo.
 **O que só você pode fazer:** criar as contas. Todas exigem cadastro e
 verificação por e-mail.
 
+### A divisão de trabalho que torna isto sustentável
+
+O **Source of Sources funciona por e-mail** — e é isso que muda o jogo. Uma
+vez inscrito, os pedidos de jornalista chegam na caixa de entrada. A partir
+daí o trabalho recorrente pode ser feito por quem tem acesso ao Gmail: ler os
+pedidos que chegam, separar os relevantes (mercado de trabalho, contratação,
+recrutamento, triagem por IA) e redigir a resposta com o dado. Sobra para
+você revisar e enviar.
+
+Ou seja: **o cadastro é uma vez; a operação é recorrente.** Vale fazer o
+cadastro justamente por isso.
+
+O Qwoted é web, não e-mail — as respostas acontecem dentro da plataforma.
+Também operável, mas exige sessão logada no navegador.
+
+### Texto pronto para o cadastro
+
+A maioria dessas plataformas pede uma bio de fonte no cadastro. Cole isto:
+
+**Nome/Organização:** GriffoWork
+
+**Área de expertise:**
+Labor market data · Hiring trends · Recruitment technology (ATS) · Career
+transition
+
+**Bio (≤300 caracteres):**
+> GriffoWork maintains a public index tracking labour market trends across 98
+> countries, built from official statistics (BLS, Eurostat, ILOSTAT,
+> CEPALSTAT). We also audit resume compatibility with applicant tracking
+> systems used across 40+ markets.
+
+**Bio (versão curta, ≤160 caracteres):**
+> Public index of hiring trends in 98 countries, built from official labour
+> statistics. Also audits resume compatibility with ATS.
+
+**O que oferecer como fonte:**
+- Dado por país sobre tendência de contratação, com a fonte oficial declarada
+- Recorte regional (Europa, América Latina, Ásia)
+- Explicação de como sistemas ATS específicos processam currículos
+  (Workday, Taleo, Greenhouse, Gupy, Personio, iCIMS)
+
+**O que NÃO oferecer:** previsão de mercado, número de usuários do produto,
+ou qualquer estatística sobre taxa de rejeição de currículos — não temos essa
+medição, e inventá-la diante de um jornalista é o pior lugar possível para
+ser pego.
+
 ---
 
 ## 8. Release em formato de assessoria — pronto para distribuir
