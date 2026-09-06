@@ -1064,4 +1064,42 @@ export interface TranslationDictionary {
     oceania: string
     southAmerica: string
   }
+  /**
+   * Chrome das páginas `/ats/*` — títulos, rótulos e CTAs.
+   *
+   * O CONTEÚDO de cada ATS (como o sistema funciona, fatores de descarte,
+   * FAQ) não mora aqui: fica em `lib/ats/locales/`, porque nem todo ATS
+   * existe em todo idioma (a Gupy só opera no Brasil). Aqui fica só o que
+   * é igual em qualquer página de ATS.
+   *
+   * `{ats}` é substituído pelo nome curto do sistema ("Workday"),
+   * `{fullName}` pelo nome completo do produto.
+   */
+  atsPage: {
+    metaTitle: string
+    metaDescription: string
+    breadcrumbHome: string
+    breadcrumbSystems: string
+    heroBadge: string
+    heroTitle: string
+    marketLabel: string
+    sourceLabel: string
+    heroCta: string
+    mechanismBadge: string
+    mechanismTitle: string
+    mechanismSubtitle: string
+    eliminationTitle: string
+    helpsTitle: string
+    auditBadge: string
+    auditTitle: string
+    auditSubtitle: string
+    auditDim1: string
+    auditDim2: string
+    auditDim3: string
+    auditDim4: string
+    auditCta: string
+    faqBadge: string
+    faqTitle: string
+    footerHome: string
+  }
 }

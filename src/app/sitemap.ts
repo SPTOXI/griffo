@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next'
-import { ATS_DATABASE } from '@/lib/ats/data'
+import { ATS_SLUGS } from '@/lib/ats/meta'
+import { atsLanguagesFor } from '@/lib/ats/content'
+import { localeForLang } from '@/lib/i18n'
 
 const COUNTRIES = [
   'br', 'us', 'pt', 'es', 'mx', 'gb', 'ca', 'de', 'at', 'fr', 'be', 'lu',
@@ -71,12 +73,29 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }
 
   // 4. ATS Systems & High-intent compatibility pages
-  for (const slug of Object.keys(ATS_DATABASE)) {
+  //
+  // `alternates.languages` sai de `atsLanguagesFor`, que é a interseção
+  // entre os idiomas que o guia declara e os que têm conteúdo escrito — não
+  // da intenção editorial. Declarar um idioma sem conteúdo apontaria o
+  // hreflang para 404, e hreflang que não fecha faz o Google descartar o
+  // bloco INTEIRO (§2.69), não só a linha errada.
+  for (const slug of ATS_SLUGS) {
+    const langs = atsLanguagesFor(slug)
+    if (langs.length === 0) continue
     routes.push({
       url: `${baseUrl}/ats/${slug}`,
       lastModified,
       changeFrequency: 'weekly',
       priority: 0.85,
+      ...(langs.length > 1
+        ? {
+            alternates: {
+              languages: Object.fromEntries(
+                langs.map((l) => [localeForLang(l), `${baseUrl}/ats/${slug}?lang=${l}`])
+              ),
+            },
+          }
+        : {}),
     })
   }
 
