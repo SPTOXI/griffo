@@ -5558,3 +5558,78 @@ A confirmação da assinatura chegou às 19:56 — a fila está viva. O
 trabalho recorrente combinado: ler os pedidos, separar os de mercado de
 trabalho / contratação / triagem por IA, redigir a resposta com o dado
 do atlas, e deixar para o operador revisar e enviar.
+
+---
+
+## 2.86 O site inteiro declarava ser português, e o árabe renderizava espelhado
+
+Operador perguntou se tinha ficado algo para trás. Os documentos estavam
+em dia; **o produto não**. Dois defeitos vivos, os dois na mesma raiz.
+
+**(1) `<html lang="pt-BR">` fixo em `app/layout.tsx`.** Conferido no
+HTML servido: `/de` entregava "Ihre …", `/jp` entregava "あなたの…" e
+`/ae` entregava "إنّ …" — todos declarando `pt-BR`. O arquivo
+**contradizia a si mesmo**: vinte linhas acima, o próprio bloco de
+`hreflang` declarava `/de` como `de-DE`.
+
+É a mesma classe do §2.71, e o comentário do `market-pulse` já
+registrava que "o layout raiz vazou português para `/us` e `/de` uma
+vez". Vazou, foi corrigido lá — e o `<html>` da raiz ficou.
+
+**(2) O árabe renderizava da esquerda para a direita.** Zero ocorrências
+de `dir="rtl"` no HTML de `/ae`, de `/hiring?lang=ar` e das 5 páginas de
+`/ats` em árabe. `/market-pulse` era o **único arquivo do projeto** a
+setar `dir`, e fazia isso com `lang === 'ar' ? 'rtl' : 'ltr'` inline.
+Não é sutileza de indexação: a página inicial em árabe saía com
+alinhamento, pontuação e ordem dos botões trocados.
+
+**A troca foi escolhida, não sofrida.** Corrigir o `lang` no HTML
+servido exige o layout raiz ler `headers()`, e isso torna **todas** as
+rotas dinâmicas — as 41 páginas de país deixariam de ser pré-geradas.
+Apresentadas três opções ao operador, ele escolheu a híbrida: `dir` no
+servidor (estático, custo zero, resolve a quebra visual de verdade) e
+`lang` ajustado no cliente pelo novo `DocumentLanguage`, que é onde o
+leitor de tela decide a pronúncia. O sinal para o rastreador continua
+vindo do `hreflang` e do conteúdo — que já estavam corretos, e são o que
+o Google documenta usar.
+
+**`DocumentLanguage` recebe o idioma por prop, e não do contexto.** Em
+rota de país os dois divergem **de propósito**: `landing.tsx` resolve
+`langManuallySet ? contextLang : forcedLang`, então em `/de` o contexto
+pode dizer `pt` (palpite de geo-IP) enquanto a página desenha alemão.
+Ler o contexto ali declararia o idioma errado exatamente nas rotas que o
+componente existe para consertar.
+
+**Duas coisas mais que nada obrigava a ficar certas:**
+
+Os 12 pares de `hreflang` da raiz e o `inLanguage` viviam escritos à mão
+no `layout.tsx`; os alternates do `/market-pulse`, à mão no `sitemap.ts`.
+Um 13º idioma entraria em `LANGUAGES`, passaria no `i18n.test.ts`,
+ganharia `/ats` e `/hiring` funcionando — e sumiria calado dos três.
+Como o Google descarta o bloco **inteiro** de hreflang quando ele não
+fecha (§2.69, que já custou "nenhuma página indexada" a este projeto), o
+dano não seria um idioma: seriam os doze. Agora saem de
+`lib/i18n/hreflang.ts` e de `LANGUAGES`. A lista literal do sitemap foi
+**conferida par a par** antes da troca, não presumida equivalente.
+
+O mapa idioma→rota de país continua literal, e de propósito: escolher
+que o alemão mora em `/de` e não em `/at` é decisão editorial, não
+derivação. O que virou teste foi a **completude**, não a escolha.
+
+E `/se`, `/cn` e `/kr` eram as únicas três das doze rotas do hreflang
+fora de `SUPPORTED_COUNTRY_SLUGS`: respondiam 200 por `dynamicParams`,
+renderizando a cada requisição em vez de sair prontas do build. Declarar
+uma rota como a casa canônica de um idioma e não pré-gerá-la é
+incoerência gratuita — os dados de mercado já as resolviam certo. O
+build foi de 45 para 48 páginas estáticas.
+
+**8 testes novos, cada trava verificada falhando** antes de restaurar:
+idioma sem rota (3 falhas), rota fora do SSG (1), árabe deixando de ser
+`rtl` (2). Inclui trava para `he`/`fa`/`ur`, que herdariam `ltr` em
+silêncio do mesmo jeito que o árabe herdou.
+
+Verificado no navegador contra o build de produção: `/ae` passa a
+`lang="ar-AE"` `dir="rtl"` com o layout espelhado corretamente (logo à
+direita, navegação e CTAs invertidos), `/de` a `lang="de-DE"` `ltr`, e o
+`dir` sai do servidor em `/hiring`, `/ats` e `/market-pulse` nos dois
+sentidos. `tsc`, `eslint` e `npm run build` limpos; 911 testes, `fail 0`.
