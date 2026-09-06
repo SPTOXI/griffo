@@ -19,6 +19,7 @@ export const nl: TranslationDictionary = {
     titleAccent: 'ervaring',
     title2: ' is meer waard dan de functietitel op je cv.',
     subtitle: 'Upload je cv binnen enkele seconden voor een diepgaande technische audit in 8 dimensies. Controleer je compatibiliteit met ATS-filters (Workday, Taleo, Greenhouse) en optimaliseer je professionele profielen.',
+    blufSummary: 'GriffoWork is een carrière-intelligentieplatform dat de compatibiliteit van cv\'s met Applicant Tracking Systems (ATS) zoals Workday, Taleo, Greenhouse en Gupy controleert, waarbij structuur, algoritmische leesbaarheid en trefwoordafstemming in meer dan 40 internationale markten worden beoordeeld.',
     ctaPrimary: 'Ontdek mijn beste carrièrerichtingen',
     ctaSecondary: 'Ik heb al een account',
     badgeFree: 'Gratis voorbeeld',

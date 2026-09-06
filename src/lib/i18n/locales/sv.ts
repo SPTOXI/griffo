@@ -19,6 +19,7 @@ export const sv: TranslationDictionary = {
     titleAccent: 'erfarenhet',
     title2: ' är värd mer än jobbtiteln i ditt CV.',
     subtitle: 'Ladda upp ditt CV på några sekunder för en djupgående teknisk granskning i 8 dimensioner. Kontrollera din kompatibilitet med ATS-filter (Workday, Taleo, Greenhouse) och optimera dina professionella profiler.',
+    blufSummary: 'GriffoWork är en karriärintelligensplattform som granskar CV:ns kompatibilitet med rekryteringssystem (ATS) som Workday, Taleo, Greenhouse och Gupy, och utvärderar struktur, algoritmisk läsbarhet och nyckelordsmatchning i mer än 40 internationella marknader.',
     ctaPrimary: 'Upptäck mina bästa karriärvägar',
     ctaSecondary: 'Jag har redan ett konto',
     badgeFree: 'Gratis förhandsvisning',

@@ -184,6 +184,17 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
                 {t.hero.subtitle}
               </p>
 
+              {/* Frase factual autossuficiente (definição objetiva do produto,
+                  nomeando ATS reais e a cobertura de mercados) — não é copy de
+                  conversão como o subtítulo acima; existe pra ficar perto do
+                  topo do HTML e ser citável por buscadores de IA (Perplexity,
+                  ChatGPT Search) sem precisar do resto da página como
+                  contexto. Estilo discreto de propósito: não deve competir
+                  visualmente com o subtítulo de conversão. */}
+              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-xl">
+                {t.hero.blufSummary}
+              </p>
+
               <div className="flex flex-col sm:flex-row gap-3 pt-1">
                 <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white text-base h-auto min-h-12 sm:min-h-13 py-3 px-8 shadow-lg shadow-primary/25 font-bold whitespace-normal">
                   {t.hero.ctaPrimary} <ArrowRight className="w-5 h-5 ml-2 shrink-0" />

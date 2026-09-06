@@ -19,6 +19,7 @@ export const en: TranslationDictionary = {
       titleAccent: 'experience',
       title2: ' is worth more than the job title on your resume.',
       subtitle: 'Upload your resume in seconds and receive an in-depth 8-dimension audit report. Check your compatibility with ATS screeners (Workday, Taleo, Greenhouse) and get actionable recommendations for your online profiles.',
+      blufSummary: 'GriffoWork is a career intelligence platform that audits resume compatibility with Applicant Tracking Systems (ATS) such as Workday, Taleo, Greenhouse, and Gupy, evaluating structure, algorithmic readability, and keyword alignment across more than 40 international markets.',
       ctaPrimary: 'Discover my best career directions',
       ctaSecondary: 'I already have an account',
       badgeFree: 'Free Analysis',

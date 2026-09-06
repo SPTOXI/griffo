@@ -19,6 +19,7 @@ export const de: TranslationDictionary = {
     titleAccent: 'Erfahrung',
     title2: ' zählt mehr als die Jobbezeichnung in Ihrem Lebenslauf.',
     subtitle: 'Laden Sie Ihren Lebenslauf in Sekunden hoch und erhalten Sie eine fundierte technische Bewertung in 8 Dimensionen. Prüfen Sie die ATS-Kompatibilität (Personio, Workday, Taleo) und optimieren Sie Ihre Karriereprofile.',
+    blufSummary: 'GriffoWork ist eine Karriere-Intelligence-Plattform, die die Kompatibilität von Lebensläufen mit Bewerbermanagementsystemen (ATS) wie Workday, Taleo, Greenhouse und Gupy prüft und dabei Struktur, algorithmische Lesbarkeit und Schlüsselwort-Abgleich in mehr als 40 internationalen Märkten bewertet.',
     ctaPrimary: 'Meine besten Karriererichtungen entdecken',
     ctaSecondary: 'Ich habe bereits ein Konto',
     badgeFree: 'Kostenlose Analyse',

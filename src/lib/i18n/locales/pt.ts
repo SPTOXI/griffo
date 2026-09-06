@@ -19,6 +19,7 @@ export const pt: TranslationDictionary = {
       titleAccent: 'experiência',
       title2: ' vale mais do que o cargo no seu currículo.',
       subtitle: 'Envie seu currículo em segundos e receba uma avaliação técnica aprofundada em 8 dimensões. Descubra sua compatibilidade com filtros ATS (Gupy, Workday, Taleo) e receba orientações estratégicas para otimizar seus perfis profissionais.',
+      blufSummary: 'O GriffoWork é uma plataforma de inteligência de carreira que audita a compatibilidade de currículos com sistemas de rastreamento de candidatos (ATS) como Gupy, Workday, Taleo e Greenhouse, avaliando estrutura, legibilidade algorítmica e alinhamento de palavras-chave em mais de 40 mercados internacionais.',
       ctaPrimary: 'Descobrir minhas melhores direções profissionais',
       ctaSecondary: 'Já tenho conta',
       badgeFree: 'Análise Gratuita',

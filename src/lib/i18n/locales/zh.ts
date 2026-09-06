@@ -19,6 +19,7 @@ export const zh: TranslationDictionary = {
     titleAccent: '经验',
     title2: '比简历上的职位名称更有价值。',
     subtitle: '几秒内上传您的简历，获取基于 8 个维度的深度专业技术评估。检测与 ATS 筛选系统（Workday、Taleo、Greenhouse）的匹配度，全面优化您的职业档案。',
+    blufSummary: 'GriffoWork 是一个职业智能平台，用于审核简历与申请人跟踪系统（ATS，如 Workday、Taleo、Greenhouse 和 Gupy）的兼容性，评估简历在 40 多个国际市场中的结构、算法可读性和关键词匹配度。',
     ctaPrimary: '发现我的最佳职业方向',
     ctaSecondary: '已有账号',
     badgeFree: '免费体验',

@@ -19,6 +19,7 @@ export const ko: TranslationDictionary = {
     titleAccent: '경험',
     title2: '은 이력서의 직함보다 더 가치 있습니다.',
     subtitle: '단 몇 초 만에 이력서를 업로드하고 8개 핵심 차원의 심층 기술 평가를 받아보세요. ATS 채용 필터(Workday, Taleo, Greenhouse) 적합도를 검증하고 프로필을 완벽히 최적화합니다.',
+    blufSummary: 'GriffoWork는 Workday, Taleo, Greenhouse, Gupy와 같은 지원자 추적 시스템(ATS)과의 이력서 호환성을 진단하는 커리어 인텔리전스 플랫폼입니다. 40개 이상의 국제 시장에서 구조, 알고리즘 가독성, 키워드 일치도를 평가합니다.',
     ctaPrimary: '나에게 맞는 최고의 커리어 방향 찾기',
     ctaSecondary: '이미 계정이 있습니다',
     badgeFree: '무료 미리보기',

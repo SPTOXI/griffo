@@ -21,6 +21,7 @@ export interface TranslationDictionary {
     titleAccent: string
     title2: string
     subtitle: string
+    blufSummary: string
     ctaPrimary: string
     ctaSecondary: string
     badgeFree: string

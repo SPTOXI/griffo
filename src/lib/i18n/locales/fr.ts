@@ -19,6 +19,7 @@ export const fr: TranslationDictionary = {
     titleAccent: 'expérience',
     title2: " vaut plus que l'intitulé de poste sur votre CV.",
     subtitle: 'Téléchargez votre CV en quelques secondes et obtenez un audit technique approfondi en 8 dimensions. Vérifiez votre compatibilité avec les filtres ATS (Workday, Taleo, Greenhouse) et optimisez votre présence professionnelle.',
+    blufSummary: 'GriffoWork est une plateforme d\'intelligence de carrière qui audite la compatibilité des CV avec les systèmes de suivi des candidatures (ATS) tels que Workday, Taleo, Greenhouse et Gupy, en évaluant la structure, la lisibilité algorithmique et l\'alignement des mots-clés dans plus de 40 marchés internationaux.',
     ctaPrimary: 'Découvrir mes meilleures orientations professionnelles',
     ctaSecondary: 'J\'ai déjà un compte',
     badgeFree: 'Analyse Gratuite',

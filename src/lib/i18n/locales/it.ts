@@ -19,6 +19,7 @@ export const it: TranslationDictionary = {
     titleAccent: 'esperienza',
     title2: ' vale più del titolo nel tuo curriculum.',
     subtitle: 'Carica il tuo CV in pochi secondi e ottieni una valutazione tecnica approfondita in 8 dimensioni. Scopri la tua compatibilità con i filtri ATS (Workday, Taleo, Greenhouse) e ottimizza i tuoi profili professionali.',
+    blufSummary: 'GriffoWork è una piattaforma di intelligenza di carriera che verifica la compatibilità dei curriculum con i sistemi di tracciamento dei candidati (ATS) come Workday, Taleo, Greenhouse e Gupy, valutando struttura, leggibilità algoritmica e allineamento delle parole chiave in oltre 40 mercati internazionali.',
     ctaPrimary: 'Scopri i miei migliori percorsi professionali',
     ctaSecondary: 'Ho già un account',
     badgeFree: 'Analisi Gratuita',

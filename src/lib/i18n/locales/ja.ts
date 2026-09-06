@@ -19,6 +19,7 @@ export const ja: TranslationDictionary = {
     titleAccent: '経験',
     title2: 'は、職務経歴書の役職名より価値があります。',
     subtitle: 'わずか数秒で職務経歴書をアップロードし、8つの次元から徹底的な技術診断を実施。ATS採用フィルター（Workday, Taleo, Greenhouse）の適合度を判定し、キャリアプロファイルを最適化します。',
+    blufSummary: 'GriffoWorkは、Workday、Taleo、Greenhouse、Gupyなどの採用管理システム（ATS）との職務経歴書の互換性を診断するキャリア・インテリジェンス・プラットフォームです。構造、アルゴリズムによる可読性、キーワードの一致度を40以上の国際市場で評価します。',
     ctaPrimary: '自分に最適なキャリアの方向性を見つける',
     ctaSecondary: 'アカウントをお持ちの方',
     badgeFree: '無料プレビュー',

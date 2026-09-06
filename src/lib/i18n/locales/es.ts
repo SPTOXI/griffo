@@ -19,6 +19,7 @@ export const es: TranslationDictionary = {
       titleAccent: 'experiencia',
       title2: ' vale más que el puesto en tu currículum.',
       subtitle: 'Sube tu currículum en segundos y recibe un informe técnico completo en 8 dimensiones. Descubre tu compatibilidad con filtros ATS (Workday, Taleo, Gupy) y obtén recomendaciones para optimizar tus perfiles profesionales.',
+      blufSummary: 'GriffoWork es una plataforma de inteligencia de carrera que audita la compatibilidad de currículums con sistemas de seguimiento de candidatos (ATS) como Workday, Taleo, Greenhouse y Gupy, evaluando estructura, legibilidad algorítmica y alineación de palabras clave en más de 40 mercados internacionales.',
       ctaPrimary: 'Descubrir mis mejores direcciones profesionales',
       ctaSecondary: 'Ya tengo una cuenta',
       badgeFree: 'Análisis Gratuito',

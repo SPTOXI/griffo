@@ -5069,3 +5069,44 @@ Verificado: `tsc --noEmit`, `eslint` e `npm test` (889/889, +1 do
 teste novo de paridade de placeholders) limpos. Testado ao vivo no
 navegador: seletor mostra "🌐 DE" sem duplicação, em qualquer
 resolução.
+
+## 2.77 Parágrafo BLUF no hero — frase factual pra citação por IA (GEO)
+
+Operador colou um relatório de estratégia SEO/GEO de terceiro e pediu
+pra fazer só o que dependesse exclusivamente de mim, deixando o resto
+pra decidir depois. Conferido item a item contra o código antes de
+escrever qualquer coisa (o mesmo hábito de checar afirmação externa
+contra o estado real, não aceitar de cara):
+
+- Schema `Organization` com `sameAs` **já existe** em `layout.tsx`
+  (o relatório sugeria criar) — só tem 1 link (Instagram); adicionar
+  LinkedIn/GitHub/X reais depende do operador informar os links, não
+  fica pra essa rodada.
+- As páginas de `/ats/{slug}` **não são genéricas** como o relatório
+  descrevia — já têm `howItWorks`, `eliminationFactors`,
+  `howGriffoWorkHelps` e FAQ próprios por sistema. O que falta de
+  verdade (estatística real de rejeição por parsing, testada de
+  verdade contra Workday/Taleo/Greenhouse) esbarra na regra
+  permanente do produto contra inventar dado pra tela parecer
+  completa — não escrito, fica pra quando existir a coleta real.
+- Diferenciação de `/gb /ca /au` vs `/us` e frase do badge do hero:
+  decisão editorial, não execução — fica pro operador.
+
+**O que dependia só de mim**: o parágrafo BLUF (*Bottom Line Up
+Front*) que o relatório pedia no item 3.1 — uma frase factual,
+autossuficiente, em terceira pessoa, que define o produto sem
+precisar do resto da página como contexto (o formato que buscadores
+de IA — Perplexity, ChatGPT Search — preferem citar). Nova chave
+`hero.blufSummary`, nas 12 línguas, citando ATS reais (Workday, Taleo,
+Greenhouse, Gupy — os mesmos já usados no subtítulo/páginas de ATS) e
+"mais de 40 mercados internacionais" (número real: `SUPPORTED_COUNTRY_SLUGS`
+tem 40 rotas de país fora `global`, conferido no código, não
+estimado).
+
+Inserido em `landing.tsx` logo abaixo do subtítulo de conversão
+existente, com estilo deliberadamente discreto (`text-xs sm:text-sm
+text-slate-400`) — a intenção é ficar perto do topo do HTML sem
+competir visualmente com a copy de conversão que já faz esse
+trabalho. Testado ao vivo em `/de` (mobile e desktop), `/ae` (RTL) e
+`/jp`: sem sobreposição, sem overflow, legível nas quatro
+combinações. `tsc --noEmit`, `eslint` e `npm test` (889/889) limpos.
