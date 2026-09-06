@@ -148,6 +148,21 @@ function datasetJsonLd(atlas: HiringAtlas, lang: Language) {
     ...(atlas.updatedAt ? { dateModified: atlas.updatedAt } : {}),
     ...(atlas.latestPeriod ? { temporalCoverage: `../${atlas.latestPeriod.slice(0, 10)}` } : {}),
     isBasedOn: sources.map((name) => ({ '@type': 'Dataset', name })),
+    // Onde os dados podem ser BAIXADOS, não só vistos.
+    //
+    // O endpoint já era público e sem autenticação (é o mesmo que o teaser
+    // da home consome a cada visita), mas nada no dado estruturado dizia
+    // isso — então nem o Google Dataset Search nem um jornalista tinham
+    // como descobrir que existe uma versão reutilizável. Um `Dataset` sem
+    // `distribution` é uma página sobre dados; com ela, é uma fonte de
+    // dados, que é o que se cita e linka.
+    distribution: [
+      {
+        '@type': 'DataDownload',
+        encodingFormat: 'application/json',
+        contentUrl: 'https://griffo.work/api/hiring-index',
+      },
+    ],
     spatialCoverage: atlas.countries.map((summary) => ({
       '@type': 'Country',
       name: displayCountry(summary.country, lang),
