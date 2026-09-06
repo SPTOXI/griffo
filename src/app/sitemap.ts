@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { ATS_SLUGS } from '@/lib/ats/meta'
 import { atsLanguagesFor } from '@/lib/ats/content'
-import { localeForLang } from '@/lib/i18n'
+import { localeForLang, LANGUAGES } from '@/lib/i18n'
 
 const COUNTRIES = [
   'br', 'us', 'pt', 'es', 'mx', 'gb', 'ca', 'de', 'at', 'fr', 'be', 'lu',
@@ -59,6 +59,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
         'ar-AE': `${baseUrl}/market-pulse?lang=ar`,
         'ko-KR': `${baseUrl}/market-pulse?lang=ko`,
       },
+    },
+  })
+
+  // 2b. `/hiring` — porta de entrada para quem acabou de se candidatar.
+  //
+  // `changeFrequency: 'monthly'` porque é copy de captação, não dado que se
+  // atualiza — declarar 'daily' pediria rastreamento para uma página que não
+  // muda, e ensinaria o rastreador a desconfiar do resto do arquivo (mesma
+  // razão do `/market-pulse` acima).
+  //
+  // Os 12 idiomas saem de `LANGUAGES`, não de lista escrita à mão: o bloco
+  // do `/market-pulse` logo acima ainda é literal e vai divergir no dia em
+  // que um 13º idioma entrar.
+  routes.push({
+    url: `${baseUrl}/hiring`,
+    lastModified,
+    changeFrequency: 'monthly',
+    priority: 0.8,
+    alternates: {
+      languages: Object.fromEntries(
+        LANGUAGES.map((l) => [localeForLang(l), `${baseUrl}/hiring?lang=${l}`])
+      ),
     },
   })
 

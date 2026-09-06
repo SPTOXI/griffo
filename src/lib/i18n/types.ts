@@ -1102,4 +1102,43 @@ export interface TranslationDictionary {
     faqTitle: string
     footerHome: string
   }
+  /**
+   * Página de entrada `/hiring` — para quem acabou de se candidatar a uma
+   * vaga que viu anunciada.
+   *
+   * ## Por que existe uma rota só para isso
+   *
+   * "Hiring" é um sinal de DIREÇÃO INVERTIDA: quem publica `#hiring` está
+   * oferecendo vaga, e o GriffoWork não oferece vaga nenhuma. Usar a palavra
+   * como se fôssemos empregador seria ruído. O que ela captura de verdade é
+   * o momento seguinte — a pessoa viu o anúncio, se candidatou, e agora tem
+   * uma dúvida ("meu currículo passa?") que é exatamente o que o produto
+   * responde. Esta página fala com esse instante, não com o anúncio.
+   *
+   * ## Nada de número aqui
+   *
+   * Circula muito "X% dos currículos nunca chegam a um humano". Nenhuma
+   * dessas estatísticas foi verificada por nós, e o §43 vale para página de
+   * captação como vale para o laudo: sem dado próprio, a página descreve o
+   * mecanismo sem afirmar magnitude.
+   */
+  hiringPage: {
+    metaTitle: string
+    metaDescription: string
+    badge: string
+    title: string
+    subtitle: string
+    ctaPrimary: string
+    ctaSecondary: string
+    stepsTitle: string
+    step1Title: string
+    step1Desc: string
+    step2Title: string
+    step2Desc: string
+    step3Title: string
+    step3Desc: string
+    closingTitle: string
+    closingSubtitle: string
+    trustNote: string
+  }
 }
