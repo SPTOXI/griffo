@@ -70,15 +70,26 @@ test('returnsRows separa quem devolve linhas de quem não devolve', () => {
 
 test('prisma/rls.sql divide no que o script espera executar', () => {
   // Trava o contrato entre o arquivo e o script: dois blocos DO (ligar RLS,
-  // revogar privilégios) e uma consulta de conferência.
+  // revogar privilégios dos papéis do Supabase), as duas revogações de PUBLIC,
+  // e uma consulta de conferência.
   const sql = readFileSync(join(process.cwd(), 'prisma', 'rls.sql'), 'utf-8')
   const out = splitSqlStatements(sql)
 
-  assert.equal(out.length, 3, `esperava 3 instruções, veio ${out.length}`)
+  assert.equal(out.length, 5, `esperava 5 instruções, veio ${out.length}`)
   assert.match(out[0], /ENABLE ROW LEVEL SECURITY/)
   assert.match(out[1], /REVOKE ALL ON ALL TABLES/)
-  assert.equal(returnsRows(out[2]), true)
-  assert.match(out[2], /relrowsecurity = false/)
+
+  // As duas de PUBLIC são separadas do bloco `DO` acima de propósito: revogar
+  // de `anon` e `authenticated` NÃO fecha função nenhuma, porque o Postgres
+  // concede EXECUTE a PUBLIC por padrão e todo papel herda de PUBLIC. Foi
+  // assim que `rls_auto_enable()` ficou chamável sem login.
+  assert.match(out[2], /REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC/)
+  // A segunda cobre a PRÓXIMA função criada; sem ela a correção valeria só
+  // para as que existem hoje.
+  assert.match(out[3], /ALTER DEFAULT PRIVILEGES.*REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC/s)
+
+  assert.equal(returnsRows(out[4]), true)
+  assert.match(out[4], /relrowsecurity = false/)
 
   // O SQL de exemplo do arquivo — o `CREATE ROLE` e o `FORCE ROW LEVEL
   // SECURITY` do "caminho futuro", e o FORCE citado no cabeçalho — está todo
