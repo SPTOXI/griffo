@@ -5698,3 +5698,62 @@ em cada, e `href="/ae"` presente em todas as páginas. `tsc`, `eslint` e
 
 **O que a varredura confirmou que está certo:** as 54 URLs do sitemap
 respondem 200, sem exceção.
+
+---
+
+## 2.88 `#OpenToWork` e `job hunting`: a hashtag que não se traduz, e dois termos que erram o público
+
+Operador pediu usar `#opentowork` e `#jobhunting` "no lugar". **Perguntei
+o que "no lugar" significava antes de mexer** — as quatro leituras
+possíveis mexiam em coisas diferentes: renomear a rota `/hiring`, criar
+páginas próprias para cada termo, acrescentar vocabulário à página que
+existe, ou usar só no material de divulgação. É a memória
+`feedback_never_assume_intent` funcionando: foi com esta mesma palavra,
+no §2.84, que eu supus o sentido e mexi em 67 páginas à toa.
+
+Ele escolheu **vocabulário na página existente** — mantém a URL já
+rastreada e não cria página fina, que era o risco das outras duas.
+
+**Uma ressalva dita antes de trabalhar:** o Google ignora a meta
+`keywords` desde 2009. Se o trabalho fosse só preencher aquele campo,
+não valeria a hora. O que trabalha de verdade é o texto visível, então é
+lá que está o esforço — as `keywords` entram por consistência com o que
+`/ats` e o `layout.tsx` já fazem, e porque o Bing ainda dá algum peso.
+
+**A hashtag não se traduz.** Verificado em fonte: `#OpenToWork` circula
+em inglês em todos os mercados, porque é selo do LinkedIn. O que muda de
+idioma é o rótulo descritivo — o LinkedIn alemão diz "Offen für
+Jobangebote", o francês "Ouvert aux opportunités". É exatamente o padrão
+que o §2.83 achou para "ATS": o termo em inglês aparece **junto** do
+nativo, nunca um dos dois sozinho. `jobSearchKeywords(lang)` monta essa
+combinação, e há teste cobrando que nenhum idioma perca nenhuma das duas
+metades.
+
+**Duas distinções verificadas em fonte, que trocariam o público:**
+
+**Japonês — `転職活動`, não `就職活動`.** O segundo é a caça a emprego de
+recém-formado, que no Japão acontece num calendário anual fixo e onde a
+empresa avalia potencial. O primeiro é a mudança de carreira, com timing
+próprio, onde a empresa procura `即戦力` (quem já entrega hoje). O
+público do GriffoWork é o segundo; usar o outro miraria estudante de
+graduação. Mesma classe de erro que o §2.83 pegou, evitada por
+verificar antes em vez de traduzir ao pé da letra.
+
+**Chinês — `求职`, não `跳槽`.** `跳槽` significa pular de emprego e
+carrega a conotação de sair antes de cumprir o contrato: palavra de
+conversa, não de página institucional. `求职` é o termo neutro.
+
+Coreano leva `구직` e `이직`, porque os dois cobrem meio de carreira.
+
+**O bloco novo respeita a linha do §2.84.** Ele alcança o outro lado do
+mesmo instante — quem ligou o `#OpenToWork` e espera ser encontrado, em
+vez de quem acabou de se candidatar — e o que afirma é factual e vale
+para os dois: o filtro automático é o mesmo. **Não promete vaga**, e há
+um teste com padrões proibidos ("vagas disponíveis", "offene Stellen",
+"jobs available") que falha se algum idioma passar a insinuar isso. Era
+o risco real de atrair por termo de quem procura emprego.
+
+6 testes novos. Verificados falhando: trocar `転職活動` por `就職活動`, e
+tirar a hashtag do texto visível de um idioma. Conferido no HTML real em
+pt, ja, ar e de — keywords e `<h2>` corretos nos quatro. `tsc`, `eslint`
+e `npm run build` limpos; 923 testes, `fail 0`.
