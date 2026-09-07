@@ -5757,3 +5757,81 @@ o risco real de atrair por termo de quem procura emprego.
 tirar a hashtag do texto visível de um idioma. Conferido no HTML real em
 pt, ja, ar e de — keywords e `<h2>` corretos nos quatro. `tsc`, `eslint`
 e `npm run build` limpos; 923 testes, `fail 0`.
+
+---
+
+## 2.89 `REVOKE ... FROM anon` não fecha função nenhuma — e dois commits meus entraram com a verificação quebrada
+
+Operador pediu para instalar o MCP do Supabase. **Ele já estava
+instalado**, pelo conector da claude.ai — conferido chamando de verdade,
+lista os dois projetos (`Griffo` e `jobbase`, ambos `ACTIVE_HEALTHY`).
+Instalar um servidor local daria as MESMAS ferramentas e exigiria
+guardar um *personal access token* com acesso total à conta dentro de
+configuração, um passo atrás logo depois do §2.88b. Em vez do trabalho
+redundante, a conexão foi usada para rodar o linter de segurança do
+banco de produção.
+
+### O defeito
+
+`public.rls_auto_enable()` é `SECURITY DEFINER` e estava chamável **sem
+login** em `/rest/v1/rpc/rls_auto_enable`.
+
+A causa é um detalhe que passa batido, e o `prisma/rls.sql` já tinha
+metade da defesa desde 24/08: o Postgres concede `EXECUTE` a **PUBLIC**
+por padrão ao criar qualquer função, e **todo papel é membro de PUBLIC**.
+Então o `REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM anon` que já
+existia tirava o grant NOMINAL de `anon` e deixava intacto o que ele
+herda de PUBLIC — na prática, não tirava nada. Confirmado nos grants:
+`PUBLIC:EXECUTE` estava lá, e `has_function_privilege('anon', ...)`
+devolvia `true` apesar do REVOKE.
+
+**A gravidade foi medida, não presumida.** Antes de classificar, li o
+corpo da função: ela retorna `event_trigger` e chama
+`pg_event_trigger_ddl_commands()`, que só funciona dentro de um gatilho
+de DDL — chamada por fora, erra antes de fazer nada. E mesmo rodando,
+tudo que faz é LIGAR RLS, que é endurecimento e não dano. Já tinha
+`SET search_path TO 'pg_catalog'`, fechando o ataque clássico. Risco
+real: baixo. Mas função `SECURITY DEFINER` alcançável pela internet
+aberta não se deixa de pé por ser inofensiva hoje — o corpo pode mudar.
+
+Também conferido que só existe UMA função no schema `public`, então
+revogar de PUBLIC não podia afetar nada além dela.
+
+### A correção
+
+`REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC`, mais
+`ALTER DEFAULT PRIVILEGES ... REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC`
+para cobrir a próxima função criada — sem a segunda, a correção valeria
+só para a que existe hoje. Aplicada em produção **e** gravada no
+`rls.sql`, senão o próximo `npm run db:rls` devolveria a permissão.
+
+Verificado, não presumido: `anon` e `authenticated` foram de `true` para
+`false`; `service_role` e `postgres` seguem com `EXECUTE`; **o gatilho
+de evento continuou ativo** (gatilho roda como dono, não pela permissão
+de quem chama); `npm run db:rls` executa os 5 comandos e termina limpo;
+e os 2 `WARN` do linter sumiram.
+
+**Os 22 avisos `INFO` restantes não são defeito.** RLS ligado sem
+política nega TUDO pela API pública — é o estado *fail-closed*, o
+seguro. O app funciona porque fala por conexão direta com `service_role`,
+que ignora RLS por definição. É o desenho deliberado do §2.x que criou
+o `rls.sql`.
+
+### Dois erros meus, e o mesmo erro duas vezes
+
+Encadeei `npm test | tail` e li `$?` — que mede o `tail`, não o teste. O
+commit `ee9b014` **entrou com a suíte vermelha**. E o teste estava
+certo: `sql-split.test.ts` existe para travar QUANTAS instruções o
+script executa contra o banco, e minha mudança levou o arquivo de 3 para
+5. Corrigido afirmando sobre as duas novas instruções, não afrouxando a
+contagem — a proteção contra o SQL de exemplo do rodapé (`CREATE ROLE`,
+`FORCE ROW LEVEL SECURITY`, `CREATE POLICY`) continua intacta.
+
+Aí **repeti o mesmo erro na mensagem seguinte** e empurrei `bcf8d39` com
+o `tsc` quebrado (`TS1501`: usei a flag `/s`, indisponível no alvo do
+`tsconfig` deste projeto). Corrigido com `[\s\S]`.
+
+A lição não é "rodar os testes" — eu rodei as três vezes. É que **`cmd |
+head` descarta o código de saída do comando**, então a verificação
+parecia acontecer e não acontecia. Agora os códigos saem para variável,
+um por um, e é o número que se lê. tsc 0, testes 0 (923), eslint 0.
