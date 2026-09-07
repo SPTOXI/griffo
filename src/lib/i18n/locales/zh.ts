@@ -1044,5 +1044,7 @@ export const zh: TranslationDictionary = {
     closingTitle: '在下次投递前，找出简历卡在哪里',
     closingSubtitle: '上传文件即可获得 8 个维度的评估，包括与您所在市场主流筛选系统的兼容性。',
     trustNote: '免费开始 · 无需信用卡',
+    searchTitle: '#OpenToWork 也好，主动求职也好，关卡是同一个',
+    searchBody: '无论你是在资料上打开了 #OpenToWork 等着被发现，还是正在主动求职、每天投递简历，你的简历都要先通过同一道自动筛选，才会被人看到。',
   },
 }

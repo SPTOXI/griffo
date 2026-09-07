@@ -1044,5 +1044,7 @@ export const fr: TranslationDictionary = {
     closingTitle: 'Découvrez où votre CV bloque — avant la prochaine candidature',
     closingSubtitle: 'Déposez le document et recevez l\'audit en 8 dimensions, y compris la compatibilité avec les filtres de votre marché.',
     trustNote: 'Gratuit pour commencer · Sans carte bancaire',
+    searchTitle: '#OpenToWork ou recherche active : le même filtre',
+    searchBody: "Que vous ayez activé #OpenToWork sur votre profil en attendant d'être repéré, ou que vous soyez en pleine recherche d'emploi à postuler chaque jour, votre CV passe par le même filtre automatique avant qu'une personne ne le lise.",
   },
 }

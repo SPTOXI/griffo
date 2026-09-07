@@ -1045,5 +1045,7 @@ export const es: TranslationDictionary = {
       closingTitle: 'Descubre dónde se traba tu currículum — antes de la próxima postulación',
       closingSubtitle: 'Sube el documento y recibe la evaluación en 8 dimensiones, incluida la compatibilidad con los filtros de tu mercado.',
       trustNote: 'Gratis para empezar · Sin tarjeta de crédito',
+      searchTitle: '#OpenToWork o búsqueda activa: el mismo filtro',
+      searchBody: 'Da igual si activaste #OpenToWork en tu perfil y esperas que te encuentren, o si estás en plena búsqueda de empleo enviando candidaturas cada día. En los dos casos tu currículum pasa por el mismo filtro automático antes de que lo lea una persona.',
     },
 }

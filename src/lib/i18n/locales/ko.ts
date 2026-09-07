@@ -1044,5 +1044,7 @@ export const ko: TranslationDictionary = {
     closingTitle: '다음 지원 전에, 이력서가 막히는 지점을 확인하세요',
     closingSubtitle: '문서를 업로드하면 8개 차원의 평가와 함께, 해당 시장에서 쓰이는 필터와의 적합도를 받아볼 수 있습니다.',
     trustNote: '무료로 시작 · 신용카드 불필요',
+    searchTitle: '#OpenToWork이든 적극적인 구직이든, 관문은 같습니다',
+    searchBody: '프로필에 #OpenToWork를 켜 두고 제안을 기다리는 경우든, 구직·이직 활동 중에 매일 지원하는 경우든, 이력서는 사람이 읽기 전에 똑같은 자동 필터를 거칩니다.',
   },
 }

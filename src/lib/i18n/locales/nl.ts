@@ -1044,5 +1044,7 @@ export const nl: TranslationDictionary = {
     closingTitle: 'Ontdek waar je cv vastloopt — vóór de volgende sollicitatie',
     closingSubtitle: 'Upload het document en ontvang de analyse op 8 dimensies, inclusief compatibiliteit met de filters in jouw markt.',
     trustNote: 'Gratis om te starten · Geen creditcard',
+    searchTitle: '#OpenToWork of actief zoeken: dezelfde filter',
+    searchBody: 'Of u nu #OpenToWork hebt aangezet en wacht tot u gevonden wordt, of dat u actief op zoek bent naar werk en zich elke dag aanmeldt: uw cv gaat door dezelfde automatische filter voordat een mens het leest.',
   },
 }

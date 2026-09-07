@@ -1147,5 +1147,18 @@ export interface TranslationDictionary {
     closingTitle: string
     closingSubtitle: string
     trustNote: string
+    /**
+     * Título do bloco que nomeia os dois momentos da busca — o sinal passivo
+     * (`#OpenToWork`) e a busca ativa (`#JobHunting`).
+     *
+     * A hashtag NÃO se traduz: verificado que `#OpenToWork` circula em inglês
+     * em todos os mercados, enquanto o rótulo descritivo é que muda de idioma
+     * (o alemão do LinkedIn é "Offen für Jobangebote"). Mesmo padrão que o
+     * §2.83 achou para "ATS": sigla em inglês + termo nativo ao lado, nunca um
+     * dos dois sozinho.
+     */
+    searchTitle: string
+    /** O texto do bloco, com o termo nativo de busca de emprego do idioma. */
+    searchBody: string
   }
 }

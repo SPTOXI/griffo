@@ -1045,5 +1045,7 @@ export const en: TranslationDictionary = {
       closingTitle: 'Find where your resume stalls — before the next application',
       closingSubtitle: 'Upload the document and get an 8-dimension audit, including compatibility with the filters used in your market.',
       trustNote: 'Free to start · No credit card',
+      searchTitle: '#OpenToWork or active job hunting: same filter',
+      searchBody: 'Whether you turned on #OpenToWork and are waiting to be found, or you are job hunting actively and applying every day, your resume goes through the same automated filter before any person reads it.',
     },
 }

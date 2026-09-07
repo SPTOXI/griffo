@@ -9,6 +9,7 @@ import {
   localeForLang,
   type Language,
 } from '@/lib/i18n'
+import { jobSearchKeywords } from '@/lib/market/job-search-terms'
 import { DocumentLanguage } from '@/components/i18n/document-language'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -66,6 +67,12 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   return {
     title: t.metaTitle,
     description: t.metaDescription,
+    // A hashtag em inglês MAIS o termo nativo — ver o cabeçalho de
+    // `job-search-terms.ts`. Vale a ressalva honesta: o Google ignora a meta
+    // `keywords` desde 2009, então o que de fato trabalha por estes termos é o
+    // bloco visível `searchTitle`/`searchBody` no corpo da página. Isto aqui
+    // acompanha o que `/ats` e o layout já fazem, e o Bing ainda considera.
+    keywords: [...jobSearchKeywords(lang), 'ATS', 'GriffoWork'],
     alternates: {
       canonical: CANONICAL,
       languages: Object.fromEntries(
@@ -168,6 +175,19 @@ export default async function HiringPage({ searchParams }: PageProps) {
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      {/* OS DOIS MOMENTOS DA BUSCA
+          A página nasceu falando com quem acabou de se candidatar. Este bloco
+          alcança o outro lado do mesmo momento — quem ligou o `#OpenToWork` e
+          espera ser encontrado — sem prometer vaga nenhuma, que é a linha que
+          o §2.84 traçou. O que ele diz é factual e vale para os dois: o filtro
+          automático é o mesmo. */}
+      <section className="py-12 bg-white border-t border-slate-100">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0B192E]">{t.searchTitle}</h2>
+          <p className="text-base text-slate-600 leading-relaxed">{t.searchBody}</p>
         </div>
       </section>
 

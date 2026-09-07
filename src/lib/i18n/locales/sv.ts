@@ -1044,5 +1044,7 @@ export const sv: TranslationDictionary = {
     closingTitle: 'Ta reda på var ditt CV fastnar — före nästa ansökan',
     closingSubtitle: 'Ladda upp dokumentet och få granskningen i 8 dimensioner, inklusive kompatibilitet med filtren på din marknad.',
     trustNote: 'Gratis att börja · Inget kreditkort',
+    searchTitle: '#OpenToWork eller aktivt jobbsökande: samma filter',
+    searchBody: 'Oavsett om du har slagit på #OpenToWork och väntar på att bli hittad, eller om du är mitt i ditt jobbsökande och söker varje dag, går ditt cv genom samma automatiska filter innan en människa läser det.',
   },
 }
