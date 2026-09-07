@@ -12,5 +12,10 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "claude-code-setup@claude-plugins-official": true,
+    "claude-security@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true
   }
 }
