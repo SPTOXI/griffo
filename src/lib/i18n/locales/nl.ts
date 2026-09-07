@@ -171,6 +171,9 @@ export const nl: TranslationDictionary = {
     secTitle: 'Beveiliging & Privacy',
     contactTitle: 'Contact',
     rights: 'Alle rechten voorbehouden.',
+    marketsTitle: 'Markten:',
+    atsTitle: 'ATS-compatibiliteit:',
+    globalRemote: 'Wereldwijd op afstand',
   },
   auth: {
     welcomeBack: 'Welkom terug',

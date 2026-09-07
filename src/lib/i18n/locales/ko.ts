@@ -171,6 +171,9 @@ export const ko: TranslationDictionary = {
     secTitle: '보안 및 개인정보',
     contactTitle: '고객지원',
     rights: 'All rights reserved.',
+    marketsTitle: '시장:',
+    atsTitle: 'ATS 호환성:',
+    globalRemote: '글로벌 원격',
   },
   auth: {
     welcomeBack: '다시 오신 것을 환영합니다',

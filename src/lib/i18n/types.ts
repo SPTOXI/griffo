@@ -163,6 +163,12 @@ export interface TranslationDictionary {
     secTitle: string
     contactTitle: string
     rights: string
+    /** Rótulo da fileira de links de mercado. Era "Mercados:" fixo em português. */
+    marketsTitle: string
+    /** Rótulo da fileira de guias de ATS. Era "Compatibilidade ATS:" fixo em português. */
+    atsTitle: string
+    /** O link `/global` — a rota sem preço nem ATS de país específico. */
+    globalRemote: string
   }
   auth: {
     welcomeBack: string

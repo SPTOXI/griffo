@@ -2,13 +2,18 @@ import type { MetadataRoute } from 'next'
 import { ATS_SLUGS } from '@/lib/ats/meta'
 import { atsLanguagesFor } from '@/lib/ats/content'
 import { localeForLang, LANGUAGES } from '@/lib/i18n'
+import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
 
-const COUNTRIES = [
-  'br', 'us', 'pt', 'es', 'mx', 'gb', 'ca', 'de', 'at', 'fr', 'be', 'lu',
-  'it', 'au', 'nz', 'in', 'jp', 'global',
-  'pl', 'cz', 'cl', 'my', 'tr', 'za', 'ae', 'co', 'ar', 'th', 'ro', 'bg',
-  'id', 'ph', 'vn', 'ng', 'eg', 'pk', 'bd', 'ke', 'sg', 'nl', 'ie'
-]
+// A MESMA lista que gera as rotas estáticas, não uma cópia.
+//
+// Aqui vivia um literal de 41 slugs, idêntico ao de `supported-slugs.ts` — e
+// nada obrigava os dois a continuarem iguais. Ao acrescentar `se`, `cn` e `kr`
+// às rotas pré-geradas (§2.86), eles nasceram pré-gerados e AUSENTES do
+// sitemap: três páginas construídas que nenhum buscador seria avisado que
+// existem. Duas listas que precisam concordar e não têm quem as obrigue é o
+// mesmo defeito que o §2.86 acabara de corrigir no hreflang, reaparecendo no
+// arquivo ao lado.
+const COUNTRIES = SUPPORTED_COUNTRY_SLUGS
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://griffo.work'

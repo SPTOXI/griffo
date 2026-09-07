@@ -171,6 +171,9 @@ export const sv: TranslationDictionary = {
     secTitle: 'Säkerhet & Integritet',
     contactTitle: 'Kontakt',
     rights: 'Alla rättigheter förbehållna.',
+    marketsTitle: 'Marknader:',
+    atsTitle: 'ATS-kompatibilitet:',
+    globalRemote: 'Global distans',
   },
   auth: {
     welcomeBack: 'Välkommen tillbaka',

@@ -13,6 +13,8 @@ import {
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
 import { DICTIONARIES, dirForLang, type Language } from '@/lib/i18n'
+import { displayCountry } from '@/lib/hiring-index/display'
+import { FOOTER_MARKET_SLUGS } from '@/lib/market/footer-markets'
 import { DocumentLanguage } from '@/components/i18n/document-language'
 import { LanguageSelector } from '@/components/ui/language-selector'
 import { contactEmail, contactMailto, salesMailto } from '@/lib/i18n/contact'
@@ -576,23 +578,24 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
 
         {/* SEO INTERNAL LINKS — Mercados & Guias ATS */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4 border-t border-slate-200/60 text-xs text-slate-500 space-y-2.5">
+          {/* Nomes por `displayCountry`, no idioma da tela. Estavam escritos à
+              mão em português — "Brasil (BR)", "Estados Unidos (US)",
+              "Alemanha (DE)" — no rodapé das 54 páginas públicas, inclusive nas
+              onze línguas que não são português. A lista de slugs vem de
+              `FOOTER_MARKET_SLUGS`, que garante um link permanente para cada
+              casa de idioma do hreflang: sem isso, `/ae` (a casa do árabe)
+              ficava sem nenhum link interno apontando para ela. */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-medium">
-            <span className="font-bold text-slate-700">Mercados:</span>
-            <a href="/br" className="hover:text-primary transition-colors">Brasil (BR)</a>
-            <a href="/us" className="hover:text-primary transition-colors">Estados Unidos (US)</a>
-            <a href="/pt" className="hover:text-primary transition-colors">Portugal (PT)</a>
-            <a href="/es" className="hover:text-primary transition-colors">Espanha (ES)</a>
-            <a href="/mx" className="hover:text-primary transition-colors">México (MX)</a>
-            <a href="/gb" className="hover:text-primary transition-colors">Reino Unido (GB)</a>
-            <a href="/ca" className="hover:text-primary transition-colors">Canadá (CA)</a>
-            <a href="/de" className="hover:text-primary transition-colors">Alemanha (DE)</a>
-            <a href="/fr" className="hover:text-primary transition-colors">França (FR)</a>
-            <a href="/it" className="hover:text-primary transition-colors">Itália (IT)</a>
-            <a href="/au" className="hover:text-primary transition-colors">Austrália (AU)</a>
-            <a href="/global" className="hover:text-primary transition-colors">Remoto Global</a>
+            <span className="font-bold text-slate-700">{t.footer.marketsTitle}</span>
+            {FOOTER_MARKET_SLUGS.map((slug) => (
+              <a key={slug} href={`/${slug}`} className="hover:text-primary transition-colors">
+                {displayCountry(slug.toUpperCase(), lang)} ({slug.toUpperCase()})
+              </a>
+            ))}
+            <a href="/global" className="hover:text-primary transition-colors">{t.footer.globalRemote}</a>
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-medium">
-            <span className="font-bold text-slate-700">Compatibilidade ATS:</span>
+            <span className="font-bold text-slate-700">{t.footer.atsTitle}</span>
             <a href="/ats/gupy" className="hover:text-primary transition-colors">Gupy</a>
             <a href="/ats/workday" className="hover:text-primary transition-colors">Workday</a>
             <a href="/ats/greenhouse" className="hover:text-primary transition-colors">Greenhouse</a>

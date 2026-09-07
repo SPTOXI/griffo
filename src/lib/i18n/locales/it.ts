@@ -171,6 +171,9 @@ export const it: TranslationDictionary = {
     secTitle: 'Sicurezza & Privacy',
     contactTitle: 'Contatti',
     rights: 'Tutti i diritti riservati.',
+    marketsTitle: 'Mercati:',
+    atsTitle: 'Compatibilità ATS:',
+    globalRemote: 'Remoto globale',
   },
   auth: {
     welcomeBack: 'Bentornato',

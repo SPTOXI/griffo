@@ -171,6 +171,9 @@ export const zh: TranslationDictionary = {
     secTitle: '安全与隐私',
     contactTitle: '联系我们',
     rights: '保留所有权利。',
+    marketsTitle: '市场：',
+    atsTitle: 'ATS 兼容性：',
+    globalRemote: '全球远程',
   },
   auth: {
     welcomeBack: '欢迎回来',

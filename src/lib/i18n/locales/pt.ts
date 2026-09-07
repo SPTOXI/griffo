@@ -172,6 +172,9 @@ export const pt: TranslationDictionary = {
       secTitle: 'Segurança & Privacidade',
       contactTitle: 'Contato & Domínio Oficial',
       rights: 'GriffoWork. Todos os direitos reservados. Em conformidade com a LGPD e GDPR.',
+      marketsTitle: 'Mercados:',
+      atsTitle: 'Compatibilidade ATS:',
+      globalRemote: 'Remoto Global',
     },
     auth: {
       welcomeBack: 'Bem-vindo de volta',

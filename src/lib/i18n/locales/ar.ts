@@ -171,6 +171,9 @@ export const ar: TranslationDictionary = {
     secTitle: 'الأمان والخصوصية',
     contactTitle: 'اتصل بنا',
     rights: 'جميع الحقوق محفوظة.',
+    marketsTitle: 'الأسواق:',
+    atsTitle: 'التوافق مع أنظمة ATS:',
+    globalRemote: 'عن بُعد عالميًا',
   },
   auth: {
     welcomeBack: 'مرحباً بعودتك',

@@ -171,6 +171,9 @@ export const ja: TranslationDictionary = {
     secTitle: 'セキュリティと規約',
     contactTitle: 'お問い合わせ',
     rights: '無断転載を禁じます。',
+    marketsTitle: '対象市場：',
+    atsTitle: 'ATS対応：',
+    globalRemote: 'グローバルリモート',
   },
   auth: {
     welcomeBack: 'おかえりなさい',
