@@ -9,6 +9,10 @@
 > anterior (`MAPA-DO-PRODUTO.md`, citado no prompt) divergir, vale o que está
 > aqui — aquele arquivo não existe neste repositório.
 
+> **Este arquivo passou de 5.800 linhas.** Antes de abrir por inteiro, veja
+> `docs/AUDITORIA-INDICE.md` — lista todo `§` com linha e tema, pra ler só a
+> seção que interessa.
+
 ---
 
 ## 1. O que foi encontrado
@@ -5835,3 +5839,61 @@ A lição não é "rodar os testes" — eu rodei as três vezes. É que **`cmd |
 head` descarta o código de saída do comando**, então a verificação
 parecia acontecer e não acontecia. Agora os códigos saem para variável,
 um por um, e é o número que se lê. tsc 0, testes 0 (923), eslint 0.
+
+## 2.90 O README dizia SQLite e ativação simulada; o produto roda em Postgres com Stripe de verdade há tempos
+
+Operador perguntou pela maturidade do projeto. Responder exigiu ler o
+estado real do código — e o README, a única porta de entrada para quem
+chega de fora do projeto, estava parado numa versão de meses atrás,
+enquanto `docs/HANDOFF-CONTINUIDADE.md` e esta auditoria seguiam em dia.
+A pergunta seguinte, "atualiza o README", foi o pedido para corrigir
+isso.
+
+### O que estava errado, e há quanto tempo
+
+- **Banco**: README dizia SQLite ("fácil de migrar para Postgres em
+  produção"). `prisma/schema.prisma` já declara `provider =
+  "postgresql"` com `POSTGRES_PRISMA_URL`/`POSTGRES_URL_NON_POOLING` —
+  Supabase, não uma migração pendente.
+- **Pagamento**: README dizia "Planos com ativação simulada".
+  `src/lib/stripe.ts`, o webhook idempotente (`WebhookEvent`) e o
+  ledger auditável (`AnalysisLedger`, com `stripeEventId`) são cobrança
+  real em produção, com Pix habilitável no checkout brasileiro.
+- **Preço**: README listava três planos fixos em real (Passe Diário
+  R$19,90 etc. — o modelo de crédito, já encerrado). `src/lib/pricing/
+  catalog.ts` é hoje a fonte única: 4 faixas por país, ancoradas em
+  dólar, com piso de US$2,60 acima do custo direto medido
+  (US$1,0449) — nenhuma menção a real como moeda universal.
+- **IA**: README citava `z-ai-web-dev-sdk` (GLM-4.6) como único
+  provedor. O roteador em `src/lib/ai-router/` opera com fallback entre
+  Claude, DeepSeek, Kimi K3 e Gemini, cada chamada registrada em
+  `AiLog` com custo, latência e provedor efetivamente usado.
+- **Idioma**: README descrevia landing só em português. `src/lib/i18n/
+  types.ts` lista 12 idiomas (`pt en es de fr it ja nl sv zh ar ko`),
+  com RTL para árabe — trabalho registrado nos §§2.69 a 2.89, nunca
+  refletido no README.
+- **Escopo do produto**: README não mencionava o Job Radar, o
+  `/market-pulse` (índice de temperatura de contratação) nem os itens
+  vendidos além do laudo e da reescrita (orientação vocacional, carta
+  de apresentação, resumo profissional, análise de presença digital) —
+  todos com produtor no código, listados em `ANALYSIS_DELIVERABLES`.
+
+### Método
+
+Cada afirmação nova só entrou depois de conferida no código-fonte, não
+por lembrança da conversa: `prisma/schema.prisma` (22 models),
+`src/lib/pricing/catalog.ts` (faixas e piso), `src/lib/i18n/types.ts`
+(lista de idiomas), `.env.example` (o que é obrigatório e por quê — os
+comentários de lá já explicam melhor que qualquer prosa nova),
+`vercel.json` (os dois crons) e `package.json` (scripts reais, sem
+`bun` como único caminho documentado). O README anterior trazia número
+de margem de lucro (94%/76%/66%) que dependia do modelo de crédito
+antigo — removido em vez de recalculado, porque recalcular pediria dado
+que não estava à mão nesta tarefa, e apresentá-lo como atual repetiria
+a imprecisão que o §2.80 já flagrou uma vez.
+
+### O que não mudou
+
+Nenhum arquivo de código foi tocado — é atualização de documentação
+pública, não correção de defeito de produto. Suíte, `tsc` e `build`
+seguem no estado do §2.89 (923 testes, `fail 0`).
