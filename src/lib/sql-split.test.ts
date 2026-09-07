@@ -86,7 +86,9 @@ test('prisma/rls.sql divide no que o script espera executar', () => {
   assert.match(out[2], /REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC/)
   // A segunda cobre a PRÓXIMA função criada; sem ela a correção valeria só
   // para as que existem hoje.
-  assert.match(out[3], /ALTER DEFAULT PRIVILEGES.*REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC/s)
+  // `[\s\S]*` e não `.*` com a flag `s`: o alvo do `tsconfig` deste projeto é
+  // anterior a es2018, onde `dotAll` não existe e o `tsc` recusa (TS1501).
+  assert.match(out[3], /ALTER DEFAULT PRIVILEGES[\s\S]*REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC/)
 
   assert.equal(returnsRows(out[4]), true)
   assert.match(out[4], /relrowsecurity = false/)
