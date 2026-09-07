@@ -135,6 +135,37 @@ END
 $$;
 
 -- -----------------------------------------------------------------------------
+-- 2b. E de PUBLIC — o buraco que o bloco acima NÃO fechava
+-- -----------------------------------------------------------------------------
+--
+-- Revogar de `anon` e `authenticated` não basta para funções, e o motivo é
+-- fácil de passar batido: o Postgres concede `EXECUTE` a **PUBLIC** por padrão
+-- ao criar qualquer função, e todo papel é membro de PUBLIC. Então o
+-- `REVOKE ALL ON ALL FUNCTIONS ... FROM anon` acima tirava o grant NOMINAL de
+-- anon e deixava intacto o que ele herda de PUBLIC — na prática, não tirava
+-- nada.
+--
+-- O linter do Supabase pegou o efeito disso em 07/09/2026: a função
+-- `public.rls_auto_enable()` é `SECURITY DEFINER` e estava chamável sem login
+-- em `/rest/v1/rpc/rls_auto_enable`.
+--
+-- O risco concreto era baixo — ela retorna `event_trigger` e chama
+-- `pg_event_trigger_ddl_commands()`, que só funciona dentro de um gatilho de
+-- DDL, então por fora ela erra antes de fazer nada; e mesmo rodando, tudo que
+-- faz é LIGAR RLS. Mas função `SECURITY DEFINER` alcançável pela internet
+-- aberta não se deixa de pé por ser inofensiva hoje: o corpo dela pode mudar.
+--
+-- Revogar de PUBLIC não afeta o gatilho: gatilho de evento roda como dono, não
+-- pela permissão de quem chama. Conferido em produção — `anon` e
+-- `authenticated` passaram a `false`, `service_role` continua `true`, e o
+-- gatilho seguiu ativo.
+--
+-- `ALTER DEFAULT PRIVILEGES` cobre a próxima função criada, senão a correção
+-- valeria só para a que existe hoje.
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
+
+-- -----------------------------------------------------------------------------
 -- 3. Conferência
 -- -----------------------------------------------------------------------------
 --
