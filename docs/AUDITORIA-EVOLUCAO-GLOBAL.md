@@ -5633,3 +5633,68 @@ Verificado no navegador contra o build de produção: `/ae` passa a
 direita, navegação e CTAs invertidos), `/de` a `lang="de-DE"` `ltr`, e o
 `dir` sai do servidor em `/hiring`, `/ats` e `/market-pulse` nos dois
 sentidos. `tsc`, `eslint` e `npm run build` limpos; 911 testes, `fail 0`.
+
+---
+
+## 2.87 A casa do árabe não tinha porta, e a lista de países se partiu em duas
+
+Operador perguntou se havia mais o que revisar. A varredura foi contra a
+produção: as 54 URLs do sitemap, cruzadas com todos os links internos
+reais de cada uma delas. Três defeitos — e um deles foi meu, feito na
+sessão anterior.
+
+**(1) `/ae` e `/my` no sitemap, com ZERO link interno.** É o mesmo
+estado que pôs `/hiring` em "Detectada, mas não indexada" (§2.85): o
+`<loc>` declara que a página existe, o link interno declara que ela
+importa, e só o segundo move a fila de rastreamento.
+
+`/ae` é o caso grave, e não por ser mais um mercado: é a rota que o
+`hreflang` da raiz declara ser **a casa do árabe**. O site anunciava ao
+Google a página canônica de um dos seus doze idiomas e não dava caminho
+nenhum até ela — logo depois de o §2.86 ter descoberto que essa mesma
+página ainda renderizava da esquerda para a direita.
+
+**A causa é estrutural, não esquecimento.** O rodapé linkava 11 países
+escolhidos a dedo. As outras 29 rotas dependiam de **um único** link: a
+tabela de países do `/market-pulse`. Só que aquela tabela lista apenas
+quem tem dado no atlas — e `AE`, `MY` e `CN` são exatamente os três sem
+dado (conferido no `/api/hiring-index`: 98 países, nenhum deles). Ou
+seja, a descoberta de uma rota de país estava presa à cobertura de uma
+coleta estatística que muda sozinha a cada trimestre. Um país que saísse
+da coleta viraria órfão sem ninguém notar.
+
+`lib/market/footer-markets.ts` inverte isso: **toda casa de idioma
+declarada no `hreflang` tem link permanente, tenha dado de mercado ou
+não.** São 18 links no rodapé contra 11; `/jp` e `/nl` saem de 1 link
+para 55.
+
+**(2) `sitemap.ts` guardava a própria cópia da lista de países** — 41
+slugs idênticos aos de `supported-slugs.ts`. Ao acrescentar `se`, `cn` e
+`kr` às rotas pré-geradas no §2.86, **eu fiz as duas divergirem**: as
+três nasceram construídas e ausentes do sitemap, três páginas que
+nenhum buscador seria avisado que existem. É o mesmo defeito que o
+§2.86 acabara de corrigir no hreflang, reaparecendo no arquivo ao lado,
+pela minha mão, na mesma sessão. Duas listas que precisam concordar e
+não têm quem as obrigue não é estilo — é um defeito esperando data.
+
+**(3) Nomes de país escritos à mão em português no rodapé.** "Brasil
+(BR)", "Estados Unidos (US)", "Alemanha (DE)" apareciam nas 54 páginas
+públicas, **inclusive nas onze línguas que não são português** —
+conferido no HTML de `/de` e `/jp` em produção. O cabeçalho de
+`lib/hiring-index/display.ts` já avisava contra exatamente isso ("usá-la
+aqui colocaria português dentro das outras 11 telas"), e o aviso estava
+sendo desobedecido no componente mais compartilhado do produto. Agora
+passam por `displayCountry(code, lang)`; "Mercados:" e "Compatibilidade
+ATS:" viraram chaves de dicionário nos 12 idiomas.
+
+**6 testes novos**, a trava principal verificada falhando ao remover a
+casa do árabe da lista. Um deles lê o `sitemap.ts` e falha se ele voltar
+a manter cópia própria dos países.
+
+Verificado no build de produção: rodapé de `/de` com "Brasilien (BR)",
+de `/jp` com "ブラジル (BR)", de `/ae` com "البرازيل (BR)", 18 mercados
+em cada, e `href="/ae"` presente em todas as páginas. `tsc`, `eslint` e
+`npm run build` limpos; 917 testes, `fail 0`.
+
+**O que a varredura confirmou que está certo:** as 54 URLs do sitemap
+respondem 200, sem exceção.
