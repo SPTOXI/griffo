@@ -34,6 +34,21 @@ yarn-error.log*
 .env*
 !.env.example
 
+# Anotações soltas com credencial de verdade.
+#
+# `apis for videos.txt` guarda chaves de API reais e vivia apenas
+# NÃO-RASTREADO, que não é proteção nenhuma: `git add -A` o incluía, e daí
+# até o push são dois comandos. Chave que chega ao GitHub tem de ser
+# rotacionada, não apagada — o histórico guarda.
+#
+# O padrão é largo de propósito: o risco não é este arquivo, é o próximo
+# com nome parecido.
+apis*.txt
+*api-keys*
+*apikeys*
+*credenciais*
+*credentials*.txt
+
 # vercel
 .vercel
 
