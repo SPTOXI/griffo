@@ -583,6 +583,7 @@ export const es: TranslationDictionary = {
       searchNowSuccessOne: '{n} oportunidad nueva encontrada ahora.',
       searchNowSuccessMany: '{n} oportunidades nuevas encontradas ahora.',
       searchNowNothingNew: 'Ninguna vacante nueva encontrada ahora. El Radar sigue monitoreando.',
+      searchNowStillRunning: 'La búsqueda todavía está en curso. Los resultados aparecen aquí en cuanto termine.',
       searchNowLimitReached: 'Ya usaste las búsquedas en vivo de esta semana. Vuelven el {date}.',
       searchNowErrorFallback: 'No se pudo buscar ahora.',
       searchNowConnectionError: 'Fallo de conexión al buscar ahora.',

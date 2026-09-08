@@ -6710,8 +6710,89 @@ suíte completa em 936/936 (5 novos, sem regressão nos 931 anteriores);
 `prisma db push` confirmado contra o banco de produção
 (`aws-1-sa-east-1.pooler.supabase.com`).
 
-**O que NÃO foi feito**: o botão na tela do Radar que chama
-`/api/radar/search-now`. O escopo confirmado em conversa foi
-explicitamente "só o contador semanal + a rota de coleta ao vivo no
-JobBase" — a UI é a próxima peça, não construída porque não foi
-pedida nesta rodada.
+**O que NÃO foi feito** (na primeira versão desta seção): o botão na
+tela do Radar. Construído logo em seguida, na mesma rodada — ver
+§2.107, que também registra um bug real de 504 encontrado ao verificar
+isto ao vivo em produção.
+
+---
+
+## 2.107 Botão da busca avulsa, e o 504 que a verificação em produção
+   encontrou
+
+Continuação do §2.106, mesma rodada. Operador confirmou o escopo do
+botão ("sim"), e pediu pra verificar direto em produção — não havia
+como ver localmente sem logar (regra fixa: não digito credencial em
+formulário nenhum), e o código só existia local, sem commit. A
+sequência: commit + push pra `main` (autorizado explicitamente pelo
+operador), deploy automático da Vercel, e só então login em
+produção pelo próprio operador pra eu conferir.
+
+**O botão**: `radar-view.tsx` ganhou "Busca ao vivo (`{n}/{total}` esta
+semana)", ao lado do "Procurar agora" que já existia, só visível
+quando `onDemandSearch.eligible` (o `GET /api/radar` passou a incluir
+esse bloco, lendo `requireAnyUnlockedResume` + o novo
+`peekOnDemandSearch` — uma leitura pura, sem consumir busca nenhuma,
+separada de `onDemandSearchDecision` que só corre no momento de
+gastar). 8 chaves de i18n novas (`searchNowButton` e afins) nas 12
+línguas.
+
+**O bug, encontrado ao clicar de verdade em produção**: a chamada
+voltou `504` depois de ~20s. Não é falha de ferramenta de automação —
+`read_network_requests` confirmou o status HTTP real. Causa raiz,
+lida no próprio código: `runCollection()` (`lib/radar/runner.ts`) —
+a mesma função que o cron usa — não faz coleta incremental. A cada
+rodada ela busca e GRAVA de novo todas as vagas abertas que a fonte
+devolve. O JobBase já tem milhares de vagas (5.572 confirmadas no
+§2.100); o fetch cabia no orçamento de 15s que a rota passava, mas
+escrever tudo em lotes de 250 (`WRITE_CHUNK`) contra um banco Supabase
+em outra região não cabia dentro do tempo de uma requisição HTTP — a
+função ainda estava gravando quando o `504` chegou ao navegador.
+
+Isto nunca apareceu no cron porque lá ninguém está com uma aba aberta
+esperando resposta — a função roda até o teto dela (`maxDuration = 60`)
+sem que o resultado precise voltar pra tela de ninguém.
+
+**Por que a correção não foi apertar o orçamento de coleta**: reduzir
+`timeBudgetMs` ou `maxPages` só limitaria o FETCH, que já cabia — o
+gargalo era a escrita, que roda depois e não tem orçamento próprio no
+código atual. E cortar página também não garante pegar vaga nova: o
+JobBase não ordena a consulta por data, então a "página 1" não é "as
+mais recentes".
+
+**A correção**: a coleta e a avaliação passaram a rodar dentro de
+`after()` — o mesmo mecanismo que `profile_extraction` e
+`career_orientation` já usam em produção para trabalho que não cabe
+numa resposta HTTP. A rota devolve `{ok: true, status: 'started'}`
+assim que o contador semanal é consumido, SEM esperar a coleta.
+`maxDuration` subiu de 30 para 60 (o mesmo teto do cron), dando à
+coleta em segundo plano mais tempo pra terminar antes de a própria
+função ser encerrada pela plataforma.
+
+O cliente (`radar-view.tsx`) não tem como saber quando a coleta em
+segundo plano termina a não ser perguntando — `waitForSearchToFinish`
+consulta `/api/user/radar-preferences` a cada 3s, por até 30s,
+esperando `lastRunAt` avançar (o mesmo campo que `runForUser` já grava
+ao final, reaproveitado em vez de inventar um sinal novo). Quando
+avança, recarrega o Radar e compara a contagem de oportunidades antes
+e depois pra decidir a mensagem (`searchNowSuccessOne/Many` ou
+`searchNowNothingNew`). Se os 30s esgotarem sem `lastRunAt` mudar, uma
+chave nova (`searchNowStillRunning`, nas 12 línguas) avisa que a busca
+continua rodando no servidor — o trabalho não é perdido, só não dá
+tempo de acompanhar na tela.
+
+**Por que consumir o contador ANTES de despachar o `after()`, e não
+depois**: se a página fechar ou a função morrer no meio da coleta, a
+pessoa não recupera a busca de graça só porque não viu o resultado —
+o mesmo raciocínio de "saldo debitado na tentativa, não no sucesso"
+que já rege o restante do produto.
+
+**Verificado em produção de verdade, não só localmente**: login feito
+pelo próprio operador (dono da conta admin master), botão clicado,
+resposta imediata (sem 504), e a UI reconferida depois do fix.
+
+**Verificado por ferramenta**: `tsc --noEmit`, `eslint`, `npm run
+build` e suíte completa limpos (938/938, sem regressão). Um `EPERM` do
+Windows travou o primeiro `npm run build` — o `npm run dev` desta
+mesma sessão ainda segurava o `.dll.node` do Prisma; parar o processo
+resolveu, sem precisar reinstalar nada.

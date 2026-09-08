@@ -582,6 +582,7 @@ export const ja: TranslationDictionary = {
     searchNowSuccessOne: '{n} 件の新しいチャンスが見つかりました。',
     searchNowSuccessMany: '{n} 件の新しいチャンスが見つかりました。',
     searchNowNothingNew: '現時点で新しい求人は見つかりませんでした。レーダーは引き続き監視します。',
+    searchNowStillRunning: '検索はまだ実行中です。完了次第、ここに結果が表示されます。',
     searchNowLimitReached: '今週のライブ検索はすでに使い切りました。{date} にリセットされます。',
     searchNowErrorFallback: '現在検索できませんでした。',
     searchNowConnectionError: '検索中に接続エラーが発生しました。',

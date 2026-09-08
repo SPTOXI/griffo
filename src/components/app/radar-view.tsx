@@ -162,6 +162,12 @@ export function RadarView() {
       setPreferences(prefs.preferences)
       setLastRunAt(prefs.lastRunAt ?? null)
     }
+    // Devolvido para quem chama comparar antes/depois (`searchNow`) sem
+    // depender do state — que só atualiza no próximo render.
+    return {
+      opportunityCount: radarRes.ok && radar ? (radar.opportunities || []).length : null,
+      lastRunAt: prefsRes.ok ? (prefs?.lastRunAt ?? null) : null,
+    }
   }, [])
 
   useEffect(() => {
@@ -254,6 +260,45 @@ export function RadarView() {
   }
 
   /**
+   * Espera a coleta terminar em segundo plano, olhando `lastRunAt` avançar.
+   *
+   * `/api/radar/search-now` responde antes de coletar (ver o cabeçalho da
+   * rota — a coleta contra milhares de vagas do JobBase não cabe no tempo de
+   * uma requisição). `lastRunAt` é o mesmo campo que `runForUser` grava ao
+   * final, tanto no cron quanto em `/api/radar/run` — reaproveitado aqui como
+   * sinal de "terminou", em vez de inventar um campo novo só para isto.
+   */
+  const waitForSearchToFinish = async (priorLastRunAt: string | null, priorOpportunityCount: number) => {
+    const POLL_MS = 3000
+    const TIMEOUT_MS = 30000
+    const deadline = Date.now() + TIMEOUT_MS
+
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, POLL_MS))
+      const res = await internalFetch('/api/user/radar-preferences', { cache: 'no-store' })
+      const data = await res.json().catch(() => null)
+
+      if (data?.lastRunAt && data.lastRunAt !== priorLastRunAt) {
+        const after = await load()
+        const gained = after.opportunityCount != null ? after.opportunityCount - priorOpportunityCount : 0
+        if (gained > 0) {
+          toast.success((gained === 1 ? rd.searchNowSuccessOne : rd.searchNowSuccessMany).replace('{n}', String(gained)))
+        } else {
+          toast.info(rd.searchNowNothingNew)
+        }
+        return
+      }
+    }
+
+    // Não terminou a tempo de acompanhar na tela — mas o contador semanal já
+    // foi gasto, e o trabalho continua rodando no servidor até seu próprio
+    // teto de tempo. Recarrega mesmo assim: pode ter terminado bem depois do
+    // último poll, entre a última checagem e o fim do laço.
+    await load()
+    toast.info(rd.searchNowStillRunning)
+  }
+
+  /**
    * Busca ao vivo: coleta agora, não só reavalia o que já estava no banco.
    *
    * Diferente de `runNow`, que só reavalia — esta chama `/api/radar/search-now`,
@@ -262,6 +307,8 @@ export function RadarView() {
    */
   const searchNow = async () => {
     setSearchingNow(true)
+    const priorLastRunAt = lastRunAt
+    const priorOpportunityCount = opportunities.length
     try {
       const res = await internalFetch('/api/radar/search-now', { method: 'POST' })
       const data = await res.json().catch(() => null)
@@ -275,13 +322,7 @@ export function RadarView() {
         return
       }
 
-      await load()
-
-      if (data?.alerted > 0) {
-        toast.success((data.alerted === 1 ? rd.searchNowSuccessOne : rd.searchNowSuccessMany).replace('{n}', String(data.alerted)))
-      } else {
-        toast.info(rd.searchNowNothingNew)
-      }
+      await waitForSearchToFinish(priorLastRunAt, priorOpportunityCount)
     } catch {
       toast.error(rd.searchNowConnectionError)
     } finally {

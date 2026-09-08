@@ -582,6 +582,7 @@ export const ar: TranslationDictionary = {
     searchNowSuccessOne: 'تم العثور على {n} فرصة جديدة الآن.',
     searchNowSuccessMany: 'تم العثور على {n} فرص جديدة الآن.',
     searchNowNothingNew: 'لم يتم العثور على وظائف جديدة الآن. يواصل الرادار المراقبة.',
+    searchNowStillRunning: 'البحث لا يزال قيد التنفيذ. ستظهر النتائج هنا فور انتهائه.',
     searchNowLimitReached: 'لقد استخدمت عمليات البحث الفوري لهذا الأسبوع بالفعل. ستعود في {date}.',
     searchNowErrorFallback: 'تعذر البحث الآن.',
     searchNowConnectionError: 'خطأ في الاتصال أثناء البحث الفوري.',

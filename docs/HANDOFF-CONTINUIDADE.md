@@ -768,9 +768,17 @@ janela rolante de 7 dias — testada em `on-demand-search.test.ts`),
 JobBase e depois `runForUser()` — as duas funções que o cron já usa, sem
 lógica de coleta ou avaliação duplicada.
 
-**O que falta**: o botão na tela do Radar que chama essa rota. Backend
-completo e testado (tsc/eslint/`npm test` 936/936/build limpos); a UI não foi
-pedida nesta rodada.
+**Botão construído e verificado em produção** (§2.107), na mesma rodada.
+Achado ao clicar de verdade em produção: a primeira versão respondia `504` —
+`runCollection()` grava TODAS as vagas abertas da fonte a cada rodada (sem
+coleta incremental), e com o JobBase já na casa de milhares de linhas, a
+escrita em lotes não cabia no tempo de uma requisição HTTP, só no orçamento
+do cron. Corrigido: a coleta roda em `after()` (mesmo mecanismo de
+`profile_extraction`/`career_orientation`), a rota responde antes de coletar,
+e o cliente descobre que terminou olhando `lastRunAt` avançar em
+`/api/user/radar-preferences` — sem endpoint novo. `maxDuration` da rota
+subiu de 30 para 60 (mesmo teto do cron). Verificado com login real do
+operador em produção: botão aparece, clique não trava mais.
 
 ### 7.5 Calibragem dos três eixos
 

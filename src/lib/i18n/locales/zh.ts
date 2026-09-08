@@ -582,6 +582,7 @@ export const zh: TranslationDictionary = {
     searchNowSuccessOne: '刚刚发现 {n} 个新机会。',
     searchNowSuccessMany: '刚刚发现 {n} 个新机会。',
     searchNowNothingNew: '暂时没有发现新职位。雷达将持续监控。',
+    searchNowStillRunning: '搜索仍在进行中，完成后结果会显示在这里。',
     searchNowLimitReached: '本周的实时搜索次数已用完，将于 {date} 恢复。',
     searchNowErrorFallback: '暂时无法搜索。',
     searchNowConnectionError: '搜索时连接出错。',

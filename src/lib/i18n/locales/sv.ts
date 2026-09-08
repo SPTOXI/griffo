@@ -582,6 +582,7 @@ export const sv: TranslationDictionary = {
     searchNowSuccessOne: '{n} ny möjlighet hittad just nu.',
     searchNowSuccessMany: '{n} nya möjligheter hittade just nu.',
     searchNowNothingNew: 'Inga nya jobb hittades just nu. Radarn fortsätter bevaka.',
+    searchNowStillRunning: 'Sökningen pågår fortfarande. Resultaten dyker upp här så fort den är klar.',
     searchNowLimitReached: 'Du har redan använt veckans livesökningar. De är tillbaka {date}.',
     searchNowErrorFallback: 'Det gick inte att söka just nu.',
     searchNowConnectionError: 'Anslutningsfel vid livesökning.',

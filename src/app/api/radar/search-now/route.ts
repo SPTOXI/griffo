@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-export const maxDuration = 30
+export const maxDuration = 60
 
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { requireAnyUnlockedResume } from '@/lib/entitlements'
@@ -37,6 +37,27 @@ import { jobBaseAdapters, jobBaseCredentials } from '@/lib/jobs/adapters/jobbase
  * `/api/radar/run` já usam. A busca inicial (perfil semeado a partir do
  * currículo) e os ajustes manuais de perfil continuam nos fluxos que já
  * existem; esta rota só adianta a COLETA.
+ *
+ * ## Por que a coleta roda em `after()`, e a resposta não espera por ela
+ *
+ * Descoberto em verificação real contra produção: o JobBase já tem milhares
+ * de vagas abertas, e `runCollection` — a mesma função que o cron usa —
+ * escreve TODAS elas a cada rodada (não há "só o que mudou" na origem). O
+ * tempo do fetch cabia no orçamento de 15s, mas gravar em lotes de 250
+ * (`WRITE_CHUNK` em `runner.ts`) contra um banco em outra região não cabia
+ * dentro do tempo de uma requisição HTTP — a chamada terminava em 504 antes
+ * de qualquer resposta chegar ao navegador. No cron isso nunca aparece
+ * porque ninguém está esperando a resposta na tela.
+ *
+ * A correção não é apertar o orçamento de coleta (perderia cobertura sem
+ * garantia de pegar as vagas mais novas, já que o JobBase não ordena por
+ * data na consulta) — é parar de fazer o usuário esperar pelo trabalho
+ * pesado. `after()` mantém a função viva depois da resposta (mesmo padrão já
+ * usado por `profile_extraction`/`career_orientation`), e o contador semanal
+ * já foi consumido ANTES de despachar — perder a página não devolve a busca.
+ * O cliente descobre que terminou reconsultando `lastRunAt` em
+ * `/api/user/radar-preferences` (ver `radar-view.tsx`), o mesmo campo que
+ * `runForUser` já atualiza ao final.
  */
 export async function POST() {
   try {
@@ -90,15 +111,20 @@ export async function POST() {
       )
     }
 
-    const collection = await runCollection(adapters[0], { timeBudgetMs: 15000 })
-    const result = await runForUser(user.id)
+    after(async () => {
+      try {
+        await runCollection(adapters[0], { timeBudgetMs: 15000 })
+        await runForUser(user.id)
+      } catch (e: any) {
+        console.error('[radar/search-now] falha na coleta em segundo plano:', e?.message || e)
+      }
+    })
 
     return NextResponse.json({
       ok: true,
-      collected: collection.collected,
+      status: 'started',
       remainingThisWeek: decision.remaining,
       resetAt: decision.resetAt,
-      ...result,
     })
   } catch (e: any) {
     console.error('[radar/search-now]', e?.message || e)

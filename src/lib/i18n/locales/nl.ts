@@ -582,6 +582,7 @@ export const nl: TranslationDictionary = {
     searchNowSuccessOne: '{n} nieuwe kans zojuist gevonden.',
     searchNowSuccessMany: '{n} nieuwe kansen zojuist gevonden.',
     searchNowNothingNew: 'Nu geen nieuwe vacatures gevonden. De Radar blijft actief.',
+    searchNowStillRunning: 'De zoekopdracht loopt nog. De resultaten verschijnen hier zodra ze klaar is.',
     searchNowLimitReached: 'Je hebt de live zoekopdrachten van deze week al gebruikt. Ze zijn weer beschikbaar op {date}.',
     searchNowErrorFallback: 'Nu zoeken is niet gelukt.',
     searchNowConnectionError: 'Verbindingsfout tijdens het live zoeken.',

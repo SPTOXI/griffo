@@ -582,6 +582,7 @@ export const ko: TranslationDictionary = {
     searchNowSuccessOne: '{n}개의 새로운 기회를 찾았습니다.',
     searchNowSuccessMany: '{n}개의 새로운 기회를 찾았습니다.',
     searchNowNothingNew: '지금은 새로운 채용 공고가 없습니다. 레이더는 계속 모니터링합니다.',
+    searchNowStillRunning: '검색이 아직 진행 중입니다. 완료되면 여기에 결과가 표시됩니다.',
     searchNowLimitReached: '이번 주 실시간 검색을 모두 사용했습니다. {date}에 다시 사용할 수 있습니다.',
     searchNowErrorFallback: '지금은 검색할 수 없습니다.',
     searchNowConnectionError: '검색 중 연결 오류가 발생했습니다.',

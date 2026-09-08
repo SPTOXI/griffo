@@ -578,6 +578,7 @@ export interface TranslationDictionary {
     searchNowSuccessOne: string
     searchNowSuccessMany: string
     searchNowNothingNew: string
+    searchNowStillRunning: string
     searchNowLimitReached: string
     searchNowErrorFallback: string
     searchNowConnectionError: string
