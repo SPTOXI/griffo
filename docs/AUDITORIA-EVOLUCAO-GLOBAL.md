@@ -6796,3 +6796,44 @@ build` e suíte completa limpos (938/938, sem regressão). Um `EPERM` do
 Windows travou o primeiro `npm run build` — o `npm run dev` desta
 mesma sessão ainda segurava o `.dll.node` do Prisma; parar o processo
 resolveu, sem precisar reinstalar nada.
+
+---
+
+## 2.108 Pendência 1 fecha — o primeiro envio real do digest, e a
+   chave que estava escrita mas não era uma variável
+
+Mesma rodada. Depois de conferir o log do digest desligado (§7.1),
+operador decidiu ligar `RADAR_DIGEST_ENABLED=true` direto — "libera
+logo essa função". A primeira rodada real (cron disparado manualmente
+no painel da Vercel) expôs dois problemas em sequência, nenhum deles
+de código.
+
+**Achado 1: `RESEND_API_KEY` ausente na Vercel.** O log mudou de
+`(desligado)` para tentativa de envio de verdade — pra **4 usuários
+reais**, não só a conta admin — e as 4 falharam com "Variável de
+ambiente obrigatória ausente: RESEND_API_KEY". Não era problema de
+DNS: `getDigestFrom()` em `lib/env.ts` já documentava
+`send.griffo.work` com SPF/DKIM/DMARC passando. Ao checar o `.env`
+local a pedido do operador, a chave estava lá — mas escrita como nota
+de texto (`resend apikey: re_...`), sem o `=` que faz virar variável
+de ambiente de verdade. `dotenv`/`process.env` nunca leram esse valor,
+local ou na Vercel. Corrigido o formato local (`RESEND_API_KEY="re_..."`,
+arquivo fora do git, confirmado no `.gitignore` antes de mexer); a
+chave em si eu não digitei em formulário nenhum da Vercel — API key
+entra na mesma regra de senha, o cadastro lá foi o operador.
+
+**Achado 2: env var nova não se aplica ao deployment já rodando.**
+Primeiro redeploy depois de cadastrar a chave ainda deu o mesmo erro —
+a Vercel só injeta variável de ambiente nova a partir do PRÓXIMO
+deployment, não no que já está no ar. Um segundo redeploy resolveu.
+
+**Confirmado por banco, não por inferência de log.** Ausência de linha
+de erro não prova sucesso — `digest.server.ts` só loga em caso de
+falha, nunca em caso de êxito. Consulta direta (script `tsx` descartável,
+`RadarAlert.findMany` filtrado pelos 4 `userId`) mostrou os quatro com
+`notifiedAt = 08/09/2026 14:03:37 BRT` — campo que o código só grava
+"depois do envio bem-sucedido" (comentário no próprio
+`digest.server.ts`, linha do `updateMany`). E-mail real, saiu de
+verdade, pra gente real.
+
+**Pendência 1 fecha.** Registrado em `HANDOFF-CONTINUIDADE.md`.

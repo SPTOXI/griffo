@@ -124,3 +124,4 @@ já lista os três documentos de continuidade; este é o quarto.
 | 2.105 | 6568 | produto,i18n | "Workforce" B2B — recorte concreto implementado |
 | 2.106 | 6611 | vagas,produto,precos | Busca avulsa do Radar — §7.4 fecha, preço R$14,90 era rascunho nunca usado |
 | 2.107 | 6720 | vagas,produto,performance | Botão da busca avulsa + 504 real: coleta síncrona não cabia na resposta HTTP, corrigido com `after()` |
+| 2.108 | 6802 | infra,email | Pendência 1 fecha: RESEND_API_KEY estava escrita no .env mas não era variável de ambiente; primeiro digest real confirmado por banco |
