@@ -55,6 +55,16 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 }))
 
+// Qualquer chamada autenticada que volte 401 (sessão morta, não "sem
+// permissão" — ver o comentário em `internal-fetch.ts`) limpa o usuário
+// aqui. É o que faz a tela cair de volta pra landing deslogada sozinha,
+// em vez de continuar mostrando o shell autenticado com dado vazio.
+if (typeof window !== 'undefined') {
+  window.addEventListener('griffo:session-expired', () => {
+    useAuth.getState().setUser(null)
+  })
+}
+
 export type AppView =
   | 'dashboard'
   | 'upload'

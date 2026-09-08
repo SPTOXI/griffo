@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -81,11 +82,12 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-slate-200/80 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-20 sm:min-h-22 py-2 flex items-center justify-between gap-4 flex-wrap transition-all">
           <div className="flex items-center gap-3.5 sm:gap-4 cursor-pointer group shrink-0" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img
+            <Image
               src="/logo-icon.png"
               alt="GriffoWork Logo"
-              width={553}
-              height={424}
+              width={120}
+              height={92}
+              priority
               className="h-13 sm:h-16 md:h-18 w-auto object-contain shrink-0 transition-transform duration-200 group-hover:scale-105"
             />
             <div className="flex flex-col leading-none">
@@ -447,15 +449,24 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
           </Button>
         </div>
 
-        {/* EMPRESAS E RH — sem autosserviço, por decisão */}
+        {/* EMPRESAS E RH — sem autosserviço, por decisão.
+            §7.9/§2.105: "workforce" como audiência nova (RH/planejamento de
+            força de trabalho), não só quem compra laudo de currículo — daí o
+            segundo link, pro /market-pulse, ao lado do CTA comercial que já
+            existia. `businessDesc` também passou a citar o atlas. */}
         <div className="mt-6 max-w-3xl mx-auto rounded-2xl border border-slate-200 bg-slate-50 p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
           <div>
             <p className="font-bold text-[#0B192E] text-sm">{t.pricing.businessTitle}</p>
             <p className="text-xs text-slate-600 mt-0.5">{t.pricing.businessDesc}</p>
           </div>
-          <Button asChild variant="outline" className="border-slate-300 text-[#0B192E] font-bold text-xs h-10 shrink-0">
-            <a href={salesMailto(lang)}>{t.pricing.businessCta}</a>
-          </Button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+            <Button asChild variant="ghost" className="text-[#0B63E5] font-semibold text-xs h-10">
+              <a href="/market-pulse">{t.pricing.businessDataCta} <ArrowRight className="w-3.5 h-3.5 ml-1" /></a>
+            </Button>
+            <Button asChild variant="outline" className="border-slate-300 text-[#0B192E] font-bold text-xs h-10">
+              <a href={salesMailto(lang)}>{t.pricing.businessCta}</a>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -520,7 +531,7 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-sm">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <img src="/logo-icon.png" alt="GriffoWork Logo" width={553} height={424} className="h-11 sm:h-12 w-auto object-contain shrink-0" />
+              <Image src="/logo-icon.png" alt="GriffoWork Logo" width={100} height={77} className="h-11 sm:h-12 w-auto object-contain shrink-0" />
               <div className="flex flex-col leading-none">
                 <span className="font-extrabold text-[#0B192E] text-xl tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
                 <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#0B63E5] mt-0.5">{appSubtitles[lang] || appSubtitles.pt}</span>

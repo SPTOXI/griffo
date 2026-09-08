@@ -41,5 +41,17 @@ export function internalFetch(input: RequestInfo | URL, init?: RequestInit): Pro
     headers: mergedHeaders,
   }
 
-  return fetch(finalInput, merged)
+  return fetch(finalInput, merged).then((res) => {
+    // Sessão morta a meio da navegação (SPA, sem reload) não é a mesma
+    // coisa que "sem permissão" — 401 é a primeira, 403 é a segunda, e as
+    // rotas autenticadas do produto seguem essa convenção. Sem isto, o
+    // `useAuth` continuava com o usuário antigo em memória e as telas
+    // renderizavam "nenhum currículo encontrado" em vez de voltar pra
+    // landing deslogada (achado do §2.100). O evento evita import
+    // circular com `store/auth.ts`, que já importa este arquivo.
+    if (isRelative && res.status === 401 && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('griffo:session-expired'))
+    }
+    return res
+  })
 }

@@ -129,6 +129,8 @@ export interface TranslationDictionary {
     businessTitle: string
     businessDesc: string
     businessCta: string
+    /** §2.105/§7.9 — link do card B2B para o /market-pulse, framing de RH/workforce. */
+    businessDataCta: string
     conjunctionOr: string
     historyTitle: string
     historyDesc: string
@@ -570,6 +572,15 @@ export interface TranslationDictionary {
     runNothingNewStrong: string
     runErrorFallback: string
     runConnectionError: string
+    searchNowButton: string
+    searchNowTooltip: string
+    searchNowRemainingBadge: string
+    searchNowSuccessOne: string
+    searchNowSuccessMany: string
+    searchNowNothingNew: string
+    searchNowLimitReached: string
+    searchNowErrorFallback: string
+    searchNowConnectionError: string
     savePrefsErrorFallback: string
     savePrefsConnectionError: string
     feedbackInterestedToast: string

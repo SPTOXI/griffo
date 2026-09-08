@@ -728,6 +728,16 @@ model RadarPreference {
   /// mais usuários do que cabe numa invocação.
   lastRunAt DateTime?
 
+  /// Quantas buscas avulsas (coleta ao vivo, não a diária) este usuário já
+  /// gastou na janela atual. Benefício de quem já destravou uma Análise
+  /// Completa — ver `requireAnyUnlockedResume` em `lib/entitlements.ts` — e
+  /// não uma cota de infraestrutura, por isso vive aqui e não em `quota.ts`.
+  onDemandSearchCount Int @default(0)
+  /// Início da janela rolante de 7 dias usada para zerar o contador acima.
+  /// Rolante a partir do primeiro uso, não semana de calendário — ver
+  /// `lib/radar/on-demand-search.ts`.
+  onDemandSearchWindowStart DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

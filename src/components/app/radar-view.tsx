@@ -71,6 +71,13 @@ interface Preferences {
   maxPerDigest: number
 }
 
+interface OnDemandSearchStatus {
+  eligible: boolean
+  available: number
+  weeklyLimit: number
+  resetAt: string | null
+}
+
 type RadarDict = TranslationDictionary['radar']
 
 const frequencyLabels = (rd: RadarDict): Record<string, string> => ({
@@ -130,6 +137,8 @@ export function RadarView() {
   const [rejecting, setRejecting] = useState<string | null>(null)
 
   const [running, setRunning] = useState(false)
+  const [onDemandSearch, setOnDemandSearch] = useState<OnDemandSearchStatus | null>(null)
+  const [searchingNow, setSearchingNow] = useState(false)
 
   const load = useCallback(async () => {
     const [radarRes, prefsRes] = await Promise.all([
@@ -144,6 +153,7 @@ export function RadarView() {
       setDigest(radar.digest || null)
       setHasProfile(Boolean(radar.hasProfile))
       setProfileMatchable(radar.profileMatchable !== false)
+      setOnDemandSearch(radar.onDemandSearch ?? null)
       setError(null)
     } else {
       setError(radar?.error || rd.loadErrorFallback)
@@ -243,6 +253,42 @@ export function RadarView() {
     }
   }
 
+  /**
+   * Busca ao vivo: coleta agora, não só reavalia o que já estava no banco.
+   *
+   * Diferente de `runNow`, que só reavalia — esta chama `/api/radar/search-now`,
+   * que vai buscar vaga nova de verdade antes de reavaliar. Por isso é limitada
+   * por semana (ver `onDemandSearch`), e `runNow` não é.
+   */
+  const searchNow = async () => {
+    setSearchingNow(true)
+    try {
+      const res = await internalFetch('/api/radar/search-now', { method: 'POST' })
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok) {
+        if (data?.code === 'weekly_limit' && data?.resetAt) {
+          toast.info(rd.searchNowLimitReached.replace('{date}', new Date(data.resetAt).toLocaleDateString(locale)))
+        } else {
+          toast.error(data?.error || rd.searchNowErrorFallback)
+        }
+        return
+      }
+
+      await load()
+
+      if (data?.alerted > 0) {
+        toast.success((data.alerted === 1 ? rd.searchNowSuccessOne : rd.searchNowSuccessMany).replace('{n}', String(data.alerted)))
+      } else {
+        toast.info(rd.searchNowNothingNew)
+      }
+    } catch {
+      toast.error(rd.searchNowConnectionError)
+    } finally {
+      setSearchingNow(false)
+    }
+  }
+
   const savePreferences = async (patch: Partial<Preferences>) => {
     const next = { ...(preferences ?? { frequency: 'daily', minimumFit: 'good', maxPerDigest: 4 }), ...patch } as Preferences
     setPreferences(next)
@@ -333,6 +379,24 @@ export function RadarView() {
                 {running ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1.5" />}
                 {rd.runNowButton}
               </Button>
+              {/* Só aparece pra quem já destravou alguma Análise Completa —
+                  é benefício do pacote, não uma feature aberta a todos. */}
+              {onDemandSearch?.eligible && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={searchNow}
+                  disabled={searchingNow || !hasProfile || onDemandSearch.available === 0}
+                  className="bg-white border-emerald-300 text-emerald-800 hover:bg-emerald-50"
+                  title={rd.searchNowTooltip}
+                >
+                  {searchingNow ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Wand2 className="w-4 h-4 mr-1.5" />}
+                  {rd.searchNowButton}
+                  <span className="ml-1.5 text-[10px] font-normal text-emerald-700/80">
+                    ({rd.searchNowRemainingBadge.replace('{n}', String(onDemandSearch.available)).replace('{total}', String(onDemandSearch.weeklyLimit))})
+                  </span>
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={() => setShowSettings((v) => !v)}>
                 <Sliders className="w-4 h-4 mr-1.5" /> {rd.preferencesButton}
               </Button>

@@ -7,6 +7,7 @@ import { displayCountry } from '@/lib/hiring-index/display'
 import { buildHiringMapModel } from '@/lib/hiring-index/map-model'
 import { HiringMapView } from '@/components/market/hiring-map'
 import { DocumentLanguage } from '@/components/i18n/document-language'
+import { employmentKeywords } from '@/lib/hiring-index/employment-keywords'
 import type { HiringAtlas } from '@/lib/hiring-index/atlas'
 
 /**
@@ -90,6 +91,13 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   return {
     title,
     description,
+    // O `pageTitle`/`metaDescription` falam de "hiring" (a fase do ciclo,
+    // que é o que o índice mede) — certo para o que a página mostra, mas
+    // deixa de fora quem busca no registro institucional que BLS/Eurostat/
+    // ILOSTAT/CEPALSTAT usam ("employment", não "hiring"). `keywords` não
+    // pesa no Google desde 2009, mas o Bing ainda considera (mesmo caso do
+    // `/hiring`, ver o comentário de `job-search-terms.ts`).
+    keywords: employmentKeywords(lang),
     alternates: {
       canonical: CANONICAL,
       languages: Object.fromEntries(
@@ -141,6 +149,13 @@ function datasetJsonLd(atlas: HiringAtlas, lang: Language) {
     ),
     url: CANONICAL,
     inLanguage: localeForLang(lang),
+    // Mesmo raciocínio do `distribution` (§2.85): sem isto, o Dataset Search
+    // do Google só encontra esta página por quem já digitou "hiring" — o
+    // termo que o `pageTitle` usa, certo para o que o índice mede (fase do
+    // ciclo), mas ausente do registro institucional das próprias fontes
+    // (BLS/Eurostat/ILOSTAT/CEPALSTAT falam em "employment"). `keywords` é
+    // propriedade padrão de `Dataset` no schema.org.
+    keywords: employmentKeywords(lang),
     creator: {
       '@type': 'Organization',
       name: 'GriffoWork',
@@ -228,8 +243,18 @@ export default async function MarketPulsePage({ searchParams }: PageProps) {
         ) : (
           /* Consulta falhou. A página diz isso, e NÃO desenha um mapa inteiro
              sem cor — um mapa todo hachurado afirmaria que nenhum país do
-             mundo tem fonte oficial, que é falso. */
-          <p className="text-sm text-slate-700">{dict.hiringIndex.unavailable}</p>
+             mundo tem fonte oficial, que é falso.
+             O <h1> aqui não é cosmético: sem ele, esta era a única rota
+             pública do site sem heading nenhum sempre que `loadHiringAtlas()`
+             falhasse — o Bing sinalizou exatamente essa página como "H1
+             ausente" (achado real, não simulado). O texto repete
+             `dict.hiringMap.heading`, o mesmo que `HiringMapView` usa no
+             caminho feliz, para não afirmar nada que a versão com dado não
+             afirme. */
+          <>
+            <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy mb-3">{dict.hiringMap.heading}</h1>
+            <p className="text-sm text-slate-700">{dict.hiringIndex.unavailable}</p>
+          </>
         )}
       </div>
     </main>

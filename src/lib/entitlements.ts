@@ -234,4 +234,30 @@ export async function requireUnlockedResume(
   }
 }
 
+/**
+ * Guarda da busca avulsa do Radar: não é POR currículo, é "já destravou
+ * algum, alguma vez".
+ *
+ * `requireUnlockedResume` não serve aqui porque o Radar não trabalha em cima
+ * de um currículo específico — trabalha em cima do Perfil Profissional da
+ * pessoa, que pode ter zero, um ou vários currículos analisados.
+ */
+export async function requireAnyUnlockedResume(userId: string): Promise<EntitlementCheck> {
+  const user = await db.user.findUnique({ where: { id: userId }, select: { role: true } })
+  if (user?.role === 'admin') return { ok: true, status: 200 }
+
+  const unlocked = await db.resume.findFirst({
+    where: { userId, unlockedAt: { not: null } },
+    select: { id: true },
+  })
+  if (unlocked) return { ok: true, status: 200 }
+
+  return {
+    ok: false,
+    status: 402,
+    error: 'A busca avulsa faz parte da Análise Completa. Libere a análise de um currículo para desbloquear.',
+    code: 'ANALYSIS_REQUIRED',
+  }
+}
+
 export { PACK_SIZE }

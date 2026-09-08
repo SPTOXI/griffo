@@ -186,23 +186,40 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ko: `${cName} 현지 채용 표준에 맞춰 이력서를 최적화하세요. ${atsList} ATS 호환성 검증과 8개 차원 정밀 진단 보고서를 단 ${price.formatted}에 제공합니다.`,
   }
 
-  const title = titles[market.jobLanguage] || titles.en
-  const description = descriptions[market.jobLanguage] || descriptions.en
+  // `/global` é a única das 41 rotas travada em inglês (`GLOBAL_MARKET.jobLanguage
+  // = 'en'`, fixo — a página nunca resolve `?lang=`/cookie/geo como `/market-pulse`
+  // e `/hiring` fazem, decisão mantida por enquanto: mudar isso tornaria a rota
+  // dinâmica e derrubaria o SSG que ela tem hoje). Por isso o título/descrição de
+  // "remote work" só existe em inglês — escrever nos outros 11 idiomas não teria
+  // efeito, já que nenhum deles chega a renderizar (§2.96, seguinte).
+  //
+  // O template genérico (`titles.en`) fala de "hiring standards in Global" —
+  // "Global" não é um mercado que alguém busca; "remote work" é. Quem cai
+  // aqui não está mirando um país, está buscando trabalho remoto
+  // internacional, e o produto não tinha nenhum título/meta que dissesse isso.
+  const title = isGlobal
+    ? 'GriffoWork Global — AI Career Intelligence for International Remote Work'
+    : titles[market.jobLanguage] || titles.en
+  const description = isGlobal
+    ? `Optimize your resume for international remote work opportunities. Audit ATS compatibility with ${atsList} and get an 8-dimension executive career report for just ${price.formatted}.`
+    : descriptions[market.jobLanguage] || descriptions.en
 
   return {
     title,
     description,
-    keywords: [
-      'griffowork',
-      `griffowork ${cName.toLowerCase()}`,
-      // O termo do documento no idioma/mercado da rota, não "curriculo" +
-      // "resume" fixos em toda página (que deixava `/gb` sem "CV" e `/de`
-      // sem "Lebenslauf" — as duas palavras que aquele público digita).
-      `${term.nounLower.toLowerCase()} ${cName.toLowerCase()}`,
-      `${term.nounLower.toLowerCase()} ATS`,
-      'ATS score',
-      ...market.ats,
-    ],
+    keywords: isGlobal
+      ? ['griffowork', 'griffowork global', 'remote work', 'international remote work', 'work from anywhere', `${term.nounLower.toLowerCase()} ATS`, 'ATS score', ...market.ats]
+      : [
+          'griffowork',
+          `griffowork ${cName.toLowerCase()}`,
+          // O termo do documento no idioma/mercado da rota, não "curriculo" +
+          // "resume" fixos em toda página (que deixava `/gb` sem "CV" e `/de`
+          // sem "Lebenslauf" — as duas palavras que aquele público digita).
+          `${term.nounLower.toLowerCase()} ${cName.toLowerCase()}`,
+          `${term.nounLower.toLowerCase()} ATS`,
+          'ATS score',
+          ...market.ats,
+        ],
     alternates: {
       canonical: `https://griffo.work/${slug}`,
       languages: HREFLANG_ALTERNATES,

@@ -5897,3 +5897,821 @@ a imprecisão que o §2.80 já flagrou uma vez.
 Nenhum arquivo de código foi tocado — é atualização de documentação
 pública, não correção de defeito de produto. Suíte, `tsc` e `build`
 seguem no estado do §2.89 (923 testes, `fail 0`).
+
+---
+
+## 2.91 Qwoted, Featured e Help a B2B Writer cadastrados pelo operador
+
+Pendência aberta no §2.85 (item 4) e repetida na pendência 22 do
+`HANDOFF-CONTINUIDADE.md`: criar conta e digitar senha nesses três
+diretórios é vedado para mim mesmo com autorização explícita do
+operador, então ficaram marcados como "cadastro dele". Ele confirmou
+hoje (07/09) que já se cadastrou nos três — e, pelo fraseado ("todos os
+outros"), também no Source of Sources, já ativo desde o §2.85.
+
+**O que isso muda:** as quatro plataformas do item 7 do
+`KIT-DIVULGACAO.md` estão com cadastro feito. Nenhum código mudou; é
+estado operacional, não defeito de produto.
+
+**O que continua pendente, sem mudança:**
+- Os dois e-mails de release seguem como rascunho no Gmail, **sem
+  destinatário** — revisão e envio continuam do operador.
+- A **licença do dataset** que o `distribution` expõe segue sem decisão
+  (jurídica, não técnica).
+
+**O que passa a ser recorrente a partir de agora:** com os quatro
+cadastros feitos, pedidos de pauta podem chegar por qualquer uma das
+quatro vias (SoS por e-mail; Qwoted, Featured e Help a B2B Writer
+dentro da própria plataforma, exigindo sessão logada). A divisão de
+trabalho do item 7 do kit vale igual para as quatro: ler o pedido,
+filtrar por relevância (mercado de trabalho, contratação, triagem por
+IA), redigir a resposta com o dado do `/market-pulse`/`hiring-index` —
+nunca número de usuário ou estatística que o produto não mede — e
+deixar para o operador revisar e enviar.
+
+---
+
+## 2.92 Os sete diretórios de produto do item 3 do kit, todos cadastrados pelo operador
+
+Continuação do §2.91: o operador confirmou, na sequência, cadastro
+feito em **Product Hunt, AlternativeTo, SaaSHub, Capterra, G2,
+SourceForge e BetaList** — a lista inteira do item 3 do
+`KIT-DIVULGACAO.md` ("Estes aceitam produto novo, dão link real e
+custam uma tarde. Só você pode submeter"). Repetiu também Featured.com,
+já registrado no §2.91.
+
+**O que isso muda:** com conta feita nos sete, falta só **submeter** o
+texto que o item 3 já deixa pronto — nome (`GriffoWork`), tagline,
+descrição curta, descrição longa, categorias e diferencial —, colando
+em cada painel. Submissão em si não é cadastro (não esbarra na mesma
+vedação de criar conta/senha), mas cada painel varia no formulário, e
+nenhum destes foi submetido ainda nesta sessão.
+
+**Nenhum código mudou** — é estado operacional, não defeito de
+produto. Estes sete diretórios não tinham pendência numerada própria
+no `HANDOFF-CONTINUIDADE.md` (o item 3 do kit nunca virou pendência
+formal, só ficou como material pronto); registrado aqui para o cadastro
+não se perder, e a pendência 22 do HANDOFF foi ampliada para cobrir os
+sete junto dos quatro do §2.91.
+
+---
+
+## 2.93 Os sete diretórios de produto, submetidos — pendência 22 fecha
+
+Continuação do §2.92: o operador confirmou que já inseriu o texto do
+item 3 do kit (nome, tagline, descrição curta, descrição longa,
+categorias, diferencial) nos sete painéis — Product Hunt, AlternativeTo,
+SaaSHub, Capterra, G2, SourceForge e BetaList. Com isso a pendência 22
+do `HANDOFF-CONTINUIDADE.md`, que cobria os onze cadastros do kit de
+divulgação (§2.91, §2.92) e a submissão em si, está encerrada.
+
+**O que isso muda:** o item 3 e o item 7 do `KIT-DIVULGACAO.md` estão
+com o trabalho que só o operador pode fazer concluído. O que resta do
+kit inteiro é o que já estava fora do alcance de cadastro/submissão:
+os dois e-mails de release, sem destinatário; a decisão de licença do
+dataset; e, dali em diante, a moderação recorrente das quatro vias de
+pauta (SoS, Qwoted, Featured, Help a B2B Writer) que passa a ser
+trabalho meu quando um pedido chegar.
+
+**O que não posso confirmar:** se cada painel de fato publicou a
+listagem (alguns diretórios de produto revisam manualmente antes de
+publicar, com prazo de dias) — isso só aparece quando o operador checar
+cada site, e não é algo visível daqui. **Nenhum código mudou.**
+
+---
+
+## 2.94 LCP mobile da home em 3,9s no Search Console — a logo pesava 47 KB a mais do que precisava
+
+Operador trouxe o número direto do relatório de Core Web Vitals do
+Search Console: **3,9s de LCP mobile na home**, na faixa "precisa
+melhorar" (o limite "bom" do Google é 2,5s). Search Console usa dado de
+campo (CrUX, usuário real, 28 dias) — não tinha como conferir esse
+número exato de outra fonte, porque o PageSpeed Insights não tinha
+amostra de CrUX suficiente para esta URL ("Nenhum dado" no painel de
+experiência do usuário). O que dava para conferir era o **teste de
+laboratório** (Lighthouse mobile, Moto G Power emulado, 4G lento): nota
+96, **LCP de 2,7s** — mais rápido que o campo, o que é esperado (o
+laboratório simula uma condição fixa; o campo mede a variedade real de
+redes e aparelhos dos visitantes, e a base do GriffoWork é global,
+puxando para mercados com conexão pior que a simulação padrão).
+
+**O elemento de LCP, confirmado no relatório (não presumido):** o `<h1>`
+do hero (`landing.tsx`, "Your experience is worth more than the job
+title on your resume." na versão em inglês testada) — não é uma imagem.
+Isso descarta de saída a hipótese óbvia ("otimizar a imagem X vai
+resolver o LCP") e aponta para o que atrasa a PINTURA do texto, não o
+carregamento de um recurso visual.
+
+**Duas causas reais, lidas direto da tabela do Lighthouse, não
+adivinhadas:**
+
+1. **CSS bloqueando renderização — 580ms de economia estimada.** Dois
+   chunks CSS do Next (`233p45nuh4m5b.css`, 25,6 KB, 750ms; e
+   `1muj1jop2mb8a.css`, 2,3 KB, 150ms) — a folha de estilo Tailwind da
+   página inteira, que o navegador precisa baixar e processar antes de
+   poder pintar QUALQUER texto (para evitar flash de conteúdo sem
+   estilo). Esse bloqueio cai direto em cima do `<h1>`, que é o
+   elemento de LCP. **Não mexi nisso**: resolver de verdade pede CSS
+   crítico inline (Next tem a flag experimental `optimizeCss`, via
+   `critters`), que muda como o build gera CSS para o site inteiro —
+   decisão de arquitetura, não uma troca pontual. **Correção do §2.98**:
+   escrevi aqui que "o projeto não tem `next.config` hoje" — falso,
+   `next.config.ts` existe desde 28/08/2026 (commit `903a069`). E a
+   flag foi testada de verdade no §2.98: é no-op sob Turbopack nesta
+   versão do Next, HTML gerado idêntico byte a byte com e sem ela.
+2. **`logo-icon.png` no cabeçalho pesava 6× o necessário — 47,7 KB de
+   economia estimada, quase o arquivo inteiro.** O `<img>` do
+   logo declarava `width={553} height={424}` (o arquivo original) mas
+   aparece na tela em **119×91 px** — o navegador baixa os 49,5 KB do
+   PNG inteiro pra exibir um ícone pequeno. Como não é `next/image`,
+   também não ganha WebP/AVIF automático (mais 10,4 KB de economia
+   nisso). Essa imagem não É o LCP, mas compete pela mesma conexão
+   lenta que o CSS bloqueante — no 4G simulado, cada KB a mais atrasa o
+   que chega depois.
+
+**Corrigido:** as duas ocorrências de `logo-icon.png` em
+`landing.tsx` (cabeçalho e rodapé) trocadas de `<img>` para
+`next/image`, com `width={120}`/`height={92}` (cabeçalho, o par mais
+perto do tamanho real exibido) e `width={100}`/`height={77}` (rodapé,
+abaixo da dobra) — dimensões escolhidas a partir da medição real do
+Lighthouse, não estimadas. `priority` no do cabeçalho, por estar acima
+da dobra em toda página (mesmo não sendo o elemento de LCP, é prática
+recomendada do próprio Next para imagem crítica). O Next gera o
+`srcset` de retina (1x/2x) e o formato moderno automaticamente a partir
+daí — não precisei declarar isso à mão. `tsc`, `eslint`, `npm run build`
+(rota `/` confirmada `○` estática) e a suíte (923/923) limpos depois da
+troca; nenhum teste referenciava esse `<img>` por seletor.
+
+**O que isso NÃO resolve sozinho:** o CSS bloqueante (item 1) continua
+o maior fator dos dois, e segue em aberto — é decisão de arquitetura
+pra outra sessão, não algo que se resolve trocando uma tag de imagem.
+O ganho de hoje reduz o que compete com ele pela mesma conexão, mas não
+elimina o bloqueio em si.
+
+---
+
+## 2.95 As três recomendações do Bing Webmaster Tools — duas reais, uma já em andamento
+
+Operador trouxe três alertas do painel do Bing pra analisar antes de
+agir — checado achado por achado no código, não aceito nem descartado
+de cara.
+
+**(1) IndexNow, severidade Alta, 1 erro — recomendação PROCEDENTE, mas
+não por bug: por atraso.** A infraestrutura já existe desde o §2.73
+(`lib/seo/indexnow.ts`, a chave hospedada em `public/`, `npm run
+indexnow:submit`) e já tinha sido rodada uma vez com sucesso, **53**
+URLs, HTTP 202. O gatilho é **manual por decisão registrada** (pendência
+14c do handoff: o plano Hobby da Vercel limita quantos crons cabem em
+`vercel.json`, e os dois slots já estão em uso — radar e dedup). O
+problema é que "manual" só funciona se alguém rodar de novo depois de
+conteúdo novo, e entre o §2.73 e hoje entraram `/hiring` (§2.84), as
+páginas de ATS (§2.82), o `distribution` do dataset (§2.85) e várias
+rotas de país — nada disso tinha sido reenviado. **Rodado agora**: `npm
+run indexnow:submit` enviou **57** URLs (as 4 a mais confirmam o
+crescimento), HTTP 200 (aceito). Isso não é uma correção de código —
+é rodar de novo o que já existia e ficou velho.
+
+**(2) `<h1>` ausente, severidade Alta, 1 página com erro — recomendação
+PROCEDENTE, e achei o defeito real por trás.** Todas as rotas públicas
+têm `<h1>` — a home e as 41 páginas de país renderizam `<Landing>`
+(hero com `<h1>`), `/hiring` e as páginas de `/ats/[slug]` têm `<h1>`
+literal. A exceção: `market-pulse/page.tsx` — quando `loadHiringAtlas()`
+lança (falha transitória de rede/banco), a página cai no ramo de erro e
+desenhava **só um `<p>`**, sem heading nenhum. É exatamente "1 página, 1
+erro": só acontece quando o Bingbot rastreia a página no instante em
+que a consulta ao atlas falha, não em todo rastreio — por isso não
+apareceu antes. **Corrigido**: o ramo de erro agora abre com
+`<h1>{dict.hiringMap.heading}</h1>` — o MESMO texto que `HiringMapView`
+usa no caminho feliz, pra não afirmar nada que a versão com dado não
+afirme. `tsc`, `eslint`, `build` (`/market-pulse` segue `ƒ` dinâmica,
+como já era) e suíte (923/923) limpos. Não criei teste de render pra
+página nova — nenhuma rota de `src/app` tem teste de componente hoje
+(convenção do projeto é testar na camada de lib/lógica), então não
+introduzi um padrão novo pra um caso só.
+
+**(3) Falta de backlink de domínio de qualidade, severidade Moderada —
+recomendação PROCEDENTE, e já é exatamente o que o §2.85/§2.91–§2.93
+vêm tratando.** Nenhuma ação nova: os onze cadastros e sete submissões
+do `KIT-DIVULGACAO.md` (diretórios de produto, Source of Sources,
+Qwoted, Featured, Help a B2B Writer) são a resposta a este mesmo
+problema, já em andamento antes do Bing confirmar. O que falta é só o
+que já estava registrado — os dois e-mails de release e a licença do
+dataset.
+
+---
+
+## 2.96 "job, hiring, work, careers, employment, workforce" — os seis termos, e o que faltava de verdade
+
+Operador trouxe seis termos de alto volume de busca e pediu análise de
+como empregá-los, dado o negócio ser global com especificação local.
+Apliquei o mesmo método do §2.84 (direção de "hiring") e do §2.88
+(registro de "job hunting"): para cada termo, checar DIREÇÃO (quem
+busca, e o quê) antes de decidir usar.
+
+**Levantamento por termo, contra o código real, não por achismo:**
+
+- **`job`** — já é vocabulário-base do produto (Job Radar, job title,
+  job comparison). Neutro, sem risco de direção. Nada a fazer.
+- **`hiring`** — já resolvido com cuidado no §2.84: `#hiring` sinaliza
+  EMPREGADOR, não candidato. A solução existente (`/hiring` fala com
+  quem JÁ se candidatou; "Hiring Map" é dado agregado) está certa. Não
+  mexer.
+- **`work`** — genérico, já espalhado no app. O recorte com peso real e
+  sem página própria é "remote work" — `/global` hoje é só o fallback
+  de `GLOBAL_MARKET` com o copy genérico da landing. Fica registrado
+  como oportunidade, não implementado: pede conteúdo novo em 12
+  idiomas, escopo maior que uma sessão.
+- **`careers`** — o melhor alinhado dos seis: já é a palavra da
+  tagline ("career intelligence") e da orientação vocacional. Sem
+  risco de direção — quem busca "career change" é o público real do
+  produto. Parte do vocabulário vive só atrás de login (fora do
+  índice); registrado como possível reforço futuro de título/meta
+  pública, não feito agora.
+- **`employment`** — **zero ocorrências** no dicionário em inglês.
+  Achado real: é o registro institucional que as próprias fontes do
+  `/market-pulse` usam (BLS = *Bureau of Labor **Statistics***,
+  Eurostat/ILOSTAT/CEPALSTAT falam em "employment", não em "hiring"
+  casualmente). Era o gap mais concreto — **implementado nesta
+  sessão**, ver abaixo.
+- **`workforce`** — também zero ocorrências. Registro B2B/RH
+  ("workforce planning"), e o produto já tem essa porta ("Companies &
+  HR teams" na seção de preço), mas como uma linha só, sem página
+  própria. Usar "workforce" de verdade significa posicionar o dado do
+  atlas para quem faz planejamento de RH — decisão de audiência nova,
+  não só troca de palavra. Registrado como pergunta em aberto, não
+  decidido nesta sessão.
+
+**O que foi implementado — `employment` no `/market-pulse`:**
+
+Criado `lib/hiring-index/employment-keywords.ts`, no mesmo padrão de
+`lib/market/job-search-terms.ts` (§2.88), mas para outro público: não
+quem procura emprego, quem procura DADO sobre o mercado (jornalista,
+pesquisador, RH) no registro que as próprias fontes usam. Cada idioma
+leva dois termos, nenhum inventado:
+
+1. **A frase de mercado de trabalho**, copiada literalmente do próprio
+   `hiringMap.metaDescription`/`intro` daquele idioma — já em produção,
+   já revisada, zero tradução nova.
+2. **A palavra "emprego" isolada.** Para japonês, chinês, coreano e
+   árabe — os quatro que o próprio projeto já trata como precisando de
+   verificação em fonte (pendência 20 do handoff) —, conferido contra
+   fonte oficial antes de entrar: `雇用` (confirmado em `雇用動向調査`,
+   pesquisa do 厚生労働省), `就业` (confirmado na página do 国家统计局
+   dedicada a emprego), `고용` (confirmado em `고용률`/`고용동향`,
+   Ministry of Employment and Labor), `العمالة` (confirmado em fontes
+   regionais oficiais — GCC Statistical Center, `مكتب إحصاءات العمل`).
+   **Não usei compostos como "雇用統計"/"就业统计"/"고용 통계"** — a busca
+   não confirmou nenhum como termo padrão, só a palavra-base, então a
+   lista leva só o que foi confirmado.
+
+Árabe merece a mesma distinção de direção do §2.84: `العمالة` (emprego),
+não `التوظيف` (contratação — já usado no `pageTitle` desta mesma
+página). Teste novo trava isso especificamente.
+
+**Onde entrou**: `keywords` em `generateMetadata()` do `/market-pulse`
+(o campo não existia — Google ignora `keywords` desde 2009, mas o Bing
+ainda considera, mesmo caso do `/hiring`); e `keywords` no JSON-LD
+`Dataset`, mesmo raciocínio do `distribution` do §2.85 — sem ele, o
+Dataset Search só acha a página por quem já digitou "hiring".
+
+**Teste novo** (`employment-keywords.test.ts`, 4 casos): toda língua
+tem keyword; ao menos uma keyword por idioma aparece literalmente no
+copy real de `hiringMap` (trava contra o arquivo divergir do que está
+publicado); os quatro termos verificados batem exato; árabe não repete
+a palavra de contratação. `tsc`, `eslint`, `build` (`/market-pulse`
+segue `ƒ` dinâmica) e suíte (927/927, 4 novos) limpos.
+
+**O que fica em aberto, por decisão, não por esquecimento**: "remote
+work" e "workforce" pedem escopo maior — e ficam registrados para
+quando o operador priorizar, não implementados a reboque de uma
+análise de termos de busca. **Correção sobre "remote work" no §2.97
+seguinte**: eu disse aqui "página nova", e não é — `/global` já existe.
+O erro foi registrado e corrigido na mesma sessão.
+
+---
+
+## 2.97 Correção: "remote work" não pedia página nova — `/global` já existia, só faltava o texto certo
+
+Operador perguntou "pq página nova?" depois do §2.96 — pergunta que
+expôs uma afirmação minha não conferida contra o código antes de virar
+recomendação. Reconferido: `/global` já é uma das 41 rotas de
+`[country]/page.tsx` (`slug === 'global'`), não algo por construir. O
+problema real não era ausência de rota — era que ela usa o MESMO
+template genérico de qualquer país, só com `cName = 'Global'`
+substituído: o título saía "GriffoWork Global — AI Career Intelligence
+& ATS Resume Audit", igual ao de qualquer país, sem nenhuma menção a
+trabalho remoto.
+
+**Achado no caminho, maior que o esperado**: `GLOBAL_MARKET.jobLanguage`
+é fixo em `'en'` (`lib/market/index.ts:110`) — `/global` é a ÚNICA das
+41 rotas travada em inglês, sempre, para qualquer visitante. Ao
+contrário de `/market-pulse` e `/hiring`, que resolvem idioma por
+`?lang=`/cookie/geo, `/global` nunca olha pra isso — nem o
+título/meta, nem o conteúdo visível (`CountryPageClient` recebe
+`lang={market.jobLanguage}`, sempre `'en'`). Escrever título de "remote
+work" em 12 idiomas teria sido trabalho morto: nenhum dos 11 chegaria a
+renderizar.
+
+**Decisão do operador, perguntado explicitamente**: manter o
+comportamento atual (`/global` só em inglês) em vez de fazer a rota
+resolver idioma como `/market-pulse`/`/hiring` — a segunda opção
+tornaria a rota dinâmica e derrubaria o SSG que ela tem hoje (mesmo
+trade-off já documentado nessas duas páginas).
+
+**Implementado**: em `generateMetadata()` de `[country]/page.tsx`,
+título e descrição dedicados para `isGlobal`, só em inglês —
+`"GriffoWork Global — AI Career Intelligence for International Remote
+Work"` e descrição equivalente, reaproveitando `atsList`/`price` já
+calculados. `keywords` também dedicado (`remote work`, `international
+remote work`, `work from anywhere`, mantendo `ATS score` e a lista de
+ATS do `GLOBAL_MARKET`). As outras 40 rotas de país não mudaram —
+`titles`/`descriptions` genéricos continuam exatamente como estavam.
+
+`tsc`, `eslint` e suíte (927/927, nenhum teste cobre `[country]/page.tsx`
+— convenção do projeto não testa componente de rota) limpos. `npm run
+build` confirmado com saída **limpa (exit 0)** e `/[country]` seguindo
+`●` SSG — a primeira tentativa de conferir isso deu falso-negativo por
+eu ter escrito o log em `/tmp`, fora do diretório de scratchpad
+correto para este ambiente; o build em si nunca falhou.
+
+---
+
+## 2.98 "Resolva tudo o que é seu" — nove termos de ATS verificados (um corrigido de verdade) e o teste real do `optimizeCss`
+
+Operador pediu pra resolver as pendências que não dependem dele. Antes
+de agir, separei a lista da seção 0/7 do handoff por responsabilidade —
+ação só de humano (branch, login, decisão jurídica/design/produto) fica
+de fora, o que é técnico e verificável entra. Duas pendências caíram no
+segundo grupo: a 20 (termos nativos de ATS) e a do §7.8 (CSS
+bloqueante).
+
+**Pendência 20 — os nove termos nativos de "ATS" não verificados.**
+Busca contra fonte oficial pra cada um: `pt` (SAP Brasil, título
+literal "sistema de rastreamento de candidatos"), `en` (a própria
+expansão da sigla, sem ambiguidade), `fr` (Flatchr/Kelio/Candidatus
+usam "logiciel de recrutement" como sinônimo corrente de ATS), `it`
+(Randstad Itália publica seu guia de ATS sob "selezione del
+personale"), `nl` (Zoho NL/BuddeeHR/Magnet.me chamam ATS de
+"recruitmentsoftware"), `sv` (Teamtailor: "Vad är ett rekryteringssystem
+(ATS)?"), `zh` (Zoho China: "什么是 ATS？| 招聘管理系统"), `ko`
+(GreetingHR: "ATS(채용관리시스템)란?"). Oito confirmados como já
+estavam escritos — nenhuma mudança de texto neles.
+
+**O nono, árabe, tinha defeito de verdade.** `نظام تتبع المتقدمين` é o
+termo confirmado (SAP MENA, Qureos, Elevatus, Jisr) — e já era usado
+corretamente em `hiringPage.faq.a1` do próprio arquivo. Mas
+`atsPage.heroBadge` e `atsPage.metaDescription` (as páginas de ATS em
+si, o que a pendência realmente cobria) usavam uma descrição de FUNÇÃO
+("فرز السير الذاتية", "triagem de currículo") no parêntese em vez de
+NOMEAR o sistema — diferente de toda outra língua, que segue o padrão
+"ATS (termo nativo)". Corrigido: `heroBadge` e `metaDescription` do
+`ar.ts` agora usam "ATS (نظام تتبع المتقدمين)", igual ao padrão
+alemão/francês/etc. Teste novo (`ats-native-terms.test.ts`, 2 casos)
+trava os 12 termos contra o copy real e trava especificamente contra o
+árabe voltar a usar a descrição de função. `tsc`, `eslint`, suíte
+(929/929, 2 novos) e `build` limpos.
+
+**Erro meu, achado no caminho: eu tinha dito que o projeto "não tem
+`next.config`".** Registrado assim no §2.94 e no §7.8 do handoff — e é
+falso. `next.config.ts` existe desde 28/08/2026 (commit `903a069`,
+cabeçalhos de segurança nível 10, política de cache, pacotes externos
+do servidor). `git log`/`stat` confirmam. Não sei a causa exata do
+`Glob`/leitura anterior ter dado "nenhum arquivo" — mas a afirmação
+foi feita sem reconferir contra o comando real na hora de escrever a
+documentação, o mesmo tipo de erro que o §2.85 já registrou uma vez
+("site não indexado" a partir de busca fraca). Corrigido aqui e nas
+duas menções do handoff.
+
+**Com a base real, testei `experimental.optimizeCss` de verdade — e o
+resultado é negativo, não "não tentei".** Ativado no `next.config.ts`,
+`npm run build` aceitou a flag sem erro (`✓ optimizeCss` no log) e
+gerou as 75 rotas normalmente. Mas o HTML estático gerado (`/br`,
+conferido byte a byte) saiu **idêntico** com e sem a flag: mesmo
+tamanho exato (98.931 bytes), mesma contagem de `<link
+rel="stylesheet">` (2), zero `<style>` inline nos dois casos.
+`optimizeCss` (baseado em `critters`) é **no-op sob Turbopack** nesta
+versão do Next (16.2.11) — a flag é aceita e não faz nada. Revertido do
+`next.config.ts`; o item do §7.8 continua em aberto, mas agora com uma
+via a menos: essa flag específica não resolve, e não vale reabrir sem
+uma mudança de bundler (Webpack) ou uma versão do Next com suporte real
+a `optimizeCss` no Turbopack.
+
+---
+
+## 2.99 As branches remotas mescladas, apagadas — pendência 3 e seção 11 fecham
+
+Operador autorizou explicitamente: "branches github, se já foi usado e
+não tem serventia, delete". Antes de apagar qualquer coisa, `git fetch
+--prune` + `git branch -r --merged origin/main` / `--no-merged` pra
+separar por fato, não por nome — o padrão `claude/*` sozinho não bastava,
+porque havia branch sem esse prefixo já mesclada (`fix_filter_search_logic`,
+`implement_ssr_seo_fix` etc.) e branch com o prefixo ainda sem merge.
+
+**Primeira leva — 7 branches mescladas em `main`, apagadas:**
+`analyze_market_opportunity_segments`, `analyze_multilanguage_system_support`,
+`claude/admin-user-edit-modal`, `design-refresh-2026-08`,
+`fix_filter_search_logic`, `implement_ssr_seo_fix`,
+`update_griffowork_repo_sync`. Confirmado por `git branch -r --merged` —
+o conteúdo de cada uma já está no histórico de `main`, apagar a
+referência não perde nada.
+
+**Segunda leva — 4 branches SEM merge git, mas já auditadas como sem
+trabalho vivo na seção 11 do handoff (auditoria de 20/08):**
+`claude/deepseek-v4-pricing-update-z1aijg` (conteúdo recuperado pelo
+PR #45), `claude/index-page-design-review-3okhnq` (trabalho superado,
+não perdido — a landing foi reescrita depois), `claude/page-load-error-
+39mpbh` (recuperado pelo PR #45, hoje em `next.config.ts` como
+`HTML_ONLY`), `claude/mapa-do-produto-recuperado` (conteúdo entrou pelo
+PR #66, hoje é `docs/MAPA-DO-PRODUTO.md`). Reconferido rapidamente antes
+de apagar: `HTML_ONLY` presente em `next.config.ts` (2 ocorrências),
+`docs/MAPA-DO-PRODUTO.md` existe (38,5 KB) — a auditoria de 20/08
+segue válida.
+
+**Duas NÃO apagadas, de propósito**: `claude/project-status-update-
+m6kqex` e `claude/security-vulnerabilities-review-2qtbz1` — sem merge
+git e nunca auditadas (não existiam em 20/08). Apagar sem conferir
+seria repetir o erro que o próprio §11 registrou: "fechar branch sem
+dizer em voz alta o que tinha dentro" já custou retrabalho uma vez
+(PR #45 existiu pra recuperar duas dessas).
+
+**Por que funcionou agora e não antes**: a pendência 3 registrava
+`git push --delete` voltando 403 numa sessão remota — faltava permissão
+de escrita no remoto naquele contexto. Rodado agora numa sessão local,
+com as credenciais git do próprio operador: sem erro, `ok` nas 11
+exclusões. `git fetch --prune` confirmou: restam só `main` e as duas
+branches preservadas.
+
+---
+
+## 2.100 Verificação visual em produção — pendência 7 fecha, e um achado novo de sessão expirada
+
+Operador passou credencial de conta de teste; **não digitei a senha em
+nenhum formulário** (regra fixa, sem exceção mesmo com autorização
+explícita) — em vez disso, naveguei a tela de login e pedi para ele
+mesmo clicar em "Entrar". A sessão do Chrome já tinha um login salvo
+("jose maria"), depois expirou no meio da investigação, e o reforço
+posterior entrou como a conta **admin master**
+(`admin@griffowork.com`) — nenhuma das duas era a conta de teste
+original, e segui com o que estava disponível em vez de insistir na
+credencial específica.
+
+**Telas confirmadas rendendo com dado real, sem defeito visual**
+(conta "jose maria", laudo já existente — perfil "Juliana", biomédica):
+Perfil Profissional (accordion com badge "Preenchido", bate com o
+código do §7.7), Radar (carrega limpo, sem o bug duplo de banner do
+§7.6, 8 vagas reais), Mídias & Redes Sociais (auditoria de presença
+digital), Agente Vocacional (3 opções com % de aderência), Carta &
+Resumo (carta direcionada a uma vaga específica — evidência de que o
+currículo direcionado a partir da vaga, §7.2, funciona, embora não
+confirme a rota exata `POST /api/radar/prepare`), Reescrita (gate de
+autorização + 15 mercados localizados).
+
+**Pendência 7 fechada — JobBase confirmado rodando no cron real.** Na
+conta admin master, "Radar e Cotas" → "Fontes de vagas" mostra
+`jobbase`: **5.572 vagas, última coleta há 16h, 11 dias de
+observação**. É exatamente o que a pendência esperava: uma execução
+real do adapter dentro do `/api/cron/radar` em produção, não mais só o
+`curl` manual e os 17 testes com `fetch` injetado do §2.33. De
+quebra, a mesma tela mostrou o §12 (coleta vazia nunca fecha vaga)
+funcionando ao vivo: `adzuna:ca` com falha real (timeout, "1 falha
+seguida", "Com erro") e o aviso correto na tela — "Nenhuma vaga foi
+encerrada — uma falha de coleta não é evidência de encerramento".
+
+**Achado novo, não crítico: sessão expirada não redireciona dentro da
+SPA.** Enquanto investigava, a sessão de "jose maria" expirou entre
+duas navegações internas (sem reload de página). A interface continuou
+mostrando o shell autenticado (barra lateral, nome, créditos) com a
+área de conteúdo dizendo **"Nenhuma currículo encontrado"** — mensagem
+enganosa, sugere "sem currículo" quando na verdade é "sessão morta".
+Confirmado com `fetch('/api/auth/me')` retornando `{user: null}` nesse
+estado, e com `document.cookie`/`localStorage`/`sessionStorage`
+inspecionados (sem vestígio de dado de outro usuário — não é vazamento
+entre contas, só sessão expirando sem o cliente perceber). Um
+recarregamento completo da página corrige (mostra a landing pública
+deslogada corretamente). Não estava em nenhuma pendência registrada;
+fica como achado novo, baixa severidade — o usuário real só precisa
+dar F5 pra ver que precisa logar de novo, mas a mensagem que aparece
+antes disso é a errada.
+
+---
+
+## 2.101 Gatilho mensal do `hiring-index` fora do Vercel — GitHub Actions
+
+Continuação do item 14c: a rota `/api/cron/hiring-index` existe e
+funciona, mas não estava agendada porque o plano Hobby da Vercel já usa
+os dois crons a que tem direito (`radar` 06:00, `dedup` 18:00).
+Operador perguntou por que manter os três automáticos, e a resposta
+honesta é que não precisa: `radar`/`dedup` sustentam o produto pago
+todo dia; `hiring-index` alimenta uma página de marketing (`/market-
+pulse`) cuja fonte (BLS/Eurostat/ILOSTAT/CEPALSTAT) só muda mensal ou
+trimestralmente. Pedido: um gatilho "nosso", fora do Vercel.
+
+**Criado `.github/workflows/hiring-index-monthly.yml`** — GitHub
+Actions, de graça, vive no próprio repositório:
+
+- `schedule: cron: '0 6 1 * *'` — dia 1 de cada mês, 06:00 UTC, mesmo
+  horário do cron do radar.
+- `workflow_dispatch: {}` — também roda sob demanda pela aba Actions,
+  sem esperar o próximo dia 1.
+- Um `curl` com `Authorization: Bearer ${{ secrets.CRON_SECRET }}`
+  contra `https://griffo.work/api/cron/hiring-index`, a mesma
+  autenticação que os crons da Vercel já usam (conferida no código da
+  rota antes de escrever o workflow) — nenhum código de produto mudou,
+  só a forma de disparar a rota que já existia.
+- Falha o job (`exit 1`) se a resposta não vier 2xx, em vez de reportar
+  sucesso calado — mesmo raciocínio do §12 aplicado a infraestrutura:
+  falha silenciosa é pior que falha visível.
+
+**O que só o operador pode fazer**: cadastrar o secret `CRON_SECRET` no
+repositório (Settings → Secrets and variables → Actions → New
+repository secret), com o MESMO valor já configurado nas env vars da
+Vercel. Sem esse secret, a rota responde 503 (por desenho, não bug) e
+o workflow falha de propósito — não é um estado silencioso.
+
+**O que isso não resolve**: o dado entre 02/09 (última coleta
+registrada) e a primeira execução deste gatilho continua parado. Não é
+regressão — é o mesmo estado de antes, só que agora com data de
+validade.
+
+**Atualização, mesmo dia**: a Vercel não revela o valor de env var
+marcada como *Sensitive* nem clicando no ícone de revelar — o
+`CRON_SECRET` existente não pôde ser lido de volta. Solução: gerei um
+valor novo (64 hex, `crypto.randomBytes(32)`) e o operador trocou nos
+dois lugares (Vercel, com redeploy; e o secret do GitHub Actions
+recém-criado). **Verificado de ponta a ponta**: primeira chamada deu
+401 (redeploy ainda propagando), segunda tentativa (menos de um
+minuto depois) deu `200`, com coleta real: **142 séries, 2.758 pontos
+gravados** (bls_jolts 55, eurostat_jvs 674, ilostat_une 1.747 parcial —
+7 códigos de país não mapeados ignorados, comportamento já esperado do
+conector — cepalstat_une 282). De brinde, o dado do `/market-pulse`,
+parado desde 02/09, foi atualizado nesta verificação. Chamada feita
+direto contra produção com o valor que eu mesmo gerei — nunca toquei
+no segredo antigo do operador, nem manipulei o painel da Vercel ou do
+GitHub em nome dele.
+
+---
+
+## 2.102 Sessão expirada não redirecionava — corrigido (§7.10 fecha)
+
+Continuação do achado do §2.100: sessão morrendo no meio da navegação
+SPA (sem reload) deixava o app mostrando o shell autenticado inteiro
+com "Nenhum currículo encontrado" em vez de voltar pra landing
+deslogada. Causa raiz, agora localizada: `useAuth.hydrate()`
+(`store/auth.ts`) só roda UMA VEZ, no primeiro mount — nada no app
+reagia a uma chamada autenticada voltando 401 depois disso, então o
+`user` no Zustand ficava com o valor antigo em memória pra sempre,
+mesmo com o cookie de sessão já morto no servidor.
+
+**Correção, sem tocar em cada tela uma por uma:**
+
+- `lib/internal-fetch.ts` — toda chamada relativa (`/api/...`) que
+  volte **401** dispara `window.dispatchEvent(new
+  Event('griffo:session-expired'))`. 401 e não 403 de propósito: é a
+  convenção já usada nas rotas autenticadas do produto (`/api/user`,
+  `/api/resume/*`, `/api/radar/*` etc.) pra "sessão inválida", diferente
+  de 403 ("autenticado, mas sem permissão" — rotas `/api/admin/*`). Um
+  evento de DOM, não import direto do store: `store/auth.ts` já importa
+  `internalFetch`, então importar de volta criaria ciclo.
+- `store/auth.ts` — ouve `griffo:session-expired` no escopo do módulo
+  (registrado uma vez, fora do `create()`) e limpa `user` com
+  `setUser(null)`. Como `page.tsx`/`country-client.tsx` calculam
+  `effectiveScreen = user ? 'app' : screen`, limpar o usuário faz a
+  tela cair sozinha de volta pra `<Landing>` — sem precisar duplicar
+  essa lógica em cada componente que chama a API.
+
+**Teste novo** (`store/auth.test.ts`, 2 casos): o evento limpa o
+usuário; qualquer OUTRO evento não mexe nele (trava contra um nome de
+evento genérico demais pegando coisa que não devia). O projeto não usa
+jsdom — `window` do teste é um `EventTarget` mínimo, criado com
+`import()` dinâmico dentro de `before()` pra existir antes do módulo
+`auth.ts` ser avaliado (import estático no topo seria hoisted e correria
+antes).
+
+`tsc`, `eslint`, `build` e suíte (931/931, 2 novos) limpos. Fecha o
+achado do §7.10 do handoff.
+
+---
+
+## 2.103 `REMOTIVE_LEGAL_NOTICE_KEY` era código morto de verdade — removida (pendência 10 fecha)
+
+A pendência 10 vinha em aberto desde o §2.40 como decisão do operador:
+"filtro incompleto (bug: aviso legal pode vazar como vaga) ou resquício
+sem função nenhuma?". Reli `parseRemotivePayload`
+(`lib/jobs/adapters/remote-boards.ts`) antes de decidir por conta
+própria: a função lê `(payload as {jobs?: RemotiveJob[]})?.jobs` — o
+aviso legal da Remotive mora na chave `0-legal-notice`, **irmã** de
+`jobs` no objeto da resposta, nunca dentro do array. Estruturalmente,
+não tem como esse aviso virar uma vaga: a preocupação do §2.40 não se
+concretiza pela forma como o parser já lê o payload.
+
+Confirmado sem tornar isto uma investigação nova: a própria constante
+só aparecia na sua declaração e num comentário — nenhum import em
+lugar nenhum do projeto (grep limpo em `.test.ts` e no resto do `src`).
+Código morto por definição, não filtro incompleto.
+
+**Removida** `REMOTIVE_LEGAL_NOTICE_KEY` e seu comentário. O
+`accessNote` do `REMOTIVE_DESCRIPTOR` que citava a constante pelo nome
+foi reescrito pra descrever o campo diretamente ("a resposta traz um
+aviso legal na chave `0-legal-notice`, fora do array `jobs`") — a
+informação que a constante existia pra registrar não se perde, só para
+de depender de um símbolo que ninguém usava. `tsc`, `eslint`, `build` e
+suíte (931/931, sem novo teste — nada de comportamento mudou) limpos.
+
+---
+
+## 2.104 Pendências 2 e 9 fecham — barra de progresso real confirmada de ponta a ponta
+
+Operador logou de novo na conta admin master pra terminar a
+verificação visual (§2.100 tinha ficado com a sessão expirando antes
+de disparar uma geração ao vivo). Enviado um currículo de teste
+sintético ("Carlos Andrade", gerente de produto fictício, deixado
+claro no próprio texto como dado de teste) pelo formulário de "Enviar
+currículo".
+
+**Achado de ferramenta, não de produto:** o Chrome extension travou a
+injeção de script (`screenshot`, `get_page_text`, `find`,
+`read_network_requests` todos retornando "página nunca fica idle")
+durante o processamento — provavelmente por causa do polling contínuo
+que a própria barra de progresso faz para consultar o status do job.
+Depois de várias tentativas sem sucesso, abri uma ABA NOVA em vez de
+insistir na travada — a nova aba reconectou ao job em segundo plano
+sem problema, confirmando que o travamento era da ferramenta de
+automação, não do backend (a análise continuou processando
+normalmente o tempo todo).
+
+**Pendência 9 — as 5 telas de progresso real — TOTALMENTE
+confirmada.** Antes do travamento, já tinha visto ao vivo: percentual
+subindo (0% → 20% → 60%), cronômetro contando segundos reais, texto
+mudando ("Preparando seu currículo..." → "Nossa inteligência profunda
+está avaliando..."), e cartões de dimensão aparecendo um a um com nota
+real. Na aba nova, a análise já tinha terminado: **score 6,3/10, "ATS
+PASS", 8 dimensões com nota individual, "Match Vaga Alvo" em 78%** —
+prova de que o pipeline inteiro roda de ponta a ponta, não só a
+animação. Não foi observado o caminho de erro (falha de provedor com
+"tentando modelo alternativo") — não há como forçar isso sem simular
+uma falha real de API, fora do escopo de uma verificação visual.
+
+**Pendência 2 — os três testes de produto — fecha.** (1) Preço em
+reais confirmado na tela "Comprar Análise": `R$ 29,90 / análise
+completa`, "Pague em BRL com Cartão". (2) "Preencher com o que já sei
+sobre você" (Perfil Profissional) executado com o currículo recém-
+analisado: terminou sem erro em ~30-40s (sem barra de percentual, só
+spinner — mais lento que a análise principal, mas correto). Nenhuma
+seção mudou visualmente porque **todas já estavam preenchidas** — o
+próprio texto da função diz que só preenche campo vazio, então nada
+mudar era o comportamento correto, não falha. (3) Vaga de área
+diferente aparecendo no Radar — já confirmado no §2.100 (Stripe/Airbnb
+para um perfil que não é da área de nenhuma das duas).
+
+---
+
+## 2.105 "Workforce" B2B — recorte concreto implementado (§7.9 fecha)
+
+Operador pediu pra expandir a seção B2B, com a condição que eu mesmo
+tinha posto: propor um recorte concreto antes de implementar. Escopo
+decidido — deliberadamente pequeno, sem página nova nem feature de
+audiência inteiramente nova, só reposicionar o que já existe:
+
+1. **`businessDesc` ganhou uma segunda frase** nos 12 idiomas,
+   citando o `/market-pulse` como ferramenta de planejamento de força
+   de trabalho — não só "volume/faturamento" para quem compra laudo.
+2. **Novo link no mesmo card**, ao lado do "Talk to sales" que já
+   existia: `businessDataCta` ("Ver o mapa de mercado"/"See the labor
+   market map"/...) apontando pro `/market-pulse`.
+3. **Chave nova** `businessDataCta: string` em `i18n/types.ts` —
+   `tsc --noEmit` limpo confirma as 12 locales com a chave (o tipo
+   exige a propriedade em todas, então a paridade é travada pelo
+   compilador, não por script separado).
+
+**Vocabulário usado**, nível de risco baixo (termos de RH básicos, não
+idiomáticos como o caso do ATS no §2.83/§2.98): "workforce planning" /
+"planejamento de força de trabalho" / "Personalplanung" /
+"planification des effectifs" / "人員計画" / "인력 계획" / "تخطيط
+القوى العاملة" etc. — vocabulário comum de negócios, não verificado
+termo a termo contra fonte como foi feito pra ATS, mas consistente com
+o registro "mercado de trabalho"/"labour market" já verificado no
+`employment-keywords.ts` (§2.98) onde a frase se sobrepõe.
+
+**Conferido visualmente** no dev server local (`npm run dev`,
+`localhost:3000`): card renderiza sem sobreposição, os dois botões
+lado a lado em desktop ("See the labor market map →" / "Talk to
+sales"). `tsc`, `eslint`, `build` e suíte (931/931, sem teste novo —
+é conteúdo, não lógica) limpos.
+
+**O que isto NÃO é**: uma página nova nem uma mudança de audiência
+formal do produto — é reposicionamento de copy num card que já
+existia, com um link a mais pro dado que já era público. Se o volume
+de interesse de RH justificar mais à frente (contato via
+`businessDataCta`, se isso vier a ser medido), uma página dedicada
+`/for-hr` ou similar é o próximo degrau — não implementado agora, por
+ser escopo maior que o pedido desta vez.
+
+---
+
+## 2.106 Busca avulsa do Radar — §7.4 fecha, com a mecânica corrigida
+   em conversa antes de qualquer código
+
+O `HANDOFF-CONTINUIDADE.md` (§7.4) registrava "busca imediata como
+produto pago, R$ 14,90 por 5 buscas". Esse preço nunca existiu de
+verdade — era um valor de rascunho que ficou na seção sem ninguém
+revisar. A mecânica real só ficou clara depois de várias rodadas de
+correção do operador, cada uma restringindo o desenho anterior:
+
+1. **Sem preço próprio.** Não é produto à parte — é benefício de quem
+   já comprou a Análise Completa, ao mesmo preço de sempre (R$ 29,90
+   no Brasil, equivalente por faixa de país, `priceFor()` de
+   `lib/pricing/catalog.ts` sem tocar). Sem SKU novo, sem saldo novo,
+   sem linha de `AnalysisLedger` nova.
+2. **Gate por usuário, não por currículo.** `requireUnlockedResume`
+   (usado pelos outros 8 itens da Análise Completa) pede um
+   `resumeId` — mas o Radar não tem "este currículo", ele lê o Perfil
+   Profissional da pessoa, que pode vir de zero, um ou vários
+   currículos analisados. Daí `requireAnyUnlockedResume`, nova em
+   `lib/entitlements.ts`: pergunta só "esta pessoa já destravou algum
+   currículo, alguma vez" — sem escopar em qual.
+3. **3 buscas avulsas por semana**, além da busca inicial grátis que
+   já existe. Número escolhido pelo operador em conversa, não
+   inventado.
+4. **Restrita ao JobBase.** Motivo do próprio operador: "o jobbase
+   cobre grande parte da base do adzuna, greenhouse, etc." — e
+   diferente deles, o JobBase é banco irmão nosso (mesmo time Vercel,
+   ver o cabeçalho de `lib/jobs/adapters/jobbase.ts`), sem cota de
+   terceiro. Confirmado no código: `jobbase` nem aparece em
+   `MONTHLY_QUOTA` (`lib/jobs/quota.ts`) — só `adzuna: 2500`. Sem
+   entrada, `onDemandAllowed('jobbase')` já cai no ramo "sem limite" e
+   libera sempre; não havia nada a mudar ali. As demais fontes
+   continuam só na coleta diária do cron.
+5. **O usuário só sabe que são "3 buscas por semana"** — qual fonte
+   responde por elas é decisão de implementação, nunca texto de tela.
+
+**Descoberta ao investigar, não pedido explícito**: `/api/radar/run`
+e o cron do Radar nunca checaram `requireUnlockedResume`, mesmo
+`job_radar` sendo um dos nove itens de `ANALYSIS_DELIVERABLES` no
+catálogo. Ou seja, hoje o Radar em si (a reavaliação gratuita) roda
+pra qualquer usuário logado com perfil preenchido, sem checar
+pagamento — inconsistência que já existia antes desta mudança e que
+não foi mexida aqui, por não ser o que foi pedido; registrado para o
+dia em que alguém decidir se isso é intencional (o produto vendendo
+"Radar" como um dos 9 itens pagos, mas entregando parte dele de
+graça) ou lacuna a fechar.
+
+**Duas peças que o operador pediu e já existiam em produção**, sem
+precisar de nada novo:
+
+- **Busca inicial automática a partir do currículo.** Em
+  `lib/ai-jobs/runners/career-orientation.ts` (linha 143-147),
+  depois do diagnóstico de orientação vocacional (que já lê o
+  currículo), `seedProfileFromOrientation()` preenche os campos
+  VAZIOS do Perfil Profissional com o que foi extraído — nunca
+  sobrescreve o que a pessoa já digitou, e o que preencheu volta no
+  resultado (`profileSeeded`), respeitando o §30 (perfil não muda
+  sozinho e em silêncio). Na sequência, `runForUserQuietly()` já
+  dispara essa primeira leitura do Radar sozinho.
+- **Ajuste manual do perfil pras buscas seguintes.** `PUT
+  /api/user/professional-profile` já deixa o usuário editar o perfil
+  e, ao salvar, já dispara `runForUserQuietly()` de novo (linha 136 de
+  `professional-profile/route.ts`).
+
+Nenhuma das duas foi tocada — o pedido só cobria a coleta ao vivo, e
+essas peças já resolviam a parte de "primeira busca automática" e
+"ajuste manual depois".
+
+**O que foi construído:**
+
+- `prisma/schema.prisma`: `RadarPreference.onDemandSearchCount` (Int,
+  default 0) e `onDemandSearchWindowStart` (DateTime?). Empurrado com
+  `prisma db push` — sem migração formal, mesmo fluxo que o resto do
+  projeto usa (não há pasta `prisma/migrations`).
+- `lib/radar/on-demand-search.ts`: regra pura, `onDemandSearchDecision`
+  — janela ROLANTE de 7 dias a partir do primeiro uso (não semana de
+  calendário, pelo mesmo motivo de `periodKey()` usar UTC: evitar
+  decisão de fuso/dia de virada que ninguém pediu). 5 testes em
+  `on-demand-search.test.ts`, incluindo o caso de borda "exatamente 7
+  dias" como expirado.
+- `lib/radar/on-demand-search.server.ts`: `consumeOnDemandSearch`, que
+  lê o estado, decide, e grava. Leitura e escrita não estão na mesma
+  transação — o pior caso de dois cliques simultâneos é o contador
+  passar de 3 por uma unidade, tolerância equivalente à que
+  `MIN_INTERVAL_MS` já assume em `/api/radar/run`.
+- `lib/entitlements.ts::requireAnyUnlockedResume`: o gate por usuário
+  descrito acima.
+- `app/api/radar/search-now/route.ts`: a rota nova. Ordem de checagem:
+  login → `requireAnyUnlockedResume` → perfil profissional existe →
+  `consumeOnDemandSearch` → coleta → avaliação. A coleta e a avaliação
+  são `runCollection()` (só para o adapter do JobBase,
+  `jobBaseAdapters({toggle, credentials})`, mesma função que
+  `runner.ts` usa para TODAS as fontes no cron) e `runForUser()` (a
+  mesma avaliação que o cron e `/api/radar/run` já fazem) — zero
+  lógica de coleta ou avaliação nova, só o fio que liga login → gate →
+  essas duas funções existentes.
+
+**Verificado**: `tsc --noEmit`, `eslint` e `npm run build` limpos;
+suíte completa em 936/936 (5 novos, sem regressão nos 931 anteriores);
+`prisma db push` confirmado contra o banco de produção
+(`aws-1-sa-east-1.pooler.supabase.com`).
+
+**O que NÃO foi feito**: o botão na tela do Radar que chama
+`/api/radar/search-now`. O escopo confirmado em conversa foi
+explicitamente "só o contador semanal + a rota de coleta ao vivo no
+JobBase" — a UI é a próxima peça, não construída porque não foi
+pedida nesta rodada.

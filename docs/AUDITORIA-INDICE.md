@@ -107,3 +107,19 @@ já lista os três documentos de continuidade; este é o quarto.
 | 2.88 | 5704 | i18n,seo-geo | `#OpenToWork` e `job hunting`: a hashtag que não se traduz |
 | 2.89 | 5763 | seguranca | `REVOKE ... FROM anon` não fecha função nenhuma |
 | 2.90 | 5839 | docs | README desatualizado — Postgres/Stripe real vs. SQLite/simulado |
+| 2.91 | 5903 | seo-geo | Qwoted, Featured e Help a B2B Writer cadastrados pelo operador |
+| 2.92 | 5934 | seo-geo | Os sete diretórios de produto do item 3 do kit, todos cadastrados |
+| 2.93 | 5959 | seo-geo | Os sete diretórios de produto, submetidos — pendência 22 fecha |
+| 2.94 | 5983 | performance,seo-geo | LCP mobile da home em 3,9s — a logo pesava 47 KB a mais |
+| 2.95 | 6050 | seo-geo | Bing Webmaster Tools: IndexNow, H1 ausente, backlinks — duas corrigidas |
+| 2.96 | 6100 | seo-geo | Os seis termos de busca ("job/hiring/work/careers/employment/workforce") |
+| 2.97 | 6190 | seo-geo | Correção: "remote work" não pedia página nova, `/global` já existia |
+| 2.98 | 6239 | ats,performance | Nove termos de ATS verificados (árabe corrigido) e teste real do `optimizeCss` |
+| 2.99 | 6301 | infra,limpeza | As branches remotas mescladas, apagadas — pendência 3 e seção 11 fecham |
+| 2.100 | 6346 | vagas,produto | Verificação visual em produção: JobBase confirmado no cron, sessão expirada não redireciona |
+| 2.101 | 6398 | infra,hiring-index | Gatilho mensal do hiring-index fora do Vercel — GitHub Actions |
+| 2.102 | 6454 | produto | Sessão expirada não redirecionava — corrigido |
+| 2.103 | 6495 | vagas,limpeza | REMOTIVE_LEGAL_NOTICE_KEY era código morto — removida |
+| 2.104 | 6522 | produto | Pendências 2 e 9 fecham — barra de progresso confirmada de ponta a ponta |
+| 2.105 | 6568 | produto,i18n | "Workforce" B2B — recorte concreto implementado |
+| 2.106 | 6611 | vagas,produto,precos | Busca avulsa do Radar — §7.4 fecha, preço R$14,90 era rascunho nunca usado |

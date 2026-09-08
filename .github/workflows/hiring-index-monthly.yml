@@ -1,0 +1,35 @@
+name: Coleta mensal do índice de temperatura de contratação
+
+# Gatilho nosso, fora do Vercel: o plano Hobby já usa os dois crons que tem
+# direito (radar às 06:00, dedup às 18:00, ver vercel.json), e a coleta de
+# estatística oficial (BLS/Eurostat/ILOSTAT/CEPALSTAT) não muda com
+# frequência diária — o JOLTS publica mensal, o Eurostat trimestral. Rodar
+# isto uma vez por mês cobre qualquer atraso de publicação com folga (ver o
+# cabeçalho de src/app/api/cron/hiring-index/route.ts).
+#
+# Exige o secret CRON_SECRET no repositório (Settings > Secrets and
+# variables > Actions > New repository secret), com o MESMO valor
+# configurado nas env vars da Vercel — sem ele a rota responde 503 e este
+# workflow falha de propósito, para não passar em silêncio.
+
+on:
+  schedule:
+    # 06:00 UTC no dia 1 de cada mês — mesmo horário do cron do radar.
+    - cron: '0 6 1 * *'
+  workflow_dispatch: {} # permite rodar manualmente pela aba Actions, sob demanda
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar /api/cron/hiring-index
+        run: |
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://griffo.work/api/cron/hiring-index)
+          echo "HTTP $status"
+          cat /tmp/response.json
+          if [ "$status" -ge 300 ]; then
+            echo "Coleta falhou (HTTP $status) — ver corpo da resposta acima."
+            exit 1
+          fi

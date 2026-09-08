@@ -58,7 +58,7 @@ export const REMOTIVE_DESCRIPTOR: JobSourceDescriptor = {
   slug: 'remotive',
   name: 'Remotive (vagas remotas)',
   accessNote:
-    'API pública e gratuita da Remotive, documentada para consumo por terceiros. A resposta traz um aviso legal do próprio serviço em `0-legal-notice` — ver REMOTIVE_LEGAL_NOTICE_KEY.',
+    'API pública e gratuita da Remotive, documentada para consumo por terceiros. A resposta traz um aviso legal do próprio serviço na chave `0-legal-notice`, fora do array `jobs` — `parseRemotivePayload` só lê `jobs`, então esse aviso não tem como ser confundido com vaga.',
 }
 
 export const REMOTEOK_DESCRIPTOR: JobSourceDescriptor = {
@@ -68,15 +68,6 @@ export const REMOTEOK_DESCRIPTOR: JobSourceDescriptor = {
   accessNote:
     'API pública e gratuita do RemoteOK. O PRIMEIRO item do array é um aviso legal do serviço, não uma vaga — ver o filtro em parseRemoteOkPayload.',
 }
-
-/**
- * A chave do aviso legal da Remotive.
- *
- * Registrada aqui porque é obrigação, não curiosidade: o serviço publica
- * condições de uso dentro da própria resposta, e quem operar isto precisa
- * saber que elas existem e onde ler.
- */
-export const REMOTIVE_LEGAL_NOTICE_KEY = '0-legal-notice'
 
 /** Segundos desde a época viram texto ISO. */
 export function isoFromEpochSeconds(value: unknown): string | null {
