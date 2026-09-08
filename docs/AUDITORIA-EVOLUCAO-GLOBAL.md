@@ -6961,3 +6961,45 @@ exatamente o que aconteceu aqui.
 CARREIRA" (sem "Global AI"), igual à landing pública.
 
 `tsc --noEmit`, `eslint`, `npm run build` e suíte (938/938) limpos.
+
+---
+
+## 2.111 Legenda: a moeda segue o país de acesso, não o idioma da tela
+
+Operador perguntou se o preço (R$ 29,90) e o valor do upsell deviam
+mudar junto com o idioma escolhido na tela, "em vez de ficar em
+reais" — parecia mais lógico à primeira vista. Resposta: não. O preço
+já é resolvido por `resolvePricingContext()`
+(`lib/pricing/resolve.ts`) a partir do país de PAGAMENTO (se já houve
+compra) ou do país de acesso por IP (`cf-ipcountry`/
+`x-vercel-ip-country`) antes disso — nunca do idioma da interface.
+Amarrar o preço ao idioma reabriria exatamente o problema que o
+catálogo já resolveu antes (preço divergente do que é cobrado de
+verdade) — alguém no Brasil que troca a tela pra inglês veria um
+valor em dólar que não é o que o cartão cobra.
+
+Concordando com a explicação, o operador pediu uma legenda discreta
+embaixo do preço avisando disso. Texto fechado em conversa, revisado
+duas vezes até chegar em: **"A moeda corrente acompanha a origem do
+seu acesso, não o idioma da tela."** — precisão importava aqui: a
+primeira tentativa dizia "país de pagamento", e o operador corrigiu
+pra "país de onde acessa" (o `edgeCountry`, por IP, é o que decide pra
+quem ainda não comprou — a maioria de quem vê a landing).
+
+**Implementado**: chave nova `currencyFollowsAccess` nos 12 idiomas,
+usada em dois lugares — `landing.tsx` (novo prop `priceCaption` no
+`PlanCard`, texto abaixo do preço público) e `plans-view.tsx` (abaixo
+do preço principal da tela "Comprar Análise", autenticada, onde
+também mora o upsell do pacote de 5 mencionado no pedido — uma
+legenda só, contextual às duas ofertas da mesma tela, em vez de
+repetir o texto embaixo de cada valor).
+
+**Verificado em produção**: a legenda aparece certa em "Comprar
+Análise" (tela autenticada, reconferida com login real). A landing
+pública não foi reconferida visualmente nesta rodada — a sessão do
+navegador está autenticada, e não há como ver a landing deslogado sem
+encerrar a sessão do operador, o que não foi pedido. Confiança vem do
+mesmo padrão de componente já confirmado funcionando em
+`plans-view.tsx`, tipo checado (`tsc`) e build limpo.
+
+`tsc --noEmit`, `eslint`, `npm run build` e suíte (938/938) limpos.

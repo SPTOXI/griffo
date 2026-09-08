@@ -127,3 +127,4 @@ já lista os três documentos de continuidade; este é o quarto.
 | 2.108 | 6802 | infra,email | Pendência 1 fecha: RESEND_API_KEY estava escrita no .env mas não era variável de ambiente; primeiro digest real confirmado por banco |
 | 2.109 | 6843 | design,produto | Pendência 4 fecha: revisão visual autenticada — sticky header/faixa de resumo não gruda, card B2B sem link novo em plans-view.tsx |
 | 2.110 | 6937 | design,i18n | Tagline "Global AI Career Intelligence" dentro do app — mapa duplicado desatualizado, centralizado em brandTaglineForLang |
+| 2.111 | 6967 | precos,i18n | Legenda nova: a moeda segue o país de acesso, não o idioma — landing e plans-view.tsx |
