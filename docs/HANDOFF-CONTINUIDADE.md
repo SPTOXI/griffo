@@ -42,9 +42,15 @@ o quanto confiar nele.
 
 **Pendências que estão esperando alguém, não código:**
 
-1. **Conferir o digest com o envio desligado.** Com a migração feita, o cron
-   registra no log quem receberia o quê, com o assunto montado. É o material
-   para decidir se o conteúdo presta antes de ligar `RADAR_DIGEST_ENABLED`.
+1. **`RADAR_DIGEST_ENABLED=true` ligado pelo operador em 08/09/2026**, depois
+   de conferir o log de uma rodada com o envio desligado — só um destinatário
+   elegível (`admin@griffowork.com`, 4 oportunidades, assunto coerente),
+   amostra pequena mas aceita pelo operador. Falta confirmar no log da
+   PRÓXIMA rodada do cron que um e-mail de verdade saiu (o módulo do Resend,
+   em `lib/email/send.ts`, foi escrito contra a documentação e nunca teve um
+   envio real observado — ver "O que ainda não foi exercitado" em
+   `digest.server.ts`). Verificável em `Vercel → Logs`, ou rodando o cron na
+   hora por `Settings → Cron Jobs → Run` no painel.
 2. ✅ **RESOLVIDO em 07/09/2026** (§2.104). Preço em reais confirmado
    (`R$ 29,90`, "Pague em BRL com Cartão"). "Preencher com o que já sei
    sobre você" executado sem erro com currículo recém-analisado — nada
