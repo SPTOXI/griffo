@@ -131,6 +131,7 @@ export const en: TranslationDictionary = {
       previewDesc: 'Upload your resume and get 0-10 scores across the 8 dimensions at no cost. One preview per account.',
       previewCta: 'See my free score',
       localPayment: 'Pay in {currency} with {methods}.',
+      currencyFollowsAccess: "The currency shown follows where you're accessing from, not the language you pick.",
       packTitle: 'Applying to more roles?',
       packDesc: '5 Complete Analyses, one for each resume or role you want to work on.',
       packCta: 'Get 5 analyses for {price}',

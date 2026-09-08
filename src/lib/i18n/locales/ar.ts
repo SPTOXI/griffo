@@ -130,6 +130,7 @@ export const ar: TranslationDictionary = {
     previewDesc: 'اطلع على الدرجات الأساسية وتوافق ATS المبدئي قبل الشراء.',
     previewCta: 'جرب مجاناً',
     localPayment: 'الدفع بعملة {currency} عبر {methods}.',
+    currencyFollowsAccess: 'العملة المعروضة تعتمد على بلد الوصول، وليس على اللغة المختارة.',
     packTitle: 'باقة التحليلات المتعددة (قيمة إضافية)',
     packDesc: 'سعر مخفض لتحليل وإعادة صياغة نسخ متعددة من سيرتك الذاتية.',
     packCta: 'شراء 5 تحليلات مقابل {price}',

@@ -130,6 +130,7 @@ export const de: TranslationDictionary = {
     previewDesc: 'Prüfen Sie grundlegende Kennzahlen und ATS-Scores vor dem Kauf.',
     previewCta: 'Kostenlos testen',
     localPayment: 'Zahlung in {currency} mit {methods}.',
+    currencyFollowsAccess: 'Die angezeigte Währung richtet sich nach Ihrem Zugriffsort, nicht nach der gewählten Sprache.',
     packTitle: 'Mehrfach-Paket (Upsell)',
     packDesc: 'Günstiger Paketpreis für mehrere Lebenslaufanalysen.',
     packCta: '5 Analysen für {price} sichern',

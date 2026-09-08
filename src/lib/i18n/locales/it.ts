@@ -130,6 +130,7 @@ export const it: TranslationDictionary = {
     previewDesc: 'Controlla i punteggi base e la compatibilità ATS prima dell\'acquisto.',
     previewCta: 'Prova gratuitamente',
     localPayment: 'Pagamento in {currency} con {methods}.',
+    currencyFollowsAccess: 'La valuta mostrata dipende da dove accedi, non dalla lingua scelta.',
     packTitle: 'Pacchetto Multi-Analisi (Upsell)',
     packDesc: 'Prezzo vantaggioso per analizzare più versioni del tuo curriculum.',
     packCta: 'Acquista 5 analisi per {price}',

@@ -130,6 +130,7 @@ export const ko: TranslationDictionary = {
     previewDesc: '구매 전 기본 점수와 초기 ATS 호환성을 무료로 확인하세요.',
     previewCta: '무료 체험하기',
     localPayment: '{currency}(으)로 {methods} 결제 지원.',
+    currencyFollowsAccess: '표시되는 통화는 접속 국가에 따라 결정되며, 선택한 언어와는 관련이 없습니다.',
     packTitle: '복수 진단 패키지 (할인 혜택)',
     packDesc: '여러 버전의 이력서나 다양한 직무를 준비하는 분들을 위한 패키지.',
     packCta: '{price}에 5회 분석 구매',

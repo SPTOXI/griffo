@@ -130,6 +130,7 @@ export const zh: TranslationDictionary = {
     previewDesc: '购买前可查看基础评分及 ATS 初步匹配概况。',
     previewCta: '免费试用',
     localPayment: '支持以 {currency} 通过 {methods} 付款。',
+    currencyFollowsAccess: '显示的货币取决于您的访问地区，与所选语言无关。',
     packTitle: '多份诊断特惠包（超值推荐）',
     packDesc: '适合需要诊断多份简历版本或不同求职方向的候选人。',
     packCta: '以 {price} 购买 5 次分析',

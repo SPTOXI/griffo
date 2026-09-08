@@ -86,11 +86,14 @@ export function PlansView() {
             <CardDescription className="text-xs">{t.pricing.oneTime}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-extrabold text-slate-900">
-                {pricing?.single.formatted ?? '—'}
-              </span>
-              <span className="text-sm text-slate-500">/ {t.pricing.productTitle.toLowerCase()}</span>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-extrabold text-slate-900">
+                  {pricing?.single.formatted ?? '—'}
+                </span>
+                <span className="text-sm text-slate-500">/ {t.pricing.productTitle.toLowerCase()}</span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">{t.pricing.currencyFollowsAccess}</p>
             </div>
 
             <div>

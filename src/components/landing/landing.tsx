@@ -411,6 +411,7 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
             footnote={t.pricing.localPayment
               .replace('{currency}', price.currency)
               .replace('{methods}', paymentMethods.join(' / '))}
+            priceCaption={t.pricing.currencyFollowsAccess}
           />
         </div>
 
@@ -637,7 +638,7 @@ function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; 
  * deles precisava ser marcado como o mais vendido. Com um produto só não há
  * comparação a fazer nem preço unitário a exibir — o preço É o preço.
  */
-function PlanCard({ name, price, period, features, cta, onCta, footnote }: {
+function PlanCard({ name, price, period, features, cta, onCta, footnote, priceCaption }: {
   name: string
   price: string
   period: string
@@ -645,6 +646,7 @@ function PlanCard({ name, price, period, features, cta, onCta, footnote }: {
   cta: string
   onCta: () => void
   footnote?: string
+  priceCaption?: string
 }) {
   return (
     <Card className="relative border-2 border-[#0B63E5] shadow-xl bg-white flex flex-col justify-between">
@@ -654,6 +656,7 @@ function PlanCard({ name, price, period, features, cta, onCta, footnote }: {
           <p className="text-xs text-slate-500 mb-4">{period}</p>
           <div className="mb-6">
             <span className="text-4xl sm:text-5xl font-extrabold text-[#0B192E]">{price}</span>
+            {priceCaption && <p className="text-[11px] text-slate-400 mt-1.5">{priceCaption}</p>}
           </div>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2.5 mb-6">
             {features.map((f) => (

@@ -130,6 +130,7 @@ export const ja: TranslationDictionary = {
     previewDesc: '購入前に基本スコアとATS概要をご確認いただけます。',
     previewCta: '無料でお試し',
     localPayment: '{currency}建てで{methods}によるお支払いに対応。',
+    currencyFollowsAccess: '表示通貨はアクセス元の国によって決まり、選択した言語では変わりません。',
     packTitle: '複数回診断パック（お得なセット）',
     packDesc: '複数の職種やバージョンを診断したい方向けの割引パック。',
     packCta: '5回分を{price}で購入',

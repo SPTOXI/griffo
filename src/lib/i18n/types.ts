@@ -122,6 +122,7 @@ export interface TranslationDictionary {
     previewDesc: string
     previewCta: string
     localPayment: string
+    currencyFollowsAccess: string
     packTitle: string
     packDesc: string
     packCta: string

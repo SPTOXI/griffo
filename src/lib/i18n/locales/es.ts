@@ -131,6 +131,7 @@ export const es: TranslationDictionary = {
       previewDesc: 'Sube tu currículum y recibe las notas de 0 a 10 en las 8 dimensiones, sin pagar nada. Una vista previa por cuenta.',
       previewCta: 'Ver mi nota gratis',
       localPayment: 'Paga en {currency} con {methods}.',
+      currencyFollowsAccess: 'La moneda mostrada depende de dónde accedes, no del idioma que elijas.',
       packTitle: '¿Vas a postular a más vacantes?',
       packDesc: '5 Análisis Completos, uno para cada currículum o vacante que quieras trabajar.',
       packCta: 'Comprar 5 análisis por {price}',

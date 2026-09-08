@@ -130,6 +130,7 @@ export const nl: TranslationDictionary = {
     previewDesc: 'Bekijk de basisscores en ATS-compatibiliteit vóór aankoop.',
     previewCta: 'Gratis proberen',
     localPayment: 'Betaal in {currency} met {methods}.',
+    currencyFollowsAccess: 'De getoonde valuta volgt uw toegangslocatie, niet de gekozen taal.',
     packTitle: 'Meerdere Analyses Pakket (Voordeel)',
     packDesc: 'Aantrekkelijk tarief om meerdere versies van je cv te analyseren.',
     packCta: 'Koop 5 analyses voor {price}',

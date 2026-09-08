@@ -130,6 +130,7 @@ export const fr: TranslationDictionary = {
     previewDesc: 'Vérifiez les scores de base et la compatibilité ATS avant l\'achat.',
     previewCta: 'Tester gratuitement',
     localPayment: 'Paiement en {currency} avec {methods}.',
+    currencyFollowsAccess: 'La devise affichée dépend de votre lieu d’accès, pas de la langue choisie.',
     packTitle: 'Pack Multi-Analyses (Upsell)',
     packDesc: 'Tarif dégressif avantageux pour analyser plusieurs versions de CV.',
     packCta: 'Acheter 5 analyses pour {price}',
