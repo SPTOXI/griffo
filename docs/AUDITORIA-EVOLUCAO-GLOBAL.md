@@ -6903,7 +6903,31 @@ não mudou a resolução real da captura nesta sessão (mesma limitação de
 ferramenta já vista antes) — o mobile da lista do §7.7 continua sem
 confirmação visual própria.
 
-**Pendência 4 fecha** (a revisão em si foi feita), mas os dois achados
-viram trabalho novo: consertar o sticky (achado 1) e replicar o link do
-card B2B em `plans-view.tsx` (achado 2) — nenhum dos dois corrigido
-nesta sessão, ambos com localização exata registrada aqui.
+**Pendência 4 fecha**, e os dois achados também — corrigidos na mesma
+sessão, logo em seguida (pedido do operador: "corrija agora").
+
+**Correção do achado 1**: `overflow-x-hidden` no `<div>` raiz de
+`app-shell.tsx` virou `overflow-x-clip`; `overflow-hidden` no `<main>`
+virou `overflow-clip`. `clip` corta o overflow do mesmo jeito visualmente,
+sem entrar na regra da spec que faz `hidden` num eixo computar o outro
+eixo como `auto` — foi essa computação que transformava os dois elementos
+em contêineres de rolagem que nunca rolam de verdade (crescem para caber o
+conteúdo), tirando o `sticky` do cabeçalho e da faixa de resumo do
+contexto de rolagem real da página.
+
+**Correção do achado 2**: `plans-view.tsx` ganhou o mesmo botão
+`businessDataCta` → `/market-pulse`, com `ArrowRight`, replicando o padrão
+da landing (estilo `ghost` adaptado ao card escuro, em vez do `outline`
+claro de lá).
+
+**Verificado em produção de verdade**, não só por `tsc`/`build`: login
+mantido, deploy aguardado, e as duas telas reconferidas. O cabeçalho e a
+faixa "6,3/10 · ATS aprovado" agora ficam presos no topo ao rolar o
+Laudo — confirmado numa aba nova, nunca tocada por nenhum teste anterior
+desta sessão, com `wait` antes da captura pra não confundir atraso de
+pintura do scroll com o bug de novo. O card "Empresas e RH" em "Comprar
+Análise" mostra "Ver o mapa de mercado →" acima de "Falar com a equipe
+comercial", igual à landing pública.
+
+`tsc --noEmit`, `eslint`, `npm run build` e suíte (938/938, sem
+regressão) limpos antes do deploy.
