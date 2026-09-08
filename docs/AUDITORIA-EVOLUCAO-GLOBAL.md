@@ -6837,3 +6837,73 @@ falha, nunca em caso de êxito. Consulta direta (script `tsx` descartável,
 verdade, pra gente real.
 
 **Pendência 1 fecha.** Registrado em `HANDOFF-CONTINUIDADE.md`.
+
+---
+
+## 2.109 Revisão visual das telas autenticadas — pendência 4 fecha, dois
+   achados reais
+
+Pedido do operador: "faça essa revisão visual", referindo-se à pendência 4
+(§7.7) — verificação nunca feita porque exigia login, e o agente não digita
+credencial. Login feito pelo operador; conferido em produção, com login
+real, cada tela da lista que o próprio §7.7 deixou: Painel, Enviar
+Currículo, Laudo (as duas visões — Score & Veredito e 8 Dimensões), Perfil
+Profissional (accordion), Radar, Reescrita, Downloads, Histórico, Comprar
+Análise, Suporte & Dúvidas, Configurações — mais a landing em português e
+em árabe (RTL).
+
+**O que passou limpo**: menu ativo em azul (não mais emerald, confirma a
+Fase B do §7.7), breadcrumb sem duplicar "Painel > Painel", card duplicado
+de saldo no dashboard não voltou, accordion do Perfil Profissional expande
+e mostra badge "Preenchido" corretamente, aba padrão do Laudo é "Score &
+Veredito" (não mais a antiga "Visão Completa" empilhada), grid de 17
+mercados na Reescrita sem duplicação (verificado por `get_page_text`, não
+só por screenshot — ver a nota sobre artefato abaixo), RTL em árabe
+espelha logo/menu/barras de progresso/card B2B corretamente, cookie de
+idioma manual persiste entre navegações.
+
+**Achado 1 — sticky não gruda.** `app-shell.tsx` declara o cabeçalho como
+`sticky top-0`, e `analysis-view.tsx` declara a faixa de resumo do laudo
+(nota + status ATS) como `sticky top-14`, exatamente como `§7.7` descreve
+ter corrigido. Na prática, ao rolar qualquer tela autenticada, os dois
+saem da tela por completo — não ficam grudados no topo. Confirmado em
+DUAS abas diferentes (uma delas nunca tocada por nenhum teste anterior
+nesta sessão, pra descartar resíduo de um `resize_window` usado mais
+cedo), com `wait` antes da captura pra descartar atraso de pintura.
+Suspeitos identificados no código, não confirmados como causa: `app-
+shell.tsx` tem `overflow-x-hidden` no `<div>` raiz (pai direto do
+`<header sticky top-0>`) e `overflow-hidden` no `<main>` (pai da faixa
+`sticky top-14`) — combinação clássica que quebra `position: sticky`
+quando o ancestral com `overflow` não é o contêiner de rolagem de
+verdade. Não investigado a fundo nem corrigido aqui — revisão visual
+aponta o problema, não o resolve.
+
+**Achado 2 — card B2B sem o link novo num dos dois lugares.** O §2.105
+desta sessão adicionou `businessDataCta` (link pro `/market-pulse`) ao
+card "Empresas e RH" da landing pública (`landing.tsx`). Existe uma
+SEGUNDA cópia quase idêntica do mesmo card em `plans-view.tsx` (tela
+"Comprar Análise", autenticada) — mesmo título, mesma descrição (o texto
+novo aparece certo ali, porque `businessDesc` é chave de i18n
+compartilhada), mas sem o botão/link novo: `plans-view.tsx` nunca
+referencia `t.pricing.businessDataCta`. A landing pública e a tela
+autenticada de planos divergem desde o §2.105 sem que ninguém tivesse
+notado — a revisão visual foi o que expôs.
+
+**Um falso alarme descartado por checagem cruzada.** Ao rolar a lista de
+mercados da Reescrita, um screenshot mostrou dezenas de cards "Portugal/
+Japão/Holanda" repetidos — pareceria um bug sério de renderização
+duplicada. `get_page_text` (o texto real do DOM, não a captura visual)
+mostrou os 17 mercados corretos, cada um uma vez só. Era artefato da
+própria ferramenta de automação durante o scroll, não do produto —
+registrado aqui como lembrete: quando um achado parece grave demais,
+confira por um caminho que não seja só o screenshot antes de reportar.
+
+**O que não foi possível verificar.** Viewport mobile: `resize_window`
+não mudou a resolução real da captura nesta sessão (mesma limitação de
+ferramenta já vista antes) — o mobile da lista do §7.7 continua sem
+confirmação visual própria.
+
+**Pendência 4 fecha** (a revisão em si foi feita), mas os dois achados
+viram trabalho novo: consertar o sticky (achado 1) e replicar o link do
+card B2B em `plans-view.tsx` (achado 2) — nenhum dos dois corrigido
+nesta sessão, ambos com localização exata registrada aqui.
