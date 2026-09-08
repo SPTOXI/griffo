@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { CheckCircle2, Loader2, ShoppingBag, Sparkles, Building2, Layers } from 'lucide-react'
+import { CheckCircle2, Loader2, ShoppingBag, Sparkles, Building2, Layers, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { useI18n } from '@/context/i18n-context'
 import { salesMailto } from '@/lib/i18n/contact'
@@ -170,7 +170,19 @@ export function PlansView() {
                 {t.pricing.businessDesc}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
+              {/* Mesmo link que a landing pública ganhou no §2.105 — esta é
+                  uma segunda cópia do card, e tinha ficado sem o botão
+                  quando a outra foi atualizada. */}
+              <Button
+                asChild
+                variant="ghost"
+                className="w-full h-9 text-xs font-semibold text-blue-300 hover:text-blue-200 hover:bg-white/10"
+              >
+                <a href="/market-pulse">
+                  {t.pricing.businessDataCta} <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </a>
+              </Button>
               <Button
                 asChild
                 variant="outline"

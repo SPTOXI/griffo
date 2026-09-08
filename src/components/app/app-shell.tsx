@@ -100,7 +100,14 @@ export function AppShell({ onExit }: { onExit: () => void }) {
   }
 
   return (
-    <div dir={dirForLang(lang)} className="min-h-screen flex flex-col bg-slate-50 overflow-x-hidden">
+    // `overflow-x-clip`, não `overflow-x-hidden`: o par (x:hidden, y:visible)
+    // faz o CSS computar y como `auto` (regra do overflow), o que transforma
+    // este `<div>` num contêiner de rolagem que nunca rola de verdade — e
+    // isso quebra `position: sticky` de tudo dentro (o cabeçalho abaixo, e a
+    // faixa de resumo do laudo em `analysis-view.tsx`), porque o sticky passa
+    // a ser relativo a um contêiner parado, enquanto quem rola de fato é a
+    // página. `clip` corta o overflow igual, sem entrar nessa regra.
+    <div dir={dirForLang(lang)} className="min-h-screen flex flex-col bg-slate-50 overflow-x-clip">
       <DocumentLanguage lang={lang} />
       {/* TOP BAR */}
       <header className="sticky top-0 z-30 bg-white border-b border-slate-200 h-14 flex items-center px-3 sm:px-4 gap-2.5">
@@ -279,7 +286,9 @@ export function AppShell({ onExit }: { onExit: () => void }) {
         </aside>
 
         {/* MAIN CONTENT */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-hidden">
+        {/* Mesmo motivo do `overflow-x-clip` do `<div>` raiz: `overflow-hidden`
+            aqui quebrava o `sticky top-14` da faixa de resumo do laudo. */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-clip">
           {view === 'dashboard' && <Dashboard />}
           {view === 'upload' && <UploadView />}
           {view === 'analysis' && <AnalysisView />}
