@@ -168,3 +168,34 @@ const RTL_LANGUAGES = new Set<Language>(['ar'])
 export function dirForLang(lang: Language): 'rtl' | 'ltr' {
   return RTL_LANGUAGES.has(lang) ? 'rtl' : 'ltr'
 }
+
+/**
+ * Tagline da marca ao lado da logo, sem "AI"/"Global" — decisão de
+ * posicionamento do operador: o produto continua global e usa IA, mas a
+ * marca não precisa dizer isso na tagline. "AI"/"Global" continuam nos
+ * `<title>` de SEO (`[country]/page.tsx`), que é texto diferente da tagline
+ * visual e onde esse volume de busca ainda importa.
+ *
+ * Fonte única: `landing.tsx` e `app-shell.tsx` tinham cada um a sua própria
+ * cópia deste mapa, e a do app-shell nunca foi atualizada com a decisão
+ * acima — cobria só pt/en/es, e a versão em inglês ainda dizia "GLOBAL AI
+ * CAREER INTELLIGENCE".
+ */
+const BRAND_TAGLINE_BY_LANG: Record<Language, string> = {
+  pt: 'INTELIGÊNCIA DE CARREIRA',
+  en: 'CAREER INTELLIGENCE',
+  es: 'INTELIGENCIA DE CARRERA',
+  de: 'KARRIERE-INTELLIGENZ',
+  fr: 'INTELLIGENCE DE CARRIÈRE',
+  it: 'INTELLIGENZA DI CARRIERA',
+  ja: 'キャリア・インテリジェンス',
+  ko: '커리어 인텔리전스',
+  nl: 'CARRIÈRE-INTELLIGENTIE',
+  sv: 'KARRIÄRINTELLIGENS',
+  zh: '职业智能',
+  ar: 'الذكاء المهني',
+}
+
+export function brandTaglineForLang(lang: Language): string {
+  return BRAND_TAGLINE_BY_LANG[lang] || BRAND_TAGLINE_BY_LANG.pt
+}

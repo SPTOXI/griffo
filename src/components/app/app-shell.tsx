@@ -27,7 +27,7 @@ import { PaymentStatusModal } from './payment-status-modal'
 import { LanguageSelector } from '../ui/language-selector'
 import { useI18n } from '@/context/i18n-context'
 import { DocumentLanguage } from '@/components/i18n/document-language'
-import { dirForLang } from '@/lib/i18n'
+import { dirForLang, brandTaglineForLang } from '@/lib/i18n'
 import { useAnalyses } from '@/hooks/use-analyses'
 
 export function AppShell({ onExit }: { onExit: () => void }) {
@@ -49,11 +49,6 @@ export function AppShell({ onExit }: { onExit: () => void }) {
     { view: 'settings', label: t.app.settings, icon: Settings },
   ]
 
-  const appSubtitles: Record<string, string> = {
-    pt: 'GLOBAL AI CAREER INTELLIGENCE',
-    en: 'GLOBAL AI CAREER INTELLIGENCE',
-    es: 'GLOBAL AI CAREER INTELLIGENCE',
-  }
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { balance, refresh: refreshBalance } = useAnalyses()
   const [activePaymentSession, setActivePaymentSession] = useState<{ sessionId: string; resumeId: string | null } | null>(null)
@@ -122,7 +117,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           <img src="/logo-icon.png" alt="GriffoWork" width={553} height={424} className="h-10 sm:h-11 w-auto object-contain shrink-0" />
           <div className="hidden sm:flex flex-col text-left leading-none">
             <span className="font-extrabold text-brand-navy text-base tracking-tight">griffo<span className="text-primary">work</span></span>
-            <span className="text-[9px] font-extrabold tracking-wider text-primary uppercase">{appSubtitles[lang] || appSubtitles.pt}</span>
+            <span className="text-[9px] font-extrabold tracking-wider text-primary uppercase">{brandTaglineForLang(lang)}</span>
           </div>
         </button>
 

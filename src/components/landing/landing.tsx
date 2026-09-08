@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
-import { DICTIONARIES, dirForLang, type Language } from '@/lib/i18n'
+import { DICTIONARIES, dirForLang, brandTaglineForLang, type Language } from '@/lib/i18n'
 import { displayCountry } from '@/lib/hiring-index/display'
 import { FOOTER_MARKET_SLUGS } from '@/lib/market/footer-markets'
 import { DocumentLanguage } from '@/components/i18n/document-language'
@@ -52,26 +52,6 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
     setOpenFaq(openFaq === index ? null : index)
   }
 
-  // Tagline da marca, sem "AI"/"Global" — decisão de posicionamento do
-  // operador: o produto continua global e usa IA, mas a marca não precisa
-  // dizer isso na tagline. O "AI"/"Global" continuam nos `<title>` de SEO
-  // (`[country]/page.tsx`), que é texto diferente da tagline visual e onde
-  // esse volume de busca ainda importa.
-  const appSubtitles: Record<string, string> = {
-    pt: 'INTELIGÊNCIA DE CARREIRA',
-    en: 'CAREER INTELLIGENCE',
-    es: 'INTELIGENCIA DE CARRERA',
-    de: 'KARRIERE-INTELLIGENZ',
-    fr: 'INTELLIGENCE DE CARRIÈRE',
-    it: 'INTELLIGENZA DI CARRIERA',
-    ja: 'キャリア・インテリジェンス',
-    ko: '커리어 인텔리전스',
-    nl: 'CARRIÈRE-INTELLIGENTIE',
-    sv: 'KARRIÄRINTELLIGENS',
-    zh: '职业智能',
-    ar: 'الذكاء المهني',
-  }
-
   return (
     <div dir={dirForLang(lang)} className="min-h-screen flex flex-col bg-white font-sans selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
       {/* `lang` resolvido acima, e não o do contexto: em rota de país os dois
@@ -92,7 +72,7 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
             />
             <div className="flex flex-col leading-none">
               <span className="font-extrabold text-[#0B192E] text-2xl sm:text-3xl tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#0B63E5] mt-1">{appSubtitles[lang] || appSubtitles.pt}</span>
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#0B63E5] mt-1">{brandTaglineForLang(lang)}</span>
             </div>
           </div>
 
@@ -534,7 +514,7 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
               <Image src="/logo-icon.png" alt="GriffoWork Logo" width={100} height={77} className="h-11 sm:h-12 w-auto object-contain shrink-0" />
               <div className="flex flex-col leading-none">
                 <span className="font-extrabold text-[#0B192E] text-xl tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
-                <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#0B63E5] mt-0.5">{appSubtitles[lang] || appSubtitles.pt}</span>
+                <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#0B63E5] mt-0.5">{brandTaglineForLang(lang)}</span>
               </div>
             </div>
             <p className="text-xs text-slate-500 leading-relaxed">
