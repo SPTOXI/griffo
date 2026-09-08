@@ -126,3 +126,4 @@ já lista os três documentos de continuidade; este é o quarto.
 | 2.107 | 6720 | vagas,produto,performance | Botão da busca avulsa + 504 real: coleta síncrona não cabia na resposta HTTP, corrigido com `after()` |
 | 2.108 | 6802 | infra,email | Pendência 1 fecha: RESEND_API_KEY estava escrita no .env mas não era variável de ambiente; primeiro digest real confirmado por banco |
 | 2.109 | 6843 | design,produto | Pendência 4 fecha: revisão visual autenticada — sticky header/faixa de resumo não gruda, card B2B sem link novo em plans-view.tsx |
+| 2.110 | 6937 | design,i18n | Tagline "Global AI Career Intelligence" dentro do app — mapa duplicado desatualizado, centralizado em brandTaglineForLang |

@@ -6931,3 +6931,33 @@ comercial", igual à landing pública.
 
 `tsc --noEmit`, `eslint`, `npm run build` e suíte (938/938, sem
 regressão) limpos antes do deploy.
+
+---
+
+## 2.110 Tagline da marca dentro do app ainda dizia "Global AI Career
+   Intelligence" — mapa duplicado e desatualizado
+
+Operador reportou, olhando o app já com os fixes do §2.109: ao lado da
+logo, dentro do sistema, continuava "Global AI Career Intelligence" em
+vez de só "Career Intelligence".
+
+**Causa**: `landing.tsx` e `app-shell.tsx` tinham cada um a sua PRÓPRIA
+cópia do mapa de tagline por idioma. A de `landing.tsx` estava certa —
+segue uma decisão de posicionamento já registrada em comentário ali
+("sem 'AI'/'Global' — a marca não precisa dizer isso na tagline,
+'AI'/'Global' continuam no `<title>` de SEO"). A de `app-shell.tsx`
+nunca recebeu essa decisão: cobria só três idiomas (pt/en/es), todos
+com o valor antigo "GLOBAL AI CAREER INTELLIGENCE" — inclusive o
+inglês, que deveria dizer só "CAREER INTELLIGENCE" como o resto do
+produto.
+
+**Correção**: mapa único, `brandTaglineForLang(lang)` em
+`lib/i18n/index.ts`, com os 12 idiomas (mesmo texto que já estava certo
+em `landing.tsx`). Os dois componentes passaram a importar dessa fonte
+única — evita um terceiro lugar divergir de novo no futuro, que foi
+exatamente o que aconteceu aqui.
+
+**Verificado em produção**, tela autenticada: "INTELIGÊNCIA DE
+CARREIRA" (sem "Global AI"), igual à landing pública.
+
+`tsc --noEmit`, `eslint`, `npm run build` e suíte (938/938) limpos.
