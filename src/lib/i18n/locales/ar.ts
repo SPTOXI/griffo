@@ -988,6 +988,7 @@ export const ar: TranslationDictionary = {
     countryLinkLabel: "فتح صفحة {country}",
     interactionHint: "مرّر المؤشر فوق بلد أو انقره لعرض قراءته.",
     mapCredit: "خلفية الخريطة: Natural Earth (ملكية عامة).",
+    licenseNote: "البيانات مرخصة بموجب CC BY 4.0 — استخدام حر مع نسب المصدر.",
     tableHeading: "كل البلدان المشمولة",
     colCountry: "البلد",
     colPhase: "المرحلة",

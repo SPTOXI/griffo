@@ -988,6 +988,7 @@ export const ja: TranslationDictionary = {
     countryLinkLabel: "{country}のページを開く",
     interactionHint: "国にカーソルを合わせるか、タップすると判定が表示されます。",
     mapCredit: "ベースマップ: Natural Earth（パブリックドメイン）。",
+    licenseNote: "データはCC BY 4.0ライセンス — 表示のうえ自由に利用可能。",
     tableHeading: "対象国の一覧",
     colCountry: "国",
     colPhase: "フェーズ",

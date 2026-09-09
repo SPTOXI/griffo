@@ -988,6 +988,7 @@ export const nl: TranslationDictionary = {
     countryLinkLabel: "Open de pagina van {country}",
     interactionHint: "Beweeg over een land of tik erop om de meting te zien.",
     mapCredit: "Basiskaart: Natural Earth (publiek domein).",
+    licenseNote: "Gegevens onder CC BY 4.0-licentie — vrij te gebruiken met naamsvermelding.",
     tableHeading: "Alle gedekte landen",
     colCountry: "Land",
     colPhase: "Fase",

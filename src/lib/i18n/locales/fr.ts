@@ -988,6 +988,7 @@ export const fr: TranslationDictionary = {
     countryLinkLabel: "Ouvrir la page {country}",
     interactionHint: "Survolez ou touchez un pays pour voir sa lecture.",
     mapCredit: "Fond de carte : Natural Earth (domaine public).",
+    licenseNote: "Données sous licence CC BY 4.0 — utilisation libre avec attribution.",
     tableHeading: "Tous les pays couverts",
     colCountry: "Pays",
     colPhase: "Phase",

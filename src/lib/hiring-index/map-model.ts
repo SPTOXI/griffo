@@ -231,6 +231,7 @@ export interface HiringMapModel {
     comparisonNote: string
     sourcesHeading: string
     mapCredit: string
+    licenseNote: string
     /** `null` quando o banco nunca registrou uma coleta. */
     updatedLine: string | null
   }
@@ -482,6 +483,7 @@ export function buildHiringMapModel(
       comparisonNote: index.comparisonNote,
       sourcesHeading: map.sourcesHeading,
       mapCredit: map.mapCredit,
+      licenseNote: map.licenseNote,
       updatedLine: atlas.updatedAt
         ? map.updatedLabel.replace('{date}', formatDate(atlas.updatedAt, lang))
         : null,

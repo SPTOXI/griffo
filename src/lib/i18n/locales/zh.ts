@@ -988,6 +988,7 @@ export const zh: TranslationDictionary = {
     countryLinkLabel: "打开 {country} 页面",
     interactionHint: "将鼠标悬停或点触某个国家即可查看其判定结果。",
     mapCredit: "底图：Natural Earth（公有领域）。",
+    licenseNote: "数据采用 CC BY 4.0 许可 — 署名后可自由使用。",
     tableHeading: "全部覆盖国家",
     colCountry: "国家",
     colPhase: "阶段",

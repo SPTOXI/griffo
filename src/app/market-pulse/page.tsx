@@ -149,6 +149,14 @@ function datasetJsonLd(atlas: HiringAtlas, lang: Language) {
     ),
     url: CANONICAL,
     inLanguage: localeForLang(lang),
+    // Decisão do operador em 09/09/2026: CC BY 4.0 — uso livre, atribuição
+    // obrigatória. Números de origem (BLS/Eurostat/ILOSTAT/CEPALSTAT) já são
+    // majoritariamente públicos por si só; o que o Griffo agrega aqui é a
+    // classificação de fase e a apresentação, não o dado bruto. Sem este
+    // campo, "fonte de dados" (o ganho do `distribution` do §2.85) ficava
+    // sem termo — qualquer um consumia o endpoint sem saber sob que
+    // condição podia reusar o que baixou.
+    license: 'https://creativecommons.org/licenses/by/4.0/',
     // Mesmo raciocínio do `distribution` (§2.85): sem isto, o Dataset Search
     // do Google só encontra esta página por quem já digitou "hiring" — o
     // termo que o `pageTitle` usa, certo para o que o índice mede (fase do

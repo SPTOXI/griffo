@@ -1036,6 +1036,8 @@ export interface TranslationDictionary {
     interactionHint: string
     /** Crédito da base cartográfica. */
     mapCredit: string
+    /** Licença do dataset em si (CC BY 4.0) — distinta do crédito do mapa-base. */
+    licenseNote: string
     tableHeading: string
     colCountry: string
     colPhase: string

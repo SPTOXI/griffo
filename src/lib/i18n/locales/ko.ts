@@ -988,6 +988,7 @@ export const ko: TranslationDictionary = {
     countryLinkLabel: "{country} 페이지 열기",
     interactionHint: "국가에 마우스를 올리거나 탭하면 판정을 볼 수 있습니다.",
     mapCredit: "기본 지도: Natural Earth(퍼블릭 도메인).",
+    licenseNote: "데이터는 CC BY 4.0 라이선스 — 출처 표시 시 자유롭게 이용 가능.",
     tableHeading: "모든 대상 국가",
     colCountry: "국가",
     colPhase: "단계",

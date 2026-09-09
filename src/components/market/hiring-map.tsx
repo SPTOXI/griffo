@@ -404,6 +404,14 @@ export function HiringMapView({ model }: HiringMapViewProps) {
         <p className="text-xs text-slate-500 space-x-2">
           {t.updatedLine && <span>{t.updatedLine}</span>}
           <span>{t.mapCredit}</span>
+          <a
+            href="https://creativecommons.org/licenses/by/4.0/"
+            target="_blank"
+            rel="license noopener noreferrer"
+            className="hover:underline hover:text-slate-700"
+          >
+            {t.licenseNote}
+          </a>
         </p>
       </section>
     </div>

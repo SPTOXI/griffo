@@ -988,6 +988,7 @@ export const de: TranslationDictionary = {
     countryLinkLabel: "Seite zu {country} öffnen",
     interactionHint: "Fahren Sie über ein Land oder tippen Sie es an, um seine Einschätzung zu sehen.",
     mapCredit: "Kartengrundlage: Natural Earth (gemeinfrei).",
+    licenseNote: "Daten unter CC-BY-4.0-Lizenz — freie Nutzung mit Namensnennung.",
     tableHeading: "Alle erfassten Länder",
     colCountry: "Land",
     colPhase: "Phase",

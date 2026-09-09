@@ -988,6 +988,7 @@ export const sv: TranslationDictionary = {
     countryLinkLabel: "Öppna sidan för {country}",
     interactionHint: "Håll muspekaren över eller tryck på ett land för att se dess läsning.",
     mapCredit: "Kartunderlag: Natural Earth (public domain).",
+    licenseNote: "Data under CC BY 4.0-licens — fri användning med källhänvisning.",
     tableHeading: "Alla länder som täcks",
     colCountry: "Land",
     colPhase: "Fas",
