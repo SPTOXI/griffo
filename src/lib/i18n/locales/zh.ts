@@ -1055,7 +1055,7 @@ export const zh: TranslationDictionary = {
     step3Title: '之后才会有人打开它',
     step3Desc: '招聘方从队列前端开始查看。能否进入前列，取决于系统是否正确读取并归类了您的简历。',
     closingTitle: '在下次投递前，找出简历卡在哪里',
-    closingSubtitle: '上传文件即可获得 8 个维度的评估，包括与您所在市场主流筛选系统的兼容性。',
+    closingSubtitle: '上传文件即可获得 8 个维度的评估，包括与您所在市场主流筛选系统的兼容性——这是进入面试的第一步。',
     trustNote: '免费开始 · 无需信用卡',
     searchTitle: '#OpenToWork 也好，主动求职也好，关卡是同一个',
     searchBody: '无论你是在资料上打开了 #OpenToWork 等着被发现，还是正在主动求职、每天投递简历，你的简历都要先通过同一道自动筛选，才会被人看到。',

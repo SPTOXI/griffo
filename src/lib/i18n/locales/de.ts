@@ -1055,7 +1055,7 @@ export const de: TranslationDictionary = {
     step3Title: 'Erst dann öffnet jemand das Dokument',
     step3Desc: 'Der Recruiter beginnt oben in der Liste. Dorthin zu gelangen hängt davon ab, ob das System Ihren Lebenslauf korrekt lesen und einordnen konnte.',
     closingTitle: 'Finden Sie heraus, wo Ihr Lebenslauf hängen bleibt — vor der nächsten Bewerbung',
-    closingSubtitle: 'Laden Sie das Dokument hoch und erhalten Sie die Bewertung in 8 Dimensionen, inklusive Kompatibilität mit den Filtern Ihres Marktes.',
+    closingSubtitle: 'Laden Sie das Dokument hoch und erhalten Sie die Bewertung in 8 Dimensionen, inklusive Kompatibilität mit den Filtern Ihres Marktes — der erste Schritt zum Vorstellungsgespräch.',
     trustNote: 'Kostenlos starten · Keine Kreditkarte',
     searchTitle: '#OpenToWork oder aktive Jobsuche: derselbe Filter',
     searchBody: 'Ob Sie #OpenToWork aktiviert haben und darauf warten, gefunden zu werden, oder ob Sie mitten in der Jobsuche stecken und sich täglich bewerben: In beiden Fällen durchläuft Ihr Lebenslauf denselben automatischen Filter, bevor ihn ein Mensch liest.',

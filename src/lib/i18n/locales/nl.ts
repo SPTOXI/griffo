@@ -1055,7 +1055,7 @@ export const nl: TranslationDictionary = {
     step3Title: 'Pas dan opent iemand het document',
     step3Desc: 'De recruiter begint bovenaan de rij. Daar komen hangt ervan af of het systeem je cv goed heeft kunnen lezen en indelen.',
     closingTitle: 'Ontdek waar je cv vastloopt — vóór de volgende sollicitatie',
-    closingSubtitle: 'Upload het document en ontvang de analyse op 8 dimensies, inclusief compatibiliteit met de filters in jouw markt.',
+    closingSubtitle: 'Upload het document en ontvang de analyse op 8 dimensies, inclusief compatibiliteit met de filters in jouw markt — de eerste stap richting het sollicitatiegesprek.',
     trustNote: 'Gratis om te starten · Geen creditcard',
     searchTitle: '#OpenToWork of actief zoeken: dezelfde filter',
     searchBody: 'Of u nu #OpenToWork hebt aangezet en wacht tot u gevonden wordt, of dat u actief op zoek bent naar werk en zich elke dag aanmeldt: uw cv gaat door dezelfde automatische filter voordat een mens het leest.',
