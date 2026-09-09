@@ -131,3 +131,4 @@ já lista os três documentos de continuidade; este é o quarto.
 | 2.112 | 7008 | vagas,produto | Pendência 7.2 fecha: confirmado por leitura que a rota do currículo direcionado é POST /api/radar/prepare |
 | 2.113 | 7049 | infra,git | As duas últimas branches claude/* auditadas (conteúdo já em main, byte a byte) e apagadas do remoto |
 | 2.114 | 7086 | dados,i18n,juridico | Licença do dataset decidida: CC BY 4.0 — campo license no JSON-LD e licenseNote nos 12 idiomas do mapa |
+| 2.115 | 7139 | seo,geo,i18n | "Job interview" — lacuna de SEO/GEO achada em dado externo; termo novo em job-search-terms.ts e em /hiring, 12 idiomas |
