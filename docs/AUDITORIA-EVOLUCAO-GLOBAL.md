@@ -7003,3 +7003,135 @@ mesmo padrão de componente já confirmado funcionando em
 `plans-view.tsx`, tipo checado (`tsc`) e build limpo.
 
 `tsc --noEmit`, `eslint`, `npm run build` e suíte (938/938) limpos.
+
+## 2.112 Pendência 7.2 fecha — confirmada a rota exata do currículo direcionado a partir da vaga
+
+Handoff registrava a pendência como "🟡 evidência encontrada, rota exata
+não confirmada": no §2.100 apareceu em produção uma carta de
+apresentação real marcada "Direcionada a: Página da Vaga |
+BIOMÉDICO(A)", prova de que currículo/carta direcionados a uma vaga
+específica funcionam de verdade — mas sem confirmar se o caminho era
+`POST /api/radar/prepare` ou outro fluxo.
+
+**Confirmado por leitura de código, sem ambiguidade.** O botão
+"Preparar Currículo" em `radar-view.tsx:642` (`Wand2`, ação
+`prepareResume(opportunity)`) chama exatamente
+`POST /api/radar/prepare` com `{ alertId }`. A rota
+(`src/app/api/radar/prepare/route.ts`):
+
+- Busca o `RadarAlert` do usuário logado pelo `alertId` (nunca de
+  outro usuário — filtro por `userId` na query, não checagem depois).
+- Pega o currículo indicado ou, sem um, o mais recente do usuário —
+  **direciona o que já existe, não cria outro**, porque a permissão de
+  uso é por currículo: um currículo novo cobraria de novo por algo que
+  a pessoa não pediu.
+- Grava `resume.targetJob = "{cargo} — {empresa}"` e
+  `targetJobDescription` (a descrição da vaga, quando a fonte a
+  entrega; só o cargo quando não entrega — pior que ter descrição,
+  mas muito melhor que não direcionar, e as rotas de IA tratam os
+  dois casos).
+- Devolve `previousTarget` quando já havia outro alvo, para a tela
+  avisar o que foi trocado em vez de trocar em silêncio (frontend usa
+  isso em `rd.prepareRedirected`).
+- Marca `RadarAlert.clickedAt` — "preparar-se para a vaga" conta como
+  o clique mais forte que existe, mais forte que abrir o link, e é o
+  que mede quais alertas realmente convertem.
+
+É esse mesmo `targetJob` que a tela de reescrita mostra depois como
+"Direcionada a: {job}" (`letterTargetedTo`, `i18n/locales/pt.ts`) — a
+frase vista em produção no §2.100 bate exatamente com o formato que
+esta rota grava (`cargo — empresa`, aqui "BIOMÉDICO(A)" seria o
+`alert.job.title`).
+
+Nenhum código mudou — é confirmação de leitura, não correção. Pendência
+7.2 fecha.
+
+## 2.113 As duas últimas branches `claude/*` — auditadas e apagadas
+
+Do §2.99 (pendência 3), sobraram de propósito duas branches nunca
+auditadas: `claude/project-status-update-m6kqex` e
+`claude/security-vulnerabilities-review-2qtbz1`. Preservadas até
+alguém conferir o conteúdo, não por indecisão — o resto da seção 11
+já tinha o método, só faltava aplicá-lo a estas duas.
+
+**Conferência.** Ambas paravam num `main` de 24/08/2026, e cada uma
+carrega só 1–2 commits reais além disso:
+
+- `claude/security-vulnerabilities-review-2qtbz1`: um commit, "Faz o
+  `db:rls` rodar sem `psql` e sem sintaxe de shell" — cria
+  `src/lib/sql-split.ts` e `src/scripts/apply-rls.ts`. Os dois
+  arquivos **já existem em `main`**, conferidos por `git cat-file -e`.
+- `claude/project-status-update-m6kqex`: dois commits — um registra o
+  peer opcional do `@swc/helpers` no lockfile (`package-lock.json` já
+  reflete isso em `main` de qualquer jeito, é gerado), outro adiciona
+  `docs/MAPA-DO-PRODUTO.md` (758 linhas). O arquivo já existe em
+  `main` — `git diff` entre a versão da branch e a de `main` veio
+  **vazio**: byte a byte idêntico.
+
+O `git diff --stat` contra `main` de cada branch mostra centenas de
+arquivos — mas é deriva normal de `main` ter andado dez dias depois
+do ponto onde as branches pararam (sistema de IA jobs reescrito,
+`hiring-index` removido, componentes shadcn novos, etc.), não
+conteúdo dessas branches que `main` não tem. O que era delas
+especificamente já está lá.
+
+**Apagadas do remoto** (`git push origin --delete`), com confirmação
+do operador antes do comando, por ser ação irreversível sobre estado
+compartilhado. Ficam só `main` e as branches de trabalho ativo, se
+houver.
+
+Pendência "duas branches nunca auditadas" (seção 0, item 3 do handoff)
+fecha.
+
+## 2.114 A licença do dataset — decidida: CC BY 4.0
+
+Pendência aberta desde o §2.85, registrada como "jurídica, não
+técnica" (§2.91). O `Dataset` JSON-LD de `/market-pulse` já declarava
+`distribution` (o endpoint `/api/hiring-index` é baixável), mas nenhum
+campo dizia sob que termo — um `Dataset` "fonte de dados" sem licença
+deixa quem consome sem saber se pode citar, redistribuir, ou nada
+disso.
+
+**Três opções foram levantadas e apresentadas ao operador:**
+
+1. **CC BY 4.0** — uso livre, incluindo comercial, com atribuição
+   obrigatória.
+2. **Licença própria restritiva** — uso editorial permitido,
+   redistribuição comercial vedada por termo (sem bloqueio técnico no
+   endpoint).
+3. **CC0 nos números brutos, proprietário na metodologia/apresentação**
+   — reconhece que a maior parte do dado de origem (BLS, Eurostat,
+   ILOSTAT, CEPALSTAT) já é pública por si só; o que o Griffo agrega é
+   a classificação de fase e a apresentação.
+
+**Recomendação dada e aceita: opção 1 (CC BY 4.0).** O objetivo
+declarado desde o §2.85 era autoridade externa e backlink — jornalista
+citando, agregador de dados linkando —, não proteção de dado bruto. O
+valor competitivo real do Griffo está no produto de análise de
+currículo, não no atlas, que é majoritariamente derivado de fonte já
+pública.
+
+**Implementado:**
+
+- `market-pulse/page.tsx`: campo `license:
+  'https://creativecommons.org/licenses/by/4.0/'` no `Dataset` JSON-LD,
+  ao lado do `distribution` que o §2.85 já tinha acrescentado.
+- Chave nova `licenseNote` em `i18n/types.ts` (bloco `hiringMap`, ao
+  lado de `mapCredit`) — 12 idiomas, paridade travada pelo `tsc`.
+- `map-model.ts`: `licenseNote` passa a fazer parte do objeto `t` que
+  `HiringMapView` recebe — sem isso o componente não teria acesso ao
+  texto, mesmo com a chave existindo no dicionário (achado do próprio
+  `tsc`, que recusou compilar até o campo ser propagado).
+- `hiring-map.tsx`: linha de crédito no rodapé do mapa ganhou um link
+  `rel="license"` para `creativecommons.org/licenses/by/4.0`, ao lado
+  do crédito do mapa-base (Natural Earth) que já existia — a licença do
+  DADO e a licença do MAPA-BASE são coisas diferentes, cada uma com seu
+  crédito.
+
+**Verificado**: dev server local, `/market-pulse?lang=en` — a linha
+final da tela mostra "Data licensed under CC BY 4.0 — free to use with
+attribution." como link clicável; `curl` confirmou o campo `license`
+presente no JSON-LD renderizado. `tsc --noEmit`, `eslint` e `npm test`
+(938/938) limpos, `npm run build` limpo.
+
+Pendência "licença do dataset" fecha.

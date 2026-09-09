@@ -29,13 +29,13 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 08/09/2026: **Legenda: a moeda segue o país de acesso, não o idioma da tela (§2.111)** — operador perguntou se o preço (R$ 29,90) e o upsell deviam seguir o idioma escolhido "em vez de ficar em reais". Resposta: não — `resolvePricingContext()` já resolve por país de pagamento (se já houve compra) ou país de acesso por IP, nunca por idioma; amarrar ao idioma reabriria o problema que o catálogo já corrigiu (preço mostrado divergente do cobrado). Operador concordou e pediu uma legenda discreta embaixo do preço avisando disso — texto ajustado em conversa até fechar em **"A moeda corrente acompanha a origem do seu acesso, não o idioma da tela."** Chave nova `currencyFollowsAccess`, 12 idiomas, usada na landing (`PlanCard`, novo prop `priceCaption`) e em `plans-view.tsx` (abaixo do preço principal, cobrindo também o upsell da mesma tela). Verificado em produção na tela autenticada "Comprar Análise" com login real; a landing pública não foi reconferida visualmente (sessão do navegador autenticada, sem forçar logout) — mesmo padrão de componente já confirmado, tipo checado. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
-| Anterior | 08/09/2026: **Tagline "Global AI Career Intelligence" dentro do app — mapa duplicado desatualizado (§2.110)** — operador reportou, olhando o app já com os fixes do §2.109: ao lado da logo, dentro do sistema, ainda dizia "Global AI Career Intelligence" em vez de só "Career Intelligence". Causa: `landing.tsx` e `app-shell.tsx` tinham cada um sua própria cópia do mapa de tagline por idioma — a de `landing.tsx` seguia a decisão de posicionamento já registrada ("sem 'AI'/'Global'"), a de `app-shell.tsx` nunca recebeu essa decisão: só três idiomas (pt/en/es), todos ainda com "GLOBAL AI CAREER INTELLIGENCE". Centralizado em `brandTaglineForLang(lang)`, `lib/i18n/index.ts`, os 12 idiomas, fonte única pros dois componentes — evita um terceiro lugar divergir de novo. Verificado em produção, tela autenticada: "INTELIGÊNCIA DE CARREIRA", igual à landing. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
-| Anterior (2) | 08/09/2026: **Revisão visual das telas autenticadas — pendência 4 fecha, dois achados reais, corrigidos na mesma sessão (§2.109)** — login do operador, percorridas em produção Painel, Enviar Currículo, Laudo (2 abas), Perfil Profissional, Radar, Reescrita, Downloads, Histórico, Comprar Análise, Suporte & Dúvidas, Configurações, mais a landing em PT e árabe (RTL). A maior parte limpa (menu azul não emerald, breadcrumb sem duplicar, accordion do perfil, aba padrão do laudo, RTL espelhando tudo certo). **Achado 1, corrigido**: o cabeçalho (`sticky top-0`) e a faixa de resumo do laudo (`sticky top-14`, do §7.7) não grudavam no topo ao rolar — `overflow-x-hidden`/`overflow-hidden` em `app-shell.tsx` faziam o CSS computar um contêiner de rolagem que nunca rola de verdade, tirando o `sticky` do contexto real da página; trocado por `overflow-x-clip`/`overflow-clip`. **Achado 2, corrigido**: o card B2B de `plans-view.tsx` não tinha o link `businessDataCta` que o §2.105 deu à landing — adicionado. Um falso alarme descartado por checagem cruzada: um screenshot durante scroll mostrou dezenas de cards de país repetidos na Reescrita — `get_page_text` confirmou os 17 mercados corretos, era artefato da ferramenta de automação. Reverificado em produção numa aba nova, com `wait` antes da captura: cabeçalho e faixa presos no topo, card B2B com o link novo. Viewport mobile não verificável (`resize_window` sem efeito na captura nesta sessão). `tsc`, `eslint`, `build` e suíte (938/938) limpos |
-| Anterior (3) | 08/09/2026: **Pendência 1 fecha — primeiro digest real enviado, depois de dois achados em produção (§2.107, §2.108)** — verificando a busca avulsa em produção com login do operador, o botão deu **504 real** (não simulado): `runCollection()` reescreve TODAS as vagas do JobBase a cada rodada, e a escrita em lotes não cabia numa requisição HTTP, só no orçamento do cron. Corrigido rodando a coleta em `after()` (mesmo mecanismo de `profile_extraction`), resposta imediata, cliente descobre o fim olhando `lastRunAt` avançar — sem endpoint novo. Verificado de novo com login real: sem 504, contador consumido certo. Em seguida, operador mandou "libera logo essa função" pro digest — `RADAR_DIGEST_ENABLED=true` ligado, cron manual rodou pra **4 usuários reais**, e falhou por `RESEND_API_KEY` ausente. A chave existia no `.env` local, mas escrita como nota de texto (`resend apikey: ...`, sem `=`) — nunca foi uma variável de ambiente de verdade, nem local nem na Vercel. Corrigido o formato local; operador cadastrou a chave na Vercel; um redeploy não bastou (env var nova só vale a partir do PRÓXIMO deployment); um segundo resolveu. **Confirmado por banco, não por ausência de erro no log**: os 4 `RadarAlert` têm `notifiedAt` gravado — campo que só existe depois de `sendEmail()` ter sucesso. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
-| Anterior (4) | 07/09/2026: **Busca avulsa do Radar implementada — §7.4 fecha (§2.106)** — operador corrigiu a mecânica original em várias rodadas de conversa: sem preço próprio (a versão anterior desta seção, "R$ 14,90 por 5 buscas", estava desatualizada), incluída no pacote de quem já destravou alguma Análise Completa, 3 buscas avulsas por semana além da inicial grátis já existente, restrita ao JobBase (banco irmão, sem cota de terceiro, já cobre boa parte de Adzuna/Greenhouse), sem o usuário precisar saber qual fonte responde. Implementado: `RadarPreference.onDemandSearchCount`/`onDemandSearchWindowStart` (schema), `lib/radar/on-demand-search.ts` (janela rolante de 7 dias, pura e testada — 5 casos novos), `lib/entitlements.ts::requireAnyUnlockedResume` (checagem por usuário, não por currículo — o Radar não tem "este currículo"), e `POST /api/radar/search-now`, que só amarra `runCollection()` (adapter do JobBase) e `runForUser()` — as duas funções que o cron já usa, zero lógica de coleta ou avaliação duplicada. A "busca inicial automática a partir do currículo" e o "ajuste manual de perfil pras buscas seguintes" que o operador pediu **já existiam em produção** (`seedProfileFromOrientation` + `runForUserQuietly` em `career-orientation.ts`, e o `PUT /api/user/professional-profile` que já dispara o Radar de novo ao salvar) — nada mudou nesses dois fluxos. `tsc`, `eslint`, `build` e suíte (936/936, 5 novos) limpos |
-| Anterior (5) | 07/09/2026: **"Workforce" B2B — recorte concreto implementado (§2.105)** — operador confirmou expandir a seção B2B, com a condição já combinada de eu propor um recorte concreto antes de construir. Escopo pequeno de propósito: `businessDesc` ganhou uma segunda frase nos 12 idiomas citando o `/market-pulse` como ferramenta de planejamento de força de trabalho (não só "volume/faturamento"), e o card ganhou um segundo link (`businessDataCta`, nova chave em `i18n/types.ts`) pro atlas, ao lado do "Talk to sales" que já existia. Vocabulário de RH básico (workforce planning/Personalplanung/人員計画/etc.), não verificado termo a termo como o ATS — reaproveita o registro "mercado de trabalho" já validado no `employment-keywords.ts`. Paridade das 12 locales travada pelo próprio `tsc` (chave obrigatória no tipo). Conferido visualmente no dev server local: renderiza sem sobreposição. `tsc`, `eslint`, `build` e suíte (931/931) limpos. **Não é** página nova nem audiência formal nova — reposicionamento de copy num card que já existia |
-| Anterior (6) | 07/09/2026: **Pendências 2 e 9 fecham — barra de progresso confirmada de ponta a ponta (§2.104)** — operador logou de novo (admin master) pra terminar a verificação que a sessão tinha cortado no §2.100. Currículo de teste sintético enviado; acompanhei ao vivo: percentual real (0%→20%→60%), cronômetro, dimensões aparecendo uma a uma. **Achado de ferramenta**: o Chrome extension travou a injeção de script (polling contínuo da própria barra de progresso deixava a página nunca "idle") — resolvido abrindo uma ABA NOVA em vez de insistir, que reconectou ao job em segundo plano sem problema (confirma que o travamento era da automação, não do backend). Terminou com score 6,3/10, ATS PASS, 8 dimensões, Match Vaga Alvo 78%. **Pendência 2 fecha**: preço em reais confirmado (`R$ 29,90`, BRL), "Preencher com o que já sei sobre você" executado sem erro (nada mudou porque só preenche campo vazio, e todos já estavam preenchidos). **Não observado**: caminho de erro de provedor — não dá pra forçar sem simular falha real de API |
+| Última revisão | 09/09/2026: **Licença do dataset decidida: CC BY 4.0 (§2.114)** — pendência aberta desde o §2.85, registrada como jurídica/não técnica. Apresentadas três opções: (1) CC BY 4.0 — uso livre com atribuição; (2) licença própria restritiva — uso editorial sim, redistribuição comercial não, sem bloqueio técnico; (3) CC0 no dado bruto, proprietário só na metodologia/apresentação. Recomendação dada — CC BY 4.0, porque o objetivo desde o §2.85 era autoridade externa/backlink, não proteger dado que já é majoritariamente público de origem (BLS/Eurostat/ILOSTAT/CEPALSTAT) — **aceita pelo operador**. Implementado: campo `license` no `Dataset` JSON-LD de `market-pulse/page.tsx`; chave `licenseNote` nova em `i18n/types.ts` (12 idiomas); propagada por `map-model.ts` até `hiring-map.tsx`, que ganhou um link `rel="license"` no rodapé do mapa, ao lado do crédito do mapa-base (Natural Earth) que já existia — são licenças diferentes, créditos separados. Verificado em dev server local (`/market-pulse?lang=en`): linha "Data licensed under CC BY 4.0 — free to use with attribution." aparece como link; `curl` confirmou o campo no JSON-LD renderizado. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
+| Anterior | 09/09/2026: **As duas últimas branches `claude/*` auditadas e apagadas do remoto (§2.113)** — sobra do §2.99/pendência 3: `claude/project-status-update-m6kqex` e `claude/security-vulnerabilities-review-2qtbz1` ficaram preservadas de propósito até alguém conferir o conteúdo. Conferidas: cada uma parava num `main` de 24/08 com 1–2 commits reais — o `db:rls` sem `psql`/shell (`sql-split.ts`, `apply-rls.ts`) de uma, `docs/MAPA-DO-PRODUTO.md` (758 linhas) da outra — e os dois já estavam em `main`: os arquivos existem lá, e o `MAPA-DO-PRODUTO.md` veio byte a byte idêntico num `git diff` entre as versões. O `diff --stat` enorme contra `main` era só deriva de dez dias de trabalho depois do ponto onde as branches pararam, não conteúdo delas ausente de `main`. Apagadas do remoto com confirmação do operador antes do comando (ação irreversível sobre estado compartilhado). Só `main` no remoto agora — pendência 3 fecha por completo |
+| Anterior (2) | 09/09/2026: **Pendência 7.2 fecha — confirmada a rota exata do currículo direcionado a partir da vaga (§2.112)** — desde o §2.100 a evidência era só de produto: uma carta de apresentação real vista em produção, "Direcionada a: Página da Vaga \| BIOMÉDICO(A)", sem confirmar se o caminho era `POST /api/radar/prepare` ou outro fluxo. Confirmado por leitura de código, sem ambiguidade: o botão "Preparar Currículo" em `radar-view.tsx:642` chama exatamente essa rota com `{alertId}`; ela direciona o currículo mais recente do usuário (ou o indicado) — nunca cria um novo, porque a permissão de uso é por currículo e um novo cobraria de novo por algo não pedido —, grava `resume.targetJob`/`targetJobDescription` a partir do `RadarAlert`, avisa o alvo anterior em vez de trocar em silêncio, e marca `RadarAlert.clickedAt` como sinal de conversão. É esse `targetJob` que a tela de reescrita mostra como "Direcionada a: {job}" — bate exatamente com o texto visto em produção. Nenhum código mudou, só confirmação; nenhuma pendência de código restante nesta lista |
+| Anterior (3) | 08/09/2026: **Legenda: a moeda segue o país de acesso, não o idioma da tela (§2.111)** — operador perguntou se o preço (R$ 29,90) e o upsell deviam seguir o idioma escolhido "em vez de ficar em reais". Resposta: não — `resolvePricingContext()` já resolve por país de pagamento (se já houve compra) ou país de acesso por IP, nunca por idioma; amarrar ao idioma reabriria o problema que o catálogo já corrigiu (preço mostrado divergente do cobrado). Operador concordou e pediu uma legenda discreta embaixo do preço avisando disso — texto ajustado em conversa até fechar em **"A moeda corrente acompanha a origem do seu acesso, não o idioma da tela."** Chave nova `currencyFollowsAccess`, 12 idiomas, usada na landing (`PlanCard`, novo prop `priceCaption`) e em `plans-view.tsx` (abaixo do preço principal, cobrindo também o upsell da mesma tela). Verificado em produção na tela autenticada "Comprar Análise" com login real; a landing pública não foi reconferida visualmente (sessão do navegador autenticada, sem forçar logout) — mesmo padrão de componente já confirmado, tipo checado. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
+| Anterior (4) | 08/09/2026: **Tagline "Global AI Career Intelligence" dentro do app — mapa duplicado desatualizado (§2.110)** — operador reportou, olhando o app já com os fixes do §2.109: ao lado da logo, dentro do sistema, ainda dizia "Global AI Career Intelligence" em vez de só "Career Intelligence". Causa: `landing.tsx` e `app-shell.tsx` tinham cada um sua própria cópia do mapa de tagline por idioma — a de `landing.tsx` seguia a decisão de posicionamento já registrada ("sem 'AI'/'Global'"), a de `app-shell.tsx` nunca recebeu essa decisão: só três idiomas (pt/en/es), todos ainda com "GLOBAL AI CAREER INTELLIGENCE". Centralizado em `brandTaglineForLang(lang)`, `lib/i18n/index.ts`, os 12 idiomas, fonte única pros dois componentes — evita um terceiro lugar divergir de novo. Verificado em produção, tela autenticada: "INTELIGÊNCIA DE CARREIRA", igual à landing. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
+| Anterior (5) | 08/09/2026: **Revisão visual das telas autenticadas — pendência 4 fecha, dois achados reais, corrigidos na mesma sessão (§2.109)** — login do operador, percorridas em produção Painel, Enviar Currículo, Laudo (2 abas), Perfil Profissional, Radar, Reescrita, Downloads, Histórico, Comprar Análise, Suporte & Dúvidas, Configurações, mais a landing em PT e árabe (RTL). A maior parte limpa (menu azul não emerald, breadcrumb sem duplicar, accordion do perfil, aba padrão do laudo, RTL espelhando tudo certo). **Achado 1, corrigido**: o cabeçalho (`sticky top-0`) e a faixa de resumo do laudo (`sticky top-14`, do §7.7) não grudavam no topo ao rolar — `overflow-x-hidden`/`overflow-hidden` em `app-shell.tsx` faziam o CSS computar um contêiner de rolagem que nunca rola de verdade, tirando o `sticky` do contexto real da página; trocado por `overflow-x-clip`/`overflow-clip`. **Achado 2, corrigido**: o card B2B de `plans-view.tsx` não tinha o link `businessDataCta` que o §2.105 deu à landing — adicionado. Um falso alarme descartado por checagem cruzada: um screenshot durante scroll mostrou dezenas de cards de país repetidos na Reescrita — `get_page_text` confirmou os 17 mercados corretos, era artefato da ferramenta de automação. Reverificado em produção numa aba nova, com `wait` antes da captura: cabeçalho e faixa presos no topo, card B2B com o link novo. Viewport mobile não verificável (`resize_window` sem efeito na captura nesta sessão). `tsc`, `eslint`, `build` e suíte (938/938) limpos |
+| Anterior (6) | 08/09/2026: **Pendência 1 fecha — primeiro digest real enviado, depois de dois achados em produção (§2.107, §2.108)** — verificando a busca avulsa em produção com login do operador, o botão deu **504 real** (não simulado): `runCollection()` reescreve TODAS as vagas do JobBase a cada rodada, e a escrita em lotes não cabia numa requisição HTTP, só no orçamento do cron. Corrigido rodando a coleta em `after()` (mesmo mecanismo de `profile_extraction`), resposta imediata, cliente descobre o fim olhando `lastRunAt` avançar — sem endpoint novo. Verificado de novo com login real: sem 504, contador consumido certo. Em seguida, operador mandou "libera logo essa função" pro digest — `RADAR_DIGEST_ENABLED=true` ligado, cron manual rodou pra **4 usuários reais**, e falhou por `RESEND_API_KEY` ausente. A chave existia no `.env` local, mas escrita como nota de texto (`resend apikey: ...`, sem `=`) — nunca foi uma variável de ambiente de verdade, nem local nem na Vercel. Corrigido o formato local; operador cadastrou a chave na Vercel; um redeploy não bastou (env var nova só vale a partir do PRÓXIMO deployment); um segundo resolveu. **Confirmado por banco, não por ausência de erro no log**: os 4 `RadarAlert` têm `notifiedAt` gravado — campo que só existe depois de `sendEmail()` ter sucesso. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
 | Suíte | **938 testes, `fail 0`** — estável desde o §2.107; o contrato do `rls.sql` continua em 5 instruções desde o §2.89, regra de contagem na seção 8 |
 | `tsc`, `build` | `tsc --noEmit`, `eslint` e `npm run build` limpos após o §2.107 (`/api/radar/search-now` com `maxDuration=60`, `ƒ` dinâmica; `/[country]` segue `●` SSG) — §2.109 não mudou código, só documentou achados |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent`, `RadarAlert.notifiedAt` — ver 7.6 —, `LaborMarketPoint` do §2.51, empurrado em 01/09/2026, e `RadarPreference.onDemandSearchCount`/`onDemandSearchWindowStart` do §2.106, empurrado em 07/09/2026) |
@@ -69,16 +69,26 @@ o quanto confiar nele.
    mudou visualmente porque só preenche campo vazio, e todos já
    estavam preenchidos (comportamento correto). Vaga de área diferente
    no Radar já confirmada no §2.100/§7.6.
-3. ✅ **RESOLVIDO em 07/09/2026** (§2.99). O 403 era da sessão remota
-   sem permissão de escrita; numa sessão local com as credenciais do
-   operador, `git push --delete` funcionou sem erro. **11 branches
-   apagadas**: as 7 mescladas em `main` (confirmado por `git branch -r
-   --merged`) mais as 4 que a seção 11 já tinha auditado como sem
-   trabalho vivo (conteúdo recuperado por outros PRs). Ficaram só
-   `main` e duas branches nunca auditadas
-   (`claude/project-status-update-m6kqex`,
+3. ✅ **RESOLVIDO em 07/09/2026, completado em 09/09/2026** (§2.99,
+   §2.113). O 403 era da sessão remota sem permissão de escrita; numa
+   sessão local com as credenciais do operador, `git push --delete`
+   funcionou sem erro. **11 branches apagadas em 07/09**: as 7
+   mescladas em `main` (confirmado por `git branch -r --merged`) mais
+   as 4 que a seção 11 já tinha auditado como sem trabalho vivo
+   (conteúdo recuperado por outros PRs). Ficaram só `main` e duas
+   branches nunca auditadas (`claude/project-status-update-m6kqex`,
    `claude/security-vulnerabilities-review-2qtbz1`), preservadas de
    propósito até alguém conferir o conteúdo delas.
+
+   **Em 09/09/2026, as duas últimas foram conferidas e apagadas**
+   (§2.113): cada uma parava num `main` de 24/08 com 1–2 commits reais
+   — o `db:rls` sem `psql`/shell (`sql-split.ts`, `apply-rls.ts`) de
+   uma, e `docs/MAPA-DO-PRODUTO.md` (758 linhas) da outra. Os dois já
+   estavam em `main`: os arquivos de código existem lá, e o
+   `MAPA-DO-PRODUTO.md` veio **byte a byte idêntico** num `git diff`
+   entre as duas versões. Apagadas com confirmação do operador
+   (`git push origin --delete`, ação irreversível sobre estado
+   compartilhado). Só `main` no remoto agora.
 4. ✅ **RESOLVIDO em 08/09/2026** (§2.109). Login feito pelo operador;
    percorridas em produção Painel, Enviar Currículo, Laudo (Score & Veredito
    e 8 Dimensões), Perfil Profissional, Radar, Reescrita, Downloads,
@@ -393,7 +403,8 @@ o quanto confiar nele.
     a plataforma com sessão logada. **Ainda pendente, sem mudança:** os
     **dois e-mails de release** seguem como rascunho no Gmail **sem
     destinatário**, esperando revisão e envio; e a **licença do dataset**
-    que o `distribution` expõe segue sem decisão (jurídica, não técnica).
+    que o `distribution` expõe — ✅ **decidida em 09/09/2026, CC BY 4.0**
+    (ver §2.114). Não é mais pendência.
 
 **O que NÃO está pendente e parece que está:**
 
@@ -718,16 +729,26 @@ Com isso feito, o §27 (cache de Job Intelligence — separar o que é da vaga d
 determinístico e barato; o problema nunca foi ele, era **quantas vagas
 irrelevantes chegavam até ele**.
 
-### 7.2 🟡 Currículo direcionado a partir da vaga — evidência encontrada, rota exata não confirmada
+### 7.2 ✅ RESOLVIDO — Currículo direcionado a partir da vaga, rota confirmada
 
-`POST /api/radar/prepare` existe e funciona nos testes. Em 07/09/2026
-(§2.100), vi em produção uma carta de apresentação real marcada
-"Direcionada a: Página da Vaga | BIOMÉDICO(A)" — evidência de que
-currículo/carta direcionados a uma vaga específica funcionam de
-verdade. **Não confirma**, porém, que o caminho foi exatamente
-`POST /api/radar/prepare` (pode ter vindo de outro fluxo de
-direcionamento). É a ponte entre o Radar e a venda; se ela falhar, o
-Radar não converte.
+Registrado em detalhe em `docs/AUDITORIA-EVOLUCAO-GLOBAL.md`, seção 2.112.
+Resumo operacional aqui.
+
+Em 07/09/2026 (§2.100), vi em produção uma carta de apresentação real
+marcada "Direcionada a: Página da Vaga | BIOMÉDICO(A)" — evidência de
+que currículo/carta direcionados a uma vaga específica funcionam de
+verdade, sem confirmar ainda o caminho exato. **Confirmado em
+09/09/2026 por leitura de código**: o botão "Preparar Currículo" em
+`radar-view.tsx:642` chama `POST /api/radar/prepare` com `{ alertId }`;
+a rota direciona o currículo mais recente do usuário (ou o indicado)
+para a vaga do alerta — grava `resume.targetJob`/`targetJobDescription`
+a partir do `RadarAlert`, avisa qual era o alvo anterior em vez de
+trocar em silêncio, e marca `RadarAlert.clickedAt` como o sinal de
+conversão mais forte que existe. É esse `targetJob` que a tela de
+reescrita mostra como "Direcionada a: {job}" — bate exatamente com o
+que foi visto em produção no §2.100. É a ponte entre o Radar e a
+venda; se ela falhar, o Radar não converte. Nenhum código mudou, só
+confirmação.
 
 ### 7.3 🟡 IMPLEMENTADO E DESLIGADO — e-mail do digest
 
@@ -1279,6 +1300,11 @@ nesta sessão, reconferidas contra a `main` atual antes). A análise
 abaixo fica como registro de COMO a verificação foi feita, não como
 lista de branches ainda existentes — nenhuma das citadas aqui está
 mais no remoto.
+
+**As duas que sobraram fora desta seção** (`claude/project-status-
+update-m6kqex`, `claude/security-vulnerabilities-review-2qtbz1`) foram
+conferidas e apagadas em 09/09/2026, pelo mesmo método — ver §2.113.
+Não sobra nenhuma branch `claude/*` no remoto.
 
 Doze branches acumularam no remoto. A conferência abaixo foi feita comparando o
 tip de cada branch com o head do PR correspondente, e — para as fechadas sem
