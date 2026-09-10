@@ -12,7 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:rls": "npx --yes tsx src/scripts/apply-rls.ts",
     "db:reset": "prisma migrate reset",
-    "test": "npx --yes tsx --test \"src/**/*.test.ts\"",
+    "test": "npx --yes tsx --import ./scripts/test-setup.mjs --test \"src/**/*.test.ts\"",
     "stripe:setup": "npx --yes tsx src/scripts/setup-stripe.ts",
     "migrate:analyses": "npx --yes tsx src/scripts/migrate-credits-to-analyses.ts",
     "indexnow:submit": "npx --yes tsx src/scripts/submit-indexnow.ts"

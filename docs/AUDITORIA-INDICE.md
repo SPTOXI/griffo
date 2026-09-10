@@ -133,3 +133,4 @@ já lista os três documentos de continuidade; este é o quarto.
 | 2.114 | 7086 | dados,i18n,juridico | Licença do dataset decidida: CC BY 4.0 — campo license no JSON-LD e licenseNote nos 12 idiomas do mapa |
 | 2.115 | 7141 | docs,infra,email | Deriva de documentação: handoff §7.3 e mapa §8.7 ainda diziam que o digest estava desligado — corrigidos |
 | 2.116 | 7193 | infra,limpeza | CI no GitHub Actions: tsc, eslint e suíte a cada PR e push em main — sem segredo, sem banco |
+| 2.117 | 7261 | infra,cobranca,ia-router | Testes de cobrança e failover: 33 casos, 12 mutações, o H6 fecha — e o teste de PDF que passava sobre código quebrado |

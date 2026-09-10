@@ -343,7 +343,7 @@ Onde **não** vale: o Agente 2 (diagnóstico) faz checagem determinística — u
 | H3 | Apagar o código morto de `llm.ts` (345 linhas) e consolidar os prompts em um módulo |
 | H4 | Reativar as regras de ESLint que importam e corrigir os 17 erros |
 | H5 | Atualizar o README (banco, provedores, modelo de preços, custos) |
-| H6 | Testes dos caminhos de cobrança e failover + CI no GitHub Actions — **CI feito em 10/09/2026** (`.github/workflows/ci.yml`, §2.116); os testes de cobrança/failover continuam abertos |
+| H6 | ✅ **FEITO em 10/09/2026.** CI no GitHub Actions (`.github/workflows/ci.yml`, §2.116) + 33 testes dos caminhos de cobrança e failover, validados por 12 mutações no código de produção (§2.117) |
 | H7 | Decidir entre créditos e assinaturas; remover o modelo abandonado |
 | H8 | Quebrar `admin-view.tsx` (2.118 linhas) e `analysis-view.tsx` (1.169) |
 | H9 | Remover `check-config.js`, `.zscripts/dev.pid`, `examples/`, `mini-services/` |

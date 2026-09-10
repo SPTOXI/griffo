@@ -7255,3 +7255,142 @@ proteção da branch `main` (Settings → Branches). Sem isso o CI informa
 mas não barra — dá para mesclar por cima do vermelho. Enquanto esse
 botão não for ligado, o resultado continua dependendo de alguém olhar,
 que é exatamente o que este trabalho existe para eliminar.
+
+---
+
+## 2.117 Testes de cobrança e failover — o H6 fecha por inteiro
+
+O §2.116 pôs o CI para rodar `tsc`, `eslint` e a suíte sozinho, e
+registrou o que ele NÃO resolvia: a suíte cobria lógica pura, e nada
+exercitava `lib/entitlements.ts` (cobrança) nem o failover do
+`lib/ai-router/router.ts` — as duas áreas que a seção 10 do documento
+de continuidade marca como "onde o erro não aparece como erro". CI
+verde sobre cobertura ausente não é segurança, é silêncio. Operador
+mandou fechar: "sim, faz os testes de cobrança e failover".
+
+**Por que esses dois módulos nunca tinham teste.** Não era desleixo: os
+dois começam com `import 'server-only'`, um pacote-marcador cujo
+`index.js` só faz lançar um erro. É assim que o Next impede que um
+módulo de servidor seja arrastado para o bundle do cliente — e fora do
+Next qualquer import dele lança, o que deixava justamente os arquivos
+mais críticos inalcançáveis pelo `node --test`.
+
+**Três caminhos testados, dois descartados com medida, não com
+opinião:**
+
+1. `--conditions=react-server` (o pacote publica essa condição
+   apontando para um `empty.js`). Resolveria — e mudaria a resolução de
+   TODOS os pacotes que publicam a condição. Medido antes de decidir: a
+   suíte caiu de **938 para 907 testes, com 2 falhas**. Encolher em
+   silêncio é o cenário que a seção 8 classifica como grave.
+2. `mock.module` do `node:test`: experimental no Node 22, exige outra
+   flag, mesmo alcance global.
+3. **Escolhido**: `scripts/test-setup.mjs`, carregado por `--import` no
+   `npm test`, usando `registerHooks` para redirecionar UM specifier —
+   `server-only` — para um módulo vazio. Precisou ser `registerHooks`
+   (síncrono) e não `module.register`: o tsx transpila os `.ts` deste
+   projeto para CommonJS, e um hook só de ESM não é consultado no
+   `require('server-only')`. Testado, não suposto. Precisou também
+   apontar para um ARQUIVO real, não um `data:` URL — o carregador CJS
+   tenta abrir a URL devolvida pelo hook, e um `data:` vira ENOENT.
+   Conferido depois da mudança: a suíte continua em **938/938**.
+
+**Como o banco entra no teste sem virar banco de mentira.**
+`lib/db.ts` guarda o cliente em `globalThis.prisma` — o truque que faz
+o hot reload do Next não abrir conexão nova a cada recompilação — e só
+constrói o cliente se essa referência estiver vazia. Preencher a
+referência ANTES da primeira consulta faz o `db` do produto usar um
+fake em memória (`lib/testing/fake-prisma.ts`), **sem uma linha de
+código de produção mudar**. O fake lança em qualquer consulta com
+formato que ele não conhece: se uma consulta do produto mudar de
+forma, o teste quebra alto em vez de passar por acidente.
+
+O arquivo do fake diz, em cima, o que ele NÃO prova: a unicidade de
+`AnalysisLedger.paymentRef`, a atomicidade do `updateMany` com
+`unlockedAt: null` e o rollback da transação são garantias do
+Postgres; aqui são, respectivamente, um erro `P2002` imitado, um `if` e
+uma cópia do estado. O que os testes provam é que **o código reage
+certo ao que o banco responde**. Escrever isso em vez de deixar
+implícito é o ponto: teste que finge ser garantia de banco é pior que
+teste nenhum, porque convence.
+
+**Cobrança — 20 casos** (`lib/entitlements.test.ts`). Compra credita e
+registra a linha com os campos de conciliação; o MESMO pagamento
+entregue duas vezes credita uma vez só (é a corrida real entre o
+webhook da Stripe e a verificação direta da sessão); pagamentos
+diferentes somam; país de pagamento passa a mandar na faixa seguinte e
+país vazio não apaga o que havia; falha que não é `P2002` SOBE em vez
+de virar "creditado". Destrave consome exatamente uma análise e
+registra o movimento; o segundo destrave do mesmo currículo não cobra
+de novo; sem saldo não destrava nem deixa rastro; admin destrava sem
+consumir e sem linha no ledger; conta suspensa não passa; currículo de
+outro usuário não é destravável. Dois casos de concorrência: quando
+outra requisição destrava primeiro, o saldo não é tocado; e quando o
+saldo some entre a leitura e a escrita, a transação desfaz o destrave
+inteiro — o currículo não pode ficar liberado de graça. Mais as três
+guardas de rota (402 com saldo para a tela oferecer a compra certa, 404
+para currículo inexistente, e a regra do Radar, que pede "algum
+currículo destravado", não aquele).
+
+**Failover — 13 casos** (`lib/ai-router/failover.test.ts`). O dublê
+aqui é o `globalThis.fetch`, e ele cobre os DOIS caminhos do roteador:
+o Claude, que chama `fetch` direto, e os provedores compatíveis com
+OpenAI, cujo SDK também usa o `fetch` global. Primário respondendo não
+chama suplente; primário fora do ar cai para o DeepSeek e o failover
+deixa rastro em `AuditLog` (não pode ser silencioso); o `AiLog` guarda
+o primário pretendido E o que respondeu, senão o painel não distingue
+"o Claude está caindo" de "esta tarefa sempre rodou no DeepSeek";
+resposta 200 com lixo é reprovada pelo agente de qualidade e dispara o
+suplente; truncamento em `max_tokens` é falha, não conteúdo parcial;
+provedor sem chave é pulado sem consumir tentativa de rede; quando
+todos falham o erro do usuário não vaza detalhe de provedor (o
+diagnóstico existe, separado, como manda a seção 10.9) e a rodada
+ainda é registrada. **Residência de dados com prova de destino**:
+usuário em Portugal com o Claude fora cai no Gemini, e as asserções
+verificam que nenhuma chamada saiu para DeepSeek ou Kimi — a regra do
+GDPR verificada pelo endereço que recebeu a requisição, não pela
+intenção do código. Mais o desvio para o Claude quando há PDF anexado,
+a ausência de suplente nesse caso, e a repetição sem cache quando o
+Claude recusa o bloco de cache com 400.
+
+**Os testes foram testados.** Teste que passa não prova nada até
+falhar quando deve: oito mutações no código de produção, uma por vez,
+com o arquivo restaurado depois de cada uma.
+
+| Mutação | Pego? |
+|---|---|
+| `P2002` deixa de ser tratado (compra duplicada credita de novo) | sim |
+| `updateMany` sem `unlockedAt: null` | sim |
+| `update` do saldo sem `gte: 1` | sim |
+| Guarda derivada libera currículo não destravado | sim |
+| Filtro de residência de dados removido | sim |
+| Agente de qualidade desligado | sim |
+| `status` do AiLog nunca marca failover | sim |
+| Repetição sem cache removida | sim |
+| Truncamento aceito como resposta boa | sim |
+| Erro final sem diagnóstico | sim |
+| PDF deixa de forçar o Claude | **não, na primeira versão** |
+| Com PDF, a cadeia de suplentes volta a existir | sim |
+
+A linha em negrito é o achado desta rodada, e ela vale mais que as
+outras onze juntas: o teste de PDF usava `analysis_segment`, uma tarefa
+que **já é roteada para o Claude** — com ou sem o desvio, a chamada ia
+para o mesmo lugar, e o teste passava verde sobre código quebrado.
+Corrigido em duas frentes: a tarefa passou a ser `profile_extraction`
+(roteada para o DeepSeek por decisão de custo), e a asserção passou a
+cobrir também `primaryModel`, porque o desvio muda o primário
+REGISTRADO — sem isso o AiLog diria que a tarefa pretendia o DeepSeek e
+"caiu" para o Claude, inventando um failover que nunca houve. É
+exatamente a classe de teste inútil que este projeto não pode ter em
+cima de cobrança e de rota de IA.
+
+**O que continua sem cobertura, e é honesto dizer:** o corte por
+orçamento de tempo do roteador (`MAX_PROVIDER_ATTEMPTS`,
+`providerTimeoutMs`, a reserva de sobrecarga). Exercitá-lo exigiria
+esperar dezenas de segundos reais, e um teste que dorme 25s não
+sobrevive a CI nenhum. Continua verificado só pelo comportamento em
+produção — que é como as duas falhas históricas dessa mecânica foram
+descobertas.
+
+Suíte: **971 testes, `fail 0`** (938 + 20 de cobrança + 13 de
+failover). `tsc`, `eslint` limpos. O H6 fecha por inteiro.
