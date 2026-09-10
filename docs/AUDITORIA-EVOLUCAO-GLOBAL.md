@@ -7160,6 +7160,16 @@ anterior:
 - `docs/MAPA-DO-PRODUTO.md`, §8.7 — título "implementado e desligado"
   e "**O envio está desligado por decisão**".
 
+Uma segunda passada de `grep` no mesmo commit achou mais dois pontos do
+handoff que a primeira leitura não pegou, ambos fora do §7.3 e por isso
+fáceis de deixar para trás: a tabela de etapas da seção 3 ("Aviso por
+e-mail | 🟡 implementado, envio desligado por decisão") e a lista "o
+que NÃO está pendente e parece que está" da seção 0 ("desligado de
+propósito"). Corrigidos junto. A lição operacional é a de sempre neste
+projeto: um fato que muda de estado costuma estar escrito em mais
+lugares do que a seção que trata dele — `grep` pelo termo, não só pela
+seção.
+
 Isso é exatamente o risco que o cabeçalho do `AUDITORIA-INDICE.md`
 descreve para o índice desatualizado: um documento errado é pior que
 um documento ausente, porque parece confiável. Quem lesse o mapa

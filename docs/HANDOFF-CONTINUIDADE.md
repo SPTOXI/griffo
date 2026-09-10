@@ -409,8 +409,9 @@ o quanto confiar nele.
 
 **O que NÃO está pendente e parece que está:**
 
-- O e-mail do digest está implementado e **desligado de propósito** (§7.3). Não é
-  trabalho pela metade.
+- O e-mail do digest está implementado e **ligado desde 08/09/2026** (§7.3,
+  §2.108), com envio real confirmado por `RadarAlert.notifiedAt` no banco. Não é
+  trabalho pela metade nem pendência de operação.
 - O **`npx prisma db push` do `RadarAlert.notifiedAt`** foi listado como
   pendência do PR #61 até 24/08. A tabela acima registra o banco sincronizado
   com a coluna e o índice `[notifiedAt, userId]`, então o erro diário do Prisma
@@ -520,7 +521,7 @@ ausência de ação. Ver 2.35 na auditoria para o desenho completo.
 | 8 — Ação | ✅ Job Fit + currículo direcionado a partir da vaga |
 | 9 — Assinatura | ⬜ travada pelo §21 |
 | 10 — Escala global | 🟡 13 mercados declarados, cobertura real de fontes varia |
-| Aviso por e-mail | 🟡 implementado, envio desligado por decisão — ver §7.3 |
+| Aviso por e-mail | ✅ ligado em 08/09/2026, primeiro envio real confirmado por banco — ver §7.3 |
 
 **As sete fontes:**
 
