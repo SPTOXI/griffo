@@ -1055,7 +1055,7 @@ export const it: TranslationDictionary = {
     step3Title: 'Solo allora qualcuno lo apre',
     step3Desc: 'Il recruiter parte dalla cima della coda. Arrivarci dipende dal fatto che il sistema abbia letto e classificato correttamente il tuo CV.',
     closingTitle: 'Scopri dove si blocca il tuo CV — prima della prossima candidatura',
-    closingSubtitle: 'Carica il documento e ricevi la valutazione in 8 dimensioni, inclusa la compatibilità con i filtri del tuo mercato.',
+    closingSubtitle: 'Carica il documento e ricevi la valutazione in 8 dimensioni, inclusa la compatibilità con i filtri del tuo mercato — il primo passo verso il colloquio.',
     trustNote: 'Gratis per iniziare · Senza carta di credito',
     searchTitle: '#OpenToWork o ricerca attiva: lo stesso filtro',
     searchBody: 'Che tu abbia attivato #OpenToWork sul profilo aspettando di essere trovato, o che sia in piena ricerca di lavoro candidandoti ogni giorno, il tuo curriculum passa dallo stesso filtro automatico prima che una persona lo legga.',

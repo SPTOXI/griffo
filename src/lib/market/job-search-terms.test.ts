@@ -64,6 +64,56 @@ test('o bloco visível existe nos 12 idiomas e cita a hashtag', () => {
   }
 })
 
+test('todo idioma cobre "entrevista de emprego" nas keywords e no texto visível', () => {
+  // Adicionado em 09/09/2026 a partir de um dado externo de share-of-search:
+  // "job interview" é a segunda maior fatia de busca no Brasil (73%) e
+  // domina isolado numa faixa que cobre quase toda a América Latina — a
+  // página não tinha nenhum termo nessa direção antes disto (ver o
+  // cabeçalho de `job-search-terms.ts`). As duas pontas têm de bater: a
+  // keyword sozinha sem o texto visível não sustenta nada (mesma lição do
+  // teste da hashtag), e o texto sozinho sem a keyword perde o Bing.
+  const INTERVIEW_TERM: Record<string, string> = {
+    pt: 'entrevista de emprego',
+    en: 'job interview',
+    es: 'entrevista de trabajo',
+    de: 'Vorstellungsgespräch',
+    fr: "entretien d'embauche",
+    it: 'colloquio di lavoro',
+    ja: '面接',
+    nl: 'sollicitatiegesprek',
+    sv: 'jobbintervju',
+    zh: '面试',
+    ar: 'مقابلة العمل',
+    ko: '면접',
+  }
+  // O texto visível não precisa repetir o composto inteiro — prosa natural
+  // não é meta `keywords` — só a raiz que prova que o assunto foi citado.
+  const INTERVIEW_ROOT: Record<string, string> = {
+    pt: 'entrevista',
+    en: 'interview',
+    es: 'entrevista',
+    de: 'Vorstellungsgespräch',
+    fr: 'entretien',
+    it: 'colloquio',
+    ja: '面接',
+    nl: 'sollicitatiegesprek',
+    sv: 'intervju',
+    zh: '面试',
+    ar: 'مقابلة',
+    ko: '면접',
+  }
+  for (const lang of LANGUAGES) {
+    const termo = INTERVIEW_TERM[lang]
+    const raiz = INTERVIEW_ROOT[lang]
+    assert.ok(termo && raiz, `"${lang}" sem termo de entrevista definido no teste`)
+    assert.ok(jobSearchKeywords(lang).includes(termo), `"${lang}" perdeu "${termo}" nas keywords`)
+    assert.ok(
+      DICTIONARIES[lang].hiringPage.closingSubtitle.includes(raiz),
+      `"${lang}" perdeu "${raiz}" no texto visível — só nas keywords não sustenta nada`
+    )
+  }
+})
+
 test('a página não promete vaga em nenhum idioma', () => {
   // A linha que o §2.84 traçou: `#hiring` é sinal de quem OFERECE vaga, e o
   // GriffoWork não oferece nenhuma. Atrair por esses termos não pode virar

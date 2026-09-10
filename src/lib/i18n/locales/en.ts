@@ -1056,7 +1056,7 @@ export const en: TranslationDictionary = {
       step3Title: 'Only then does someone open it',
       step3Desc: 'The recruiter starts at the top of the queue. Getting there depends on the system having read and classified your resume correctly.',
       closingTitle: 'Find where your resume stalls — before the next application',
-      closingSubtitle: 'Upload the document and get an 8-dimension audit, including compatibility with the filters used in your market.',
+      closingSubtitle: 'Upload the document and get an 8-dimension audit, including compatibility with the filters used in your market — the first step toward landing the interview.',
       trustNote: 'Free to start · No credit card',
       searchTitle: '#OpenToWork or active job hunting: same filter',
       searchBody: 'Whether you turned on #OpenToWork and are waiting to be found, or you are job hunting actively and applying every day, your resume goes through the same automated filter before any person reads it.',

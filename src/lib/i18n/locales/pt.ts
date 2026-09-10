@@ -1056,7 +1056,7 @@ export const pt: TranslationDictionary = {
       step3Title: 'Só então alguém abre o documento',
       step3Desc: 'O recrutador começa pelo topo da fila. Chegar lá depende de o sistema ter conseguido ler e classificar seu currículo corretamente.',
       closingTitle: 'Descubra onde seu currículo trava — antes da próxima candidatura',
-      closingSubtitle: 'Envie o documento e receba a avaliação em 8 dimensões, incluindo compatibilidade com os filtros usados no seu mercado.',
+      closingSubtitle: 'Envie o documento e receba a avaliação em 8 dimensões, incluindo compatibilidade com os filtros usados no seu mercado — o primeiro passo para chegar à entrevista.',
       trustNote: 'Gratuito para começar · Sem cartão de crédito',
       searchTitle: '#OpenToWork ou busca ativa: o filtro é o mesmo',
       searchBody: 'Não importa se você marcou #OpenToWork no perfil e espera ser encontrado, ou se está na busca ativa por emprego respondendo a vagas todos os dias. Nos dois caminhos o currículo passa pelo mesmo filtro automático antes de chegar a uma pessoa.',

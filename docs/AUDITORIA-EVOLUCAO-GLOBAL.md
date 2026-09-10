@@ -7433,3 +7433,75 @@ não a data de uma venda, o gatilho técnico real para ligar o bloqueio.
 
 **Gatilho para reabrir:** primeira venda (critério do operador) ou
 segundo colaborador com acesso de escrita, o que vier primeiro.
+---
+## 2.119 "Job interview" — lacuna real de SEO/GEO encontrada num dado externo, corrigida em `/hiring`
+
+O operador trouxe um levantamento externo de share-of-search por país,
+oito termos de carreira ("job application", "job interview", "job
+vacancies", "job search", "career development", "career coaching",
+"cv writing", "resume optimization"), pedindo leitura para SEO/GEO/LLM.
+Três achados, o segundo com ação concreta:
+
+1. **"resume optimization" e "cv writing" são termos mortos** — 0% em
+   praticamente todas as 58 linhas, sem exceção real na primeira. Jargão
+   de quem vende o serviço, não fala de usuário. Conferido: o código já
+   evita os dois (`job-search-terms.ts`, `employment-keywords.ts`) —
+   nada a corrigir aqui.
+2. **"job interview" é lacuna real**: segunda maior fatia de busca no
+   Brasil (73%, atrás só de "job application") e dominante isolado numa
+   faixa que cobre quase toda a América Latina, Leste Europeu e Ibéria.
+   Busca em código confirmou zero termo, zero conteúdo nessa direção —
+   a única ocorrência de "interview" no projeto inteiro era incidental,
+   numa descrição de recurso.
+3. Segmentação geográfica por bloco (África/Caribe → "job vacancies"
+   transacional; Anglófonos/Ásia desenvolvida → "career development"
+   mais presente) — registrado, sem ação nesta rodada.
+
+**Escopo decidido com o operador antes de implementar**: só SEO/GEO —
+sem feature nova de IA (havia a opção de um "preparador de entrevista"
+por IA, descartada por ora: maior custo, decisão de preço/entitlement
+que este achado isolado não justifica).
+
+**Implementado, `/hiring` — a página que já fala com este exato
+momento do funil** (quem se candidatou e quer saber se o currículo
+passa):
+
+- `job-search-terms.ts`: termo nativo de entrevista acrescentado aos 12
+  idiomas (`entrevista de emprego`, `job interview`,
+  `Vorstellungsgespräch`, `面接`, etc.) — japonês e chinês levam a
+  palavra isolada (`面接`/`面试`), não um composto com `転職`/`求职`, pelo
+  mesmo cuidado documentado no cabeçalho do arquivo para os outros
+  pares. Nenhuma tradução nova exigiu verificação institucional — ao
+  contrário dos termos de mercado de trabalho, "entrevista de emprego"
+  não muda de público por idioma.
+- `closingSubtitle` de `hiringPage` (12 idiomas): uma frase a mais,
+  verdadeira — o que a avaliação em 8 dimensões entrega É o primeiro
+  passo para chegar à entrevista. Não é invenção de capacidade nova.
+- **Por que a cópia visível, não só a meta `keywords`**: o próprio
+  cabeçalho de `/hiring/page.tsx` já registra que o Google ignora
+  `keywords` desde 2009 — quem de fato sustenta o termo é o texto que
+  a pessoa lê, que é também o que um motor de resposta (GEO) cita.
+- Teste novo em `job-search-terms.test.ts`: confirma o termo completo
+  nas keywords E a raiz do termo no texto visível, nos 12 idiomas — a
+  mesma dupla checagem que o teste da hashtag já fazia.
+
+**Verificado**: dev server local, `/hiring?lang=pt` e `?lang=en` —
+`get_page_text` confirmou a frase nova no corpo visível, `curl`
+confirmou "entrevista de emprego"/"job interview" na meta `keywords`.
+Achado no caminho: dois processos do Next dev de uma verificação
+anterior na sessão não tinham morrido de verdade (seguravam a DLL do
+Prisma, `EPERM` no build) — encerrados por PID via PowerShell antes de
+buildar. `tsc --noEmit`, `eslint` e `npm test` (939/939, 1 novo) e
+`npm run build` limpos.
+
+> **Nota de conciliação (10/09/2026).** Esta seção foi escrita como
+> §2.115 numa sessão que expirou antes do push; os dois commits ficaram
+> só na máquina do operador e foram resgatados depois que a `main` já
+> tinha um §2.115 diferente (a deriva de documentação do digest).
+> Renumerada para §2.119 na conciliação — o CONTEÚDO é o original, sem
+> corte. As referências a "§2.115" que apontavam para cá, no §7.11 do
+> documento de continuidade e no índice, foram atualizadas junto. Fica
+> o registro do porquê: número de seção é ordem de chegada ao
+> repositório, não ordem de escrita, e duas sessões em paralelo colidem
+> nele sem que nenhuma das duas esteja errada.
+

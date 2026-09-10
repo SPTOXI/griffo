@@ -1055,7 +1055,7 @@ export const fr: TranslationDictionary = {
     step3Title: 'Ce n\'est qu\'ensuite que quelqu\'un l\'ouvre',
     step3Desc: 'Le recruteur commence par le haut de la file. Y parvenir dépend de la capacité du système à lire et classer correctement votre CV.',
     closingTitle: 'Découvrez où votre CV bloque — avant la prochaine candidature',
-    closingSubtitle: 'Déposez le document et recevez l\'audit en 8 dimensions, y compris la compatibilité avec les filtres de votre marché.',
+    closingSubtitle: 'Déposez le document et recevez l\'audit en 8 dimensions, y compris la compatibilité avec les filtres de votre marché — la première étape avant l\'entretien.',
     trustNote: 'Gratuit pour commencer · Sans carte bancaire',
     searchTitle: '#OpenToWork ou recherche active : le même filtre',
     searchBody: "Que vous ayez activé #OpenToWork sur votre profil en attendant d'être repéré, ou que vous soyez en pleine recherche d'emploi à postuler chaque jour, votre CV passe par le même filtre automatique avant qu'une personne ne le lise.",
