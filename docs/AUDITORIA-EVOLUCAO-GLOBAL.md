@@ -7450,16 +7450,37 @@ Três achados, o segundo com ação concreta:
 2. **"job interview" é lacuna real**: segunda maior fatia de busca no
    Brasil (73%, atrás só de "job application") e dominante isolado numa
    faixa que cobre quase toda a América Latina, Leste Europeu e Ibéria.
-   Busca em código confirmou zero termo, zero conteúdo nessa direção —
-   a única ocorrência de "interview" no projeto inteiro era incidental,
-   numa descrição de recurso.
+   Busca em código confirmou **zero termo de busca** em
+   `job-search-terms.ts` e **zero cópia nessa direção em `/hiring`**.
+
+   > **Correção (10/09/2026, conciliação).** A frase original aqui dizia
+   > "zero conteúdo nessa direção — a única ocorrência de 'interview' no
+   > projeto inteiro era incidental". Isso estava **errado**, e a revisão
+   > automática do PR #68 pegou: `en.ts` já tinha cópia visível ao usuário
+   > ("increase your interview chances", em `recommendationsDesc`) e
+   > `matching/job-fit.ts` já definia uma ação `interview_prep`
+   > ("Preparar para a entrevista", com justificativa própria). A lacuna
+   > real era **de SEO em `/hiring`**, não de produto — e é só isso que a
+   > mudança desta seção fecha.
+   >
+   > **Achado que veio junto, e que não é de SEO**: `interview_prep`
+   > nunca chega à tela. A lista de ações do Job Fit é filtrada por
+   > `primary` em `radar-view.tsx:656`, e `interview_prep` nunca é
+   > marcada como principal em nenhum dos três caminhos de
+   > `job-fit.ts` — existe no modelo de dados e no tipo, e o usuário
+   > jamais a vê. Não é defeito de tela nem promessa quebrada (nada é
+   > oferecido e não entregue), mas é código que não faz nada:
+   > **fica em aberto** decidir entre exibir a recomendação ou remover
+   > a ação. Não mexi nisto aqui — é decisão de produto, e este PR é de
+   > conciliação.
 3. Segmentação geográfica por bloco (África/Caribe → "job vacancies"
    transacional; Anglófonos/Ásia desenvolvida → "career development"
    mais presente) — registrado, sem ação nesta rodada.
 
 **Escopo decidido com o operador antes de implementar**: só SEO/GEO —
 sem feature nova de IA (havia a opção de um "preparador de entrevista"
-por IA, descartada por ora: maior custo, decisão de preço/entitlement
+por IA — que, como a correção acima mostra, já existe como RECOMENDAÇÃO
+não exibida em `job-fit.ts` —, descartada por ora: maior custo, decisão de preço/entitlement
 que este achado isolado não justifica).
 
 **Implementado, `/hiring` — a página que já fala com este exato
