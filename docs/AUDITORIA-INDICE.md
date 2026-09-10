@@ -134,3 +134,4 @@ já lista os três documentos de continuidade; este é o quarto.
 | 2.115 | 7141 | docs,infra,email | Deriva de documentação: handoff §7.3 e mapa §8.7 ainda diziam que o digest estava desligado — corrigidos |
 | 2.116 | 7193 | infra,limpeza | CI no GitHub Actions: tsc, eslint e suíte a cada PR e push em main — sem segredo, sem banco |
 | 2.117 | 7261 | infra,cobranca,ia-router | Testes de cobrança e failover: 33 casos, 12 mutações, o H6 fecha — e o teste de PDF que passava sobre código quebrado |
+| 2.118 | 7400 | infra,decisao | Bloqueio de merge fica desligado: plano gratuito não aplica ruleset em repo privado — reavaliar na primeira venda |

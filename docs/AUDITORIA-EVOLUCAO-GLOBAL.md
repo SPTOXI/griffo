@@ -7394,3 +7394,42 @@ descobertas.
 
 Suíte: **971 testes, `fail 0`** (938 + 20 de cobrança + 13 de
 failover). `tsc`, `eslint` limpos. O H6 fecha por inteiro.
+
+---
+
+## 2.118 O bloqueio de merge fica desligado até haver venda — decisão do operador
+
+O §2.116 deixou uma pendência que não era de código: o CI **informa**
+mas não **barra**, e barrar depende de marcar o check como *required*
+na proteção da branch `main`, botão que só o dono do repositório
+aperta.
+
+O operador tentou. O GitHub recusou: *"Your rulesets won't be enforced
+on this private repository until you move to GitHub Team organization
+account."* Não é erro de configuração — em repositório **privado** no
+plano gratuito o GitHub simplesmente não aplica regra de bloqueio, nem
+por *ruleset* (modelo novo) nem por *branch protection* clássica (que
+está sendo aposentada; se um dia isto for reativado, o caminho é
+**Add branch ruleset**, não o clássico).
+
+**Três saídas foram apresentadas:** (1) deixar como está — o
+verificador roda e mostra ✅/❌ em cada PR, sem impedir o merge;
+(2) GitHub Pro, ~US$ 4/mês na conta pessoal, que libera o bloqueio em
+repositório privado; (3) tornar o repositório público, que libera de
+graça e expõe o código — descartada na hora.
+
+**Decisão do operador: opção 1, e reavaliar quando houver venda.**
+"desativei, deixa começar a ter vendas que ativo". Registrado aqui para
+que ninguém tente de novo daqui a três meses, receba a mesma recusa e
+gaste tempo achando que configurou errado.
+
+**O que isso significa na prática, sem eufemismo:** um commit vermelho
+PODE ser mesclado na `main` — e mesclar na `main` dispara o deploy pela
+Vercel. O que impede isso hoje é disciplina de processo (trabalhar por
+PR e não mesclar nada vermelho), não o GitHub. Enquanto o repositório
+tem um humano e um agente trabalhando por PR, o risco é aceitável; ele
+sobe no dia em que entrar mais alguém com acesso de escrita — e é esse,
+não a data de uma venda, o gatilho técnico real para ligar o bloqueio.
+
+**Gatilho para reabrir:** primeira venda (critério do operador) ou
+segundo colaborador com acesso de escrita, o que vier primeiro.

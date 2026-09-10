@@ -14,6 +14,13 @@ name: Verificações (tipos, lint, testes)
 # precisasse de credencial de produção para rodar seria um CI que ninguém liga
 # num fork e que vaza segredo em log.
 #
+# Este CI INFORMA, mas não BARRA: marcar o check como *required* na proteção da
+# branch `main` não funciona em repositório privado no plano gratuito do GitHub
+# ("Your rulesets won't be enforced on this private repository until you move to
+# GitHub Team organization account"). Decisão do operador em 10/09/2026:
+# reavaliar na primeira venda, ou quando entrar um segundo colaborador com
+# acesso de escrita. Ver §2.118 da auditoria antes de tentar ligar de novo.
+#
 # `npm run build` NÃO entra aqui: o Vercel já builda o preview a cada push do
 # PR, com as env vars reais. Repetir o build sem elas daria vermelho por falta
 # de credencial, não por defeito — ruído que ensina a ignorar o CI.
