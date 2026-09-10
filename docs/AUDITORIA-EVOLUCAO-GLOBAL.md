@@ -7135,3 +7135,301 @@ presente no JSON-LD renderizado. `tsc --noEmit`, `eslint` e `npm test`
 (938/938) limpos, `npm run build` limpo.
 
 Pendência "licença do dataset" fecha.
+
+---
+
+## 2.115 Dois documentos ainda diziam que o digest está desligado
+
+Conferência de fim de sessão, pedida pelo operador ("veja se ficou
+alguma pendência de push e de melhorias"). Push: nada — `main` no
+remoto está exatamente em `3645f1f`, árvore local limpa, nenhuma
+branch além de `main`, nenhum PR aberto. `tsc --noEmit`, `eslint` e a
+suíte (938/938, `fail 0`) reconferidos limpos neste commit.
+
+O que a conferência achou foi **deriva de documentação**, não de
+código: o §2.108 registrou que `RADAR_DIGEST_ENABLED=true` foi ligado
+em produção em 08/09/2026 e que quatro e-mails reais saíram
+(confirmados por `RadarAlert.notifiedAt` gravado nos quatro
+registros), mas dois documentos continuaram descrevendo o estado
+anterior:
+
+- `docs/HANDOFF-CONTINUIDADE.md`, §7.3 — título "🟡 IMPLEMENTADO E
+  DESLIGADO", mais o parágrafo "O que ainda não foi exercitado:
+  nenhuma mensagem saiu de verdade" e a instrução "não ligue o envio
+  antes do Radar estar validado".
+- `docs/MAPA-DO-PRODUTO.md`, §8.7 — título "implementado e desligado"
+  e "**O envio está desligado por decisão**".
+
+Uma segunda passada de `grep` no mesmo commit achou mais dois pontos do
+handoff que a primeira leitura não pegou, ambos fora do §7.3 e por isso
+fáceis de deixar para trás: a tabela de etapas da seção 3 ("Aviso por
+e-mail | 🟡 implementado, envio desligado por decisão") e a lista "o
+que NÃO está pendente e parece que está" da seção 0 ("desligado de
+propósito"). Corrigidos junto. A lição operacional é a de sempre neste
+projeto: um fato que muda de estado costuma estar escrito em mais
+lugares do que a seção que trata dele — `grep` pelo termo, não só pela
+seção.
+
+Isso é exatamente o risco que o cabeçalho do `AUDITORIA-INDICE.md`
+descreve para o índice desatualizado: um documento errado é pior que
+um documento ausente, porque parece confiável. Quem lesse o mapa
+antes da auditoria (a ordem de leitura que o próprio handoff
+recomenda) concluiria que o canal de e-mail nunca foi exercitado — e
+poderia, por exemplo, "ligar" de novo algo já ligado, ou tratar o
+domínio como sem reputação construída.
+
+**Corrigido**: as duas seções passam a descrever o estado real, com a
+data do primeiro envio, os quatro destinatários, a forma de
+confirmação (banco, não log) e a armadilha do `RESEND_API_KEY` escrito
+sem `=` no `.env` — que é o achado reutilizável do §2.108, não uma
+curiosidade. O aviso sobre reputação de domínio permanece nos dois
+lugares: continua valendo, só deixou de ser motivo para manter o envio
+desligado.
+
+Nenhum código mudou nesta seção — só documentação.
+
+---
+
+## 2.116 CI no GitHub Actions — a verificação sai da memória humana
+
+Pedido do operador, na sequência do §2.115: "não quero nada que
+dependa da memória humana, tudo 100% IA". O §2.115 tinha acabado de
+mostrar por que: um fato mudou de estado em produção e quatro trechos
+de documentação continuaram descrevendo o estado anterior, porque
+depender de alguém lembrar de atualizar não é processo, é sorte. O
+mesmo vale para as verificações de código.
+
+**O que existia até aqui.** Um workflow só, `hiring-index-monthly.yml`,
+que é um cron de coleta — não verifica código nenhum. Os checks que
+apareciam nos PRs eram do Vercel, e o que eles provam é que o preview
+buildou: `next build` NÃO executa teste. Um commit podia entrar em
+`main` com a suíte quebrada e o PR ficar verde. Toda linha "`tsc`,
+`eslint` e suíte limpos" desta auditoria foi escrita porque alguém
+rodou os três na mão e lembrou de anotar.
+
+**O que passou a existir.** `.github/workflows/ci.yml`, um job só:
+`npm ci` → `npx prisma generate` → `npx tsc --noEmit` → `npm run lint`
+→ `npm test`. Dispara em `pull_request` (qualquer branch) e em `push`
+para `main`, mais `workflow_dispatch` para rodar sob demanda.
+
+**Quatro decisões que não são óbvias:**
+
+- **`prisma generate` antes do `tsc`, e não depois do `npm ci` por
+  acaso.** Os tipos do `@prisma/client` são gerados a partir do schema.
+  Quem já tem o client no `node_modules` não vê o problema; num
+  checkout limpo o type-check reprovaria em cima de tipo ausente. É a
+  falha que teria feito o primeiro CI ficar vermelho por motivo errado.
+- **Nenhum segredo, nenhum banco.** Verificado, não suposto:
+  `prisma generate` roda com `POSTGRES_PRISMA_URL` e
+  `POSTGRES_URL_NON_POOLING` ausentes do ambiente (gerou o client em
+  580ms sem reclamar), e o único teste que toca ambiente,
+  `src/middleware.test.ts`, seta e restaura `GEO_REDIRECT_ENABLED` ele
+  mesmo. CI que exige credencial de produção é CI que não roda em fork
+  e que arrisca vazar segredo em log.
+- **`npm run build` fica de fora.** O Vercel já builda o preview a cada
+  push do PR, com as env vars reais. Repetir o build sem elas daria
+  vermelho por falta de credencial, não por defeito — e CI que dá
+  vermelho por motivo que não é defeito ensina a ignorar CI.
+- **`push` só em `main`.** Com `pull_request` cobrindo as branches, um
+  `push: branches: ['**']` rodaria o mesmo commit duas vezes. `main`
+  entra na lista porque merge direto, sem PR, também precisa passar.
+
+**Verificado antes de subir, não depois.** Um clone limpo da própria
+branch, em diretório separado, com os passos exatos do workflow na
+ordem exata: `npm ci` (988 MB de `node_modules` do zero),
+`prisma generate`, `tsc --noEmit`, `eslint`, `npm test`. É a única
+forma honesta de saber se o workflow passa — rodar os comandos no
+repositório de trabalho, que já tem tudo gerado, provaria menos.
+
+**O que este CI NÃO resolve**, e continua aberto no H6: os testes dos
+caminhos de cobrança e failover. A suíte cobre lógica pura; nenhum
+teste exercita `entitlements.ts` ou o failover do `ai-router` de ponta
+a ponta — justamente as áreas que a seção 10 do documento de
+continuidade marca como "onde o erro não aparece como erro". CI verde
+sobre cobertura ausente não é segurança, é silêncio. O H6 fica metade
+feito, e a metade que falta é a de mais valor.
+
+**Falta um passo que não é código e que só o dono do repositório pode
+dar**: marcar `tsc + eslint + suíte` como **required status check** na
+proteção da branch `main` (Settings → Branches). Sem isso o CI informa
+mas não barra — dá para mesclar por cima do vermelho. Enquanto esse
+botão não for ligado, o resultado continua dependendo de alguém olhar,
+que é exatamente o que este trabalho existe para eliminar.
+
+---
+
+## 2.117 Testes de cobrança e failover — o H6 fecha por inteiro
+
+O §2.116 pôs o CI para rodar `tsc`, `eslint` e a suíte sozinho, e
+registrou o que ele NÃO resolvia: a suíte cobria lógica pura, e nada
+exercitava `lib/entitlements.ts` (cobrança) nem o failover do
+`lib/ai-router/router.ts` — as duas áreas que a seção 10 do documento
+de continuidade marca como "onde o erro não aparece como erro". CI
+verde sobre cobertura ausente não é segurança, é silêncio. Operador
+mandou fechar: "sim, faz os testes de cobrança e failover".
+
+**Por que esses dois módulos nunca tinham teste.** Não era desleixo: os
+dois começam com `import 'server-only'`, um pacote-marcador cujo
+`index.js` só faz lançar um erro. É assim que o Next impede que um
+módulo de servidor seja arrastado para o bundle do cliente — e fora do
+Next qualquer import dele lança, o que deixava justamente os arquivos
+mais críticos inalcançáveis pelo `node --test`.
+
+**Três caminhos testados, dois descartados com medida, não com
+opinião:**
+
+1. `--conditions=react-server` (o pacote publica essa condição
+   apontando para um `empty.js`). Resolveria — e mudaria a resolução de
+   TODOS os pacotes que publicam a condição. Medido antes de decidir: a
+   suíte caiu de **938 para 907 testes, com 2 falhas**. Encolher em
+   silêncio é o cenário que a seção 8 classifica como grave.
+2. `mock.module` do `node:test`: experimental no Node 22, exige outra
+   flag, mesmo alcance global.
+3. **Escolhido**: `scripts/test-setup.mjs`, carregado por `--import` no
+   `npm test`, usando `registerHooks` para redirecionar UM specifier —
+   `server-only` — para um módulo vazio. Precisou ser `registerHooks`
+   (síncrono) e não `module.register`: o tsx transpila os `.ts` deste
+   projeto para CommonJS, e um hook só de ESM não é consultado no
+   `require('server-only')`. Testado, não suposto. Precisou também
+   apontar para um ARQUIVO real, não um `data:` URL — o carregador CJS
+   tenta abrir a URL devolvida pelo hook, e um `data:` vira ENOENT.
+   Conferido depois da mudança: a suíte continua em **938/938**.
+
+**Como o banco entra no teste sem virar banco de mentira.**
+`lib/db.ts` guarda o cliente em `globalThis.prisma` — o truque que faz
+o hot reload do Next não abrir conexão nova a cada recompilação — e só
+constrói o cliente se essa referência estiver vazia. Preencher a
+referência ANTES da primeira consulta faz o `db` do produto usar um
+fake em memória (`lib/testing/fake-prisma.ts`), **sem uma linha de
+código de produção mudar**. O fake lança em qualquer consulta com
+formato que ele não conhece: se uma consulta do produto mudar de
+forma, o teste quebra alto em vez de passar por acidente.
+
+O arquivo do fake diz, em cima, o que ele NÃO prova: a unicidade de
+`AnalysisLedger.paymentRef`, a atomicidade do `updateMany` com
+`unlockedAt: null` e o rollback da transação são garantias do
+Postgres; aqui são, respectivamente, um erro `P2002` imitado, um `if` e
+uma cópia do estado. O que os testes provam é que **o código reage
+certo ao que o banco responde**. Escrever isso em vez de deixar
+implícito é o ponto: teste que finge ser garantia de banco é pior que
+teste nenhum, porque convence.
+
+**Cobrança — 20 casos** (`lib/entitlements.test.ts`). Compra credita e
+registra a linha com os campos de conciliação; o MESMO pagamento
+entregue duas vezes credita uma vez só (é a corrida real entre o
+webhook da Stripe e a verificação direta da sessão); pagamentos
+diferentes somam; país de pagamento passa a mandar na faixa seguinte e
+país vazio não apaga o que havia; falha que não é `P2002` SOBE em vez
+de virar "creditado". Destrave consome exatamente uma análise e
+registra o movimento; o segundo destrave do mesmo currículo não cobra
+de novo; sem saldo não destrava nem deixa rastro; admin destrava sem
+consumir e sem linha no ledger; conta suspensa não passa; currículo de
+outro usuário não é destravável. Dois casos de concorrência: quando
+outra requisição destrava primeiro, o saldo não é tocado; e quando o
+saldo some entre a leitura e a escrita, a transação desfaz o destrave
+inteiro — o currículo não pode ficar liberado de graça. Mais as três
+guardas de rota (402 com saldo para a tela oferecer a compra certa, 404
+para currículo inexistente, e a regra do Radar, que pede "algum
+currículo destravado", não aquele).
+
+**Failover — 13 casos** (`lib/ai-router/failover.test.ts`). O dublê
+aqui é o `globalThis.fetch`, e ele cobre os DOIS caminhos do roteador:
+o Claude, que chama `fetch` direto, e os provedores compatíveis com
+OpenAI, cujo SDK também usa o `fetch` global. Primário respondendo não
+chama suplente; primário fora do ar cai para o DeepSeek e o failover
+deixa rastro em `AuditLog` (não pode ser silencioso); o `AiLog` guarda
+o primário pretendido E o que respondeu, senão o painel não distingue
+"o Claude está caindo" de "esta tarefa sempre rodou no DeepSeek";
+resposta 200 com lixo é reprovada pelo agente de qualidade e dispara o
+suplente; truncamento em `max_tokens` é falha, não conteúdo parcial;
+provedor sem chave é pulado sem consumir tentativa de rede; quando
+todos falham o erro do usuário não vaza detalhe de provedor (o
+diagnóstico existe, separado, como manda a seção 10.9) e a rodada
+ainda é registrada. **Residência de dados com prova de destino**:
+usuário em Portugal com o Claude fora cai no Gemini, e as asserções
+verificam que nenhuma chamada saiu para DeepSeek ou Kimi — a regra do
+GDPR verificada pelo endereço que recebeu a requisição, não pela
+intenção do código. Mais o desvio para o Claude quando há PDF anexado,
+a ausência de suplente nesse caso, e a repetição sem cache quando o
+Claude recusa o bloco de cache com 400.
+
+**Os testes foram testados.** Teste que passa não prova nada até
+falhar quando deve: oito mutações no código de produção, uma por vez,
+com o arquivo restaurado depois de cada uma.
+
+| Mutação | Pego? |
+|---|---|
+| `P2002` deixa de ser tratado (compra duplicada credita de novo) | sim |
+| `updateMany` sem `unlockedAt: null` | sim |
+| `update` do saldo sem `gte: 1` | sim |
+| Guarda derivada libera currículo não destravado | sim |
+| Filtro de residência de dados removido | sim |
+| Agente de qualidade desligado | sim |
+| `status` do AiLog nunca marca failover | sim |
+| Repetição sem cache removida | sim |
+| Truncamento aceito como resposta boa | sim |
+| Erro final sem diagnóstico | sim |
+| PDF deixa de forçar o Claude | **não, na primeira versão** |
+| Com PDF, a cadeia de suplentes volta a existir | sim |
+
+A linha em negrito é o achado desta rodada, e ela vale mais que as
+outras onze juntas: o teste de PDF usava `analysis_segment`, uma tarefa
+que **já é roteada para o Claude** — com ou sem o desvio, a chamada ia
+para o mesmo lugar, e o teste passava verde sobre código quebrado.
+Corrigido em duas frentes: a tarefa passou a ser `profile_extraction`
+(roteada para o DeepSeek por decisão de custo), e a asserção passou a
+cobrir também `primaryModel`, porque o desvio muda o primário
+REGISTRADO — sem isso o AiLog diria que a tarefa pretendia o DeepSeek e
+"caiu" para o Claude, inventando um failover que nunca houve. É
+exatamente a classe de teste inútil que este projeto não pode ter em
+cima de cobrança e de rota de IA.
+
+**O que continua sem cobertura, e é honesto dizer:** o corte por
+orçamento de tempo do roteador (`MAX_PROVIDER_ATTEMPTS`,
+`providerTimeoutMs`, a reserva de sobrecarga). Exercitá-lo exigiria
+esperar dezenas de segundos reais, e um teste que dorme 25s não
+sobrevive a CI nenhum. Continua verificado só pelo comportamento em
+produção — que é como as duas falhas históricas dessa mecânica foram
+descobertas.
+
+Suíte: **971 testes, `fail 0`** (938 + 20 de cobrança + 13 de
+failover). `tsc`, `eslint` limpos. O H6 fecha por inteiro.
+
+---
+
+## 2.118 O bloqueio de merge fica desligado até haver venda — decisão do operador
+
+O §2.116 deixou uma pendência que não era de código: o CI **informa**
+mas não **barra**, e barrar depende de marcar o check como *required*
+na proteção da branch `main`, botão que só o dono do repositório
+aperta.
+
+O operador tentou. O GitHub recusou: *"Your rulesets won't be enforced
+on this private repository until you move to GitHub Team organization
+account."* Não é erro de configuração — em repositório **privado** no
+plano gratuito o GitHub simplesmente não aplica regra de bloqueio, nem
+por *ruleset* (modelo novo) nem por *branch protection* clássica (que
+está sendo aposentada; se um dia isto for reativado, o caminho é
+**Add branch ruleset**, não o clássico).
+
+**Três saídas foram apresentadas:** (1) deixar como está — o
+verificador roda e mostra ✅/❌ em cada PR, sem impedir o merge;
+(2) GitHub Pro, ~US$ 4/mês na conta pessoal, que libera o bloqueio em
+repositório privado; (3) tornar o repositório público, que libera de
+graça e expõe o código — descartada na hora.
+
+**Decisão do operador: opção 1, e reavaliar quando houver venda.**
+"desativei, deixa começar a ter vendas que ativo". Registrado aqui para
+que ninguém tente de novo daqui a três meses, receba a mesma recusa e
+gaste tempo achando que configurou errado.
+
+**O que isso significa na prática, sem eufemismo:** um commit vermelho
+PODE ser mesclado na `main` — e mesclar na `main` dispara o deploy pela
+Vercel. O que impede isso hoje é disciplina de processo (trabalhar por
+PR e não mesclar nada vermelho), não o GitHub. Enquanto o repositório
+tem um humano e um agente trabalhando por PR, o risco é aceitável; ele
+sobe no dia em que entrar mais alguém com acesso de escrita — e é esse,
+não a data de uma venda, o gatilho técnico real para ligar o bloqueio.
+
+**Gatilho para reabrir:** primeira venda (critério do operador) ou
+segundo colaborador com acesso de escrita, o que vier primeiro.

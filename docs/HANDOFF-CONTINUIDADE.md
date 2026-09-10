@@ -29,14 +29,18 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 09/09/2026: **Licença do dataset decidida: CC BY 4.0 (§2.114)** — pendência aberta desde o §2.85, registrada como jurídica/não técnica. Apresentadas três opções: (1) CC BY 4.0 — uso livre com atribuição; (2) licença própria restritiva — uso editorial sim, redistribuição comercial não, sem bloqueio técnico; (3) CC0 no dado bruto, proprietário só na metodologia/apresentação. Recomendação dada — CC BY 4.0, porque o objetivo desde o §2.85 era autoridade externa/backlink, não proteger dado que já é majoritariamente público de origem (BLS/Eurostat/ILOSTAT/CEPALSTAT) — **aceita pelo operador**. Implementado: campo `license` no `Dataset` JSON-LD de `market-pulse/page.tsx`; chave `licenseNote` nova em `i18n/types.ts` (12 idiomas); propagada por `map-model.ts` até `hiring-map.tsx`, que ganhou um link `rel="license"` no rodapé do mapa, ao lado do crédito do mapa-base (Natural Earth) que já existia — são licenças diferentes, créditos separados. Verificado em dev server local (`/market-pulse?lang=en`): linha "Data licensed under CC BY 4.0 — free to use with attribution." aparece como link; `curl` confirmou o campo no JSON-LD renderizado. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
-| Anterior | 09/09/2026: **As duas últimas branches `claude/*` auditadas e apagadas do remoto (§2.113)** — sobra do §2.99/pendência 3: `claude/project-status-update-m6kqex` e `claude/security-vulnerabilities-review-2qtbz1` ficaram preservadas de propósito até alguém conferir o conteúdo. Conferidas: cada uma parava num `main` de 24/08 com 1–2 commits reais — o `db:rls` sem `psql`/shell (`sql-split.ts`, `apply-rls.ts`) de uma, `docs/MAPA-DO-PRODUTO.md` (758 linhas) da outra — e os dois já estavam em `main`: os arquivos existem lá, e o `MAPA-DO-PRODUTO.md` veio byte a byte idêntico num `git diff` entre as versões. O `diff --stat` enorme contra `main` era só deriva de dez dias de trabalho depois do ponto onde as branches pararam, não conteúdo delas ausente de `main`. Apagadas do remoto com confirmação do operador antes do comando (ação irreversível sobre estado compartilhado). Só `main` no remoto agora — pendência 3 fecha por completo |
-| Anterior (2) | 09/09/2026: **Pendência 7.2 fecha — confirmada a rota exata do currículo direcionado a partir da vaga (§2.112)** — desde o §2.100 a evidência era só de produto: uma carta de apresentação real vista em produção, "Direcionada a: Página da Vaga \| BIOMÉDICO(A)", sem confirmar se o caminho era `POST /api/radar/prepare` ou outro fluxo. Confirmado por leitura de código, sem ambiguidade: o botão "Preparar Currículo" em `radar-view.tsx:642` chama exatamente essa rota com `{alertId}`; ela direciona o currículo mais recente do usuário (ou o indicado) — nunca cria um novo, porque a permissão de uso é por currículo e um novo cobraria de novo por algo não pedido —, grava `resume.targetJob`/`targetJobDescription` a partir do `RadarAlert`, avisa o alvo anterior em vez de trocar em silêncio, e marca `RadarAlert.clickedAt` como sinal de conversão. É esse `targetJob` que a tela de reescrita mostra como "Direcionada a: {job}" — bate exatamente com o texto visto em produção. Nenhum código mudou, só confirmação; nenhuma pendência de código restante nesta lista |
-| Anterior (3) | 08/09/2026: **Legenda: a moeda segue o país de acesso, não o idioma da tela (§2.111)** — operador perguntou se o preço (R$ 29,90) e o upsell deviam seguir o idioma escolhido "em vez de ficar em reais". Resposta: não — `resolvePricingContext()` já resolve por país de pagamento (se já houve compra) ou país de acesso por IP, nunca por idioma; amarrar ao idioma reabriria o problema que o catálogo já corrigiu (preço mostrado divergente do cobrado). Operador concordou e pediu uma legenda discreta embaixo do preço avisando disso — texto ajustado em conversa até fechar em **"A moeda corrente acompanha a origem do seu acesso, não o idioma da tela."** Chave nova `currencyFollowsAccess`, 12 idiomas, usada na landing (`PlanCard`, novo prop `priceCaption`) e em `plans-view.tsx` (abaixo do preço principal, cobrindo também o upsell da mesma tela). Verificado em produção na tela autenticada "Comprar Análise" com login real; a landing pública não foi reconferida visualmente (sessão do navegador autenticada, sem forçar logout) — mesmo padrão de componente já confirmado, tipo checado. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
-| Anterior (4) | 08/09/2026: **Tagline "Global AI Career Intelligence" dentro do app — mapa duplicado desatualizado (§2.110)** — operador reportou, olhando o app já com os fixes do §2.109: ao lado da logo, dentro do sistema, ainda dizia "Global AI Career Intelligence" em vez de só "Career Intelligence". Causa: `landing.tsx` e `app-shell.tsx` tinham cada um sua própria cópia do mapa de tagline por idioma — a de `landing.tsx` seguia a decisão de posicionamento já registrada ("sem 'AI'/'Global'"), a de `app-shell.tsx` nunca recebeu essa decisão: só três idiomas (pt/en/es), todos ainda com "GLOBAL AI CAREER INTELLIGENCE". Centralizado em `brandTaglineForLang(lang)`, `lib/i18n/index.ts`, os 12 idiomas, fonte única pros dois componentes — evita um terceiro lugar divergir de novo. Verificado em produção, tela autenticada: "INTELIGÊNCIA DE CARREIRA", igual à landing. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
-| Anterior (5) | 08/09/2026: **Revisão visual das telas autenticadas — pendência 4 fecha, dois achados reais, corrigidos na mesma sessão (§2.109)** — login do operador, percorridas em produção Painel, Enviar Currículo, Laudo (2 abas), Perfil Profissional, Radar, Reescrita, Downloads, Histórico, Comprar Análise, Suporte & Dúvidas, Configurações, mais a landing em PT e árabe (RTL). A maior parte limpa (menu azul não emerald, breadcrumb sem duplicar, accordion do perfil, aba padrão do laudo, RTL espelhando tudo certo). **Achado 1, corrigido**: o cabeçalho (`sticky top-0`) e a faixa de resumo do laudo (`sticky top-14`, do §7.7) não grudavam no topo ao rolar — `overflow-x-hidden`/`overflow-hidden` em `app-shell.tsx` faziam o CSS computar um contêiner de rolagem que nunca rola de verdade, tirando o `sticky` do contexto real da página; trocado por `overflow-x-clip`/`overflow-clip`. **Achado 2, corrigido**: o card B2B de `plans-view.tsx` não tinha o link `businessDataCta` que o §2.105 deu à landing — adicionado. Um falso alarme descartado por checagem cruzada: um screenshot durante scroll mostrou dezenas de cards de país repetidos na Reescrita — `get_page_text` confirmou os 17 mercados corretos, era artefato da ferramenta de automação. Reverificado em produção numa aba nova, com `wait` antes da captura: cabeçalho e faixa presos no topo, card B2B com o link novo. Viewport mobile não verificável (`resize_window` sem efeito na captura nesta sessão). `tsc`, `eslint`, `build` e suíte (938/938) limpos |
-| Anterior (6) | 08/09/2026: **Pendência 1 fecha — primeiro digest real enviado, depois de dois achados em produção (§2.107, §2.108)** — verificando a busca avulsa em produção com login do operador, o botão deu **504 real** (não simulado): `runCollection()` reescreve TODAS as vagas do JobBase a cada rodada, e a escrita em lotes não cabia numa requisição HTTP, só no orçamento do cron. Corrigido rodando a coleta em `after()` (mesmo mecanismo de `profile_extraction`), resposta imediata, cliente descobre o fim olhando `lastRunAt` avançar — sem endpoint novo. Verificado de novo com login real: sem 504, contador consumido certo. Em seguida, operador mandou "libera logo essa função" pro digest — `RADAR_DIGEST_ENABLED=true` ligado, cron manual rodou pra **4 usuários reais**, e falhou por `RESEND_API_KEY` ausente. A chave existia no `.env` local, mas escrita como nota de texto (`resend apikey: ...`, sem `=`) — nunca foi uma variável de ambiente de verdade, nem local nem na Vercel. Corrigido o formato local; operador cadastrou a chave na Vercel; um redeploy não bastou (env var nova só vale a partir do PRÓXIMO deployment); um segundo resolveu. **Confirmado por banco, não por ausência de erro no log**: os 4 `RadarAlert` têm `notifiedAt` gravado — campo que só existe depois de `sendEmail()` ter sucesso. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
-| Suíte | **938 testes, `fail 0`** — estável desde o §2.107; o contrato do `rls.sql` continua em 5 instruções desde o §2.89, regra de contagem na seção 8 |
+| Última revisão | 10/09/2026: **Bloqueio de merge fica desligado por limite de plano — decisão registrada (§2.118)** — o §2.116 deixou como pendência marcar o check do CI como *required* na `main`. O operador tentou e o GitHub recusou: em repositório **privado no plano gratuito** não há como aplicar *ruleset* nem proteção clássica ("until you move to GitHub Team organization account"). Três saídas apresentadas — deixar informativo, GitHub Pro (~US$ 4/mês) ou tornar o repo público (descartada) —, **decisão: deixar informativo e reavaliar na primeira venda**. Consequência dita sem eufemismo: um commit vermelho PODE ser mesclado na `main`, e mesclar dispara o deploy; o que impede isso hoje é processo, não o GitHub. Gatilho para reabrir: primeira venda ou segundo colaborador com acesso de escrita. Registrada também a instrução permanente do operador — documentar tudo, inclusive o que não foi feito e por quê (seção 5) |
+| Anterior | 10/09/2026: **Cobrança e failover ganham teste — o H6 fecha por inteiro (§2.117)** — as duas áreas que a seção 10 marca como "onde o erro não aparece como erro" estavam sem cobertura porque começam com `import 'server-only'`, que lança fora do Next. Resolvido com `scripts/test-setup.mjs` (`registerHooks` redirecionando SÓ esse specifier; `--conditions=react-server` foi medido antes e descartado: derrubava a suíte de 938 para 907 com 2 falhas). O banco entra pelo `globalThis.prisma`, o mesmo ponto do hot reload — **zero linha de produção mudou**. 20 casos de cobrança (idempotência da compra, duplo destrave, corrida perdida, rollback do destrave quando o saldo some, admin sem ledger, as três guardas de rota) e 13 de failover (suplente por erro, por lixo aprovado em 200, por truncamento; rastro em AuditLog; erro do usuário sem vazar provedor; **residência de dados provada pelo endereço que recebeu a chamada**). Os testes foram testados: 12 mutações no código de produção, **uma passou verde** — o teste de PDF usava uma tarefa que já ia para o Claude —, corrigida com tarefa roteada para outro provedor e asserção sobre `primaryModel`. Sem cobertura, e dito: o corte por orçamento de tempo, que exigiria dormir 25s. Suíte **971/971**, `tsc` e `eslint` limpos |
+| Anterior (2) | 10/09/2026: **CI no GitHub Actions — a verificação sai da memória humana (§2.116)** — pedido do operador na sequência do §2.115 ("não quero nada que dependa da memória humana"). Até aqui o único workflow era o cron mensal do hiring-index, e os checks dos PRs eram do Vercel, que só prova que o preview buildou: `next build` não executa teste, então um commit podia entrar em `main` com a suíte quebrada e o PR ficar verde. `.github/workflows/ci.yml` roda `npm ci` → `prisma generate` → `tsc --noEmit` → `eslint` → `npm test` a cada `pull_request` e a cada `push` em `main`. **Sem segredo e sem banco**, verificado e não suposto: `prisma generate` roda com as duas env vars do Postgres ausentes, e o único teste que toca ambiente (`middleware.test.ts`) seta e restaura `GEO_REDIRECT_ENABLED` sozinho. `npm run build` fica de fora porque o Vercel já builda o preview com as env vars reais. Validado num clone limpo, com os passos exatos do workflow na ordem exata. Falta um botão que só o dono do repositório aperta: marcar o check como *required* na proteção de `main` — sem isso o CI informa, mas não barra |
+| Anterior (3) | 10/09/2026: **Conferência de fim de sessão — nada pendente de push, uma deriva de documentação corrigida (§2.115)** — `main` no remoto exatamente no commit local, árvore limpa, só `main` no remoto, nenhum PR aberto; `tsc`, `eslint` e a suíte (938/938, `fail 0`) reconferidos limpos. O que a conferência achou foi documentação errada, não código: o §7.3 deste documento ("🟡 IMPLEMENTADO E DESLIGADO... nenhuma mensagem saiu de verdade") e o §8.7 do `MAPA-DO-PRODUTO.md` ("o envio está desligado por decisão") ainda descreviam o digest como desligado, oito dias depois de o §2.108 registrar o contrário — ligado em 08/09, 4 e-mails reais confirmados por `notifiedAt` no banco. Documento errado é pior que documento ausente: parece confiável. As duas seções agora descrevem o estado real, com a armadilha reutilizável do `RESEND_API_KEY` escrito sem `=` no `.env` e o redeploy que não bastou. O aviso de reputação de domínio continua nos dois lugares — deixou de ser motivo para manter o envio desligado, virou o motivo de o matching ser inegociável agora que sai e-mail |
+| Anterior (4) | 09/09/2026: **Licença do dataset decidida: CC BY 4.0 (§2.114)** — pendência aberta desde o §2.85, registrada como jurídica/não técnica. Apresentadas três opções: (1) CC BY 4.0 — uso livre com atribuição; (2) licença própria restritiva — uso editorial sim, redistribuição comercial não, sem bloqueio técnico; (3) CC0 no dado bruto, proprietário só na metodologia/apresentação. Recomendação dada — CC BY 4.0, porque o objetivo desde o §2.85 era autoridade externa/backlink, não proteger dado que já é majoritariamente público de origem (BLS/Eurostat/ILOSTAT/CEPALSTAT) — **aceita pelo operador**. Implementado: campo `license` no `Dataset` JSON-LD de `market-pulse/page.tsx`; chave `licenseNote` nova em `i18n/types.ts` (12 idiomas); propagada por `map-model.ts` até `hiring-map.tsx`, que ganhou um link `rel="license"` no rodapé do mapa, ao lado do crédito do mapa-base (Natural Earth) que já existia — são licenças diferentes, créditos separados. Verificado em dev server local (`/market-pulse?lang=en`): linha "Data licensed under CC BY 4.0 — free to use with attribution." aparece como link; `curl` confirmou o campo no JSON-LD renderizado. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
+| Anterior (5) | 09/09/2026: **As duas últimas branches `claude/*` auditadas e apagadas do remoto (§2.113)** — sobra do §2.99/pendência 3: `claude/project-status-update-m6kqex` e `claude/security-vulnerabilities-review-2qtbz1` ficaram preservadas de propósito até alguém conferir o conteúdo. Conferidas: cada uma parava num `main` de 24/08 com 1–2 commits reais — o `db:rls` sem `psql`/shell (`sql-split.ts`, `apply-rls.ts`) de uma, `docs/MAPA-DO-PRODUTO.md` (758 linhas) da outra — e os dois já estavam em `main`: os arquivos existem lá, e o `MAPA-DO-PRODUTO.md` veio byte a byte idêntico num `git diff` entre as versões. O `diff --stat` enorme contra `main` era só deriva de dez dias de trabalho depois do ponto onde as branches pararam, não conteúdo delas ausente de `main`. Apagadas do remoto com confirmação do operador antes do comando (ação irreversível sobre estado compartilhado). Só `main` no remoto agora — pendência 3 fecha por completo |
+| Anterior (6) | 09/09/2026: **Pendência 7.2 fecha — confirmada a rota exata do currículo direcionado a partir da vaga (§2.112)** — desde o §2.100 a evidência era só de produto: uma carta de apresentação real vista em produção, "Direcionada a: Página da Vaga \| BIOMÉDICO(A)", sem confirmar se o caminho era `POST /api/radar/prepare` ou outro fluxo. Confirmado por leitura de código, sem ambiguidade: o botão "Preparar Currículo" em `radar-view.tsx:642` chama exatamente essa rota com `{alertId}`; ela direciona o currículo mais recente do usuário (ou o indicado) — nunca cria um novo, porque a permissão de uso é por currículo e um novo cobraria de novo por algo não pedido —, grava `resume.targetJob`/`targetJobDescription` a partir do `RadarAlert`, avisa o alvo anterior em vez de trocar em silêncio, e marca `RadarAlert.clickedAt` como sinal de conversão. É esse `targetJob` que a tela de reescrita mostra como "Direcionada a: {job}" — bate exatamente com o texto visto em produção. Nenhum código mudou, só confirmação; nenhuma pendência de código restante nesta lista |
+| Anterior (7) | 08/09/2026: **Legenda: a moeda segue o país de acesso, não o idioma da tela (§2.111)** — operador perguntou se o preço (R$ 29,90) e o upsell deviam seguir o idioma escolhido "em vez de ficar em reais". Resposta: não — `resolvePricingContext()` já resolve por país de pagamento (se já houve compra) ou país de acesso por IP, nunca por idioma; amarrar ao idioma reabriria o problema que o catálogo já corrigiu (preço mostrado divergente do cobrado). Operador concordou e pediu uma legenda discreta embaixo do preço avisando disso — texto ajustado em conversa até fechar em **"A moeda corrente acompanha a origem do seu acesso, não o idioma da tela."** Chave nova `currencyFollowsAccess`, 12 idiomas, usada na landing (`PlanCard`, novo prop `priceCaption`) e em `plans-view.tsx` (abaixo do preço principal, cobrindo também o upsell da mesma tela). Verificado em produção na tela autenticada "Comprar Análise" com login real; a landing pública não foi reconferida visualmente (sessão do navegador autenticada, sem forçar logout) — mesmo padrão de componente já confirmado, tipo checado. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
+| Anterior (8) | 08/09/2026: **Tagline "Global AI Career Intelligence" dentro do app — mapa duplicado desatualizado (§2.110)** — operador reportou, olhando o app já com os fixes do §2.109: ao lado da logo, dentro do sistema, ainda dizia "Global AI Career Intelligence" em vez de só "Career Intelligence". Causa: `landing.tsx` e `app-shell.tsx` tinham cada um sua própria cópia do mapa de tagline por idioma — a de `landing.tsx` seguia a decisão de posicionamento já registrada ("sem 'AI'/'Global'"), a de `app-shell.tsx` nunca recebeu essa decisão: só três idiomas (pt/en/es), todos ainda com "GLOBAL AI CAREER INTELLIGENCE". Centralizado em `brandTaglineForLang(lang)`, `lib/i18n/index.ts`, os 12 idiomas, fonte única pros dois componentes — evita um terceiro lugar divergir de novo. Verificado em produção, tela autenticada: "INTELIGÊNCIA DE CARREIRA", igual à landing. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
+| Anterior (9) | 08/09/2026: **Revisão visual das telas autenticadas — pendência 4 fecha, dois achados reais, corrigidos na mesma sessão (§2.109)** — login do operador, percorridas em produção Painel, Enviar Currículo, Laudo (2 abas), Perfil Profissional, Radar, Reescrita, Downloads, Histórico, Comprar Análise, Suporte & Dúvidas, Configurações, mais a landing em PT e árabe (RTL). A maior parte limpa (menu azul não emerald, breadcrumb sem duplicar, accordion do perfil, aba padrão do laudo, RTL espelhando tudo certo). **Achado 1, corrigido**: o cabeçalho (`sticky top-0`) e a faixa de resumo do laudo (`sticky top-14`, do §7.7) não grudavam no topo ao rolar — `overflow-x-hidden`/`overflow-hidden` em `app-shell.tsx` faziam o CSS computar um contêiner de rolagem que nunca rola de verdade, tirando o `sticky` do contexto real da página; trocado por `overflow-x-clip`/`overflow-clip`. **Achado 2, corrigido**: o card B2B de `plans-view.tsx` não tinha o link `businessDataCta` que o §2.105 deu à landing — adicionado. Um falso alarme descartado por checagem cruzada: um screenshot durante scroll mostrou dezenas de cards de país repetidos na Reescrita — `get_page_text` confirmou os 17 mercados corretos, era artefato da ferramenta de automação. Reverificado em produção numa aba nova, com `wait` antes da captura: cabeçalho e faixa presos no topo, card B2B com o link novo. Viewport mobile não verificável (`resize_window` sem efeito na captura nesta sessão). `tsc`, `eslint`, `build` e suíte (938/938) limpos |
+| Anterior (10) | 08/09/2026: **Pendência 1 fecha — primeiro digest real enviado, depois de dois achados em produção (§2.107, §2.108)** — verificando a busca avulsa em produção com login do operador, o botão deu **504 real** (não simulado): `runCollection()` reescreve TODAS as vagas do JobBase a cada rodada, e a escrita em lotes não cabia numa requisição HTTP, só no orçamento do cron. Corrigido rodando a coleta em `after()` (mesmo mecanismo de `profile_extraction`), resposta imediata, cliente descobre o fim olhando `lastRunAt` avançar — sem endpoint novo. Verificado de novo com login real: sem 504, contador consumido certo. Em seguida, operador mandou "libera logo essa função" pro digest — `RADAR_DIGEST_ENABLED=true` ligado, cron manual rodou pra **4 usuários reais**, e falhou por `RESEND_API_KEY` ausente. A chave existia no `.env` local, mas escrita como nota de texto (`resend apikey: ...`, sem `=`) — nunca foi uma variável de ambiente de verdade, nem local nem na Vercel. Corrigido o formato local; operador cadastrou a chave na Vercel; um redeploy não bastou (env var nova só vale a partir do PRÓXIMO deployment); um segundo resolveu. **Confirmado por banco, não por ausência de erro no log**: os 4 `RadarAlert` têm `notifiedAt` gravado — campo que só existe depois de `sendEmail()` ter sucesso. `tsc`, `eslint`, `build` e suíte (938/938) limpos |
+| Suíte | **971 testes, `fail 0`** — 938 até o §2.116, mais 33 de cobrança e failover no §2.117 (20 em `entitlements.test.ts`, 13 em `ai-router/failover.test.ts`); o contrato do `rls.sql` continua em 5 instruções desde o §2.89, regra de contagem na seção 8 |
 | `tsc`, `build` | `tsc --noEmit`, `eslint` e `npm run build` limpos após o §2.107 (`/api/radar/search-now` com `maxDuration=60`, `ƒ` dinâmica; `/[country]` segue `●` SSG) — §2.109 não mudou código, só documentou achados |
 | Banco | Sincronizado via `prisma db push` (inclui `AnalyticsEvent`, `RadarAlert.notifiedAt` — ver 7.6 —, `LaborMarketPoint` do §2.51, empurrado em 01/09/2026, e `RadarPreference.onDemandSearchCount`/`onDemandSearchWindowStart` do §2.106, empurrado em 07/09/2026) |
 
@@ -408,8 +412,9 @@ o quanto confiar nele.
 
 **O que NÃO está pendente e parece que está:**
 
-- O e-mail do digest está implementado e **desligado de propósito** (§7.3). Não é
-  trabalho pela metade.
+- O e-mail do digest está implementado e **ligado desde 08/09/2026** (§7.3,
+  §2.108), com envio real confirmado por `RadarAlert.notifiedAt` no banco. Não é
+  trabalho pela metade nem pendência de operação.
 - O **`npx prisma db push` do `RadarAlert.notifiedAt`** foi listado como
   pendência do PR #61 até 24/08. A tabela acima registra o banco sincronizado
   com a coluna e o índice `[notifiedAt, userId]`, então o erro diário do Prisma
@@ -519,7 +524,7 @@ ausência de ação. Ver 2.35 na auditoria para o desenho completo.
 | 8 — Ação | ✅ Job Fit + currículo direcionado a partir da vaga |
 | 9 — Assinatura | ⬜ travada pelo §21 |
 | 10 — Escala global | 🟡 13 mercados declarados, cobertura real de fontes varia |
-| Aviso por e-mail | 🟡 implementado, envio desligado por decisão — ver §7.3 |
+| Aviso por e-mail | ✅ ligado em 08/09/2026, primeiro envio real confirmado por banco — ver §7.3 |
 
 **As sete fontes:**
 
@@ -596,6 +601,16 @@ Rotas relevantes: `src/app/api/cron/radar` (a rodada), `src/app/api/radar/*`
 ---
 
 ## 5. Convenções de trabalho
+
+**Documentar TUDO — instrução permanente do operador (10/09/2026).** Toda
+mudança, decisão e recusa entra na documentação: seção nova em
+`AUDITORIA-EVOLUCAO-GLOBAL.md` com o porquê, linha no `AUDITORIA-INDICE.md`,
+e o que envelhece a seção 0 deste documento. Vale inclusive — e
+principalmente — para o que NÃO foi feito e por quê: uma decisão não
+registrada volta como pergunta daqui a três meses, e a resposta se perde
+junto com o motivo. O §2.118 é o exemplo curto: sem ele, alguém tentaria
+ligar o bloqueio de merge de novo, receberia a mesma recusa do GitHub e
+perderia a tarde achando que configurou errado.
 
 **Branch e PR.** Cada sessão de trabalho recebe uma branch `claude/...` própria e
 trabalha só nela; `main` é o que está em produção. Cada bloco vira um PR,
@@ -750,13 +765,14 @@ que foi visto em produção no §2.100. É a ponte entre o Radar e a
 venda; se ela falhar, o Radar não converte. Nenhum código mudou, só
 confirmação.
 
-### 7.3 🟡 IMPLEMENTADO E DESLIGADO — e-mail do digest
+### 7.3 ✅ RESOLVIDO — e-mail do digest, ligado e exercitado em produção
 
-O caminho inteiro existe. O envio **não está ligado**, e ligar é decisão de
-operação: `RADAR_DIGEST_ENABLED=true`.
+O caminho inteiro existe e **está ligado** desde 08/09/2026:
+`RADAR_DIGEST_ENABLED=true` em produção, decisão do operador ("libera logo essa
+função"), registrada no §2.108.
 
 O Resend está configurado no domínio `send.griffo.work`, com SPF, DKIM e DMARC
-passando — mas os testes caem no spam do Gmail por reputação de domínio novo, o
+passando — os testes caíam no spam do Gmail por reputação de domínio novo, o
 que se resolve com uso real e não com configuração.
 
 **Onde está.** `lib/email/digest.ts` monta o conteúdo (puro, com teste),
@@ -789,13 +805,26 @@ arriscar a reputação do domínio. A coluna `notifiedAt` já está no banco des
   abrem sozinhos as URLs de um e-mail. Se o GET desligasse, gente seria
   descadastrada sem ter clicado.
 
-**O que ainda não foi exercitado:** nenhuma mensagem saiu de verdade. O módulo
-de envio foi escrito contra a documentação do Resend, não contra resposta
-observada — exceção declarada à regra da seção 6, e o motivo de `sendEmail`
-receber o `fetch` por parâmetro. O primeiro envio real é o primeiro teste real.
+**O primeiro envio real, e o que ele achou (§2.108).** O módulo de envio tinha
+sido escrito contra a documentação do Resend, não contra resposta observada —
+exceção declarada à regra da seção 6, e o motivo de `sendEmail` receber o
+`fetch` por parâmetro. O primeiro envio real foi o primeiro teste real, e
+falhou: cron manual de 08/09 às 16:38 rodou para os **4 usuários reais** e
+morreu em `Variável de ambiente obrigatória ausente: RESEND_API_KEY`. A chave
+existia no `.env` local, mas anotada como texto solto (`resend apikey: ...`,
+sem o `=`) — nunca foi variável de ambiente, nem local nem na Vercel. Corrigido
+o formato do `.env`, cadastrada a chave na Vercel (Production) pelo operador;
+**um redeploy não bastou** — a Vercel só aplica env var nova a partir do
+deployment seguinte, não no que já está rodando —, um segundo resolveu.
 
-**Não ligue o envio antes do Radar estar validado.** Mandar e-mail sobre vaga
-ruim queima o domínio, e domínio queimado não se recupera fácil.
+**Confirmado por banco, não por ausência de erro no log**: os 4 `RadarAlert`
+dos 4 usuários têm `notifiedAt = 08/09/2026 14:03:37 BRT`, campo que só é
+gravado DEPOIS de `sendEmail()` retornar sucesso. E-mail real, para gente real.
+
+**O aviso de reputação continua valendo** — mandar e-mail sobre vaga ruim queima
+o domínio, e domínio queimado não se recupera fácil. Ele deixou de ser motivo
+para manter o envio desligado (o Radar foi validado antes, §7.4/§7.6), e passou
+a ser o motivo de a qualidade do matching ser inegociável agora que sai e-mail.
 
 ### 7.4 ✅ RESOLVIDO — Busca avulsa do Radar
 
@@ -1092,6 +1121,42 @@ de volta criaria ciclo. Teste novo (`store/auth.test.ts`, 2 casos).
    glob sem aspas e o `node_modules` ausente — estão na seção 9. Confira as
    duas antes de investigar o código.
 4. Ao acrescentar fonte de vaga: peça o `curl` ao operador primeiro. Sempre.
+5. **O CI roda os três sozinho** desde 10/09/2026 (§2.116):
+   `.github/workflows/ci.yml` executa `npm ci` → `prisma generate` →
+   `tsc --noEmit` → `eslint` → `npm test` a cada PR e a cada push em `main`.
+   Isso NÃO substitui rodar antes de subir — o CI é a rede embaixo, não a
+   corda —, mas acaba com o caso em que ninguém rodou e ninguém percebeu.
+
+   Duas coisas para saber sobre ele: `prisma generate` vem antes do `tsc` de
+   propósito (os tipos do `@prisma/client` são gerados; sem esse passo o
+   type-check reprova num checkout limpo), e o workflow **não usa segredo
+   nenhum** — se algum dia precisar de credencial para passar, alguma
+   dependência de ambiente entrou na suíte e é isso que deve ser investigado,
+   não o CI.
+
+   O CI **informa** e NÃO **barra** — decisão registrada, não esquecimento
+   (§2.118). Barrar exigiria marcar o check como *required* na proteção da
+   `main`, e o GitHub não aplica isso em repositório **privado** no plano
+   gratuito: "Your rulesets won't be enforced on this private repository until
+   you move to GitHub Team organization account". Não adianta tentar de novo
+   sem mudar de plano. Reavaliar na primeira venda (critério do operador) ou
+   quando entrar um segundo colaborador com acesso de escrita — o que vier
+   primeiro. Até lá o que impede um merge vermelho é processo, não o GitHub:
+   trabalhar por PR e não mesclar nada vermelho. Lembrando que mesclar na
+   `main` dispara o deploy.
+6. **`npm test` carrega `scripts/test-setup.mjs`** desde o §2.117, e isso não é
+   opcional: é ele que redireciona o pacote-marcador `server-only` para um
+   módulo vazio. Sem esse `--import`, os testes de `entitlements.ts` e do
+   roteador de IA nem carregam — `server-only` lança em qualquer import fora do
+   Next. Se algum dia a suíte encolher de repente, confira se o `--import`
+   continua no script (é a terceira causa conhecida de suíte que emagrece, ao
+   lado das duas da seção 9).
+
+   Nos testes, o cliente do banco é trocado em `globalThis.prisma` — o mesmo
+   ponto que `lib/db.ts` usa para sobreviver ao hot reload. Nenhum código de
+   produção conhece o fake. O que ele prova e o que NÃO prova está escrito no
+   cabeçalho de `lib/testing/fake-prisma.ts`; em resumo, ele verifica a reação
+   do código à resposta do banco, não a garantia do banco.
 
 ---
 
