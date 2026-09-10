@@ -657,7 +657,7 @@ das vagas realmente recentes.
 cota de API, e há uma reserva de 20% que protege a primeira. É a trava que
 precisa existir antes de a busca imediata paga entrar (§9).
 
-### 8.7 E-mail do digest — implementado e desligado
+### 8.7 E-mail do digest — ligado, com envio real confirmado
 
 `lib/email/` (`send.ts`, `digest.ts`, `unsubscribe.ts`) e
 `lib/radar/digest.server.ts`. O canal que o documento de 14/08 listava como
@@ -669,10 +669,18 @@ O que o digest respeita: idioma do usuário (`communicationLanguage`),
 descadastro assinado, `Reply-To` em `@griffo.work`, e `RadarAlert.notifiedAt`
 para não repetir alerta.
 
-**O envio está desligado por decisão**, atrás de `RADAR_DIGEST_ENABLED`. Com ele
-desligado, o cron registra no log quem receberia o quê. Mandar e-mail sobre vaga
-ruim queima o domínio, e domínio queimado não se recupera fácil — o envio não
-liga antes de o Radar estar validado com gente real.
+**O envio está ligado** desde 08/09/2026 (`RADAR_DIGEST_ENABLED=true` em
+produção). Com a variável desligada o cron só registra no log quem receberia o
+quê — foi assim que o conteúdo foi conferido antes de sair mensagem. O primeiro
+disparo real saiu para 4 usuários, confirmado por `RadarAlert.notifiedAt`
+gravado nos quatro registros, campo escrito só depois de `sendEmail()` ter
+sucesso. Detalhe do incidente que atrasou esse primeiro envio (a `RESEND_API_KEY`
+anotada no `.env` sem o `=`, e o redeploy que não bastou) em `§2.108` da
+auditoria e em `§7.3` do documento de continuidade.
+
+Mandar e-mail sobre vaga ruim queima o domínio, e domínio queimado não se
+recupera fácil: o envio só ligou depois de o Radar estar validado com gente
+real, e a qualidade do matching passa a ser o que protege a reputação.
 
 ### 8.8 O que continua não existindo
 

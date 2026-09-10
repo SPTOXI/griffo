@@ -7135,3 +7135,45 @@ presente no JSON-LD renderizado. `tsc --noEmit`, `eslint` e `npm test`
 (938/938) limpos, `npm run build` limpo.
 
 Pendência "licença do dataset" fecha.
+
+---
+
+## 2.115 Dois documentos ainda diziam que o digest está desligado
+
+Conferência de fim de sessão, pedida pelo operador ("veja se ficou
+alguma pendência de push e de melhorias"). Push: nada — `main` no
+remoto está exatamente em `3645f1f`, árvore local limpa, nenhuma
+branch além de `main`, nenhum PR aberto. `tsc --noEmit`, `eslint` e a
+suíte (938/938, `fail 0`) reconferidos limpos neste commit.
+
+O que a conferência achou foi **deriva de documentação**, não de
+código: o §2.108 registrou que `RADAR_DIGEST_ENABLED=true` foi ligado
+em produção em 08/09/2026 e que quatro e-mails reais saíram
+(confirmados por `RadarAlert.notifiedAt` gravado nos quatro
+registros), mas dois documentos continuaram descrevendo o estado
+anterior:
+
+- `docs/HANDOFF-CONTINUIDADE.md`, §7.3 — título "🟡 IMPLEMENTADO E
+  DESLIGADO", mais o parágrafo "O que ainda não foi exercitado:
+  nenhuma mensagem saiu de verdade" e a instrução "não ligue o envio
+  antes do Radar estar validado".
+- `docs/MAPA-DO-PRODUTO.md`, §8.7 — título "implementado e desligado"
+  e "**O envio está desligado por decisão**".
+
+Isso é exatamente o risco que o cabeçalho do `AUDITORIA-INDICE.md`
+descreve para o índice desatualizado: um documento errado é pior que
+um documento ausente, porque parece confiável. Quem lesse o mapa
+antes da auditoria (a ordem de leitura que o próprio handoff
+recomenda) concluiria que o canal de e-mail nunca foi exercitado — e
+poderia, por exemplo, "ligar" de novo algo já ligado, ou tratar o
+domínio como sem reputação construída.
+
+**Corrigido**: as duas seções passam a descrever o estado real, com a
+data do primeiro envio, os quatro destinatários, a forma de
+confirmação (banco, não log) e a armadilha do `RESEND_API_KEY` escrito
+sem `=` no `.env` — que é o achado reutilizável do §2.108, não uma
+curiosidade. O aviso sobre reputação de domínio permanece nos dois
+lugares: continua valendo, só deixou de ser motivo para manter o envio
+desligado.
+
+Nenhum código mudou nesta seção — só documentação.
