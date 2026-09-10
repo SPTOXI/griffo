@@ -7187,3 +7187,71 @@ lugares: continua valendo, só deixou de ser motivo para manter o envio
 desligado.
 
 Nenhum código mudou nesta seção — só documentação.
+
+---
+
+## 2.116 CI no GitHub Actions — a verificação sai da memória humana
+
+Pedido do operador, na sequência do §2.115: "não quero nada que
+dependa da memória humana, tudo 100% IA". O §2.115 tinha acabado de
+mostrar por que: um fato mudou de estado em produção e quatro trechos
+de documentação continuaram descrevendo o estado anterior, porque
+depender de alguém lembrar de atualizar não é processo, é sorte. O
+mesmo vale para as verificações de código.
+
+**O que existia até aqui.** Um workflow só, `hiring-index-monthly.yml`,
+que é um cron de coleta — não verifica código nenhum. Os checks que
+apareciam nos PRs eram do Vercel, e o que eles provam é que o preview
+buildou: `next build` NÃO executa teste. Um commit podia entrar em
+`main` com a suíte quebrada e o PR ficar verde. Toda linha "`tsc`,
+`eslint` e suíte limpos" desta auditoria foi escrita porque alguém
+rodou os três na mão e lembrou de anotar.
+
+**O que passou a existir.** `.github/workflows/ci.yml`, um job só:
+`npm ci` → `npx prisma generate` → `npx tsc --noEmit` → `npm run lint`
+→ `npm test`. Dispara em `pull_request` (qualquer branch) e em `push`
+para `main`, mais `workflow_dispatch` para rodar sob demanda.
+
+**Quatro decisões que não são óbvias:**
+
+- **`prisma generate` antes do `tsc`, e não depois do `npm ci` por
+  acaso.** Os tipos do `@prisma/client` são gerados a partir do schema.
+  Quem já tem o client no `node_modules` não vê o problema; num
+  checkout limpo o type-check reprovaria em cima de tipo ausente. É a
+  falha que teria feito o primeiro CI ficar vermelho por motivo errado.
+- **Nenhum segredo, nenhum banco.** Verificado, não suposto:
+  `prisma generate` roda com `POSTGRES_PRISMA_URL` e
+  `POSTGRES_URL_NON_POOLING` ausentes do ambiente (gerou o client em
+  580ms sem reclamar), e o único teste que toca ambiente,
+  `src/middleware.test.ts`, seta e restaura `GEO_REDIRECT_ENABLED` ele
+  mesmo. CI que exige credencial de produção é CI que não roda em fork
+  e que arrisca vazar segredo em log.
+- **`npm run build` fica de fora.** O Vercel já builda o preview a cada
+  push do PR, com as env vars reais. Repetir o build sem elas daria
+  vermelho por falta de credencial, não por defeito — e CI que dá
+  vermelho por motivo que não é defeito ensina a ignorar CI.
+- **`push` só em `main`.** Com `pull_request` cobrindo as branches, um
+  `push: branches: ['**']` rodaria o mesmo commit duas vezes. `main`
+  entra na lista porque merge direto, sem PR, também precisa passar.
+
+**Verificado antes de subir, não depois.** Um clone limpo da própria
+branch, em diretório separado, com os passos exatos do workflow na
+ordem exata: `npm ci` (988 MB de `node_modules` do zero),
+`prisma generate`, `tsc --noEmit`, `eslint`, `npm test`. É a única
+forma honesta de saber se o workflow passa — rodar os comandos no
+repositório de trabalho, que já tem tudo gerado, provaria menos.
+
+**O que este CI NÃO resolve**, e continua aberto no H6: os testes dos
+caminhos de cobrança e failover. A suíte cobre lógica pura; nenhum
+teste exercita `entitlements.ts` ou o failover do `ai-router` de ponta
+a ponta — justamente as áreas que a seção 10 do documento de
+continuidade marca como "onde o erro não aparece como erro". CI verde
+sobre cobertura ausente não é segurança, é silêncio. O H6 fica metade
+feito, e a metade que falta é a de mais valor.
+
+**Falta um passo que não é código e que só o dono do repositório pode
+dar**: marcar `tsc + eslint + suíte` como **required status check** na
+proteção da branch `main` (Settings → Branches). Sem isso o CI informa
+mas não barra — dá para mesclar por cima do vermelho. Enquanto esse
+botão não for ligado, o resultado continua dependendo de alguém olhar,
+que é exatamente o que este trabalho existe para eliminar.

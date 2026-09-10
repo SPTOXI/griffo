@@ -1,0 +1,76 @@
+name: Verificações (tipos, lint, testes)
+
+# Por que este workflow existe: até 10/09/2026 nada rodava `tsc`, `eslint` ou a
+# suíte sozinho. Os únicos checks nos PRs eram do Vercel, e o que eles provam é
+# só que o preview buildou — `next build` NÃO executa teste nenhum, então um
+# commit podia entrar em `main` com teste quebrado e o PR ficar verde. A
+# verificação dependia de alguém lembrar de rodar na mão; isto tira a memória
+# humana do caminho.
+#
+# Não precisa de segredo nem de banco, e é de propósito: a suíte é toda de
+# unidade (o único teste que toca ambiente é `src/middleware.test.ts`, que seta
+# e restaura `GEO_REDIRECT_ENABLED` ele mesmo), e `prisma generate` não lê
+# `POSTGRES_PRISMA_URL` — só gera o client a partir do schema. Um CI que
+# precisasse de credencial de produção para rodar seria um CI que ninguém liga
+# num fork e que vaza segredo em log.
+#
+# `npm run build` NÃO entra aqui: o Vercel já builda o preview a cada push do
+# PR, com as env vars reais. Repetir o build sem elas daria vermelho por falta
+# de credencial, não por defeito — ruído que ensina a ignorar o CI.
+
+on:
+  # `pull_request` cobre qualquer branch com PR aberto; `push` fica só em `main`
+  # para não rodar duas vezes o mesmo commit (uma pelo push da branch, outra
+  # pelo PR). `main` entra porque um merge direto, sem PR, também precisa ser
+  # verificado.
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+# Push novo na mesma branch cancela a rodada anterior: o que importa é o estado
+# do último commit, não o histórico de rodadas intermediárias.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificacoes:
+    name: tsc + eslint + suíte
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Mesma major do ambiente de desenvolvimento e do runtime da Vercel.
+          node-version: '22'
+          cache: npm
+
+      # `npm ci`, não `npm install`: falha se o `package-lock.json` estiver
+      # fora de sincronia com o `package.json` em vez de "consertar" em silêncio.
+      # (Existe um `bun.lock` no repo também — os dois são atualizados juntos
+      # hoje, mas escolher um e apagar o outro continua na lista de higiene.)
+      - name: Instalar dependências
+        run: npm ci
+
+      # Obrigatório antes do `tsc`: os tipos do `@prisma/client` são GERADOS a
+      # partir do schema. Sem este passo o type-check reprova em CI mesmo
+      # passando na máquina de quem já tem o client gerado no node_modules.
+      - name: Gerar o Prisma Client
+        run: npx prisma generate
+
+      - name: Checagem de tipos
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      # A suíte é a proteção real dos caminhos que a seção 10 do documento de
+      # continuidade marca como "onde o erro não aparece como erro" (cobrança,
+      # data residency, SSRF, limitador). Regra permanente do projeto: teste
+      # quebrado nunca é "flaky" — é achado até prova em contrário.
+      - name: Suíte de testes
+        run: npm test
