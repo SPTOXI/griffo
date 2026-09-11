@@ -60,10 +60,13 @@ local-*
 # A configuração local do Claude Code fica fora do versionamento, mas o hook de
 # início de sessão precisa estar versionado: é ele que instala as dependências
 # no contêiner das sessões remotas, e um hook não versionado não vale para
-# ninguém além de quem o escreveu.
+# ninguém além de quem o escreveu. Mesmo motivo para .claude/agents/: um
+# agente definido só localmente não existe em outra máquina, sessão remota,
+# ou para outro colaborador que clonar o repositório.
 .claude/*
 !.claude/hooks/
 !.claude/settings.json
+!.claude/agents/
 .z-ai-config
 *.log
 dev.log

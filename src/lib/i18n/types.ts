@@ -30,6 +30,53 @@ export interface TranslationDictionary {
     badgeSecurity: string
     badgeSafe: string
   }
+  heroD: {
+    eyebrow: string
+    title: string
+    /** Contém o token literal "{N}" — o número real de vagas é injetado no lugar dele. */
+    paragraph: string
+    ctaPrimary: string
+    ctaSecondary: string
+    quote: string
+    trustFree: string
+    /** Contém o token literal "{count}" — número de idiomas suportados. */
+    trustLanguages: string
+    trustCompliance: string
+    toggleHuman: string
+    toggleAts: string
+    cardKicker: string
+    cardTitle: string
+    cardMeta: string
+    cardRadarBadge: string
+    cardIllustrativeBadge: string
+    humanLabel: string
+    humanNote: string
+    atsLabel: string
+    atsNote: string
+    compatibleUnit: string
+    humanKicker: string
+    requirements: { title: string; evidence: string }[]
+    humanClosing: string
+    atsKicker: string
+    atsLine1: string
+    atsLine1Note: string
+    atsLine2: string
+    atsLine3: string
+    atsLine4: string
+    extractedKicker: string
+    extractedShuffled: string
+    ignoredLine: string
+    resultLabel: string
+    resultValue: string
+    legend: string
+  }
+  orderBand: {
+    kicker: string
+    intro: string
+    steps: { title: string; body: string }[]
+    closingBrand: string
+    closingTagline: string
+  }
   mockup: {
     title: string
     precision: string

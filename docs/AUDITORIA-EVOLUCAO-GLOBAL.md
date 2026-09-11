@@ -7433,3 +7433,185 @@ não a data de uma venda, o gatilho técnico real para ligar o bloqueio.
 
 **Gatilho para reabrir:** primeira venda (critério do operador) ou
 segundo colaborador com acesso de escrita, o que vier primeiro.
+
+---
+
+## 2.119 Hero D + faixa "A ordem importa" — landing reposicionada da vaga para a auditoria
+
+Pedido do operador, a partir de uma especificação de design (handoff com
+quatro direções de hero, A/B/C/D, das quais só a D foi aprovada): substituir o
+hero público e acrescentar uma faixa nova logo abaixo, comunicando a cadeia
+oficial do produto — inteligência → análise → auditoria → otimização →
+direcionamento → Radar — em vez de abrir pela vaga. Frase central: "Conectamos
+você a oportunidades, não a vagas." Implementado em
+`src/components/landing/hero-d.tsx` e `order-band.tsx`, montados em
+`landing.tsx` no lugar do hero antigo (o card de "Relatório Técnico" fixo em
+nota 8.7 saiu; a "HOW IT WORKS" mais abaixo na página, que fala do fluxo de
+uso — envio → laudo → reescrita —, não foi tocada, é uma tese diferente).
+
+**A parte que importava mais não era CSS — era não publicar número
+inventado.** A especificação era explícita: quatro pontos de dado no
+protótipo eram ilustrativos, não reais, e cabia a esta sessão checar cada um
+contra a implementação antes de publicar:
+
+- **`{N}` vagas abertas** — o protótipo animava até 1.284, inventado. Trocado
+  por `db.job.count({ where: { closedAt: null } })`, o mesmo critério de
+  "aberta" que o resto do produto usa (`Job.closedAt` nulo — ver §12/§14).
+  Conferido direto no banco: **8.281** vagas ativas agora, bem acima do
+  placeholder, então a copy "Mais de N vagas abertas" não perde força.
+  `src/app/page.tsx` virou Server Component (antes era `'use client'` puro);
+  a lógica de estado que ele tinha foi para `src/app/home-client.tsx` novo,
+  que recebe `openJobsCount` como prop. **`src/app/[country]/page.tsx`
+  (as 41 rotas de país, SSG) precisou do mesmo tratamento** — não estava no
+  escopo pedido literalmente, mas são a mesma `Landing`/`HeroD`, e deixá-las
+  sem a contagem real publicaria "0" nessas 41 páginas. Ambas as rotas
+  ganharam `export const revalidate = 300`: a contagem já não fica presa no
+  valor do build, revalida a cada 5 minutos.
+- **Cartão "91% → 43%" (Head de Operações — logística)** — é exemplo
+  construído, não auditoria real de um usuário. A especificação oferecia
+  duas saídas: dado real anonimizado (não disponível nesta sessão) ou rótulo
+  visível de exemplo. Escolhida a segunda: badge discreto "Exemplo
+  ilustrativo" (`cardIllustrativeBadge`) no canto do cabeçalho do cartão —
+  não estava no texto aprovado, mas é a alternativa que a própria
+  especificação autoriza para não publicar percentual de compatibilidade sem
+  lastro.
+- **"seu arquivo não vai para lugar nenhum"** — checado contra o código e
+  **descartado da linha de confiança**, não publicado. É falso como
+  afirmação: o currículo é enviado a provedores de IA de terceiros
+  (`lib/ai-router` — OpenAI, Anthropic, Gemini, DeepSeek, Kimi) para a
+  própria análise que é o produto, e fica retido até 730 dias em conta
+  inativa (`lib/retention.ts`). Publicar "não vai para lugar nenhum" seria
+  uma reivindicação factualmente errada no próprio hero.
+- **"12 idiomas"** — mantido, é verificável e verdadeiro:
+  `src/lib/i18n/locales/` tem exatamente 12 arquivos. Escrito como
+  `{count} idiomas` com `LANGUAGES.length`, não `"12"` fixo — se um 13º
+  idioma entrar um dia, a frase não fica desatualizada sozinha.
+- **"LGPD & GDPR"** — mantido: já é uma afirmação publicada hoje
+  (`hero.badgeSecurity` no hero antigo) e tem código real por trás
+  (`lib/data-residency.ts`, `lib/retention.ts`). Registrado aqui, não
+  resolvido nesta sessão: **não existe página pública de política de
+  privacidade** no app — gap pré-existente, não introduzido por este
+  trabalho, mas que sustenta cada vez menos quanto mais essa sigla aparece
+  na landing.
+
+**i18n.** [[feedback_no_hardcoded_portuguese]] é regra permanente do
+projeto — as chaves novas (`heroD`, `orderBand`, em `i18n/types.ts`) foram
+escritas nos **12 idiomas**, não só em português com fallback. O português é
+a copy aprovada pelo cliente, verbatim, incluindo o bloco de texto
+"embaralhado" do cartão ATS (o embaralhamento É o argumento visual da seção —
+mostrar um parser destruindo a ordem das palavras). As outras 11 traduções
+foram produzidas nesta sessão, sem revisão do cliente ainda — recomendado
+revisão por falante nativo antes de tráfego amplo, principalmente no cartão
+ilustrativo (a vaga de exemplo, as evidências, e o bloco embaralhado, que
+precisou ser adaptado — não só traduzido — em cada idioma para preservar o
+mesmo efeito).
+
+**CSS.** O protótipo original usa `style` inline; a CSP do projeto bloqueia
+isso (mesmo motivo já documentado em `hiring-index-teaser.tsx`). Tudo virou
+Tailwind + tokens de `globals.css` (`--primary`/`--brand-navy` já batiam
+exatamente com `#0B63E5`/`#0B192E` do design, reaproveitados). A única
+animação (linha de varredura do cartão ATS) virou `@keyframes hero-ats-scan`
+em `globals.css`, referenciada como classe Tailwind arbitrária — nunca como
+atributo `style`. Desligada sob `prefers-reduced-motion` via
+`motion-reduce:animate-none`.
+
+**Verificação.** `tsc --noEmit`, `eslint` e `next build` limpos (78 páginas,
+`/` e as 41 `/[country]` com `5m` de revalidate). Contagem do banco conferida
+duas vezes por fora do Next (`node` + `@prisma/client` direto): 8.281,
+estável. `next start` (build de produção) e uma bateria de `curl` — incluindo
+um com User-Agent e cabeçalhos de Chrome completos, `--compressed` — sempre
+devolveram o valor correto no HTML servido. **Achado à parte, registrado em
+memória** ([[feedback_playwright_stale_ssr_preview]]): o navegador controlado
+por Playwright nesta sessão mostrou "0" persistentemente, em aba nova, em
+dev e em produção, mesmo depois de reiniciar o servidor — isolado como
+artefato da própria ferramenta de automação (o `curl` nunca reproduziu,
+inclusive imitando os cabeçalhos exatos do navegador), não um bug do código
+publicado.
+
+**O que fica pendente, não implementado por falta de dado/decisão do
+cliente:**
+
+1. Revisão nativa das 11 traduções novas (só português é copy aprovada).
+2. Decisão do cliente: substituir o cartão ilustrativo por uma auditoria real
+   anonimizada, ou manter o rótulo "Exemplo ilustrativo" em definitivo.
+3. Página pública de política de privacidade — gap pré-existente que a
+   afirmação "LGPD & GDPR" da landing expõe, não fechado nesta sessão.
+4. Contador animado de `{N}` no carregamento (~1,1s) do protótipo foi
+   deliberadamente **não implementado** — é opcional na especificação, e o
+   valor estático renderizado no servidor evita qualquer risco de mostrar
+   "0" antes da hidratação ou de um salto de layout.
+
+---
+
+## 2.120 `/privacy` sai do papel — pendência 3 do §2.119 fecha, e nasce um agente de revisão de tradução
+
+Resposta do operador às duas pendências do §2.119. Sobre o cartão
+ilustrativo do Hero D: "dados pessoais podem ser fictícios apenas para
+simulação" — confirma a implementação já feita (nome, empresa e evidências
+inventados, rotulados como "Exemplo ilustrativo"), sem necessidade de
+substituir por auditoria real. Fechado sem mudança de código.
+
+Sobre a falta de página pública de política de privacidade: "pode criar uma
+que não nos comprometa". Como não existe ainda razão social/CNPJ formalizado
+(confirmado com o operador antes de escrever qualquer texto — não seria
+inventável), a página cita "GriffoWork" como marca operacional, não como
+pessoa jurídica, e evita qualquer promessa que o produto não cumpre hoje
+("segurança absoluta" nunca é afirmada, por exemplo).
+
+**Todo fato da política é verificável no código, não inventado:**
+
+- **Sub-processadores de IA** — Anthropic, OpenAI, Google, DeepSeek, Moonshot
+  AI, exatamente os cinco de `lib/ai-router/registry.ts`.
+- **Retenção** — as linhas da tabela vêm direto de `lib/retention.ts`:
+  currículo em conta inativa até 730 dias, log de IA até 365, trilha de
+  auditoria até 730, registro de pagamento/webhook até 90.
+- **Transferência internacional** — descreve o mecanismo real de
+  `lib/data-residency.ts`: usuários da UE/Reino Unido/Suíça não têm o
+  currículo roteado a DeepSeek/Kimi (sem decisão de adequação), os demais
+  usuários podem receber qualquer um dos cinco.
+- **Direitos do usuário** — "exportar" e "excluir conta" descrevem rotas que
+  já existem e funcionam: `GET /api/user/export` e `DELETE /api/user`. Nada
+  prometido que ainda não está implementado.
+- **Cookies** — só o cookie de sessão (`lib/auth.ts`) e o de preferência de
+  idioma `griffo_lang` (`i18n-context.tsx`) são citados, porque são os únicos
+  que o código de fato grava; nenhum rastreador de terceiro existe para
+  citar.
+
+Implementado como módulo próprio (`lib/privacy/content-types.ts` +
+`locales/` + `content.ts`), no mesmo padrão de `lib/enterprise/` — não
+dentro do `TranslationDictionary` principal, que já é grande demais para
+conteúdo de uma página só. Rota `src/app/privacy/page.tsx` fora do
+roteamento `[country]` (mesmo padrão de `/enterprise`, `/market-pulse`),
+idioma resolvido por `resolveRequestLanguage` (o helper que uma sessão
+anterior já tinha extraído para o `/enterprise`, reaproveitado aqui em vez
+de duplicado uma terceira vez). A frase "LGPD & GDPR" da linha de confiança
+do Hero D (§2.119) virou link para `/privacy`.
+
+**Escopo de idioma: os 12 do site**, decisão do operador — "só em inglês é
+interessante mas corremos o risco de perder clientes". Diferente do Hero D,
+aqui o **inglês** é a fonte (não o português): a política foi escrita em
+inglês primeiro como conteúdo mestre, e o português foi escrito em paralelo
+com os mesmos fatos, não traduzido de um para o outro — as outras 10 línguas
+partiram do inglês.
+
+**Nasce `.claude/agents/translation-reviewer.md`.** Pedido explícito do
+operador junto da resposta sobre idiomas: "precisamos criar um agente para
+revisar e sempre buscar aprimorar as traduções". Agente reutilizável,
+disponível a partir da próxima sessão neste repositório (registro de agente
+não recarrega no meio de uma sessão em andamento) — compara cada idioma
+contra a fonte da verdade do módulo (português para copy de marketing já
+aprovada, inglês para conteúdo global-first como este), corrige erro
+inequívoco direto, e **sinaliza em vez de editar** qualquer coisa que possa
+mudar sentido jurídico em conteúdo de compliance. Nesta sessão, sem poder
+invocá-lo ainda, a mesma revisão rodou por um fork com as instruções do
+arquivo do agente — resultado registrado à parte quando terminar.
+
+`tsc --noEmit`, `eslint` e `next build` limpos (`/privacy` sai como `ƒ`
+dinâmica, mesmo padrão de `/enterprise`). Verificado por `curl` em inglês e
+português (`?lang=pt`), e o link do Hero D confirmado apontando para
+`/privacy` no HTML servido.
+
+**O que fica pendente:** revisão jurídica de verdade antes de tratar esta
+página como blindagem de conformidade definitiva — o texto foi escrito para
+ser honesto e verificável contra o código, não para substituir um advogado;
+e atualizar a página no dia em que existir razão social/CNPJ formalizado.

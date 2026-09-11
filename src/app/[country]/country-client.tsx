@@ -23,9 +23,11 @@ type Screen = 'landing' | 'login' | 'signup' | 'app'
 export interface CountryPageClientProps {
   countryCode: string
   lang: Language
+  /** Contagem real de vagas ativas, resolvida no servidor em `page.tsx`. */
+  openJobsCount: number
 }
 
-export function CountryPageClient({ countryCode, lang }: CountryPageClientProps) {
+export function CountryPageClient({ countryCode, lang, openJobsCount }: CountryPageClientProps) {
   const { user, hydrated, hydrate } = useAuth()
   const setNavView = useNav((s) => s.setView)
   const [screen, setScreen] = useState<Screen>('landing')
@@ -48,7 +50,7 @@ export function CountryPageClient({ countryCode, lang }: CountryPageClientProps)
 
   // Durante SSR e primeiro render: entrega a Landing Page localizada para o país
   if (!hydrated) {
-    return <Landing onNavigate={(v) => setScreen(v)} countryCode={countryCode} forcedLang={lang} />
+    return <Landing onNavigate={(v) => setScreen(v)} countryCode={countryCode} forcedLang={lang} openJobsCount={openJobsCount} />
   }
 
   if (effectiveScreen === 'app') {

@@ -6,9 +6,25 @@ import { priceFor } from '@/lib/pricing/catalog'
 import { DICTIONARIES, dirForLang } from '@/lib/i18n'
 import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
 import { resumeTermFor } from '@/lib/market/regional-terms'
+import { db } from '@/lib/db'
 import { CountryPageClient } from './country-client'
 
 export const dynamicParams = true
+
+// As 41 rotas continuam estaticamente geradas (`generateStaticParams` abaixo)
+// — só passam a revalidar em segundo plano a cada 5 minutos, igual à home em
+// `src/app/page.tsx`, para que a contagem de vagas do Hero D não fique presa
+// no valor do último build.
+export const revalidate = 300
+
+async function getOpenJobsCount(): Promise<number> {
+  try {
+    return await db.job.count({ where: { closedAt: null } })
+  } catch (e) {
+    console.error('open jobs count failed', e)
+    return 0
+  }
+}
 
 /**
  * Nome do país de cada rota, no idioma que a PRÓPRIA página usa
@@ -263,6 +279,7 @@ export default async function CountryPage({ params }: PageProps) {
   const market = isGlobal ? GLOBAL_MARKET : marketForCountry(code)
   const effectiveCountry = isGlobal ? 'US' : code
   const price = priceFor(effectiveCountry, 'single')
+  const openJobsCount = await getOpenJobsCount()
 
   // Schema.org com preço e moeda do mercado específico
   const countryJsonLd = {
@@ -314,7 +331,7 @@ export default async function CountryPage({ params }: PageProps) {
           tem o mesmo efeito visual — e vale também para o app autenticado, que
           o `CountryPageClient` monta neste mesmo lugar depois de hidratar. */}
       <div dir={dirForLang(market.jobLanguage)}>
-        <CountryPageClient countryCode={effectiveCountry} lang={market.jobLanguage} />
+        <CountryPageClient countryCode={effectiveCountry} lang={market.jobLanguage} openJobsCount={openJobsCount} />
       </div>
     </>
   )

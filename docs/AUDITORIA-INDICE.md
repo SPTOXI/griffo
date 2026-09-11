@@ -135,3 +135,5 @@ já lista os três documentos de continuidade; este é o quarto.
 | 2.116 | 7193 | infra,limpeza | CI no GitHub Actions: tsc, eslint e suíte a cada PR e push em main — sem segredo, sem banco |
 | 2.117 | 7261 | infra,cobranca,ia-router | Testes de cobrança e failover: 33 casos, 12 mutações, o H6 fecha — e o teste de PDF que passava sobre código quebrado |
 | 2.118 | 7400 | infra,decisao | Bloqueio de merge fica desligado: plano gratuito não aplica ruleset em repo privado — reavaliar na primeira venda |
+| 2.119 | 7439 | design-ui,produto,i18n | Hero D + faixa "A ordem importa": landing reposicionada da vaga para a auditoria, contagem real de vagas, cartão ilustrativo rotulado, 12 idiomas |
+| 2.120 | 7546 | seguranca,i18n,produto | `/privacy` nos 12 idiomas, todo fato verificável no código; nasce o agente `translation-reviewer` |

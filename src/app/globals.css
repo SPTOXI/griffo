@@ -140,3 +140,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Linha de varredura do cartão "Como o ATS te vê" (hero D). Usada como
+   classe (`animate-[hero-ats-scan_3.4s_linear_infinite]`), não `style`
+   inline — a CSP do projeto não declara `style-src` e bloqueia atributo
+   `style` em linha (ver comentário em hiring-index-teaser.tsx). */
+@keyframes hero-ats-scan {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(320px);
+  }
+}

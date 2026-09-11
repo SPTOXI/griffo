@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  FileText, Sparkles, ShieldCheck, Download, TrendingUp, Target, CheckCircle2,
+  Sparkles, ShieldCheck, Download, TrendingUp, Target, CheckCircle2,
   ArrowRight, Brain, Search, Award, Lock, Users, BarChart3, Zap, Globe, Share2,
   Check, HelpCircle, ChevronDown, Star, MessageSquare, Menu, X, FileSearch, Edit3,
   Instagram
@@ -22,14 +22,18 @@ import { contactEmail, contactMailto, salesMailto } from '@/lib/i18n/contact'
 import { priceFor } from '@/lib/pricing/catalog'
 import { localMethodLabels } from '@/lib/pricing/payment-methods'
 import { HiringIndexTeaser } from './hiring-index-teaser'
+import { HeroD } from './hero-d'
+import { OrderBand } from './order-band'
 
 export interface LandingProps {
   onNavigate: (v: 'login' | 'signup' | 'app') => void
   countryCode?: string
   forcedLang?: Language
+  /** Contagem real de vagas ativas (resolvida no servidor) — ver `src/app/page.tsx`. */
+  openJobsCount?: number
 }
 
-export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
+export function Landing({ onNavigate, countryCode, forcedLang, openJobsCount = 0 }: LandingProps) {
   const { user } = useAuth()
   const { t: contextT, lang: contextLang, detectedCountry: contextCountry, langManuallySet } = useI18n()
   // Palpite automático (geo-IP/navegador) nunca vence o idioma da rota de
@@ -150,126 +154,14 @@ export function Landing({ onNavigate, countryCode, forcedLang }: LandingProps) {
         )}
       </header>
 
-      {/* HERO */}
-      <section className="relative overflow-hidden pt-10 sm:pt-14 pb-16 md:py-24">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-white to-white pointer-events-none" />
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 sm:w-[500px] h-80 sm:h-[500px] rounded-full bg-primary/15 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 sm:w-[500px] h-80 sm:h-[500px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+      {/* HERO D — única direção aprovada do handoff de design; ver hero-d.tsx */}
+      <HeroD t={t} lang={lang} openJobsCount={openJobsCount} onNavigate={onNavigate} />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-10 items-center">
-            {/* COPY — hierarquia em 3 níveis: prova (badge) → promessa (título) →
-                como (subtítulo) → ação (CTAs) → objeção (confiança), nessa ordem */}
-            <div className="space-y-6 text-left">
-              <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary px-3 py-1 text-xs font-bold rounded-full shadow-xs w-fit leading-snug whitespace-normal">
-                <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary shrink-0 inline" /> {t.hero.badge}
-              </Badge>
-
-              <h1 className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-brand-navy leading-[1.08]">
-                {t.hero.title1}<span className="bg-gradient-to-r from-brand-navy to-primary bg-clip-text text-transparent">{t.hero.titleAccent}</span>{t.hero.title2}
-              </h1>
-
-              <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl">
-                {t.hero.subtitle}
-              </p>
-
-              {/* Frase factual autossuficiente (definição objetiva do produto,
-                  nomeando ATS reais e a cobertura de mercados) — não é copy de
-                  conversão como o subtítulo acima; existe pra ficar perto do
-                  topo do HTML e ser citável por buscadores de IA (Perplexity,
-                  ChatGPT Search) sem precisar do resto da página como
-                  contexto. Estilo discreto de propósito: não deve competir
-                  visualmente com o subtítulo de conversão. */}
-              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-xl">
-                {t.hero.blufSummary}
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-3 pt-1">
-                <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white text-base h-auto min-h-12 sm:min-h-13 py-3 px-8 shadow-lg shadow-primary/25 font-bold whitespace-normal">
-                  {t.hero.ctaPrimary} <ArrowRight className="w-5 h-5 ml-2 shrink-0" />
-                </Button>
-                <Button onClick={() => onNavigate('login')} size="lg" variant="outline" className="w-full sm:w-auto text-base h-12 sm:h-13 px-7 border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold">
-                  {t.hero.ctaSecondary}
-                </Button>
-              </div>
-
-              {/* Confiança: linha só, sem grid rígido — cada item quebra onde
-                  precisar em vez de forçar coluna de 2 e sobrar espaço torto. */}
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5 text-xs font-semibold text-slate-600 pt-4 mt-2 border-t border-slate-100">
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary shrink-0" /> {t.hero.badgeFree}</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary shrink-0" /> {t.hero.badgeNoCard}</span>
-                <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-primary shrink-0" /> {t.hero.badgeSecurity}</span>
-                <span className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-primary shrink-0" /> {t.hero.badgeSafe}</span>
-              </div>
-            </div>
-
-            {/* INTERACTIVE MOCKUP CARD */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-primary/10 rounded-3xl transform rotate-1 blur-lg -z-10" />
-              <Card className="shadow-2xl border-slate-200/90 rounded-2xl overflow-hidden bg-white">
-                <CardContent className="p-0">
-                  <div className="bg-brand-navy text-white px-4 sm:px-5 py-3.5 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-blue-500/80" />
-                    </div>
-                    <span className="text-[11px] sm:text-xs font-medium text-slate-300 flex items-center gap-1.5 truncate">
-                      <FileText className="w-3.5 h-3.5 text-primary shrink-0" /> {t.mockup.title}
-                    </span>
-                    <Badge className="bg-primary/20 text-blue-300 text-[9px] sm:text-[10px] font-semibold border-none shrink-0">{t.mockup.precision}</Badge>
-                  </div>
-                  <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4">
-                      <div>
-                        <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">{t.mockup.overallScore}</p>
-                        <div className="flex items-baseline gap-1.5 mt-0.5">
-                          <span className="text-4xl sm:text-5xl font-extrabold text-brand-navy">8.7</span>
-                          <span className="text-slate-400 font-medium text-xs sm:text-sm">/ 10</span>
-                        </div>
-                      </div>
-                      <div className="text-right space-y-1">
-                        <Badge className="bg-primary/10 text-primary border-primary/20 font-bold px-2 py-0.5 text-[10px] sm:text-xs">
-                          <CheckCircle2 className="w-3 h-3 mr-1 text-primary inline" /> {t.mockup.atsApproved}
-                        </Badge>
-                        <p className="text-[10px] sm:text-[11px] text-slate-500">{t.mockup.atsSub}</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      {[
-                        { l: t.mockup.dim1, s: 9.2 },
-                        { l: t.mockup.dim2, s: 8.8 },
-                        { l: t.mockup.dim3, s: 8.5 },
-                        { l: t.mockup.dim4, s: 8.3 },
-                      ].map((d) => (
-                        <div key={d.l}>
-                          <div className="flex justify-between text-[11px] sm:text-xs mb-1 font-medium">
-                            <span className="text-slate-700 truncate pr-2">{d.l}</span>
-                            <span className="font-bold text-brand-navy shrink-0">{d.s.toFixed(1)}</span>
-                          </div>
-                          <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                            <div className="h-full rounded-full bg-primary" style={{ width: `${d.s * 10}%` }} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="rounded-xl bg-primary/5 border border-primary/10 p-3 sm:p-3.5 space-y-1">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-brand-navy">
-                        <Share2 className="w-3.5 h-3.5 text-primary shrink-0" /> {t.mockup.suggestionTitle}
-                      </div>
-                      <p className="text-xs text-slate-700 font-medium leading-relaxed">
-                        {t.mockup.suggestionText}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* "A ordem importa" — cadeia inteligência → análise → auditoria →
+          otimização → direcionamento → Radar; ver order-band.tsx. Não confundir
+          com a seção "HOW IT WORKS" mais abaixo, que fala do fluxo de uso do
+          produto (envio → laudo → reescrita), não da tese de posicionamento. */}
+      <OrderBand t={t} />
 
       {/* STATS BAR */}
       <section className="border-y border-slate-200/80 bg-slate-50/70">
