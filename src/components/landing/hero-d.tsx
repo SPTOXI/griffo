@@ -58,6 +58,15 @@ export function HeroD({ t, lang, openJobsCount, onNavigate }: HeroDProps) {
 
   return (
     <section className="relative overflow-hidden bg-[#0B192E]">
+      {/* Textura de fundo (handoff "Hero background — circuit pattern") — classe
+          Tailwind compilada, não `style` inline: a CSP do projeto não declara
+          `style-src` e bloqueia atributo `style` em linha (mesmo motivo já
+          documentado no scan-line do cartão ATS logo abaixo e em
+          `hiring-index-teaser.tsx`). */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[url('/circuit-pattern.svg')] bg-repeat [background-size:240px_240px]"
+      />
       <div className="mx-auto max-w-[1200px] px-8 py-20">
         <div className="grid grid-cols-1 gap-14 min-[830px]:grid-cols-2 min-[830px]:items-center">
           {/* COLUNA ESQUERDA */}
