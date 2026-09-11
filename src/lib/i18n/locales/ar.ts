@@ -239,6 +239,7 @@ export const ar: TranslationDictionary = {
     marketsTitle: 'الأسواق:',
     atsTitle: 'التوافق مع أنظمة ATS:',
     globalRemote: 'عن بُعد عالميًا',
+    forCompanies: 'للشركات',
   },
   auth: {
     welcomeBack: 'مرحباً بعودتك',

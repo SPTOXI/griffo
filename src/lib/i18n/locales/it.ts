@@ -239,6 +239,7 @@ export const it: TranslationDictionary = {
     marketsTitle: 'Mercati:',
     atsTitle: 'Compatibilità ATS:',
     globalRemote: 'Remoto globale',
+    forCompanies: 'Per le aziende',
   },
   auth: {
     welcomeBack: 'Bentornato',

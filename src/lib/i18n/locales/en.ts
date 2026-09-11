@@ -240,6 +240,7 @@ export const en: TranslationDictionary = {
       marketsTitle: 'Markets:',
       atsTitle: 'ATS compatibility:',
       globalRemote: 'Global remote',
+      forCompanies: 'For companies',
     },
     auth: {
       welcomeBack: 'Welcome back',

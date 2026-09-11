@@ -239,6 +239,7 @@ export const ja: TranslationDictionary = {
     marketsTitle: '対象市場：',
     atsTitle: 'ATS対応：',
     globalRemote: 'グローバルリモート',
+    forCompanies: '法人のお客様へ',
   },
   auth: {
     welcomeBack: 'おかえりなさい',

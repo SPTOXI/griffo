@@ -239,6 +239,7 @@ export const ko: TranslationDictionary = {
     marketsTitle: '시장:',
     atsTitle: 'ATS 호환성:',
     globalRemote: '글로벌 원격',
+    forCompanies: '기업 고객',
   },
   auth: {
     welcomeBack: '다시 오신 것을 환영합니다',

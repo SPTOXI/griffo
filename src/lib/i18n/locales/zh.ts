@@ -239,6 +239,7 @@ export const zh: TranslationDictionary = {
     marketsTitle: '市场：',
     atsTitle: 'ATS 兼容性：',
     globalRemote: '全球远程',
+    forCompanies: '企业服务',
   },
   auth: {
     welcomeBack: '欢迎回来',

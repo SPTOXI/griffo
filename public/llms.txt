@@ -1,0 +1,19 @@
+# GriffoWork
+
+> GriffoWork is an AI career intelligence platform: an 8-dimension AI resume audit, ATS-compatibility diagnostics, and job matching for job seekers. Griffo Enterprise is its B2B counterpart, running the same AI resume-to-job compatibility engine for companies hiring externally and moving talent internally.
+
+## GriffoWork (for job seekers)
+
+- [GriffoWork](https://griffo.work): AI-powered resume audit across 8 executive dimensions, ATS optimization, resume rewriting, and career orientation for job seekers, in 12 languages.
+- [Hiring](https://griffo.work/hiring): Entry point for candidates who just applied to a job and want to check their resume against it.
+- [ATS Compatibility Guides](https://griffo.work/ats/workday): How major applicant tracking systems (Workday, Greenhouse, Lever, Taleo, Ashby, Gupy, and others) parse and screen resumes, and what breaks a resume's compatibility with each.
+
+## Griffo Enterprise (for recruiting and HR teams)
+
+- [Griffo Enterprise](https://griffo.work/enterprise): AI resume-to-job matching for companies — external recruitment and internal mobility on the same compatibility engine behind GriffoWork.
+- [External Recruitment](https://griffo.work/enterprise/external-recruitment): Automatic scoring and ranking of job applicants against a company's own requisitions.
+- [Internal Mobility](https://griffo.work/enterprise/internal-mobility): Matching existing employees to new internal openings, using the profile they already maintain on Griffo, with their consent.
+
+## Data
+
+- [Market Pulse](https://griffo.work/market-pulse): Public, CC BY 4.0-licensed hiring-temperature index across tracked countries, aggregated from official sources (BLS, Eurostat, ILOSTAT, CEPALSTAT). Machine-readable at [/api/hiring-index](https://griffo.work/api/hiring-index).

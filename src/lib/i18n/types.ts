@@ -237,6 +237,10 @@ export interface TranslationDictionary {
     atsTitle: string
     /** O link `/global` — a rota sem preço nem ATS de país específico. */
     globalRemote: string
+    /** Link `/enterprise` no rodapé — Fase 4 do plano de SEO/GEO do Griffo
+     *  Enterprise (2026-09-10/11): fluir link equity de dentro do próprio
+     *  domínio já indexado pra seção B2B nova. */
+    forCompanies: string
   }
   auth: {
     welcomeBack: string

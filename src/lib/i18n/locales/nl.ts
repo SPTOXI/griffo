@@ -239,6 +239,7 @@ export const nl: TranslationDictionary = {
     marketsTitle: 'Markten:',
     atsTitle: 'ATS-compatibiliteit:',
     globalRemote: 'Wereldwijd op afstand',
+    forCompanies: 'Voor bedrijven',
   },
   auth: {
     welcomeBack: 'Welkom terug',

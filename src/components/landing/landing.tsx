@@ -429,6 +429,12 @@ export function Landing({ onNavigate, countryCode, forcedLang, openJobsCount = 0
                   exatamente o estado de quem foi descoberto pelo sitemap e
                   não tem link apontando. */}
               <li><a href="/hiring" className="hover:text-[#0B63E5] transition-colors">{t.nav.hiring}</a></li>
+              {/* Griffo Enterprise (B2B) — Fase 4 do plano de SEO/GEO
+                  (2026-09-10/11): único link interno do domínio consumer pra
+                  seção nova, pra fluir link equity já indexado pro
+                  `/enterprise`, que ainda não tem nenhum outro backlink
+                  interno além do sitemap. */}
+              <li><a href="/enterprise" className="hover:text-[#0B63E5] transition-colors">{t.footer.forCompanies}</a></li>
             </ul>
           </div>
           <div>

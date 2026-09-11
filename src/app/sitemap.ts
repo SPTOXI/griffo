@@ -84,6 +84,32 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   })
 
+  // 2c. Griffo Enterprise (B2B) — landing + páginas-pilar da Fase 1/3 do
+  // plano de SEO/GEO (2026-09-10/11). `changeFrequency: 'monthly'`, mesmo
+  // raciocínio do `/market-pulse` e do `/hiring` acima: é copy institucional,
+  // não dado que muda todo dia.
+  //
+  // Os 12 idiomas saem de `LANGUAGES`, igual às rotas acima — nunca lista
+  // escrita à mão (§2.69 já custou caro ao projeto por causa disso).
+  const enterpriseRoutes = [
+    `${baseUrl}/enterprise`,
+    `${baseUrl}/enterprise/external-recruitment`,
+    `${baseUrl}/enterprise/internal-mobility`,
+  ]
+  for (const url of enterpriseRoutes) {
+    routes.push({
+      url,
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+      alternates: {
+        languages: Object.fromEntries(
+          LANGUAGES.map((l) => [localeForLang(l), `${url}?lang=${l}`])
+        ),
+      },
+    })
+  }
+
   // 3. Country / Market specific pages
   for (const country of COUNTRIES) {
     routes.push({

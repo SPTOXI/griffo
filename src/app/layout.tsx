@@ -107,7 +107,21 @@ const jsonLd = {
         "@type": "ContactPoint",
         "email": "contact@griffo.work",
         "contactType": "customer service"
-      }
+      },
+      "subOrganization": [
+        { "@id": "https://griffo.work/enterprise#organization" }
+      ]
+    },
+    {
+      // Griffo Enterprise (B2B) como sub-organização da GriffoWork, não uma
+      // marca solta: mesma entidade legal, produto separado para recrutador/
+      // RH. Sem `logo`/`contactPoint` próprios de propósito — herdam da
+      // organização-mãe acima via `parentOrganization`, para não duplicar.
+      "@type": "Organization",
+      "@id": "https://griffo.work/enterprise#organization",
+      "name": "Griffo Enterprise",
+      "url": "https://griffo.work/enterprise",
+      "parentOrganization": { "@id": "https://griffo.work/#organization" }
     },
     {
       "@type": "SoftwareApplication",

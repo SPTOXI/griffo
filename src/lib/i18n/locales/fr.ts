@@ -239,6 +239,7 @@ export const fr: TranslationDictionary = {
     marketsTitle: 'Marchés :',
     atsTitle: 'Compatibilité ATS :',
     globalRemote: 'Télétravail mondial',
+    forCompanies: 'Pour les entreprises',
   },
   auth: {
     welcomeBack: 'Bon retour parmi nous',

@@ -71,6 +71,10 @@ model User {
   professionalProfile ProfessionalProfile?
   radarPreference     RadarPreference?
   radarAlerts         RadarAlert[]
+
+  // Griffo Enterprise (B2B) — ver Organization/OrganizationMembership abaixo.
+  organizationMemberships OrganizationMembership[]
+  candidateSubmissions    CandidateSubmission[]
 }
 
 /// Quem a pessoa é profissionalmente, e onde ela quer trabalhar.
@@ -702,6 +706,182 @@ model Job {
   @@index([closedAt, publishedAt])
 }
 
+/// Empresa cliente do Griffo Enterprise (B2B) — decidido em 2026-09-10.
+/// Plataforma separada do Griffo consumer, mas mesmo banco: isolamento de
+/// tenant é lógico, por `organizationId`, igual ao resto do schema já isola
+/// por `userId`. Não tem billing próprio ainda — ver `matchThreshold` e
+/// `marketplaceEnabled` para o que já é configurável por empresa.
+model Organization {
+  id   String @id @default(cuid())
+  name String
+  /// Usado em rotas do Enterprise (`/enterprise/[slug]`).
+  slug String @unique
+
+  /// Corte mínimo de compatibilidade (0–100) para o agente de match sugerir
+  /// um candidato automaticamente ao criar uma `JobRequisition`. Produto
+  /// nasce em 80, configurável por empresa.
+  matchThreshold Float @default(80)
+
+  /// Libera a 3ª fonte da cascata do agente de match — o pool de opt-in do
+  /// Griffo consumer (`User.recruiterOptIn`), além de time interno e base
+  /// própria. Fica desligado por padrão porque é alcance extra, possivelmente
+  /// um add-on pago.
+  marketplaceEnabled Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships          OrganizationMembership[]
+  jobRequisitions      JobRequisition[]
+  candidateSubmissions CandidateSubmission[]
+}
+
+/// Liga um `User` já existente do Griffo a uma `Organization`, com o papel
+/// que exerce ali. É também o mecanismo de mobilidade interna: um
+/// funcionário é `role = employee` e concorre a `JobRequisition` internas
+/// usando o mesmo `ProfessionalProfile` que já mantém no Griffo consumer —
+/// sem duplicar dado, sem a organização escrever nele.
+model OrganizationMembership {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// admin | recruiter | hiring_manager | employee
+  role   String
+  // active | invited | removed
+  status String @default("active")
+
+  /// Consentimento explícito de QUE ESTA organização veja o
+  /// `ProfessionalProfile` do funcionário para efeito de vagas internas —
+  /// escopado por empresa, diferente do `User.recruiterOptIn`, que é global
+  /// pro marketplace.
+  internalMobilityConsent   Boolean   @default(false)
+  internalMobilityConsentAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  decidedSubmissions CandidateSubmission[] @relation("SubmissionDecidedBy")
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, role])
+}
+
+/// Vaga criada por uma `Organization` no Griffo Enterprise. Não confundir com
+/// `Job`: aquele é raspado de fontes externas via `JobSource` e não pertence
+/// a ninguém — este é autoral, tem dono e ciclo de vida próprio. Mesmo shape
+/// de campos de mercado que `Job`, de propósito, para caber sem tradução em
+/// `matching/compatibility.ts` (`NormalizedJob`).
+model JobRequisition {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  title           String
+  normalizedTitle String?
+
+  country    String?
+  region     String?
+  city       String?
+  /// remote | hybrid | onsite | unknown
+  remoteType String  @default("unknown")
+  market     String?
+
+  employmentType String?
+  /// intern | junior | mid | senior | lead | principal | director | executive
+  seniority      String?
+
+  salaryMin    Float?
+  salaryMax    Float?
+  currency     String?
+  /// year | month | hour
+  salaryPeriod String?
+
+  description  String?
+  /// JSON array de requisitos.
+  requirements String?
+  /// JSON array de competências.
+  skills       String?
+  language     String?
+
+  // open | paused | closed
+  status String @default("open")
+
+  /// Concessão de exclusividade do agente de match automático, mesmo papel
+  /// do `leaseUntil` de `AnalysisJob`/`AiJob` — uma varredura morta não fica
+  /// travada esperando alguém retomar. A varredura roda em cascata: time
+  /// interno → base cadastrada da empresa → marketplace Griffo (se
+  /// `Organization.marketplaceEnabled`), escrevendo um `CandidateSubmission`
+  /// por candidato encontrado, incrementalmente — igual o `AnalysisJob`
+  /// escreve `segmentsJson` conforme cada etapa termina.
+  matchScanStatus      String    @default("pending") // pending | running | completed | failed
+  matchScanLeaseUntil  DateTime?
+  matchScanAttempts    Int       @default(0)
+  matchScanStartedAt   DateTime?
+  matchScanCompletedAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  closedAt  DateTime?
+
+  candidateSubmissions CandidateSubmission[]
+
+  @@index([organizationId, status])
+  @@index([matchScanStatus, matchScanLeaseUntil])
+}
+
+/// Um candidato avaliado contra uma `JobRequisition`, gerado pelo agente de
+/// match automático em cascata OU lançado manualmente por um recrutador.
+/// `source` é obrigatório e sempre mostrado na apresentação junto do score —
+/// a origem faz parte da decisão do recrutador, não é metadado escondido
+/// (decisão de produto de 2026-09-10).
+model CandidateSubmission {
+  id               String         @id @default(cuid())
+  organizationId   String
+  organization     Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  jobRequisitionId String
+  jobRequisition   JobRequisition @relation(fields: [jobRequisitionId], references: [id], onDelete: Cascade)
+
+  /// Preenchido quando o candidato é um `User` já existente do Griffo — time
+  /// interno (via `OrganizationMembership`) ou opt-in do marketplace. `null`
+  /// quando é um currículo cadastrado direto na empresa, sem conta Griffo.
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  /// Snapshot do perfil no formato de `ProfessionalProfile`, usado só quando
+  /// não há `userId` — currículo recebido pela empresa e extraído via
+  /// `profile/extract.ts` (mesma extração do Griffo consumer), sem virar
+  /// conta na plataforma. Fonte 2 da cascata, MVP: cadastro/upload direto —
+  /// importação de outras plataformas de RH (Gupy, Workday etc.) fica para
+  /// fase 2, demand-driven, seguindo o padrão de `lib/jobs/adapters/`.
+  profileJson String?
+
+  /// internal | registered | marketplace — de qual fonte da cascata este
+  /// candidato veio. Ver comentário acima: sempre exibido ao recrutador.
+  source String
+
+  /// 0–100, saída de `matching/compatibility.ts`.
+  matchScore      Float?
+  /// Decomposição completa (`professionalAxis`/`jobFitAxis`/`contextualAxis`),
+  /// mesmo papel do `segmentsJson` do `AnalysisJob`.
+  matchResultJson String?
+
+  // new | shortlisted | rejected | hired
+  status                String                  @default("new")
+  decidedByMembershipId String?
+  decidedByMembership   OrganizationMembership? @relation("SubmissionDecidedBy", fields: [decidedByMembershipId], references: [id], onDelete: SetNull)
+  decidedAt             DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([jobRequisitionId, userId])
+  @@index([jobRequisitionId, matchScore])
+  @@index([organizationId, status])
+}
+
 /// Como o usuário quer ser interrompido pelo Radar (§22).
 ///
 /// Tabela própria, e não campos no `User`, pela mesma razão do
@@ -732,7 +912,7 @@ model RadarPreference {
   /// gastou na janela atual. Benefício de quem já destravou uma Análise
   /// Completa — ver `requireAnyUnlockedResume` em `lib/entitlements.ts` — e
   /// não uma cota de infraestrutura, por isso vive aqui e não em `quota.ts`.
-  onDemandSearchCount Int @default(0)
+  onDemandSearchCount       Int       @default(0)
   /// Início da janela rolante de 7 dias usada para zerar o contador acima.
   /// Rolante a partir do primeiro uso, não semana de calendário — ver
   /// `lib/radar/on-demand-search.ts`.
@@ -841,11 +1021,11 @@ model ApiQuotaUsage {
 /// Eventos de telemetria e funil de conversão (visitantes, checkouts e upsell).
 model AnalyticsEvent {
   id        String   @id @default(cuid())
-  event     String   // 'page_view' | 'checkout_initiated' | 'upsell_viewed'
+  event     String // 'page_view' | 'checkout_initiated' | 'upsell_viewed'
   userId    String?
-  visitorId String?  // Hash ou identificador anônimo de sessão
-  sku       String?  // 'single' | 'pack5'
-  meta      String?  // JSON string com metadados adicionais
+  visitorId String? // Hash ou identificador anônimo de sessão
+  sku       String? // 'single' | 'pack5'
+  meta      String? // JSON string com metadados adicionais
   createdAt DateTime @default(now())
 
   @@index([event, createdAt])

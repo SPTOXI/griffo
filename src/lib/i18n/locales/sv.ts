@@ -239,6 +239,7 @@ export const sv: TranslationDictionary = {
     marketsTitle: 'Marknader:',
     atsTitle: 'ATS-kompatibilitet:',
     globalRemote: 'Global distans',
+    forCompanies: 'För företag',
   },
   auth: {
     welcomeBack: 'Välkommen tillbaka',
