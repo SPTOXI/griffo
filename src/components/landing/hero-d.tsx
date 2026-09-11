@@ -166,11 +166,16 @@ export function HeroD({ t, lang, openJobsCount, onNavigate }: HeroDProps) {
                   fora do "Corpo" de 320px, para o `top: 0%→100%` do keyframe
                   (ver `hero-ats-scan` em globals.css) ser relativo à altura
                   real do cartão — que muda de idioma para idioma — não a um
-                  pixel fixo. */}
+                  pixel fixo. Roda mesmo com `prefers-reduced-motion`: é um
+                  flourish decorativo de baixa opacidade, sem flash nem
+                  parallax — não o tipo de movimento que essa preferência visa
+                  evitar, e "reduzir animações" no Windows é uma opção que
+                  muita gente desliga por preferência de performance, sem
+                  relação com sensibilidade a movimento. */}
               {view === 'ats' && (
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 top-0 z-10 h-3.5 animate-[hero-ats-scan_3.4s_linear_infinite] bg-gradient-to-b from-[#0B63E5]/[0.22] to-transparent motion-reduce:animate-none"
+                  className="pointer-events-none absolute inset-x-0 top-0 z-10 h-3.5 animate-[hero-ats-scan_3.4s_linear_infinite] bg-gradient-to-b from-[#0B63E5]/[0.22] to-transparent"
                 />
               )}
               {/* Cabeçalho */}
