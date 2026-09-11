@@ -11,6 +11,18 @@ export interface OrderBandProps {
  * hero-d.tsx e o contexto de produto no prompt de handoff).
  */
 export function OrderBand({ t }: OrderBandProps) {
+  // Chaves planas no dicionário (step1Title...step6Body), não array de
+  // objetos — `i18n.test.ts` exige que todo array de tradução seja
+  // `string[]`, então a lista é remontada aqui só para o render.
+  const steps = [
+    { title: t.orderBand.step1Title, body: t.orderBand.step1Body },
+    { title: t.orderBand.step2Title, body: t.orderBand.step2Body },
+    { title: t.orderBand.step3Title, body: t.orderBand.step3Body },
+    { title: t.orderBand.step4Title, body: t.orderBand.step4Body },
+    { title: t.orderBand.step5Title, body: t.orderBand.step5Body },
+    { title: t.orderBand.step6Title, body: t.orderBand.step6Body },
+  ]
+
   return (
     <section className="border-t border-white/10 bg-[#0B192E]">
       <div className="mx-auto max-w-[1200px] px-8 pt-14 pb-[72px]">
@@ -22,8 +34,8 @@ export function OrderBand({ t }: OrderBandProps) {
         </p>
 
         <div className="grid grid-cols-1 gap-px overflow-hidden rounded-[10px] border border-white/[0.12] bg-white/[0.12] min-[480px]:grid-cols-2 min-[830px]:grid-cols-3 min-[1080px]:grid-cols-6">
-          {t.orderBand.steps.map((step, i) => {
-            const isRadar = i === t.orderBand.steps.length - 1
+          {steps.map((step, i) => {
+            const isRadar = i === steps.length - 1
             return (
               <div key={i} className="flex flex-col gap-2 bg-[#0B192E] px-5 py-[22px]">
                 <span

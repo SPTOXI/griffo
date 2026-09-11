@@ -46,6 +46,16 @@ export function HeroD({ t, lang, openJobsCount, onNavigate }: HeroDProps) {
 
   const score = view === 'human' ? 91 : 43
 
+  // Chaves planas no dicionário (requirement1Title...requirement4Evidence), não
+  // array de objetos — `i18n.test.ts` exige que todo array de tradução seja
+  // `string[]`, então a lista é remontada aqui só para o render.
+  const requirements = [
+    { title: t.heroD.requirement1Title, evidence: t.heroD.requirement1Evidence },
+    { title: t.heroD.requirement2Title, evidence: t.heroD.requirement2Evidence },
+    { title: t.heroD.requirement3Title, evidence: t.heroD.requirement3Evidence },
+    { title: t.heroD.requirement4Title, evidence: t.heroD.requirement4Evidence },
+  ]
+
   return (
     <section className="relative overflow-hidden bg-[#0B192E]">
       <div className="mx-auto max-w-[1200px] px-8 py-20">
@@ -199,7 +209,7 @@ export function HeroD({ t, lang, openJobsCount, onNavigate }: HeroDProps) {
                     <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#64748b]">
                       {t.heroD.humanKicker}
                     </p>
-                    {t.heroD.requirements.map((r, i) => (
+                    {requirements.map((r, i) => (
                       <div
                         key={i}
                         className="flex items-start justify-between gap-3.5 border-b border-[#f4f7fa] pb-3 last:border-b-0 last:pb-0"

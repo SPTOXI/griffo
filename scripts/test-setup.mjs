@@ -29,10 +29,13 @@
  * ponto que `lib/db.ts` já usa para sobreviver ao hot reload.
  */
 import { registerHooks } from 'node:module'
-import { pathToFileURL } from 'node:url'
 
 const NEUTRALIZADOS = new Set(['server-only', 'client-only'])
-const VAZIO = pathToFileURL(new URL('./empty-module.js', import.meta.url).pathname).href
+// `new URL(...)` já devolve uma `file://` válida. Um `pathToFileURL(url.pathname)`
+// que passou por aqui antes fazia round-trip por um path OS (decodificando
+// `%20` e, no Windows, duplicando a letra da unidade — `C:\C:\Users\...`) e
+// quebrava em qualquer checkout com espaço no caminho (ex.: "Projeto Griffo").
+const VAZIO = new URL('./empty-module.js', import.meta.url).href
 
 registerHooks({
   resolve(specifier, context, nextResolve) {

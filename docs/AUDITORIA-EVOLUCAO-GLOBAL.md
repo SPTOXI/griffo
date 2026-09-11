@@ -7436,7 +7436,101 @@ segundo colaborador com acesso de escrita, o que vier primeiro.
 
 ---
 
-## 2.119 Hero D + faixa "A ordem importa" — landing reposicionada da vaga para a auditoria
+## 2.119 "Job interview" — lacuna real de SEO/GEO encontrada num dado externo, corrigida em `/hiring`
+
+O operador trouxe um levantamento externo de share-of-search por país,
+oito termos de carreira ("job application", "job interview", "job
+vacancies", "job search", "career development", "career coaching",
+"cv writing", "resume optimization"), pedindo leitura para SEO/GEO/LLM.
+Três achados, o segundo com ação concreta:
+
+1. **"resume optimization" e "cv writing" são termos mortos** — 0% em
+   praticamente todas as 58 linhas, sem exceção real na primeira. Jargão
+   de quem vende o serviço, não fala de usuário. Conferido: o código já
+   evita os dois (`job-search-terms.ts`, `employment-keywords.ts`) —
+   nada a corrigir aqui.
+2. **"job interview" é lacuna real**: segunda maior fatia de busca no
+   Brasil (73%, atrás só de "job application") e dominante isolado numa
+   faixa que cobre quase toda a América Latina, Leste Europeu e Ibéria.
+   Busca em código confirmou **zero termo de busca** em
+   `job-search-terms.ts` e **zero cópia nessa direção em `/hiring`**.
+
+   > **Correção (10/09/2026, conciliação).** A frase original aqui dizia
+   > "zero conteúdo nessa direção — a única ocorrência de 'interview' no
+   > projeto inteiro era incidental". Isso estava **errado**, e a revisão
+   > automática do PR #68 pegou: `en.ts` já tinha cópia visível ao usuário
+   > ("increase your interview chances", em `recommendationsDesc`) e
+   > `matching/job-fit.ts` já definia uma ação `interview_prep`
+   > ("Preparar para a entrevista", com justificativa própria). A lacuna
+   > real era **de SEO em `/hiring`**, não de produto — e é só isso que a
+   > mudança desta seção fecha.
+   >
+   > **Achado que veio junto, e que não é de SEO**: `interview_prep`
+   > nunca chega à tela. A lista de ações do Job Fit é filtrada por
+   > `primary` em `radar-view.tsx:656`, e `interview_prep` nunca é
+   > marcada como principal em nenhum dos três caminhos de
+   > `job-fit.ts` — existe no modelo de dados e no tipo, e o usuário
+   > jamais a vê. Não é defeito de tela nem promessa quebrada (nada é
+   > oferecido e não entregue), mas é código que não faz nada:
+   > **fica em aberto** decidir entre exibir a recomendação ou remover
+   > a ação. Não mexi nisto aqui — é decisão de produto, e este PR é de
+   > conciliação.
+3. Segmentação geográfica por bloco (África/Caribe → "job vacancies"
+   transacional; Anglófonos/Ásia desenvolvida → "career development"
+   mais presente) — registrado, sem ação nesta rodada.
+
+**Escopo decidido com o operador antes de implementar**: só SEO/GEO —
+sem feature nova de IA (havia a opção de um "preparador de entrevista"
+por IA — que, como a correção acima mostra, já existe como RECOMENDAÇÃO
+não exibida em `job-fit.ts` —, descartada por ora: maior custo, decisão de preço/entitlement
+que este achado isolado não justifica).
+
+**Implementado, `/hiring` — a página que já fala com este exato
+momento do funil** (quem se candidatou e quer saber se o currículo
+passa):
+
+- `job-search-terms.ts`: termo nativo de entrevista acrescentado aos 12
+  idiomas (`entrevista de emprego`, `job interview`,
+  `Vorstellungsgespräch`, `面接`, etc.) — japonês e chinês levam a
+  palavra isolada (`面接`/`面试`), não um composto com `転職`/`求职`, pelo
+  mesmo cuidado documentado no cabeçalho do arquivo para os outros
+  pares. Nenhuma tradução nova exigiu verificação institucional — ao
+  contrário dos termos de mercado de trabalho, "entrevista de emprego"
+  não muda de público por idioma.
+- `closingSubtitle` de `hiringPage` (12 idiomas): uma frase a mais,
+  verdadeira — o que a avaliação em 8 dimensões entrega É o primeiro
+  passo para chegar à entrevista. Não é invenção de capacidade nova.
+- **Por que a cópia visível, não só a meta `keywords`**: o próprio
+  cabeçalho de `/hiring/page.tsx` já registra que o Google ignora
+  `keywords` desde 2009 — quem de fato sustenta o termo é o texto que
+  a pessoa lê, que é também o que um motor de resposta (GEO) cita.
+- Teste novo em `job-search-terms.test.ts`: confirma o termo completo
+  nas keywords E a raiz do termo no texto visível, nos 12 idiomas — a
+  mesma dupla checagem que o teste da hashtag já fazia.
+
+**Verificado**: dev server local, `/hiring?lang=pt` e `?lang=en` —
+`get_page_text` confirmou a frase nova no corpo visível, `curl`
+confirmou "entrevista de emprego"/"job interview" na meta `keywords`.
+Achado no caminho: dois processos do Next dev de uma verificação
+anterior na sessão não tinham morrido de verdade (seguravam a DLL do
+Prisma, `EPERM` no build) — encerrados por PID via PowerShell antes de
+buildar. `tsc --noEmit`, `eslint` e `npm test` (939/939, 1 novo) e
+`npm run build` limpos.
+
+> **Nota de conciliação (10/09/2026).** Esta seção foi escrita como
+> §2.115 numa sessão que expirou antes do push; os dois commits ficaram
+> só na máquina do operador e foram resgatados depois que a `main` já
+> tinha um §2.115 diferente (a deriva de documentação do digest).
+> Renumerada para §2.119 na conciliação — o CONTEÚDO é o original, sem
+> corte. As referências a "§2.115" que apontavam para cá, no §7.11 do
+> documento de continuidade e no índice, foram atualizadas junto. Fica
+> o registro do porquê: número de seção é ordem de chegada ao
+> repositório, não ordem de escrita, e duas sessões em paralelo colidem
+> nele sem que nenhuma das duas esteja errada.
+
+---
+
+## 2.120 Hero D + faixa "A ordem importa" — landing reposicionada da vaga para a auditoria
 
 Pedido do operador, a partir de uma especificação de design (handoff com
 quatro direções de hero, A/B/C/D, das quais só a D foi aprovada): substituir o
@@ -7543,9 +7637,9 @@ cliente:**
 
 ---
 
-## 2.120 `/privacy` sai do papel — pendência 3 do §2.119 fecha, e nasce um agente de revisão de tradução
+## 2.121 `/privacy` sai do papel — pendência 3 do §2.120 fecha, e nasce um agente de revisão de tradução
 
-Resposta do operador às duas pendências do §2.119. Sobre o cartão
+Resposta do operador às duas pendências do §2.120. Sobre o cartão
 ilustrativo do Hero D: "dados pessoais podem ser fictícios apenas para
 simulação" — confirma a implementação já feita (nome, empresa e evidências
 inventados, rotulados como "Exemplo ilustrativo"), sem necessidade de
@@ -7585,7 +7679,7 @@ roteamento `[country]` (mesmo padrão de `/enterprise`, `/market-pulse`),
 idioma resolvido por `resolveRequestLanguage` (o helper que uma sessão
 anterior já tinha extraído para o `/enterprise`, reaproveitado aqui em vez
 de duplicado uma terceira vez). A frase "LGPD & GDPR" da linha de confiança
-do Hero D (§2.119) virou link para `/privacy`.
+do Hero D (§2.120) virou link para `/privacy`.
 
 **Escopo de idioma: os 12 do site**, decisão do operador — "só em inglês é
 interessante mas corremos o risco de perder clientes". Diferente do Hero D,

@@ -4,8 +4,8 @@
  * Mesmo padrão de `lib/enterprise/content-types.ts`: um arquivo por idioma em
  * `locales/`, agregado em `content.ts`. Cada fato descrito aqui precisa ser
  * verificável no código (retenção, sub-processadores, direitos do usuário) —
- * nada de alegação de conformidade sem o mecanismo real por trás. Ver §2.119
- * e §2.120 em `docs/AUDITORIA-EVOLUCAO-GLOBAL.md` para a origem de cada dado.
+ * nada de alegação de conformidade sem o mecanismo real por trás. Ver §2.120
+ * e §2.121 em `docs/AUDITORIA-EVOLUCAO-GLOBAL.md` para a origem de cada dado.
  */
 
 export interface PrivacyDataCategory {

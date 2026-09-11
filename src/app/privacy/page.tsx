@@ -8,7 +8,7 @@ import { privacyContentFor } from '@/lib/privacy/content'
 /**
  * `/privacy` — política de privacidade pública, nos 12 idiomas do site.
  *
- * Existe porque a landing (Hero D, §2.119) cita "LGPD & GDPR" na linha de
+ * Existe porque a landing (Hero D, §2.120) cita "LGPD & GDPR" na linha de
  * confiança sem nenhuma página por trás que explicasse o que isso significa
  * na prática — gap identificado nessa sessão e fechado aqui, a pedido do
  * operador ("pode criar uma que não nos comprometa"). Todo fato descrito

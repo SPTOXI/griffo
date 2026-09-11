@@ -55,7 +55,14 @@ export interface TranslationDictionary {
     atsNote: string
     compatibleUnit: string
     humanKicker: string
-    requirements: { title: string; evidence: string }[]
+    requirement1Title: string
+    requirement1Evidence: string
+    requirement2Title: string
+    requirement2Evidence: string
+    requirement3Title: string
+    requirement3Evidence: string
+    requirement4Title: string
+    requirement4Evidence: string
     humanClosing: string
     atsKicker: string
     atsLine1: string
@@ -73,7 +80,18 @@ export interface TranslationDictionary {
   orderBand: {
     kicker: string
     intro: string
-    steps: { title: string; body: string }[]
+    step1Title: string
+    step1Body: string
+    step2Title: string
+    step2Body: string
+    step3Title: string
+    step3Body: string
+    step4Title: string
+    step4Body: string
+    step5Title: string
+    step5Body: string
+    step6Title: string
+    step6Body: string
     closingBrand: string
     closingTagline: string
   }
