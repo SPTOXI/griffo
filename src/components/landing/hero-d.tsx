@@ -160,7 +160,19 @@ export function HeroD({ t, lang, openJobsCount, onNavigate }: HeroDProps) {
               </button>
             </div>
 
-            <div className="overflow-hidden rounded-xl bg-white shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)]">
+            <div className="relative overflow-hidden rounded-xl bg-white shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)]">
+              {/* Linha de varredura — cobre o cartão inteiro (cabeçalho + faixa
+                  do número + corpo), só na aba "Como o ATS te vê". Vive aqui,
+                  fora do "Corpo" de 320px, para o `top: 0%→100%` do keyframe
+                  (ver `hero-ats-scan` em globals.css) ser relativo à altura
+                  real do cartão — que muda de idioma para idioma — não a um
+                  pixel fixo. */}
+              {view === 'ats' && (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 top-0 z-10 h-3.5 animate-[hero-ats-scan_3.4s_linear_infinite] bg-gradient-to-b from-[#0B63E5]/[0.22] to-transparent motion-reduce:animate-none"
+                />
+              )}
               {/* Cabeçalho */}
               <div className="flex items-start justify-between gap-3 border-b border-[#eef2f6] px-[22px] py-4">
                 <div className="min-w-0">
@@ -240,10 +252,6 @@ export function HeroD({ t, lang, openJobsCount, onNavigate }: HeroDProps) {
                     tabIndex={0}
                     className="overflow-hidden bg-[#f7f9fc] p-[22px] font-mono text-[12.5px] leading-[1.75] text-[#26313f]"
                   >
-                    <div
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-x-0 top-0 h-3.5 animate-[hero-ats-scan_3.4s_linear_infinite] bg-gradient-to-b from-[#0B63E5]/[0.22] to-transparent motion-reduce:animate-none"
-                    />
                     <p className="text-[11px] uppercase tracking-[0.08em] text-[#64748b]">
                       {t.heroD.atsKicker}
                     </p>

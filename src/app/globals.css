@@ -141,15 +141,20 @@
   }
 }
 
-/* Linha de varredura do cartão "Como o ATS te vê" (hero D). Usada como
-   classe (`animate-[hero-ats-scan_3.4s_linear_infinite]`), não `style`
-   inline — a CSP do projeto não declara `style-src` e bloqueia atributo
-   `style` em linha (ver comentário em hiring-index-teaser.tsx). */
+/* Linha de varredura do cartão "Como o ATS te vê" (hero D) — varre o cartão
+   inteiro (cabeçalho + faixa do número + corpo), não só os 320px do corpo.
+   `top` em % é relativo à altura do contêiner posicionado (o cartão), ao
+   contrário de `transform: translateY(%)`, que é relativo ao próprio
+   elemento — por isso `top`, não `transform`, e por isso nenhum pixel fixo:
+   a altura do cartão varia por idioma (texto mais longo quebra linha).
+   Usada como classe (`animate-[hero-ats-scan_3.4s_linear_infinite]`), não
+   `style` inline — a CSP do projeto não declara `style-src` e bloqueia
+   atributo `style` em linha (ver comentário em hiring-index-teaser.tsx). */
 @keyframes hero-ats-scan {
   from {
-    transform: translateY(0);
+    top: 0%;
   }
   to {
-    transform: translateY(320px);
+    top: 100%;
   }
 }
