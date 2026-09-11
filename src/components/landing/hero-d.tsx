@@ -67,7 +67,7 @@ export function HeroD({ t, lang, openJobsCount, onNavigate }: HeroDProps) {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-[url('/circuit-pattern.svg')] bg-repeat [background-size:240px_240px]"
       />
-      <div className="mx-auto max-w-[1200px] px-8 py-20">
+      <div className="relative z-10 mx-auto max-w-[1200px] px-8 py-20">
         <div className="grid grid-cols-1 gap-14 min-[830px]:grid-cols-2 min-[830px]:items-center">
           {/* COLUNA ESQUERDA */}
           <div className="flex min-w-0 flex-col gap-[26px]">
