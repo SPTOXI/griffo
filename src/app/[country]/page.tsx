@@ -172,7 +172,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // vazava para o preview de link do WhatsApp/redes sociais sempre que a rota
   // resolvia para uma dessas línguas.
   const titles: Record<string, string> = {
-    pt: `GriffoWork ${cName} — Inteligência de Carreira por IA & Auditoria ATS`,
+    pt: `GriffoWork ${cName} — Inteligência de Carreira & Auditoria ATS`,
     es: `GriffoWork ${cName} — Inteligencia de Carrera con IA y Auditoría ATS`,
     en: `GriffoWork ${cName} — AI Career Intelligence & ATS ${term.noun} Audit`,
     de: `GriffoWork ${cName} — KI-Karriere-Intelligenz & ATS-Audit`,
