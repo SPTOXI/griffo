@@ -6,7 +6,7 @@ import { priceFor } from '@/lib/pricing/catalog'
 import { DICTIONARIES, dirForLang } from '@/lib/i18n'
 import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
 import { resumeTermFor } from '@/lib/market/regional-terms'
-import { db } from '@/lib/db'
+import { getOpenJobsCount } from '@/lib/jobs/open-count.server'
 import { CountryPageClient } from './country-client'
 
 export const dynamicParams = true
@@ -14,17 +14,9 @@ export const dynamicParams = true
 // As 41 rotas continuam estaticamente geradas (`generateStaticParams` abaixo)
 // — só passam a revalidar em segundo plano a cada 5 minutos, igual à home em
 // `src/app/page.tsx`, para que a contagem de vagas do Hero D não fique presa
-// no valor do último build.
+// no valor do último build. A contagem em si vive em
+// `lib/jobs/open-count.server.ts`, compartilhada com a home.
 export const revalidate = 300
-
-async function getOpenJobsCount(): Promise<number> {
-  try {
-    return await db.job.count({ where: { closedAt: null } })
-  } catch (e) {
-    console.error('open jobs count failed', e)
-    return 0
-  }
-}
 
 /**
  * Nome do país de cada rota, no idioma que a PRÓPRIA página usa
