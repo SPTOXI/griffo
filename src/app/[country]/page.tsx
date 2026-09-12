@@ -171,19 +171,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // anterior do produto ("análise de currículo por IA e pontuação ATS"), que
   // vazava para o preview de link do WhatsApp/redes sociais sempre que a rota
   // resolvia para uma dessas línguas.
+  // Só a frase de posicionamento (igual a `heroD.eyebrow` de cada dicionário),
+  // sem sufixo de "auditoria ATS"/"IA" anexado — o título é o nome da marca
+  // + o conceito, não um resumo de feature.
   const titles: Record<string, string> = {
-    pt: `GriffoWork ${cName} — Inteligência de Carreira & Auditoria ATS`,
-    es: `GriffoWork ${cName} — Inteligencia de Carrera con IA y Auditoría ATS`,
-    en: `GriffoWork ${cName} — AI Career Intelligence & ATS ${term.noun} Audit`,
-    de: `GriffoWork ${cName} — KI-Karriere-Intelligenz & ATS-Audit`,
-    fr: `GriffoWork ${cName} — Intelligence de Carrière par IA & Audit ATS`,
-    it: `GriffoWork ${cName} — Intelligenza di Carriera con IA & Audit ATS`,
-    ja: `GriffoWork ${cName} — AIキャリア・インテリジェンス＆ATS適合度診断`,
-    nl: `GriffoWork ${cName} — AI Carrière-intelligentie & ATS-Audit`,
-    sv: `GriffoWork ${cName} — AI-Karriärintelligens & ATS-Granskning`,
-    zh: `GriffoWork ${cName} — AI 职业智能与 ATS 审核`,
-    ar: `GriffoWork ${cName} — ذكاء المسار المهني بالذكاء الاصطناعي وتدقيق ATS`,
-    ko: `GriffoWork ${cName} — AI 커리어 인텔리전스 & ATS 감사`,
+    pt: `GriffoWork ${cName} — Inteligência de Carreira`,
+    es: `GriffoWork ${cName} — Inteligencia de Carrera`,
+    en: `GriffoWork ${cName} — Career Intelligence`,
+    de: `GriffoWork ${cName} — Karriere-Intelligenz`,
+    fr: `GriffoWork ${cName} — Intelligence de Carrière`,
+    it: `GriffoWork ${cName} — Intelligenza di Carriera`,
+    ja: `GriffoWork ${cName} — キャリア・インテリジェンス`,
+    nl: `GriffoWork ${cName} — Carrière-intelligentie`,
+    sv: `GriffoWork ${cName} — Karriärintelligens`,
+    zh: `GriffoWork ${cName} — 职业智能`,
+    ar: `GriffoWork ${cName} — ذكاء المسار المهني`,
+    ko: `GriffoWork ${cName} — 커리어 인텔리전스`,
   }
 
   const descriptions: Record<string, string> = {
