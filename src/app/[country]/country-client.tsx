@@ -61,5 +61,12 @@ export function CountryPageClient({ countryCode, lang, openJobsCount }: CountryP
     return <AuthScreen initialMode={effectiveScreen} onBack={() => setScreen('landing')} />
   }
 
-  return <Landing onNavigate={(v) => setScreen(v)} countryCode={countryCode} forcedLang={lang} />
+  return (
+    <Landing
+      onNavigate={(v) => setScreen(v)}
+      countryCode={countryCode}
+      forcedLang={lang}
+      openJobsCount={openJobsCount}
+    />
+  )
 }
