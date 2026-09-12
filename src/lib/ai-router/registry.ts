@@ -179,6 +179,9 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   // análise foi calculado com ela no Sonnet. Estava no DeepSeek — mais barata,
   // mas fora do padrão de qualidade do que a pessoa leva embora.
   cover_letter: 'claude',
+  // Mesmo grupo de career_orientation/cover_letter: conteúdo que a pessoa lê
+  // e usa para se preparar, não extração barata.
+  interview_prep: 'claude',
   // Prévia gratuita: servida a quem ainda não pagou, ao custo de US$ 0,0011 por
   // conta fora de pico e US$ 0,0022 no pico, pela tabela do DeepSeek que vale a
   // partir de 16/08/2026 (antes dela era US$ 0,0017). É o único item do produto

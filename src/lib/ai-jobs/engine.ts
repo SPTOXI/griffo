@@ -30,6 +30,7 @@ export type AiJobKind =
   | 'career_orientation'
   | 'cover_letter'
   | 'rewrite'
+  | 'interview_prep'
 
 /** Roda um job até o fim. Um runner por `kind` implementa isto. */
 export type AiJobRunner = (jobId: string) => Promise<void>

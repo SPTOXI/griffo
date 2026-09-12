@@ -692,6 +692,15 @@ export interface TranslationDictionary {
     blockersTitle: string
     viewJobButton: string
     prepareResumeButton: string
+    interviewPrepButton: string
+    interviewPrepLoading: string
+    interviewPrepEmpty: string
+    interviewPrepErrorFallback: string
+    interviewPrepConnectionError: string
+    interviewPrepGroundedInLabel: string
+    interviewPrepTipLabel: string
+    interviewPrepSignalStrength: string
+    interviewPrepSignalGap: string
     feedbackInterestedNote: string
     feedbackNotUsefulNote: string
     feedbackWhatWrong: string

@@ -9,13 +9,14 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Radar as RadarIcon, Loader2, CheckCircle2, AlertTriangle, XCircle, ExternalLink,
-  ThumbsUp, ThumbsDown, Sliders, Info, Briefcase, RefreshCw, Wand2,
+  ThumbsUp, ThumbsDown, Sliders, Info, Briefcase, RefreshCw, Wand2, HelpCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { internalFetch } from '@/lib/internal-fetch'
 import { safeHttpUrl } from '@/lib/safe-url'
 import { useI18n } from '@/context/i18n-context'
 import { localeForLang, type TranslationDictionary } from '@/lib/i18n'
+import { useAiJob } from './use-ai-job'
 
 /**
  * O Radar, do lado do usuário.
@@ -55,6 +56,18 @@ interface Opportunity {
   seenAt: string | null
   feedback: string | null
   fit: JobFit | null
+}
+
+interface InterviewPrepQuestion {
+  question: string
+  signal: 'strength' | 'gap'
+  groundedIn: string
+  tip: string
+}
+
+interface InterviewPrepResult {
+  questions: InterviewPrepQuestion[]
+  generatedAt: string
 }
 
 interface Digest {
@@ -185,6 +198,41 @@ export function RadarView() {
   }, [load])
 
   const [preparing, setPreparing] = useState<string | null>(null)
+
+  // Preparo de entrevista: qual card tem o painel aberto, e os resultados já
+  // buscados (por `alertId`) para não perder o que já foi gerado ao
+  // expandir/recolher outro card. Uma instância só de `useAiJob` — como em
+  // `rewrite-view.tsx`/`professional-profile-view.tsx` — porque só um card
+  // gera de cada vez.
+  const [expandedPrepAlertId, setExpandedPrepAlertId] = useState<string | null>(null)
+  const [prepResults, setPrepResults] = useState<Record<string, InterviewPrepResult>>({})
+  const [prepStartingId, setPrepStartingId] = useState<string | null>(null)
+  const interviewPrepJob = useAiJob<{ interviewPrep: InterviewPrepResult }>({
+    startUrl: '/api/radar/interview-prep',
+    statusUrl: '/api/ai-jobs/status',
+    onCompleted: (result) => {
+      if (prepStartingId && result?.interviewPrep) {
+        setPrepResults((prev) => ({ ...prev, [prepStartingId]: result.interviewPrep }))
+      }
+      setPrepStartingId(null)
+    },
+    onFailed: () => setPrepStartingId(null),
+  })
+
+  const toggleInterviewPrep = async (opportunity: Opportunity) => {
+    // Já aberto: só fecha. Reabrir não rebusca — o resultado já está em
+    // `prepResults` (e o próprio backend cacheia em `RadarAlert.interviewPrepJson`
+    // mesmo que o estado local se perca, ex. após recarregar a página).
+    if (expandedPrepAlertId === opportunity.alertId) {
+      setExpandedPrepAlertId(null)
+      return
+    }
+    setExpandedPrepAlertId(opportunity.alertId)
+    if (prepResults[opportunity.alertId]) return
+
+    setPrepStartingId(opportunity.alertId)
+    await interviewPrepJob.start({ alertId: opportunity.alertId })
+  }
 
   /**
    * Leva a vaga para o currículo.
@@ -648,7 +696,58 @@ export function RadarView() {
                     : <Wand2 className="w-4 h-4 mr-1.5" />}
                   {rd.prepareResumeButton}
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => toggleInterviewPrep(opportunity)}
+                  disabled={prepStartingId === opportunity.alertId}
+                  className="border-indigo-300 text-indigo-800 hover:bg-indigo-50"
+                >
+                  {prepStartingId === opportunity.alertId
+                    ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    : <HelpCircle className="w-4 h-4 mr-1.5" />}
+                  {rd.interviewPrepButton}
+                </Button>
               </div>
+
+              {expandedPrepAlertId === opportunity.alertId && (
+                <div className="space-y-2.5 p-3 rounded-lg bg-indigo-50/50 border border-indigo-200">
+                  {prepStartingId === opportunity.alertId ? (
+                    <p className="text-xs text-indigo-800 flex items-center gap-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> {rd.interviewPrepLoading}
+                    </p>
+                  ) : interviewPrepJob.phase === 'failed' && !prepResults[opportunity.alertId] ? (
+                    <p className="text-xs text-rose-700">{interviewPrepJob.error || rd.interviewPrepErrorFallback}</p>
+                  ) : prepResults[opportunity.alertId] ? (
+                    prepResults[opportunity.alertId].questions.length === 0 ? (
+                      <p className="text-xs text-slate-600">{rd.interviewPrepEmpty}</p>
+                    ) : (
+                      prepResults[opportunity.alertId].questions.map((q, i) => (
+                        <div key={i} className="space-y-1 pb-2.5 border-b border-indigo-100 last:border-b-0 last:pb-0">
+                          <div className="flex items-start gap-1.5">
+                            <Badge
+                              className={
+                                q.signal === 'gap'
+                                  ? 'bg-amber-100 text-amber-800 border-amber-200 shrink-0'
+                                  : 'bg-emerald-100 text-emerald-800 border-emerald-200 shrink-0'
+                              }
+                            >
+                              {q.signal === 'gap' ? rd.interviewPrepSignalGap : rd.interviewPrepSignalStrength}
+                            </Badge>
+                            <p className="text-xs font-semibold text-slate-800">{q.question}</p>
+                          </div>
+                          <p className="text-[11px] text-slate-600">
+                            <span className="font-medium text-slate-700">{rd.interviewPrepGroundedInLabel}</span> {q.groundedIn}
+                          </p>
+                          <p className="text-[11px] text-slate-600 italic">
+                            <span className="font-medium not-italic text-slate-700">{rd.interviewPrepTipLabel}</span> {q.tip}
+                          </p>
+                        </div>
+                      ))
+                    )
+                  ) : null}
+                </div>
+              )}
 
               {/* As ações do Job Fit são recomendações, não botões: cada uma
                   descreve o que fazer, e transformá-las em botões que fazem

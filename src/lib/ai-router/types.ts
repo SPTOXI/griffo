@@ -27,6 +27,12 @@ export type TaskType =
   | 'support_chat'
   /// Análise semântica de similaridade entre pares de vagas para deduplicação avançada.
   | 'job_deduplication'
+  /// Perguntas de entrevista prováveis para uma vaga do Radar, ancoradas no
+  /// que o match já identificou (atende/lacuna). Tipo próprio pelo mesmo
+  /// motivo de `career_orientation`/`profile_extraction`: produz `questions`,
+  /// não `dimensions` nem `coverLetter` — reaproveitar outro validador
+  /// reprovaria uma resposta correta.
+  | 'interview_prep'
 
 export type ProviderId = 'gemini' | 'deepseek' | 'claude' | 'kimi' | 'openai'
 

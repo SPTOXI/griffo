@@ -140,6 +140,36 @@ export function auditQualityOfAiResult(taskType: string, content: string): Quali
     return { approved: true, score: 9.0 }
   }
 
+  /**
+   * Perguntas de entrevista para uma vaga do Radar.
+   *
+   * Regra própria pelo mesmo motivo de `cover_letter`: o risco aqui não é
+   * tamanho de texto, é a IA devolver poucas perguntas ou perguntas sem
+   * ancoragem (sem `groundedIn`/`tip`) — genéricas o bastante para servir
+   * qualquer vaga, o que o prompt proíbe explicitamente.
+   */
+  if (taskType === 'interview_prep') {
+    let json: any = null
+    try {
+      json = JSON.parse(text.replace(/```json/gi, '').replace(/```/g, '').trim())
+    } catch {
+      return { approved: false, score: 3, feedback: 'Estrutura JSON inválida.' }
+    }
+
+    if (!Array.isArray(json.questions) || json.questions.length < 4) {
+      return { approved: false, score: 4, feedback: 'Poucas ou nenhuma pergunta gerada.' }
+    }
+
+    const hasWeak = json.questions.some(
+      (q: any) => !q?.question?.trim() || q.question.trim().length < 15 || !q?.groundedIn?.trim() || !q?.tip?.trim()
+    )
+    if (hasWeak) {
+      return { approved: false, score: 5, feedback: 'Pergunta sem base na vaga ou sem dica de coaching.' }
+    }
+
+    return { approved: true, score: 9.0 }
+  }
+
   if (taskType === 'rewrite') {
     // Reescrita deve ter tamanho razoável e estrutura em markdown
     if (text.length < 100) {

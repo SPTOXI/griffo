@@ -452,12 +452,13 @@ model AnalysisJob {
 
 /// Execução em segundo plano para tarefas de IA fora do laudo principal —
 /// leitura de perfil social, extração de perfil, orientação vocacional,
-/// carta de apresentação e reescrita do currículo (ver HANDOFF-CONTINUIDADE.md,
-/// "Nunca dar sensação de travamento", e 2.35 na auditoria).
+/// carta de apresentação, reescrita do currículo e preparo de entrevista
+/// (ver HANDOFF-CONTINUIDADE.md, "Nunca dar sensação de travamento", e 2.35
+/// na auditoria).
 ///
 /// Mesmo desenho de concessão/retomada do `AnalysisJob`, mas genérico por
 /// `kind`: este model NÃO substitui o `AnalysisJob` do laudo — que continua
-/// intacto — e sim cobre os outros cinco fluxos, que antes respondiam de
+/// intacto — e sim cobre os outros seis fluxos, que antes respondiam de
 /// forma síncrona e mostravam só um spinner com aviso de tempo estimado.
 model AiJob {
   id       String @id @default(cuid())
@@ -466,7 +467,7 @@ model AiJob {
   resumeId String
   resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
-  /// social_advice | profile_extraction | career_orientation | cover_letter | rewrite
+  /// social_advice | profile_extraction | career_orientation | cover_letter | rewrite | interview_prep
   kind   String
   status String @default("queued") // queued | running | completed | failed
 
@@ -972,6 +973,14 @@ model RadarAlert {
   /// wrong_role | location | salary | seniority | skills | company | work_mode | other
   feedbackReason String?
   feedbackAt     DateTime?
+
+  /// Perguntas de entrevista geradas para ESTA vaga e ESTE usuário — não é
+  /// inteligência da vaga (`Job.intelligenceJson`, reaproveitada entre
+  /// usuários): as perguntas citam as lacunas do MATCH deste usuário, então
+  /// são inerentemente por (usuário, vaga), como o próprio alerta. Gerado
+  /// uma vez, no clique de "Preparar para a entrevista", e reaproveitado nas
+  /// próximas aberturas do painel — nulo até então.
+  interviewPrepJson String?
 
   createdAt DateTime @default(now())
 
