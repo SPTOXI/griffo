@@ -31,7 +31,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://griffo.work"),
   title: "GriffoWork — Inteligência de Carreira",
-  description: "Conectamos você a oportunidades, não a vagas: auditoria de currículo por IA em 8 dimensões, compatibilidade com o ATS e Radar de Vagas para encontrar onde você se encaixa.",
+  description: "Conectamos você a oportunidades, não a vagas.",
   keywords: ["griffowork", "currículo", "resume ai", "cv audit", "inteligência de carreira", "career intelligence", "ATS", "RH", "carreira", "griffo.work"],
   authors: [{ name: "GriffoWork" }],
   alternates: {
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "GriffoWork — Inteligência de Carreira",
-    description: "Conectamos você a oportunidades, não a vagas: auditoria de currículo por IA em 8 dimensões, compatibilidade com o ATS e Radar de Vagas para encontrar onde você se encaixa.",
+    description: "Conectamos você a oportunidades, não a vagas.",
     url: "https://griffo.work",
     siteName: "GriffoWork",
     images: [
@@ -79,7 +79,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "GriffoWork — Inteligência de Carreira",
-    description: "Conectamos você a oportunidades, não a vagas: auditoria de currículo por IA em 8 dimensões e Radar de Vagas.",
+    description: "Conectamos você a oportunidades, não a vagas.",
     images: ['/logo-full.png'],
   },
 };
