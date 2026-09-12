@@ -30,9 +30,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://griffo.work"),
-  title: "GriffoWork — Global AI Career Intelligence",
-  description: "Do perfil social à vaga certa: audite, alinhe e conquiste sua carreira com a Griffo IA. Laudo de currículo por IA em 8 dimensões e Radar de Vagas.",
-  keywords: ["griffowork", "currículo", "resume ai", "cv audit", "global ai career intelligence", "ATS", "RH", "carreira", "griffo.work"],
+  title: "GriffoWork — Inteligência de Carreira por IA",
+  description: "Conectamos você a oportunidades, não a vagas: auditoria de currículo por IA em 8 dimensões, compatibilidade com o ATS e Radar de Vagas para encontrar onde você se encaixa.",
+  keywords: ["griffowork", "currículo", "resume ai", "cv audit", "inteligência de carreira", "career intelligence", "ATS", "RH", "carreira", "griffo.work"],
   authors: [{ name: "GriffoWork" }],
   alternates: {
     canonical: "https://griffo.work",
@@ -62,8 +62,8 @@ export const metadata: Metadata = {
     apple: '/logo.png',
   },
   openGraph: {
-    title: "GriffoWork — Global AI Career Intelligence",
-    description: "Do perfil social à vaga certa: audite, alinhe e conquiste sua carreira com a Griffo IA. Laudo de currículo por IA em 8 dimensões e Radar de Vagas.",
+    title: "GriffoWork — Inteligência de Carreira por IA",
+    description: "Conectamos você a oportunidades, não a vagas: auditoria de currículo por IA em 8 dimensões, compatibilidade com o ATS e Radar de Vagas para encontrar onde você se encaixa.",
     url: "https://griffo.work",
     siteName: "GriffoWork",
     images: [
@@ -71,15 +71,15 @@ export const metadata: Metadata = {
         url: "/logo-full.png",
         width: 693,
         height: 694,
-        alt: "GriffoWork — Global AI Career Intelligence",
+        alt: "GriffoWork — Inteligência de Carreira por IA",
       },
     ],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "GriffoWork — Análise de Currículo por IA",
-    description: "Laudo profissional de currículo por IA em 8 dimensões executivas.",
+    title: "GriffoWork — Inteligência de Carreira por IA",
+    description: "Conectamos você a oportunidades, não a vagas: auditoria de currículo por IA em 8 dimensões e Radar de Vagas.",
     images: ['/logo-full.png'],
   },
 };

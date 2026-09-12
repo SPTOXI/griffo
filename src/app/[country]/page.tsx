@@ -164,34 +164,41 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // busca. Só muda dentro do inglês; ver `regional-terms.ts`.
   const term = resumeTermFor(isGlobal ? 'US' : code, market.jobLanguage)
 
+  // Título/descrição repetem, por idioma, a MESMA frase de posicionamento já
+  // aprovada e traduzida em `heroD.eyebrow`/`heroD.title` de cada dicionário
+  // (`src/lib/i18n/locales/*.ts`) — não um texto novo. Antes, só o inglês
+  // dizia "Career Intelligence"; as outras 11 línguas ainda falavam da versão
+  // anterior do produto ("análise de currículo por IA e pontuação ATS"), que
+  // vazava para o preview de link do WhatsApp/redes sociais sempre que a rota
+  // resolvia para uma dessas línguas.
   const titles: Record<string, string> = {
-    pt: `GriffoWork ${cName} — Análise de Currículo por IA e Pontuação ATS`,
-    es: `GriffoWork ${cName} — Auditoría de Currículum con IA y Puntuación ATS`,
+    pt: `GriffoWork ${cName} — Inteligência de Carreira por IA & Auditoria ATS`,
+    es: `GriffoWork ${cName} — Inteligencia de Carrera con IA y Auditoría ATS`,
     en: `GriffoWork ${cName} — AI Career Intelligence & ATS ${term.noun} Audit`,
-    de: `GriffoWork ${cName} — KI-Lebenslauf-Analyse & ATS-Score-Prüfung`,
-    fr: `GriffoWork ${cName} — Audit de CV par IA & Score de Compatibilité ATS`,
-    it: `GriffoWork ${cName} — Analisi del Curriculum con IA & Punteggio ATS`,
-    ja: `GriffoWork ${cName} — AI職務経歴書診断＆ATS適合度スコア`,
-    nl: `GriffoWork ${cName} — AI Cv-Analyse & ATS-Score Verificatie`,
-    sv: `GriffoWork ${cName} — AI CV-Granskning & ATS-Kompatibilitetstest`,
-    zh: `GriffoWork ${cName} — AI 简历智能诊断与 ATS 筛选适配评测`,
-    ar: `GriffoWork ${cName} — تدقيق السيرة الذاتية بالذكاء الاصطناعي واختبار توافق ATS`,
-    ko: `GriffoWork ${cName} — AI 이력서 정밀 기술 평가 및 ATS 채용 필터 검증`,
+    de: `GriffoWork ${cName} — KI-Karriere-Intelligenz & ATS-Audit`,
+    fr: `GriffoWork ${cName} — Intelligence de Carrière par IA & Audit ATS`,
+    it: `GriffoWork ${cName} — Intelligenza di Carriera con IA & Audit ATS`,
+    ja: `GriffoWork ${cName} — AIキャリア・インテリジェンス＆ATS適合度診断`,
+    nl: `GriffoWork ${cName} — AI Carrière-intelligentie & ATS-Audit`,
+    sv: `GriffoWork ${cName} — AI-Karriärintelligens & ATS-Granskning`,
+    zh: `GriffoWork ${cName} — AI 职业智能与 ATS 审核`,
+    ar: `GriffoWork ${cName} — ذكاء المسار المهني بالذكاء الاصطناعي وتدقيق ATS`,
+    ko: `GriffoWork ${cName} — AI 커리어 인텔리전스 & ATS 감사`,
   }
 
   const descriptions: Record<string, string> = {
-    pt: `Otimize seu currículo para os padrões de recrutamento de ${cName}. Avaliação de compatibilidade com ${atsList} e laudo executivo em 8 dimensões por apenas ${price.formatted}.`,
-    es: `Optimiza tu currículum para los estándares de contratación en ${cName}. Evaluación de compatibilidad con ${atsList} e informe ejecutivo en 8 dimensiones por solo ${price.formatted}.`,
-    en: `Optimize your ${term.nounLower} for hiring standards in ${cName}. Audit ATS compatibility with ${atsList} and get an 8-dimension executive career report for just ${price.formatted}.`,
-    de: `Optimieren Sie Ihren Lebenslauf für den Arbeitsmarkt in ${cName}. ATS-Kompatibilitätsprüfung für ${atsList} und 8-Dimensionen-Prüfbericht für nur ${price.formatted}.`,
-    fr: `Optimisez votre CV selon les standards de recrutement en ${cName}. Audit de compatibilité avec ${atsList} et rapport exécutif en 8 dimensions pour seulement ${price.formatted}.`,
-    it: `Ottimizza il tuo curriculum per gli standard di selezione in ${cName}. Valutazione di compatibilità con ${atsList} e report esecutivo in 8 dimensioni per soli ${price.formatted}.`,
-    ja: `${cName} の採用基準に合わせて職務経歴書を最適化。${atsList} のATS適合度判定と8次元診断レポートをわずか ${price.formatted} でご提供。`,
-    nl: `Optimaliseer je cv voor wervingsstandaarden in ${cName}. ATS-compatibiliteitstest voor ${atsList} en analyserapport in 8 dimensies voor slechts ${price.formatted}.`,
-    sv: `Optimera ditt CV för rekryteringsstandarder i ${cName}. ATS-kompatibilitetstest för ${atsList} och granskningsrapport i 8 dimensioner för endast ${price.formatted}.`,
-    zh: `针对 ${cName} 的主流招聘标准优化您的简历。全方位检测 ${atsList} 等主流 ATS 适配度并出具 8 维度评估报告，仅需 ${price.formatted}。`,
-    ar: `حسّن سيرتك الذاتية وفقاً لمعايير التوظيف في ${cName}. تقييم التوافق مع ${atsList} وتقرير تنفيذي في 8 أبعاد مقابل ${price.formatted} فقط.`,
-    ko: `${cName} 현지 채용 표준에 맞춰 이력서를 최적화하세요. ${atsList} ATS 호환성 검증과 8개 차원 정밀 진단 보고서를 단 ${price.formatted}에 제공합니다.`,
+    pt: `Conectamos você a oportunidades em ${cName}, não a vagas. Auditoria de currículo por IA em 8 dimensões, compatibilidade com ${atsList}, por apenas ${price.formatted}.`,
+    es: `Te conectamos con oportunidades en ${cName}, no con ofertas de empleo. Auditoría de currículum con IA en 8 dimensiones, compatibilidad con ${atsList}, por solo ${price.formatted}.`,
+    en: `We connect you to opportunities in ${cName}, not job postings. An 8-dimension AI ${term.nounLower} audit, ATS compatibility with ${atsList}, for just ${price.formatted}.`,
+    de: `Wir verbinden Sie mit Chancen in ${cName}, nicht mit Stellenanzeigen. KI-Lebenslauf-Audit in 8 Dimensionen, ATS-Kompatibilität mit ${atsList}, für nur ${price.formatted}.`,
+    fr: `Nous vous connectons à des opportunités en ${cName}, pas à des offres d’emploi. Audit de CV par IA en 8 dimensions, compatibilité ATS avec ${atsList}, pour seulement ${price.formatted}.`,
+    it: `Ti connettiamo a opportunità in ${cName}, non ad annunci di lavoro. Audit del curriculum con IA in 8 dimensioni, compatibilità ATS con ${atsList}, per soli ${price.formatted}.`,
+    ja: `「求人」ではなく「機会」へつなぐ。${cName} 向け、AIによる職務経歴書の8次元診断と ${atsList} とのATS適合度チェックを、わずか ${price.formatted} で。`,
+    nl: `Wij verbinden je met kansen in ${cName}, niet met vacatures. AI-cv-audit in 8 dimensies, ATS-compatibiliteit met ${atsList}, voor slechts ${price.formatted}.`,
+    sv: `Vi kopplar dig till möjligheter i ${cName}, inte jobbannonser. AI-granskning av ditt CV i 8 dimensioner, ATS-kompatibilitet med ${atsList}, för endast ${price.formatted}.`,
+    zh: `我们连接的是 ${cName} 的机会，而不是职位空缺。AI 简历 8 维度审核，兼容 ${atsList} 等 ATS 系统，仅需 ${price.formatted}。`,
+    ar: `نصلك بالفرص في ${cName}، لا بالوظائف المُعلنة. تدقيق للسيرة الذاتية بالذكاء الاصطناعي على 8 أبعاد، وتوافق مع أنظمة ATS مثل ${atsList}، مقابل ${price.formatted} فقط.`,
+    ko: `채용 공고가 아닌, ${cName}의 기회로 연결합니다. AI 이력서 8차원 감사와 ${atsList} ATS 호환성 검증을 단 ${price.formatted}에 제공합니다.`,
   }
 
   // `/global` é a única das 41 rotas travada em inglês (`GLOBAL_MARKET.jobLanguage
