@@ -987,14 +987,17 @@ status usavam 5 cores sem critério.
 - `admin-view.tsx` — fora do escopo funcional (área interna, não afeta usuário
   pagante).
 
-**O que falta.** Verificação visual nas telas autenticadas — o agente não tem
-credencial de login e não pode digitá-la (regra de segurança), então o usuário
-optou por revisar tudo no final em vez de logar durante o trabalho. `tsc`,
-`eslint` e `npm test` (510/510) estão limpos em cada commit, mas ninguém olhou
-as telas no navegador ainda. Antes de mergear em `main`: abrir a branch
-localmente ou no Preview da Vercel e percorrer dashboard, upload, perfil
-profissional, radar, planos, histórico, downloads, configurações, suporte e a
-landing nos três idiomas — inclusive o menu em mobile.
+**O que faltava na época** (parágrafo histórico — ✅ já resolvido, ver a nota
+no topo desta seção e §2.109 da auditoria; mantido sem apagar porque descreve
+o estado real quando esta seção foi escrita). Verificação visual nas telas
+autenticadas — o agente não tinha credencial de login e não podia digitá-la
+(regra de segurança), então o usuário optou por revisar tudo no final em vez
+de logar durante o trabalho. `tsc`, `eslint` e `npm test` (510/510) estavam
+limpos em cada commit, mas ninguém tinha olhado as telas no navegador ainda.
+Antes de mergear em `main`: abrir a branch localmente ou no Preview da Vercel
+e percorrer dashboard, upload, perfil profissional, radar, planos, histórico,
+downloads, configurações, suporte e a landing nos três idiomas — inclusive o
+menu em mobile.
 
 **Continuação (mesmo dia, mesma branch): hero + UX de laudo/perfil.**
 Depois de revisar o resultado, o usuário pediu duas coisas mais específicas.
@@ -1016,8 +1019,9 @@ Detalhe completo em `docs/AUDITORIA-EVOLUCAO-GLOBAL.md`, seção 2.27.
 - **`professional-profile-view.tsx`**: as 5 seções de dado (não o cartão de
   intro) viram `Accordion` com badge "Preenchido" por seção — calculado por
   leitura direta do `profile`, sem estado novo. Seção vazia abre sozinha.
-- Mesma pendência de antes: verificação visual continua sem ser feita (sem
-  login). `npm test` 510/510, `tsc`/`eslint` limpos em cada commit.
+- Mesma pendência de antes (histórico — ✅ resolvida depois, ver §2.109 e a
+  nota no topo da seção 7.7): verificação visual continua sem ser feita, na
+  época, sem login. `npm test` 510/510, `tsc`/`eslint` limpos em cada commit.
 
 ### 7.8 CSS bloqueando renderização na home — `optimizeCss` testado e negativo, ainda em aberto (§2.94, §2.98)
 
