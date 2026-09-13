@@ -7757,3 +7757,37 @@ por volume (item 16), dado próprio sem volume para virar conteúdo público
 calibragem dos três eixos de matching esperando caso real (§7.5), e a
 revisão jurídica de `/privacy` (§2.121). Nenhuma delas é código quebrado —
 são decisões ou dados que só o operador ou o tempo resolvem.
+
+## 2.123 Cartão do Hero D mudava de tamanho ao trocar de aba, e empurrava o texto ao lado
+
+Reportado pelo operador: "na home quando clicamos em 'como ATS te vê' o
+bloco branco diminuiu de tamanho e o texto lateral se move para cima".
+
+**Causa.** Em `hero-d.tsx`, o "Corpo" do cartão (`<div className="relative
+min-h-[320px]">`) só renderizava a aba ativa, e `min-h-[320px]` é um PISO,
+não um teto — a altura real seguia o conteúdo de cada aba. A visão humana
+(4 requisitos + evidência) é mais alta que a visão ATS (linhas de
+diagnóstico mais curtas); trocar de aba trocava a altura real do cartão. E
+como a coluna esquerda do hero está centralizada verticalmente contra a
+direita (`items-center` na grid do `HeroD`), uma mudança na altura da
+coluna direita recentralizava as duas colunas na nova altura da linha da
+grid — o texto à esquerda "pulava" a cada clique.
+
+**A correção**, sem mexer em conteúdo nem em texto: as duas abas passam a
+ficar **sempre montadas**, empilhadas na mesma célula de grid
+(`col-start-1 row-start-1`), técnica de CSS puro em que a altura da linha
+vira automaticamente o MAIOR conteúdo entre as duas — sem precisar de
+número mágico em pixel, o que importa porque o texto muda de tamanho por
+idioma nos 12 idiomas do site. A aba inativa fica com `invisible`
+(`visibility: hidden`), não `hidden`/`display:none`: continua ocupando
+espaço e contribuindo pra altura da linha, só não é pintada nem clicável.
+`tabIndex` e `aria-hidden` seguem a aba ativa, preservando o papel
+`tabpanel` para leitor de tela.
+
+**Verificado por medição de DOM, não só visual** (`getBoundingClientRect`
+via `javascript_tool`, produção local após `npm run build` + `npm run
+start` — dev/Turbopack tinha um erro de módulo à parte, sem relação com
+esta mudança, que não reproduziu em build/produção): `cardHeight`,
+`cardTop`, `cardBottom` e a posição do `h1` idênticos bit a bit entre as
+duas abas (599,8px de altura nos dois casos). `tsc`, `eslint`, `build` e
+suíte (973/973) limpos.

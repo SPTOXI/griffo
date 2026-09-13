@@ -222,61 +222,75 @@ export function HeroD({ t, lang, openJobsCount, onNavigate }: HeroDProps) {
                 </p>
               </div>
 
-              {/* Corpo */}
-              <div className="relative min-h-[320px]">
-                {view === 'human' ? (
-                  <div
-                    role="tabpanel"
-                    id={humanPanelId}
-                    aria-labelledby={humanTabId}
-                    tabIndex={0}
-                    className="flex flex-col gap-3.5 p-[22px]"
-                  >
-                    <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#64748b]">
-                      {t.heroD.humanKicker}
-                    </p>
-                    {requirements.map((r, i) => (
-                      <div
-                        key={i}
-                        className="flex items-start justify-between gap-3.5 border-b border-[#f4f7fa] pb-3 last:border-b-0 last:pb-0"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-[13.5px] font-semibold text-[#0B192E]">{r.title}</p>
-                          <p className="mt-1 text-[12.5px] leading-[1.5] text-[#5b6878]">{r.evidence}</p>
-                        </div>
-                        <Check className="mt-0.5 size-4 shrink-0 text-[#0B63E5]" />
+              {/* Corpo — as duas abas ficam empilhadas na mesma célula de grid
+                  (`col-start-1 row-start-1`), as duas sempre montadas. Isso faz
+                  a altura da linha ser o MAIOR conteúdo entre as duas, em vez
+                  de só a aba ativa: sem isso, trocar de aba mudava a altura
+                  real do cartão (min-h era só piso, não teto), e como a coluna
+                  esquerda é centralizada verticalmente contra a direita
+                  (`items-center` na grid do hero), o texto lateral pulava de
+                  posição a cada clique. A aba inativa vira invisível
+                  (`invisible`, não `hidden`/`display:none`) para continuar
+                  contribuindo com a altura sem aparecer nem ser focável. */}
+              <div className="relative grid min-h-[320px]">
+                <div
+                  role="tabpanel"
+                  id={humanPanelId}
+                  aria-labelledby={humanTabId}
+                  aria-hidden={view !== 'human'}
+                  tabIndex={view === 'human' ? 0 : -1}
+                  className={cn(
+                    'col-start-1 row-start-1 flex flex-col gap-3.5 p-[22px]',
+                    view !== 'human' && 'invisible'
+                  )}
+                >
+                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#64748b]">
+                    {t.heroD.humanKicker}
+                  </p>
+                  {requirements.map((r, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start justify-between gap-3.5 border-b border-[#f4f7fa] pb-3 last:border-b-0 last:pb-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-[13.5px] font-semibold text-[#0B192E]">{r.title}</p>
+                        <p className="mt-1 text-[12.5px] leading-[1.5] text-[#5b6878]">{r.evidence}</p>
                       </div>
-                    ))}
-                    <p className="text-[12.5px] text-[#5b6878]">{t.heroD.humanClosing}</p>
-                  </div>
-                ) : (
-                  <div
-                    role="tabpanel"
-                    id={atsPanelId}
-                    aria-labelledby={atsTabId}
-                    tabIndex={0}
-                    className="overflow-hidden bg-[#f7f9fc] p-[22px] font-mono text-[12.5px] leading-[1.75] text-[#26313f]"
-                  >
-                    <p className="text-[11px] uppercase tracking-[0.08em] text-[#64748b]">
-                      {t.heroD.atsKicker}
-                    </p>
-                    <p className="mt-2 text-[#b91c1c]">
-                      {t.heroD.atsLine1} <span className="text-[#64748b]">{t.heroD.atsLine1Note}</span>
-                    </p>
-                    <p className="text-[#b91c1c]">{t.heroD.atsLine2}</p>
-                    <p className="text-[#b45309]">{t.heroD.atsLine3}</p>
-                    <p className="text-[#b91c1c]">{t.heroD.atsLine4}</p>
-                    <p className="mt-3 text-[11px] uppercase tracking-[0.08em] text-[#64748b]">
-                      {t.heroD.extractedKicker}
-                    </p>
-                    <p className="text-[#475569]">{t.heroD.extractedShuffled}</p>
-                    <p className="text-[#b91c1c]">{t.heroD.ignoredLine}</p>
-                    <p className="mt-3.5 border-t border-[#e2e8f0] pt-3.5">
-                      <span className="text-[#0B192E]">{t.heroD.resultLabel}</span>{' '}
-                      <span className="font-semibold text-[#b91c1c]">{t.heroD.resultValue}</span>
-                    </p>
-                  </div>
-                )}
+                      <Check className="mt-0.5 size-4 shrink-0 text-[#0B63E5]" />
+                    </div>
+                  ))}
+                  <p className="text-[12.5px] text-[#5b6878]">{t.heroD.humanClosing}</p>
+                </div>
+                <div
+                  role="tabpanel"
+                  id={atsPanelId}
+                  aria-labelledby={atsTabId}
+                  aria-hidden={view !== 'ats'}
+                  tabIndex={view === 'ats' ? 0 : -1}
+                  className={cn(
+                    'col-start-1 row-start-1 overflow-hidden bg-[#f7f9fc] p-[22px] font-mono text-[12.5px] leading-[1.75] text-[#26313f]',
+                    view !== 'ats' && 'invisible'
+                  )}
+                >
+                  <p className="text-[11px] uppercase tracking-[0.08em] text-[#64748b]">
+                    {t.heroD.atsKicker}
+                  </p>
+                  <p className="mt-2 text-[#b91c1c]">
+                    {t.heroD.atsLine1} <span className="text-[#64748b]">{t.heroD.atsLine1Note}</span>
+                  </p>
+                  <p className="text-[#b91c1c]">{t.heroD.atsLine2}</p>
+                  <p className="text-[#b45309]">{t.heroD.atsLine3}</p>
+                  <p className="text-[#b91c1c]">{t.heroD.atsLine4}</p>
+                  <p className="mt-3 text-[11px] uppercase tracking-[0.08em] text-[#64748b]">
+                    {t.heroD.extractedKicker}
+                  </p>
+                  <p className="text-[#475569]">{t.heroD.extractedShuffled}</p>
+                  <p className="text-[#b91c1c]">{t.heroD.ignoredLine}</p>
+                  <p className="mt-3.5 border-t border-[#e2e8f0] pt-3.5">
+                    <span className="text-[#0B192E]">{t.heroD.resultLabel}</span>{' '}
+                    <span className="font-semibold text-[#b91c1c]">{t.heroD.resultValue}</span>
+                  </p>
+                </div>
               </div>
             </div>
 

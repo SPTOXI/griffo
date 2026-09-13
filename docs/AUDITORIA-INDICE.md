@@ -139,3 +139,4 @@ já lista os três documentos de continuidade; este é o quarto.
 | 2.120 | 7533 | design-ui,produto,i18n | Hero D + faixa "A ordem importa": landing reposicionada da vaga para a auditoria, contagem real de vagas, cartão ilustrativo rotulado, 12 idiomas |
 | 2.121 | 7640 | seguranca,i18n,produto | `/privacy` nos 12 idiomas, todo fato verificável no código; nasce o agente `translation-reviewer` |
 | 2.122 | 7713 | docs,infra,limpeza | Revisão geral: tudo verde no código, handoff §7.7 desatualizado corrigido, dois ponteiros de branch obsoletos limpos |
+| 2.123 | 7762 | design-ui | Cartão do Hero D mudava de altura ao trocar de aba e empurrava o texto lateral — abas empilhadas na mesma célula de grid |
