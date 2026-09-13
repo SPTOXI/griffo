@@ -210,7 +210,7 @@ test('o AiLog do failover guarda o primário pretendido e o que de fato responde
       const log = fake.state.aiLogs[0]
       assert.equal(log.provider, 'deepseek')
       assert.equal(log.primaryModel, 'claude-sonnet-5')
-      assert.equal(log.usedModel, 'deepseek-v4-flash')
+      assert.equal(log.usedModel, 'deepseek-flash')
       assert.equal(log.failoverCount, 1)
       assert.equal(log.status, 'failover')
     }

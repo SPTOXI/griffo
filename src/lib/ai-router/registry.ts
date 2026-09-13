@@ -35,7 +35,16 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
     // UTC — era apelido do V4-Flash em modo não-pensante. Um ID retirado não
     // responde: enquanto ele era o padrão, toda chamada ao DeepSeek que não
     // tivesse modelo configurado no painel falhava e caía para o suplente.
-    defaultModel: 'deepseek-v4-flash',
+    //
+    // `deepseek-v4-flash` (o padrão seguinte) também foi retirado, confirmado
+    // em 13/09/2026 na documentação oficial: "ainda é aceito, mas os modelos
+    // correspondentes foram aposentados" — servido por trás por
+    // `deepseek-flash`, no mesmo preço. Diferente do `deepseek-chat`, este
+    // não falha explicitamente (o alias continua respondendo), então não
+    // havia sintoma nenhum apontando para o problema — só apareceu ao
+    // verificar o ID antes de uma mudança não relacionada (pedido do
+    // operador para o Flash V4.1). `deepseek-flash` é o ID atual.
+    defaultModel: 'deepseek-flash',
     baseURL: 'https://api.deepseek.com/v1',
     apiKeyEnvVar: 'DEEPSEEK_API_KEY',
     // Fallback de preço, usado só se o modelo efetivo sair de MODEL_PRICING.
@@ -106,7 +115,14 @@ const CURRENT_MODELS: Record<ProviderId, string[]> = {
   // valendo e chamando um ID que não existe mais; fora da lista, ela é
   // substituída pelo padrão do provedor — que é exatamente para o que esta
   // substituição existe.
-  deepseek: ['deepseek-v4-flash', 'deepseek-v4-pro'],
+  //
+  // `deepseek-v4-flash` saiu pelo mesmo motivo, confirmado em 13/09/2026: a
+  // chave já cadastrada no painel apontava para ele, e sem removê-lo daqui
+  // ela continuaria "funcionando" só porque a DeepSeek mantém o alias — o
+  // efeito colateral seria nunca migrar de fato para o `deepseek-flash`
+  // atual, e continuar vulnerável ao dia em que o alias for desligado de
+  // vez, sem aviso, como aconteceu com o `deepseek-chat`.
+  deepseek: ['deepseek-flash', 'deepseek-v4-pro'],
   // `gemini-2.0-flash` saiu da lista pelo mesmo motivo do `deepseek-chat`
   // acima: aposentado pelo Google (descoberto em 26/08/2026, ver o
   // cabeçalho de PROVIDER_CONFIGS.gemini). Mantê-lo aqui faria uma chave já

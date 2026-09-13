@@ -75,12 +75,28 @@ test('os valores publicados pelo DeepSeek', () => {
 })
 
 test('o aumento é real: a faixa fora de pico ainda é mais cara que o preço de hoje', () => {
+  // `deepseek-flash` não tem preço antigo em `MODEL_PRICING` de propósito:
+  // é o mesmo modelo/preço de `deepseek-v4-flash` sob um ID renomeado pela
+  // DeepSeek (ver o comentário em `TIERED_MODEL_PRICING`), não um aumento
+  // de preço novo — não há "preço de hoje" separado para comparar.
   for (const model of Object.keys(TIERED_MODEL_PRICING)) {
-    const hoje = MODEL_PRICING[model]!
+    const hoje = MODEL_PRICING[model]
+    if (!hoje) continue
     const foraDePico = TIERED_MODEL_PRICING[model].offPeak
     assert.ok(foraDePico.inputPer1k > hoje.inputPer1k, `${model}: entrada`)
     assert.ok(foraDePico.outputPer1k > hoje.outputPer1k, `${model}: saída`)
   }
+})
+
+test('deepseek-flash é o mesmo preço de deepseek-v4-flash (renomeado, não reprecificado)', () => {
+  assert.deepEqual(
+    resolveModelPricing('deepseek-flash', depois(12)),
+    resolveModelPricing('deepseek-v4-flash', depois(12))
+  )
+  assert.deepEqual(
+    resolveModelPricing('deepseek-flash', depois(2)),
+    resolveModelPricing('deepseek-v4-flash', depois(2))
+  )
 })
 
 test('modelo sem preço por horário não muda com a hora nem com a data', () => {

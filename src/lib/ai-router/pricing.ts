@@ -67,6 +67,23 @@ export const TIERED_MODEL_PRICING: Record<string, TieredPricing> = {
     offPeak: { inputPer1k: 0.00022, outputPer1k: 0.00066 }, // $0,22 / $0,66 por 1M
     peak: { inputPer1k: 0.00044, outputPer1k: 0.00132 }, // $0,44 / $1,32 por 1M
   },
+  // `deepseek-v4-flash` foi aposentado pela DeepSeek — o ID atual é
+  // `deepseek-flash` (confirmado na documentação oficial em 13/09/2026). A
+  // própria DeepSeek diz que o nome antigo "ainda é aceito, mas os modelos
+  // correspondentes foram aposentados" e passam a ser servidos por este,
+  // cobrados no mesmo preço Flash — por isso os números abaixo são
+  // IDÊNTICOS à entrada acima, só o nome mudou. Mesma classe de problema já
+  // vista com `deepseek-chat` e `gemini-2.0-flash`: um ID retirado não avisa,
+  // só some ou (neste caso) some silenciosamente por trás de um alias.
+  'deepseek-flash': {
+    from: Date.UTC(2026, 7, 16, 16, 0, 0),
+    peakWindowsUtc: [
+      [1, 4],
+      [6, 10],
+    ],
+    offPeak: { inputPer1k: 0.00022, outputPer1k: 0.00066 }, // $0,22 / $0,66 por 1M
+    peak: { inputPer1k: 0.00044, outputPer1k: 0.00132 }, // $0,44 / $1,32 por 1M
+  },
   'deepseek-v4-pro': {
     from: Date.UTC(2026, 7, 16, 16, 0, 0),
     peakWindowsUtc: [
