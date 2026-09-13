@@ -350,7 +350,14 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
           maxRetries: 0,
         })
 
-        const isReasoningModel = currentProviderId === 'kimi' || runtime.model?.includes('reasoner') || runtime.model?.includes('k3')
+        // `gpt-5.6-luna` (o único modelo OpenAI cadastrado) recusa qualquer
+        // `temperature` fora do padrão — "400 Unsupported value: 'temperature'
+        // does not support 0.3 with this model. Only the default (1) value is
+        // supported." — descoberto em produção ao estrear o provedor no
+        // `interview_prep` (12/09/2026, ver `AiLog`). Mesma classe de
+        // restrição do Kimi, por isso entra no mesmo grupo aqui.
+        const isReasoningModel =
+          currentProviderId === 'kimi' || currentProviderId === 'openai' || runtime.model?.includes('reasoner') || runtime.model?.includes('k3')
 
         // Os cinco segmentos da análise saem ao mesmo tempo. Quando o primário
         // falha, os cinco caem juntos para o suplente — e o Kimi limita a 3
