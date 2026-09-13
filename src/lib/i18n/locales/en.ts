@@ -88,6 +88,8 @@ export const en: TranslationDictionary = {
       step5Body: "We identify where your profile is likely to fit best.",
       step6Title: "Radar",
       step6Body: "We find opportunities that match that direction.",
+      step7Title: "Preparation",
+      step7Body: "GriffoWork prepares you for the interview, anticipating the likely questions for the job we found.",
       closingBrand: 'GriffoWork — Career Intelligence.',
       closingTagline: 'We connect you to opportunities, not job postings.',
     },

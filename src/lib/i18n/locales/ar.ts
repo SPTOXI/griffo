@@ -88,6 +88,8 @@ export const ar: TranslationDictionary = {
       step5Body: "نحدد أين يكون ملفك الأكثر توافقًا.",
       step6Title: "Radar",
       step6Body: "نجد الفرص المتوافقة مع هذا التوجيه.",
+      step7Title: "الاستعداد",
+      step7Body: "تُعِدّك GriffoWork للمقابلة، وتتوقّع الأسئلة المحتملة للوظيفة التي تم العثور عليها.",
     closingBrand: 'GriffoWork — ذكاء المسار المهني.',
     closingTagline: 'نصلك بالفرص، لا بالوظائف المُعلنة.',
   },

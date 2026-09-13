@@ -88,6 +88,8 @@ export const sv: TranslationDictionary = {
       step5Body: "Vi identifierar var din profil sannolikt passar bäst.",
       step6Title: "Radar",
       step6Body: "Vi hittar möjligheter som matchar den inriktningen.",
+      step7Title: "Förberedelse",
+      step7Body: "GriffoWork förbereder dig för intervjun genom att förutse de sannolika frågorna för den tjänst vi hittat.",
     closingBrand: 'GriffoWork — Karriärintelligens.',
     closingTagline: 'Vi kopplar dig till möjligheter, inte jobbannonser.',
   },

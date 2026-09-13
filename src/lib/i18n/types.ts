@@ -92,6 +92,8 @@ export interface TranslationDictionary {
     step5Body: string
     step6Title: string
     step6Body: string
+    step7Title: string
+    step7Body: string
     closingBrand: string
     closingTagline: string
   }

@@ -88,6 +88,8 @@ export const nl: TranslationDictionary = {
       step5Body: "We bepalen waar jouw profiel de meeste kans maakt.",
       step6Title: "Radar",
       step6Body: "We vinden kansen die passen bij die richting.",
+      step7Title: "Voorbereiding",
+      step7Body: "GriffoWork bereidt je voor op het sollicitatiegesprek door te anticiperen op de waarschijnlijke vragen voor de gevonden functie.",
     closingBrand: 'GriffoWork — Carrière-intelligentie.',
     closingTagline: 'Wij verbinden je met kansen, niet met vacatures.',
   },

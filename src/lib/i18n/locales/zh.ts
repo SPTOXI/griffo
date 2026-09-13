@@ -88,6 +88,8 @@ export const zh: TranslationDictionary = {
       step5Body: "我们判断您的档案在哪里最具契合度。",
       step6Title: "Radar",
       step6Body: "我们据此定向寻找与之匹配的机会。",
+      step7Title: "准备",
+      step7Body: "GriffoWork 帮你准备面试，针对找到的职位预测可能出现的问题。",
     closingBrand: 'GriffoWork — 职业智能。',
     closingTagline: '我们连接的是机会，而不是职位空缺。',
   },

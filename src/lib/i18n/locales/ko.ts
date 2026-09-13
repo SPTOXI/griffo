@@ -88,6 +88,8 @@ export const ko: TranslationDictionary = {
       step5Body: "당신의 프로필이 가장 잘 맞는 곳을 파악합니다.",
       step6Title: "Radar",
       step6Body: "그 방향에 맞는 기회를 찾아냅니다.",
+      step7Title: "준비",
+      step7Body: "GriffoWork가 면접을 준비해 드립니다. 찾은 공고에 대한 예상 질문을 미리 준비합니다.",
     closingBrand: 'GriffoWork — 커리어 인텔리전스.',
     closingTagline: '채용 공고가 아닌, 기회로 연결합니다.',
   },

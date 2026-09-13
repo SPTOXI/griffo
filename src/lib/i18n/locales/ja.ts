@@ -88,6 +88,8 @@ export const ja: TranslationDictionary = {
       step5Body: "あなたのプロフィールが最も適合しやすい分野を特定します。",
       step6Title: "Radar",
       step6Body: "その方向性に合致する機会を見つけます。",
+      step7Title: "準備",
+      step7Body: "GriffoWorkが面接の準備をお手伝いし、見つかった求人で聞かれそうな質問を先読みします。",
     closingBrand: 'GriffoWork — キャリア・インテリジェンス。',
     closingTagline: '「求人」ではなく「機会」へつなぐ。',
   },
