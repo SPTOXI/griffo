@@ -16,7 +16,15 @@ const INTERVIEW_PREP_JSON_SCHEMA = {
   properties: {
     questions: {
       type: 'array',
-      minItems: 5,
+      // 3, não 5: uma vaga sem requisitos/competências estruturados (ex.
+      // fonte que só entrega descrição solta, sem lista) genuinamente não
+      // sustenta 5 perguntas ancoradas em algo concreto — e a regra de nunca
+      // inventar pergunta genérica (ver o prompt abaixo) vale mais que
+      // bater uma contagem mínima. Descoberto ao investigar uma vaga real
+      // sem `requirements`/`skills` (13/09/2026): o modelo respeitou a
+      // regra e devolveu poucas perguntas, e o código rejeitava a resposta
+      // inteira por isso.
+      minItems: 3,
       maxItems: 8,
       items: {
         type: 'object',
@@ -65,11 +73,16 @@ export function parseInterviewPrep(rawText: string): InterviewPrepResult['questi
           groundedIn: typeof q?.groundedIn === 'string' ? q.groundedIn.trim() : '',
           tip: typeof q?.tip === 'string' ? q.tip.trim() : '',
         }))
-        .filter((q: any) => q.question.length >= 15 && q.signal && q.groundedIn && q.tip)
+        .filter((q: any) => q.question.length >= 10 && q.signal && q.groundedIn && q.tip)
     : []
 
-  if (questions.length < 4) {
-    throw new Error('A IA não gerou perguntas suficientes com base na vaga.')
+  if (questions.length < 3) {
+    // Diagnóstico, não silêncio: sem isto, a única forma de saber por que
+    // uma vaga específica reprovou seria reproduzir a chamada — o texto cru
+    // não fica em `AiLog` (que só grava sucesso/tokens/tempo do roteador,
+    // não o conteúdo). Aparece nos Runtime Logs da Vercel.
+    console.error('[interview-prep] resposta com poucas perguntas válidas:', rawText.slice(0, 2000))
+    throw new Error('Essa vaga tem poucos requisitos detalhados — não foi possível gerar perguntas específicas o bastante.')
   }
 
   return questions
@@ -119,7 +132,7 @@ const SYSTEM_PROMPT = `Você é um recrutador técnico sênior preparando um can
 
 O contexto acima traz a vaga (requisitos, competências, descrição), o que o candidato JÁ ATENDE e as LACUNAS identificadas pelo match.
 
-REGRA INEGOCIÁVEL: toda pergunta tem que nascer de algo CONCRETO no contexto acima — um requisito declarado, uma competência pedida, ou uma lacuna listada. Proibido perguntas genéricas de entrevista ("fale sobre você", "qual seu maior defeito") que serviriam para qualquer vaga.
+REGRA INEGOCIÁVEL: toda pergunta tem que nascer de algo CONCRETO no contexto acima — um requisito declarado, uma competência pedida, uma lacuna listada, ou uma responsabilidade específica citada na descrição da vaga. Proibido perguntas genéricas de entrevista ("fale sobre você", "qual seu maior defeito") que serviriam para qualquer vaga.
 
 Para cada pergunta:
 - Se nasce de algo que o candidato JÁ ATENDE ("strength"): é uma pergunta que aprofunda, testando se o domínio é real ou superficial.
@@ -128,7 +141,7 @@ Para cada pergunta:
 "groundedIn": cite o requisito/competência/lacuna EXATA do contexto (não uma paráfrase vaga) — é o que explica ao candidato por que ESTA pergunta, para ESTA vaga.
 "tip": uma frase só, coaching prático de como abordar a resposta (estrutura, o que citar, o que evitar) — não a resposta pronta.
 
-Gere entre 5 e 8 perguntas. Responda APENAS o JSON do schema, sem texto antes ou depois.`
+Gere entre 3 e 8 perguntas — o número certo depende de quanto material concreto a vaga oferece. Menos perguntas bem ancoradas é MELHOR do que completar a contagem com perguntas genéricas. Responda APENAS o JSON do schema, sem texto antes ou depois.`
 
 /**
  * Perguntas de entrevista prováveis para uma vaga do Radar (§18/§19 —

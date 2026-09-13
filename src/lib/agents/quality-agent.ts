@@ -156,7 +156,10 @@ export function auditQualityOfAiResult(taskType: string, content: string): Quali
       return { approved: false, score: 3, feedback: 'Estrutura JSON inválida.' }
     }
 
-    if (!Array.isArray(json.questions) || json.questions.length < 4) {
+    // 3, não 4: uma vaga sem requisitos/competências estruturados
+    // legitimamente sustenta menos perguntas ancoradas — ver o comentário
+    // no schema em `lib/ai-jobs/runners/interview-prep.ts`.
+    if (!Array.isArray(json.questions) || json.questions.length < 3) {
       return { approved: false, score: 4, feedback: 'Poucas ou nenhuma pergunta gerada.' }
     }
 
