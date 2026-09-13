@@ -686,6 +686,7 @@ export const nl: TranslationDictionary = {
     compatBoa: 'Goed',
     compatParcial: 'Gemiddeld',
     compatBaixa: 'Laag',
+    publishedAtPrefix: 'Geplaatst op',
     whyRecommendedTitle: 'Waarom deze functie bij jou past:',
     attentionTitle: 'Aandachtspunten:',
     blockersTitle: 'Mogelijke obstakels:',

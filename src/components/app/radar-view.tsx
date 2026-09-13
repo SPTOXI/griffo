@@ -40,6 +40,7 @@ interface JobFit {
   company: string
   location: string
   workMode: string
+  publishedAt: string | null
   compatibility: string
   whyRecommended: string[]
   attention: string[]
@@ -626,6 +627,9 @@ export function RadarView() {
                   <CardTitle className="text-base font-bold text-slate-900">{fit.role}</CardTitle>
                   <CardDescription className="text-xs text-slate-600">
                     {fit.company} · {fit.location} · {fit.workMode}
+                    {fit.publishedAt && (
+                      <> · {rd.publishedAtPrefix} {new Date(fit.publishedAt).toLocaleDateString(locale)}</>
+                    )}
                   </CardDescription>
                 </div>
                 <Badge variant="outline" className={`shrink-0 font-bold text-[11px] ${COMPATIBILITY_STYLE[fit.compatibility] ?? ''}`}>

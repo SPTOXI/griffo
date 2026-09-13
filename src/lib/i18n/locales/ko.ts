@@ -686,6 +686,7 @@ export const ko: TranslationDictionary = {
     compatBoa: '우수',
     compatParcial: '보통',
     compatBaixa: '낮음',
+    publishedAtPrefix: '게시일:',
     whyRecommendedTitle: '이 공고를 추천하는 이유:',
     attentionTitle: '유의해야 할 사항:',
     blockersTitle: '잠재적인 자격 장벽:',

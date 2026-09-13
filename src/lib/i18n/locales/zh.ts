@@ -686,6 +686,7 @@ export const zh: TranslationDictionary = {
     compatBoa: '良好契合',
     compatParcial: '中等匹配',
     compatBaixa: '较低匹配',
+    publishedAtPrefix: '发布于',
     whyRecommendedTitle: '为什么为您推荐该职位：',
     attentionTitle: '需要关注的事项：',
     blockersTitle: '潜在的门槛与挑战：',

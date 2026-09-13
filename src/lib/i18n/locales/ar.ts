@@ -686,6 +686,7 @@ export const ar: TranslationDictionary = {
     compatBoa: 'جيد',
     compatParcial: 'متوسط',
     compatBaixa: 'منخفض',
+    publishedAtPrefix: 'نُشرت في',
     whyRecommendedTitle: 'لماذا نوصي بهذه الوظيفة:',
     attentionTitle: 'نقاط ينبغي مراعاتها:',
     blockersTitle: 'التحديات المحتملة:',

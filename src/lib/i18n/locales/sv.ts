@@ -686,6 +686,7 @@ export const sv: TranslationDictionary = {
     compatBoa: 'God',
     compatParcial: 'Mellan',
     compatBaixa: 'Låg',
+    publishedAtPrefix: 'Publicerad',
     whyRecommendedTitle: 'Varför tjänsten passar dig:',
     attentionTitle: 'Värt att tänka på:',
     blockersTitle: 'Eventuella hinder:',

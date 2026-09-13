@@ -687,6 +687,7 @@ export const es: TranslationDictionary = {
       compatBoa: 'Buena',
       compatParcial: 'Parcial',
       compatBaixa: 'Baja',
+      publishedAtPrefix: 'Publicada el',
       whyRecommendedTitle: 'Por qué lo recomendamos',
       attentionTitle: 'Atención',
       blockersTitle: 'Impedimentos',

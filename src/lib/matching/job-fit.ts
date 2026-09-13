@@ -57,6 +57,13 @@ export interface JobFitView {
   company: string
   location: string
   workMode: string
+  /**
+   * Quando a vaga foi publicada na fonte. `null` quando a fonte não informa
+   * — nem toda fonte declara isso, e inventar uma data seria pior que não
+   * mostrar nenhuma. A formatação de exibição (relativa, absoluta, no
+   * idioma da pessoa) é da tela, não daqui — este campo só entrega o dado.
+   */
+  publishedAt: string | null
 
   /** Compatibilidade em palavras (§17). */
   compatibility: string
@@ -172,6 +179,7 @@ export function buildJobFit(
     company: job.company,
     location: locationOf(job),
     workMode: WORK_MODE_LABEL[job.remoteType] ?? 'Não informado',
+    publishedAt: job.publishedAt ? new Date(job.publishedAt).toISOString() : null,
     compatibility: COMPATIBILITY_LABEL[match.overall],
     whyRecommended,
     attention,

@@ -687,6 +687,7 @@ export interface TranslationDictionary {
     compatBoa: string
     compatParcial: string
     compatBaixa: string
+    publishedAtPrefix: string
     whyRecommendedTitle: string
     attentionTitle: string
     blockersTitle: string

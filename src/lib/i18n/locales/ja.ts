@@ -686,6 +686,7 @@ export const ja: TranslationDictionary = {
     compatBoa: '高い',
     compatParcial: '普通',
     compatBaixa: '低い',
+    publishedAtPrefix: '掲載日:',
     whyRecommendedTitle: 'この求人がおすすめの理由:',
     attentionTitle: '留意すべき点:',
     blockersTitle: '懸念される要件:',
