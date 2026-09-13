@@ -69,8 +69,8 @@ export function Landing({ onNavigate, countryCode, forcedLang, openJobsCount = 0
             <Image
               src="/logo-icon.png"
               alt="GriffoWork Logo"
-              width={120}
-              height={92}
+              width={94}
+              height={72}
               priority
               className="h-13 sm:h-16 md:h-18 w-auto object-contain shrink-0 transition-transform duration-200 group-hover:scale-105"
             />
@@ -556,7 +556,7 @@ function PlanCard({ name, price, period, features, cta, onCta, footnote, priceCa
           <p className="text-xs text-slate-500 mb-4">{period}</p>
           <div className="mb-6">
             <span className="text-4xl sm:text-5xl font-extrabold text-[#0B192E]">{price}</span>
-            {priceCaption && <p className="text-[11px] text-slate-400 mt-1.5">{priceCaption}</p>}
+            {priceCaption && <p className="text-[11px] text-slate-500 mt-1.5">{priceCaption}</p>}
           </div>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2.5 mb-6">
             {features.map((f) => (

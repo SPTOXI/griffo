@@ -129,6 +129,16 @@ const nextConfig: NextConfig = {
    * `pdfkit` está aqui pelo mesmo motivo: lê arquivos de fonte do disco.
    */
   serverExternalPackages: ['pdf-parse', 'pdfjs-dist', '@napi-rs/canvas', 'pdfkit'],
+  images: {
+    /**
+     * O padrão do Next pula de 128 para 256 — para um logo fixo de ~94px
+     * exibido (188px em tela retina), isso força o otimizador a servir
+     * 256px, quase o dobro do necessário. Os 192 aqui fecham esse buraco
+     * só para imagens de largura fixa nessa faixa (ícones, logo do
+     * cabeçalho); não afeta imagens que já usam `sizes`/`fill`.
+     */
+    imageSizes: [16, 32, 48, 64, 96, 128, 192, 256, 384],
+  },
   typescript: {
     ignoreBuildErrors: false,
   },

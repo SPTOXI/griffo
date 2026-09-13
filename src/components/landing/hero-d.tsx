@@ -191,7 +191,7 @@ export function HeroD({ t, lang, openJobsCount, onNavigate }: HeroDProps) {
                   <span className="inline-flex items-center gap-1.5 font-mono text-[11px] whitespace-nowrap text-[#0B63E5]">
                     <RadarIcon className="size-[13px]" /> {t.heroD.cardRadarBadge}
                   </span>
-                  <span className="text-[9px] font-semibold uppercase tracking-[0.06em] text-slate-400">
+                  <span className="text-[9px] font-semibold uppercase tracking-[0.06em] text-[#64748b]">
                     {t.heroD.cardIllustrativeBadge}
                   </span>
                 </div>
@@ -212,7 +212,7 @@ export function HeroD({ t, lang, openJobsCount, onNavigate }: HeroDProps) {
                     >
                       {score}%
                     </span>
-                    <span className="font-mono text-sm whitespace-nowrap text-[#94a3b8]">
+                    <span className="font-mono text-sm whitespace-nowrap text-[#64748b]">
                       {t.heroD.compatibleUnit}
                     </span>
                   </div>
