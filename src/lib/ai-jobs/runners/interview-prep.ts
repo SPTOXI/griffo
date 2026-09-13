@@ -128,17 +128,19 @@ function jobFromRow(row: any): NormalizedJob {
   }
 }
 
-const SYSTEM_PROMPT = `Você é um recrutador técnico sênior preparando um candidato para a entrevista de UMA vaga específica.
+const SYSTEM_PROMPT = `Você prepara um candidato para a entrevista de UMA vaga específica.
+
+Antes de gerar qualquer pergunta, identifique pelo cargo e pela descrição no contexto acima: (1) a ÁREA PROFISSIONAL da vaga (vendas, engenharia de software, saúde, logística, financeiro, marketing, operações, jurídico, RH, e por aí vai — nunca assuma "técnico/TI" por padrão, a maioria das vagas não é) e (2) o nível de senioridade. Assuma o papel de um recrutador ou gestor experiente DAQUELA área específica, aplicando as práticas reais de entrevista que esse tipo de profissional usaria — vendas pergunta sobre meta/ciclo/negociação, engenharia pergunta profundidade técnica e decisão de design, saúde pergunta protocolo e julgamento clínico, e assim por diante, sempre ajustado ao cargo real da vaga, não a um roteiro genérico.
 
 O contexto acima traz a vaga (requisitos, competências, descrição), o que o candidato JÁ ATENDE e as LACUNAS identificadas pelo match.
 
 REGRA INEGOCIÁVEL: toda pergunta tem que nascer de algo CONCRETO no contexto acima — um requisito declarado, uma competência pedida, uma lacuna listada, ou uma responsabilidade específica citada na descrição da vaga. Proibido perguntas genéricas de entrevista ("fale sobre você", "qual seu maior defeito") que serviriam para qualquer vaga.
 
 Para cada pergunta:
-- Se nasce de algo que o candidato JÁ ATENDE ("strength"): é uma pergunta que aprofunda, testando se o domínio é real ou superficial.
+- Se nasce de algo que o candidato JÁ ATENDE ("strength"): é uma pergunta que aprofunda, testando se o domínio é real ou superficial — no formato que um entrevistador DAQUELA área realmente usaria (comportamental estruturada tipo STAR, estudo de caso, ou pergunta técnica, conforme o cargo).
 - Se nasce de uma LACUNA ("gap"): é uma pergunta que o entrevistador plausivelmente faria para testar exatamente aquele ponto fraco — sem acusar, mas sem fingir que a lacuna não existe.
 
-"groundedIn": cite o requisito/competência/lacuna EXATA do contexto (não uma paráfrase vaga) — é o que explica ao candidato por que ESTA pergunta, para ESTA vaga.
+"groundedIn": cite o requisito/competência/lacuna/responsabilidade EXATA do contexto (não uma paráfrase vaga) — é o que explica ao candidato por que ESTA pergunta, para ESTA vaga.
 "tip": uma frase só, coaching prático de como abordar a resposta (estrutura, o que citar, o que evitar) — não a resposta pronta.
 
 Gere entre 3 e 8 perguntas — o número certo depende de quanto material concreto a vaga oferece. Menos perguntas bem ancoradas é MELHOR do que completar a contagem com perguntas genéricas. Responda APENAS o JSON do schema, sem texto antes ou depois.`
@@ -153,6 +155,18 @@ Gere entre 3 e 8 perguntas — o número certo depende de quanto material concre
  * dentro, e não confiar num id solto, é o que mantém o isolamento por
  * usuário mesmo quando `resumeIfStalled` retoma o job fora da requisição
  * original.
+ *
+ * Um prompt só, não um agente por área profissional. Cogitado (pedido do
+ * operador, 13/09/2026): um "agente de entrevista" especializado por área
+ * (vendas, engenharia, saúde...), do A ao Z. Decisão: não agora — significa
+ * construir e manter dezenas de personas, mapear cada vaga pra área certa, e
+ * testar cada uma separadamente, por um ganho que um modelo bom já entrega
+ * quando INSTRUÍDO a identificar a área pelo cargo/descrição e reagir como
+ * um recrutador daquela área (ver a primeira instrução do `SYSTEM_PROMPT`
+ * abaixo — era "recrutador técnico sênior" fixo, errado até para o caso que
+ * motivou a investigação: Coordenador Comercial, vaga de vendas, não
+ * técnica). Reabrir esta decisão se aparecer evidência concreta de que o
+ * prompt único falha num campo específico — não antecipar a necessidade.
  */
 export async function processInterviewPrepJob(jobId: string): Promise<void> {
   await runSingleCallJob(jobId, async (job, onAttempt) => {
