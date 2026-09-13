@@ -7709,3 +7709,51 @@ português (`?lang=pt`), e o link do Hero D confirmado apontando para
 página como blindagem de conformidade definitiva — o texto foi escrito para
 ser honesto e verificável contra o código, não para substituir um advogado;
 e atualizar a página no dia em que existir razão social/CNPJ formalizado.
+
+## 2.122 Revisão geral pedida pelo operador — nada de código pendente, dois ponteiros de branch obsoletos limpos
+
+Pedido do operador: "revise o projeto veja se ficou algo pendente". Sem
+mudança de escopo, é conferência, não desenvolvimento.
+
+**Verificação de estado**: `main` local idêntico a `origin/main` (mesmo
+commit `cc3c01f`), árvore limpa. `tsc --noEmit`, `eslint` e `npm run build`
+sem erro; suíte em **973/973** (`fail 0`) — acima dos 972 do §2.117 por
+causa dos dois commits de `interview-prep` que entraram depois do §2.121 e
+não tinham seção própria na auditoria (identificação de área profissional
+em vez de assumir "técnico"; vaga sem requisitos estruturados deixando de
+rejeitar a resposta inteira).
+
+**O achado real**: `git branch -a` mostrava duas branches locais —
+`design-refresh-2026-08` (a mesma do §7.7 do handoff) e
+`claude/admin-user-edit-modal` — que pareciam pendentes de mesclar. Não
+estavam: as duas tinham **0 commits à frente de `main`** (todo o conteúdo
+já dentro dela) e já tinham sido apagadas do remoto por fora desta sessão
+(`git fetch --prune` confirmou `[origin/...: gone]` nas duas). Sobravam só
+os ponteiros locais obsoletos, removidos com `git branch -D` — nada de
+irreversível, porque não existia mais nada no remoto para perder.
+
+A causa do falso alarme era **o handoff, não o git**: o §7.7 ainda descrevia
+o design-refresh como "🟡 EM REVISÃO, falta verificar telas autenticadas",
+quando essa verificação já tinha acontecido no §2.109 (produção, login
+real) e o trabalho já estava mesclado havia mais de 170 commits. Mesma
+classe de erro do §2.115 — documento que descreve estado velho é pior que
+documento ausente, porque parece confiável. Corrigido para ✅ RESOLVIDO,
+com a nota de que foi achado desatualizado, não código quebrado.
+
+**Achado à parte, sem ação**: existem 10 worktrees em
+`C:\Users\sptox\.gemini\antigravity\worktrees\griffo\...`, de uma ferramenta
+de IA diferente (Google Antigravity) atuando neste mesmo repositório fora
+de qualquer sessão do Claude Code. Todas com 0 commits à frente de `main`
+— só snapshots antigos sem trabalho exclusivo, nada a recuperar ou apagar.
+Registrado aqui porque é o tipo de estado inesperado que vale a pena
+alguém saber que existe, não porque exige ação.
+
+**Pendências reais que continuam de pé**, sem mudança nesta sessão — já
+listadas na seção 0 do handoff e não repetidas aqui: banner social
+1200×630 nunca desenhado (item 11), "profissões em alta por país" inviável
+por volume (item 16), dado próprio sem volume para virar conteúdo público
+(item 18), tom/registro nativo das 12 traduções sem revisão humana (item
+21), dois e-mails de release parados no Gmail sem destinatário (item 22),
+calibragem dos três eixos de matching esperando caso real (§7.5), e a
+revisão jurídica de `/privacy` (§2.121). Nenhuma delas é código quebrado —
+são decisões ou dados que só o operador ou o tempo resolvem.

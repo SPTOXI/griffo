@@ -138,3 +138,4 @@ já lista os três documentos de continuidade; este é o quarto.
 | 2.119 | 7439 | seo,geo,i18n | "Job interview" — lacuna de SEO/GEO achada em dado externo; termo novo em job-search-terms.ts e em /hiring, 12 idiomas |
 | 2.120 | 7533 | design-ui,produto,i18n | Hero D + faixa "A ordem importa": landing reposicionada da vaga para a auditoria, contagem real de vagas, cartão ilustrativo rotulado, 12 idiomas |
 | 2.121 | 7640 | seguranca,i18n,produto | `/privacy` nos 12 idiomas, todo fato verificável no código; nasce o agente `translation-reviewer` |
+| 2.122 | 7713 | docs,infra,limpeza | Revisão geral: tudo verde no código, handoff §7.7 desatualizado corrigido, dois ponteiros de branch obsoletos limpos |
