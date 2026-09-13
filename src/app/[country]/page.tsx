@@ -189,16 +189,24 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ko: `GriffoWork ${cName} — 커리어 인텔리전스`,
   }
 
+  // 13/09/2026 — três palavras trocadas por sinônimo exato após pesquisa real
+  // no Google Trends (ver o cabeçalho de `job-search-terms.ts`): a frase e a
+  // posição continuam as mesmas do Hero D (§2.120, "conectamos a
+  // oportunidades, não a vagas"), só a palavra da negação virou a que o
+  // mercado de fato mais busca — `Stellenanzeigen`→`Stellenangeboten` (de),
+  // `annunci di lavoro`→`offerte di lavoro` (it), `jobbannonser`→`lediga
+  // jobb` (sv). As outras 9 línguas já usavam a palavra de maior volume
+  // confirmada no Trends; nada mudou nelas.
   const descriptions: Record<string, string> = {
     pt: `Conectamos você a oportunidades em ${cName}, não a vagas. Auditoria de currículo por IA em 8 dimensões, compatibilidade com ${atsList}, por apenas ${price.formatted}.`,
     es: `Te conectamos con oportunidades en ${cName}, no con ofertas de empleo. Auditoría de currículum con IA en 8 dimensiones, compatibilidad con ${atsList}, por solo ${price.formatted}.`,
     en: `We connect you to opportunities in ${cName}, not job postings. An 8-dimension AI ${term.nounLower} audit, ATS compatibility with ${atsList}, for just ${price.formatted}.`,
-    de: `Wir verbinden Sie mit Chancen in ${cName}, nicht mit Stellenanzeigen. KI-Lebenslauf-Audit in 8 Dimensionen, ATS-Kompatibilität mit ${atsList}, für nur ${price.formatted}.`,
+    de: `Wir verbinden Sie mit Chancen in ${cName}, nicht mit Stellenangeboten. KI-Lebenslauf-Audit in 8 Dimensionen, ATS-Kompatibilität mit ${atsList}, für nur ${price.formatted}.`,
     fr: `Nous vous connectons à des opportunités en ${cName}, pas à des offres d’emploi. Audit de CV par IA en 8 dimensions, compatibilité ATS avec ${atsList}, pour seulement ${price.formatted}.`,
-    it: `Ti connettiamo a opportunità in ${cName}, non ad annunci di lavoro. Audit del curriculum con IA in 8 dimensioni, compatibilità ATS con ${atsList}, per soli ${price.formatted}.`,
+    it: `Ti connettiamo a opportunità in ${cName}, non ad offerte di lavoro. Audit del curriculum con IA in 8 dimensioni, compatibilità ATS con ${atsList}, per soli ${price.formatted}.`,
     ja: `「求人」ではなく「機会」へつなぐ。${cName} 向け、AIによる職務経歴書の8次元診断と ${atsList} とのATS適合度チェックを、わずか ${price.formatted} で。`,
     nl: `Wij verbinden je met kansen in ${cName}, niet met vacatures. AI-cv-audit in 8 dimensies, ATS-compatibiliteit met ${atsList}, voor slechts ${price.formatted}.`,
-    sv: `Vi kopplar dig till möjligheter i ${cName}, inte jobbannonser. AI-granskning av ditt CV i 8 dimensioner, ATS-kompatibilitet med ${atsList}, för endast ${price.formatted}.`,
+    sv: `Vi kopplar dig till möjligheter i ${cName}, inte lediga jobb. AI-granskning av ditt CV i 8 dimensioner, ATS-kompatibilitet med ${atsList}, för endast ${price.formatted}.`,
     zh: `我们连接的是 ${cName} 的机会，而不是职位空缺。AI 简历 8 维度审核，兼容 ${atsList} 等 ATS 系统，仅需 ${price.formatted}。`,
     ar: `نصلك بالفرص في ${cName}، لا بالوظائف المُعلنة. تدقيق للسيرة الذاتية بالذكاء الاصطناعي على 8 أبعاد، وتوافق مع أنظمة ATS مثل ${atsList}، مقابل ${price.formatted} فقط.`,
     ko: `채용 공고가 아닌, ${cName}의 기회로 연결합니다. AI 이력서 8차원 감사와 ${atsList} ATS 호환성 검증을 단 ${price.formatted}에 제공합니다.`,

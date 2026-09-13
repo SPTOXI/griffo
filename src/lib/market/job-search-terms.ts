@@ -46,20 +46,56 @@ import type { Language } from '@/lib/i18n'
  * Japonês e chinês levam só a palavra isolada (`面接`/`面试`), não um
  * composto com `転職`/`求职`: mesmo cuidado do cabeçalho acima — um composto
  * pareceria natural sem ter sido verificado contra o uso real.
+ *
+ * ## "Currículo/CV/resume" — adicionado em 13/09/2026, Google Trends real
+ *
+ * Pedido do operador: ir ao Google Trends, achar o termo mais buscado em
+ * cada idioma do site e usar para atrair mais lead orgânico. Comparação real
+ * feita por país-sede de cada idioma (`trends.google.com/explore`, últimos
+ * 12 meses, busca na Web), termos atuais desta lista contra candidatos.
+ *
+ * **O achado maior não entrou aqui, de propósito.** Em praticamente todo
+ * mercado testado, o termo de MAIOR volume de todos não foi um sinônimo de
+ * "busca de emprego" nem de "currículo" — foi "vagas de emprego"/"ofertas de
+ * empleo"/`Stellenangebote`/"offres d'emploi"/"offerte di lavoro"/`求人`/
+ * `vacatures`/"lediga jobb"/`招聘`, 3 a 10× mais buscado que qualquer termo
+ * já usado aqui. Mesmo assim, **não entrou nesta lista**: é a mesma direção
+ * que o cabeçalho de `/hiring` já rejeita para "hiring" (§2.84) — quem
+ * digita "vagas de emprego" quer um QUADRO de vagas, e `/hiring` fala com
+ * quem JÁ se candidatou e quer saber se o currículo passa. Trazer esse termo
+ * pra cá atrairia o público errado pra página errada. Registrado aqui para
+ * quem vier depois não repetir a pesquisa achando que foi esquecimento.
+ *
+ * **O que entrou**: o termo isolado de currículo/CV/resume, confirmado nos
+ * mesmos gráficos como 2º colocado (ou empatado em 1º, no Brasil e na
+ * Itália) — muito acima dos termos de busca de emprego já existentes nesta
+ * lista, e com a direção certa: é exatamente a dúvida que `/hiring` responde
+ * ("meu currículo passa?"). Confirmado, além do gráfico, contra o texto
+ * visível de `hiringPage.searchBody` de cada um dos 12 idiomas — a palavra
+ * já estava lá antes desta mudança (nenhuma cópia nova foi escrita), então
+ * a keyword nova não é a promessa vazia que o teste da hashtag existe pra
+ * pegar.
+ *
+ * Confiança mais baixa em três idiomas — o termo isolado apareceu no
+ * gráfico bem perto dos termos já existentes, sem separação clara (ao
+ * contrário do salto grande visto nos outros nove): japonês (`履歴書`),
+ * sueco (`cv`) e coreano (`이력서`). Entraram mesmo assim porque a palavra já
+ * é a mesma do texto visível — o risco de errar é baixo mesmo com o sinal do
+ * Trends mais fraco.
  */
 const JOB_SEARCH_TERM: Record<Language, string[]> = {
-  pt: ['busca de emprego', 'procurando emprego', 'recolocação profissional', 'entrevista de emprego'],
-  en: ['job hunting', 'job search', 'open to work', 'job interview'],
-  es: ['búsqueda de empleo', 'buscar trabajo', 'entrevista de trabajo'],
-  de: ['Jobsuche', 'Stellensuche', 'Bewerbung', 'Vorstellungsgespräch'],
-  fr: ["recherche d'emploi", 'chercher un emploi', "entretien d'embauche"],
-  it: ['ricerca di lavoro', 'cercare lavoro', 'colloquio di lavoro'],
-  ja: ['転職活動', '転職', '面接'],
-  nl: ['op zoek naar werk', 'solliciteren', 'sollicitatiegesprek'],
-  sv: ['jobbsökande', 'söka jobb', 'jobbintervju'],
-  zh: ['求职', '找工作', '面试'],
-  ar: ['البحث عن عمل', 'البحث عن وظيفة', 'مقابلة العمل'],
-  ko: ['구직', '이직', '면접'],
+  pt: ['busca de emprego', 'procurando emprego', 'recolocação profissional', 'entrevista de emprego', 'currículo'],
+  en: ['job hunting', 'job search', 'open to work', 'job interview', 'resume'],
+  es: ['búsqueda de empleo', 'buscar trabajo', 'entrevista de trabajo', 'currículum'],
+  de: ['Jobsuche', 'Stellensuche', 'Bewerbung', 'Vorstellungsgespräch', 'Lebenslauf'],
+  fr: ["recherche d'emploi", 'chercher un emploi', "entretien d'embauche", 'CV'],
+  it: ['ricerca di lavoro', 'cercare lavoro', 'colloquio di lavoro', 'curriculum'],
+  ja: ['転職活動', '転職', '面接', '履歴書'],
+  nl: ['op zoek naar werk', 'solliciteren', 'sollicitatiegesprek', 'cv'],
+  sv: ['jobbsökande', 'söka jobb', 'jobbintervju', 'cv'],
+  zh: ['求职', '找工作', '面试', '简历'],
+  ar: ['البحث عن عمل', 'البحث عن وظيفة', 'مقابلة العمل', 'السيرة الذاتية'],
+  ko: ['구직', '이직', '면접', '이력서'],
 }
 
 /** As hashtags, que não se traduzem. */

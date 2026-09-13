@@ -7791,3 +7791,74 @@ esta mudança, que não reproduziu em build/produção): `cardHeight`,
 `cardTop`, `cardBottom` e a posição do `h1` idênticos bit a bit entre as
 duas abas (599,8px de altura nos dois casos). `tsc`, `eslint`, `build` e
 suíte (973/973) limpos.
+
+## 2.124 Google Trends real, nos 12 idiomas — o termo isolado de currículo entra, o de maior volume de todos fica de fora por direção
+
+Pedido do operador: ir ao Google Trends de verdade, achar o termo mais
+buscado em cada um dos 12 idiomas do site, e usar para atrair mais lead
+orgânico — mesmo método do §2.96/§2.119 (dado de busca real, não achismo),
+desta vez pesquisado ao vivo em vez de trazido pelo operador.
+
+**Como foi feito.** `trends.google.com/explore`, no navegador, um país-sede
+por idioma (BR, US, ES, DE, FR, IT, JP, NL, SE, CN, SA+EG, KR), últimos 12
+meses, comparando os termos já usados em `job-search-terms.ts` contra
+candidatos (termo isolado de currículo/CV/resume; termo de vaga/anúncio de
+emprego). A ferramenta em si foi instável — o gráfico da Trends travou o
+carregamento da página repetidas vezes em francês, japonês, sueco e coreano,
+resolvido reabrindo a aba; nenhum dado foi lido de um gráfico que não
+carregou.
+
+**O achado maior não virou código.** Em quase todo mercado, o termo de
+MAIOR volume não foi nenhum sinônimo de "busca de emprego" nem de
+"currículo" — foi "vagas de emprego"/"ofertas de empleo"/`Stellenangebote`/
+"offres d'emploi"/"offerte di lavoro"/`求人`/`vacatures`/"lediga jobb"/
+`招聘`, de 3 a 10× mais buscado que qualquer termo já usado no site (na
+Itália, "ricerca di lavoro" — o termo atual — ficou **quase zerado** contra
+"offerte di lavoro"). Ficou de fora por decisão, não por esquecimento:
+`/hiring` já rejeita a mesma direção para "hiring" desde o §2.84 — quem
+digita "vagas de emprego" quer um QUADRO de vagas, não uma auditoria de
+currículo pós-candidatura. Trazer esse termo pra `/hiring` atrairia o
+público errado pra página errada. Registrado no cabeçalho de
+`job-search-terms.ts` para ninguém repetir a pesquisa achando que foi
+descuido.
+
+**O que entrou: o termo isolado de currículo/CV/resume**, 2º colocado (ou
+empatado em 1º, Brasil e Itália) em 9 dos 12 mercados, bem acima dos termos
+de busca de emprego já usados — e com a direção certa, porque é exatamente
+a dúvida que `/hiring` responde ("meu currículo passa no filtro?"). Nos
+outros três (japonês, sueco, coreano) o sinal do Trends veio mais fraco, sem
+separação clara do termo atual — entraram do mesmo jeito porque a palavra já
+estava no texto visível de `hiringPage.searchBody` **antes** desta sessão
+(currículo/CV/resume é o assunto central da página desde sempre, só nunca
+tinha virado keyword), então o risco de keyword sem sustentação — a mesma
+regra que os testes desta lista já cobram — é baixo mesmo com sinal fraco.
+Confirmado nos 12 idiomas, um por um, contra o texto real antes de
+adicionar: nenhuma cópia nova foi escrita, só a keyword passou a refletir o
+que a página já dizia. Teste novo (`job-search-terms.test.ts`) trava as duas
+pontas, mesmo padrão do teste de "entrevista de emprego" do §2.119 — árabe
+precisou da mesma distinção raiz/termo completo que aquele teste já usa
+(`سيرتك` no texto flexiona a `ة` para `ت` antes do sufixo possessivo; a raiz
+comum é `سير`, sem a terminação).
+
+**Achado à parte, sem entrar no código**: os dois países árabes testados
+divergiram — na Arábia Saudita o termo atual (`البحث عن عمل`) andou
+emparelhado com `السيرة الذاتية`, sem vencedor claro; no Egito (população
+bem maior) `السيرة الذاتية` disparou na frente dos dois outros termos.
+Decisão: somar ao lado que a maioria e a população maior indicam, registrado
+aqui para não parecer que o resultado misto foi ignorado.
+
+**Três sinônimos trocados em `[country]/page.tsx`**, sem mexer em frase,
+posição ou estrutura — só a palavra que a própria descrição já usa no
+contraste "conectamos a oportunidades, não a X" (posicionamento do Hero D,
+§2.120) virou a de maior volume confirmado: alemão `Stellenanzeigen` →
+`Stellenangeboten` (mesma ideia, declinação dativa depois de "mit"), italiano
+`annunci di lavoro` → `offerte di lavoro`, sueco `jobbannonser` → `lediga
+jobb`. As outras 9 descrições já usavam a palavra de maior volume — nada
+mudou nelas. Isto **não** reabre a decisão do Hero D de não liderar a
+mensagem pelo quadro de vagas; é só a palavra escolhida dentro da mesma
+frase negativa que já existia.
+
+`tsc`, `eslint`, `build` (`/[country]` segue `●` SSG) e suíte — **974/974**,
+1 novo — limpos. Conferido também contra o HTML servido de verdade
+(`npm run build` + `npm run start`, `curl` em `/de`, `/it`, `/se` e
+`/hiring?lang=` para pt/ar/it/ja), não só contra o código-fonte.

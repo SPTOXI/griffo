@@ -132,3 +132,46 @@ test('a página não promete vaga em nenhum idioma', () => {
     }
   }
 })
+
+test('todo idioma cobre o termo isolado de currículo/CV nas keywords e no texto visível', () => {
+  // Adicionado em 13/09/2026 a partir de pesquisa real no Google Trends
+  // (ver o cabeçalho de `job-search-terms.ts`): o termo isolado de
+  // currículo/CV/resume ficou em 2º lugar (ou empatado em 1º) em praticamente
+  // todo mercado testado, muito acima dos termos de busca de emprego já
+  // usados aqui — e é exatamente a dúvida que `/hiring` responde. Mesma
+  // regra do teste de "entrevista de emprego": keyword sem o termo no texto
+  // visível não sustenta nada.
+  const RESUME_TERM: Record<string, string> = {
+    pt: 'currículo',
+    en: 'resume',
+    es: 'currículum',
+    de: 'Lebenslauf',
+    fr: 'CV',
+    it: 'curriculum',
+    ja: '履歴書',
+    nl: 'cv',
+    sv: 'cv',
+    zh: '简历',
+    ar: 'السيرة الذاتية',
+    ko: '이력서',
+  }
+  // Árabe leva sufixo possessivo no texto corrido ("سيرتك الذاتية" = "seu
+  // currículo", não "السيرة الذاتية" = "o currículo") — mesma flexão que já
+  // exigiu a distinção TERM/ROOT no teste de entrevista logo acima. A
+  // "ة" (taa marbuta) de "سيرة" vira "ت" antes do sufixo possessivo
+  // ("سيرتك", não "سيرةك") — a raiz comum aos dois é só "سير", sem a
+  // terminação; é só ela que entra na checagem do texto visível, a palavra
+  // completa continua nas keywords.
+  const RESUME_ROOT: Record<string, string> = { ...RESUME_TERM, ar: 'سير' }
+  for (const lang of LANGUAGES) {
+    const termo = RESUME_TERM[lang]
+    const raiz = RESUME_ROOT[lang]
+    assert.ok(termo, `"${lang}" sem termo de currículo definido no teste`)
+    assert.ok(jobSearchKeywords(lang).includes(termo), `"${lang}" perdeu "${termo}" nas keywords`)
+    const corpo = `${DICTIONARIES[lang].hiringPage.searchTitle} ${DICTIONARIES[lang].hiringPage.searchBody}`
+    assert.ok(
+      corpo.toLowerCase().includes(raiz.toLowerCase()),
+      `"${lang}" perdeu "${raiz}" no texto visível — só nas keywords não sustenta nada`
+    )
+  }
+})
