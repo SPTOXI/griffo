@@ -367,6 +367,21 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         //
         // Uma repetição só: se o segundo 429 vier, a concorrência não é
         // passageira e insistir apenas queima o orçamento de tempo.
+        //
+        // Isso explica também um padrão à parte, sem relação com paralelismo
+        // interno: `job_deduplication` (o único `kind` com o Kimi como
+        // PRIMÁRIO, e chamado propositalmente um par por vez, sem
+        // concorrência nenhuma dentro da Griffo — ver `agent-dedup.ts`) ainda
+        // assim caiu para o DeepSeek em ~30% das chamadas num período de 30
+        // dias (revisão do `AiLog` em 13/09/2026), com falha rápida (~1-2s,
+        // não um timeout de verdade — condizente com um 429 imediato).
+        // Confirmado com o operador: a mesma chave da Moonshot é usada fora
+        // da Griffo, então o teto de 3 simultâneas por organização é
+        // estourado por tráfego externo, não por nada que este código faça.
+        // Sem correção de código possível daqui — as opções são aceitar o
+        // failover (sem efeito visível ao usuário, só custo do DeepSeek
+        // sendo mais caro que o Kimi nessa fração de chamadas) ou cadastrar
+        // uma chave da Moonshot dedicada só à Griffo.
         const createCompletion = async (attempt = 1): Promise<any> => {
           try {
             return await client.chat.completions.create(buildCompletionParams())
