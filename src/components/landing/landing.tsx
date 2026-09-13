@@ -154,6 +154,7 @@ export function Landing({ onNavigate, countryCode, forcedLang, openJobsCount = 0
         )}
       </header>
 
+      <main>
       {/* HERO D — única direção aprovada do handoff de design; ver hero-d.tsx */}
       <HeroD t={t} lang={lang} openJobsCount={openJobsCount} onNavigate={onNavigate} />
 
@@ -398,6 +399,7 @@ export function Landing({ onNavigate, countryCode, forcedLang, openJobsCount = 0
           </div>
         </div>
       </section>
+      </main>
 
       {/* FOOTER WITH OFFICIAL LOGO */}
       <footer className="mt-auto border-t border-slate-200 bg-slate-50">
@@ -415,7 +417,7 @@ export function Landing({ onNavigate, countryCode, forcedLang, openJobsCount = 0
             </p>
           </div>
           <div>
-            <h4 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">{t.footer.navTitle}</h4>
+            <h3 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">{t.footer.navTitle}</h3>
             <ul className="space-y-2 text-xs text-slate-600 font-medium">
               <li><a href="#features" className="hover:text-[#0B63E5] transition-colors">{t.nav.features}</a></li>
               <li><a href="#social" className="hover:text-[#0B63E5] transition-colors">{t.nav.social}</a></li>
@@ -438,7 +440,7 @@ export function Landing({ onNavigate, countryCode, forcedLang, openJobsCount = 0
             </ul>
           </div>
           <div>
-            <h4 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">{t.footer.secTitle}</h4>
+            <h3 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">{t.footer.secTitle}</h3>
             <ul className="space-y-2 text-xs text-slate-600 font-medium">
               <li className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> LGPD & GDPR Compliant</li>
               <li className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-[#0B63E5] shrink-0" /> Data Encryption</li>
@@ -446,7 +448,7 @@ export function Landing({ onNavigate, countryCode, forcedLang, openJobsCount = 0
             </ul>
           </div>
           <div>
-            <h4 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">{t.footer.contactTitle}</h4>
+            <h3 className="font-extrabold text-[#0B192E] text-xs uppercase tracking-wider mb-3">{t.footer.contactTitle}</h3>
             <p className="text-xs text-slate-600 leading-relaxed font-medium">
               {/* O endereço acompanha o idioma da página — ver lib/i18n/contact.ts. */}
               <a href={contactMailto(lang)} className="hover:text-[#0B63E5] transition-colors">
@@ -475,27 +477,27 @@ export function Landing({ onNavigate, countryCode, forcedLang, openJobsCount = 0
               `FOOTER_MARKET_SLUGS`, que garante um link permanente para cada
               casa de idioma do hreflang: sem isso, `/ae` (a casa do árabe)
               ficava sem nenhum link interno apontando para ela. */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-medium">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-medium">
             <span className="font-bold text-slate-700">{t.footer.marketsTitle}</span>
             {FOOTER_MARKET_SLUGS.map((slug) => (
-              <a key={slug} href={`/${slug}`} className="hover:text-primary transition-colors">
+              <a key={slug} href={`/${slug}`} className="inline-block py-1.5 hover:text-primary transition-colors">
                 {displayCountry(slug.toUpperCase(), lang)} ({slug.toUpperCase()})
               </a>
             ))}
-            <a href="/global" className="hover:text-primary transition-colors">{t.footer.globalRemote}</a>
+            <a href="/global" className="inline-block py-1.5 hover:text-primary transition-colors">{t.footer.globalRemote}</a>
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-medium">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-medium">
             <span className="font-bold text-slate-700">{t.footer.atsTitle}</span>
-            <a href="/ats/gupy" className="hover:text-primary transition-colors">Gupy</a>
-            <a href="/ats/workday" className="hover:text-primary transition-colors">Workday</a>
-            <a href="/ats/greenhouse" className="hover:text-primary transition-colors">Greenhouse</a>
-            <a href="/ats/lever" className="hover:text-primary transition-colors">Lever</a>
-            <a href="/ats/taleo" className="hover:text-primary transition-colors">Taleo</a>
-            <a href="/ats/solides" className="hover:text-primary transition-colors">Solides</a>
-            <a href="/ats/icims" className="hover:text-primary transition-colors">iCIMS</a>
-            <a href="/ats/ashby" className="hover:text-primary transition-colors">Ashby</a>
-            <a href="/ats/infojobs" className="hover:text-primary transition-colors">InfoJobs</a>
-            <a href="/ats/personio" className="hover:text-primary transition-colors">Personio</a>
+            <a href="/ats/gupy" className="inline-block py-1.5 hover:text-primary transition-colors">Gupy</a>
+            <a href="/ats/workday" className="inline-block py-1.5 hover:text-primary transition-colors">Workday</a>
+            <a href="/ats/greenhouse" className="inline-block py-1.5 hover:text-primary transition-colors">Greenhouse</a>
+            <a href="/ats/lever" className="inline-block py-1.5 hover:text-primary transition-colors">Lever</a>
+            <a href="/ats/taleo" className="inline-block py-1.5 hover:text-primary transition-colors">Taleo</a>
+            <a href="/ats/solides" className="inline-block py-1.5 hover:text-primary transition-colors">Solides</a>
+            <a href="/ats/icims" className="inline-block py-1.5 hover:text-primary transition-colors">iCIMS</a>
+            <a href="/ats/ashby" className="inline-block py-1.5 hover:text-primary transition-colors">Ashby</a>
+            <a href="/ats/infojobs" className="inline-block py-1.5 hover:text-primary transition-colors">InfoJobs</a>
+            <a href="/ats/personio" className="inline-block py-1.5 hover:text-primary transition-colors">Personio</a>
           </div>
         </div>
 

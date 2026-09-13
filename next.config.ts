@@ -50,14 +50,25 @@ const securityHeaders = [
     value: "off",
   },
   {
+    // A sintaxe de Permissions-Policy é "structured header": itens de
+    // allowlist exigem aspas DUPLAS. A aspa simples (estilo CSP) que estava
+    // aqui não é um item válido para o parser e derruba a diretiva inteira —
+    // é exatamente o erro "Parse of permissions policy failed" reportado
+    // pelo Chrome DevTools/Lighthouse.
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), payment=(self 'https://js.stripe.com'), usb=(), interest-cohort=()",
+    value: 'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com"), usb=(), interest-cohort=()',
   },
   {
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
+      // Sem `style-src` explícito, `default-src 'self'` vira o fallback e
+      // bloqueia todo `style=` inline — inclusive o que bibliotecas de UI
+      // (Radix, sonner, recharts) injetam em runtime para posicionamento e
+      // animação, fora do nosso controle. Mesmo nível de permissividade já
+      // aceito em `script-src` acima.
+      "style-src 'self' 'unsafe-inline'",
       "connect-src 'self' https: wss:",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data: https:",

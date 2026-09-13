@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { toast } from 'sonner'
 import { useAuth, useNav, AppView } from '@/store/auth'
 import { Button } from '@/components/ui/button'
@@ -114,7 +115,7 @@ export function AppShell({ onExit }: { onExit: () => void }) {
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
         <button onClick={onExit} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-          <img src="/logo-icon.png" alt="GriffoWork" width={553} height={424} className="h-10 sm:h-11 w-auto object-contain shrink-0" />
+          <Image src="/logo-icon.png" alt="GriffoWork" width={110} height={84} className="h-10 sm:h-11 w-auto object-contain shrink-0" />
           <div className="hidden sm:flex flex-col text-left leading-none">
             <span className="font-extrabold text-brand-navy text-base tracking-tight">griffo<span className="text-primary">work</span></span>
             <span className="text-[9px] font-extrabold tracking-wider text-primary uppercase">{brandTaglineForLang(lang)}</span>

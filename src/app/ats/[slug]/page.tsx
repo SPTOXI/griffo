@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { cookies, headers } from 'next/headers'
+import Image from 'next/image'
 import Link from 'next/link'
 import { ATS_META } from '@/lib/ats/meta'
 import { atsContentFor, atsLanguagesFor } from '@/lib/ats/content'
@@ -207,7 +208,7 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-slate-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-2 flex items-center justify-between gap-4 flex-wrap">
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <img src="/logo-icon.png" alt="GriffoWork" width={553} height={424} className="h-9 w-auto object-contain" />
+            <Image src="/logo-icon.png" alt="GriffoWork" width={90} height={69} className="h-9 w-auto object-contain" />
             <span className="font-extrabold text-[#0B192E] text-lg tracking-tight">
               griffo<span className="text-[#0B63E5]">work</span>
             </span>
@@ -389,7 +390,7 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
       <footer className="mt-auto border-t border-slate-200 bg-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-medium">
           <div className="flex items-center gap-2">
-            <img src="/logo-icon.png" alt="GriffoWork" width={553} height={424} className="h-6 w-auto object-contain" />
+            <Image src="/logo-icon.png" alt="GriffoWork" width={60} height={46} className="h-6 w-auto object-contain" />
             <span>© {new Date().getFullYear()} GriffoWork</span>
           </div>
           <Link href="/" className="hover:text-primary transition-colors">{t.footerHome}</Link>

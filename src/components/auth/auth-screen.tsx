@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -64,7 +65,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
           </button>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2.5">
-              <img src="/logo-icon.png" alt="GriffoWork" width={553} height={424} className="h-10 sm:h-11 w-auto object-contain shrink-0" />
+              <Image src="/logo-icon.png" alt="GriffoWork" width={110} height={84} className="h-10 sm:h-11 w-auto object-contain shrink-0" />
               <span className="font-extrabold text-[#0B192E] text-base tracking-tight">griffo<span className="text-[#0B63E5]">work</span></span>
             </div>
             <LanguageSelector />
