@@ -457,7 +457,12 @@ export function RadarView() {
                 </CardDescription>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+            {/* `flex-wrap`: os botões usam `whitespace-nowrap` (base do
+                componente `Button`) e não encolhem — sem quebra de linha
+                aqui, três botões (Rodar agora / Buscar agora com o contador
+                / Preferências) simplesmente vazam da tela em qualquer
+                largura de celular, em vez de empilhar. */}
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
               <Button
                 variant="outline"
                 size="sm"
