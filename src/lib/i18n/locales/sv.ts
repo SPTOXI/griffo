@@ -93,6 +93,10 @@ export const sv: TranslationDictionary = {
     closingBrand: 'GriffoWork — Karriärintelligens.',
     closingTagline: 'Vi kopplar dig till möjligheter, inte jobbannonser.',
   },
+  differentials: {
+    badge: 'Våra Fördelar',
+    title: 'Vad som gör skillnaden',
+  },
   mockup: {
     title: 'Teknisk Granskningsrapport',
     precision: 'HÖG PRECISION',

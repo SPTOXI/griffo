@@ -93,6 +93,10 @@ export const zh: TranslationDictionary = {
     closingBrand: 'GriffoWork — 职业智能。',
     closingTagline: '我们连接的是机会，而不是职位空缺。',
   },
+  differentials: {
+    badge: '核心优势',
+    title: '让我们与众不同',
+  },
   mockup: {
     title: '专业技术评估报告',
     precision: '高精度 AI 解析',

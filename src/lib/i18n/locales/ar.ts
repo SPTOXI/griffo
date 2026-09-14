@@ -93,6 +93,10 @@ export const ar: TranslationDictionary = {
     closingBrand: 'GriffoWork — ذكاء المسار المهني.',
     closingTagline: 'نصلك بالفرص، لا بالوظائف المُعلنة.',
   },
+  differentials: {
+    badge: 'مزايانا',
+    title: 'ما يصنع الفرق',
+  },
   mockup: {
     title: 'تقرير التقييم الفني',
     precision: 'دقة فائقة بالذكاء الاصطناعي',

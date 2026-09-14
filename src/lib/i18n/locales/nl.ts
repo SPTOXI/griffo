@@ -93,6 +93,10 @@ export const nl: TranslationDictionary = {
     closingBrand: 'GriffoWork — Carrière-intelligentie.',
     closingTagline: 'Wij verbinden je met kansen, niet met vacatures.',
   },
+  differentials: {
+    badge: 'Onze Voordelen',
+    title: 'Wat het verschil maakt',
+  },
   mockup: {
     title: 'Technisch Evaluatierapport',
     precision: 'HOGE PRECISIE',

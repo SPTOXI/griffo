@@ -9,7 +9,7 @@ import {
   Sparkles, ShieldCheck, Download, TrendingUp, Target, CheckCircle2,
   ArrowRight, Brain, Search, Award, Lock, Users, BarChart3, Zap, Globe, Share2,
   Check, HelpCircle, ChevronDown, Star, MessageSquare, Menu, X, FileSearch, Edit3,
-  Instagram
+  Instagram, Radar as RadarIcon
 } from 'lucide-react'
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
@@ -163,6 +163,32 @@ export function Landing({ onNavigate, countryCode, forcedLang, openJobsCount = 0
           com a seção "HOW IT WORKS" mais abaixo, que fala do fluxo de uso do
           produto (envio → laudo → reescrita), não da tese de posicionamento. */}
       <OrderBand t={t} />
+
+      {/* DIFERENCIAIS — foto de fundo (aperto de mão) sobre gradiente escuro;
+          os 4 cards reaproveitam texto já aprovado em produção, sem cópia
+          nova: Otimização/Radar/Preparação vêm de `orderBand` (mesmos
+          `step4/6/7`), Orientação de Carreira vem de `features.f8` — ver
+          handoff "imagem de fundo — seção Diferenciais". */}
+      <section className="relative overflow-hidden py-20 sm:py-24">
+        <Image src="/diferenciais-bg.jpg" alt="" fill className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0B192E]/95 to-[#0B192E]/88" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="border-white/20 text-white/80 px-3 py-1 text-xs">
+              {t.differentials.badge}
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mt-3">
+              {t.differentials.title}
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <DifferentialCard icon={<Target className="w-5 h-5" />} title={t.orderBand.step4Title} desc={t.orderBand.step4Body} />
+            <DifferentialCard icon={<RadarIcon className="w-5 h-5" />} title={t.orderBand.step6Title} desc={t.orderBand.step6Body} />
+            <DifferentialCard icon={<MessageSquare className="w-5 h-5" />} title={t.orderBand.step7Title} desc={t.orderBand.step7Body} />
+            <DifferentialCard icon={<TrendingUp className="w-5 h-5" />} title={t.features.f8Title} desc={t.features.f8Desc} />
+          </div>
+        </div>
+      </section>
 
       {/* STATS BAR */}
       <section className="border-y border-slate-200/80 bg-slate-50/70">
@@ -528,6 +554,19 @@ function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; 
         <p className="text-xs text-slate-600 leading-relaxed">{desc}</p>
       </CardContent>
     </Card>
+  )
+}
+
+/** Card da seção "Diferenciais" — mesmo formato do `Feature`, mas para o
+ *  fundo escuro com foto (texto branco, translúcido, sem `Card`/`CardContent`
+ *  porque não há necessidade de sombra/hover claro nesse contexto). */
+function DifferentialCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <div className="rounded-2xl border border-white/[0.14] bg-white/[0.06] backdrop-blur p-5 sm:p-6 h-full">
+      <div className="w-10 h-10 rounded-xl bg-white/10 text-white flex items-center justify-center mb-4 border border-white/[0.14]">{icon}</div>
+      <h3 className="font-bold text-white text-base mb-2">{title}</h3>
+      <p className="text-xs text-white/70 leading-relaxed">{desc}</p>
+    </div>
   )
 }
 

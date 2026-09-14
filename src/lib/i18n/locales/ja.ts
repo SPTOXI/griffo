@@ -93,6 +93,10 @@ export const ja: TranslationDictionary = {
     closingBrand: 'GriffoWork — キャリア・インテリジェンス。',
     closingTagline: '「求人」ではなく「機会」へつなぐ。',
   },
+  differentials: {
+    badge: '私たちの強み',
+    title: '違いを生むもの',
+  },
   mockup: {
     title: '技術診断レポート',
     precision: '高精度AI解析',

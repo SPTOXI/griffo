@@ -97,6 +97,10 @@ export interface TranslationDictionary {
     closingBrand: string
     closingTagline: string
   }
+  differentials: {
+    badge: string
+    title: string
+  }
   mockup: {
     title: string
     precision: string

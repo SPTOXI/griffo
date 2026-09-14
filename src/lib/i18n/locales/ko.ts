@@ -93,6 +93,10 @@ export const ko: TranslationDictionary = {
     closingBrand: 'GriffoWork — 커리어 인텔리전스.',
     closingTagline: '채용 공고가 아닌, 기회로 연결합니다.',
   },
+  differentials: {
+    badge: '우리의 강점',
+    title: '차이를 만드는 것',
+  },
   mockup: {
     title: '기술 평가 진단 보고서',
     precision: '고정밀 AI 분석',

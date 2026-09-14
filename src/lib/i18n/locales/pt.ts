@@ -93,6 +93,10 @@ export const pt: TranslationDictionary = {
       closingBrand: 'GriffoWork — Inteligência de Carreira.',
       closingTagline: 'Conectamos você a oportunidades, não a vagas.',
     },
+    differentials: {
+      badge: 'Diferenciais',
+      title: 'O que faz a diferença',
+    },
     mockup: {
       title: 'Relatório Técnico de Avaliação',
       precision: 'ALTA PRECISÃO',
