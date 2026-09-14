@@ -33,15 +33,32 @@ export function OrderBand({ t }: OrderBandProps) {
         <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.1em] text-[#6f8fc4]">
           {t.orderBand.kicker}
         </p>
-        <p className="mb-9 max-w-[640px] text-pretty text-[26px] font-semibold tracking-[-0.02em] text-white">
+        <p className="mb-3 max-w-[640px] text-pretty text-[26px] font-semibold tracking-[-0.02em] text-white">
           {t.orderBand.intro}
         </p>
+        <div className="mb-9 h-[3px] w-full max-w-[640px] bg-gradient-to-r from-[#0B63E5] to-transparent" />
 
         <div className="grid grid-cols-1 gap-px overflow-hidden rounded-[10px] border border-white/[0.12] bg-white/[0.12] min-[480px]:grid-cols-2 min-[830px]:grid-cols-4 min-[1080px]:grid-cols-7">
           {steps.map((step, i) => {
             const isLastStep = i === steps.length - 1
             return (
-              <div key={i} className="flex flex-col gap-2 bg-[#0B192E] px-5 py-[22px]">
+              <div
+                key={i}
+                className={cn(
+                  'relative flex flex-col gap-2 px-5 py-[22px]',
+                  isLastStep
+                    ? 'bg-gradient-to-br from-[#0B63E5]/[0.28] to-[#0B63E5]/[0.08]'
+                    : 'bg-[#0B192E]'
+                )}
+              >
+                <span
+                  className={cn(
+                    'pointer-events-none absolute top-1.5 right-3.5 font-mono text-[44px] font-bold leading-none',
+                    isLastStep ? 'text-[#7fb0ff]/10' : 'text-white/[0.06]'
+                  )}
+                >
+                  {String(i + 1).padStart(2, '0')}
+                </span>
                 <span
                   className={cn(
                     'font-mono text-[11px]',
