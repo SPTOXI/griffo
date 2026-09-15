@@ -8005,3 +8005,9 @@ próximo deployment; aqui é a mesma lógica para coluna nova).
 
 `tsc`, `eslint`, `build` e suíte — **989/989**, 5 novos — limpos, contra o
 cliente Prisma gerado localmente.
+
+**Atualização, mesmo dia**: operador rodou `npx prisma db push`.
+Confirmado por consulta direta ao banco de produção
+(`information_schema.columns`), não só pela ausência de erro: a coluna
+`category` existe, `text`, aceita nulo. Push liberado e feito para
+`origin/main` (`c1361e9` + `31cf898`).
