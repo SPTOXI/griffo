@@ -645,6 +645,13 @@ model Job {
   /// Conceito da taxonomia (`data_analyst`), quando reconhecido. `null` é uma
   /// resposta válida: título desconhecido não vira o vizinho mais próximo.
   normalizedTitle String?
+  /// Setor amplo (`ti`, `vendas`, `vaga_remota`...) — diferente de
+  /// `normalizedTitle` (cargo fino, taxonomia própria do Griffo, ~24% de
+  /// cobertura): vem do `category_slug` do JobBase (gerado por título,
+  /// ~74% de cobertura), com `vaga_remota` sobrepondo quando `remoteType`
+  /// é `remote` (pedido do operador — ver `normalize.ts`). `null` quando a
+  /// fonte não categoriza (Gupy/Adzuna/Greenhouse/Remotive/RemoteOK).
+  category        String?
 
   country    String?
   region     String?

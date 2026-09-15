@@ -7946,3 +7946,62 @@ categoria no painel do país selecionado de `/market-pulse`, pendência que
 o próprio §2.56/pendência 16 já previa "quando o volume justificar").
 
 `tsc`, `eslint`, `build` e suíte — **984/984**, 10 novos — limpos.
+
+## 2.126 Categoria de vaga, com "vaga remota" sobrepondo — fase 2 de 4, aguardando `db push`
+
+Continuação do §2.125, mesmo plano aprovado. Campo novo **aditivo**
+`Job.category` em `prisma/schema.prisma` — setor amplo (`ti`, `vendas`...),
+diferente de `normalizedTitle` (cargo fino, taxonomia própria do Griffo,
+~24% de cobertura): vem de `category_slug` do JobBase (coluna gerada por
+título, 19 categorias, ~74% de cobertura), avisado pelo time em
+14-15/09/2026.
+
+**"Vaga remota" sempre sobrepõe**, pedido explícito do operador: quando
+`remoteType === 'remote'`, `category` vira `'vaga_remota'` mesmo que a
+vaga já tivesse uma categoria de função — em `normalize.ts`, antes de
+`markAbsent`. Fora do JobBase (Gupy/Adzuna/Greenhouse/Remotive/RemoteOK),
+`category` fica `null` — nenhuma fonte que não categoriza ganha um setor
+inventado.
+
+**"vaga_remota" não entra no catálogo do JobBase** (`job_categories`) —
+aquele sistema categoriza por função da vaga a partir do título; regime
+de trabalho é outro eixo, e não é este projeto que decide o schema do
+banco irmão. A sobreposição acontece só na leitura, do lado do Griffo.
+
+**Onde mudou**: adapter do JobBase (`jobbase.ts`) pede `category_slug` no
+`SELECT_COLUMNS` e mapeia pra `RawJob.category`; `normalize.ts` computa a
+regra acima; `radar/runner.ts` (o ponto real de escrita no banco, achado
+ao seguir `normalizeJob(...)` até o fim — não é `lib/jobs/` que grava,
+como se poderia supor) grava `category` na `Job`; os dois lugares que
+RECONSTROEM `NormalizedJob` a partir de uma linha do banco
+(`api/radar/route.ts`, `ai-jobs/runners/interview-prep.ts`) também
+precisaram do campo — `tsc` foi quem achou os dois, não haviam sido
+listados no plano.
+
+**Tradução das 19 categorias do JobBase + "vaga remota"** nos 12 idiomas
+(`lib/jobs/category-labels.ts`) — JobBase só dá pt/en, as outras 10 são
+tradução direta de palavra de setor (não frase de marketing), mesmo risco
+baixo já aceito para "Diferenciais" (§2.123) e os termos de currículo
+(§2.124); mesma ressalva já registrada (pendência 21) de tom sem revisão
+nativa. Slug desconhecido cai em "outros" — nunca mostra o slug cru pra
+quem usa a tela.
+
+**Correção de comentário**, achada no caminho: `jobbase.ts` dizia
+"Gupy/InfoJobs/Catho ainda não coletam nada" — não é mais verdade
+(InfoJobs 2.942 vagas, Catho 1.154, conferido no banco do JobBase); a
+query do adapter nunca filtrou por `source`, então isso já chegava ao
+Griffo sem precisar de mudança de código.
+
+**Ainda não foi para produção.** Rodei `npx prisma generate` localmente
+(gera o cliente TypeScript a partir do schema, não toca o banco) só para
+`tsc`/testes passarem — a coluna `category` **não existe ainda** na
+tabela `Job` de produção. Não vou aplicar `db push` eu mesmo, mesmo tendo
+acesso de escrita ao banco via MCP: é uma trava deliberada do projeto
+(decisão humana antes de tocar produção), não uma limitação técnica. Sem
+essa migração, o próximo cron que tentar gravar `category` falha. Commit
+feito, **push para `origin/main` represado até o operador confirmar o
+`db push`** — mesmo cuidado do §2.108 (env var nova só vale a partir do
+próximo deployment; aqui é a mesma lógica para coluna nova).
+
+`tsc`, `eslint`, `build` e suíte — **989/989**, 5 novos — limpos, contra o
+cliente Prisma gerado localmente.

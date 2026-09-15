@@ -44,6 +44,7 @@ function jobFromRow(row: any): NormalizedJob {
     companyKey: row.companyKey,
     title: row.title,
     normalizedTitle: row.normalizedTitle,
+    category: row.category,
     country: row.country,
     region: row.region,
     city: row.city,

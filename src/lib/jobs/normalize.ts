@@ -257,6 +257,14 @@ export function normalizeJob(raw: RawJob, options: NormalizeOptions): Normalized
   const normalizedTitle = conceptForTitle(title)?.id ?? null
   if (!normalizedTitle) markAbsent('normalizedTitle')
 
+  // "Vaga remota" sempre sobrepõe a categoria de função — pedido explícito
+  // do operador (15/09/2026): regime de trabalho é o eixo que importa mais
+  // pra quem procura remoto, não a área da vaga. `category` só existe pra
+  // fontes que categorizam (hoje, só o JobBase); as demais ficam `null`, sem
+  // inventar setor pra quem não declarou.
+  const category = remoteType === 'remote' ? 'vaga_remota' : text(raw.category)
+  if (!category) markAbsent('category')
+
   const sourceJobId = text(raw.sourceJobId)
   const market = country ? marketForCountry(country).id : null
 
@@ -266,6 +274,7 @@ export function normalizeJob(raw: RawJob, options: NormalizeOptions): Normalized
     companyKey,
     title,
     normalizedTitle,
+    category,
     country,
     region,
     city,

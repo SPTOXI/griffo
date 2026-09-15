@@ -247,6 +247,18 @@ test('modelo de trabalho não assume presencial quando a vaga não diz', () => {
   assert.equal(normalizeRemoteType(null, 'Presencial - Belo Horizonte'), 'onsite')
 })
 
+test('vaga remota sempre sobrepõe a categoria de função (pedido do operador, 15/09/2026)', () => {
+  const remota = normalizeJob(rawJob({ remoteType: 'remote', category: 'ti' }), opts)
+  assert.equal(remota.category, 'vaga_remota', 'remoto tem que vencer a categoria de função declarada')
+
+  const naoRemota = normalizeJob(rawJob({ remoteType: 'onsite', category: 'ti' }), opts)
+  assert.equal(naoRemota.category, 'ti', 'sem ser remoto, a categoria declarada passa direto')
+
+  const semCategoria = normalizeJob(rawJob({}), opts)
+  assert.equal(semCategoria.category, null, 'fonte que não categoriza fica null, sem inventar setor')
+  assert.equal(absenceReason(semCategoria, 'category'), 'unknown')
+})
+
 test('salário é lido em formatos de mercados diferentes', () => {
   assert.equal(normalizeJob(rawJob({ salaryMin: 'R$ 8.000,00' }), opts).salaryMin, 8000)
   assert.equal(normalizeJob(rawJob({ salaryMin: '$80,000' }), opts).salaryMin, 80000)

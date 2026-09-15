@@ -106,6 +106,11 @@ const SELECT_COLUMNS = [
   'salary_currency',
   'posted_at',
   'first_seen_at',
+  // Coluna gerada por linha (`classify_job_category(title)`, 19 categorias,
+  // ~74% de cobertura) — avisada pelo time do JobBase em 14/09/2026. `null`
+  // quando o título não bate com nenhuma categoria ("outros" tem slug
+  // próprio, não é isto que fica `null`).
+  'category_slug',
 ].join(',')
 
 const WORK_MODE_TO_REMOTE_TYPE: Record<string, string> = {
@@ -130,6 +135,7 @@ interface JobBasePosting {
   salary_currency?: string | null
   posted_at?: string | null
   first_seen_at?: string | null
+  category_slug?: string | null
 }
 
 function pickDate(...candidates: unknown[]): string | null {
@@ -173,6 +179,7 @@ export function parseJobBasePayload(payload: unknown): RawJob[] {
       region: typeof item?.region === 'string' ? item.region : null,
       city: typeof item?.city === 'string' ? item.city : null,
       remoteType: WORK_MODE_TO_REMOTE_TYPE[workMode] || 'unknown',
+      category: typeof item?.category_slug === 'string' ? item.category_slug : null,
       salaryMin: typeof item?.salary_min === 'number' ? item.salary_min : null,
       salaryMax: typeof item?.salary_max === 'number' ? item.salary_max : null,
       currency: typeof item?.salary_currency === 'string' ? item.salary_currency : null,

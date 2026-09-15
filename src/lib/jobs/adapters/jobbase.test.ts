@@ -79,6 +79,15 @@ test('work_mode mapeia para remoteType; valor desconhecido vira unknown', () => 
   assert.equal(jobs[2].remoteType, 'unknown')
 })
 
+test('category_slug do JobBase mapeia para category; sem ele fica null', () => {
+  const jobs = parseJobBasePayload([
+    { ...payloadValido[0], category_slug: 'ti', external_id: 'y' },
+    { ...payloadValido[1], external_id: 'z' }, // sem category_slug no payload
+  ])
+  assert.equal(jobs[0].category, 'ti')
+  assert.equal(jobs[1].category, null)
+})
+
 test('publishedAt prefere posted_at; sem ele cai para first_seen_at', () => {
   const jobs = parseJobBasePayload(payloadValido)
   assert.equal(jobs[0].publishedAt, '2026-08-10T12:00:00Z')

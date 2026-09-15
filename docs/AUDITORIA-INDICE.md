@@ -142,3 +142,4 @@ já lista os três documentos de continuidade; este é o quarto.
 | 2.123 | 7762 | design-ui | Cartão do Hero D mudava de altura ao trocar de aba e empurrava o texto lateral — abas empilhadas na mesma célula de grid |
 | 2.124 | 7793 | seo-geo,i18n | Google Trends real nos 12 idiomas: termo isolado de currículo entra em job-search-terms.ts, termo de vaga fica de fora por direção |
 | 2.125 | 7867 | vagas,produto | Pendência 16 reaberta: causa raiz era país vazio, não falta de vaga — inferência por cidade, backfill de 3.975 vagas, cobertura 52%→93% (fase 1 de 4) |
+| 2.126 | 7952 | vagas,i18n,infra | Campo Job.category + "vaga remota" sobrepondo (fase 2 de 4) — código pronto, push represado até `db push` do operador |

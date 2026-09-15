@@ -40,6 +40,9 @@ export interface RawJob {
   region?: string | null
   city?: string | null
   remoteType?: string | null
+  /** Setor amplo declarado pela fonte (ex.: `category_slug` do JobBase).
+   *  `null` quando a fonte não categoriza — ver `NormalizedJob.category`. */
+  category?: string | null
   employmentType?: string | null
   seniority?: string | null
   salaryMin?: number | string | null
@@ -65,6 +68,9 @@ export interface NormalizedJob {
   title: string
   /** Conceito da taxonomia, ou `null` quando o título não é reconhecido. */
   normalizedTitle: string | null
+  /** Setor amplo. `'vaga_remota'` sempre sobrepõe quando `remoteType ===
+   *  'remote'` — ver `normalize.ts`. `null` quando a fonte não categoriza. */
+  category: string | null
 
   country: string | null
   region: string | null
