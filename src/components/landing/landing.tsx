@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
-import { DICTIONARIES, dirForLang, brandTaglineForLang, type Language } from '@/lib/i18n'
+import { DICTIONARIES, dirForLang, brandTaglineForLang, localeForLang, type Language } from '@/lib/i18n'
 import { displayCountry } from '@/lib/hiring-index/display'
 import { FOOTER_MARKET_SLUGS } from '@/lib/market/footer-markets'
 import { DocumentLanguage } from '@/components/i18n/document-language'
@@ -21,6 +21,8 @@ import { LanguageSelector } from '@/components/ui/language-selector'
 import { contactEmail, contactMailto, salesMailto } from '@/lib/i18n/contact'
 import { priceFor } from '@/lib/pricing/catalog'
 import { localMethodLabels } from '@/lib/pricing/payment-methods'
+import type { CountryJobCount } from '@/lib/jobs/open-count.server'
+import { countryLabel } from '@/lib/jobs/country-labels'
 import { HiringIndexTeaser } from './hiring-index-teaser'
 import { HeroD } from './hero-d'
 import { OrderBand } from './order-band'
@@ -31,9 +33,19 @@ export interface LandingProps {
   forcedLang?: Language
   /** Contagem real de vagas ativas (resolvida no servidor) — ver `src/app/page.tsx`. */
   openJobsCount?: number
+  /** Vagas por país, mesma fonte — só a home (`src/app/page.tsx`) resolve
+   *  isto hoje; as 41 rotas de país recebem lista vazia e a seção não
+   *  aparece (ver `jobsByCountry` em `landing.tsx`). */
+  jobsByCountry?: CountryJobCount[]
 }
 
-export function Landing({ onNavigate, countryCode, forcedLang, openJobsCount = 0 }: LandingProps) {
+export function Landing({
+  onNavigate,
+  countryCode,
+  forcedLang,
+  openJobsCount = 0,
+  jobsByCountry = [],
+}: LandingProps) {
   const { user } = useAuth()
   const { t: contextT, lang: contextLang, detectedCountry: contextCountry, langManuallySet } = useI18n()
   // Palpite automático (geo-IP/navegador) nunca vence o idioma da rota de
@@ -49,6 +61,17 @@ export function Landing({ onNavigate, countryCode, forcedLang, openJobsCount = 0
   // pagamento, resolvido no servidor — ver lib/pricing/resolve.ts.
   const price = priceFor(effectiveCountry, 'single')
   const paymentMethods = localMethodLabels(effectiveCountry)
+  // Piso de exibição por nome — mesma disciplina do mapa de contratação
+  // (`hiring-map.tsx`): país com 1-2 vagas isolado pareceria mais fraco do
+  // que o produto realmente é. O resto soma num "+N países", número real,
+  // nunca omitido — ver `open-count.server.ts` para o porquê de o piso viver
+  // aqui (decisão de apresentação) e não na consulta (decisão de dado).
+  const MIN_COUNTRY_JOBS_TO_LIST = 30
+  const shownCountries = jobsByCountry.filter((c) => c.count >= MIN_COUNTRY_JOBS_TO_LIST)
+  const otherCountries = jobsByCountry.filter((c) => c.count < MIN_COUNTRY_JOBS_TO_LIST)
+  const otherCountriesJobs = otherCountries.reduce((sum, c) => sum + c.count, 0)
+  const numberFormat = new Intl.NumberFormat(localeForLang(lang))
+
   const [openFaq, setOpenFaq] = useState<number | null>(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -189,6 +212,44 @@ export function Landing({ onNavigate, countryCode, forcedLang, openJobsCount = 0
           </div>
         </div>
       </section>
+
+      {/* VAGAS POR PAÍS — só a home resolve `jobsByCountry` hoje (ver
+          `LandingProps`); nas rotas de país a lista vem vazia e a seção
+          inteira não renderiza, de propósito (ver §2.127). */}
+      {shownCountries.length > 0 && (
+        <section className="border-t border-slate-200/80 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
+            <div className="text-center mb-10">
+              <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs">
+                {t.jobsByCountry.badge}
+              </Badge>
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#0B192E] mt-3">
+                {t.jobsByCountry.title}
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+              {shownCountries.map(({ country, count }) => (
+                <div
+                  key={country}
+                  className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3.5 text-center"
+                >
+                  <p className="text-lg font-bold text-[#0B192E] tabular-nums">
+                    {numberFormat.format(count)}
+                  </p>
+                  <p className="text-xs text-slate-600 mt-0.5">{countryLabel(country, lang)}</p>
+                </div>
+              ))}
+            </div>
+            {otherCountries.length > 0 && (
+              <p className="text-center text-sm text-slate-500 mt-6">
+                {t.jobsByCountry.moreCountries
+                  .replace('{jobs}', numberFormat.format(otherCountriesJobs))
+                  .replace('{countries}', String(otherCountries.length))}
+              </p>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* STATS BAR */}
       <section className="border-y border-slate-200/80 bg-slate-50/70">

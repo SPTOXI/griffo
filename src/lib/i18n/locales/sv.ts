@@ -97,6 +97,11 @@ export const sv: TranslationDictionary = {
     badge: 'Våra Fördelar',
     title: 'Vad som gör skillnaden',
   },
+  jobsByCountry: {
+    badge: 'Jobb per Land',
+    title: 'Lediga jobb just nu, per land',
+    moreCountries: '+ {jobs} lediga jobb i {countries} andra länder',
+  },
   mockup: {
     title: 'Teknisk Granskningsrapport',
     precision: 'HÖG PRECISION',

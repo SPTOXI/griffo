@@ -97,6 +97,11 @@ export const nl: TranslationDictionary = {
     badge: 'Onze Voordelen',
     title: 'Wat het verschil maakt',
   },
+  jobsByCountry: {
+    badge: 'Vacatures per Land',
+    title: 'Openstaande vacatures nu, per land',
+    moreCountries: '+ {jobs} vacatures in {countries} andere landen',
+  },
   mockup: {
     title: 'Technisch Evaluatierapport',
     precision: 'HOGE PRECISIE',

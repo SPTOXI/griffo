@@ -97,6 +97,11 @@ export const ja: TranslationDictionary = {
     badge: '私たちの強み',
     title: '違いを生むもの',
   },
+  jobsByCountry: {
+    badge: '国別の求人',
+    title: '今すぐ見られる、国別の求人数',
+    moreCountries: '他{countries}か国で{jobs}件の求人',
+  },
   mockup: {
     title: '技術診断レポート',
     precision: '高精度AI解析',

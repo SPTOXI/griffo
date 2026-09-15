@@ -97,6 +97,11 @@ export const ko: TranslationDictionary = {
     badge: '우리의 강점',
     title: '차이를 만드는 것',
   },
+  jobsByCountry: {
+    badge: '국가별 채용 공고',
+    title: '지금 국가별 채용 중인 공고 수',
+    moreCountries: '그 외 {countries}개국에서 {jobs}건',
+  },
   mockup: {
     title: '기술 평가 진단 보고서',
     precision: '고정밀 AI 분석',

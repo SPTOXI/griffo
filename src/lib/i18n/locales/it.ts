@@ -97,6 +97,11 @@ export const it: TranslationDictionary = {
     badge: 'I Nostri Vantaggi',
     title: 'Cosa fa la differenza',
   },
+  jobsByCountry: {
+    badge: 'Offerte per Paese',
+    title: 'Offerte di lavoro aperte ora, per paese',
+    moreCountries: '+ {jobs} offerte aperte in altri {countries} paesi',
+  },
   mockup: {
     title: 'Report di Valutazione Tecnica',
     precision: 'ALTA PRECISIONE',

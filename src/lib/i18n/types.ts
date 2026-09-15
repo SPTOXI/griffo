@@ -101,6 +101,12 @@ export interface TranslationDictionary {
     badge: string
     title: string
   }
+  jobsByCountry: {
+    badge: string
+    title: string
+    /** "{jobs}" e "{countries}" são substituídos em runtime. */
+    moreCountries: string
+  }
   mockup: {
     title: string
     precision: string

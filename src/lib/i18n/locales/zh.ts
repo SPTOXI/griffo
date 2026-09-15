@@ -97,6 +97,11 @@ export const zh: TranslationDictionary = {
     badge: '核心优势',
     title: '让我们与众不同',
   },
+  jobsByCountry: {
+    badge: '各国职位',
+    title: '当前各国的开放职位',
+    moreCountries: '另外 {countries} 个国家共 {jobs} 个职位',
+  },
   mockup: {
     title: '专业技术评估报告',
     precision: '高精度 AI 解析',

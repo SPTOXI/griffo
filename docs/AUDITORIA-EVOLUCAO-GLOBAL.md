@@ -8011,3 +8011,47 @@ Confirmado por consulta direta ao banco de produção
 (`information_schema.columns`), não só pela ausência de erro: a coluna
 `category` existe, `text`, aceita nulo. Push liberado e feito para
 `origin/main` (`c1361e9` + `31cf898`).
+
+## 2.127 Lista "vagas por país" na home — fase 3 de 4, e um bug real achado na verificação
+
+Continuação do §2.125/§2.126, mesmo plano aprovado. Com país já
+resolvido pra 93% das vagas (fase 1) e categoria vindo do JobBase (fase
+2), a home ganhou uma seção nova entre "Diferenciais" e a barra de
+estatísticas: `getOpenJobsCountByCountry()` (novo, em
+`open-count.server.ts`, mesmo padrão de retry de `getOpenJobsCount()`),
+`db.job.groupBy(['country'])` só com vaga aberta e país preenchido.
+`src/app/page.tsx` resolve as duas contagens em paralelo
+(`Promise.all`) e passa pra `HomeClient` → `Landing`.
+
+**Piso de exibição, decisão de apresentação (não de dado)**:
+`MIN_COUNTRY_JOBS_TO_LIST = 30` em `landing.tsx` — país com menos vagas
+não aparece nomeado, some no "+ vagas em N outros países" com número
+real, mesma disciplina do mapa de contratação (nunca um total sem o
+resto ao lado). Novo dicionário fechado `country-labels.ts` (31 códigos,
+12 idiomas) traduz o código do país pro nome visível sem
+`Intl.DisplayNames` — a mesma armadilha de ICU divergente entre Node e
+navegador que já tinha quebrado `map-model.ts` antes; `Intl.NumberFormat`
+(só formatação de dígito) continua seguro e já usado em `hero-d.tsx`.
+
+**O bug real, achado na verificação visual**: depois de `build`+`start`
+local, a seção aparecia no HTML servido por `curl` (confirmado com dado
+real — "4.884" ao lado de "Brasil") mas nunca aparecia no navegador
+depois de a página carregar. Não era cache do Chrome (descartado por
+`fetch(..., {cache:'no-store'})` no mesmo request, por
+`document.cookie` vazio, por zero *service worker* registrado, e por um
+DOM lido direto via `querySelectorAll` numa aba nova, sem histórico
+nenhum) — era `src/app/home-client.tsx`: o componente tem DOIS pontos
+que renderizam `<Landing>`, um usado antes da hidratação (pra SEO/bot,
+que recebia `jobsByCountry` certo) e outro usado depois que
+`hydrated` vira `true` (o estado em que qualquer visitante real fica) —
+e só o segundo **não** passava `jobsByCountry`, caindo no `= []` default
+da prop. A seção nascia visível no HTML da primeira resposta e
+desaparecia sozinha no instante em que o React hidratava — silencioso,
+sem erro de console, porque não é exceção, é prop ausente com fallback
+válido. Corrigido passando `jobsByCountry={jobsByCountry}` também no
+retorno pós-hidratação. Confirmado depois da correção, em aba nova,
+sem histórico: heading exato (`"Open jobs right now, by country"`) e 16
+cards de país no DOM.
+
+`tsc`, `eslint`, `build` e suíte — **989/989** (mesma contagem do
+§2.126, nenhum teste novo nesta fase) — limpos.

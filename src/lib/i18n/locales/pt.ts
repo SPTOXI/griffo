@@ -97,6 +97,11 @@ export const pt: TranslationDictionary = {
       badge: 'Diferenciais',
       title: 'O que faz a diferença',
     },
+    jobsByCountry: {
+      badge: 'Vagas por País',
+      title: 'Vagas abertas agora, em cada país',
+      moreCountries: '+ {jobs} vagas abertas em outros {countries} países',
+    },
     mockup: {
       title: 'Relatório Técnico de Avaliação',
       precision: 'ALTA PRECISÃO',

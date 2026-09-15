@@ -32,3 +32,38 @@ export async function getOpenJobsCount(): Promise<number> {
   // Inalcançável (o laço acima sempre retorna ou relança), só para o TypeScript.
   throw new Error('unreachable')
 }
+
+export interface CountryJobCount {
+  country: string
+  count: number
+}
+
+/**
+ * Vagas abertas por país, para a lista "vagas por país" da home (§2.127).
+ * Mesmo padrão de retry de `getOpenJobsCount` — o mesmo raciocínio do
+ * cabeçalho acima vale aqui: um soluço transitório não pode virar lista
+ * vazia cacheada por 5 minutos.
+ *
+ * Não filtra por piso nenhum aqui — quem decide o que É exibido por nome e
+ * o que entra no "+ N outros países" é a camada de apresentação
+ * (`landing.tsx`), porque o piso é uma decisão de produto, não de dado.
+ */
+export async function getOpenJobsCountByCountry(): Promise<CountryJobCount[]> {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const rows = await db.job.groupBy({
+        by: ['country'],
+        where: { closedAt: null, country: { not: null } },
+        _count: { _all: true },
+      })
+      return rows
+        .map((r) => ({ country: r.country as string, count: r._count._all }))
+        .sort((a, b) => b.count - a.count)
+    } catch (e) {
+      if (attempt === 2) throw e
+      console.error('open jobs count by country failed, retrying', e)
+      await new Promise((resolve) => setTimeout(resolve, 300))
+    }
+  }
+  throw new Error('unreachable')
+}

@@ -97,6 +97,11 @@ export const ar: TranslationDictionary = {
     badge: 'مزايانا',
     title: 'ما يصنع الفرق',
   },
+  jobsByCountry: {
+    badge: 'الوظائف حسب البلد',
+    title: 'الوظائف الشاغرة الآن، حسب البلد',
+    moreCountries: '+ {jobs} وظيفة شاغرة في {countries} بلدًا آخر',
+  },
   mockup: {
     title: 'تقرير التقييم الفني',
     precision: 'دقة فائقة بالذكاء الاصطناعي',

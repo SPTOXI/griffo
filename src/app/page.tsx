@@ -1,4 +1,4 @@
-import { getOpenJobsCount } from '@/lib/jobs/open-count.server'
+import { getOpenJobsCount, getOpenJobsCountByCountry } from '@/lib/jobs/open-count.server'
 import { HomeClient } from './home-client'
 
 // A landing (Hero D) cita a contagem real de vagas ativas — nunca um número
@@ -16,6 +16,9 @@ import { HomeClient } from './home-client'
 export const revalidate = 300
 
 export default async function Page() {
-  const openJobsCount = await getOpenJobsCount()
-  return <HomeClient openJobsCount={openJobsCount} />
+  const [openJobsCount, jobsByCountry] = await Promise.all([
+    getOpenJobsCount(),
+    getOpenJobsCountByCountry(),
+  ])
+  return <HomeClient openJobsCount={openJobsCount} jobsByCountry={jobsByCountry} />
 }
