@@ -7862,3 +7862,87 @@ frase negativa que já existia.
 1 novo — limpos. Conferido também contra o HTML servido de verdade
 (`npm run build` + `npm run start`, `curl` em `/de`, `/it`, `/se` e
 `/hiring?lang=` para pt/ar/it/ja), não só contra o código-fonte.
+
+## 2.125 Pendência 16 reaberta com dado real — a causa de "poucas vagas fora do Brasil" não era falta de vaga, era falta de país preenchido (fase 1 de 4)
+
+O time do JobBase (mesmo grupo) avisou de uma view nova
+(`job_category_country_counts`) categorizando vagas por atividade. Ao
+verificar os números reais no banco (Supabase MCP, direto nos dois
+projetos — `Griffo` e `jobbase`, não por estimativa) para decidir onde usar
+esse dado, apareceu a pergunta certa do operador: por que a distribuição
+por país é tão desigual (Brasil 4.441, 2º lugar Austrália só 146)?
+
+**A causa raiz não era volume — era campo vazio.** De 9.645 vagas abertas
+no Griffo, 4.641 (48%) não tinham `country`. Mas 4.197 dessas (90%) TINHAM
+`city` preenchida — só que como texto livre nunca parseado ("San
+Francisco, CA | New York City, NY", "Brazil (São Paulo - Hybrid)", "Dublin,
+Ireland"; 725 strings distintas, mas concentradas — "San Francisco" sozinha
+aparecia 640 vezes). O operador confirmou a intuição certa: "as outras
+vagas que não têm país devem ter pelo menos uma cidade... dessa forma
+identificamos o país."
+
+**O que foi feito** — plano completo em 4 fases (documento salvo, aprovado
+pelo operador antes de qualquer código); esta seção cobre a Fase 1:
+
+Novo módulo `src/lib/jobs/location-country.ts`
+(`inferCountryFromLocation`): lista fechada de nome de país (EN+PT) e das
+cidades que realmente apareceram nos dados (não uma tabela de geocoding
+genérica), mais sigla de estado americano após vírgula como recurso final.
+Texto sem nenhum sinal reconhecível devolve `null` — nunca um palpite
+forçado, mesma regra do resto do normalizador. Multi-localização
+(`"X | Y | Z"`) usa só o primeiro trecho — suficiente pela amostra real.
+
+**Por que isto não é uma nova exceção à regra de não inventar**: o
+cabeçalho de `normalize.ts` já permite UMA inferência — "a que se lê do
+próprio texto da vaga" — e é exatamente essa exceção que já autoriza
+`normalizeRemoteType` a ler "remote"/"hybrid" dentro do texto de
+localização. Ler o país no MESMO texto é a mesma classe de inferência, não
+uma nova. Achado no caminho: `jobbase.ts` já documentava, de propósito,
+"o normalizador decide o que fazer com um país ausente, este adapter não
+adivinha" — o lugar certo para esta função já estava previsto no comentário
+de outra sessão, só não tinha sido escrito ainda.
+
+Wiring em `normalize.ts`: `country` tenta o valor declarado da fonte
+primeiro, cai para `inferCountryFromLocation(city, region)` só quando a
+fonte não disse. Teste novo (`location-country.test.ts`, 10 casos, todos
+com string real observada no banco) trava os casos de acerto E o de
+recusa (texto sem match, substring dentro de outra palavra).
+
+**Backfill único** (`src/scripts/backfill-job-country.ts`, mesmo padrão de
+`--dry-run` de `fetch-hiring-index.ts`) aplicado às 4.197 vagas já
+gravadas sem país, com autorização do operador antes de tocar produção:
+**3.975 resolvidas (94,7%)**, 222 continuam sem país — texto que
+genuinamente não bate com nada da lista. Conferido por consulta direta ao
+banco antes e depois, não só pelo log do script: cobertura de país sobe de
+52% para **93%** (8.979 de 9.645). O quadro deixa de parecer um produto
+quase só brasileiro: Brasil 4.441→4.884, **Estados Unidos 53→2.477**,
+Reino Unido 112→315, Austrália 146→223, Singapura 29→175, **Canadá e
+Irlanda, que não apareciam, entram com 140 e 123**.
+
+**Achado à parte, sem ação nesta sessão**: o rodízio direto de Adzuna do
+Griffo (`adzuna:br`/`au`/`be`/`at`/`ca`) está parado há 11-13 dias
+enquanto as outras fontes coletaram hoje — parece bug real, registrado
+para investigar depois. O operador esclareceu que isso importa menos do
+que parecia: o JobBase TAMBÉM coleta Adzuna por conta própria (confirmado
+no banco: 500 vagas, coletadas ontem), e a query do adapter do JobBase
+nunca filtrou por `source` — todas as 10 fontes que o JobBase agrega
+(inclusive InfoJobs, 2.942 vagas, e Catho, 1.154 — o comentário do
+adapter que dizia "ainda não coletam nada" estava desatualizado, corrigido
+nesta sessão) já chegam ao Griffo automaticamente, sem mudança de código
+quando uma fonte nova passa a coletar de verdade.
+
+**Frescor**: a exigência do operador ("atualizada em até 12 horas") já
+está coberta pela mesma peça que já existe — a página usa ISR com
+`revalidate=300` (5 minutos), bem dentro do limite; nenhuma infraestrutura
+nova precisa entrar só por isso.
+
+**Próximas fases, já combinadas com o operador**: Fase 2 (campo
+`Job.category`, aditivo — pausa antes de pedir `npx prisma db push` —,
+`category_slug` do JobBase importado por vaga, "vaga remota" sobrepondo a
+categoria de função quando `remoteType === 'remote'`); Fase 3 (lista
+"vagas por país" na home, com piso de exibição — não lista país com 1-2
+vagas, soma no "+ vagas em N outros países"); Fase 4 (detalhamento por
+categoria no painel do país selecionado de `/market-pulse`, pendência que
+o próprio §2.56/pendência 16 já previa "quando o volume justificar").
+
+`tsc`, `eslint`, `build` e suíte — **984/984**, 10 novos — limpos.

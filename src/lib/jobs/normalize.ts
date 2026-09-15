@@ -26,6 +26,7 @@
 import { safeHttpUrl } from '../safe-url'
 import { conceptForTitle, foldTitle, seniorityFromTitle } from '../market/taxonomy'
 import { marketForCountry } from '../market'
+import { inferCountryFromLocation } from './location-country'
 import {
   JobNormalizationError,
   type NormalizedJob,
@@ -210,11 +211,16 @@ export function normalizeJob(raw: RawJob, options: NormalizeOptions): Normalized
     unknownFields[field] = notDisclosed.has(field) ? 'not_disclosed' : reason
   }
 
-  const country = upper(raw.country, 2)
-  if (!country) markAbsent('country')
-
   const region = text(raw.region)
   const city = text(raw.city)
+
+  // A fonte pode não declarar país, mas ainda dizer a cidade — "San
+  // Francisco", "Brazil (São Paulo - Hybrid)". Ler o país no mesmo texto de
+  // localização é a mesma classe de inferência que `normalizeRemoteType` já
+  // faz para o modelo de trabalho (ver o cabeçalho do arquivo e de
+  // `location-country.ts`), não uma nova exceção à regra de não inventar.
+  const country = upper(raw.country, 2) || inferCountryFromLocation(city, region)
+  if (!country) markAbsent('country')
 
   const remoteType = normalizeRemoteType(raw.remoteType, raw.location)
   if (remoteType === 'unknown') markAbsent('remoteType')

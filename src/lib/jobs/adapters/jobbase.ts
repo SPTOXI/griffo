@@ -4,10 +4,17 @@
  * ## O que é
  *
  * JobBase é um projeto irmão do GriffoWork (mesmo time Vercel `griffojobs`)
- * que varre Greenhouse, Lever, Ashby e LinkedIn (Gupy/InfoJobs/Catho ainda
- * não coletam nada) para dentro de um Postgres próprio, em lote 1x/dia. O
- * GriffoWork lê essa base pela chave publicável, com RLS que só libera
- * leitura em `companies`/`job_postings` — nenhuma escrita.
+ * que varre Greenhouse, Lever, Ashby, LinkedIn, SmartRecruiters, Gupy,
+ * InfoJobs, Catho, Adzuna e Remotive para dentro de um Postgres próprio, em
+ * lote 1x/dia. O GriffoWork lê essa base pela chave publicável, com RLS que
+ * só libera leitura em `companies`/`job_postings` — nenhuma escrita.
+ *
+ * Correção em 15/09/2026: este comentário dizia "Gupy/InfoJobs/Catho ainda
+ * não coletam nada" — não é mais verdade (conferido direto no banco do
+ * JobBase): InfoJobs tem 2.942 vagas, Catho 1.154, Gupy 127. A query abaixo
+ * (`collect`) nunca filtrou por `source`, então todas as fontes que o
+ * JobBase agrega já chegam ao Griffo automaticamente, sem mudança de código
+ * quando uma fonte nova passa a coletar de verdade.
  *
  * A chave abaixo é a publicável (`sb_publishable_...`): pública por desenho,
  * travada a leitura pelo RLS do próprio JobBase. Guardá-la como segredo não
