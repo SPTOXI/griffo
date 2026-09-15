@@ -217,8 +217,17 @@ export function Landing({
           `LandingProps`); nas rotas de país a lista vem vazia e a seção
           inteira não renderiza, de propósito (ver §2.127). */}
       {shownCountries.length > 0 && (
-        <section className="border-t border-slate-200/80 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
+        <section className="relative border-t border-slate-200/80 bg-white overflow-hidden">
+          {/* `<img>` puro, não `next/image`: SVG local não passa pelo
+              otimizador sem `dangerouslyAllowSVG` (não configurado no
+              projeto), e não há ganho de otimizar um vetor já leve. */}
+          <img
+            src="/world-map-bg.svg"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.15] pointer-events-none select-none"
+          />
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
             <div className="text-center mb-10">
               <Badge variant="outline" className="border-slate-300 text-slate-600 px-3 py-1 text-xs">
                 {t.jobsByCountry.badge}
