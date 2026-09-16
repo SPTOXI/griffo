@@ -206,7 +206,7 @@ export const it: TranslationDictionary = {
     localPayment: 'Pagamento in {currency} con {methods}.',
     currencyFollowsAccess: 'La valuta mostrata dipende da dove accedi, non dalla lingua scelta.',
     packTitle: 'Pass Trimestrale — 90 giorni',
-    packDesc: '5 Analisi Complete, ricerca attiva ampliata nel Radar Offerte e preparazione ai colloqui. Pagamento unico, senza rinnovo automatico.',
+    packDesc: '5 Analisi Complete, Radar Offerte con ricerche automatiche via e-mail e preparazione ai colloqui. Pagamento unico, senza rinnovo automatico.',
     packCta: 'Acquista il Pass a {price}',
     packPerAnalysis: '{price} per analisi',
     passActive: 'Pass attivo — {days} giorni rimanenti',

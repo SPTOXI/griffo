@@ -6,7 +6,7 @@
  *
  * A janela é ROLANTE de 7 dias a partir do primeiro uso, não a semana do
  * calendário — calendário exigiria decidir fuso horário e dia de virada, e
- * quem usa só precisa saber "3 por semana", não "3 de segunda a domingo".
+ * quem usa só precisa saber "2 por semana", não "3 de segunda a domingo".
  *
  * Isto NÃO é a cota de `lib/jobs/quota.ts`: aquela protege o teto mensal de um
  * provedor de terceiro contra o conjunto dos usuários. Esta é um benefício do
@@ -14,13 +14,17 @@
  * não tem relação com `onDemandAllowed()`.
  */
 
-export const ON_DEMAND_SEARCH_WEEKLY_LIMIT = 3
+/**
+ * 2 por semana, para todos. O Radar já busca sozinho e manda as vagas por
+ * e-mail; a busca avulsa é complemento, não o canal principal (set/2026).
+ */
+export const ON_DEMAND_SEARCH_WEEKLY_LIMIT = 2
 
 /**
- * Busca ativa do Passe Trimestral: o limite semanal de quem tem passe ativo.
- * É o benefício que diferencia o passe da análise avulsa no Radar.
+ * Limite de quem tem Passe Trimestral ativo. Hoje igual ao geral — mantido
+ * separado para poder ser ajustado sem mexer nas rotas.
  */
-export const PASS_ON_DEMAND_SEARCH_WEEKLY_LIMIT = 10
+export const PASS_ON_DEMAND_SEARCH_WEEKLY_LIMIT = 2
 
 /** Limite semanal conforme o passe. */
 export function onDemandWeeklyLimit(hasPass: boolean): number {

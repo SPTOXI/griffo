@@ -67,7 +67,7 @@ const PRODUCT_NAMES: Record<Sku, string> = {
 const PRODUCT_DESCRIPTIONS: Record<Sku, string> = {
   single:
     'Uma análise completa de currículo: laudo das 8 dimensões, comparação com a vaga, trechos a ajustar no currículo, reescrita STAR/XYZ, orientação profissional, presença digital e otimização de perfil, carta de apresentação, resumo profissional e PDF.',
-  quarterly: `Passe de ${QUARTERLY_PASS_DAYS} dias, pagamento único, sem renovação automática: ${QUARTERLY_ANALYSES} análises completas, busca ativa ampliada no Radar e preparação de entrevista.`,
+  quarterly: `Passe de ${QUARTERLY_PASS_DAYS} dias, pagamento único, sem renovação automática: ${QUARTERLY_ANALYSES} análises completas, Radar de vagas com buscas automáticas enviadas por e-mail e preparação de entrevista.`,
 }
 
 async function archiveLegacyCreditProducts(): Promise<number> {

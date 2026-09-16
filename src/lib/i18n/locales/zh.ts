@@ -206,7 +206,7 @@ export const zh: TranslationDictionary = {
     localPayment: '支持以 {currency} 通过 {methods} 付款。',
     currencyFollowsAccess: '显示的货币取决于您的访问地区，与所选语言无关。',
     packTitle: '季度通行证 — 90天',
-    packDesc: '5 次完整分析、职位雷达主动搜索扩展及面试准备。一次性付款，不自动续费。',
+    packDesc: '5 次完整分析、自动搜索并邮件推送的职位雷达及面试准备。一次性付款，不自动续费。',
     packCta: '以 {price} 购买通行证',
     packPerAnalysis: '单次 {price}',
     passActive: '通行证有效 — 剩余 {days} 天',

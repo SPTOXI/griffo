@@ -206,7 +206,7 @@ export const ja: TranslationDictionary = {
     localPayment: '{currency}建てで{methods}によるお支払いに対応。',
     currencyFollowsAccess: '表示通貨はアクセス元の国によって決まり、選択した言語では変わりません。',
     packTitle: '3か月パス — 90日間',
-    packDesc: '完全分析5回、求人レーダーでの能動検索の拡大、面接対策。一回払い、自動更新なし。',
+    packDesc: '完全分析5回、自動検索でメール通知する求人レーダー、面接対策。一回払い、自動更新なし。',
     packCta: '{price}でパスを購入',
     packPerAnalysis: '1回あたり{price}',
     passActive: 'パス有効 — 残り{days}日',

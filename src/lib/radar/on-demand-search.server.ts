@@ -31,7 +31,7 @@ export async function peekOnDemandSearch(
  * Consome uma busca avulsa, se houver, e grava o novo estado.
  *
  * Leitura e escrita não estão na mesma transação: o pior caso de dois cliques
- * simultâneos é o contador passar de 3 por uma unidade, não um saldo negativo
+ * simultâneos é o contador passar do limite por uma unidade, não um saldo negativo
  * nem uma coleta duplicada gravada errado — o mesmo nível de tolerância que
  * `MIN_INTERVAL_MS` já assume em `/api/radar/run`.
  */

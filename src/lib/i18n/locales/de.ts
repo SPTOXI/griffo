@@ -206,7 +206,7 @@ export const de: TranslationDictionary = {
     localPayment: 'Zahlung in {currency} mit {methods}.',
     currencyFollowsAccess: 'Die angezeigte Währung richtet sich nach Ihrem Zugriffsort, nicht nach der gewählten Sprache.',
     packTitle: 'Quartalspass — 90 Tage',
-    packDesc: '5 Komplettanalysen, erweiterte aktive Suche im Job-Radar und Interviewvorbereitung. Einmalzahlung, keine automatische Verlängerung.',
+    packDesc: '5 Komplettanalysen, Job-Radar mit automatischer Suche per E-Mail und Interviewvorbereitung. Einmalzahlung, keine automatische Verlängerung.',
     packCta: 'Pass für {price} kaufen',
     packPerAnalysis: '{price} pro Analyse',
     passActive: 'Pass aktiv — noch {days} Tage',

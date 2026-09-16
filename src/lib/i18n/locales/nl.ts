@@ -206,7 +206,7 @@ export const nl: TranslationDictionary = {
     localPayment: 'Betaal in {currency} met {methods}.',
     currencyFollowsAccess: 'De getoonde valuta volgt uw toegangslocatie, niet de gekozen taal.',
     packTitle: 'Kwartaalpas — 90 dagen',
-    packDesc: '5 Volledige Analyses, uitgebreid actief zoeken in de Vacatureradar en sollicitatievoorbereiding. Eenmalige betaling, geen automatische verlenging.',
+    packDesc: '5 Volledige Analyses, Vacatureradar die automatisch zoekt en per e-mail meldt, en sollicitatievoorbereiding. Eenmalige betaling, geen automatische verlenging.',
     packCta: 'Koop de Pas voor {price}',
     packPerAnalysis: '{price} per analyse',
     passActive: 'Pas actief — nog {days} dagen',

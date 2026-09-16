@@ -206,7 +206,7 @@ export const sv: TranslationDictionary = {
     localPayment: 'Betala i {currency} med {methods}.',
     currencyFollowsAccess: 'Den visade valutan följer var du får åtkomst ifrån, inte det valda språket.',
     packTitle: 'Kvartalspass — 90 dagar',
-    packDesc: '5 Kompletta Analyser, utökad aktiv sökning i Jobbradarn och intervjuförberedelse. Engångsbetalning, ingen automatisk förnyelse.',
+    packDesc: '5 Kompletta Analyser, Jobbradar som söker automatiskt och mejlar träffar, och intervjuförberedelse. Engångsbetalning, ingen automatisk förnyelse.',
     packCta: 'Köp passet för {price}',
     packPerAnalysis: '{price} per analys',
     passActive: 'Pass aktivt — {days} dagar kvar',

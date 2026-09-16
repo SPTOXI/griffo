@@ -1,6 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { ON_DEMAND_SEARCH_WEEKLY_LIMIT, onDemandSearchAvailability, onDemandSearchDecision } from './on-demand-search'
+import {
+  ON_DEMAND_SEARCH_WEEKLY_LIMIT,
+  onDemandSearchAvailability,
+  onDemandSearchDecision,
+  onDemandWeeklyLimit,
+} from './on-demand-search'
 
 test('primeiro uso abre uma janela nova e libera', () => {
   const now = new Date('2026-09-07T12:00:00Z')
@@ -18,17 +23,21 @@ test('libera até o limite semanal, dentro da mesma janela', () => {
 
   const second = onDemandSearchDecision({ count: 1, windowStart }, now)
   assert.equal(second.allowed, true)
-  assert.equal(second.remaining, 1)
+  assert.equal(second.remaining, 0)
   assert.equal(second.nextCount, 2)
   assert.equal(second.windowStart.getTime(), windowStart.getTime())
 
   const third = onDemandSearchDecision({ count: 2, windowStart }, now)
-  assert.equal(third.allowed, true)
-  assert.equal(third.remaining, 0)
-  assert.equal(third.nextCount, 3)
+  assert.equal(third.allowed, false)
 })
 
-test('BLOQUEIA a quarta busca dentro da mesma janela', () => {
+test('o limite semanal é 2, com ou sem passe', () => {
+  assert.equal(ON_DEMAND_SEARCH_WEEKLY_LIMIT, 2)
+  assert.equal(onDemandWeeklyLimit(true), 2)
+  assert.equal(onDemandWeeklyLimit(false), 2)
+})
+
+test('BLOQUEIA a busca além do limite dentro da mesma janela', () => {
   const windowStart = new Date('2026-09-01T00:00:00Z')
   const now = new Date('2026-09-03T00:00:00Z')
 
@@ -67,8 +76,8 @@ test('onDemandSearchAvailability não consome — só lê', () => {
 
   const first = onDemandSearchAvailability({ count: 1, windowStart }, now)
   const second = onDemandSearchAvailability({ count: 1, windowStart }, now)
-  assert.equal(first.available, 2)
-  assert.equal(second.available, 2)
+  assert.equal(first.available, ON_DEMAND_SEARCH_WEEKLY_LIMIT - 1)
+  assert.equal(second.available, ON_DEMAND_SEARCH_WEEKLY_LIMIT - 1)
 })
 
 test('onDemandSearchAvailability chega a zero no limite, e nunca fica negativa', () => {

@@ -20,8 +20,8 @@ export type Tier = 1 | 2 | 3 | 4
  *
  * - `single`: uma Análise Completa.
  * - `quarterly`: o Passe Trimestral — `QUARTERLY_ANALYSES` análises e
- *   `QUARTERLY_PASS_DAYS` dias de passe ativo (busca avulsa ampliada no
- *   Radar), pago UMA vez, sem renovação automática.
+ *   `QUARTERLY_PASS_DAYS` dias de passe ativo (Radar com buscas automáticas
+ *   por e-mail), pago UMA vez, sem renovação automática.
  *
  * O pacote de 5 (`pack5`) saiu em set/2026: o trimestral entrega as mesmas
  * cinco análises e mais, por menos — manter os dois deixaria o pacote

@@ -207,7 +207,7 @@ export const en: TranslationDictionary = {
       localPayment: 'Pay in {currency} with {methods}.',
       currencyFollowsAccess: "The currency shown follows where you're accessing from, not the language you pick.",
       packTitle: 'Quarterly Pass — 90 days',
-      packDesc: '5 Complete Analyses, expanded active search in the Job Radar and interview prep. One-time payment, no auto-renewal.',
+      packDesc: '5 Complete Analyses, a Job Radar that searches automatically and emails you matches, and interview prep. One-time payment, no auto-renewal.',
       packCta: 'Get the Pass for {price}',
       packPerAnalysis: '{price} per analysis',
       passActive: 'Pass active — {days} days left',

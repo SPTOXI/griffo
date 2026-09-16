@@ -206,7 +206,7 @@ export const ko: TranslationDictionary = {
     localPayment: '{currency}(으)로 {methods} 결제 지원.',
     currencyFollowsAccess: '표시되는 통화는 접속 국가에 따라 결정되며, 선택한 언어와는 관련이 없습니다.',
     packTitle: '3개월 패스 — 90일',
-    packDesc: '완전 분석 5회, 채용 레이더 능동 검색 확대, 면접 준비. 1회 결제, 자동 갱신 없음.',
+    packDesc: '완전 분석 5회, 자동 검색 후 이메일로 알려주는 채용 레이더, 면접 준비. 1회 결제, 자동 갱신 없음.',
     packCta: '{price}에 패스 구매',
     packPerAnalysis: '회당 {price}',
     passActive: '패스 이용 중 — {days}일 남음',

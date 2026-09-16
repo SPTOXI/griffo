@@ -70,7 +70,7 @@ export async function POST(req: Request) {
       sku === 'quarterly' ? 'Griffo — Passe Trimestral' : 'Griffo — Análise Completa'
     const productDesc =
       sku === 'quarterly'
-        ? `Passe de ${QUARTERLY_PASS_DAYS} dias, pagamento único, sem renovação automática: ${QUARTERLY_ANALYSES} análises completas de currículo, busca ativa ampliada no Radar de vagas e preparação de entrevista. Cada análise entrega laudo das 8 dimensões, comparação com a vaga, trechos a ajustar, reescrita, orientação, presença digital, carta, resumo e PDF.`
+        ? `Passe de ${QUARTERLY_PASS_DAYS} dias, pagamento único, sem renovação automática: ${QUARTERLY_ANALYSES} análises completas de currículo, Radar de vagas com buscas automáticas enviadas por e-mail e preparação de entrevista. Cada análise entrega laudo das 8 dimensões, comparação com a vaga, trechos a ajustar, reescrita, orientação, presença digital, carta, resumo e PDF.`
         : 'Uma análise completa de currículo: laudo das 8 dimensões, comparação com a vaga, trechos a ajustar, reescrita, orientação, presença digital, carta, resumo e PDF.'
 
     try {
