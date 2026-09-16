@@ -1,4 +1,5 @@
 import { normalizeCountry } from './catalog'
+import { cameThroughCloudflare } from '../edge-trust'
 
 /**
  * O país de onde a requisição veio.
@@ -26,7 +27,8 @@ import { normalizeCountry } from './catalog'
  * para o client (resolução de preço por pagamento).
  */
 export function edgeCountry(req: Request): string {
-  return normalizeCountry(
-    req.headers.get('cf-ipcountry') || req.headers.get('x-vercel-ip-country') || ''
-  )
+  // `cf-ipcountry` só conta se a requisição veio pelo Cloudflare — ver
+  // `lib/edge-trust.ts`. Sem isso, o cabeçalho escolhe a faixa de preço.
+  const cf = cameThroughCloudflare(req.headers) ? req.headers.get('cf-ipcountry') : null
+  return normalizeCountry(cf || req.headers.get('x-vercel-ip-country') || '')
 }

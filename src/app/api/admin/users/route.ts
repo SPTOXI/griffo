@@ -286,10 +286,15 @@ export async function PATCH(req: Request) {
     let appliedDelta = 0
     const previousBalance = targetUser.analysisBalance
 
-    if (typeof analysisDelta === 'number' && Number.isFinite(analysisDelta) && analysisDelta !== 0) {
+    // Inteiro e com teto, como no POST (`.int().max(1000)`): um delta de 1e9 ou
+    // de 0.5 passava direto para o `increment`.
+    if (typeof analysisDelta === 'number' && Number.isInteger(analysisDelta) && analysisDelta !== 0) {
+      if (Math.abs(analysisDelta) > 1000) {
+        return NextResponse.json({ error: 'Ajuste de saldo acima do limite (1000).' }, { status: 400 })
+      }
       appliedDelta = Math.max(analysisDelta, -previousBalance)
       data.analysisBalance = { increment: appliedDelta }
-    } else if (typeof analysisBalance === 'number' && analysisBalance >= 0) {
+    } else if (typeof analysisBalance === 'number' && Number.isInteger(analysisBalance) && analysisBalance >= 0 && analysisBalance <= 1000) {
       appliedDelta = analysisBalance - previousBalance
       data.analysisBalance = analysisBalance
     }

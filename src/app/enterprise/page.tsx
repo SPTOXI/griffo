@@ -1,3 +1,4 @@
+import { jsonLd } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { dirForLang, localeForLang, LANGUAGES } from '@/lib/i18n'
@@ -104,15 +105,15 @@ export default async function EnterprisePage({ searchParams }: PageProps) {
     <main dir={dir} className="min-h-screen bg-white text-slate-900">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(faqJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(softwareJsonLd) }}
       />
       <section className="mx-auto max-w-4xl px-6 py-24 text-center">
         <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-indigo-600">

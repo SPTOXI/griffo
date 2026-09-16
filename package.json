@@ -11,6 +11,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:rls": "npx --yes tsx src/scripts/apply-rls.ts",
+    "db:encrypt-secrets": "npx --yes tsx --import ./scripts/test-setup.mjs src/scripts/encrypt-secrets.ts",
     "db:reset": "prisma migrate reset",
     "test": "npx --yes tsx --import ./scripts/test-setup.mjs --test \"src/**/*.test.ts\"",
     "stripe:setup": "npx --yes tsx src/scripts/setup-stripe.ts",

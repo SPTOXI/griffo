@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { edgeCountry } from '@/lib/pricing/edge-country'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,7 +10,13 @@ const schema = z.object({
   event: z.enum(['page_view', 'checkout_initiated', 'upsell_viewed']),
   visitorId: z.string().max(100).optional(),
   sku: z.enum(['single', 'pack5']).optional(),
-  meta: z.record(z.string(), z.any()).optional(),
+  // Antes era `z.any()` sem teto: o corpo inteiro ia para o banco numa rota
+  // pública. E estes eventos são a base da decisão de preço — lixo aqui é
+  // decisão errada lá.
+  meta: z
+    .record(z.string().max(40), z.union([z.string().max(300), z.number(), z.boolean(), z.null()]))
+    .refine((m) => Object.keys(m).length <= 20, 'meta grande demais')
+    .optional(),
 })
 
 export async function POST(req: Request) {
@@ -24,15 +31,13 @@ export async function POST(req: Request) {
     const { event, visitorId, sku, meta = {} } = parsed.data
 
     // Detecta país pelos headers de geolocalização da borda (Vercel / Cloudflare)
-    const headerCountry =
-      req.headers.get('x-vercel-ip-country')?.toUpperCase() ||
-      req.headers.get('cf-ipcountry')?.toUpperCase() ||
-      null
+    // País só de fonte do servidor: o `meta.country` enviado pelo navegador é
+    // descartado.
+    const metaCountry = edgeCountry(req) || user?.paymentCountry || null
 
-    const metaCountry = (meta.country as string | undefined)?.toUpperCase() || headerCountry || user?.paymentCountry || null
-
+    const { country: _ignored, ...clientMeta } = meta
     const enrichedMeta = {
-      ...meta,
+      ...clientMeta,
       ...(metaCountry ? { country: metaCountry } : {}),
     }
 

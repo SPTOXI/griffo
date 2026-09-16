@@ -1,3 +1,4 @@
+import { jsonLd } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { cookies, headers } from 'next/headers'
@@ -222,7 +223,7 @@ export default async function MarketPulsePage({ searchParams }: PageProps) {
       {atlas && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(datasetJsonLd(atlas, lang)) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(datasetJsonLd(atlas, lang)) }}
         />
       )}
 

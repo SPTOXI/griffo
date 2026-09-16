@@ -1,3 +1,5 @@
+import { cameThroughCloudflare } from './edge-trust'
+
 /**
  * O IP de quem fez a requisição.
  *
@@ -23,7 +25,9 @@
 export function clientIpFrom(headers: {
   get(name: string): string | null
 }): string {
-  const cloudflare = headers.get('cf-connecting-ip')?.trim()
+  // Só confia no cabeçalho do Cloudflare se a requisição passou por ele — ver
+  // `lib/edge-trust.ts`. Direto na Vercel, o valor é o que o cliente mandou.
+  const cloudflare = cameThroughCloudflare(headers) ? headers.get('cf-connecting-ip')?.trim() : ''
   if (cloudflare) return cloudflare
 
   const forwarded = headers.get('x-forwarded-for')

@@ -1,3 +1,4 @@
+import { jsonLd } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import { dirForLang, localeForLang, LANGUAGES, type Language } from '@/lib/i18n'
 import { resolveRequestLanguage } from '@/lib/i18n/resolve-request-language'
@@ -106,7 +107,7 @@ export function PillarView({
     <main dir={dir} className="min-h-screen bg-white text-slate-900">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd) }}
       />
       <section className="mx-auto max-w-4xl px-6 py-24 text-center">
         <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-indigo-600">

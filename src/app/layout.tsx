@@ -1,3 +1,4 @@
+import { jsonLd as serializeJsonLd } from '@/lib/json-ld'
 import type { Metadata } from "next";
 import { rootHreflang, declaredLocales } from "@/lib/i18n/hreflang";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -163,7 +164,7 @@ export default function RootLayout({
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
         />
       </head>
       <body

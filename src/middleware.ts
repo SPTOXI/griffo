@@ -119,6 +119,18 @@ const RULES: Rule[] = [
   { prefix: '/api/support/chat', limit: 30, windowMs: 10 * 60_000 },
   // Usa o servidor como cliente HTTP para buscar páginas externas.
   { prefix: '/api/resume/job-fetch', limit: 20, windowMs: 10 * 60_000 },
+  // Rotas que chamam IA (visão ou texto) e estavam sem teto nenhum. A de
+  // upload e a de PDF do perfil disparam transcrição por VISÃO — a chamada mais
+  // cara do produto — para qualquer conta logada, antes de qualquer pagamento.
+  { prefix: '/api/resume/upload', limit: 15, windowMs: 10 * 60_000 },
+  { prefix: '/api/resume/profile-pdf-text', limit: 10, windowMs: 10 * 60_000 },
+  { prefix: '/api/resume/cover-letter', limit: 10, windowMs: 10 * 60_000 },
+  { prefix: '/api/radar/prepare', limit: 10, windowMs: 10 * 60_000 },
+  { prefix: '/api/radar/interview-prep', limit: 10, windowMs: 10 * 60_000 },
+  { prefix: '/api/radar/search-now', limit: 10, windowMs: 10 * 60_000 },
+  { prefix: '/api/radar/run', limit: 10, windowMs: 10 * 60_000 },
+  // Telemetria pública: escreve no banco sem sessão.
+  { prefix: '/api/analytics', limit: 120, windowMs: 10 * 60_000 },
   // Criação de checkout no Stripe.
   { prefix: '/api/checkout', limit: 20, windowMs: 10 * 60_000 },
   // Prévia gratuita: uma por conta, mas o limite fecha a porta de tentar
@@ -252,5 +264,6 @@ export const config = {
     // roda para o caminho.
     '/api/admin/:path*',
     '/api/cron/:path*',
+    '/api/analytics/:path*',
   ],
 }

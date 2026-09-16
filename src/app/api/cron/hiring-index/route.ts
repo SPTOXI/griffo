@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const maxDuration = 60
 
+import { cronAuthorized } from '@/lib/cron-auth'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import {
@@ -63,7 +64,7 @@ export async function GET(req: Request) {
     )
   }
 
-  if (req.headers.get('authorization') !== `Bearer ${secret}`) {
+  if (!cronAuthorized(req, secret)) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
   }
 

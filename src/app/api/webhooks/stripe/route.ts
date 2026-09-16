@@ -38,8 +38,8 @@ export async function POST(req: Request) {
     const rawBody = await req.text()
     const signature = req.headers.get('stripe-signature') || ''
     const configs = await getGlobalSettings()
-    const webhookSecret = configs.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET || ''
-    const secretKey = configs.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || ''
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || configs.STRIPE_WEBHOOK_SECRET || ''
+    const secretKey = process.env.STRIPE_SECRET_KEY || configs.STRIPE_SECRET_KEY || ''
 
     if (!webhookSecret || !secretKey) {
       console.error('STRIPE_WEBHOOK_SECRET ou STRIPE_SECRET_KEY não configuradas.')

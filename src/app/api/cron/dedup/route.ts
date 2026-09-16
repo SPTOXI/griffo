@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const maxDuration = 60
 
+import { cronAuthorized } from '@/lib/cron-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { runAiDeduplicationClean } from '@/lib/jobs/agent-dedup'
 
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  if (req.headers.get('authorization') !== `Bearer ${secret}`) {
+  if (!cronAuthorized(req, secret)) {
     return NextResponse.json({ ok: false, error: 'Não autorizado.' }, { status: 401 })
   }
 

@@ -1,3 +1,4 @@
+import { jsonLd } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { MARKETS, GLOBAL_MARKET, marketForCountry, marketById } from '@/lib/market'
@@ -328,11 +329,11 @@ export default async function CountryPage({ params }: PageProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(countryJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(countryJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(faqJsonLd) }}
       />
       {/* `dir` aqui, e não no `<html>`: o layout raiz é estático e compartilhado
           por todas as rotas, então ele não tem como saber que idioma esta rota

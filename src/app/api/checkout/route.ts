@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     assertAboveFloor(price)
 
     const configs = await getGlobalSettings()
-    const stripeSecretKey = configs.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || ''
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY || configs.STRIPE_SECRET_KEY || ''
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://griffo.work'
 
     if (!stripeSecretKey) {

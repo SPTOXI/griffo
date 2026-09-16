@@ -1,3 +1,4 @@
+import { jsonLd } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { cookies, headers } from 'next/headers'
@@ -200,9 +201,9 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
   return (
     <div dir={dirForLang(lang)} className="min-h-screen flex flex-col bg-white font-sans overflow-x-hidden">
       <DocumentLanguage lang={lang} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd) }} />
 
       {/* HEADER */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-slate-200/80">
