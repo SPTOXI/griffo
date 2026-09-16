@@ -103,7 +103,7 @@ export async function fulfillCheckoutSession(
     grantsPass: sku === 'quarterly',
     description:
       sku === 'quarterly'
-        ? `Passe Trimestral: ${analyses} Análises Completas + ${QUARTERLY_PASS_DAYS} dias (Faixa ${chargedTier})`
+        ? `Recolocação 90 dias: ${analyses} Análises Completas + ${QUARTERLY_PASS_DAYS} dias (Faixa ${chargedTier})`
         : analyses > 1
           ? `Compra de ${analyses} Análises Completas (Faixa ${chargedTier})`
           : `Compra de 1 Análise Completa (Faixa ${chargedTier})`,

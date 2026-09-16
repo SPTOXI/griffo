@@ -82,7 +82,8 @@ export function PlansView() {
             <Badge className="w-fit bg-primary/10 text-primary hover:bg-primary/10 text-[11px] font-bold">
               {t.pricing.badge}
             </Badge>
-            <CardTitle className="text-xl text-slate-900 pt-1">{t.pricing.productTitle}</CardTitle>
+            <CardTitle className="text-xl text-slate-900 pt-1">{t.pricing.singleTitle}</CardTitle>
+            <CardDescription className="text-xs">{t.pricing.singleDesc}</CardDescription>
             <CardDescription className="text-xs">{t.pricing.oneTime}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">

@@ -18,8 +18,10 @@ export type Tier = 1 | 2 | 3 | 4
 /**
  * O que se compra. Não há mais nada à venda.
  *
- * - `single`: uma Análise Completa.
- * - `quarterly`: o Passe Trimestral — `QUARTERLY_ANALYSES` análises e
+ * - `single`: o **Essencial** — uma Análise Completa, preço de entrada
+ *   pensado para quem está desempregado e precisa gastar pouco.
+ * - `quarterly`: o **Recolocação** (passe de 90 dias) — para quem tem verba
+ *   e quer se reposicionar com estratégia. `QUARTERLY_ANALYSES` análises e
  *   `QUARTERLY_PASS_DAYS` dias de passe ativo (Radar com buscas automáticas
  *   por e-mail), pago UMA vez, sem renovação automática.
  *
@@ -82,7 +84,7 @@ export const TIERS: RegionalPrice[] = [
     tier: 1,
     countries: ['US', 'CA', 'GB', 'DE', 'FR', 'AU', 'JP', 'SG', 'NL', 'IE'],
     displayCurrency: 'USD',
-    unitPriceUSD: 17.9,
+    unitPriceUSD: 9.9,
     quarterlyPriceUSD: 35.9,
     localPaymentMethods: ['card'],
   },
@@ -90,7 +92,7 @@ export const TIERS: RegionalPrice[] = [
     tier: 2,
     countries: ['PT', 'ES', 'IT', 'PL', 'CZ', 'CL', 'MY', 'TR', 'ZA', 'AE'],
     displayCurrency: 'EUR',
-    unitPriceUSD: 11.9,
+    unitPriceUSD: 6.9,
     quarterlyPriceUSD: 23.9,
     localPaymentMethods: ['card'],
   },
@@ -98,7 +100,7 @@ export const TIERS: RegionalPrice[] = [
     tier: 3,
     countries: ['BR', 'MX', 'CO', 'AR', 'TH', 'RO', 'BG'],
     displayCurrency: 'BRL',
-    unitPriceUSD: 7.9,
+    unitPriceUSD: 3.7,
     quarterlyPriceUSD: 15.9,
     localPaymentMethods: ['card', 'pix'],
   },
@@ -106,7 +108,7 @@ export const TIERS: RegionalPrice[] = [
     tier: 4,
     countries: ['IN', 'ID', 'PH', 'VN', 'NG', 'EG', 'PK', 'BD', 'KE'],
     displayCurrency: 'INR',
-    unitPriceUSD: 5.2,
+    unitPriceUSD: 2.9,
     quarterlyPriceUSD: 13.1,
     localPaymentMethods: ['card', 'upi', 'gopay', 'ovo'],
   },
@@ -227,46 +229,46 @@ export interface LocalPrice {
  * O preço que o cliente vê e paga, por moeda.
  *
  * Não é conversão em tempo real: é preço de tabela, arredondado para o formato
- * a que cada mercado está acostumado. R$ 39,90 é o preço do Brasil, decidido
+ * a que cada mercado está acostumado. R$ 19,90 é o preço do Brasil, decidido
  * assim — não `5.90 × cotação do dia`.
  */
 export const LOCAL_PRICES: Record<string, LocalPrice> = {
-  // Faixa 1 — âncora $17,90 / $35,90
-  USD: { single: 17.9, quarterly: 35.9 },
-  CAD: { single: 23.9, quarterly: 47.9 },
-  GBP: { single: 14.9, quarterly: 29.9 },
-  AUD: { single: 26.9, quarterly: 53.9 },
-  JPY: { single: 2690, quarterly: 5390 },
-  SGD: { single: 23.9, quarterly: 47.9 },
-  // Faixa 2 — âncora $11,90 / $23,90. EUR vive aqui: os países de euro da
+  // Faixa 1 — âncora $9,90 / $35,90
+  USD: { single: 9.9, quarterly: 35.9 },
+  CAD: { single: 13.9, quarterly: 47.9 },
+  GBP: { single: 7.99, quarterly: 29.9 },
+  AUD: { single: 14.9, quarterly: 53.9 },
+  JPY: { single: 1490, quarterly: 5390 },
+  SGD: { single: 12.9, quarterly: 47.9 },
+  // Faixa 2 — âncora $6,90 / $23,90. EUR vive aqui: os países de euro da
   // Faixa 1 (DE, FR, NL, IE) usam `EUR_TIER1`, resolvido por país.
-  EUR: { single: 10.9, quarterly: 21.9 },
-  PLN: { single: 46.9, quarterly: 93.9 },
-  CZK: { single: 269, quarterly: 539 },
-  CLP: { single: 10990, quarterly: 21990 },
-  MYR: { single: 53.9, quarterly: 109 },
-  TRY: { single: 399, quarterly: 799 },
-  ZAR: { single: 219, quarterly: 439 },
-  AED: { single: 43.9, quarterly: 87.9 },
-  // Faixa 3 — âncora $7,90 / $15,90
-  BRL: { single: 39.9, quarterly: 79.9 },
-  MXN: { single: 149, quarterly: 299 },
-  COP: { single: 31990, quarterly: 63990 },
-  ARS: { single: 10990, quarterly: 21990 },
-  THB: { single: 269, quarterly: 539 },
-  RON: { single: 35.9, quarterly: 71.9 },
-  BGN: { single: 14.9, quarterly: 29.9 },
-  // Faixa 4 — âncora $5,20 / $13,10. O trimestral fica
-  // no piso (5 × US$ 2,60), por isso ~2,5× o avulso e não 2× como nas demais.
-  INR: { single: 439, quarterly: 1099 },
-  IDR: { single: 79000, quarterly: 209000 },
-  PHP: { single: 299, quarterly: 749 },
-  VND: { single: 129000, quarterly: 329000 },
-  NGN: { single: 7900, quarterly: 20990 },
-  EGP: { single: 259, quarterly: 629 },
-  PKR: { single: 1490, quarterly: 3690 },
-  BDT: { single: 629, quarterly: 1590 },
-  KES: { single: 669, quarterly: 1690 },
+  EUR: { single: 6.49, quarterly: 21.9 },
+  PLN: { single: 27.9, quarterly: 93.9 },
+  CZK: { single: 159, quarterly: 539 },
+  CLP: { single: 6490, quarterly: 21990 },
+  MYR: { single: 29.9, quarterly: 109 },
+  TRY: { single: 229, quarterly: 799 },
+  ZAR: { single: 129, quarterly: 439 },
+  AED: { single: 24.9, quarterly: 87.9 },
+  // Faixa 3 — âncora $3,70 / $15,90
+  BRL: { single: 19.9, quarterly: 79.9 },
+  MXN: { single: 69, quarterly: 299 },
+  COP: { single: 14990, quarterly: 63990 },
+  ARS: { single: 4990, quarterly: 21990 },
+  THB: { single: 129, quarterly: 539 },
+  RON: { single: 16.9, quarterly: 71.9 },
+  BGN: { single: 6.9, quarterly: 29.9 },
+  // Faixa 4 — âncora $2,90 / $13,10. O Essencial fica logo acima do piso
+  // (US$ 2,60) e o Recolocação no piso por análise (5 × US$ 2,60).
+  INR: { single: 249, quarterly: 1099 },
+  IDR: { single: 46900, quarterly: 209000 },
+  PHP: { single: 169, quarterly: 749 },
+  VND: { single: 72000, quarterly: 329000 },
+  NGN: { single: 4690, quarterly: 20990 },
+  EGP: { single: 139, quarterly: 629 },
+  PKR: { single: 799, quarterly: 3690 },
+  BDT: { single: 349, quarterly: 1590 },
+  KES: { single: 379, quarterly: 1690 },
 }
 
 /**
@@ -276,7 +278,7 @@ export const LOCAL_PRICES: Record<string, LocalPrice> = {
  * decidir o preço sozinha — quem decide é o par (país, faixa). Esta tabela
  * cobre a única sobreposição real do catálogo.
  */
-const EUR_TIER1: LocalPrice = { single: 15.9, quarterly: 31.9 }
+const EUR_TIER1: LocalPrice = { single: 8.9, quarterly: 31.9 }
 
 /** Locale de formatação por país. Separador e posição do símbolo são locais. */
 const COUNTRY_LOCALE: Record<string, string> = {

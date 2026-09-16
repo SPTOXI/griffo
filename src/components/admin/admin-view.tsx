@@ -1850,13 +1850,13 @@ function AdminViewContent() {
               <CardHeader className="pb-3 border-b border-slate-100">
                 <CardTitle className="text-base flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <ShoppingBag className="w-5 h-5 text-amber-600" /> Performance do Passe Trimestral
+                    <ShoppingBag className="w-5 h-5 text-amber-600" /> Performance do Recolocação
                   </span>
                   <Badge variant="outline" className="text-xs font-bold text-amber-700 bg-amber-50 border-amber-200">
                     {upsellConversionRate.toFixed(1)}% Aceitação
                   </Badge>
                 </CardTitle>
-                <CardDescription>Conversão da oferta do Passe Trimestral exibida no laudo depois da primeira compra (vendas com 5 análises, incluindo o antigo pacote de 5).</CardDescription>
+                <CardDescription>Conversão da oferta do Recolocação exibida no laudo depois da primeira compra (vendas com 5 análises, incluindo o antigo pacote de 5).</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 pt-4 text-xs">
                 <div className="space-y-2">
@@ -2040,7 +2040,7 @@ function AdminViewContent() {
                       <th className="px-3 py-2">Faixa</th>
                       <th className="px-3 py-2">Países</th>
                       <th className="px-3 py-2">Análise (USD)</th>
-                      <th className="px-3 py-2">Passe Trimestral (USD)</th>
+                      <th className="px-3 py-2">Recolocação (USD)</th>
                       <th className="px-3 py-2">Exemplo local</th>
                       <th className="px-3 py-2 text-right">Margem</th>
                     </tr>
@@ -2231,7 +2231,7 @@ function AdminViewContent() {
                       <td className="px-4 py-3 text-right text-slate-500 text-[11px]">lib/pricing/catalog.ts</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-semibold text-slate-900">Passe Trimestral</td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">Recolocação</td>
                       <td className="px-4 py-3 font-mono text-slate-700">
                         5 análises + 90 dias, pagamento único
                       </td>

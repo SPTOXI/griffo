@@ -392,7 +392,8 @@ export function Landing({
 
         <div className="max-w-3xl mx-auto">
           <PlanCard
-            name={t.pricing.productTitle}
+            name={t.pricing.singleTitle}
+            description={t.pricing.singleDesc}
             price={price.formatted}
             period={t.pricing.oneTime}
             features={t.pricing.items}
@@ -404,7 +405,7 @@ export function Landing({
             priceCaption={t.pricing.currencyFollowsAccess}
           />
 
-          {/* PASSE TRIMESTRAL — a segunda opção, lado a lado com o avulso */}
+          {/* RECOLOCAÇÃO (passe de 90 dias) — a segunda opção, lado a lado com o avulso */}
           <div className="mt-4 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50/70 via-white to-white p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
             <div>
               <p className="font-bold text-[#0B192E] text-sm">{t.pricing.packTitle}</p>
@@ -663,8 +664,9 @@ function DifferentialCard({ icon, title, desc }: { icon: React.ReactNode; title:
  * deles precisava ser marcado como o mais vendido. Com um produto só não há
  * comparação a fazer nem preço unitário a exibir — o preço É o preço.
  */
-function PlanCard({ name, price, period, features, cta, onCta, footnote, priceCaption }: {
+function PlanCard({ name, description, price, period, features, cta, onCta, footnote, priceCaption }: {
   name: string
+  description?: string
   price: string
   period: string
   features: string[]
@@ -678,6 +680,7 @@ function PlanCard({ name, price, period, features, cta, onCta, footnote, priceCa
       <CardContent className="p-6 sm:p-8 flex-1 flex flex-col justify-between">
         <div>
           <h3 className="font-bold text-[#0B192E] text-xl">{name}</h3>
+          {description && <p className="text-sm text-slate-600 mt-1">{description}</p>}
           <p className="text-xs text-slate-500 mb-4">{period}</p>
           <div className="mb-6">
             <span className="text-4xl sm:text-5xl font-extrabold text-[#0B192E]">{price}</span>

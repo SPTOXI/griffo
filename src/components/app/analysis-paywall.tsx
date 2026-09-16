@@ -232,8 +232,9 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
       <Card className="border-2 border-primary shadow-lg">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg text-slate-900 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" /> {t.pricing.productTitle}
+            <Sparkles className="w-5 h-5 text-primary" /> {t.pricing.singleTitle}
           </CardTitle>
+          <CardDescription className="text-xs">{t.pricing.singleDesc}</CardDescription>
           <CardDescription className="text-xs">{t.pricing.oneTime}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

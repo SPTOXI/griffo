@@ -146,14 +146,14 @@ describe('moeda local', () => {
   })
 
   test('o preço formatado sai no padrão do país', () => {
-    assert.ok(priceFor('BR').formatted.includes('39,90'), priceFor('BR').formatted)
-    assert.equal(priceFor('US').formatted, '$17.90')
+    assert.ok(priceFor('BR').formatted.includes('19,90'), priceFor('BR').formatted)
+    assert.equal(priceFor('US').formatted, '$9.90')
   })
 
   test('moeda sem subunidade não é multiplicada por cem', () => {
-    assert.equal(toMinorUnits(2690, 'JPY'), 2690)
+    assert.equal(toMinorUnits(1490, 'JPY'), 1490)
     assert.equal(toMinorUnits(29.9, 'BRL'), 2990)
-    assert.equal(priceFor('JP').amountMinor, 2690)
+    assert.equal(priceFor('JP').amountMinor, 1490)
   })
 })
 
@@ -205,11 +205,11 @@ describe('faixas', () => {
     }
   })
 
-  test('Brasil é Faixa 3: R$ 39,90 avulso e R$ 79,90 trimestral', () => {
+  test('Brasil é Faixa 3: Essencial R$ 19,90 e Recolocação R$ 79,90', () => {
     const price = priceFor('BR')
     assert.equal(price.tier, 3)
     assert.equal(price.currency, 'BRL')
-    assert.equal(price.amount, 39.9)
+    assert.equal(price.amount, 19.9)
     assert.equal(priceFor('BR', 'quarterly').amount, 79.9)
     assert.ok(price.localPaymentMethods.includes('pix'))
   })

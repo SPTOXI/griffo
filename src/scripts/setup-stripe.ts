@@ -60,8 +60,8 @@ const PRODUCT_KEYS: Record<Sku, string> = {
 }
 
 const PRODUCT_NAMES: Record<Sku, string> = {
-  single: 'Griffo — Análise Completa',
-  quarterly: 'Griffo — Passe Trimestral',
+  single: 'Griffo — Essencial',
+  quarterly: 'Griffo — Recolocação 90 dias',
 }
 
 const PRODUCT_DESCRIPTIONS: Record<Sku, string> = {

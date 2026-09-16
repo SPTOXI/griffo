@@ -190,6 +190,10 @@ export interface TranslationDictionary {
     title: string
     subtitle: string
     productTitle: string
+    /** Nome da oferta de entrada (1 análise). */
+    singleTitle: string
+    /** Para quem é a oferta de entrada. */
+    singleDesc: string
     productDesc: string
     oneTime: string
     includesTitle: string
