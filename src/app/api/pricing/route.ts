@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import {
+  QUARTERLY_PASS_DAYS,
   ANALYSIS_DIRECT_COST_USD,
   ANALYSIS_FLOOR_USD,
   formatPrice,
@@ -23,7 +24,7 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: Request) {
   const country = edgeCountry(req) || 'US'
   const single = priceFor(country, 'single')
-  const pack = priceFor(country, 'pack5')
+  const quarterly = priceFor(country, 'quarterly')
 
   return NextResponse.json({
     country,
@@ -37,12 +38,13 @@ export async function GET(req: Request) {
       formatted: single.formatted,
       amountUsd: single.amountUsd,
     },
-    pack5: {
-      amount: pack.amount,
-      formatted: pack.formatted,
-      analyses: pack.analyses,
-      amountUsd: pack.amountUsd,
-      perAnalysisFormatted: formatPrice(pack.amount / pack.analyses, pack.currency, country),
+    quarterly: {
+      amount: quarterly.amount,
+      formatted: quarterly.formatted,
+      analyses: quarterly.analyses,
+      passDays: QUARTERLY_PASS_DAYS,
+      amountUsd: quarterly.amountUsd,
+      perAnalysisFormatted: formatPrice(quarterly.amount / quarterly.analyses, quarterly.currency, country),
     },
     economics: {
       floorUsd: ANALYSIS_FLOOR_USD,

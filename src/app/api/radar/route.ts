@@ -9,9 +9,9 @@ import { buildJobFit } from '@/lib/matching/job-fit'
 import { fromRecord as profileFromRecord } from '@/lib/profile'
 import { hasMatchableSignal } from '@/lib/matching/filters'
 import { summarizeDigest, meetsMinimumFit, DEFAULT_RADAR_PREFERENCES, type RadarPreferences } from '@/lib/radar/curation'
-import { requireAnyUnlockedResume } from '@/lib/entitlements'
+import { requireAnyUnlockedResume, userHasActivePass } from '@/lib/entitlements'
 import { peekOnDemandSearch } from '@/lib/radar/on-demand-search.server'
-import { ON_DEMAND_SEARCH_WEEKLY_LIMIT } from '@/lib/radar/on-demand-search'
+import { onDemandWeeklyLimit } from '@/lib/radar/on-demand-search'
 import type { MatchResult } from '@/lib/matching/compatibility'
 import type { NormalizedJob } from '@/lib/jobs/types'
 
@@ -71,6 +71,7 @@ export async function GET() {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 })
 
+  const weeklyLimit = onDemandWeeklyLimit(await userHasActivePass(user.id))
   const [alerts, profileRow, prefRow, onDemandEntitlement, onDemandAvailability] = await Promise.all([
     db.radarAlert.findMany({
       where: { userId: user.id },
@@ -81,7 +82,7 @@ export async function GET() {
     db.professionalProfile.findUnique({ where: { userId: user.id } }),
     db.radarPreference.findUnique({ where: { userId: user.id } }),
     requireAnyUnlockedResume(user.id),
-    peekOnDemandSearch(user.id),
+    peekOnDemandSearch(user.id, weeklyLimit),
   ])
 
   const minimumFit: RadarPreferences['minimumFit'] = (['strong', 'good', 'partial'] as const).includes(
@@ -150,7 +151,7 @@ export async function GET() {
     onDemandSearch: {
       eligible: onDemandEntitlement.ok,
       available: onDemandAvailability.available,
-      weeklyLimit: ON_DEMAND_SEARCH_WEEKLY_LIMIT,
+      weeklyLimit,
       resetAt: onDemandAvailability.resetAt,
     },
   })

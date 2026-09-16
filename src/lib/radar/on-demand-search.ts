@@ -16,6 +16,17 @@
 
 export const ON_DEMAND_SEARCH_WEEKLY_LIMIT = 3
 
+/**
+ * Busca ativa do Passe Trimestral: o limite semanal de quem tem passe ativo.
+ * É o benefício que diferencia o passe da análise avulsa no Radar.
+ */
+export const PASS_ON_DEMAND_SEARCH_WEEKLY_LIMIT = 10
+
+/** Limite semanal conforme o passe. */
+export function onDemandWeeklyLimit(hasPass: boolean): number {
+  return hasPass ? PASS_ON_DEMAND_SEARCH_WEEKLY_LIMIT : ON_DEMAND_SEARCH_WEEKLY_LIMIT
+}
+
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
 
 export interface OnDemandSearchState {
@@ -46,17 +57,18 @@ export interface OnDemandSearchDecision {
 
 export function onDemandSearchDecision(
   state: OnDemandSearchState,
-  now: Date = new Date()
+  now: Date = new Date(),
+  limit: number = ON_DEMAND_SEARCH_WEEKLY_LIMIT
 ): OnDemandSearchDecision {
   const { windowStart, usedInWindow, resetAt } = currentWindow(state, now)
 
-  if (usedInWindow >= ON_DEMAND_SEARCH_WEEKLY_LIMIT) {
+  if (usedInWindow >= limit) {
     return { allowed: false, remaining: 0, windowStart, resetAt }
   }
 
   return {
     allowed: true,
-    remaining: ON_DEMAND_SEARCH_WEEKLY_LIMIT - usedInWindow - 1,
+    remaining: limit - usedInWindow - 1,
     windowStart,
     resetAt,
     nextCount: usedInWindow + 1,
@@ -77,8 +89,9 @@ export interface OnDemandSearchAvailability {
  */
 export function onDemandSearchAvailability(
   state: OnDemandSearchState,
-  now: Date = new Date()
+  now: Date = new Date(),
+  limit: number = ON_DEMAND_SEARCH_WEEKLY_LIMIT
 ): OnDemandSearchAvailability {
   const { usedInWindow, resetAt } = currentWindow(state, now)
-  return { available: Math.max(0, ON_DEMAND_SEARCH_WEEKLY_LIMIT - usedInWindow), resetAt }
+  return { available: Math.max(0, limit - usedInWindow), resetAt }
 }

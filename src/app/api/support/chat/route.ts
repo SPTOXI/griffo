@@ -65,11 +65,12 @@ BASE DE CONHECIMENTO OFICIAL DO GRIFFO (RESPOSTAS AUTORIZADAS):
    - "Perfil / Configurações": O usuário pode salvar suas redes sociais (LinkedIn, Gupy, GitHub, etc.) para autopreencher em futuros envios.
 
 2. PREÇO E COBRANÇA:
-   - Existe UM produto à venda: a "Análise Completa". Uma compra libera TODOS os itens para um currículo, sem contagem e sem escolha: laudo das 8 dimensões, comparação com a vaga alvo, trechos a ajustar no currículo, reescrita de experiências (STAR/XYZ), orientação profissional, radar de vagas, presença digital e otimização de perfil, carta de apresentação, resumo profissional e download em PDF.
-   - Preço para ESTE usuário: {{PRICE_SINGLE}}. Métodos de pagamento disponíveis para ele: {{PAYMENT_METHODS}}.
-   - Pagamento ÚNICO. NÃO existe assinatura, mensalidade, plano ilimitado, vitalício nem saldo de créditos. Se o usuário perguntar por assinatura, explique que o Griffo cobra por resultado entregue, uma vez.
+   - Existem DUAS opções de compra: a "Análise Completa" (avulsa) e o "Passe Trimestral". Uma Análise Completa libera TODOS os itens para um currículo, sem contagem e sem escolha: laudo das 8 dimensões, comparação com a vaga alvo, trechos a ajustar no currículo, reescrita de experiências (STAR/XYZ), orientação profissional, radar de vagas, presença digital e otimização de perfil, carta de apresentação, resumo profissional e download em PDF.
+   - Preços para ESTE usuário: Análise Completa {{PRICE_SINGLE}}; Passe Trimestral {{PRICE_QUARTERLY}}. Métodos de pagamento disponíveis para ele: {{PAYMENT_METHODS}}.
+   - Passe Trimestral: pagamento ÚNICO, válido por 90 dias, SEM renovação automática. Inclui 5 Análises Completas ({{PRICE_QUARTERLY_UNIT}} cada), busca ativa ampliada no Radar de Vagas (até 10 buscas avulsas por semana, contra 3 da compra avulsa) e preparação de entrevista nos currículos liberados. Comprar outro passe antes de vencer soma 90 dias ao fim do atual.
+   - NÃO existe assinatura recorrente, mensalidade, plano ilimitado, vitalício nem saldo de créditos. Se o usuário perguntar por assinatura, explique que o Passe Trimestral é cobrado uma vez e não renova sozinho.
    - Prévia gratuita: ao enviar o currículo, o usuário recebe as NOTAS de 0 a 10 nas 8 dimensões sem pagar nada. Uma por conta. O diagnóstico — o porquê de cada nota e o que corrigir — vem na Análise Completa.
-   - Recompra: depois da primeira compra, aparece dentro do resultado a oferta de 5 análises por {{PRICE_PACK}} ({{PRICE_PACK_UNIT}} cada). Ela NÃO existe antes da primeira compra.
+   - O antigo pacote de 5 análises foi substituído pelo Passe Trimestral e não está mais à venda.
    - Falha técnica não custa nada: se a IA falhar em qualquer item, o currículo continua liberado e o usuário pede de novo, sem nova cobrança.
    - Empresas e equipes de RH não têm autosserviço: oriente a acionar "Falar com vendas".
    - Se o usuário perguntar por um preço diferente do informado acima, NÃO invente: diga que o valor exibido na tela de compra é o que vale para a conta dele.
@@ -146,13 +147,13 @@ export async function POST(req: Request) {
     })
     const pricingContext = resolvePricingContext(req, payer)
     const single = priceFor(pricingContext.country, 'single')
-    const pack = priceFor(pricingContext.country, 'pack5')
+    const quarterly = priceFor(pricingContext.country, 'quarterly')
     const supportPrompt = SYSTEM_SUPPORT_PROMPT_BASE
       .replace('{{PRICE_SINGLE}}', single.formatted)
-      .replace('{{PRICE_PACK}}', pack.formatted)
+      .replace('{{PRICE_QUARTERLY}}', quarterly.formatted)
       .replace(
-        '{{PRICE_PACK_UNIT}}',
-        formatPrice(pack.amount / pack.analyses, pack.currency, pricingContext.country)
+        '{{PRICE_QUARTERLY_UNIT}}',
+        formatPrice(quarterly.amount / quarterly.analyses, quarterly.currency, pricingContext.country)
       )
       .replace('{{PAYMENT_METHODS}}', localMethodLabels(pricingContext.country).join(', '))
 

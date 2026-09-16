@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 const schema = z.object({
   event: z.enum(['page_view', 'checkout_initiated', 'upsell_viewed']),
   visitorId: z.string().max(100).optional(),
-  sku: z.enum(['single', 'pack5']).optional(),
+  sku: z.enum(['single', 'quarterly']).optional(),
   // Antes era `z.any()` sem teto: o corpo inteiro ia para o banco numa rota
   // pública. E estes eventos são a base da decisão de preço — lixo aqui é
   // decisão errada lá.

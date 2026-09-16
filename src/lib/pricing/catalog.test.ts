@@ -18,7 +18,7 @@ import {
   COUNTRY_CURRENCY,
   DELIVERABLE_PRODUCERS,
   LOCAL_PRICES,
-  PACK_SIZE,
+  QUARTERLY_ANALYSES,
   TIERS,
   USD_TO_LOCAL,
   allPricedCountries,
@@ -30,7 +30,7 @@ import {
   toMinorUnits,
 } from './catalog'
 
-const SKUS = ['single', 'pack5'] as const
+const SKUS = ['single', 'quarterly'] as const
 
 /** Quanto o preço local pode se afastar da âncora em dólar da faixa. */
 const ANCHOR_TOLERANCE = 0.15
@@ -146,14 +146,14 @@ describe('moeda local', () => {
   })
 
   test('o preço formatado sai no padrão do país', () => {
-    assert.ok(priceFor('BR').formatted.includes('29,90'), priceFor('BR').formatted)
-    assert.equal(priceFor('US').formatted, '$12.90')
+    assert.ok(priceFor('BR').formatted.includes('39,90'), priceFor('BR').formatted)
+    assert.equal(priceFor('US').formatted, '$17.90')
   })
 
   test('moeda sem subunidade não é multiplicada por cem', () => {
-    assert.equal(toMinorUnits(1980, 'JPY'), 1980)
+    assert.equal(toMinorUnits(2690, 'JPY'), 2690)
     assert.equal(toMinorUnits(29.9, 'BRL'), 2990)
-    assert.equal(priceFor('JP').amountMinor, 1980)
+    assert.equal(priceFor('JP').amountMinor, 2690)
   })
 })
 
@@ -162,7 +162,7 @@ describe('faixas', () => {
     for (const tier of TIERS) {
       for (const country of tier.countries) {
         for (const sku of SKUS) {
-          const anchor = sku === 'pack5' ? tier.packOf5PriceUSD : tier.unitPriceUSD
+          const anchor = sku === 'quarterly' ? tier.quarterlyPriceUSD : tier.unitPriceUSD
           const price = priceFor(country, sku)
           const drift = Math.abs(price.amountUsd - anchor) / anchor
           assert.ok(
@@ -184,23 +184,33 @@ describe('faixas', () => {
     assert.equal(new Set(all).size, all.length)
   })
 
-  test('o pacote de 5 é mais barato por análise que a compra avulsa', () => {
+  test('o Passe Trimestral é mais barato por análise que a compra avulsa', () => {
     for (const country of allPricedCountries()) {
       const single = priceFor(country, 'single')
-      const pack = priceFor(country, 'pack5')
-      assert.equal(pack.analyses, PACK_SIZE)
+      const quarterly = priceFor(country, 'quarterly')
+      assert.equal(quarterly.analyses, QUARTERLY_ANALYSES)
       assert.ok(
-        pack.perAnalysisUsd < single.perAnalysisUsd,
-        `${country}: pacote US$ ${pack.perAnalysisUsd} não é menor que avulso US$ ${single.perAnalysisUsd}`
+        quarterly.perAnalysisUsd < single.perAnalysisUsd,
+        `${country}: trimestral US$ ${quarterly.perAnalysisUsd} não é menor que avulso US$ ${single.perAnalysisUsd}`
       )
     }
   })
 
-  test('Brasil é Faixa 3 e custa R$ 29,90', () => {
+  test('o Passe Trimestral custa mais que uma avulsa e menos que cinco', () => {
+    for (const country of allPricedCountries()) {
+      const single = priceFor(country, 'single').amount
+      const quarterly = priceFor(country, 'quarterly').amount
+      assert.ok(quarterly > single, `${country}: trimestral ${quarterly} <= avulso ${single}`)
+      assert.ok(quarterly < single * QUARTERLY_ANALYSES, `${country}: trimestral ${quarterly} >= 5 avulsos`)
+    }
+  })
+
+  test('Brasil é Faixa 3: R$ 39,90 avulso e R$ 79,90 trimestral', () => {
     const price = priceFor('BR')
     assert.equal(price.tier, 3)
     assert.equal(price.currency, 'BRL')
-    assert.equal(price.amount, 29.9)
+    assert.equal(price.amount, 39.9)
+    assert.equal(priceFor('BR', 'quarterly').amount, 79.9)
     assert.ok(price.localPaymentMethods.includes('pix'))
   })
 

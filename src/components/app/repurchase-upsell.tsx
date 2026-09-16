@@ -9,42 +9,42 @@ import { useI18n } from '@/context/i18n-context'
 import { useAnalyses, startCheckout } from '@/hooks/use-analyses'
 
 /**
- * O upsell do pacote de 5.
+ * Oferta do Passe Trimestral dentro do resultado.
  *
- * Renderiza APENAS dentro do resultado, e apenas depois da primeira compra —
- * nunca na landing, nunca antes de comprar. `hasPurchased` vem do servidor, que
- * também recusa o SKU do pacote a quem nunca comprou: a regra não pode morar só
- * na renderização.
+ * Aparece depois da primeira compra, para quem ainda NÃO tem passe ativo — a
+ * quem já tem, oferecer o mesmo passe seria ruído. (O passe também está à venda
+ * na tela de planos desde o início; aqui é só o lembrete no momento certo.)
  *
  * A recompra é de um clique e não passa pela página de preço: o `resumeId` vai
  * junto e o retorno do pagamento reabre este mesmo laudo.
  */
 export function RepurchaseUpsell({ resumeId }: { resumeId: string }) {
   const { t } = useI18n()
-  const { hasPurchased, pricing, refresh } = useAnalyses()
+  const { hasPurchased, pass, pricing, refresh } = useAnalyses()
+  const eligible = hasPurchased && !pass.active && Boolean(pricing)
   const [buying, setBuying] = useState(false)
   const trackedRef = useRef(false)
 
   useEffect(() => {
-    if (hasPurchased && pricing && !trackedRef.current) {
+    if (eligible && !trackedRef.current) {
       trackedRef.current = true
       fetch('/api/analytics/track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           event: 'upsell_viewed',
-          sku: 'pack5',
+          sku: 'quarterly',
           meta: { resumeId },
         }),
       }).catch(() => {})
     }
-  }, [hasPurchased, pricing, resumeId])
+  }, [eligible, resumeId])
 
-  if (!hasPurchased || !pricing) return null
+  if (!eligible || !pricing) return null
 
   const handleBuy = async () => {
     setBuying(true)
-    const result = await startCheckout('pack5', resumeId)
+    const result = await startCheckout('quarterly', resumeId)
     if (!result.ok) {
       toast.error(result.error)
       setBuying(false)
@@ -65,7 +65,7 @@ export function RepurchaseUpsell({ resumeId }: { resumeId: string }) {
               {t.pricing.packDesc}
             </p>
             <p className="text-[11px] font-semibold text-amber-700 mt-1">
-              {t.pricing.packPerAnalysis.replace('{price}', pricing.pack5.perAnalysisFormatted || '')}
+              {t.pricing.packPerAnalysis.replace('{price}', pricing.quarterly.perAnalysisFormatted || '')}
             </p>
           </div>
         </div>
@@ -80,7 +80,7 @@ export function RepurchaseUpsell({ resumeId }: { resumeId: string }) {
           ) : (
             <ShoppingBag className="w-4 h-4 mr-1.5" />
           )}
-          {t.pricing.packCta.replace('{price}', pricing.pack5.formatted)}
+          {t.pricing.packCta.replace('{price}', pricing.quarterly.formatted)}
         </Button>
       </CardContent>
     </Card>

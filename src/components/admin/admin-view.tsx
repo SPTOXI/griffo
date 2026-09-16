@@ -34,6 +34,9 @@ import {
 } from '@/lib/pricing/catalog'
 import { internalFetch } from '@/lib/internal-fetch';
 
+/** Ticket médio de referência do Passe Trimestral entre as faixas, em USD. */
+const AVG_QUARTERLY_USD = TIERS.reduce((sum, t) => sum + t.quarterlyPriceUSD, 0) / TIERS.length
+
 /**
  * O servidor devolve os segredos mascarados (`sk_l••••••••1234`). O campo fica
  * vazio quando o que chegou é máscara, e a máscara vira placeholder: assim o
@@ -849,7 +852,7 @@ function AdminViewContent() {
                 <p className="text-xs font-medium text-slate-500">Upsell & Margem Líquida</p>
                 <p className="text-2xl font-bold text-slate-900">{netMarginPercent.toFixed(1)}%</p>
                 <p className="text-[10px] text-violet-700 font-medium">
-                  Taxa de Upsell: {upsellConversionRate.toFixed(1)}% ({upsellPurchasesCount} pacotes)
+                  Taxa de Upsell: {upsellConversionRate.toFixed(1)}% ({upsellPurchasesCount} passes)
                 </p>
               </div>
               <Percent className="w-8 h-8 text-violet-500 opacity-80" />
@@ -1847,13 +1850,13 @@ function AdminViewContent() {
               <CardHeader className="pb-3 border-b border-slate-100">
                 <CardTitle className="text-base flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <ShoppingBag className="w-5 h-5 text-amber-600" /> Performance do Upsell (Pack 5)
+                    <ShoppingBag className="w-5 h-5 text-amber-600" /> Performance do Passe Trimestral
                   </span>
                   <Badge variant="outline" className="text-xs font-bold text-amber-700 bg-amber-50 border-amber-200">
                     {upsellConversionRate.toFixed(1)}% Aceitação
                   </Badge>
                 </CardTitle>
-                <CardDescription>Conversão da oferta pós-compra do pacote de 5 análises.</CardDescription>
+                <CardDescription>Conversão da oferta do Passe Trimestral exibida no laudo depois da primeira compra (vendas com 5 análises, incluindo o antigo pacote de 5).</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 pt-4 text-xs">
                 <div className="space-y-2">
@@ -1868,7 +1871,7 @@ function AdminViewContent() {
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-600 font-medium">2. Pacotes de 5 Vendidos (Upsell Aceito)</span>
+                    <span className="text-slate-600 font-medium">2. Passes Trimestrais Vendidos</span>
                     <div className="text-right">
                       <span className="font-bold text-amber-700 font-mono text-sm">{upsellPurchasesCount}</span>
                       <span className="text-[10px] text-amber-600 font-semibold ml-1">
@@ -1890,12 +1893,12 @@ function AdminViewContent() {
                   <div className="flex justify-between items-center text-[11px] text-slate-500">
                     <span>Impacto do Upsell no Ticket Médio (AOV):</span>
                     <span className="font-bold font-mono text-emerald-700">
-                      +US$ {(aovUsd - (totalRevenueUsd - upsellPurchasesCount * 22) / Math.max(1, purchaseCount - upsellPurchasesCount)).toFixed(2)} / pedido
+                      +US$ {(aovUsd - (totalRevenueUsd - upsellPurchasesCount * AVG_QUARTERLY_USD) / Math.max(1, purchaseCount - upsellPurchasesCount)).toFixed(2)} / pedido
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] text-slate-500">
                     <span>SKU do Upsell:</span>
-                    <span className="font-mono text-slate-700 font-semibold">pack5 (5 análises completas)</span>
+                    <span className="font-mono text-slate-700 font-semibold">quarterly (5 análises + 90 dias)</span>
                   </div>
                 </div>
               </CardContent>
@@ -2037,7 +2040,7 @@ function AdminViewContent() {
                       <th className="px-3 py-2">Faixa</th>
                       <th className="px-3 py-2">Países</th>
                       <th className="px-3 py-2">Análise (USD)</th>
-                      <th className="px-3 py-2">Pacote de 5 (USD)</th>
+                      <th className="px-3 py-2">Passe Trimestral (USD)</th>
                       <th className="px-3 py-2">Exemplo local</th>
                       <th className="px-3 py-2 text-right">Margem</th>
                     </tr>
@@ -2058,7 +2061,7 @@ function AdminViewContent() {
                             ${tier.unitPriceUSD.toFixed(2)}
                           </td>
                           <td className="px-3 py-2 font-mono text-slate-700">
-                            ${tier.packOf5PriceUSD.toFixed(2)}
+                            ${tier.quarterlyPriceUSD.toFixed(2)}
                           </td>
                           <td className="px-3 py-2 font-mono text-slate-700">
                             {sample.country} {sample.formatted}
@@ -2228,9 +2231,9 @@ function AdminViewContent() {
                       <td className="px-4 py-3 text-right text-slate-500 text-[11px]">lib/pricing/catalog.ts</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-semibold text-slate-900">Pacote de 5 Análises</td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">Passe Trimestral</td>
                       <td className="px-4 py-3 font-mono text-slate-700">
-                        Upsell — só depois da primeira compra
+                        5 análises + 90 dias, pagamento único
                       </td>
                       <td className="px-4 py-3">
                         <Badge className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">

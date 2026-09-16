@@ -9,7 +9,7 @@ import { CheckCircle2, Loader2, ShoppingBag, Sparkles, Building2, Layers, ArrowR
 import { toast } from 'sonner'
 import { useI18n } from '@/context/i18n-context'
 import { salesMailto } from '@/lib/i18n/contact'
-import { useAnalyses, startCheckout } from '@/hooks/use-analyses'
+import { useAnalyses, startCheckout, type CheckoutSku } from '@/hooks/use-analyses'
 
 /**
  * A tela de compra.
@@ -18,16 +18,16 @@ import { useAnalyses, startCheckout } from '@/hooks/use-analyses'
  * ação e um guia explicando qual ferramenta custava quanto. Nada disso existe:
  * há um produto, um preço, um botão.
  *
- * O pacote de 5 aparece SÓ depois da primeira compra — é upsell de recompra,
- * não opção de entrada. Mostrá-lo antes devolveria ao usuário exatamente a
- * decisão que a mudança de modelo eliminou.
+ * Duas opções lado a lado: a Análise Completa avulsa e o Passe Trimestral
+ * (5 análises + 90 dias, pagamento único). O pacote de 5 saiu em set/2026 —
+ * o trimestral entrega o mesmo e mais, por menos.
  */
 export function PlansView() {
   const { t, lang } = useI18n()
-  const { balance, hasPurchased, pricing, ledger, loading, refresh } = useAnalyses()
+  const { balance, pass, pricing, ledger, loading, refresh } = useAnalyses()
   const [buying, setBuying] = useState<string | null>(null)
 
-  const handleBuy = async (sku: 'single' | 'pack5') => {
+  const handleBuy = async (sku: CheckoutSku) => {
     setBuying(sku)
     const result = await startCheckout(sku)
     if (!result.ok) {
@@ -128,8 +128,8 @@ export function PlansView() {
         </Card>
 
         <div className="space-y-5">
-          {/* UPSELL — só depois da primeira compra */}
-          {hasPurchased && pricing && (
+          {/* PASSE TRIMESTRAL — opção de entrada, ao lado do avulso */}
+          {pricing && (
             <Card className="border-2 border-amber-300 bg-gradient-to-b from-amber-50/60 via-white to-white shadow-md">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2 text-slate-900">
@@ -139,25 +139,30 @@ export function PlansView() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <p className="text-2xl font-extrabold text-slate-900">{pricing.pack5.formatted}</p>
+                  <p className="text-2xl font-extrabold text-slate-900">{pricing.quarterly.formatted}</p>
                   <p className="text-[11px] font-semibold text-amber-700">
                     {t.pricing.packPerAnalysis.replace(
                       '{price}',
-                      pricing.pack5.perAnalysisFormatted || ''
+                      pricing.quarterly.perAnalysisFormatted || ''
                     )}
                   </p>
                 </div>
+                {pass.active && (
+                  <p className="text-[11px] font-semibold text-emerald-700">
+                    {t.pricing.passActive.replace('{days}', String(pass.daysLeft))}
+                  </p>
+                )}
                 <Button
-                  onClick={() => handleBuy('pack5')}
+                  onClick={() => handleBuy('quarterly')}
                   disabled={buying !== null}
                   className="w-full h-auto min-h-10 py-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 whitespace-normal"
                 >
-                  {buying === 'pack5' ? (
+                  {buying === 'quarterly' ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
                   ) : (
                     <ShoppingBag className="w-4 h-4 mr-1.5" />
                   )}
-                  {t.pricing.packCta.replace('{price}', pricing.pack5.formatted)}
+                  {t.pricing.packCta.replace('{price}', pricing.quarterly.formatted)}
                 </Button>
               </CardContent>
             </Card>

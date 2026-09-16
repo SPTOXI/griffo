@@ -204,6 +204,8 @@ export interface TranslationDictionary {
     packDesc: string
     packCta: string
     packPerAnalysis: string
+    /** Validade do Passe Trimestral ativo. `{days}` = dias restantes. */
+    passActive: string
     businessTitle: string
     businessDesc: string
     businessCta: string

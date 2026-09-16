@@ -20,7 +20,7 @@ import { useAnalyses, startCheckout } from '@/hooks/use-analyses'
  *
  * Quando já existe saldo, não há paywall nenhum — o botão libera na hora, sem
  * passar pelo checkout. É esse caminho que torna a recompra de um clique útil:
- * quem comprou o pacote de 5 destrava o currículo seguinte sem sair da tela.
+ * quem comprou o Passe Trimestral destrava o currículo seguinte sem sair da tela.
  */
 
 interface PreviewDimension {
@@ -124,6 +124,22 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
     if (!result.ok) {
       toast.error(result.error)
       setUnlocking(false)
+      await refresh()
+    }
+  }
+
+  /**
+   * Passe Trimestral a partir do paywall. Volta com 5 análises no saldo: o
+   * botão principal passa a liberar este currículo com um clique — gastar uma
+   * delas automaticamente seria decidir pela pessoa.
+   */
+  const [buyingQuarterly, setBuyingQuarterly] = useState(false)
+  const handleQuarterly = async () => {
+    setBuyingQuarterly(true)
+    const result = await startCheckout('quarterly', resumeId)
+    if (!result.ok) {
+      toast.error(result.error)
+      setBuyingQuarterly(false)
       await refresh()
     }
   }
@@ -244,6 +260,20 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
               ? t.analysisPaywall.unlockAvailable.replace('{count}', String(balance))
               : `${t.pricing.buyCta} — ${pricing?.single.formatted ?? ''}`}
           </Button>
+
+          {balance === 0 && pricing && (
+            <Button
+              onClick={handleQuarterly}
+              disabled={buyingQuarterly || unlocking || loadingBalance}
+              variant="outline"
+              className="w-full h-auto min-h-10 py-1.5 text-xs font-bold border-amber-300 bg-amber-50 text-slate-900 hover:bg-amber-100 whitespace-normal"
+            >
+              {buyingQuarterly ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+              {t.pricing.packCta.replace('{price}', pricing.quarterly.formatted)}
+              {' · '}
+              {t.pricing.packPerAnalysis.replace('{price}', pricing.quarterly.perAnalysisFormatted || '')}
+            </Button>
+          )}
 
           {balance === 0 && localPayment && (
             <p className="text-[11px] text-slate-500 text-center">{localPayment}</p>

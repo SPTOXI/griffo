@@ -1,6 +1,7 @@
 import 'server-only'
 import { db } from './db'
-import { PACK_SIZE, type Tier } from './pricing/catalog'
+import { QUARTERLY_ANALYSES, QUARTERLY_PLAN, type Tier } from './pricing/catalog'
+import { extendPass, hasActivePass } from './pricing/pass'
 
 /**
  * Direito de uso, no lugar do saldo de créditos.
@@ -33,6 +34,8 @@ export interface PurchaseGrant {
   paymentRef: string
   stripeEventId?: string | null
   description: string
+  /** Passe Trimestral: estende `User.planEndsAt` na mesma transação. */
+  grantsPass?: boolean
 }
 
 export async function getAnalysisBalance(userId: string): Promise<number> {
@@ -74,9 +77,23 @@ export async function grantAnalyses(grant: PurchaseGrant): Promise<{
         },
       })
 
+      // O passe vai na MESMA transação do crédito: ou os dois entram, ou
+      // nenhum. E herda a idempotência — o segundo caminho colide no índice de
+      // `paymentRef` acima e nunca chega aqui, então não soma 90 dias duas vezes.
+      let passData = {}
+      if (grant.grantsPass) {
+        const current = await tx.user.findUnique({
+          where: { id: grant.userId },
+          select: { plan: true, planEndsAt: true },
+        })
+        const { startsAt, endsAt } = extendPass(current)
+        passData = { plan: QUARTERLY_PLAN, planStartsAt: startsAt, planEndsAt: endsAt }
+      }
+
       return tx.user.update({
         where: { id: grant.userId },
         data: {
+          ...passData,
           analysisBalance: { increment: grant.quantity },
           // O país do pagamento passa a mandar na faixa das compras seguintes.
           ...(grant.paymentCountry ? { paymentCountry: grant.paymentCountry } : {}),
@@ -260,4 +277,14 @@ export async function requireAnyUnlockedResume(userId: string): Promise<Entitlem
   }
 }
 
-export { PACK_SIZE }
+export { QUARTERLY_ANALYSES }
+
+/** Passe Trimestral ativo agora. Admin conta como ativo. */
+export async function userHasActivePass(userId: string): Promise<boolean> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { role: true, plan: true, planEndsAt: true },
+  })
+  if (user?.role === 'admin') return true
+  return hasActivePass(user)
+}

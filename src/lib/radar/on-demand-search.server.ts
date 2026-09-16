@@ -8,16 +8,23 @@ import {
 } from './on-demand-search'
 
 /** Quantas buscas avulsas sobram agora, sem gastar nenhuma. Para exibir na tela. */
-export async function peekOnDemandSearch(userId: string): Promise<OnDemandSearchAvailability> {
+export async function peekOnDemandSearch(
+  userId: string,
+  limit?: number
+): Promise<OnDemandSearchAvailability> {
   const pref = await db.radarPreference.findUnique({
     where: { userId },
     select: { onDemandSearchCount: true, onDemandSearchWindowStart: true },
   })
 
-  return onDemandSearchAvailability({
-    count: pref?.onDemandSearchCount ?? 0,
-    windowStart: pref?.onDemandSearchWindowStart ?? null,
-  })
+  return onDemandSearchAvailability(
+    {
+      count: pref?.onDemandSearchCount ?? 0,
+      windowStart: pref?.onDemandSearchWindowStart ?? null,
+    },
+    new Date(),
+    limit
+  )
 }
 
 /**
@@ -28,16 +35,23 @@ export async function peekOnDemandSearch(userId: string): Promise<OnDemandSearch
  * nem uma coleta duplicada gravada errado — o mesmo nível de tolerância que
  * `MIN_INTERVAL_MS` já assume em `/api/radar/run`.
  */
-export async function consumeOnDemandSearch(userId: string): Promise<OnDemandSearchDecision> {
+export async function consumeOnDemandSearch(
+  userId: string,
+  limit?: number
+): Promise<OnDemandSearchDecision> {
   const pref = await db.radarPreference.findUnique({
     where: { userId },
     select: { onDemandSearchCount: true, onDemandSearchWindowStart: true },
   })
 
-  const decision = onDemandSearchDecision({
-    count: pref?.onDemandSearchCount ?? 0,
-    windowStart: pref?.onDemandSearchWindowStart ?? null,
-  })
+  const decision = onDemandSearchDecision(
+    {
+      count: pref?.onDemandSearchCount ?? 0,
+      windowStart: pref?.onDemandSearchWindowStart ?? null,
+    },
+    new Date(),
+    limit
+  )
 
   if (!decision.allowed) return decision
 

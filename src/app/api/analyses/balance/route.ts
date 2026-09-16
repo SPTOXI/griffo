@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { formatPrice, priceFor } from '@/lib/pricing/catalog'
+import { QUARTERLY_PASS_DAYS, formatPrice, priceFor } from '@/lib/pricing/catalog'
+import { hasActivePass, passDaysLeft } from '@/lib/pricing/pass'
 import { resolvePricingContext } from '@/lib/pricing/resolve'
 import { localMethodLabels } from '@/lib/pricing/payment-methods'
 
@@ -24,7 +25,13 @@ export async function GET(req: Request) {
     const [userData, ledger, purchases] = await Promise.all([
       db.user.findUnique({
         where: { id: user.id },
-        select: { analysisBalance: true, paymentCountry: true, freePreviewAt: true },
+        select: {
+          analysisBalance: true,
+          paymentCountry: true,
+          freePreviewAt: true,
+          plan: true,
+          planEndsAt: true,
+        },
       }),
       db.analysisLedger.findMany({
         where: { userId: user.id },
@@ -36,13 +43,17 @@ export async function GET(req: Request) {
 
     const context = resolvePricingContext(req, userData)
     const single = priceFor(context.country, 'single')
-    const pack = priceFor(context.country, 'pack5')
+    const quarterly = priceFor(context.country, 'quarterly')
 
     return NextResponse.json({
       balance: userData?.analysisBalance ?? 0,
       freePreviewUsed: Boolean(userData?.freePreviewAt),
-      // O upsell do pacote só existe depois da primeira compra.
       hasPurchased: purchases > 0,
+      pass: {
+        active: hasActivePass(userData),
+        endsAt: hasActivePass(userData) ? userData?.planEndsAt ?? null : null,
+        daysLeft: passDaysLeft(userData),
+      },
       pricing: {
         tier: single.tier,
         country: context.country,
@@ -50,11 +61,12 @@ export async function GET(req: Request) {
         currency: single.currency,
         paymentMethods: localMethodLabels(context.country),
         single: { amount: single.amount, formatted: single.formatted },
-        pack5: {
-          amount: pack.amount,
-          formatted: pack.formatted,
-          analyses: pack.analyses,
-          perAnalysisFormatted: formatPrice(pack.amount / pack.analyses, pack.currency, context.country),
+        quarterly: {
+          amount: quarterly.amount,
+          formatted: quarterly.formatted,
+          analyses: quarterly.analyses,
+          passDays: QUARTERLY_PASS_DAYS,
+          perAnalysisFormatted: formatPrice(quarterly.amount / quarterly.analyses, quarterly.currency, context.country),
         },
       },
       ledger,

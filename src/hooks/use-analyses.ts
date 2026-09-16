@@ -18,6 +18,16 @@ export interface PriceOption {
   formatted: string
   analyses?: number
   perAnalysisFormatted?: string
+  /** Só no Passe Trimestral. */
+  passDays?: number
+}
+
+export type CheckoutSku = 'single' | 'quarterly'
+
+export interface PassState {
+  active: boolean
+  endsAt: string | null
+  daysLeft: number
 }
 
 export interface AnalysisPricing {
@@ -27,7 +37,7 @@ export interface AnalysisPricing {
   currency: string
   paymentMethods: string[]
   single: PriceOption
-  pack5: PriceOption
+  quarterly: PriceOption
 }
 
 export interface LedgerEntry {
@@ -45,6 +55,7 @@ export interface AnalysesState {
   balance: number
   freePreviewUsed: boolean
   hasPurchased: boolean
+  pass: PassState
   pricing: AnalysisPricing | null
   ledger: LedgerEntry[]
   loading: boolean
@@ -58,11 +69,14 @@ export function notifyBalanceChanged() {
   if (typeof window !== 'undefined') window.dispatchEvent(new Event(BALANCE_CHANGED_EVENT))
 }
 
+const NO_PASS: PassState = { active: false, endsAt: null, daysLeft: 0 }
+
 export function useAnalyses(): AnalysesState {
   const [state, setState] = useState<Omit<AnalysesState, 'refresh'>>({
     balance: 0,
     freePreviewUsed: false,
     hasPurchased: false,
+    pass: NO_PASS,
     pricing: null,
     ledger: [],
     loading: true,
@@ -77,6 +91,13 @@ export function useAnalyses(): AnalysesState {
         balance: typeof data.balance === 'number' ? data.balance : 0,
         freePreviewUsed: Boolean(data.freePreviewUsed),
         hasPurchased: Boolean(data.hasPurchased),
+        pass: data.pass
+          ? {
+              active: Boolean(data.pass.active),
+              endsAt: data.pass.endsAt ?? null,
+              daysLeft: Number(data.pass.daysLeft) || 0,
+            }
+          : NO_PASS,
         pricing: data.pricing ?? null,
         ledger: Array.isArray(data.ledger) ? data.ledger : [],
         loading: false,
@@ -107,7 +128,7 @@ export function useAnalyses(): AnalysesState {
  * passar pela página de preço e sem recadastrar cartão.
  */
 export async function startCheckout(
-  sku: 'single' | 'pack5',
+  sku: CheckoutSku,
   resumeId?: string | null
 ): Promise<{ ok: boolean; error?: string }> {
   try {

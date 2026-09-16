@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { getGlobalSettings } from '@/lib/settings'
-import { assertAboveFloor, PACK_SIZE } from '@/lib/pricing/catalog'
+import { assertAboveFloor, QUARTERLY_ANALYSES, QUARTERLY_PASS_DAYS } from '@/lib/pricing/catalog'
 import { priceForRequest } from '@/lib/pricing/resolve'
 import { stripePaymentMethodTypes } from '@/lib/pricing/payment-methods'
 
@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic'
  * ~8% mais barato, bastava enviar `brl` de qualquer lugar do mundo.
  */
 const schema = z.object({
-  sku: z.enum(['single', 'pack5']),
+  sku: z.enum(['single', 'quarterly']),
   /** Para onde voltar depois de pagar. Recompra de um clique dentro do laudo. */
   resumeId: z.string().min(1).optional(),
 })
@@ -42,21 +42,8 @@ export async function POST(req: Request) {
 
     const { sku, resumeId } = parsed.data
 
-    // O upsell do pacote só existe DEPOIS da primeira compra. Barrar aqui, e
-    // não só na interface, é o que impede que ele seja acessível por URL antes
-    // da hora.
-    if (sku === 'pack5') {
-      const previous = await db.analysisLedger.findFirst({
-        where: { userId: user.id, type: 'purchase' },
-        select: { id: true },
-      })
-      if (!previous) {
-        return NextResponse.json(
-          { error: 'O pacote de análises fica disponível depois da primeira compra.' },
-          { status: 403 }
-        )
-      }
-    }
+    // O Passe Trimestral é opção de entrada, lado a lado com o avulso — não é
+    // mais upsell de recompra, como era o pacote de 5.
 
     const dbUser = await db.user.findUnique({
       where: { id: user.id },
@@ -80,10 +67,10 @@ export async function POST(req: Request) {
     }
 
     const productName =
-      sku === 'pack5' ? `Griffo — ${PACK_SIZE} Análises Completas` : 'Griffo — Análise Completa'
+      sku === 'quarterly' ? 'Griffo — Passe Trimestral' : 'Griffo — Análise Completa'
     const productDesc =
-      sku === 'pack5'
-        ? `${PACK_SIZE} análises completas de currículo. Cada uma entrega laudo das 8 dimensões, comparação com a vaga, trechos a ajustar, reescrita, orientação, presença digital, carta, resumo e PDF.`
+      sku === 'quarterly'
+        ? `Passe de ${QUARTERLY_PASS_DAYS} dias, pagamento único, sem renovação automática: ${QUARTERLY_ANALYSES} análises completas de currículo, busca ativa ampliada no Radar de vagas e preparação de entrevista. Cada análise entrega laudo das 8 dimensões, comparação com a vaga, trechos a ajustar, reescrita, orientação, presença digital, carta, resumo e PDF.`
         : 'Uma análise completa de currículo: laudo das 8 dimensões, comparação com a vaga, trechos a ajustar, reescrita, orientação, presença digital, carta, resumo e PDF.'
 
     try {

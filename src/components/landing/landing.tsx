@@ -60,6 +60,7 @@ export function Landing({
   // nada além disso. Quem decide o que será cobrado é o país do meio de
   // pagamento, resolvido no servidor — ver lib/pricing/resolve.ts.
   const price = priceFor(effectiveCountry, 'single')
+  const quarterlyPrice = priceFor(effectiveCountry, 'quarterly')
   const paymentMethods = localMethodLabels(effectiveCountry)
   // Piso de exibição por nome — mesma disciplina do mapa de contratação
   // (`hiring-map.tsx`): país com 1-2 vagas isolado pareceria mais fraco do
@@ -402,6 +403,21 @@ export function Landing({
               .replace('{methods}', paymentMethods.join(' / '))}
             priceCaption={t.pricing.currencyFollowsAccess}
           />
+
+          {/* PASSE TRIMESTRAL — a segunda opção, lado a lado com o avulso */}
+          <div className="mt-4 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50/70 via-white to-white p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+            <div>
+              <p className="font-bold text-[#0B192E] text-sm">{t.pricing.packTitle}</p>
+              <p className="text-xs text-slate-600 mt-0.5 max-w-md">{t.pricing.packDesc}</p>
+              <p className="text-2xl font-extrabold text-[#0B192E] mt-2">{quarterlyPrice.formatted}</p>
+            </div>
+            <Button
+              onClick={() => onNavigate('signup')}
+              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold h-11 px-5 shrink-0"
+            >
+              {t.pricing.packCta.replace('{price}', quarterlyPrice.formatted)}
+            </Button>
+          </div>
         </div>
 
         {/* PRÉVIA GRATUITA — o que traz a pessoa para dentro */}

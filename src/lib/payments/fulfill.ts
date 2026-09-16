@@ -3,7 +3,8 @@ import type Stripe from 'stripe'
 import { db } from '../db'
 import { grantAnalyses, unlockAnalysis } from '../entitlements'
 import {
-  PACK_SIZE,
+  QUARTERLY_ANALYSES,
+  QUARTERLY_PASS_DAYS,
   ZERO_DECIMAL_CURRENCIES,
   priceFor,
   tierForCountry,
@@ -65,8 +66,13 @@ export async function fulfillCheckoutSession(
 
   const metadata = session.metadata || {}
   const userId: string | undefined = metadata.user_id || session.client_reference_id
-  const sku: string = metadata.sku === 'pack5' ? 'pack5' : 'single'
-  const analyses = parseInt(metadata.analyses || '', 10) || (sku === 'pack5' ? PACK_SIZE : 1)
+  // `pack5` é legado (saiu em set/2026): uma sessão antiga ainda paga é
+  // entregue como antes — 5 análises, sem passe.
+  const sku: string =
+    metadata.sku === 'quarterly' ? 'quarterly' : metadata.sku === 'pack5' ? 'pack5' : 'single'
+  const analyses =
+    parseInt(metadata.analyses || '', 10) ||
+    (sku === 'quarterly' || sku === 'pack5' ? QUARTERLY_ANALYSES : 1)
 
   if (!userId) {
     console.error('[fulfill] Sessão sem user_id:', session.id)
@@ -94,10 +100,13 @@ export async function fulfillCheckoutSession(
     amountLocal,
     paymentRef: session.id,
     stripeEventId: eventId || null,
+    grantsPass: sku === 'quarterly',
     description:
-      analyses > 1
-        ? `Compra de ${analyses} Análises Completas (Faixa ${chargedTier})`
-        : `Compra de 1 Análise Completa (Faixa ${chargedTier})`,
+      sku === 'quarterly'
+        ? `Passe Trimestral: ${analyses} Análises Completas + ${QUARTERLY_PASS_DAYS} dias (Faixa ${chargedTier})`
+        : analyses > 1
+          ? `Compra de ${analyses} Análises Completas (Faixa ${chargedTier})`
+          : `Compra de 1 Análise Completa (Faixa ${chargedTier})`,
   })
 
   if (!result.granted) {
@@ -111,8 +120,8 @@ export async function fulfillCheckoutSession(
   // precisa clicar de novo no mesmo botão que o levou a pagar — o que é
   // exatamente a fricção que a recompra de um clique existe para eliminar.
   //
-  // Só para o SKU avulso: no pacote de 5 o usuário escolhe onde gastar, e
-  // gastar por ele seria decidir no lugar dele.
+  // Só para o SKU avulso: no trimestral o usuário escolhe onde gastar as
+  // cinco análises, e gastar por ele seria decidir no lugar dele.
   const resumeId = metadata.resume_id
   let balance = result.balance
   if (sku === 'single' && resumeId) {
@@ -156,7 +165,7 @@ async function recordTierAudit(input: {
           paymentCountry,
           suggestedCountry: metadata.country || null,
           countrySource: metadata.country_source || null,
-          expectedUsd: paymentCountry ? priceFor(paymentCountry, metadata.sku === 'pack5' ? 'pack5' : 'single').amountUsd : null,
+          expectedUsd: paymentCountry ? priceFor(paymentCountry, metadata.sku === 'quarterly' ? 'quarterly' : 'single').amountUsd : null,
           chargedUsd: parseFloat(metadata.price_usd || '') || null,
         }),
       },

@@ -15,11 +15,28 @@
 
 export type Tier = 1 | 2 | 3 | 4
 
-/** O que se compra. Não há mais nada à venda. */
-export type Sku = 'single' | 'pack5'
+/**
+ * O que se compra. Não há mais nada à venda.
+ *
+ * - `single`: uma Análise Completa.
+ * - `quarterly`: o Passe Trimestral — `QUARTERLY_ANALYSES` análises e
+ *   `QUARTERLY_PASS_DAYS` dias de passe ativo (busca avulsa ampliada no
+ *   Radar), pago UMA vez, sem renovação automática.
+ *
+ * O pacote de 5 (`pack5`) saiu em set/2026: o trimestral entrega as mesmas
+ * cinco análises e mais, por menos — manter os dois deixaria o pacote
+ * invendável (escada invertida).
+ */
+export type Sku = 'single' | 'quarterly'
 
-/** Quantas análises o pacote entrega. */
-export const PACK_SIZE = 5
+/** Quantas análises o Passe Trimestral entrega. */
+export const QUARTERLY_ANALYSES = 5
+
+/** Duração do Passe Trimestral. */
+export const QUARTERLY_PASS_DAYS = 90
+
+/** Nome interno gravado em `User.plan` enquanto o passe está ativo. */
+export const QUARTERLY_PLAN = 'quarterly'
 
 /**
  * Piso absoluto por análise, em USD.
@@ -31,7 +48,7 @@ export const PACK_SIZE = 5
  *
  * Nenhum preço, cupom ou promoção pode ficar abaixo disto. `catalog.test.ts`
  * falha se algum preço do catálogo violar o piso, incluindo o unitário dentro
- * do pacote de 5.
+ * do Passe Trimestral.
  */
 export const ANALYSIS_FLOOR_USD = 2.6
 
@@ -43,7 +60,7 @@ export interface RegionalPrice {
   countries: string[] // ISO-3166 alpha-2
   displayCurrency: string
   unitPriceUSD: number
-  packOf5PriceUSD: number
+  quarterlyPriceUSD: number
   localPaymentMethods: string[]
 }
 
@@ -56,7 +73,7 @@ export interface RegionalPrice {
  * país listado tem moeda própria declarada, porque exibir dólar fora da Faixa 1
  * é proibido (regra 3).
  *
- * `unitPriceUSD` e `packOf5PriceUSD` são a âncora. O valor efetivamente cobrado
+ * `unitPriceUSD` e `quarterlyPriceUSD` são a âncora. O valor efetivamente cobrado
  * é o de `LOCAL_PRICES`, arredondado para o formato de preço da moeda — e
  * validado contra a âncora e contra o piso pelo teste do catálogo.
  */
@@ -65,32 +82,32 @@ export const TIERS: RegionalPrice[] = [
     tier: 1,
     countries: ['US', 'CA', 'GB', 'DE', 'FR', 'AU', 'JP', 'SG', 'NL', 'IE'],
     displayCurrency: 'USD',
-    unitPriceUSD: 12.9,
-    packOf5PriceUSD: 49.9,
+    unitPriceUSD: 17.9,
+    quarterlyPriceUSD: 35.9,
     localPaymentMethods: ['card'],
   },
   {
     tier: 2,
     countries: ['PT', 'ES', 'IT', 'PL', 'CZ', 'CL', 'MY', 'TR', 'ZA', 'AE'],
     displayCurrency: 'EUR',
-    unitPriceUSD: 8.9,
-    packOf5PriceUSD: 34.9,
+    unitPriceUSD: 11.9,
+    quarterlyPriceUSD: 23.9,
     localPaymentMethods: ['card'],
   },
   {
     tier: 3,
     countries: ['BR', 'MX', 'CO', 'AR', 'TH', 'RO', 'BG'],
     displayCurrency: 'BRL',
-    unitPriceUSD: 5.9,
-    packOf5PriceUSD: 22.9,
+    unitPriceUSD: 7.9,
+    quarterlyPriceUSD: 15.9,
     localPaymentMethods: ['card', 'pix'],
   },
   {
     tier: 4,
     countries: ['IN', 'ID', 'PH', 'VN', 'NG', 'EG', 'PK', 'BD', 'KE'],
     displayCurrency: 'INR',
-    unitPriceUSD: 3.9,
-    packOf5PriceUSD: 16.9,
+    unitPriceUSD: 5.2,
+    quarterlyPriceUSD: 13.1,
     localPaymentMethods: ['card', 'upi', 'gopay', 'ovo'],
   },
 ]
@@ -202,53 +219,54 @@ export const ZERO_DECIMAL_CURRENCIES = new Set(['JPY', 'CLP', 'VND', 'KRW', 'XOF
 export interface LocalPrice {
   /** Preço de uma análise, na unidade principal da moeda. */
   single: number
-  /** Preço do pacote de 5, na unidade principal da moeda. */
-  pack5: number
+  /** Preço do Passe Trimestral, na unidade principal da moeda. */
+  quarterly: number
 }
 
 /**
  * O preço que o cliente vê e paga, por moeda.
  *
  * Não é conversão em tempo real: é preço de tabela, arredondado para o formato
- * a que cada mercado está acostumado. R$ 29,90 é o preço do Brasil, decidido
+ * a que cada mercado está acostumado. R$ 39,90 é o preço do Brasil, decidido
  * assim — não `5.90 × cotação do dia`.
  */
 export const LOCAL_PRICES: Record<string, LocalPrice> = {
-  // Faixa 1 — âncora $12,90 / $49,90
-  USD: { single: 12.9, pack5: 49.9 },
-  CAD: { single: 17.9, pack5: 67.9 },
-  GBP: { single: 10.9, pack5: 42.9 },
-  AUD: { single: 19.9, pack5: 74.9 },
-  JPY: { single: 1980, pack5: 7480 },
-  SGD: { single: 17.9, pack5: 66.9 },
-  // Faixa 2 — âncora $8,90 / $34,90. EUR vive aqui: os países de euro da
+  // Faixa 1 — âncora $17,90 / $35,90
+  USD: { single: 17.9, quarterly: 35.9 },
+  CAD: { single: 23.9, quarterly: 47.9 },
+  GBP: { single: 14.9, quarterly: 29.9 },
+  AUD: { single: 26.9, quarterly: 53.9 },
+  JPY: { single: 2690, quarterly: 5390 },
+  SGD: { single: 23.9, quarterly: 47.9 },
+  // Faixa 2 — âncora $11,90 / $23,90. EUR vive aqui: os países de euro da
   // Faixa 1 (DE, FR, NL, IE) usam `EUR_TIER1`, resolvido por país.
-  EUR: { single: 7.9, pack5: 31.9 },
-  PLN: { single: 34.9, pack5: 137.9 },
-  CZK: { single: 199, pack5: 799 },
-  CLP: { single: 7990, pack5: 32990 },
-  MYR: { single: 39.9, pack5: 156.9 },
-  TRY: { single: 299, pack5: 1179 },
-  ZAR: { single: 159.9, pack5: 639.9 },
-  AED: { single: 32.9, pack5: 127.9 },
-  // Faixa 3 — âncora $5,90 / $22,90
-  BRL: { single: 29.9, pack5: 119.9 },
-  MXN: { single: 109, pack5: 419 },
-  COP: { single: 23900, pack5: 89900 },
-  ARS: { single: 7590, pack5: 28990 },
-  THB: { single: 199, pack5: 799 },
-  RON: { single: 26.9, pack5: 104.9 },
-  BGN: { single: 10.9, pack5: 39.9 },
-  // Faixa 4 — âncora $3,90 / $16,90
-  INR: { single: 329, pack5: 1399 },
-  IDR: { single: 59000, pack5: 259000 },
-  PHP: { single: 219, pack5: 949 },
-  VND: { single: 99000, pack5: 419000 },
-  NGN: { single: 5900, pack5: 25900 },
-  EGP: { single: 189, pack5: 799 },
-  PKR: { single: 1090, pack5: 4690 },
-  BDT: { single: 469, pack5: 1999 },
-  KES: { single: 499, pack5: 2199 },
+  EUR: { single: 10.9, quarterly: 21.9 },
+  PLN: { single: 46.9, quarterly: 93.9 },
+  CZK: { single: 269, quarterly: 539 },
+  CLP: { single: 10990, quarterly: 21990 },
+  MYR: { single: 53.9, quarterly: 109 },
+  TRY: { single: 399, quarterly: 799 },
+  ZAR: { single: 219, quarterly: 439 },
+  AED: { single: 43.9, quarterly: 87.9 },
+  // Faixa 3 — âncora $7,90 / $15,90
+  BRL: { single: 39.9, quarterly: 79.9 },
+  MXN: { single: 149, quarterly: 299 },
+  COP: { single: 31990, quarterly: 63990 },
+  ARS: { single: 10990, quarterly: 21990 },
+  THB: { single: 269, quarterly: 539 },
+  RON: { single: 35.9, quarterly: 71.9 },
+  BGN: { single: 14.9, quarterly: 29.9 },
+  // Faixa 4 — âncora $5,20 / $13,10. O trimestral fica
+  // no piso (5 × US$ 2,60), por isso ~2,5× o avulso e não 2× como nas demais.
+  INR: { single: 439, quarterly: 1099 },
+  IDR: { single: 79000, quarterly: 209000 },
+  PHP: { single: 299, quarterly: 749 },
+  VND: { single: 129000, quarterly: 329000 },
+  NGN: { single: 7900, quarterly: 20990 },
+  EGP: { single: 259, quarterly: 629 },
+  PKR: { single: 1490, quarterly: 3690 },
+  BDT: { single: 629, quarterly: 1590 },
+  KES: { single: 669, quarterly: 1690 },
 }
 
 /**
@@ -258,7 +276,7 @@ export const LOCAL_PRICES: Record<string, LocalPrice> = {
  * decidir o preço sozinha — quem decide é o par (país, faixa). Esta tabela
  * cobre a única sobreposição real do catálogo.
  */
-const EUR_TIER1: LocalPrice = { single: 11.9, pack5: 45.9 }
+const EUR_TIER1: LocalPrice = { single: 15.9, quarterly: 31.9 }
 
 /** Locale de formatação por país. Separador e posição do símbolo são locais. */
 const COUNTRY_LOCALE: Record<string, string> = {
@@ -413,8 +431,8 @@ export function priceFor(country: string | null | undefined, sku: Sku = 'single'
   const tier = tierForCountry(code)
   const currency = currencyForCountry(code)
   const local = localPriceFor(code, currency, tier)
-  const amount = sku === 'pack5' ? local.pack5 : local.single
-  const analyses = sku === 'pack5' ? PACK_SIZE : 1
+  const amount = sku === 'quarterly' ? local.quarterly : local.single
+  const analyses = sku === 'quarterly' ? QUARTERLY_ANALYSES : 1
   const rate = USD_TO_LOCAL[currency] ?? 1
   const amountUsd = Math.round((amount / rate) * 100) / 100
 

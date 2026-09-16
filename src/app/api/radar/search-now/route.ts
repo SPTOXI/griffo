@@ -5,7 +5,8 @@ export const maxDuration = 60
 import { NextResponse, after } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { requireAnyUnlockedResume } from '@/lib/entitlements'
+import { requireAnyUnlockedResume, userHasActivePass } from '@/lib/entitlements'
+import { onDemandWeeklyLimit } from '@/lib/radar/on-demand-search'
 import { consumeOnDemandSearch } from '@/lib/radar/on-demand-search.server'
 import { runCollection, runForUser } from '@/lib/radar/runner'
 import { jobBaseAdapters, jobBaseCredentials } from '@/lib/jobs/adapters/jobbase'
@@ -88,11 +89,13 @@ export async function POST() {
       )
     }
 
-    const decision = await consumeOnDemandSearch(user.id)
+    // Passe Trimestral ativo amplia o limite semanal (busca ativa).
+    const weeklyLimit = onDemandWeeklyLimit(await userHasActivePass(user.id))
+    const decision = await consumeOnDemandSearch(user.id, weeklyLimit)
     if (!decision.allowed) {
       return NextResponse.json(
         {
-          error: 'Você já usou as 3 buscas avulsas desta semana. Elas voltam depois disso.',
+          error: `Você já usou as ${weeklyLimit} buscas avulsas desta semana. Elas voltam depois disso.`,
           code: 'weekly_limit',
           resetAt: decision.resetAt,
         },

@@ -2,7 +2,8 @@ import Stripe from 'stripe'
 import { loadEnvFile } from './load-env'
 import {
   LOCAL_PRICES,
-  PACK_SIZE,
+  QUARTERLY_ANALYSES,
+  QUARTERLY_PASS_DAYS,
   TIERS,
   allPricedCountries,
   assertAboveFloor,
@@ -20,7 +21,7 @@ import {
  *    histórico dos pagamentos que o referenciam, e a Stripe nem permite
  *    deletá-lo depois de usado. `active: false` tira da venda e preserva o
  *    passado.
- * 2. **Cria** os preços da Análise Completa e do pacote de 5, um por
+ * 2. **Cria** os preços da Análise Completa e do Passe Trimestral, um por
  *    moeda-faixa do catálogo.
  *
  * O checkout monta o preço inline a partir do catálogo, então estes `Price`
@@ -50,20 +51,23 @@ const DRY_RUN = process.argv.includes('--dry-run')
 /** Pacotes do modelo de créditos, que saem de venda. */
 const LEGACY_PACKAGE_IDS = ['entrada', 'starter', 'carreira', 'profissional']
 
+/** Produtos que saíram de venda depois do modelo de créditos (pacote de 5, set/2026). */
+const LEGACY_GRIFFO_SKUS = ['griffo_analise_completa_x5']
+
 const PRODUCT_KEYS: Record<Sku, string> = {
   single: 'griffo_analise_completa',
-  pack5: `griffo_analise_completa_x${PACK_SIZE}`,
+  quarterly: 'griffo_passe_trimestral',
 }
 
 const PRODUCT_NAMES: Record<Sku, string> = {
   single: 'Griffo — Análise Completa',
-  pack5: `Griffo — ${PACK_SIZE} Análises Completas`,
+  quarterly: 'Griffo — Passe Trimestral',
 }
 
 const PRODUCT_DESCRIPTIONS: Record<Sku, string> = {
   single:
     'Uma análise completa de currículo: laudo das 8 dimensões, comparação com a vaga, trechos a ajustar no currículo, reescrita STAR/XYZ, orientação profissional, presença digital e otimização de perfil, carta de apresentação, resumo profissional e PDF.',
-  pack5: `${PACK_SIZE} análises completas de currículo. Oferta de recompra, disponível depois da primeira compra.`,
+  quarterly: `Passe de ${QUARTERLY_PASS_DAYS} dias, pagamento único, sem renovação automática: ${QUARTERLY_ANALYSES} análises completas, busca ativa ampliada no Radar e preparação de entrevista.`,
 }
 
 async function archiveLegacyCreditProducts(): Promise<number> {
@@ -74,6 +78,7 @@ async function archiveLegacyCreditProducts(): Promise<number> {
     const packageId = product.metadata?.package_id
     const isLegacy =
       (packageId && LEGACY_PACKAGE_IDS.includes(packageId)) ||
+      LEGACY_GRIFFO_SKUS.includes(product.metadata?.griffo_sku || '') ||
       /pacote (starter|carreira|profissional)|plano de entrada/i.test(product.name || '')
 
     if (!isLegacy) continue
@@ -122,7 +127,7 @@ async function findOrCreateProduct(
     metadata: {
       griffo_sku: key,
       sku,
-      analyses: (sku === 'pack5' ? PACK_SIZE : 1).toString(),
+      analyses: (sku === 'quarterly' ? QUARTERLY_ANALYSES : 1).toString(),
     },
   })
   return { product, exists: true }
@@ -217,7 +222,7 @@ async function main() {
   // Falha antes de tocar na Stripe se algum preço do catálogo violar o piso.
   for (const country of allPricedCountries()) {
     assertAboveFloor(priceFor(country, 'single'))
-    assertAboveFloor(priceFor(country, 'pack5'))
+    assertAboveFloor(priceFor(country, 'quarterly'))
   }
   console.log(
     `Catálogo validado: ${allPricedCountries().length} países, ${Object.keys(LOCAL_PRICES).length} moedas, piso respeitado.`
@@ -226,7 +231,7 @@ async function main() {
   const archived = await archiveLegacyCreditProducts()
 
   let createdPrices = 0
-  for (const sku of ['single', 'pack5'] as Sku[]) {
+  for (const sku of ['single', 'quarterly'] as Sku[]) {
     const { product, exists } = await findOrCreateProduct(sku)
     createdPrices += await syncPrices(sku, product, exists)
   }
