@@ -49,11 +49,13 @@ export function HomeClient({ openJobsCount, jobsByCountry }: HomeClientProps) {
       // A navegação do app vive em memória, sem rota própria, então sem este
       // nome na lista o link do e-mail deixaria a pessoa no painel inicial —
       // que não é onde o aviso dela está.
+      // Vindo do teste ATS grátis: abre direto o cadastro.
+      if (v === 'signup' && !user) setScreen('signup')
       if (v === 'admin' || v === 'upload' || v === 'analysis' || v === 'rewrite' || v === 'plans' || v === 'radar') {
         setNavView(v as any)
       }
     }
-  }, [hydrated, setNavView])
+  }, [hydrated, setNavView, user])
 
   // If user is logged in, force app screen
   const effectiveScreen: Screen = user ? 'app' : screen

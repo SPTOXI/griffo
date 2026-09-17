@@ -33,6 +33,7 @@ import {
   priceFor,
 } from '@/lib/pricing/catalog'
 import { internalFetch } from '@/lib/internal-fetch';
+import { FunnelCard } from './funnel-card'
 
 /** Ticket médio de referência do Passe Trimestral entre as faixas, em USD. */
 const AVG_QUARTERLY_USD = TIERS.reduce((sum, t) => sum + t.quarterlyPriceUSD, 0) / TIERS.length
@@ -1844,6 +1845,9 @@ function AdminViewContent() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* FUNIL COMPLETO */}
+            <FunnelCard />
 
             {/* PERFORMANCE DO UPSELL */}
             <Card className="border-slate-200">

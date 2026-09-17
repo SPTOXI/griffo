@@ -9,6 +9,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { cleanAndOptimizeTextForAi } from '@/lib/ocr/extractor'
 import { MAX_PDF_BASE64_CHARS, parsePdfBase64, extractPdfWithVision } from '@/lib/pdf-text'
 import { checkResumeContent } from '@/lib/analysis/content-guard'
+import { trackServerEvent } from '@/lib/analytics/track.server'
 import {
   MAX_JOB_DESCRIPTION_CHARS,
   MAX_RESUME_CHARS,
@@ -187,6 +188,12 @@ export async function POST(req: Request) {
         action: 'upload',
         meta: JSON.stringify({ format, length: analyzable.length, socialConsent, visionUsed }),
       },
+    })
+
+    await trackServerEvent('cv_uploaded', {
+      req,
+      userId: user.id,
+      meta: { format: format || 'text', vision: visionUsed },
     })
 
     return NextResponse.json({ resume })

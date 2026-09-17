@@ -3,11 +3,14 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { edgeCountry } from '@/lib/pricing/edge-country'
+import { CLIENT_EVENTS, isLikelyBot } from '@/lib/analytics/funnel'
 
 export const dynamic = 'force-dynamic'
 
 const schema = z.object({
-  event: z.enum(['page_view', 'checkout_initiated', 'upsell_viewed']),
+  // Só eventos de atenção. Cadastro, upload, prévia e compra são gravados pelo
+  // servidor — ver `lib/analytics/funnel.ts`.
+  event: z.enum(CLIENT_EVENTS),
   visitorId: z.string().max(100).optional(),
   sku: z.enum(['single', 'quarterly']).optional(),
   // Antes era `z.any()` sem teto: o corpo inteiro ia para o banco numa rota
@@ -25,6 +28,12 @@ export async function POST(req: Request) {
     const parsed = schema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json({ ok: false, error: 'Evento inválido' }, { status: 400 })
+    }
+
+    // Robô e pré-visualizador de link não entram no funil. Responde 200 para
+    // não ensinar a ninguém que foi filtrado.
+    if (isLikelyBot(req.headers.get('user-agent'))) {
+      return NextResponse.json({ ok: true })
     }
 
     const user = await getCurrentUser().catch(() => null)

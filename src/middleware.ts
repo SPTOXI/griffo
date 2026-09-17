@@ -136,6 +136,9 @@ const RULES: Rule[] = [
   // Prévia gratuita: uma por conta, mas o limite fecha a porta de tentar
   // repetidamente antes que a cota do banco seja consultada.
   { prefix: '/api/resume/preview', limit: 10, windowMs: 10 * 60_000 },
+  // Teste ATS público: a cota real (1 por pessoa a cada 24h) fica no banco,
+  // na própria rota. Isto só barra rajadas antes de chegar lá.
+  { prefix: '/api/public/ats-check', limit: 3, windowMs: 10 * 60_000 },
   // Exportação lê todos os dados do titular de uma vez; exclusão é
   // irreversível. Ambas são legítimas e raras — o limite é baixo de propósito.
   { prefix: '/api/user/export', limit: 5, windowMs: 60 * 60_000 },
@@ -265,5 +268,6 @@ export const config = {
     '/api/admin/:path*',
     '/api/cron/:path*',
     '/api/analytics/:path*',
+    '/api/public/:path*',
   ],
 }

@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { internalFetch } from '@/lib/internal-fetch'
 import { useI18n } from '@/context/i18n-context'
 import { useAnalyses, startCheckout } from '@/hooks/use-analyses'
+import { trackOnce } from '@/components/analytics/track-client'
 
 /**
  * O paywall: a nota de graça, o diagnóstico só depois de pagar.
@@ -54,6 +55,10 @@ export function AnalysisPaywall({ resumeId, preview: initialPreview, onUnlocked 
   const [loadingPreview, setLoadingPreview] = useState(false)
   const [unlocking, setUnlocking] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
+
+  useEffect(() => {
+    trackOnce('pricing_viewed', 'paywall')
+  }, [])
 
   /**
    * Busca a prévia.

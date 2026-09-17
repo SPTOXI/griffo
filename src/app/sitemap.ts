@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { ATS_SLUGS } from '@/lib/ats/meta'
 import { atsLanguagesFor } from '@/lib/ats/content'
+import { ATS_CHECK_LANGS, ATS_CHECK_PATH } from '@/lib/ats-check/copy'
 import { localeForLang, LANGUAGES } from '@/lib/i18n'
 import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
 
@@ -119,6 +120,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: country === 'br' || country === 'us' || country === 'pt' || country === 'es' || country === 'mx' || country === 'de' || country === 'fr' || country === 'it' || country === 'jp' ? 0.9 : 0.8,
     })
   }
+
+  // Teste ATS grátis — a porta de entrada sem cadastro.
+  routes.push({
+    url: `${baseUrl}${ATS_CHECK_PATH}`,
+    lastModified,
+    changeFrequency: 'monthly',
+    priority: 0.9,
+    alternates: {
+      languages: Object.fromEntries(
+        ATS_CHECK_LANGS.map((l) => [localeForLang(l), `${baseUrl}${ATS_CHECK_PATH}?lang=${l}`])
+      ),
+    },
+  })
 
   // 4. ATS Systems & High-intent compatibility pages
   //

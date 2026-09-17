@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { trackOnce } from '@/components/analytics/track-client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -26,6 +27,10 @@ export function PlansView() {
   const { t, lang } = useI18n()
   const { balance, pass, pricing, ledger, loading, refresh } = useAnalyses()
   const [buying, setBuying] = useState<string | null>(null)
+
+  useEffect(() => {
+    trackOnce('pricing_viewed', 'plans')
+  }, [])
 
   const handleBuy = async (sku: CheckoutSku) => {
     setBuying(sku)

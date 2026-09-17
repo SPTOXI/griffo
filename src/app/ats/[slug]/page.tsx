@@ -5,6 +5,7 @@ import { cookies, headers } from 'next/headers'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ATS_META } from '@/lib/ats/meta'
+import { ATS_CHECK_COPY, ATS_CHECK_PATH, isAtsCheckLang } from '@/lib/ats-check/copy'
 import { atsContentFor, atsLanguagesFor } from '@/lib/ats/content'
 import { resumeTermFor } from '@/lib/market/regional-terms'
 import {
@@ -270,6 +271,16 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
                 {t.heroCta} <ArrowRight className="w-5 h-5 ml-2 shrink-0" />
               </Link>
             </Button>
+            {isAtsCheckLang(lang) && (
+              <p className="mt-3 text-sm">
+                <Link
+                  href={`${ATS_CHECK_PATH}?lang=${lang}&utm_source=ats_page&utm_medium=${slug}`}
+                  className="font-semibold text-emerald-700 underline underline-offset-2 hover:text-emerald-800"
+                >
+                  {ATS_CHECK_COPY[lang].bannerTitle} {ATS_CHECK_COPY[lang].bannerCta} →
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </section>

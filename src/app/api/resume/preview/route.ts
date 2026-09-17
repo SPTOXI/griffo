@@ -11,6 +11,7 @@ import { getRequestLanguage, LANGUAGE_DIRECTIVE } from '@/lib/i18n/server'
 import { edgeCountry } from '@/lib/pricing/resolve'
 import { DIMENSION_KEYS, DIMENSION_LABELS, type DimensionKey } from '@/lib/analysis/stages'
 import { checkResumeContent } from '@/lib/analysis/content-guard'
+import { trackServerEvent } from '@/lib/analytics/track.server'
 
 /**
  * Prévia gratuita: as oito notas, e só isso.
@@ -201,6 +202,8 @@ export async function POST(req: Request) {
       where: { id: resume.id },
       data: { previewJson: JSON.stringify(preview) },
     })
+
+    await trackServerEvent('preview_viewed', { req, userId: user.id, meta: { overall: preview.overall } })
 
     return NextResponse.json({ preview, cached: false })
   } catch (e: any) {

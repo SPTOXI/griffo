@@ -25,6 +25,8 @@ import type { CountryJobCount } from '@/lib/jobs/open-count.server'
 import { countryLabel } from '@/lib/jobs/country-labels'
 import { HiringIndexTeaser } from './hiring-index-teaser'
 import { HeroD } from './hero-d'
+import { TrackWhenVisible } from '@/components/analytics/track-when-visible'
+import { AtsCheckBanner } from '@/components/ats-check/ats-check-banner'
 import { OrderBand } from './order-band'
 
 export interface LandingProps {
@@ -181,6 +183,9 @@ export function Landing({
       <main>
       {/* HERO D — única direção aprovada do handoff de design; ver hero-d.tsx */}
       <HeroD t={t} lang={lang} openJobsCount={openJobsCount} onNavigate={onNavigate} />
+
+      {/* Porta de entrada sem cadastro — só nos idiomas em que o teste existe */}
+      <AtsCheckBanner lang={lang} />
 
       {/* "A ordem importa" — cadeia inteligência → análise → auditoria →
           otimização → direcionamento → Radar; ver order-band.tsx. Não confundir
@@ -384,6 +389,7 @@ export function Landing({
 
       {/* PRICING & CREDIT PACKAGES */}
       <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+        <TrackWhenVisible targetId="pricing" event="pricing_viewed" onceKey="landing" />
         <div className="text-center max-w-2xl mx-auto mb-10">
           <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-900 px-3 py-1 text-xs font-bold">{t.pricing.badge}</Badge>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0B192E] mt-3 mb-3">{t.pricing.title}</h2>

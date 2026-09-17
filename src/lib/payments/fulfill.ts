@@ -11,6 +11,7 @@ import {
   type Tier,
 } from '../pricing/catalog'
 import { paymentCountryFromStripe } from '../pricing/resolve'
+import { trackServerEvent } from '@/lib/analytics/track.server'
 
 /**
  * Entrega do que foi pago, num lugar só.
@@ -114,6 +115,14 @@ export async function fulfillCheckoutSession(
   }
 
   await recordTierAudit({ userId, sessionId: session.id, chargedTier, paymentCountry, metadata })
+
+  // Só depois de concedido: a idempotência de `grantAnalyses` garante que o
+  // mesmo pagamento não conta duas vezes (webhook e retorno do checkout).
+  await trackServerEvent('purchase_done', {
+    userId,
+    sku: sku === 'pack5' ? 'quarterly' : sku,
+    meta: { tier: chargedTier, priceUsd, currency, country: paymentCountry || null },
+  })
 
   // Compra avulsa feita a partir de um currículo: destrava esse currículo aqui,
   // no servidor. Sem isto o usuário volta do checkout, já pagou, e ainda

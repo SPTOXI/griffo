@@ -13,6 +13,7 @@ import { DocumentLanguage } from '@/components/i18n/document-language'
 import { dirForLang } from '@/lib/i18n'
 import { LanguageSelector } from '@/components/ui/language-selector'
 import { internalFetch } from '@/lib/internal-fetch'
+import { getVisitorId } from '@/components/analytics/track-client'
 
 type Mode = 'login' | 'signup'
 
@@ -36,7 +37,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register'
       const body = mode === 'login'
         ? { email, password }
-        : { name, email, password, profession: profession || undefined, dataTransferConsent }
+        : { name, email, password, profession: profession || undefined, dataTransferConsent, visitorId: getVisitorId() }
       const r = await internalFetch(endpoint, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },

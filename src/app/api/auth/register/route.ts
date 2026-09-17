@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { hashPassword, createSession } from '@/lib/auth'
 import { isConfigError } from '@/lib/env'
+import { trackServerEvent } from '@/lib/analytics/track.server'
 
 const schema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(120),
@@ -13,6 +14,8 @@ const schema = z.object({
     .max(128, 'Senha deve ter no máximo 128 caracteres')
     .refine((p) => p.trim().length >= 8, 'A senha não pode conter apenas espaços.'),
   profession: z.string().max(120).optional(),
+  // Liga o cadastro à visita anônima que o originou (funil).
+  visitorId: z.string().max(100).optional(),
   // Consentimento de transferência internacional. Obrigatório: o currículo é
   // processado por provedores de IA fora do país de origem, e sem base
   // jurídica registrada esse tratamento não tem respaldo (LGPD Art. 33,
@@ -65,6 +68,8 @@ export async function POST(req: Request) {
     })
 
     await createSession(user.id)
+
+    await trackServerEvent('signup_done', { req, userId: user.id, visitorId: parsed.data.visitorId })
 
     return NextResponse.json({
       user: {
