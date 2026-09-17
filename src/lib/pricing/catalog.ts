@@ -154,7 +154,8 @@ export const COUNTRY_CURRENCY: Record<string, string> = {
   AR: 'ARS',
   TH: 'THB',
   RO: 'RON',
-  BG: 'BGN',
+  // A Bulgária adotou o euro em 2026 e a Stripe não aceita mais BGN.
+  BG: 'EUR',
   // Faixa 4
   IN: 'INR',
   ID: 'IDR',
@@ -200,7 +201,6 @@ export const USD_TO_LOCAL: Record<string, number> = {
   ARS: 1300,
   THB: 35,
   RON: 4.6,
-  BGN: 1.8,
   INR: 84,
   IDR: 16000,
   PHP: 57,
@@ -257,7 +257,6 @@ export const LOCAL_PRICES: Record<string, LocalPrice> = {
   ARS: { single: 4990, quarterly: 21990 },
   THB: { single: 129, quarterly: 539 },
   RON: { single: 16.9, quarterly: 71.9 },
-  BGN: { single: 6.9, quarterly: 29.9 },
   // Faixa 4 — âncora $2,90 / $13,10. O Essencial fica logo acima do piso
   // (US$ 2,60) e o Recolocação no piso por análise (5 × US$ 2,60).
   INR: { single: 249, quarterly: 1099 },
@@ -279,6 +278,8 @@ export const LOCAL_PRICES: Record<string, LocalPrice> = {
  * cobre a única sobreposição real do catálogo.
  */
 const EUR_TIER1: LocalPrice = { single: 8.9, quarterly: 31.9 }
+/** Euro na Faixa 3 (Bulgária, desde a troca do lev pelo euro). */
+const EUR_TIER3: LocalPrice = { single: 3.49, quarterly: 14.9 }
 
 /** Locale de formatação por país. Separador e posição do símbolo são locais. */
 const COUNTRY_LOCALE: Record<string, string> = {
@@ -370,6 +371,7 @@ export function currencyForCountry(country: string | null | undefined): string {
 
 function localPriceFor(country: string, currency: string, tier: Tier): LocalPrice {
   if (currency === 'EUR' && tier === 1) return EUR_TIER1
+  if (currency === 'EUR' && tier === 3) return EUR_TIER3
   const table = LOCAL_PRICES[currency]
   if (!table) throw new Error(`Sem preço local declarado para ${currency} (país ${country})`)
   return table

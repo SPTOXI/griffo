@@ -221,3 +221,19 @@ describe('faixas', () => {
     assert.ok(price.localPaymentMethods.includes('upi'))
   })
 })
+
+describe('Bulgária cobra em euro', () => {
+  test('BG usa EUR na Faixa 3 (a Stripe não aceita mais BGN)', () => {
+    const p = priceFor('BG')
+    assert.equal(p.currency, 'EUR')
+    assert.equal(p.tier, 3)
+    assert.equal(p.amount, 3.49)
+    assert.equal(priceFor('BG', 'quarterly').amount, 14.9)
+  })
+
+  test('nenhum país cobra em moeda que a Stripe descontinuou', () => {
+    for (const c of ['BGN', 'HRK']) {
+      for (const country of ['BG', 'HR']) assert.notEqual(priceFor(country).currency, c)
+    }
+  })
+})

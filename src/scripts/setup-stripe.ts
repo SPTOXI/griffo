@@ -114,7 +114,23 @@ async function findOrCreateProduct(
 ): Promise<{ product: Stripe.Product; exists: boolean }> {
   const key = PRODUCT_KEYS[sku]
   const existing = await stripe.products.search({ query: `metadata['griffo_sku']:'${key}'` })
-  if (existing.data.length > 0) return { product: existing.data[0], exists: true }
+  if (existing.data.length > 0) {
+    const found = existing.data[0]
+    // O nome comercial muda (ex.: "Análise Completa" → "Essencial"); o produto
+    // é o mesmo, identificado pelo metadata. Atualiza o nome em vez de duplicar.
+    const name = PRODUCT_NAMES[sku]
+    const description = PRODUCT_DESCRIPTIONS[sku]
+    if (found.name !== name || found.description !== description) {
+      if (DRY_RUN) {
+        console.log(`\n(simulação) renomear produto: "${found.name}" → "${name}"`)
+      } else {
+        await stripe.products.update(found.id, { name, description })
+        console.log(`\nProduto renomeado: "${found.name}" → "${name}"`)
+        return { product: { ...found, name, description }, exists: true }
+      }
+    }
+    return { product: found, exists: true }
+  }
 
   if (DRY_RUN) {
     console.log(`\n(simulação) produto a criar: ${PRODUCT_NAMES[sku]}`)
