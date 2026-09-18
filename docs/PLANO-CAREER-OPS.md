@@ -46,7 +46,7 @@ depois o que alimenta o topo do funil, e por último cobertura e higiene.
 | ID | Frente | Prioridade | Estado |
 |---|---|---|---|
 | F1 | Sinal de legitimidade da vaga | P1 | **Fases 1 e 2 feitas** |
-| F2 | Loop de aprendizado (desfecho → padrão → calibração) | P1 | Não iniciado |
+| F2 | Loop de aprendizado (desfecho → padrão → calibração) | P1 | **Fase 1 feita** |
 | F3 | Endurecer o teste ATS | P2 | Não iniciado |
 | F4 | Providers selecionados (10–15, não 100) | P2 | Não iniciado |
 | F5 | Sinais de risco da empresa na entrevista | P3 | Não iniciado |
@@ -150,10 +150,36 @@ analytics confiável de ruído, e estão documentadas no cabeçalho do
 Mesma disciplina do piso de 30 vagas por país do §2.127 e do mapa de
 contratação — não é regra nova, é a que a casa já usa.
 
-**Pré-requisito.** Não há hoje captura de desfecho. Precisa de schema
-(`Application` / `Outcome`), de uma tela que custe pouco para a pessoa
-preencher, e reconhecer o arranque frio: o relatório só vale depois de
-n candidaturas resolvidas.
+**Onde isto encaixa no que já existe.** Não precisa de modelo novo: o
+`RadarAlert` **já é** o par (usuário, vaga), com `@@unique([userId, jobId])`, e
+já carrega a faixa que demos (`overallFit`, no vocabulário `OverallFit`), a
+recomendação, `seenAt`, `clickedAt` e o feedback 👍/👎 do §30. Falta só o
+desfecho — campos aditivos, no mesmo padrão do `Job.category` do §2.126.
+
+**Fases.**
+
+| Fase | Escopo | Estado |
+|---|---|---|
+| 1 | `src/lib/learning/calibration.ts` + testes. As duas regras de honestidade viram código | ✅ feita |
+| 2 | Campos aditivos no `RadarAlert` (`appliedAt`, `outcome`, `outcomeAt`) + captura | pendente |
+| 3 | Relatório na tela e no digest semanal, nos 12 idiomas | pendente |
+
+Mesma disciplina da F1, e pelo mesmo motivo: a fase 1 não toca schema, então
+não depende do operador rodar `prisma db push` — e é justamente a parte onde
+errar é mais caro, porque um número enganoso mostrado a quem pagou é pior que
+número nenhum.
+
+**O desfecho é o estágio mais longe alcançado, não o veredito final.** Quem foi
+entrevistado e depois recusado grava `interview`, não `rejected`. Para a
+pergunta que o módulo faz — a nota previu **tração**? — chegar à conversa é o
+desfecho favorável, mesmo que a vaga tenha ido para outra pessoa.
+
+**O que o módulo não é, e está escrito nele:** não é teste de significância.
+Com dezenas de candidaturas, e não milhares, qualquer inferência formal seria
+teatro. O veredito (`predictive` / `flat` / `inverted` / `insufficient`) é
+heurística de painel pessoal, e exige piso amostral **e** margem grande
+(15 pontos percentuais) justamente porque uma candidatura vale 20 pontos quando
+n = 5.
 
 ---
 
