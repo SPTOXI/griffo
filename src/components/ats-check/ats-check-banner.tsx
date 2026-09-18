@@ -7,7 +7,7 @@ export function AtsCheckBanner({ lang }: { lang: string }) {
   if (!isAtsCheckLang(lang)) return null
   const c = ATS_CHECK_COPY[lang]
   return (
-    <section className="max-w-5xl mx-auto px-4 sm:px-6 -mt-2 mb-6">
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 my-8 sm:my-10">
       <Link
         href={`${ATS_CHECK_PATH}?lang=${lang}&utm_source=landing&utm_medium=banner`}
         className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 rounded-2xl border-2 border-emerald-300 bg-emerald-50/70 px-5 py-4 hover:bg-emerald-50 transition-colors"
