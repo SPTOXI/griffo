@@ -45,7 +45,7 @@ depois o que alimenta o topo do funil, e por último cobertura e higiene.
 
 | ID | Frente | Prioridade | Estado |
 |---|---|---|---|
-| F1 | Sinal de legitimidade da vaga | P1 | **Fase 1 feita** |
+| F1 | Sinal de legitimidade da vaga | P1 | **Fases 1 e 2 feitas** |
 | F2 | Loop de aprendizado (desfecho → padrão → calibração) | P1 | Não iniciado |
 | F3 | Endurecer o teste ATS | P2 | Não iniciado |
 | F4 | Providers selecionados (10–15, não 100) | P2 | Não iniciado |
@@ -83,12 +83,45 @@ além da janela normal, a mesma empresa republicar o mesmo cargo várias vezes.
 | Fase | Escopo | Estado |
 |---|---|---|
 | 1 | `src/lib/jobs/legitimacy.ts` + testes. Módulo puro, sem banco e sem tela | ✅ feita |
-| 2 | Ligar à coleta e persistir o nível; contagem de recirculação por consulta | pendente |
-| 3 | Exibir no Radar e no detalhe da vaga, nos 12 idiomas | pendente |
+| 2 | Avaliação em lote, ligada ao Radar; banco de talentos sai do lote, o resto é medido | ✅ feita |
+| 3 | Decidir a eliminação por inferência com número real; exibir nos 12 idiomas | pendente |
 
 A fase 1 é pura de propósito: a regra fica testável isoladamente antes de
 qualquer decisão de produto sobre como mostrar, e o limiar pode ser calibrado
 contra dado real antes de virar algo que o cliente vê.
+
+### A fase 2 saiu diferente do planejado, e por quê
+
+Estava escrito aqui "ligar à coleta e **persistir o nível**". Ao escrever, o
+plano se mostrou errado para metade dos sinais: `evergreen` depende de `now`
+(uma vaga gravada como `ok` no dia 1 vira anúncio perpétuo no dia 120 sem que
+nada nela mude) e `recirculated` depende de quantas irmãs já existem, que
+cresce. Um nível gravado na coleta estaria desatualizado na leitura seguinte — e
+dado errado no banco é pior que dado nenhum, porque parece confiável.
+
+Então **nada é persistido**: o lote é avaliado na leitura, com uma consulta
+agregada só para o lote inteiro (`legitimacy.server.ts`). Se um dia for preciso
+filtrar por nível em SQL, aí sim vale uma coluna desnormalizada — recalculada na
+coleta, com o custo de staleness assumido de olhos abertos. Efeito colateral
+bom: sem campo novo no schema, esta fase não depende do operador rodar
+`prisma db push`.
+
+### O que foi eliminado, e o que só foi medido
+
+A fase 2 separa as duas coisas que o módulo devolve, e trata cada uma como ela é:
+
+- **`talent_pool` sai do lote do Radar.** É o anúncio declarando que não há
+  posição específica — não é inferência nossa, não há o que medir, e avisar
+  alguém sobre um banco de talentos é o oposto do "só interromper quando vale a
+  pena" que o Radar promete.
+- **`evergreen`, `recirculated` e `thin_description` só entram no log.**
+  Eliminar por inferência antes de saber o volume é exatamente o que o §2.30
+  ("medir antes de automatizar") existe para impedir: com o limiar errado
+  ninguém descobre, porque a vaga some do aviso sem deixar rastro. A decisão de
+  eliminar espera número real de produção.
+
+O log é agregado por rodada, sem nome de vaga: nome não ajuda a decidir limiar e
+só aumenta o que fica gravado sobre quem está procurando emprego.
 
 ---
 

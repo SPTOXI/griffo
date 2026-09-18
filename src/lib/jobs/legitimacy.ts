@@ -198,3 +198,90 @@ export function assessLegitimacy(input: LegitimacyInput): LegitimacyAssessment {
 
   return { level: levelFor(signals), signals }
 }
+
+/* ------------------------------------------------------------------------- *
+ * Avaliação em lote
+ *
+ * A recirculação é a única entrada que não cabe na vaga sozinha: ela pergunta
+ * quantas vezes a MESMA empresa publicou o MESMO cargo. Responder isso por
+ * vaga seria uma consulta por vaga — 500 consultas para um lote do Radar.
+ *
+ * Por isso o lote é separado em duas metades: a montagem, aqui, pura e
+ * testável com um mapa de contagens na mão; e a consulta que produz esse mapa,
+ * em `legitimacy.server.ts`. O que decide (chave do par, dado ausente,
+ * contagem de requisitos) fica testado sem banco nenhum.
+ * ------------------------------------------------------------------------- */
+
+/** O que a avaliação precisa de cada linha do banco. Nada além disto. */
+export interface LegitimacyJobRow {
+  id: string
+  title: string
+  companyKey: string
+  /** `null` quando a taxonomia não reconheceu o cargo. */
+  normalizedTitle: string | null
+  description: string | null
+  /** JSON array, na forma em que o banco guarda. */
+  requirements: string | null
+  publishedAt: Date | null
+}
+
+/**
+ * Chave do par (empresa, cargo), ou `null` quando o cargo é desconhecido.
+ *
+ * `null` não é caso de borda a tolerar, é a resposta certa: sem cargo
+ * reconhecido não há como agrupar por cargo, e agrupar só por empresa contaria
+ * como recirculação uma empresa que abriu cinco vagas DIFERENTES — que é
+ * contratação saudável, o oposto do que o sinal procura.
+ *
+ * O separador é ` ` porque não ocorre em `companyKey` normalizada: com um
+ * hífen, `("acme-tech", "lead")` e `("acme", "tech-lead")` cairiam na mesma
+ * chave.
+ */
+export function roleKey(companyKey: string, normalizedTitle: string | null): string | null {
+  if (!normalizedTitle) return null
+  return `${companyKey} ${normalizedTitle}`
+}
+
+/** Quantos requisitos o normalizador extraiu. JSON quebrado conta como zero. */
+function countRequirements(raw: string | null): number {
+  if (!raw) return 0
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.length : 0
+  } catch {
+    return 0
+  }
+}
+
+/**
+ * Avalia um lote, dado o mapa de quantas publicações existem por par
+ * (empresa, cargo) — o que `roleKey` chaveia.
+ *
+ * Par ausente do mapa vira `1`, o valor que não acusa nada: se a contagem não
+ * foi resolvida, o silêncio não pode virar acusação (a mesma regra do
+ * `types.ts` que rege o módulo inteiro).
+ */
+export function assessJobsWithCounts(
+  jobs: readonly LegitimacyJobRow[],
+  postingsByRole: ReadonlyMap<string, number>,
+  now: Date
+): Map<string, LegitimacyAssessment> {
+  const out = new Map<string, LegitimacyAssessment>()
+
+  for (const job of jobs) {
+    const key = roleKey(job.companyKey, job.normalizedTitle)
+    out.set(
+      job.id,
+      assessLegitimacy({
+        title: job.title,
+        description: job.description,
+        requirementsCount: countRequirements(job.requirements),
+        publishedAt: job.publishedAt,
+        postingsForSameRole: (key && postingsByRole.get(key)) || 1,
+        now,
+      })
+    )
+  }
+
+  return out
+}

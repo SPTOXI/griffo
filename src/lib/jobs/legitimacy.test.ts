@@ -1,10 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  assessJobsWithCounts,
   assessLegitimacy,
   EVERGREEN_AFTER_DAYS,
   RECIRCULATION_MIN_POSTINGS,
+  roleKey,
   type LegitimacyInput,
+  type LegitimacyJobRow,
 } from './legitimacy'
 
 const NOW = new Date('2026-09-18T12:00:00Z')
@@ -187,4 +190,95 @@ test('a ordem dos sinais é estável', () => {
     'thin_description',
   ])
   assert.deepEqual(assessLegitimacy(input).signals, assessLegitimacy(input).signals)
+})
+
+/* --- Avaliação em lote ---------------------------------------------------- */
+
+function row(over: Partial<LegitimacyJobRow> = {}): LegitimacyJobRow {
+  return {
+    id: 'j1',
+    title: 'Pessoa Desenvolvedora Back-end Sênior',
+    companyKey: 'acme',
+    normalizedTitle: 'backend_engineer',
+    description: 'x'.repeat(400),
+    requirements: JSON.stringify(['Node.js', 'Postgres']),
+    publishedAt: daysBefore(10),
+    ...over,
+  }
+}
+
+test('roleKey separa empresa e cargo sem ambiguidade', () => {
+  // Com hífen, ("acme-tech","lead") e ("acme","tech-lead") colidiriam.
+  assert.notEqual(roleKey('acme-tech', 'lead'), roleKey('acme', 'tech-lead'))
+})
+
+test('roleKey é null quando o cargo não foi reconhecido', () => {
+  assert.equal(roleKey('acme', null), null)
+})
+
+test('lote: toda vaga entra no mapa, inclusive a limpa', () => {
+  const jobs = [row({ id: 'a' }), row({ id: 'b', title: 'Banco de Talentos' })]
+  const out = assessJobsWithCounts(jobs, new Map(), NOW)
+  assert.deepEqual([...out.keys()].sort(), ['a', 'b'])
+  assert.equal(out.get('a')!.level, 'ok')
+  assert.equal(out.get('b')!.level, 'suspect')
+})
+
+test('lote: a contagem do par certo é a que conta', () => {
+  const jobs = [
+    row({ id: 'a', companyKey: 'acme', normalizedTitle: 'backend_engineer' }),
+    row({ id: 'b', companyKey: 'acme', normalizedTitle: 'data_analyst' }),
+  ]
+  const counts = new Map([[roleKey('acme', 'backend_engineer')!, RECIRCULATION_MIN_POSTINGS]])
+  const out = assessJobsWithCounts(jobs, counts, NOW)
+  assert.deepEqual(out.get('a')!.signals, ['recirculated'])
+  assert.deepEqual(out.get('b')!.signals, [])
+})
+
+test('lote: cargo desconhecido nunca acusa recirculação, mesmo com contagem alta', () => {
+  const jobs = [row({ id: 'a', normalizedTitle: null })]
+  const counts = new Map([[roleKey('acme', 'backend_engineer')!, 99]])
+  assert.deepEqual(assessJobsWithCounts(jobs, counts, NOW).get('a')!.signals, [])
+})
+
+test('lote: par ausente do mapa vira 1, não acusa', () => {
+  const out = assessJobsWithCounts([row({ id: 'a' })], new Map(), NOW)
+  assert.deepEqual(out.get('a')!.signals, [])
+})
+
+test('lote: requisitos vêm do JSON do banco, e JSON quebrado conta zero', () => {
+  const short = 'Vaga curta.'
+  const withReqs = assessJobsWithCounts(
+    [row({ id: 'a', description: short, requirements: JSON.stringify(['Node']) })],
+    new Map(),
+    NOW
+  )
+  assert.deepEqual(withReqs.get('a')!.signals, [])
+
+  const broken = assessJobsWithCounts(
+    [row({ id: 'a', description: short, requirements: '{nao é json' })],
+    new Map(),
+    NOW
+  )
+  assert.deepEqual(broken.get('a')!.signals, ['thin_description'])
+
+  const nullReqs = assessJobsWithCounts(
+    [row({ id: 'a', description: short, requirements: null })],
+    new Map(),
+    NOW
+  )
+  assert.deepEqual(nullReqs.get('a')!.signals, ['thin_description'])
+})
+
+test('lote: requirements com JSON que não é array conta zero', () => {
+  const out = assessJobsWithCounts(
+    [row({ id: 'a', description: 'Curta.', requirements: '{"a":1}' })],
+    new Map(),
+    NOW
+  )
+  assert.deepEqual(out.get('a')!.signals, ['thin_description'])
+})
+
+test('lote vazio devolve mapa vazio', () => {
+  assert.equal(assessJobsWithCounts([], new Map(), NOW).size, 0)
 })
