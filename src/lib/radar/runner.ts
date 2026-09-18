@@ -9,6 +9,8 @@ import { safeCollect, type JobSourceAdapter } from '../jobs/adapter'
 import { decideCollection, sourceStateAfter } from '../jobs/collection'
 import { closeStaleJobs, type StaleCloseReport } from '../jobs/lifecycle.server'
 import { dedupeBatch } from '../jobs/dedup'
+import type { LegitimacyJobRow } from '../jobs/legitimacy'
+import { assessLegitimacyForJobs } from '../jobs/legitimacy.server'
 import { normalizeJob } from '../jobs/normalize'
 import { JobNormalizationError, type NormalizedJob } from '../jobs/types'
 import { filterJobs, hasMatchableSignal, marketScopeOf } from '../matching/filters'
@@ -393,6 +395,55 @@ const NEWEST_FIRST = { publishedAt: { sort: 'desc', nulls: 'last' } } as const
  * já não cabem é que o resto fica de fora — e aí ficar de fora é a decisão
  * certa.
  */
+/**
+ * Tira do lote o que o próprio anúncio declara não ser vaga, e MEDE o resto.
+ *
+ * A separação não é meio-termo, é a diferença entre as duas coisas que
+ * `assessLegitimacy` devolve:
+ *
+ * - `talent_pool` é o anúncio dizendo, com todas as letras, que não há posição
+ *   específica. Não há o que medir: avisar alguém sobre um banco de talentos é
+ *   o oposto exato do "só interromper quando vale a pena" que o Radar promete.
+ *   Sai do lote.
+ * - `evergreen`, `recirculated` e `thin_description` são INFERÊNCIA nossa.
+ *   Eliminar por inferência antes de saber o volume é o que o §2.30 ("medir
+ *   antes de automatizar") existe para impedir: se o limiar estiver errado,
+ *   ninguém descobre — a vaga some do aviso e não sobra rastro. Então por ora
+ *   eles só aparecem no log, e a decisão de eliminar espera número real.
+ *
+ * O log é por rodada, agregado: nome de vaga em log de produção não ajuda a
+ * decidir limiar e só aumenta o que fica gravado sobre quem está procurando
+ * emprego.
+ */
+async function dropDeclaredTalentPools<T extends LegitimacyJobRow>(rows: T[]): Promise<T[]> {
+  const assessments = await assessLegitimacyForJobs(rows)
+
+  const counts = { talent_pool: 0, evergreen: 0, recirculated: 0, thin_description: 0 }
+  const kept: T[] = []
+
+  for (const row of rows) {
+    const signals = assessments.get(row.id)?.signals ?? []
+    for (const signal of signals) counts[signal]++
+    if (!signals.includes('talent_pool')) kept.push(row)
+  }
+
+  if (counts.talent_pool > 0) {
+    console.warn(
+      `[radar] ${counts.talent_pool} de ${rows.length} vaga(s) descartada(s): ` +
+        'o anúncio declara banco de talentos / candidatura espontânea.'
+    )
+  }
+  if (counts.evergreen || counts.recirculated || counts.thin_description) {
+    console.info(
+      `[radar] sinais de legitimidade apenas observados (nada eliminado por eles): ` +
+        `perpétua=${counts.evergreen} recirculada=${counts.recirculated} ` +
+        `descrição_oca=${counts.thin_description} de ${rows.length}.`
+    )
+  }
+
+  return kept
+}
+
 async function openJobsWithinBudget(profile: ProfessionalProfile) {
   const scope = marketScopeOf(profile)
 
@@ -554,8 +605,9 @@ export async function runForUser(userId: string): Promise<UserRunResult> {
   await pruneUnfoundedAlerts(userId, profile)
 
   const rows = await openJobsWithinBudget(profile)
+  const trustworthy = await dropDeclaredTalentPools(rows)
 
-  const jobs = rows.map(jobFromRow)
+  const jobs = trustworthy.map(jobFromRow)
   const { eligible } = filterJobs(jobs, profile)
 
   const opportunities: EvaluatedOpportunity<{ id: string }>[] = eligible.map((job) => {
