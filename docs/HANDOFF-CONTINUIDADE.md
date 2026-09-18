@@ -47,6 +47,47 @@ o quanto confiar nele.
 
 **Pendências que estão esperando alguém, não código:**
 
+0. ⏳ **ABERTA em 18/09/2026 — conferir o volume do primeiro encerramento por
+   idade.** O PR #71 (mesclado, `db08a11`) implementou o `expired_by_age` que o
+   schema já previa e o código nunca fazia: vaga publicada há mais de 120 dias
+   passa a ser encerrada mesmo que a fonte siga listando. Importa porque o
+   adapter do JobBase documenta que o `status` de lá é sempre `'open'` — nada
+   naquele projeto expira vaga, então o acervo inteiro dependia do ciclo de
+   vida daqui, que só media ausência.
+
+   **O que falta**: rodar o cron e ver o número. A **primeira** rodada fecha o
+   acumulado histórico de uma vez e pode derrubar visivelmente a contagem de
+   vagas abertas do Hero D; as seguintes fecham só o que envelheceu no dia. É
+   melhor ver o tamanho antes de ele aparecer na home.
+
+   O encerramento roda dentro de `runRadar`, então o gatilho é o cron do Radar
+   (`/api/cron/radar`, Vercel, `0 6 * * *` UTC — 03:00 em Brasília). Disparo
+   manual exige o mesmo cabeçalho que o Vercel manda, comparado em tempo
+   constante por `lib/cron-auth.ts`:
+
+   ```
+   curl -X GET https://griffo.work/api/cron/radar \
+     -H "Authorization: Bearer $CRON_SECRET"
+   ```
+
+   A rota tem `maxDuration = 60`; a rodada inteira (coleta + avaliação + digest)
+   pode encostar nesse teto, e o encerramento por idade acontece **antes** de
+   avaliar, então ele conclui mesmo que o resto seja cortado.
+
+   **O número, depois** — não depende do log sobreviver (runtime log do Vercel
+   expira rápido):
+
+   ```sql
+   SELECT count(*) FROM "Job" WHERE "closedReason" LIKE 'Publicada há mais de%';
+   ```
+
+   **Por que isto não é só curiosidade**: o número decide o que o site pode
+   afirmar. Se sobrar pouca vaga acima de 120 dias, "acervo atualizado, nenhuma
+   vaga com mais de 4 meses" vira verdade garantida por código, e serve de base
+   para o reposicionamento em vagas discutido com o operador. Se for alto, a
+   frase honesta é a outra, que o sistema já garantia: "toda vaga foi confirmada
+   como aberta nos últimos 45 dias" (`STALE_AFTER_DAYS`).
+
 1. ✅ **RESOLVIDO em 08/09/2026.** `RADAR_DIGEST_ENABLED=true` ligado pelo
    operador, e o primeiro envio real do digest — o caminho que
    `digest.server.ts` avisava nunca ter sido exercitado — funcionou.
