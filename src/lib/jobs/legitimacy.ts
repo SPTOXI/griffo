@@ -40,10 +40,18 @@
  *
  * O piso é bem acima dos 45 dias do `STALE_AFTER_DAYS` de propósito: aquele
  * conta ausência (sumiu da coleta), este conta presença (continua aparecendo).
- * Uma contratação demorada de verdade cabe nos 120 dias; o que passa disso
+ * Uma contratação demorada de verdade cabe em três meses; o que passa disso
  * raramente é uma vaga só sendo preenchida devagar.
+ *
+ * **Tem que ficar ABAIXO de `EXPIRED_AFTER_PUBLISHED_DAYS` (120).** Desde que
+ * a vaga passou a ser encerrada por idade aos 120 dias, um limiar de 120 aqui
+ * nunca dispararia: quando a vaga chegasse à idade, já estaria fechada, e este
+ * sinal só olha vaga aberta. Os 90 dias mantêm o aviso vivo na janela em que
+ * ele ainda informa alguma coisa — entre "velha o bastante para desconfiar" e
+ * "velha o bastante para sair do acervo". Mexer num dos dois números sem olhar
+ * o outro desliga este sinal em silêncio.
  */
-export const EVERGREEN_AFTER_DAYS = 120
+export const EVERGREEN_AFTER_DAYS = 90
 
 /**
  * A partir de quantas publicações do mesmo cargo pela mesma empresa a
