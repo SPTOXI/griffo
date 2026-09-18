@@ -46,11 +46,41 @@ depois o que alimenta o topo do funil, e por último cobertura e higiene.
 | ID | Frente | Prioridade | Estado |
 |---|---|---|---|
 | F1 | Sinal de legitimidade da vaga | P1 | **Fases 1 e 2 feitas** |
-| F2 | Loop de aprendizado (desfecho → padrão → calibração) | P1 | **Fase 1 feita** |
-| F3 | Endurecer o teste ATS | P2 | Não iniciado |
+| F2 | Loop de aprendizado (desfecho → padrão → calibração) | ~~P1~~ **pausada** | Fase 1 feita, resto **suspenso** |
+| F3 | Endurecer o teste ATS | P2 | Não iniciado — **depende do funil** |
 | F4 | Providers selecionados (10–15, não 100) | P2 | Não iniciado |
 | F5 | Sinais de risco da empresa na entrevista | P3 | Não iniciado |
 | F6 | SSRF: fechar a janela de DNS rebinding | P4 | Condicional |
+
+### ⚠️ Correção de rota — 18/09/2026
+
+**Esta ordenação assumia um funil com fluxo. Não há.** O operador informou:
+~16 mil visitas no Instagram, ~800 na página, **zero conversões**, e nenhum
+feedback de Radar no banco.
+
+Isso inverte a lógica da lista. A **F2 é feature de retenção** — o valor dela é
+segurar quem já pagou até a semana 12. Sem clientes ela não retém ninguém e
+nem pode ser validada: o piso amostral a manteria em `insufficient` por meses.
+**Pausada** depois da fase 1. O módulo fica mesclado, sem consumidor e sem
+efeito em produção, pronto para quando houver dado.
+
+Com comercialização devagar o gargalo é **aquisição**, e nenhuma das seis
+frentes ataca isso diretamente. Antes de mexer em qualquer uma:
+
+1. **Ler `/admin` e achar em que degrau o funil zera.** Está instrumentado desde
+   a fase 2 do teste ATS — oito degraus, `page_view` → `purchase_done`. Os três
+   desfechos possíveis exigem trabalhos completamente diferentes, e escolher no
+   escuro é escolher errado.
+2. A F3 só faz sentido **se o funil não zerar no primeiro degrau**: endurecer
+   uma porta que ninguém abre não muda nada.
+
+Hipótese em aberto, sustentada pela auditoria: o §2.120 reposicionou a landing
+da vaga para a auditoria, e o §2.124 registrou que "vagas de emprego" tem 3 a
+10× o volume de busca dos termos em uso — excluído por decisão de direção,
+tomada antes de existir tráfego para testá-la. O operador decidiu inverter:
+atrair por vaga/emprego, com a auditoria como ponte ("por que ninguém te
+responde"). Pré-requisito disso foi o `expired_by_age` (§2.128, PR #71), para
+a promessa de frescor do acervo ser garantida por código em vez de torcida.
 
 ---
 

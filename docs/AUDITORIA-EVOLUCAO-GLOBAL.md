@@ -8055,3 +8055,166 @@ cards de país no DOM.
 
 `tsc`, `eslint`, `build` e suíte — **989/989** (mesma contagem do
 §2.126, nenhum teste novo nesta fase) — limpos.
+
+## 2.128 Análise do `career-ops`, sinal de legitimidade de vaga, calibração da nota, e o encerramento por idade que o schema já previa
+
+Pedido do operador: avaliar se o repositório aberto
+[`career-ops-hq/career-ops`](https://github.com/career-ops-hq/career-ops)
+(MIT) agrega ao GriffoWork — "ele foi considerado a melhor ferramenta".
+
+### O que a análise concluiu
+
+`career-ops` é ferramenta **local-first de CLI** (Node, v1.33.0, ~200
+scripts na raiz): roda dentro de um AI coding CLI, guarda tudo em markdown
+versionável ("files are canonical, databases are derived"), sem servidor no
+caminho. A engenharia sustenta a reputação — suíte real, CodeQL, guarda de
+SSRF que valida no momento do `dns.lookup` via `AsyncLocalStorage`, 17
+traduções de README.
+
+Mesmo domínio que o nosso, **modelo oposto**: eles são grátis e para quem
+roda `node scan.mjs`; nós somos SaaS pago em 12 idiomas, para quem nunca
+abriu terminal. Sobreposição de mercado pequena, de conhecimento de domínio
+grande. Por isso **nada de arquitetura foi adotado** — nem arquivos-como-
+banco, nem raiz plana, nem distribuição por CLI, nem o pipeline LaTeX, nem
+o auto-updater, nem portar os ~100 providers em bloco (o custo real ali é
+manutenção, não porte: quando um provider quebra lá um dev conserta
+localmente; aqui **um cliente pagante vê vaga faltando**).
+
+Registrado em `docs/PLANO-CAREER-OPS.md`, seis frentes ordenadas por
+alavancagem no negócio.
+
+### F1 — sinal de legitimidade da vaga (PR #70)
+
+O buraco: `lifecycle.ts` responde se a vaga ainda **existe**; existir não é
+a mesma pergunta que valer a candidatura. Banco de talentos fica aberto
+para sempre e aparece em toda coleta — saudável pelo `lifecycle`, e do
+outro lado um formulário sem vaga.
+
+`assessLegitimacy()` é determinístico: sem IA, sem custo, sem campo novo.
+Quatro sinais **afirmativos** — `talent_pool` (12 idiomas), `evergreen`,
+`recirculated`, `thin_description`.
+
+Duas decisões que valem além deste módulo:
+
+**Neutro na compatibilidade por FORMA, não por disciplina.** No
+`career-ops` o bloco G é "a separate, score-neutral signal that never
+affects the score". Aqui foi um passo além: a saída **não tem número
+nenhum** — nível (`ok`/`attention`/`suspect`) mais os motivos. Nota é
+somável ao Job Fit por engano; nível não é. Há teste travando isso.
+
+**Ausência de dado não pontua**, seguindo o que o `types.ts` já fixou
+("eliminar por dado ausente transforma silêncio em rejeição"). Salário não
+divulgado é a norma em boa parte dos mercados, não indício de fraude.
+
+**A fase 2 saiu diferente do planejado, e o plano estava errado.** Estava
+escrito "persistir o nível". Ao escrever, ficou claro que metade dos sinais
+depende do tempo: `evergreen` depende de `now` (vaga gravada como `ok` no
+dia 1 vira perpétua no dia 120 sem nada nela mudar) e `recirculated` cresce
+conforme chegam irmãs. Nível gravado na coleta estaria velho na leitura
+seguinte, e **dado errado no banco é pior que dado nenhum porque parece
+confiável**. Nada é persistido: avalia-se na leitura, com uma consulta
+agregada por lote (`legitimacy.server.ts`) e não uma por vaga. Efeito
+colateral bom: sem campo novo, não dependeu de `prisma db push`.
+
+**O que entrou em produção como comportamento é só o que o anúncio declara
+sobre si**: vaga que se diz banco de talentos sai do lote do Radar.
+`evergreen`, `recirculated` e `thin_description` são inferência nossa e só
+vão para o log, agregados por rodada e sem nome de vaga — eliminar por
+inferência antes de saber o volume é o que o §2.30 ("medir antes de
+automatizar") existe para impedir: com o limiar errado ninguém descobre,
+porque a vaga some do aviso sem deixar rastro.
+
+### F2 — calibração da nota, e por que ela parou (PR #70)
+
+`src/lib/learning/calibration.ts` responde "as suas candidaturas com nota
+alta convertem mais, **para você**?". As duas regras de honestidade do
+`calibrate.mjs` deles entraram como código testado: candidatura em
+andamento **não é ponto de dado** (contar como fracasso pune o recente,
+como sucesso lisonjeia tudo), e **nenhuma taxa abaixo do piso amostral**
+("2 de 3" não é 67%) — mesma disciplina do piso de 30 vagas por país do
+§2.127. Está escrito no módulo que ele **não é teste de significância**:
+com dezenas de candidaturas, valor-p seria teatro.
+
+Achado que reduziu o custo: **não precisa de modelo novo.** `RadarAlert` já
+é o par (usuário, vaga) com `@@unique([userId, jobId])`, e já carrega
+`overallFit`, `seenAt`, `clickedAt` e o feedback 👍/👎 do §30.
+
+**A frente parou aqui, por decisão tomada na conversa.** Perguntado como a
+pessoa registraria ter se candidatado, a resposta honesta foi que ela
+**não deveria** — seria pedir escrituração ao cliente para uma métrica
+nossa. O `career-ops` consegue porque o usuário dele é o dev que roda a
+ferramenta. O nosso não é. A alternativa desenhada foi ler o que já flui
+(`feedback`, `clickedAt`, `interviewPrepJson` como sinal de entrevista) —
+mas o operador informou que **não há feedback nenhum no banco ainda,
+porque a comercialização está devagar**. Com isso a F2 inteira é
+prematura: é feature de **retenção**, e sem clientes ela não retém ninguém
+nem pode ser validada (o piso amostral a manteria em `insufficient` por
+meses). O módulo fica mesclado, sem consumidor e sem efeito em produção,
+pronto para quando houver dado.
+
+### O funil: 16 mil visitas no Instagram, ~800 na página, zero conversões
+
+Zero é diagnosticamente diferente de baixo: com 800 visitas reais
+(`page_view` é evento de cliente, e robô não executa JS), uma conversão
+fraca daria *alguma* coisa. O funil já está instrumentado desde a fase 2 do
+teste ATS — oito degraus em `analytics/funnel.ts`, de `page_view` a
+`purchase_done`, visíveis em `/admin`. **O degrau onde zera decide o
+trabalho**, e os três possíveis exigem correções completamente diferentes.
+Fica registrado como pendente a leitura desse painel.
+
+Hipótese levantada, sustentada pela própria auditoria: o §2.120 
+reposicionou a landing *da vaga para a auditoria*, e o §2.124 registrou que
+"vagas de emprego" tem 3 a 10× o volume de busca de qualquer termo em uso —
+excluído **por decisão de direção**, tomada antes de existir tráfego para
+testá-la. Se o público do Instagram procura vaga e a home abre falando de
+auditoria, o descasamento de promessa explica zero melhor que fraqueza de
+oferta. O operador decidiu inverter: atrair por vaga/emprego e usar a
+auditoria como a ponte ("por que ninguém te responde").
+
+### O encerramento por idade que faltava (PR #71)
+
+Verificando se a promessa de frescor do acervo se sustentaria, dois
+achados:
+
+**`expired_by_age` estava documentado no `closedReason` do schema e não
+existia em lugar nenhum do código.** Vaga nenhuma fechava por idade: uma
+publicada há oito meses que a fonte ainda lista ficava aberta
+indefinidamente. Não é caso raro — o adapter do JobBase documenta que o
+`status` de lá é sempre `'open'` porque nada naquele pipeline expira vaga,
+então o acervo inteiro dele dependia do ciclo de vida daqui, que só media
+ausência.
+
+**Idade é o fundo falso da trava do §12.** A trava impede fechar quando a
+fonte não coletou na janela, porque o silêncio pode ser falha nossa — está
+certa, e congela o acervo de uma fonte parada como "aberto"
+indefinidamente. Idade de publicação é fato da vaga, não da nossa coleta,
+então continua valendo justamente quando o outro critério desliga. Há teste
+cobrindo o par: a mesma vaga que a trava recusa fechar, a idade fecha.
+
+Implementado com corte de **120 dias**, escolhido pelo operador para
+bater com "4 meses" — número de produto, não técnico: define o que o site
+pode afirmar. Vaga sem `publishedAt` **nunca** fecha por idade (idade
+desconhecida não é idade demais), e a borda é exclusiva, igual à de
+`staleDecision`, com teste amarrando as duas.
+
+**Efeito colateral tratado**: `EVERGREEN_AFTER_DAYS` era 120, o mesmo
+corte — vaga na idade de expirar já estaria fechada e o sinal só olha vaga
+aberta, então ele viraria código morto em silêncio. Baixado para 90, com
+teste travando a relação entre os dois números.
+
+Fica pendente (ver `HANDOFF-CONTINUIDADE.md`, item 0) conferir o volume da
+**primeira** passada, que fecha o acumulado histórico de uma vez e pode
+derrubar visivelmente a contagem do Hero D.
+
+### Duas correções de rota registradas de propósito
+
+A ordenação original do `PLANO-CAREER-OPS.md` assumia um funil com fluxo.
+Com comercialização devagar, features de retenção são prematuras e o
+gargalo é aquisição — a ordem foi revista na conversa, e a F2 pausada.
+
+E um deslize de processo: o commit `1ecb604` (documentação) foi empurrado
+direto para `main` sem branch nem PR, contrariando a regra seguida no resto
+da sessão. Comunicado ao operador, que decidiu manter.
+
+`tsc`, `eslint` e suíte — **1069/1069** ao fim da sessão (47 novos desde o
+`bc5c764`) — limpos.
