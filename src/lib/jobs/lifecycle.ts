@@ -32,36 +32,6 @@
 export const STALE_AFTER_DAYS = 45
 
 /**
- * Publicada há mais tempo que isto, a vaga é encerrada por idade — mesmo que
- * a fonte continue listando.
- *
- * ## Por que existe, se já existe o encerramento por ausência
- *
- * São perguntas diferentes. O `STALE_AFTER_DAYS` mede **ausência**: a vaga
- * sumiu da coleta. Este mede **idade**: a vaga continua aparecendo, e é velha.
- * Uma fonte que nunca marca nada como fechado — e o adapter do JobBase
- * documenta exatamente isso: `status` é sempre `'open'` porque nada no
- * pipeline de lá expira vaga — mantém um anúncio de oito meses reaparecendo em
- * toda coleta. Pelo critério de ausência ele é uma vaga saudável. Não é.
- *
- * ## É o que torna a trava do §12 segura
- *
- * A trava diz: fonte sem coleta confiável na janela não fecha nada, porque o
- * silêncio pode ser falha nossa. Correto — e o efeito colateral é que **fonte
- * parada congela o acervo dela como "aberto" indefinidamente**. O
- * encerramento por idade é o fundo falso disso: idade de publicação é um fato
- * da vaga, não da nossa coleta, então ele continua valendo justamente quando
- * o outro critério desliga.
- *
- * ## 120 dias
- *
- * Quatro meses, escolhido pelo operador para sustentar a promessa pública de
- * frescor do acervo. O número é de produto, não técnico: mudar aqui muda o que
- * o site pode afirmar.
- */
-export const EXPIRED_AFTER_PUBLISHED_DAYS = 120
-
-/**
  * Vaga fechada há mais tempo que isto pode ser apagada.
  *
  * O prazo existe para que a vaga sobreviva ao arrependimento: um fechamento
@@ -126,54 +96,5 @@ export function staleDecision(input: StaleInput, options: { now: Date; staleDays
     close: true,
     reason: `Não reapareceu em nenhuma coleta por ${staleDays} dias.`,
     explanation: `A fonte segue coletando e a vaga não aparece há mais de ${staleDays} dias.`,
-  }
-}
-
-export interface AgeInput {
-  /** Quando a fonte diz que a vaga foi publicada. `null` = a fonte não informou. */
-  publishedAt: Date | null
-  /** Já fechada? Então não há o que decidir. */
-  closedAt: Date | null
-}
-
-/**
- * Decide se uma vaga deve ser encerrada por idade de publicação.
- *
- * Diferente de `staleDecision`, **não** consulta a saúde da fonte: idade é um
- * fato da vaga, não da nossa coleta. É exatamente por isso que este critério
- * serve de fundo falso para a trava do §12 — ele vale quando o outro desliga.
- *
- * **Sem data de publicação, nunca fecha.** Vaga sem `publishedAt` não é vaga
- * velha, é vaga cuja idade não sabemos, e a casa já decidiu no `types.ts` que
- * "eliminar por dado ausente transforma silêncio em rejeição". Fechar aqui
- * apagaria vaga viva por causa de um campo que a fonte não mandou.
- */
-export function expiredByAgeDecision(
-  input: AgeInput,
-  options: { now: Date; maxAgeDays?: number }
-): StaleDecision {
-  const maxAgeDays = options.maxAgeDays ?? EXPIRED_AFTER_PUBLISHED_DAYS
-  const cutoff = daysAgo(options.now, maxAgeDays)
-
-  if (input.closedAt) {
-    return { close: false, reason: null, explanation: 'Vaga já estava encerrada.' }
-  }
-
-  if (!input.publishedAt) {
-    return {
-      close: false,
-      reason: null,
-      explanation: 'A fonte não informou data de publicação: idade desconhecida não é idade demais.',
-    }
-  }
-
-  if (input.publishedAt >= cutoff) {
-    return { close: false, reason: null, explanation: `Publicada há menos de ${maxAgeDays} dias.` }
-  }
-
-  return {
-    close: true,
-    reason: `Publicada há mais de ${maxAgeDays} dias.`,
-    explanation: `A vaga continua sendo listada, mas foi publicada há mais de ${maxAgeDays} dias.`,
   }
 }

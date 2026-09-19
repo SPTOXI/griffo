@@ -1,11 +1,6 @@
 import 'server-only'
 import { db } from '../db'
-import {
-  EXPIRED_AFTER_PUBLISHED_DAYS,
-  PURGE_CLOSED_AFTER_DAYS,
-  STALE_AFTER_DAYS,
-  daysAgo,
-} from './lifecycle'
+import { PURGE_CLOSED_AFTER_DAYS, STALE_AFTER_DAYS, daysAgo } from './lifecycle'
 
 export interface StaleCloseReport {
   closed: number
@@ -62,41 +57,6 @@ export async function closeStaleJobs(options: { now?: Date; staleDays?: number }
   }
 
   return report
-}
-
-/**
- * Encerra as vagas velhas demais, ainda que a fonte siga listando.
- *
- * Uma consulta só, e não o laço por fonte de `closeStaleJobs`: aquele laço
- * existe por causa da trava do §12, que pergunta se a coleta da fonte está
- * saudável. Aqui a pergunta não se aplica — idade de publicação é um fato da
- * vaga, independente de a nossa coleta estar indo bem ou mal. É justamente por
- * isso que este critério protege o acervo quando o outro desliga.
- *
- * `publishedAt: { not: null }` é a regra escrita em `expiredByAgeDecision`, na
- * forma que o banco entende: em SQL, `publishedAt < cutoff` já é falso para
- * nulo, mas deixar explícito evita que uma mudança futura na condição pareça
- * inofensiva e passe a apagar vaga sem data.
- *
- * Nunca lança, pelo mesmo motivo que `closeStaleJobs` não lança.
- */
-export async function expireAgedJobs(
-  options: { now?: Date; maxAgeDays?: number } = {}
-): Promise<number> {
-  const now = options.now ?? new Date()
-  const maxAgeDays = options.maxAgeDays ?? EXPIRED_AFTER_PUBLISHED_DAYS
-  const cutoff = daysAgo(now, maxAgeDays)
-
-  try {
-    const result = await db.job.updateMany({
-      where: { closedAt: null, publishedAt: { not: null, lt: cutoff } },
-      data: { closedAt: now, closedReason: `Publicada há mais de ${maxAgeDays} dias.` },
-    })
-    return result.count
-  } catch (e: any) {
-    console.warn('[jobs] encerramento por idade falhou:', e?.message || e)
-    return 0
-  }
 }
 
 /**
