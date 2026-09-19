@@ -88,6 +88,7 @@ export const ko: PrivacyContent = {
     { category: 'AI 처리 로그(이력서 내용이 이미 제거된 운영 지표)', period: '최대 365일' },
     { category: '감사 로그(컴플라이언스·보안 로그)', period: '최대 730일' },
     { category: '결제/웹훅 기록', period: '최대 90일' },
+    { category: '레이더 추천 이력(레이더가 보여준 공고)', period: '최대 730일' },
   ],
 
   rightsHeading: '귀하의 권리와 선택',

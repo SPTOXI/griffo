@@ -1180,4 +1180,8 @@ model RadarOfferLog {
   /// rodar quantas vezes for, e `skipDuplicates` cuida do resto.
   @@unique([userId, jobId])
   @@index([userId, offeredAt])
+  /// A varredura de retenção filtra só por `offeredAt`, sem `userId`, e o
+  /// índice composto acima não serve para isso — o primeiro campo dele é o
+  /// usuário. Sem este, o expurgo de conformidade vira varredura da tabela.
+  @@index([offeredAt])
 }

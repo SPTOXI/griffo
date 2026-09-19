@@ -89,6 +89,7 @@ export const nl: PrivacyContent = {
     { category: 'AI-verwerkingslogs (operationele statistieken, al zonder cv-inhoud)', period: 'Tot 365 dagen' },
     { category: 'Auditlog (compliance- en beveiligingslog)', period: 'Tot 730 dagen' },
     { category: 'Betalings-/webhookgegevens', period: 'Tot 90 dagen' },
+    { category: 'Radar-aanbodgeschiedenis (vacatures die de Radar je toonde)', period: 'Tot 730 dagen' },
   ],
 
   rightsHeading: 'Jouw rechten en keuzes',

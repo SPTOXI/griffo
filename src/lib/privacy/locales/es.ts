@@ -89,6 +89,7 @@ export const es: PrivacyContent = {
     { category: 'Registros de procesamiento por IA (métricas operativas, ya sin el contenido del currículum)', period: 'Hasta 365 días' },
     { category: 'Registro de auditoría (registro de cumplimiento y seguridad)', period: 'Hasta 730 días' },
     { category: 'Registros de pago/webhook', period: 'Hasta 90 días' },
+    { category: 'Historial de ofertas del Radar (vacantes que el Radar te mostró)', period: 'Hasta 730 días' },
   ],
 
   rightsHeading: 'Tus derechos y opciones',

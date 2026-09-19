@@ -89,6 +89,7 @@ export const sv: PrivacyContent = {
     { category: 'AI-bearbetningsloggar (operativa mätvärden, redan utan CV-innehåll)', period: 'Upp till 365 dagar' },
     { category: 'Granskningslogg (efterlevnads- och säkerhetslogg)', period: 'Upp till 730 dagar' },
     { category: 'Betalnings-/webhook-poster', period: 'Upp till 90 dagar' },
+    { category: 'Radarhistorik över erbjudanden (tjänster som Radarn visade dig)', period: 'Upp till 730 dagar' },
   ],
 
   rightsHeading: 'Dina rättigheter och val',

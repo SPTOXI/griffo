@@ -89,6 +89,7 @@ export const en: PrivacyContent = {
     { category: 'AI processing logs (operational metrics, already stripped of resume content)', period: 'Up to 365 days' },
     { category: 'Audit trail (compliance and security log)', period: 'Up to 730 days' },
     { category: 'Payment/webhook records', period: 'Up to 90 days' },
+    { category: 'Radar offer history (roles the Radar showed you)', period: 'Up to 730 days' },
   ],
 
   rightsHeading: 'Your rights and choices',

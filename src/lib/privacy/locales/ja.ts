@@ -88,6 +88,7 @@ export const ja: PrivacyContent = {
     { category: 'AI処理ログ（運用指標、職務経歴書の内容は既に除去済み）', period: '最大365日' },
     { category: '監査ログ（コンプライアンス・セキュリティログ）', period: '最大730日' },
     { category: '決済／Webhook記録', period: '最大90日' },
+    { category: 'レーダーの提示履歴（レーダーが表示した求人）', period: '最長730日' },
   ],
 
   rightsHeading: 'お客様の権利と選択',

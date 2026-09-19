@@ -89,6 +89,7 @@ export const de: PrivacyContent = {
     { category: 'KI-Verarbeitungsprotokolle (Betriebskennzahlen, bereits ohne Lebenslaufinhalt)', period: 'Bis zu 365 Tage' },
     { category: 'Audit-Trail (Compliance- und Sicherheitsprotokoll)', period: 'Bis zu 730 Tage' },
     { category: 'Zahlungs-/Webhook-Datensätze', period: 'Bis zu 90 Tage' },
+    { category: 'Radar-Angebotsverlauf (Stellen, die der Radar Ihnen gezeigt hat)', period: 'Bis zu 730 Tage' },
   ],
 
   rightsHeading: 'Ihre Rechte und Wahlmöglichkeiten',

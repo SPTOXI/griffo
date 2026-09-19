@@ -89,6 +89,7 @@ export const fr: PrivacyContent = {
     { category: "Journaux de traitement par IA (métriques opérationnelles, déjà dépourvues du contenu du CV)", period: "Jusqu'à 365 jours" },
     { category: "Journal d'audit (registre de conformité et de sécurité)", period: "Jusqu'à 730 jours" },
     { category: 'Enregistrements de paiement/webhook', period: "Jusqu'à 90 jours" },
+    { category: "Historique des offres du Radar (postes que le Radar vous a présentés)", period: "Jusqu'à 730 jours" },
   ],
 
   rightsHeading: 'Vos droits et choix',

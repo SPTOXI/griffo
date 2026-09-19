@@ -201,10 +201,19 @@ export async function purgeAgedJobs(
     // Copiar e apagar numa transação só: se o apagamento acontecesse sem a
     // cópia ter entrado, o histórico sumiria — e é para impedir exatamente
     // isso que esta função foi reescrita.
+    let removed = 0
     await db.$transaction(
       async (tx) => {
         await tx.radarOfferLog.createMany({ data: memories, skipDuplicates: true })
-        await tx.job.deleteMany({ where: { id: { in: candidates.map((c) => c.id) } } })
+        // O critério é REPETIDO aqui, e não só a lista de ids: entre a leitura
+        // dos candidatos e esta transação, a coleta pode ter reaberto uma
+        // delas (`closedAt: null`). Apagar por id apagaria a vaga reaberta
+        // assim mesmo, e a coleta seguinte a recriaria com cuid novo — o laço
+        // de apaga-e-recria que o `closedAt` no critério existe para impedir.
+        const res = await tx.job.deleteMany({
+          where: { AND: [{ id: { in: candidates.map((c) => c.id) } }, agedJobPurgeWhere(now, afterDays)] },
+        })
+        removed = res.count
       },
       // Forma interativa, e não o array, só por causa do `timeout`: a forma de
       // array não aceita a opção, e o padrão de 5s é curto para um apagamento
@@ -214,7 +223,10 @@ export async function purgeAgedJobs(
       { timeout: 20_000 }
     )
 
-    deleted += candidates.length
+    // A contagem vem do apagamento, não da seleção: uma vaga reaberta ou já
+    // removida por outra via não foi apagada aqui, e inflar o relatório do
+    // admin com ela seria mentir sobre o que a manutenção fez.
+    deleted += removed
     if (candidates.length < batchSize) break
   }
 

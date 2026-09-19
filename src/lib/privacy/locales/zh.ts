@@ -88,6 +88,7 @@ export const zh: PrivacyContent = {
     { category: 'AI 处理日志（已不含简历内容的运营指标）', period: '最多 365 天' },
     { category: '审计日志（合规与安全记录）', period: '最多 730 天' },
     { category: '支付/webhook 记录', period: '最多 90 天' },
+    { category: '雷达推荐历史（雷达向您展示过的职位）', period: '最长 730 天' },
   ],
 
   rightsHeading: '您的权利与选择',

@@ -151,10 +151,27 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
    * primeiro, faxina depois.
    */
   report.offerLogs = await step('radarOfferLog', async () => {
-    const r = await db.radarOfferLog.deleteMany({
-      where: { offeredAt: { lt: cutoff(RETENTION_DAYS.radarOfferLog) } },
-    })
-    return r.count
+    // Em lotes, como os expurgos de vaga. Um `deleteMany` único sobre uma
+    // tabela de dois anos de histórico estoura o `maxDuration = 60` da rota e
+    // passa a falhar IGUAL em toda execução — e uma etapa de conformidade
+    // travada é pior que uma etapa lenta.
+    const limite = cutoff(RETENTION_DAYS.radarOfferLog)
+    let apagadas = 0
+
+    for (let lote = 0; lote < 20; lote++) {
+      const alvos = await db.radarOfferLog.findMany({
+        where: { offeredAt: { lt: limite } },
+        select: { id: true },
+        take: 500,
+      })
+      if (alvos.length === 0) break
+
+      const r = await db.radarOfferLog.deleteMany({ where: { id: { in: alvos.map((a) => a.id) } } })
+      apagadas += r.count
+      if (alvos.length < 500) break
+    }
+
+    return apagadas
   })
 
   /**
