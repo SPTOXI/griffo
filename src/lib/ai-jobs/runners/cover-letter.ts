@@ -5,6 +5,7 @@ import { loadProfileContext } from '../../profile/server'
 import { buildResumeContext } from '../../analysis/resume-context'
 import { registerAiJobRunner } from '../engine'
 import { runSingleCallJob } from './single-call'
+import { assessWriting, bannedTermsPrompt } from '../../writing/slop'
 
 const str = { type: 'string' } as const
 
@@ -117,6 +118,10 @@ O QUE PRODUZIR:
 - "professionalSummary": resumo profissional para o TOPO DO CURRÍCULO, de 3 a 5 frases, na terceira pessoa implícita (sem "eu"), direcionado à vaga alvo. É o parágrafo de abertura do documento, não um texto de rede social.
 - "keywords": 6 a 10 termos do vocabulário da vaga e do mercado que foram efetivamente incorporados aos dois textos.
 
+${bannedTermsPrompt(lang)}
+
+Escreva como uma pessoa escreve: frases de comprimentos diferentes, fatos concretos do currículo (números, nomes de empresa, sistemas, prazos) em vez de adjetivos sobre o candidato. Se uma frase serviria para qualquer outra pessoa, ela não deveria estar na carta.
+
 Responda APENAS o JSON do schema, sem texto antes ou depois.`
 
     const aiResponse = await executeAiTask({
@@ -135,6 +140,21 @@ Responda APENAS o JSON do schema, sem texto antes ou depois.`
     })
 
     const result = parseCoverLetter(aiResponse.content)
+
+    // Medição, não bloqueio. Os limiares ainda não foram calibrados contra
+    // produção, e reprovar a carta da pessoa com base num número que nós
+    // mesmos chutamos seria pior que não medir. Primeiro a distribuição
+    // aparece no log; depois se decide o que fazer com ela.
+    const writing = assessWriting(result.coverLetter, lang)
+    if (writing.judged && writing.level !== 'ok') {
+      console.warn(
+        `[slop] carta ${writing.level} resume=${resume.id} ` +
+          `clichês/100=${writing.slopPer100.toFixed(2)} ` +
+          `variação=${writing.burstiness.toFixed(2)} ` +
+          `concretude/100=${writing.concretePer100.toFixed(2)} ` +
+          `termos=${writing.hits.join('|')} estruturas=${writing.structures.join('|')}`
+      )
+    }
 
     const stored: CoverLetterResult = {
       ...result,

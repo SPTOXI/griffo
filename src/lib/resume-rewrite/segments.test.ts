@@ -47,3 +47,22 @@ test('a dica de palavras-chave, quando presente, entra nas três seções', () =
     assert.match(spec.instruction, /React, TypeScript/)
   }
 })
+
+test('o prompt de reescrita proíbe clichê nos idiomas que têm léxico', () => {
+  for (const lang of ['pt', 'en', 'es'] as const) {
+    const specs = buildRewriteSegments('', lang)
+    for (const spec of specs) {
+      assert.match(spec.instruction, /NÃO use nenhuma|Do NOT use any|NO uses ninguna/)
+    }
+  }
+})
+
+test('IDIOMA SEM LÉXICO NÃO GANHA PROIBIÇÃO EM PORTUGUÊS', () => {
+  // Pedir num idioma que o modelo evite expressões de outro é ruído no prompt
+  // com aparência de cuidado — e a medição depois não acharia nada mesmo.
+  for (const lang of ['de', 'fr', 'ja', 'ar'] as const) {
+    for (const spec of buildRewriteSegments('', lang)) {
+      assert.doesNotMatch(spec.instruction, /NÃO use nenhuma destas expressões/)
+    }
+  }
+})

@@ -31,6 +31,7 @@ export interface RewriteSegmentSpec {
 }
 
 import type { Language } from '../i18n'
+import { bannedTermsPrompt, writingLangOf } from '../writing/slop'
 
 const SECTION_TITLES: Record<Language, { summary: string; experience: string; education: string; skills: string; languages: string }> = {
   pt: { summary: 'Resumo Profissional', experience: 'Experiência Profissional', education: 'Formação Acadêmica', skills: 'Habilidades Técnicas e Comportamentais', languages: 'Idiomas e Certificações' },
@@ -47,8 +48,20 @@ const SECTION_TITLES: Record<Language, { summary: string; experience: string; ed
   ko: { summary: '직무 요약 및 핵심 역량', experience: '주요 경력 및 프로젝트', education: '학력 사항', skills: '전문 스킬 및 핵심 역량', languages: '어학 능력 및 자격증' },
 }
 
+/**
+ * Proibição de clichê, quando há léxico para o idioma.
+ *
+ * Vazio nos nove idiomas sem léxico — ver `writingLangOf`. Pedir em português
+ * que o modelo evite expressões portuguesas num currículo em alemão seria
+ * ruído no prompt com aparência de cuidado.
+ */
+function slopRule(lang: Language): string {
+  const writingLang = writingLangOf(lang)
+  return writingLang ? `\n\n${bannedTermsPrompt(writingLang)}` : ''
+}
+
 /** Regras válidas para as três seções — idênticas às da chamada única anterior. */
-function sharedRules(keywordsHint: string): string {
+function sharedRules(keywordsHint: string, lang: Language): string {
   return `Você é um Redator Executivo Sênior especialista em currículos de alto impacto e otimização para sistemas de triagem (ATS).
 
 REGRAS OBRIGATÓRIAS, válidas para o que você produzir:
@@ -56,7 +69,7 @@ REGRAS OBRIGATÓRIAS, válidas para o que você produzir:
 2. Estruture a resposta usando formatação Markdown rica (títulos '## ', marcadores '- ', negritos '**').
 3. NÃO invente dados de contato. Se o currículo original não traz e-mail, telefone ou LinkedIn, omita o campo — nunca escreva marcadores como "[seu e-mail]" ou "[link]", que chegam ao recrutador exatamente assim, como se fossem o conteúdo.
 4. NÃO use emojis, ícones ou símbolos decorativos em nenhuma parte do documento. Ele é lido por sistemas de triagem (ATS), que os descartam ou corrompem, e a exportação em PDF não possui glifo para eles.
-5. Responda APENAS a seção pedida, em Markdown puro, sem comentário antes ou depois.`
+5. Responda APENAS a seção pedida, em Markdown puro, sem comentário antes ou depois.${slopRule(lang)}`
 }
 
 export function buildRewriteSegments(keywordsHint: string, lang: Language = 'pt'): RewriteSegmentSpec[] {
@@ -66,7 +79,7 @@ export function buildRewriteSegments(keywordsHint: string, lang: Language = 'pt'
     {
       id: 'header',
       maxTokens: 1200,
-      instruction: `${sharedRules(keywordsHint)}
+      instruction: `${sharedRules(keywordsHint, lang)}
 
 SUA SEÇÃO: Cabeçalho e Resumo Profissional — e SÓ ela.
 
@@ -79,7 +92,7 @@ NÃO produza experiências, formação, habilidades, idiomas ou certificações 
     {
       id: 'experience',
       maxTokens: 5000,
-      instruction: `${sharedRules(keywordsHint)}
+      instruction: `${sharedRules(keywordsHint, lang)}
 
 SUA SEÇÃO: '## ${titles.experience}' — e SÓ ela, completa, sem cortar nenhuma vaga do currículo original.
 
@@ -91,7 +104,7 @@ NÃO produza cabeçalho, resumo, formação, habilidades, idiomas ou certificaç
     {
       id: 'education',
       maxTokens: 2000,
-      instruction: `${sharedRules(keywordsHint)}
+      instruction: `${sharedRules(keywordsHint, lang)}
 
 SUA SEÇÃO: Formação Acadêmica, Habilidades e Idiomas/Certificações — e SÓ elas.
 
