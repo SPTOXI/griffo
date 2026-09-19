@@ -145,3 +145,4 @@ já lista os três documentos de continuidade; este é o quarto.
 | 2.126 | 7952 | vagas,i18n,infra | Campo Job.category + "vaga remota" sobrepondo (fase 2 de 4) — código pronto, push represado até `db push` do operador |
 | 2.127 | 8015 | vagas,produto,design-ui | Lista "vagas por país" na home (fase 3 de 4); bug real achado: seção desaparecia pós-hidratação por prop ausente num dos dois retornos de home-client.tsx |
 | 2.128 | 8059 | vagas,produto,radar,docs | Análise do `career-ops`; sinal de legitimidade de vaga (banco de talentos sai do Radar); calibração da nota (pausada por falta de clientes); `expired_by_age` que o schema previa e o código nunca fez; funil com 800 visitas e zero conversões |
+| 2.129 | 8222 | seguranca,ia,produto,docs | Análise do `linkedin-agent-skill`: 9 das 11 skills não servem e `li-profile` já existe; dois furos reais achados — tag characters vazando por baixo do escape de prompt (#76) e saída gerada de IA sem crivo nenhum (#77) |
