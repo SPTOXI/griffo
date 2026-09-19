@@ -26,6 +26,9 @@ export type AtsIssueCode =
   | 'columns_suspected'
   | 'no_metrics'
   | 'no_linkedin'
+  | 'keyword_stuffing'
+  | 'hidden_text_suspected'
+  | 'invisible_chars'
 
 export type AtsSeverity = 'critical' | 'warning' | 'tip'
 export type AtsLevel = 'good' | 'attention' | 'risk'
@@ -57,7 +60,49 @@ export const ISSUE_PENALTY: Record<AtsIssueCode, { points: number; severity: Ats
   no_phone: { points: 6, severity: 'warning' },
   no_metrics: { points: 6, severity: 'tip' },
   no_linkedin: { points: 3, severity: 'tip' },
+  keyword_stuffing: { points: 25, severity: 'critical' },
+  hidden_text_suspected: { points: 30, severity: 'critical' },
+  invisible_chars: { points: 15, severity: 'critical' },
 }
+
+/**
+ * ## Por que estas três REPROVAM, e com peso alto
+ *
+ * As outras checagens medem se o ATS CONSEGUE LER. Estas medem se alguém
+ * tentou enganá-lo — e a diferença importa porque, sem elas, o teste premiava
+ * exatamente a prática que mais prejudica quem a usa.
+ *
+ * Um currículo com palavras-chave repetidas trinta vezes em branco sobre
+ * branco passa por qualquer leitor automático: o texto ESTÁ lá. Pela régua
+ * antiga ele tirava nota boa. Só que recrutador humano abre o arquivo, marca
+ * o texto, vê o bloco escondido, e a candidatura morre ali — às vezes com a
+ * pessoa marcada na empresa inteira.
+ *
+ * Dizer "seu currículo passa" para quem fez isso seria o GriffoWork
+ * chancelando o truque que vai custar a vaga da pessoa. Por isso o peso é de
+ * reprovação, não de dica.
+ *
+ * ## O que NÃO dá para detectar aqui, e está dito
+ *
+ * Branco-sobre-branco e modo de renderização invisível vivem na ESTRUTURA do
+ * PDF, e o extrator (`pdf-parse`) devolve só texto — sem cor, sem posição, sem
+ * modo. Estas três checagens são indícios estatísticos sobre o texto extraído,
+ * não leitura da estrutura. Pegam o caso comum e não prometem mais que isso.
+ */
+
+/** Repetição a partir da qual um termo deixa de ser ênfase e vira empilhamento. */
+export const STUFFING_MIN_REPEATS = 12
+
+/** Fração do texto que um único termo precisa ocupar para acusar. */
+export const STUFFING_MIN_SHARE = 0.03
+
+/**
+ * Palavras por página acima das quais o texto não cabe fisicamente na folha.
+ *
+ * Um currículo denso bem diagramado chega a ~600 palavras por página. O dobro
+ * disso não é diagramação apertada: é texto que não está sendo exibido.
+ */
+export const MAX_WORDS_PER_PAGE = 1200
 
 export const MIN_WORDS = 150
 export const MAX_WORDS = 1400
@@ -107,7 +152,48 @@ export function levelFor(score: number): AtsLevel {
   return 'risk'
 }
 
-export function scoreAtsReadability(input: string | null | undefined): AtsCheckResult {
+/**
+ * Caracteres que não desenham nada mas entram na extração.
+ *
+ * Largura zero, junção, marca de ordenação, separadores de linha invisíveis.
+ * Aparecem em currículo honesto por acidente de copiar-e-colar — mas em
+ * QUANTIDADE só aparecem quando alguém está escondendo ou fatiando texto para
+ * driblar leitura.
+ */
+const INVISIBLE_RE = /[\u200b-\u200f\u2028\u2029\u202a-\u202e\u2060-\u206f\ufeff]/g
+
+/** Quantos invisíveis já deixam de ser acidente. */
+const INVISIBLE_TOLERANCE = 15
+
+/**
+ * Um único termo ocupando fatia grande demais do documento.
+ *
+ * Conta só palavras de 4+ letras: artigo e preposição repetem muito por
+ * natureza, e contá-los acusaria todo currículo escrito em prosa.
+ */
+function stuffedTerm(text: string, words: number): boolean {
+  if (words < 80) return false
+
+  const counts = new Map<string, number>()
+  for (const raw of normalize(text).split(/[^\p{L}\p{N}]+/u)) {
+    if (raw.length < 4) continue
+    counts.set(raw, (counts.get(raw) ?? 0) + 1)
+  }
+
+  for (const n of counts.values()) {
+    if (n >= STUFFING_MIN_REPEATS && n / words >= STUFFING_MIN_SHARE) return true
+  }
+  return false
+}
+
+export function scoreAtsReadability(
+  input: string | null | undefined,
+  /**
+   * Páginas do PDF, quando conhecidas. Ausente para texto colado — e ausência
+   * NÃO acusa nada, pela mesma regra do resto da casa.
+   */
+  options: { pages?: number } = {}
+): AtsCheckResult {
   const text = (input ?? '').replace(/\r/g, '')
   const rawLines = text.split('\n').map((l) => l.trim()).filter(Boolean)
   const spaced = text.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length
@@ -123,6 +209,14 @@ export function scoreAtsReadability(input: string | null | undefined): AtsCheckR
 
   const lines = rawLines.map(normalize)
   const flat = normalize(text)
+
+  // Sinais de manipulação. Vêm antes das checagens de legibilidade porque
+  // pesam mais: não adianta dizer que o texto é legível se ele foi plantado.
+  if ((text.match(INVISIBLE_RE) || []).length > INVISIBLE_TOLERANCE) found.add('invisible_chars')
+  if (stuffedTerm(text, words)) found.add('keyword_stuffing')
+  if (options.pages && options.pages > 0 && words / options.pages > MAX_WORDS_PER_PAGE) {
+    found.add('hidden_text_suspected')
+  }
 
   if (words < MIN_WORDS) found.add('too_short')
   if (words > MAX_WORDS) found.add('too_long')

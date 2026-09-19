@@ -1,4 +1,5 @@
 import { LANGUAGE_DIRECTIVE } from '../i18n/server'
+import { wrapUntrustedDocument } from './untrusted'
 import { marketPromptContext, resolveMarket, type MarketConfig } from '../market'
 import type { Language } from '../i18n'
 
@@ -59,17 +60,18 @@ export function buildResumeContext({
     targetJob || targetJobDescription
       ? `VAGA / CARGO ALVO DESEJADO PELO CANDIDATO:
 Cargo: ${targetJob || 'Não especificado'}
-Descrição/Requisitos da Vaga:
-${targetJobDescription || 'Nenhuma descrição fornecida.'}`
+${
+          targetJobDescription
+            ? wrapUntrustedDocument(targetJobDescription, 'descrição da vaga informada pelo candidato')
+            : 'Descrição/Requisitos da Vaga: nenhuma descrição fornecida.'
+        }`
       : 'VAGA ALVO: nenhuma vaga específica foi fornecida.'
 
   return `${LANGUAGE_DIRECTIVE[lang]}
 
 ${marketPromptContext(resolvedMarket)}
 ${profileContext ? `\n${profileContext}\n` : ''}
-=== CURRÍCULO DO CANDIDATO ===
-${resumeContent}
-=== FIM DO CURRÍCULO ===
+${wrapUntrustedDocument(resumeContent, 'currículo do candidato')}
 
 ${jobBlock}`
 }

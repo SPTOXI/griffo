@@ -98,6 +98,9 @@ const pt: AtsCheckCopy = {
     columns_suspected: { title: 'Layout em colunas ou tabelas', why: 'Colunas costumam ser lidas fora de ordem, misturando cargos, datas e empresas.' },
     no_metrics: { title: 'Nenhum resultado em números', why: 'Números (%, valores, quantidades) destacam você de quem só lista tarefas.' },
     no_linkedin: { title: 'Sem link do LinkedIn', why: 'Recrutadores costumam conferir o perfil antes de chamar.' },
+    keyword_stuffing: { title: 'Palavras-chave repetidas em excesso', why: 'Repetir o mesmo termo dezenas de vezes passa pelo robô, mas o recrutador abre o arquivo e vê. É o truque que mais queima candidatura.' },
+    hidden_text_suspected: { title: 'Texto que não aparece na página', why: 'Há muito mais texto do que cabe nas páginas deste arquivo. Texto escondido é lido pelo robô e, quando descoberto, elimina o candidato.' },
+    invisible_chars: { title: 'Caracteres invisíveis no arquivo', why: 'Símbolos sem largura foram inseridos no meio do texto. Costumam vir de tentativa de driblar a leitura e deixam o arquivo suspeito.' },
   },
   nextTitle: 'Legível é o primeiro passo. E o conteúdo?',
   nextText:
@@ -161,6 +164,9 @@ const en: AtsCheckCopy = {
     columns_suspected: { title: 'Columns or tables layout', why: 'Columns are often read out of order, mixing titles, dates and employers.' },
     no_metrics: { title: 'No results in numbers', why: 'Numbers (%, amounts, counts) set you apart from task lists.' },
     no_linkedin: { title: 'No LinkedIn link', why: 'Recruiters often check your profile before reaching out.' },
+    keyword_stuffing: { title: 'Keywords repeated too often', why: 'Repeating the same term dozens of times gets past the robot, but the recruiter opens the file and sees it. It is the trick that sinks the most applications.' },
+    hidden_text_suspected: { title: 'Text that does not show on the page', why: 'There is far more text than fits the pages of this file. Hidden text is read by the robot and, once found, eliminates the candidate.' },
+    invisible_chars: { title: 'Invisible characters in the file', why: 'Zero-width symbols were inserted into the text. They usually come from attempts to game the parser and make the file look suspicious.' },
   },
   nextTitle: 'Readable is step one. What about the content?',
   nextText: 'Create a free account and see your resume’s 8 scores — impact, clarity, keywords and fit for the job you want.',
@@ -223,6 +229,9 @@ const es: AtsCheckCopy = {
     columns_suspected: { title: 'Diseño en columnas o tablas', why: 'Las columnas suelen leerse desordenadas y mezclan cargos, fechas y empresas.' },
     no_metrics: { title: 'Ningún resultado en números', why: 'Los números (%, montos, cantidades) te distinguen de quien solo lista tareas.' },
     no_linkedin: { title: 'Sin enlace de LinkedIn', why: 'Los reclutadores suelen revisar el perfil antes de contactar.' },
+    keyword_stuffing: { title: 'Palabras clave repetidas en exceso', why: 'Repetir el mismo término decenas de veces engaña al robot, pero el reclutador abre el archivo y lo ve. Es el truco que más hunde candidaturas.' },
+    hidden_text_suspected: { title: 'Texto que no aparece en la página', why: 'Hay mucho más texto del que cabe en las páginas de este archivo. El texto oculto lo lee el robot y, al descubrirse, elimina al candidato.' },
+    invisible_chars: { title: 'Caracteres invisibles en el archivo', why: 'Se insertaron símbolos sin ancho en el texto. Suelen venir de intentos de burlar la lectura y vuelven el archivo sospechoso.' },
   },
   nextTitle: 'Legible es el primer paso. ¿Y el contenido?',
   nextText: 'Crea tu cuenta gratis y mira las 8 notas de tu CV: impacto, claridad, palabras clave y ajuste a la vacante.',
@@ -338,6 +347,18 @@ const de: AtsCheckCopy = {
     "no_linkedin": {
       "title": "Kein LinkedIn-Link",
       "why": "Recruiter prüfen oft das Profil, bevor sie sich melden."
+    },
+    "keyword_stuffing": {
+      "title": "Schlüsselwörter zu oft wiederholt",
+      "why": "Denselben Begriff dutzendfach zu wiederholen täuscht den Roboter, aber die Personalabteilung öffnet die Datei und sieht es. Dieser Trick beendet die Bewerbung."
+    },
+    "hidden_text_suspected": {
+      "title": "Text, der auf der Seite nicht erscheint",
+      "why": "Es gibt weit mehr Text, als auf die Seiten dieser Datei passt. Versteckten Text liest der Roboter – wird er entdeckt, scheidet die Bewerbung aus."
+    },
+    "invisible_chars": {
+      "title": "Unsichtbare Zeichen in der Datei",
+      "why": "Zeichen ohne Breite wurden in den Text eingefügt. Sie stammen meist aus Täuschungsversuchen und lassen die Datei verdächtig wirken."
     }
   },
   "nextTitle": "Lesbar ist der erste Schritt. Und der Inhalt?",
@@ -463,6 +484,18 @@ const fr: AtsCheckCopy = {
     "no_linkedin": {
       "title": "Pas de lien LinkedIn",
       "why": "Les recruteurs consultent souvent le profil avant de contacter."
+    },
+    "keyword_stuffing": {
+      "title": "Mots-clés répétés à l’excès",
+      "why": "Répéter le même terme des dizaines de fois trompe le robot, mais le recruteur ouvre le fichier et le voit. C’est la ruse qui coule le plus de candidatures."
+    },
+    "hidden_text_suspected": {
+      "title": "Texte qui n’apparaît pas sur la page",
+      "why": "Il y a bien plus de texte que ne peuvent contenir les pages de ce fichier. Le texte caché est lu par le robot et, une fois découvert, élimine le candidat."
+    },
+    "invisible_chars": {
+      "title": "Caractères invisibles dans le fichier",
+      "why": "Des symboles sans largeur ont été insérés dans le texte. Ils viennent souvent de tentatives de contournement et rendent le fichier suspect."
     }
   },
   "nextTitle": "Lisible, c’est la première étape. Et le contenu ?",
@@ -588,6 +621,18 @@ const it: AtsCheckCopy = {
     "no_linkedin": {
       "title": "Nessun link LinkedIn",
       "why": "I recruiter spesso controllano il profilo prima di contattarti."
+    },
+    "keyword_stuffing": {
+      "title": "Parole chiave ripetute in eccesso",
+      "why": "Ripetere lo stesso termine decine di volte inganna il robot, ma il recruiter apre il file e lo vede. È il trucco che affonda più candidature."
+    },
+    "hidden_text_suspected": {
+      "title": "Testo che non appare nella pagina",
+      "why": "C’è molto più testo di quanto entri nelle pagine di questo file. Il testo nascosto viene letto dal robot e, una volta scoperto, elimina il candidato."
+    },
+    "invisible_chars": {
+      "title": "Caratteri invisibili nel file",
+      "why": "Sono stati inseriti simboli a larghezza zero nel testo. Di solito derivano da tentativi di aggirare la lettura e rendono il file sospetto."
     }
   },
   "nextTitle": "Leggibile è il primo passo. E il contenuto?",
@@ -713,6 +758,18 @@ const nl: AtsCheckCopy = {
     "no_linkedin": {
       "title": "Geen LinkedIn-link",
       "why": "Recruiters bekijken vaak je profiel voordat ze contact opnemen."
+    },
+    "keyword_stuffing": {
+      "title": "Te vaak herhaalde trefwoorden",
+      "why": "Dezelfde term tientallen keren herhalen misleidt de robot, maar de recruiter opent het bestand en ziet het. Deze truc kost de meeste sollicitaties."
+    },
+    "hidden_text_suspected": {
+      "title": "Tekst die niet op de pagina staat",
+      "why": "Er is veel meer tekst dan op de pagina’s van dit bestand past. Verborgen tekst wordt door de robot gelezen en leidt bij ontdekking tot afwijzing."
+    },
+    "invisible_chars": {
+      "title": "Onzichtbare tekens in het bestand",
+      "why": "Er zijn tekens zonder breedte in de tekst gezet. Die komen meestal uit pogingen het uitlezen te omzeilen en maken het bestand verdacht."
     }
   },
   "nextTitle": "Leesbaar is stap één. En de inhoud?",
@@ -838,6 +895,18 @@ const sv: AtsCheckCopy = {
     "no_linkedin": {
       "title": "Ingen LinkedIn-länk",
       "why": "Rekryterare kollar ofta profilen innan de hör av sig."
+    },
+    "keyword_stuffing": {
+      "title": "Nyckelord upprepas för ofta",
+      "why": "Att upprepa samma ord dussintals gånger lurar roboten, men rekryteraren öppnar filen och ser det. Det är knepet som sänker flest ansökningar."
+    },
+    "hidden_text_suspected": {
+      "title": "Text som inte syns på sidan",
+      "why": "Det finns långt mer text än vad som ryms på filens sidor. Dold text läses av roboten och leder till att kandidaten gallras bort när den upptäcks."
+    },
+    "invisible_chars": {
+      "title": "Osynliga tecken i filen",
+      "why": "Tecken utan bredd har lagts in i texten. De kommer oftast från försök att kringgå inläsningen och gör filen misstänkt."
     }
   },
   "nextTitle": "Läsbart är första steget. Och innehållet?",
@@ -963,6 +1032,18 @@ const ja: AtsCheckCopy = {
     "no_linkedin": {
       "title": "LinkedInのリンクがありません",
       "why": "採用担当者は連絡前にプロフィールを確認することがよくあります。"
+    },
+    "keyword_stuffing": {
+      "title": "キーワードの過剰な繰り返し",
+      "why": "同じ語を何十回も繰り返せば機械は通せますが、採用担当者はファイルを開いて気づきます。応募そのものを失う手口です。"
+    },
+    "hidden_text_suspected": {
+      "title": "ページに表示されない文字",
+      "why": "このファイルのページに収まる量をはるかに超える文字があります。隠された文字は機械に読まれ、発覚すれば不採用につながります。"
+    },
+    "invisible_chars": {
+      "title": "ファイル内の不可視文字",
+      "why": "幅のない記号が本文に挿入されています。読み取り回避の試みであることが多く、ファイルが不審に見えます。"
     }
   },
   "nextTitle": "読み取れるのは第一歩。内容はどうでしょう？",
@@ -1088,6 +1169,18 @@ const ko: AtsCheckCopy = {
     "no_linkedin": {
       "title": "LinkedIn 링크가 없습니다",
       "why": "담당자는 연락하기 전에 프로필을 확인하는 경우가 많습니다."
+    },
+    "keyword_stuffing": {
+      "title": "키워드가 지나치게 반복됨",
+      "why": "같은 단어를 수십 번 반복하면 시스템은 통과하지만, 채용 담당자가 파일을 열면 보입니다. 지원 자체를 날리는 수법입니다."
+    },
+    "hidden_text_suspected": {
+      "title": "페이지에 보이지 않는 텍스트",
+      "why": "이 파일의 페이지에 들어갈 수 있는 양보다 훨씬 많은 텍스트가 있습니다. 숨겨진 텍스트는 시스템이 읽으며, 발각되면 탈락으로 이어집니다."
+    },
+    "invisible_chars": {
+      "title": "파일 안의 보이지 않는 문자",
+      "why": "너비가 없는 기호가 본문에 삽입되어 있습니다. 대개 판독을 우회하려는 시도에서 나오며 파일을 의심스럽게 만듭니다."
     }
   },
   "nextTitle": "읽히는 것은 첫걸음입니다. 내용은요?",
@@ -1213,6 +1306,18 @@ const zh: AtsCheckCopy = {
     "no_linkedin": {
       "title": "没有 LinkedIn 链接",
       "why": "招聘人员常在联系前查看你的主页。"
+    },
+    "keyword_stuffing": {
+      "title": "关键词重复过多",
+      "why": "把同一个词重复几十次能骗过机器，但招聘人员打开文件就会看到。这类手法会直接断送这次应聘。"
+    },
+    "hidden_text_suspected": {
+      "title": "页面上看不到的文字",
+      "why": "文字量远超这份文件页面能容纳的范围。隐藏文字会被机器读取，一旦被发现就会被淘汰。"
+    },
+    "invisible_chars": {
+      "title": "文件中的隐形字符",
+      "why": "正文中被插入了零宽度符号。这通常来自规避解析的尝试，会让文件显得可疑。"
     }
   },
   "nextTitle": "能被读取只是第一步，内容呢？",
@@ -1338,6 +1443,18 @@ const ar: AtsCheckCopy = {
     "no_linkedin": {
       "title": "لا يوجد رابط LinkedIn",
       "why": "كثيرًا ما يراجع مسؤولو التوظيف الملف الشخصي قبل التواصل."
+    },
+    "keyword_stuffing": {
+      "title": "تكرار مفرط للكلمات المفتاحية",
+      "why": "تكرار المصطلح نفسه عشرات المرات يخدع النظام، لكن المسؤول عن التوظيف يفتح الملف ويراه. حيلة كهذه تُسقط الترشيح."
+    },
+    "hidden_text_suspected": {
+      "title": "نص لا يظهر على الصفحة",
+      "why": "يوجد نص أكثر بكثير مما تتسع له صفحات هذا الملف. النص المخفي يقرأه النظام، وعند اكتشافه يُستبعد المرشح."
+    },
+    "invisible_chars": {
+      "title": "محارف غير مرئية داخل الملف",
+      "why": "أُدرجت رموز عديمة العرض داخل النص. تأتي عادةً من محاولات للالتفاف على القراءة وتجعل الملف مريبًا."
     }
   },
   "nextTitle": "المقروئية هي الخطوة الأولى. ماذا عن المحتوى؟",
