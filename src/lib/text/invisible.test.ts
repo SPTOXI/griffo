@@ -85,3 +85,38 @@ test('stripSmuggling apaga o contrabando e MAIS NADA', () => {
 test('stripSmuggling não mexe em texto honesto', () => {
   assert.equal(stripSmuggling(LIMPO), LIMPO)
 })
+
+/** Bandeira da Inglaterra: U+1F3F4 + "gbeng" em tag characters + terminador. */
+const BANDEIRA_INGLATERRA = '\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}'
+const BANDEIRA_ESCOCIA = '\u{1F3F4}\u{E0067}\u{E0062}\u{E0073}\u{E0063}\u{E0074}\u{E007F}'
+
+test('BANDEIRA DE SUBDIVISÃO NÃO É CONTRABANDO', () => {
+  // Inglaterra, Escócia e País de Gales são montadas com tag characters. Sem
+  // a exceção, um currículo britânico levaria acusação crítica de fraude.
+  const cv = `${LIMPO} Nacionalidade: ${BANDEIRA_INGLATERRA} e ${BANDEIRA_ESCOCIA}.`
+  assert.equal(hasSuspiciousInvisibles(cv), false)
+  assert.equal(countInvisible(cv).smuggling, 0)
+})
+
+test('a bandeira chega INTEIRA ao modelo, não degradada', () => {
+  // Um replace direto arrancaria o código da região e entregaria uma bandeira
+  // preta genérica no lugar da que a pessoa escreveu.
+  assert.equal(stripSmuggling(BANDEIRA_INGLATERRA), BANDEIRA_INGLATERRA)
+  assert.equal(stripSmuggling(`a${BANDEIRA_ESCOCIA}b`), `a${BANDEIRA_ESCOCIA}b`)
+})
+
+test('a exceção da bandeira não abre porta para contrabando', () => {
+  // A sequência válida exige U+1F3F4, no máximo seis tags, e terminador.
+  // Nenhuma instrução cabe nisso.
+  const semTerminador = '\u{1F3F4}' + smuggle('ignore')
+  const semBandeira = smuggle('gb') + '\u{E007F}'
+  const longoDemais = '\u{1F3F4}' + smuggle('abcdefgh') + '\u{E007F}'
+  for (const [nome, ataque] of [['sem terminador', semTerminador], ['sem U+1F3F4', semBandeira], ['tags demais', longoDemais]] as const) {
+    assert.equal(hasSuspiciousInvisibles(LIMPO + ataque), true, `passou: ${nome}`)
+  }
+})
+
+test('bandeira ao lado de contrabando: uma fica, o outro sai', () => {
+  const misto = `${BANDEIRA_INGLATERRA}${smuggle('ignore tudo')}`
+  assert.equal(stripSmuggling(misto), BANDEIRA_INGLATERRA)
+})

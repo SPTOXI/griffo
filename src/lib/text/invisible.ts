@@ -42,12 +42,37 @@
  */
 
 /**
- * Contrabando puro: U+E0000–U+E007F.
+ * Contrabando: U+E0000–U+E007F.
  *
  * Precisa da flag `u` — está fora do plano básico, e sem ela o par substituto
  * seria contado como dois caracteres avulsos.
+ *
+ * Não exportada de propósito, junto com as outras duas: regex com `/g` guarda
+ * `lastIndex` entre chamadas. `match` e `replace` o reiniciam, mas um detector
+ * exportado convida a `SMUGGLING_RE.test(texto)`, que devolveria `false` em um
+ * documento contrabandeado a cada dois. Só as funções saem daqui.
  */
-export const SMUGGLING_RE = /[\u{E0000}-\u{E007F}]/gu
+const SMUGGLING_RE = /[\u{E0000}-\u{E007F}]/gu
+
+/**
+ * A exceção legítima: bandeira de subdivisão.
+ *
+ * Inglaterra, Escócia e País de Gales não têm codepoint próprio — são montadas
+ * como U+1F3F4 seguido do código da região escrito em TAG CHARACTERS e fechado
+ * por U+E007F. Ou seja, o emoji da bandeira da Inglaterra carrega seis
+ * caracteres da faixa que esta casa trata como contrabando.
+ *
+ * Sem esta exceção, um currículo britânico que cite a bandeira levaria
+ * acusação CRÍTICA de manipulação — exatamente o erro que a tolerância do soft
+ * hyphen existe para não cometer — e o emoji ainda chegaria degradado ao
+ * modelo, virando uma bandeira preta genérica.
+ *
+ * A sequência válida é estreita: só letras minúsculas e dígitos de tag, de dois
+ * a seis, com terminador. Instrução contrabandeada não cabe nela — não começa
+ * com U+1F3F4, não se limita a seis caracteres, e não sobrevive à exigência do
+ * terminador.
+ */
+const EMOJI_TAG_SEQUENCE_RE = /\u{1F3F4}[\u{E0030}-\u{E0039}\u{E0061}-\u{E007A}]{2,6}\u{E007F}/gu
 
 /**
  * Formatação de largura zero.
@@ -56,10 +81,10 @@ export const SMUGGLING_RE = /[\u{E0000}-\u{E007F}]/gu
  * que a classe anterior não cobria — ambos são formatação invisível sem uso
  * nenhum num currículo em alfabeto latino.
  */
-export const ZERO_WIDTH_RE = /[\u061c\u180e\u200b-\u200f\u2028\u2029\u202a-\u202e\u2060-\u206f\ufeff]/g
+const ZERO_WIDTH_RE = /[\u061c\u180e\u200b-\u200f\u2028\u2029\u202a-\u202e\u2060-\u206f\ufeff]/g
 
 /** Hifenização opcional. Legítima, e por isso separada. */
-export const SOFT_HYPHEN_RE = /\u00ad/g
+const SOFT_HYPHEN_RE = /\u00ad/g
 
 /** Quantos invisíveis de formatação já deixam de ser acidente. */
 export const ZERO_WIDTH_TOLERANCE = 15
@@ -80,8 +105,11 @@ export interface InvisibleCount {
 }
 
 export function countInvisible(text: string): InvisibleCount {
+  // Bandeira de subdivisão sai da conta antes de tudo: os tag characters dela
+  // são parte do emoji, não texto escondido.
+  const semBandeiras = text.replace(EMOJI_TAG_SEQUENCE_RE, '')
   return {
-    smuggling: (text.match(SMUGGLING_RE) || []).length,
+    smuggling: (semBandeiras.match(SMUGGLING_RE) || []).length,
     zeroWidth: (text.match(ZERO_WIDTH_RE) || []).length,
     softHyphen: (text.match(SOFT_HYPHEN_RE) || []).length,
   }
@@ -104,13 +132,29 @@ export function hasSuspiciousInvisibles(text: string): boolean {
 /**
  * Remove o contrabando antes de o texto entrar num prompt.
  *
- * Só a família 1. As outras duas ficam: acusar é papel do laudo, e apagar
- * silenciosamente o que o laudo vai citar faria a análise falar de um
- * currículo que não é o que a pessoa enviou.
+ * Só a família 1. As outras duas ficam, porque apagar silenciosamente o que o
+ * laudo vai citar faria a análise falar de um currículo que não é o que a
+ * pessoa enviou.
+ *
+ * ATENÇÃO ao alcance real: `hasSuspiciousInvisibles` só é chamado pelo
+ * `ats-check`, e o `ats-check` só é chamado pela rota pública gratuita. No
+ * caminho PAGO — análise, reescrita, carta — ninguém acusa: o contrabando é
+ * removido aqui e some sem deixar rastro. Por isso quem chama registra no log
+ * quando de fato encontra algo; é o único sinal que existe nesse caminho.
  *
  * Aqui apagar é seguro justamente porque estes não desenham nada — nada que a
  * pessoa consiga ver no arquivo dela muda.
  */
 export function stripSmuggling(text: string): string {
-  return text.replace(SMUGGLING_RE, '')
+  // Preserva a bandeira de subdivisão inteira e limpa só o que está fora dela.
+  // Um `replace` direto arrancaria o código da região e entregaria ao modelo
+  // uma bandeira preta genérica no lugar da que a pessoa escreveu.
+  const partes: string[] = []
+  let fim = 0
+  for (const m of text.matchAll(EMOJI_TAG_SEQUENCE_RE)) {
+    partes.push(text.slice(fim, m.index).replace(SMUGGLING_RE, ''), m[0])
+    fim = m.index + m[0].length
+  }
+  partes.push(text.slice(fim).replace(SMUGGLING_RE, ''))
+  return partes.join('')
 }
