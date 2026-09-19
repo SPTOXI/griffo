@@ -68,10 +68,15 @@ export async function closeStaleJobs(options: { now?: Date; staleDays?: number }
 /**
  * Apaga vagas encerradas há muito tempo.
  *
- * **Vaga com alerta nunca é apagada.** `RadarAlert` tem `onDelete: Cascade`,
- * então apagar a vaga apagaria junto o registro de que alguém foi avisado sobre
- * ela — destruindo o histórico da pessoa para economizar espaço. São poucas
- * linhas; não vale a troca.
+ * **Vaga com alerta não é apagada POR AQUI.** `RadarAlert` tem
+ * `onDelete: Cascade`, então apagar a vaga apagaria junto o registro de que
+ * alguém foi avisado sobre ela — e este caminho, que existe só para economizar
+ * espaço, não tem por que pagar esse preço.
+ *
+ * Isso vale para este expurgo, não para o sistema: `purgeAgedJobs`, mais
+ * abaixo, apaga vaga com alerta e tudo aos 180 dias. A diferença é que ele
+ * copia a memória para `RadarOfferLog` antes, e este aqui não precisa copiar
+ * nada justamente porque só toca vaga que não tem alerta nenhum.
  *
  * Feito em lotes para não montar uma transação gigante no primeiro expurgo,
  * quando o acúmulo pode ser grande.

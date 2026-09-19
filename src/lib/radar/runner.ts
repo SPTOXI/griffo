@@ -556,11 +556,16 @@ async function pruneUnfoundedAlerts(
 
   // Memória antes do apagamento. O alerta retirado deixa de ser recomendação,
   // mas continua tendo acontecido — ver o cabeçalho de `offer-log.server.ts`.
-  await preserveOffers(
+  const preserved = await preserveOffers(
     alerts
       .filter((a) => unfounded.includes(a.id))
       .map((a) => ({ userId, jobId: a.jobId, createdAt: a.createdAt, job: a.job }))
   )
+
+  // Memória não preservada, alerta não apagado. O alerta sobrevive mais uma
+  // rodada — custo nenhum — e a próxima tenta de novo. Apagar assim mesmo
+  // destruiria em silêncio o histórico que a preservação existe para salvar.
+  if (!preserved.ok) return 0
 
   const res = await db.radarAlert.deleteMany({ where: { id: { in: unfounded } } })
   console.warn(
@@ -622,9 +627,13 @@ export async function runForUser(userId: string): Promise<UserRunResult> {
       where: { userId },
       select: { jobId: true, createdAt: true, job: true },
     })
-    await preserveOffers(doomed.map((a) => ({ userId, ...a })))
+    const kept = await preserveOffers(doomed.map((a) => ({ userId, ...a })))
 
-    const removed = await db.radarAlert.deleteMany({ where: { userId } })
+    // Mesma regra do `pruneUnfoundedAlerts`: sem memória preservada, não se
+    // apaga. A limpeza fica para a rodada seguinte.
+    const removed = kept.ok
+      ? await db.radarAlert.deleteMany({ where: { userId } })
+      : { count: 0 }
     if (removed.count > 0) {
       console.warn(
         `[radar] usuário ${userId}: perfil sem sinal profissional; ` +

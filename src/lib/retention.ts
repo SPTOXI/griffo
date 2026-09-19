@@ -140,6 +140,24 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
   })
 
   /**
+   * O teto do histórico de ofertas vem ANTES dos dois expurgos de vaga, de
+   * propósito.
+   *
+   * Esta rota tem `maxDuration = 60`, e `purgeAgedJobs` pode gastar quase tudo
+   * num acervo acumulado (até 20 transações de 20s). Se ele viesse antes, uma
+   * execução carregada seria interrompida sem nunca chegar aqui, e o teto de
+   * retenção de DADO PESSOAL nunca se aplicaria — enquanto a etapa que só
+   * economiza espaço rodaria sempre. A ordem certa é a inversa: conformidade
+   * primeiro, faxina depois.
+   */
+  report.offerLogs = await step('radarOfferLog', async () => {
+    const r = await db.radarOfferLog.deleteMany({
+      where: { offeredAt: { lt: cutoff(RETENTION_DAYS.radarOfferLog) } },
+    })
+    return r.count
+  })
+
+  /**
    * Vagas encerradas não são dado pessoal — são anúncio público fora do ar. O
    * motivo de apagá-las é espaço, não conformidade, e por isso o critério é
    * diferente: vaga sobre a qual alguém foi avisado fica — até os 180 dias,
@@ -157,13 +175,6 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
    * a memória de que ela lhe foi oferecida.
    */
   report.agedJobs = await step('agedJob', () => purgeAgedJobs())
-
-  report.offerLogs = await step('radarOfferLog', async () => {
-    const r = await db.radarOfferLog.deleteMany({
-      where: { offeredAt: { lt: cutoff(RETENTION_DAYS.radarOfferLog) } },
-    })
-    return r.count
-  })
 
   return report
 }

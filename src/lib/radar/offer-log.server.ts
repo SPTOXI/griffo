@@ -55,10 +55,21 @@ export interface AlertToPreserve {
  * histórico anterior ao deploy, que nunca chegaria ao expurgo para ser
  * copiado.
  *
- * Idempotente pelo `@@unique([userId, jobId])`; nunca lança, porque preservar
- * memória não pode ser motivo para derrubar a manutenção que a invoca.
+ * Idempotente pelo `@@unique([userId, jobId])`, e **nunca lança** — mas
+ * SINALIZA a falha, e isso é o ponto.
+ *
+ * A primeira versão devolvia só a contagem e engolia o erro. Quem chama
+ * apagava em seguida de qualquer jeito, então uma falha aqui — a tabela ainda
+ * não existir no banco, antes do `prisma db push`, é o caso óbvio — destruía
+ * em silêncio exatamente o histórico que esta função existe para salvar.
+ *
+ * Agora quem chama sabe, e a regra é simples: **memória não preservada,
+ * alerta não apagado**. O alerta sobrevive mais uma rodada, o que não custa
+ * nada, e a rodada seguinte tenta de novo.
  */
-export async function preserveOffers(alerts: readonly AlertToPreserve[]): Promise<number> {
+export async function preserveOffers(
+  alerts: readonly AlertToPreserve[]
+): Promise<{ ok: boolean; count: number }> {
   const memories = alerts
     .filter((a) => a.job)
     .map((a) => ({
@@ -70,14 +81,16 @@ export async function preserveOffers(alerts: readonly AlertToPreserve[]): Promis
       offeredAt: a.createdAt,
     }))
 
-  if (memories.length === 0) return 0
+  if (memories.length === 0) return { ok: true, count: 0 }
 
   try {
     const res = await db.radarOfferLog.createMany({ data: memories, skipDuplicates: true })
-    return res.count
+    return { ok: true, count: res.count }
   } catch (e: any) {
-    console.warn('[radar] preservação de ofertas falhou:', e?.message || e)
-    return 0
+    console.error(
+      `[radar] preservação de ofertas FALHOU — apagamento abortado para não perder histórico: ${e?.message || e}`
+    )
+    return { ok: false, count: 0 }
   }
 }
 
