@@ -54,6 +54,7 @@ export async function POST(req: Request) {
     }
 
     const { pdfBase64, visitorId } = parsed.data
+    let pages: number | undefined
     const bot = isLikelyBot(req.headers.get('user-agent'))
     const ipKey = ipKeyFor(clientIpFrom(req.headers))
     const admin = await getAdminUser().catch(() => null)
@@ -101,9 +102,13 @@ export async function POST(req: Request) {
       }
       // NO_TEXT_LAYER: `text` fica vazio e o avaliador devolve `no_text`.
       text = decoded.text || ''
+      pages = decoded.pages
     }
 
-    const result = scoreAtsReadability(text)
+    // `pages` só existe para a checagem de densidade, que detecta texto
+    // escondido. Texto colado não tem páginas, e aí a checagem não roda —
+    // dado ausente não acusa.
+    const result = scoreAtsReadability(text, { pages })
 
     if (claimId) {
       const country = edgeCountry(req) || null

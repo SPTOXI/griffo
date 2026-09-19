@@ -14,6 +14,40 @@ import 'server-only'
  * PDF sem camada de texto (escaneado) devolve string vazia aqui — é o caso que
  * `extractPdfWithVision` cobre.
  */
+/**
+ * Páginas do PDF, quando a biblioteca informa.
+ *
+ * Existe por causa de uma checagem só: densidade de texto por página. Um
+ * currículo denso e bem diagramado chega a ~600 palavras por página; o dobro
+ * disso não é diagramação apertada, é texto que não está sendo exibido. Sem a
+ * contagem de páginas não há como notar isso a partir do texto extraído.
+ *
+ * `undefined` quando a biblioteca não informa — e aí a checagem simplesmente
+ * não acontece, pela mesma regra do resto da casa: dado ausente não acusa.
+ */
+export async function parsePdfPages(buffer: Buffer): Promise<number | undefined> {
+  try {
+    const mod: any = await import('pdf-parse')
+    const pdfParse: any = mod?.default ?? mod
+
+    if (mod?.PDFParse || pdfParse?.PDFParse) {
+      const PDFParse = mod.PDFParse ?? pdfParse.PDFParse
+      const parser = new PDFParse({ data: buffer })
+      const res: any = await parser.getText()
+      const n = res?.numpages ?? res?.numPages ?? res?.total ?? res?.pages?.length
+      return typeof n === 'number' && n > 0 ? n : undefined
+    }
+    if (typeof pdfParse === 'function') {
+      const res: any = await pdfParse(buffer)
+      return typeof res?.numpages === 'number' && res.numpages > 0 ? res.numpages : undefined
+    }
+  } catch {
+    // Contagem de páginas é acessório: se falhar, a checagem de densidade
+    // apenas não roda. Nunca vale derrubar a extração por causa dela.
+  }
+  return undefined
+}
+
 export async function parsePdfBuffer(buffer: Buffer): Promise<string> {
   try {
     // `import()` em vez de `require()`: o pacote declara `"type": "module"` e
@@ -60,6 +94,8 @@ export const MAX_PDF_BASE64_CHARS = Math.ceil((MAX_PDF_BYTES * 4) / 3) + 1024
 
 export interface PdfDecodeResult {
   text: string
+  /** Páginas do arquivo, quando conhecidas. Ver `parsePdfPages`. */
+  pages?: number
   error?: string
   /**
    * Causa da falha, para que o chamador possa reagir a cada uma de um jeito
@@ -119,7 +155,9 @@ export async function parsePdfBase64(base64: string): Promise<PdfDecodeResult> {
     }
   }
 
-  return { text }
+  // A contagem só é buscada no caminho de sucesso: num PDF sem texto ela não
+  // serve para nada, e custaria uma segunda passada pela biblioteca à toa.
+  return { text, pages: await parsePdfPages(buffer) }
 }
 
 /**

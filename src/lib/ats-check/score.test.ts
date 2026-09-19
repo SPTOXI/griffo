@@ -110,3 +110,69 @@ test('japonês e chinês sem espaços não são tratados como currículo curto',
   const codes = scoreAtsReadability(zh).issues.map((i) => i.code)
   assert.ok(!codes.includes('too_short'), JSON.stringify(codes))
 })
+
+/* --- Sinais de manipulação ------------------------------------------------ */
+
+test('currículo honesto não é acusado de manipulação', () => {
+  const r = scoreAtsReadability(GOOD)
+  const codes = r.issues.map((i) => i.code)
+  assert.ok(!codes.includes('keyword_stuffing'))
+  assert.ok(!codes.includes('invisible_chars'))
+  assert.ok(!codes.includes('hidden_text_suspected'))
+})
+
+test('termo empilhado dezenas de vezes é acusado, e reprova', () => {
+  const stuffed = GOOD + '\n' + Array(40).fill('javascript').join(' ')
+  const r = scoreAtsReadability(stuffed)
+  const issue = r.issues.find((i) => i.code === 'keyword_stuffing')
+  assert.ok(issue, 'deveria acusar empilhamento')
+  assert.equal(issue!.severity, 'critical')
+  assert.ok(r.score < scoreAtsReadability(GOOD).score, 'empilhar tem que BAIXAR a nota, não subir')
+})
+
+// A razão de existir da checagem: antes, empilhar palavra-chave era
+// recompensado, porque o texto está lá e o robô lê.
+test('empilhar palavra-chave nunca melhora a nota', () => {
+  const base = scoreAtsReadability(GOOD).score
+  const comLixo = scoreAtsReadability(GOOD + '\n' + Array(60).fill('gestao').join(' ')).score
+  assert.ok(comLixo <= base)
+})
+
+test('repetição natural de um termo do ramo não acusa', () => {
+  // "administrativa" aparece várias vezes no currículo honesto por ser o
+  // cargo da pessoa — isso é ênfase legítima, não empilhamento.
+  const r = scoreAtsReadability(GOOD)
+  assert.ok(!r.issues.some((i) => i.code === 'keyword_stuffing'))
+})
+
+test('poucos caracteres invisíveis são acidente de copiar-e-colar, não acusam', () => {
+  const r = scoreAtsReadability(GOOD.replace('Resumo', 'Res​umo'))
+  assert.ok(!r.issues.some((i) => i.code === 'invisible_chars'))
+})
+
+test('muitos caracteres invisíveis acusam', () => {
+  const r = scoreAtsReadability(GOOD + '​'.repeat(50))
+  const issue = r.issues.find((i) => i.code === 'invisible_chars')
+  assert.ok(issue)
+  assert.equal(issue!.severity, 'critical')
+})
+
+test('densidade impossível por página acusa texto escondido', () => {
+  const denso = GOOD + '\n' + Array(3000).fill('palavra').join(' ')
+  const r = scoreAtsReadability(denso, { pages: 1 })
+  assert.ok(r.issues.some((i) => i.code === 'hidden_text_suspected'))
+})
+
+// Mesma regra do resto da casa: dado ausente não acusa. Texto colado não tem
+// páginas, e não pode ser punido por isso.
+test('sem contagem de páginas, a densidade nunca acusa', () => {
+  const denso = GOOD + '\n' + Array(3000).fill('palavra').join(' ')
+  assert.ok(!scoreAtsReadability(denso).issues.some((i) => i.code === 'hidden_text_suspected'))
+})
+
+test('currículo longo e legítimo em várias páginas não acusa densidade', () => {
+  const r = scoreAtsReadability(GOOD + '\n' + Array(800).fill('experiencia relevante').join(' '), {
+    pages: 3,
+  })
+  assert.ok(!r.issues.some((i) => i.code === 'hidden_text_suspected'))
+})

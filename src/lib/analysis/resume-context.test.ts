@@ -60,6 +60,16 @@ test('currículo diferente produz bloco diferente', () => {
 
 test('perfil ausente não muda o resto do bloco de posição', () => {
   const semPerfil = buildResumeContext({ ...base, profileContext: null })
-  assert.match(semPerfil, /=== CURRÍCULO DO CANDIDATO ===/)
+  // O currículo entra embrulhado como dado não confiável — ver
+  // `untrusted.ts`. O delimitador antigo (`=== CURRÍCULO DO CANDIDATO ===`)
+  // saiu de propósito: ele não era escapado, e um currículo contendo a linha
+  // de fechamento saía do bloco.
+  assert.match(semPerfil, /<<<DOCUMENTO_DO_USUARIO>>>/)
   assert.equal(semPerfil, buildResumeContext({ ...base, profileContext: null }))
+})
+
+test('o currículo chega ao prompt marcado como dado, nunca como instrução', () => {
+  const prompt = buildResumeContext({ ...base, profileContext: null })
+  assert.match(prompt, /DADO A ANALISAR/)
+  assert.match(prompt, /IGNORE o pedido/i)
 })

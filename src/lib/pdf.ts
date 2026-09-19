@@ -53,7 +53,14 @@ function stripMd(s: string): string {
 export async function generateResumePdf(markdownContent: string): Promise<Buffer> {
   const doc = await PDFDocument.create()
   doc.setTitle('Currículo')
-  doc.setAuthor('Griffo')
+  // `Creator` é a FERRAMENTA que gerou o arquivo; `Author` é quem responde
+  // pelo conteúdo. Antes o GriffoWork se declarava autor, e isso é errado nos
+  // dois sentidos: o currículo é da pessoa, e um documento montado a partir de
+  // texto que ela enviou sairia com a nossa assinatura no que ela escreveu.
+  // O campo de autor fica vazio de propósito — melhor sem autor declarado que
+  // com o autor errado.
+  doc.setCreator('GriffoWork')
+  doc.setProducer('GriffoWork')
   doc.setSubject('Currículo Otimizado')
   const font = await doc.embedFont(StandardFonts.Helvetica)
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold)

@@ -1,4 +1,5 @@
 import 'server-only'
+import { wrapUntrustedDocument } from '@/lib/analysis/untrusted'
 import { db } from '../../db'
 import { executeAiTask } from '../../ai-router/router'
 import { LANGUAGE_DIRECTIVE } from '../../i18n/server'
@@ -58,7 +59,7 @@ Responda APENAS o JSON do schema, sem texto antes ou depois.`
       userId: job.userId,
       resumeId: resume.id,
       systemPrompt,
-      userPrompt: `CURRÍCULO:\n${resume.originalContent.slice(0, 14000)}`,
+      userPrompt: wrapUntrustedDocument(resume.originalContent.slice(0, 14000), 'currículo do candidato'),
       maxTokens: 1200,
       disableThinking: true,
       jsonSchema: PROFILE_EXTRACTION_JSON_SCHEMA as unknown as Record<string, unknown>,

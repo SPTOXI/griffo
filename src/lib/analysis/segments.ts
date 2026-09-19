@@ -1,4 +1,5 @@
 import type { Language } from '../i18n'
+import { wrapUntrustedDocument } from './untrusted'
 import { LANGUAGE_DIRECTIVE } from '../i18n/server'
 import { marketPromptContext, resolveMarket, type MarketConfig } from '../market'
 import {
@@ -389,8 +390,11 @@ export function buildSharedContext({
     targetJob || targetJobDescription
       ? `VAGA / CARGO ALVO DESEJADO PELO CANDIDATO:
 Cargo: ${targetJob || 'Não especificado'}
-Descrição/Requisitos da Vaga:
-${targetJobDescription || 'Nenhuma descrição fornecida.'}`
+${
+          targetJobDescription
+            ? wrapUntrustedDocument(targetJobDescription, 'descrição da vaga informada pelo candidato')
+            : 'Descrição/Requisitos da Vaga: nenhuma descrição fornecida.'
+        }`
       : 'VAGA ALVO: nenhuma vaga específica foi fornecida. Avalie a aderência geral à área de atuação evidente no currículo.'
 
   return `${LANGUAGE_DIRECTIVE[lang]}
@@ -403,9 +407,7 @@ Você trabalha com ALTA PROFUNDIDADE TÉCNICA E JUSTIFICADA. Você NUNCA é gen�
 
 Responda SEMPRE com um único JSON válido, sem blocos de markdown em volta, seguindo estritamente o schema pedido.
 
-=== CURRÍCULO DO CANDIDATO ===
-${resumeContent}
-=== FIM DO CURRÍCULO ===
+${wrapUntrustedDocument(resumeContent, 'currículo do candidato')}
 
 ${jobBlock}`
 }
