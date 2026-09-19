@@ -155,7 +155,13 @@ export async function purgeAgedJobs(
 ): Promise<number> {
   const now = options.now ?? new Date()
   const afterDays = options.afterDays ?? DELETE_AFTER_PUBLISHED_DAYS
-  const batchSize = options.batchSize ?? 500
+  // Lote pequeno de propósito. Cada iteração é uma transação que copia
+  // memórias E apaga vagas em cascata (`RadarAlert` vai junto), e o teto padrão
+  // de transação do Prisma é de 5s: 500 vagas com cascata estouram esse teto, a
+  // etapa falha, e falha IGUAL em toda tentativa seguinte — um expurgo
+  // permanentemente travado. Cem cabe com folga, e o laço de 20 lotes continua
+  // dando 2.000 vagas por execução.
+  const batchSize = options.batchSize ?? 100
 
   let deleted = 0
 
@@ -190,10 +196,18 @@ export async function purgeAgedJobs(
     // Copiar e apagar numa transação só: se o apagamento acontecesse sem a
     // cópia ter entrado, o histórico sumiria — e é para impedir exatamente
     // isso que esta função foi reescrita.
-    await db.$transaction([
-      db.radarOfferLog.createMany({ data: memories, skipDuplicates: true }),
-      db.job.deleteMany({ where: { id: { in: candidates.map((c) => c.id) } } }),
-    ])
+    await db.$transaction(
+      async (tx) => {
+        await tx.radarOfferLog.createMany({ data: memories, skipDuplicates: true })
+        await tx.job.deleteMany({ where: { id: { in: candidates.map((c) => c.id) } } })
+      },
+      // Forma interativa, e não o array, só por causa do `timeout`: a forma de
+      // array não aceita a opção, e o padrão de 5s é curto para um apagamento
+      // em cascata com o banco em outra região. Preferir um lote lento a um
+      // lote que estoura — porque um lote que estoura falha IGUAL em toda
+      // tentativa seguinte, travando o expurgo para sempre.
+      { timeout: 20_000 }
+    )
 
     deleted += candidates.length
     if (candidates.length < batchSize) break

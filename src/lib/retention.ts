@@ -49,6 +49,19 @@ export const RETENTION_DAYS = {
    * mais o histórico de ninguém.
    */
   agedJob: DELETE_AFTER_PUBLISHED_DAYS,
+  /**
+   * O histórico de vagas ofertadas (`RadarOfferLog`).
+   *
+   * **É dado pessoal** — diz o que uma pessoa identificável procurou e recebeu
+   * —, e por isso precisa de teto como qualquer outro neste arquivo. Sem esta
+   * linha, o módulo que existe para limitar retenção estaria guardando para
+   * sempre justamente o dado que ele acabou de criar.
+   *
+   * Dois anos, alinhado ao currículo inativo: é memória da própria pessoa
+   * sobre a própria busca, e bem além dos 180 dias em que a vaga original
+   * deixa de existir.
+   */
+  radarOfferLog: 730,
 }
 
 function cutoff(days: number): Date {
@@ -64,6 +77,8 @@ export interface PurgeReport {
   closedJobs: number
   /** Vagas publicadas há mais de 180 dias, apagadas com alerta e tudo. */
   agedJobs: number
+  /** Linhas do histórico de ofertas além do prazo de retenção. */
+  offerLogs: number
   errors: string[]
 }
 
@@ -81,6 +96,7 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
     resumes: 0,
     closedJobs: 0,
     agedJobs: 0,
+    offerLogs: 0,
     errors: [],
   }
 
@@ -141,6 +157,13 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
    * a memória de que ela lhe foi oferecida.
    */
   report.agedJobs = await step('agedJob', () => purgeAgedJobs())
+
+  report.offerLogs = await step('radarOfferLog', async () => {
+    const r = await db.radarOfferLog.deleteMany({
+      where: { offeredAt: { lt: cutoff(RETENTION_DAYS.radarOfferLog) } },
+    })
+    return r.count
+  })
 
   return report
 }

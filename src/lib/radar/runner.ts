@@ -8,6 +8,7 @@ import { db } from '../db'
 import { safeCollect, type JobSourceAdapter } from '../jobs/adapter'
 import { decideCollection, sourceStateAfter } from '../jobs/collection'
 import { freshOpenJobWhere } from '../jobs/lifecycle'
+import { preserveOffers } from './offer-log.server'
 import { closeStaleJobs, type StaleCloseReport } from '../jobs/lifecycle.server'
 import { dedupeBatch } from '../jobs/dedup'
 import type { LegitimacyJobRow } from '../jobs/legitimacy'
@@ -511,7 +512,15 @@ async function pruneUnfoundedAlerts(
 ): Promise<number> {
   const alerts = await db.radarAlert.findMany({
     where: { userId },
-    select: { id: true, job: true, overallFit: true, recommendation: true, matchJson: true },
+    select: {
+      id: true,
+      jobId: true,
+      createdAt: true,
+      job: true,
+      overallFit: true,
+      recommendation: true,
+      matchJson: true,
+    },
   })
 
   if (alerts.length === 0) return 0
@@ -544,6 +553,14 @@ async function pruneUnfoundedAlerts(
   }
 
   if (unfounded.length === 0) return 0
+
+  // Memória antes do apagamento. O alerta retirado deixa de ser recomendação,
+  // mas continua tendo acontecido — ver o cabeçalho de `offer-log.server.ts`.
+  await preserveOffers(
+    alerts
+      .filter((a) => unfounded.includes(a.id))
+      .map((a) => ({ userId, jobId: a.jobId, createdAt: a.createdAt, job: a.job }))
+  )
 
   const res = await db.radarAlert.deleteMany({ where: { id: { in: unfounded } } })
   console.warn(
@@ -599,6 +616,14 @@ export async function runForUser(userId: string): Promise<UserRunResult> {
     //
     // O custo é perder o histórico de feedback desses alertas. É aceitável:
     // feedback sobre um aviso que nunca deveria ter saído não mede nada.
+    // Mesma regra do `pruneUnfoundedAlerts`: nenhum alerta é destruído sem
+    // virar memória antes, inclusive nesta limpeza mais agressiva.
+    const doomed = await db.radarAlert.findMany({
+      where: { userId },
+      select: { jobId: true, createdAt: true, job: true },
+    })
+    await preserveOffers(doomed.map((a) => ({ userId, ...a })))
+
     const removed = await db.radarAlert.deleteMany({ where: { userId } })
     if (removed.count > 0) {
       console.warn(

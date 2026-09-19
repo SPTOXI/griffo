@@ -19,6 +19,68 @@ import { db } from '../db'
 /** Teto de uma consulta. Alto o bastante para caber um ano de Radar. */
 export const OFFER_LOG_MAX = 500
 
+/**
+ * O que este log NÃO é, e é decisão, não esquecimento.
+ *
+ * Ele é **append-only**: uma oferta registrada nunca é removida porque o
+ * alerta correspondente foi retirado depois. `pruneUnfoundedAlerts` existe
+ * para parar de mostrar uma RECOMENDAÇÃO que envelheceu mal — o perfil mudou,
+ * a vaga fechou — e isso não desfaz o fato de que aquela vaga apareceu no
+ * Radar da pessoa naquele dia.
+ *
+ * A distinção importa porque as duas coisas têm formas diferentes: o alerta
+ * carrega nota, recomendação e o match inteiro; esta lista carrega cargo,
+ * empresa, país e data. Uma diz "candidate-se a isto"; a outra diz "isto passou
+ * por aqui". Retirar a primeira é correto; reescrever a segunda seria apagar o
+ * passado da pessoa para poupar a nossa vergonha.
+ */
+
+/** O mínimo para preservar um alerta como memória, antes de ele ser apagado. */
+export interface AlertToPreserve {
+  userId: string
+  jobId: string
+  createdAt: Date
+  job: { title: string; company: string; country: string | null } | null
+}
+
+/**
+ * Copia alertas para o log ANTES de eles serem apagados.
+ *
+ * Chamado de todo lugar que apaga `RadarAlert`. É essa simetria que sustenta a
+ * promessa do módulo: **nenhum alerta é destruído sem virar memória antes**.
+ *
+ * A primeira versão desta funcionalidade preservava só no expurgo de vagas aos
+ * 180 dias, e a revisão mostrou o buraco: `pruneUnfoundedAlerts` roda a cada
+ * rodada do Radar e apaga alerta muito antes disso — inclusive todo o
+ * histórico anterior ao deploy, que nunca chegaria ao expurgo para ser
+ * copiado.
+ *
+ * Idempotente pelo `@@unique([userId, jobId])`; nunca lança, porque preservar
+ * memória não pode ser motivo para derrubar a manutenção que a invoca.
+ */
+export async function preserveOffers(alerts: readonly AlertToPreserve[]): Promise<number> {
+  const memories = alerts
+    .filter((a) => a.job)
+    .map((a) => ({
+      userId: a.userId,
+      jobId: a.jobId,
+      title: a.job!.title,
+      company: a.job!.company,
+      country: a.job!.country,
+      offeredAt: a.createdAt,
+    }))
+
+  if (memories.length === 0) return 0
+
+  try {
+    const res = await db.radarOfferLog.createMany({ data: memories, skipDuplicates: true })
+    return res.count
+  } catch (e: any) {
+    console.warn('[radar] preservação de ofertas falhou:', e?.message || e)
+    return 0
+  }
+}
+
 export interface OfferLogEntry {
   title: string
   company: string
