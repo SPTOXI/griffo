@@ -165,3 +165,64 @@ test('clichê em texto curto NÃO some do relatório', () => {
   assert.equal(a.level, 'ok', "'ok' aqui significa não avaliado")
   assert.deepEqual(a.hits, ['é importante ressaltar'])
 })
+
+test('"COMO IA" (imperfeito de IR) NÃO é o modelo falando de si', () => {
+  // "Expliquei como ia conduzir a migração" é português honesto e comum.
+  // Como este achado reprova sozinho, ignorar a caixa transformaria a frase
+  // mais banal do mundo em acusação de texto gerado.
+  const honesto = `${CARTA_BOA}\n\nExpliquei à diretoria como ia conduzir a migração dos sistemas.`
+  const a = assessWriting(honesto, 'pt')
+  assert.deepEqual(a.structures, [])
+  assert.equal(a.level, 'ok')
+})
+
+test('a sigla em maiúscula continua sendo detectada', () => {
+  for (const frase of ['Como uma IA, não posso garantir isso.', 'Como IA, devo avisar.', 'As an AI language model, I cannot.']) {
+    const a = assessWriting(`${CARTA_BOA}\n\n${frase}`, 'pt')
+    assert.ok(a.structures.includes('como-ia'), `não pegou: ${frase}`)
+  }
+})
+
+test('CARTA DENSA EM SIGLAS É A MAIS CONCRETA, NÃO A MENOS', () => {
+  // AWS, ETL, SAP, CRM ficavam fora da concretude porque a regra exigia
+  // maiúscula seguida de minúscula. O efeito era o inverso do pretendido: a
+  // carta que cita os sistemas que a pessoa opera media concretude zero.
+  const tecnica = `Atuo com AWS, ETL e SQL em pipelines de dados corporativos há seis anos.
+Migrei o ERP da empresa para SAP e integrei o CRM usando REST e SOAP.
+Construí o processo de triagem interno e mantive os contratos entre os serviços.
+Conheço o ciclo completo, da ingestão à entrega para as áreas de negócio.
+Posso começar em janeiro e estou disponível para conversar quando for melhor.`
+  const a = assessWriting(tecnica, 'pt')
+  assert.ok(a.concretePer100 > 0, 'concretude zero numa carta cheia de sistemas')
+  assert.deepEqual(a.hits, [])
+})
+
+test('título gritado não vira sigla', () => {
+  // O teto de seis letras existe para isto: "EXPERIÊNCIA PROFISSIONAL" é
+  // formatação, não fato concreto.
+  const a = assessWriting(`EXPERIENCIA PROFISSIONAL\n${CARTA_BOA}`, 'pt')
+  const b = assessWriting(CARTA_BOA, 'pt')
+  assert.equal(a.concretePer100 > 0, b.concretePer100 > 0)
+})
+
+test('FRASE CURTA CONTA — é o que a variação existe para premiar', () => {
+  // Descartá-las tirava os valores baixos da distribuição e reduzia a
+  // variância, empurrando texto humano para 'suspect'.
+  const comCurtas = `Trabalhei na Alfa. Foi bom. Aprendi muito sobre fechamento contábil e conciliação.
+Depois mudei para a Beta, onde assumi a área inteira de contas a pagar sozinho.
+Deu certo. O prazo caiu de onze dias para quatro, e ficou assim por três anos.
+Quero voltar para o operacional. Estou disponível em janeiro.`
+  const a = assessWriting(comCurtas, 'pt')
+  assert.equal(a.sentences, 8, 'as frases de duas palavras precisam ser contadas')
+  assert.ok(a.burstiness > 0.7, `variação subestimada: ${a.burstiness}`)
+})
+
+test('uma palavra ainda não é frase', () => {
+  // "S.A." e "Dr." quebram frase onde não há frase. O fragmento de UMA
+  // palavra que sobra ("A.", "Delta.") inventaria variação que o autor não
+  // escreveu, então continua fora — só o piso de duas é que baixou.
+  const texto = 'Alfa Ltda. Beta S.A. Gama Dr. Delta.'
+  const brutas = (texto.match(/[^.!?\n]+[.!?]*/g) || []).length
+  assert.equal(brutas, 5)
+  assert.equal(assessWriting(texto, 'pt').sentences, 3, 'os dois fragmentos de uma palavra ficam fora')
+})

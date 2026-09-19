@@ -177,8 +177,16 @@ const STRUCTURES: readonly { id: string; re: RegExp }[] = [
   { id: 'nao-apenas', re: /\bn[ãa]o (?:apenas|s[óo])\b[^.!?]{0,80}\bmas tamb[ée]m\b/giu },
   { id: 'not-just', re: /\bnot (?:just|only)\b[^.!?]{0,80}\bbut (?:also)?\b/giu },
   { id: 'no-solo', re: /\bno s[óo]lo\b[^.!?]{0,80}\bsino (?:tambi[ée]n)?\b/giu },
-  // O delator absoluto: o modelo falando de si dentro do entregável.
-  { id: 'como-ia', re: /\b(?:como (?:uma? )?(?:IA|intelig[êe]ncia artificial)|as an AI(?: language model)?)\b/giu },
+  /**
+   * O delator absoluto: o modelo falando de si dentro do entregável.
+   *
+   * SEM a flag `i`, e isso é a regra inteira: "IA" em maiúscula é a sigla;
+   * "ia" em minúscula é o imperfeito de IR. "Expliquei como ia conduzir a
+   * migração" é português perfeitamente honesto, e como este achado reprova
+   * sozinho, ignorar a caixa transformaria a frase mais comum do mundo em
+   * acusação de texto gerado.
+   */
+  { id: 'como-ia', re: /\b(?:[Cc]omo (?:uma? )?(?:IA\b|[Ii]ntelig[êe]ncia [Aa]rtificial\b)|[Aa]s an AI(?: language model)?\b)/gu },
 ]
 
 /**
@@ -241,10 +249,24 @@ const SENTENCE_RE = /[^.!?\n]+[.!?]*/g
 const WORD_RE = /[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu
 const NUMBER_RE = /\b\d[\d.,]*\s?%?|\b(?:R\$|US\$|€|\$)\s?\d/g
 
+/**
+ * Frases do texto.
+ *
+ * O piso é de DUAS palavras, não de três. A fonte original descartava frases
+ * de até três palavras para não contar fragmento como frase — mas frase curta
+ * é exatamente o que a variação de comprimento existe para premiar. "Deu
+ * certo." e "Isso durou." são o que uma pessoa escreve e um modelo não;
+ * descartá-las tirava os valores baixos da distribuição, reduzia a variância
+ * e empurrava texto humano para 'suspect'. Medido: 0,61 contra 0,77 numa
+ * carta de teste, 26% de subestimação na direção da acusação falsa.
+ *
+ * Uma palavra ainda não conta, porque "Ltda.", "S.A." e "Dr." quebram frase
+ * onde não há frase e inventariam variação que o autor não escreveu.
+ */
 function sentencesOf(text: string): string[] {
   return (text.match(SENTENCE_RE) || [])
     .map((s) => s.trim())
-    .filter((s) => s.split(/\s+/).filter(Boolean).length > 2)
+    .filter((s) => s.split(/\s+/).filter(Boolean).length >= 2)
 }
 
 function wordsOf(text: string): string[] {
@@ -269,6 +291,26 @@ function properNouns(text: string): Set<string> {
     }
   }
   return out
+}
+
+/**
+ * Siglas: AWS, ETL, SAP, CRM.
+ *
+ * Ficavam DE FORA porque `properNouns` exige maiúscula seguida de minúscula.
+ * O efeito era o inverso do pretendido: a carta mais densa em fato técnico
+ * — a que cita os sistemas que a pessoa opera — media concretude ZERO e caía
+ * no piso. Quem escreve "migrei o ERP para SAP e integrei o CRM via REST"
+ * está sendo o mais concreto possível.
+ *
+ * Varre o texto inteiro, sem pular a primeira palavra da frase: maiúscula
+ * inicial é ambígua numa palavra comum, mas "AWS" no começo da frase não é
+ * outra coisa. O teto de seis letras mantém título gritado de fora
+ * ("EXPERIÊNCIA PROFISSIONAL" não é sigla).
+ */
+const ACRONYM_RE = /\b\p{Lu}{2,6}\b/gu
+
+function acronyms(text: string): Set<string> {
+  return new Set(text.match(ACRONYM_RE) || [])
 }
 
 function coefficientOfVariation(lengths: number[]): number {
@@ -324,7 +366,8 @@ export function assessWriting(input: string | null | undefined, lang: WritingLan
   if (words.length === 0) return { ...base, hits, structures }
 
   const per100 = 100 / words.length
-  const concreteCount = (text.match(NUMBER_RE) || []).length + properNouns(text).size
+  const concreteCount =
+    (text.match(NUMBER_RE) || []).length + properNouns(text).size + acronyms(text).size
 
   const measured: WritingAssessment = {
     ...base,
