@@ -1,5 +1,6 @@
 import 'server-only'
 import { db } from '@/lib/db'
+import { freshOpenJobWhere } from './lifecycle'
 
 /**
  * Contagem de vagas abertas citada no Hero D (home e as 41 rotas de país) —
@@ -22,7 +23,7 @@ import { db } from '@/lib/db'
 export async function getOpenJobsCount(): Promise<number> {
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      return await db.job.count({ where: { closedAt: null } })
+      return await db.job.count({ where: freshOpenJobWhere() })
     } catch (e) {
       if (attempt === 2) throw e
       console.error('open jobs count failed, retrying', e)
@@ -53,7 +54,7 @@ export async function getOpenJobsCountByCountry(): Promise<CountryJobCount[]> {
     try {
       const rows = await db.job.groupBy({
         by: ['country'],
-        where: { closedAt: null, country: { not: null } },
+        where: { ...freshOpenJobWhere(), country: { not: null } },
         _count: { _all: true },
       })
       return rows

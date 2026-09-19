@@ -1,6 +1,11 @@
 import 'server-only'
 import { db } from '../db'
-import { PURGE_CLOSED_AFTER_DAYS, STALE_AFTER_DAYS, daysAgo } from './lifecycle'
+import {
+  DELETE_AFTER_PUBLISHED_DAYS,
+  PURGE_CLOSED_AFTER_DAYS,
+  STALE_AFTER_DAYS,
+  daysAgo,
+} from './lifecycle'
 
 export interface StaleCloseReport {
   closed: number
@@ -98,6 +103,58 @@ export async function purgeClosedJobs(
     }
   } catch (e: any) {
     console.warn('[jobs] expurgo de vagas encerradas falhou:', e?.message || e)
+  }
+
+  return deleted
+}
+
+/**
+ * Apaga vaga velha demais — **com alerta e tudo**.
+ *
+ * Isto desfaz de propósito a regra de `purgeClosedJobs` logo acima ("vaga com
+ * alerta nunca é apagada"). A troca só é aceitável porque o que aquela regra
+ * protegia mudou de lugar: o registro de que alguém foi avisado vive agora em
+ * `RadarOfferLog`, desnormalizado (cargo, empresa, país, data) e sem relação
+ * com `Job`, portanto imune ao `onDelete: Cascade` que leva o `RadarAlert`
+ * junto.
+ *
+ * Em outras palavras: o alerta some, a memória fica. Apagar isto antes de o
+ * log existir destruiria histórico — foi exatamente o defeito que reverteu o
+ * PR #71.
+ *
+ * **Vaga sem `publishedAt` nunca é apagada por aqui.** Apagar de forma
+ * irreversível por causa de um campo que a fonte não mandou é a pior versão de
+ * "eliminar por dado ausente".
+ *
+ * Em lotes, e nunca lança — mesmo raciocínio de `purgeClosedJobs`.
+ */
+export async function purgeAgedJobs(
+  options: { now?: Date; afterDays?: number; batchSize?: number } = {}
+): Promise<number> {
+  const now = options.now ?? new Date()
+  const afterDays = options.afterDays ?? DELETE_AFTER_PUBLISHED_DAYS
+  const batchSize = options.batchSize ?? 500
+  const cutoff = daysAgo(now, afterDays)
+
+  let deleted = 0
+
+  try {
+    for (let batch = 0; batch < 20; batch++) {
+      const candidates = await db.job.findMany({
+        where: { publishedAt: { not: null, lt: cutoff } },
+        select: { id: true },
+        take: batchSize,
+      })
+
+      if (candidates.length === 0) break
+
+      const result = await db.job.deleteMany({ where: { id: { in: candidates.map((c) => c.id) } } })
+      deleted += result.count
+
+      if (candidates.length < batchSize) break
+    }
+  } catch (e: any) {
+    console.warn('[jobs] expurgo por idade falhou:', e?.message || e)
   }
 
   return deleted

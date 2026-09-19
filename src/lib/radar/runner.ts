@@ -7,6 +7,7 @@ import { db } from '../db'
 // O lugar de filtrar por mercado é o filtro duro, por usuário.
 import { safeCollect, type JobSourceAdapter } from '../jobs/adapter'
 import { decideCollection, sourceStateAfter } from '../jobs/collection'
+import { freshOpenJobWhere } from '../jobs/lifecycle'
 import { closeStaleJobs, type StaleCloseReport } from '../jobs/lifecycle.server'
 import { dedupeBatch } from '../jobs/dedup'
 import type { LegitimacyJobRow } from '../jobs/legitimacy'
@@ -448,7 +449,7 @@ async function openJobsWithinBudget(profile: ProfessionalProfile) {
   const scope = marketScopeOf(profile)
 
   const inScope = await db.job.findMany({
-    where: { closedAt: null, market: { in: scope } },
+    where: { ...freshOpenJobWhere(), market: { in: scope } },
     orderBy: NEWEST_FIRST,
     take: MAX_JOBS_PER_USER,
   })
@@ -456,12 +457,21 @@ async function openJobsWithinBudget(profile: ProfessionalProfile) {
   if (inScope.length >= MAX_JOBS_PER_USER) return inScope
 
   const rest = await db.job.findMany({
+    // `AND` explícito, e não espalhamento: `freshOpenJobWhere()` já traz um
+    // `OR` (a vaga sem data de publicação que nunca é eliminada), e o filtro de
+    // mercado abaixo traz outro. Espalhar os dois no mesmo objeto faria o
+    // segundo `OR` sobrescrever o primeiro em silêncio — e o filtro de frescor
+    // sumiria justamente desta consulta.
     where: {
-      closedAt: null,
-      // `notIn` sozinho deixaria de fora as vagas sem mercado: em SQL,
-      // `market NOT IN (...)` com `market` nulo não é verdadeiro. São
-      // justamente as vagas que "desconhecido nunca elimina" protege.
-      OR: [{ market: null }, { market: { notIn: scope } }],
+      AND: [
+        freshOpenJobWhere(),
+        {
+          // `notIn` sozinho deixaria de fora as vagas sem mercado: em SQL,
+          // `market NOT IN (...)` com `market` nulo não é verdadeiro. São
+          // justamente as vagas que "desconhecido nunca elimina" protege.
+          OR: [{ market: null }, { market: { notIn: scope } }],
+        },
+      ],
     },
     orderBy: NEWEST_FIRST,
     take: MAX_JOBS_PER_USER - inScope.length,
@@ -627,23 +637,45 @@ export async function runForUser(userId: string): Promise<UserRunResult> {
     alreadyAlertedJobIds: alreadyAlerted.map((a) => a.jobId),
   })
 
+  // Os dados da vaga na mão para o log de ofertas: ele guarda uma CÓPIA
+  // (cargo, empresa, país), não uma referência, e é isso que o faz sobreviver
+  // ao apagamento da vaga aos 180 dias.
+  const rowById = new Map(trustworthy.map((row) => [row.id, row]))
+
   let alerted = 0
   for (const opportunity of result.selected) {
+    const row = rowById.get(opportunity.jobId)
     try {
-      await db.radarAlert.create({
-        data: {
-          userId,
-          jobId: opportunity.jobId,
-          overallFit: opportunity.match.overall,
-          recommendation: opportunity.match.recommendation,
-          matchJson: JSON.stringify(opportunity.match),
-          signalScore: internalSignalScore(opportunity.match),
-        },
-      })
+      // Numa transação de propósito: "foi avisado" e "está registrado que foi
+      // avisado" são o mesmo fato. Se o log falhasse à parte, a vaga poderia
+      // ser apagada mais tarde levando junto a única prova da oferta — que é
+      // exatamente o que este log existe para impedir.
+      await db.$transaction([
+        db.radarAlert.create({
+          data: {
+            userId,
+            jobId: opportunity.jobId,
+            overallFit: opportunity.match.overall,
+            recommendation: opportunity.match.recommendation,
+            matchJson: JSON.stringify(opportunity.match),
+            signalScore: internalSignalScore(opportunity.match),
+          },
+        }),
+        db.radarOfferLog.create({
+          data: {
+            userId,
+            title: row?.title ?? '',
+            company: row?.company ?? '',
+            country: row?.country ?? null,
+            offeredAt: new Date(),
+          },
+        }),
+      ])
       alerted++
     } catch (e: any) {
       // P2002 = já existe alerta deste usuário para esta vaga. É a garantia do
-      // "não se avisa duas vezes" funcionando sob concorrência, não um erro.
+      // "não se avisa duas vezes" funcionando sob concorrência, não um erro —
+      // e, dentro da transação, ela impede também o log duplicado.
       if (e?.code !== 'P2002') throw e
     }
   }

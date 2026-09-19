@@ -1,6 +1,14 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { PURGE_CLOSED_AFTER_DAYS, STALE_AFTER_DAYS, daysAgo, staleDecision } from './lifecycle'
+import {
+  DELETE_AFTER_PUBLISHED_DAYS,
+  FRESH_MAX_AGE_DAYS,
+  PURGE_CLOSED_AFTER_DAYS,
+  STALE_AFTER_DAYS,
+  daysAgo,
+  freshOpenJobWhere,
+  staleDecision,
+} from './lifecycle'
 
 const AGORA = new Date('2026-08-18T12:00:00Z')
 const opts = { now: AGORA }
@@ -107,4 +115,53 @@ test('a janela é longa o bastante para não punir instabilidade', () => {
 test('daysAgo anda para trás, não para frente', () => {
   assert.ok(daysAgo(AGORA, 5) < AGORA)
   assert.equal(daysAgo(AGORA, 0).getTime(), AGORA.getTime())
+})
+
+/* --- Frescor na leitura e expurgo por idade ------------------------------- */
+
+/** O `gte` que o filtro monta, para as asserções lerem sem repetir a conta. */
+function freshCutoff(now: Date) {
+  const where = freshOpenJobWhere(now)
+  const clause = where.OR[1] as { publishedAt: { gte: Date } }
+  return clause.publishedAt.gte
+}
+
+test('o filtro de frescor exige vaga aberta', () => {
+  assert.equal(freshOpenJobWhere(AGORA).closedAt, null)
+})
+
+test('o corte de frescor fica na janela declarada', () => {
+  assert.equal(freshCutoff(AGORA).getTime(), daysAgo(AGORA, FRESH_MAX_AGE_DAYS).getTime())
+})
+
+// A regra do types.ts: "eliminar por dado ausente transforma silêncio em
+// rejeição". Vaga sem data não é vaga velha, é vaga de idade desconhecida.
+test('vaga sem data de publicação NUNCA é filtrada por frescor', () => {
+  const where = freshOpenJobWhere(AGORA)
+  assert.deepEqual(where.OR[0], { publishedAt: null })
+})
+
+test('o filtro é um OR de dois casos: sem data, ou dentro da janela', () => {
+  const where = freshOpenJobWhere(AGORA)
+  assert.equal(where.OR.length, 2)
+})
+
+// O expurgo é irreversível, então precisa de folga sobre o filtro: a vaga some
+// da vista bem antes de sumir do banco, e dá tempo de voltar atrás.
+test('o prazo de apagamento é maior que o de frescor', () => {
+  assert.ok(
+    DELETE_AFTER_PUBLISHED_DAYS > FRESH_MAX_AGE_DAYS,
+    `apagamento (${DELETE_AFTER_PUBLISHED_DAYS}) precisa dar folga sobre frescor (${FRESH_MAX_AGE_DAYS})`
+  )
+})
+
+test('a folga entre sumir da vista e sumir do banco é de pelo menos um mês', () => {
+  assert.ok(DELETE_AFTER_PUBLISHED_DAYS - FRESH_MAX_AGE_DAYS >= 30)
+})
+
+// Frescor NÃO escreve closedAt: foi escrever idade nesse campo que causou os
+// dois defeitos do PR #71 (apagamento de histórico e oscilação).
+test('o filtro de frescor não propõe escrita nenhuma — só leitura', () => {
+  const where = freshOpenJobWhere(AGORA) as Record<string, unknown>
+  assert.deepEqual(Object.keys(where).sort(), ['OR', 'closedAt'])
 })

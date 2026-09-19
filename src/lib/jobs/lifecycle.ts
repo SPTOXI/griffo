@@ -41,8 +41,73 @@ export const STALE_AFTER_DAYS = 45
  */
 export const PURGE_CLOSED_AFTER_DAYS = 90
 
+/**
+ * Publicada há mais tempo que isto, a vaga some do Radar e das contagens
+ * públicas — **sem** ser encerrada.
+ *
+ * ## Por que filtro na leitura, e não `closedAt`
+ *
+ * Uma primeira versão disto (PR #71, revertida) escrevia `closedAt` nas vagas
+ * velhas. Dois defeitos, e os dois vinham da mesma causa: `closedAt` carrega
+ * dois significados — "esta vaga acabou" e "pode limpar" — e escrever idade ali
+ * herdava o segundo sem querer.
+ *
+ * 1. `pruneUnfoundedAlerts` apaga permanentemente todo alerta cuja vaga esteja
+ *    fechada. Fechar o acervo velho de uma vez viraria apagamento em massa do
+ *    histórico das pessoas.
+ * 2. `runCollection` reabre qualquer vaga que reaparece, e roda ANTES. A vaga
+ *    oscilava fechada/aberta a cada rodada.
+ *
+ * Idade é um fato que depende de `now`, não um estado da vaga — e fato
+ * dependente de tempo não se grava, se calcula na leitura. É a mesma conclusão
+ * a que `legitimacy.server.ts` chegou sobre o sinal `evergreen`.
+ *
+ * O número é de produto, não técnico: ele define o que o site pode afirmar
+ * sobre o frescor do que exibe.
+ */
+export const FRESH_MAX_AGE_DAYS = 120
+
+/**
+ * Publicada há mais tempo que isto, a vaga é **apagada**, com alerta e tudo.
+ *
+ * Decisão do operador, e ela desfaz de propósito a regra antiga de
+ * `purgeClosedJobs` ("vaga sobre a qual alguém foi avisado fica, sempre"). O
+ * que aquela regra protegia — o registro de que alguém foi avisado — passa a
+ * viver em `RadarOfferLog`, que é uma cópia desnormalizada (cargo, empresa,
+ * país, data) e **sobrevive ao apagamento da vaga**.
+ *
+ * Trocar a linha inteira por quatro campos é a escolha certa aqui: o que a
+ * pessoa precisa lembrar é "esta vaga me foi oferecida naquele dia", não o
+ * anúncio inteiro de uma vaga que não existe mais há meio ano.
+ *
+ * Os 60 dias de folga sobre `FRESH_MAX_AGE_DAYS` existem para a vaga sumir da
+ * vista bem antes de sumir do banco: se o corte de frescor estiver errado, dá
+ * tempo de perceber e voltar atrás enquanto a linha ainda existe.
+ */
+export const DELETE_AFTER_PUBLISHED_DAYS = 180
+
 export function daysAgo(now: Date, days: number): Date {
   return new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
+}
+
+/**
+ * O recorte de "vaga que conta": aberta e não velha demais.
+ *
+ * Existe como função única porque o mesmo recorte é usado no Radar, na
+ * contagem da home e na lista por país. Três cópias divergiriam, e a home
+ * passaria a discordar do Radar sobre quantas vagas existem.
+ *
+ * **Vaga sem `publishedAt` entra.** Idade desconhecida não é idade demais — a
+ * regra do `types.ts` ("eliminar por dado ausente transforma silêncio em
+ * rejeição") vale aqui como vale no resto. A consequência honesta é que a
+ * promessa pública é sobre o que se SABE: nenhuma vaga sabidamente mais velha
+ * que o corte.
+ */
+export function freshOpenJobWhere(now: Date = new Date(), maxAgeDays: number = FRESH_MAX_AGE_DAYS) {
+  return {
+    closedAt: null,
+    OR: [{ publishedAt: null }, { publishedAt: { gte: daysAgo(now, maxAgeDays) } }],
+  }
 }
 
 export interface StaleInput {

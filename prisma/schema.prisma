@@ -71,6 +71,7 @@ model User {
   professionalProfile ProfessionalProfile?
   radarPreference     RadarPreference?
   radarAlerts         RadarAlert[]
+  radarOfferLog       RadarOfferLog[]
 
   // Griffo Enterprise (B2B) — ver Organization/OrganizationMembership abaixo.
   organizationMemberships OrganizationMembership[]
@@ -1131,4 +1132,37 @@ model LaborMarketPoint {
   @@unique([country, source, metric, period])
   @@index([country, metric, period])
   @@index([source, period])
+}
+
+/// O que o Radar já ofereceu a uma pessoa — em forma que sobrevive à vaga.
+///
+/// `RadarAlert` é o alerta vivo: aponta para `Job` com `onDelete: Cascade`, e
+/// some junto quando a vaga é apagada. Isso é correto para o alerta (não faz
+/// sentido abrir um aviso de uma vaga que não existe mais) e errado para a
+/// memória da pessoa: ela continua tendo o direito de saber o que lhe foi
+/// oferecido, e quando.
+///
+/// Por isso esta tabela é **desnormalizada de propósito**: guarda uma cópia dos
+/// quatro campos que importam em vez de uma referência. Não há relação com
+/// `Job` — nem opcional —, porque qualquer relação reintroduziria a dependência
+/// que esta tabela existe para cortar.
+///
+/// É o que permite `purgeAgedJobs` apagar vaga com alerta e tudo aos 180 dias
+/// sem destruir histórico de ninguém.
+model RadarOfferLog {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Cargo, como estava no anúncio no dia da oferta.
+  title   String
+  /// Empresa, idem. Nome de exibição, não a chave de deduplicação.
+  company String
+  /// País da vaga (ISO-2). Nulo quando a vaga não tinha país resolvido.
+  country String?
+
+  /// Quando esta vaga apareceu no Radar desta pessoa.
+  offeredAt DateTime @default(now())
+
+  @@index([userId, offeredAt])
 }

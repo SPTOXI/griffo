@@ -1,7 +1,7 @@
 import 'server-only'
 import { db } from './db'
-import { purgeClosedJobs } from './jobs/lifecycle.server'
-import { PURGE_CLOSED_AFTER_DAYS } from './jobs/lifecycle'
+import { purgeAgedJobs, purgeClosedJobs } from './jobs/lifecycle.server'
+import { DELETE_AFTER_PUBLISHED_DAYS, PURGE_CLOSED_AFTER_DAYS } from './jobs/lifecycle'
 
 /**
  * Política de retenção.
@@ -33,11 +33,22 @@ export const RETENTION_DAYS = {
    * Vagas encerradas. Não são dado pessoal — são anúncio público que já saiu
    * do ar, e guardá-los para sempre faz o banco crescer sem teto.
    *
-   * Vaga sobre a qual alguém foi avisado NUNCA é apagada, independente do
-   * prazo: `RadarAlert` cai junto por cascata, e isso destruiria o histórico da
-   * pessoa. Ver `jobs/lifecycle.server.ts`.
+   * Vaga sobre a qual alguém foi avisado sobrevive a ESTE prazo — `RadarAlert`
+   * cai junto por cascata. Ela não sobrevive ao `agedJob` abaixo. Ver
+   * `jobs/lifecycle.server.ts`.
    */
   closedJob: PURGE_CLOSED_AFTER_DAYS,
+  /**
+   * Vagas velhas, apagadas **com alerta e tudo**.
+   *
+   * O prazo maior que `closedJob` não é acaso: aquele é o caminho suave (só
+   * vaga sem alerta), este é o duro, e o duro precisa de mais folga.
+   *
+   * O que tornou isto aceitável foi `RadarOfferLog`: o registro de que alguém
+   * foi avisado deixou de depender da linha da vaga, então apagá-la não destrói
+   * mais o histórico de ninguém.
+   */
+  agedJob: DELETE_AFTER_PUBLISHED_DAYS,
 }
 
 function cutoff(days: number): Date {
@@ -51,6 +62,8 @@ export interface PurgeReport {
   resumes: number
   /** Vagas encerradas há tempo e sem alerta nenhum apontando para elas. */
   closedJobs: number
+  /** Vagas publicadas há mais de 180 dias, apagadas com alerta e tudo. */
+  agedJobs: number
   errors: string[]
 }
 
@@ -67,6 +80,7 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
     auditLogs: 0,
     resumes: 0,
     closedJobs: 0,
+    agedJobs: 0,
     errors: [],
   }
 
@@ -112,9 +126,21 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
   /**
    * Vagas encerradas não são dado pessoal — são anúncio público fora do ar. O
    * motivo de apagá-las é espaço, não conformidade, e por isso o critério é
-   * diferente: vaga sobre a qual alguém foi avisado fica, sempre.
+   * diferente: vaga sobre a qual alguém foi avisado fica — até os 180 dias,
+   * quando `purgeAgedJobs` abaixo a leva de qualquer jeito.
    */
   report.closedJobs = await step('closedJob', () => purgeClosedJobs())
+
+  /**
+   * Aos 180 dias a vaga sai, com alerta e tudo.
+   *
+   * O que antes impedia isto — não destruir o registro de que alguém foi
+   * avisado — passou a viver em `RadarOfferLog`, que guarda cargo, empresa,
+   * país e data sem referência à vaga, e por isso sobrevive ao apagamento.
+   * A pessoa perde o anúncio de uma vaga que não existe há meio ano, e mantém
+   * a memória de que ela lhe foi oferecida.
+   */
+  report.agedJobs = await step('agedJob', () => purgeAgedJobs())
 
   return report
 }
