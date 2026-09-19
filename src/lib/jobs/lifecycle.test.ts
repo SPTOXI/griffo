@@ -6,6 +6,7 @@ import {
   PURGE_CLOSED_AFTER_DAYS,
   STALE_AFTER_DAYS,
   daysAgo,
+  agedJobPurgeWhere,
   freshOpenJobWhere,
   staleDecision,
 } from './lifecycle'
@@ -164,4 +165,33 @@ test('a folga entre sumir da vista e sumir do banco é de pelo menos um mês', (
 test('o filtro de frescor não propõe escrita nenhuma — só leitura', () => {
   const where = freshOpenJobWhere(AGORA) as Record<string, unknown>
   assert.deepEqual(Object.keys(where).sort(), ['OR', 'closedAt'])
+})
+
+/* --- A trava do expurgo --------------------------------------------------- */
+
+// Sem o `closedAt`, a vaga que a fonte ainda lista seria apagada e recriada na
+// coleta seguinte com id novo: churn permanente, e o "não se avisa duas vezes"
+// do §15 cairia junto, porque a vaga voltaria parecendo inédita.
+test('o expurgo exige vaga JÁ ENCERRADA, não só velha', () => {
+  assert.deepEqual(agedJobPurgeWhere(AGORA).closedAt, { not: null })
+})
+
+test('o expurgo nunca apaga vaga sem data de publicação', () => {
+  assert.equal(agedJobPurgeWhere(AGORA).publishedAt.not, null)
+})
+
+test('o corte do expurgo fica na janela declarada', () => {
+  assert.equal(
+    agedJobPurgeWhere(AGORA).publishedAt.lt.getTime(),
+    daysAgo(AGORA, DELETE_AFTER_PUBLISHED_DAYS).getTime()
+  )
+})
+
+// O expurgo é mais restritivo que o filtro: tudo que ele apaga já estava
+// invisível havia pelo menos 60 dias. Se esta relação inverter, passaríamos a
+// apagar vaga que ainda aparece para alguém.
+test('o expurgo é sempre mais restritivo que o filtro de frescor', () => {
+  const purga = agedJobPurgeWhere(AGORA).publishedAt.lt
+  const frescor = (freshOpenJobWhere(AGORA).OR[1] as { publishedAt: { gte: Date } }).publishedAt.gte
+  assert.ok(purga < frescor, 'o corte de apagamento precisa ser mais antigo que o de frescor')
 })

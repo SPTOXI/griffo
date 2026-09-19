@@ -4,6 +4,7 @@ import {
   DELETE_AFTER_PUBLISHED_DAYS,
   PURGE_CLOSED_AFTER_DAYS,
   STALE_AFTER_DAYS,
+  agedJobPurgeWhere,
   daysAgo,
 } from './lifecycle'
 
@@ -109,24 +110,45 @@ export async function purgeClosedJobs(
 }
 
 /**
- * Apaga vaga velha demais — **com alerta e tudo**.
+ * Apaga vaga velha demais — **com alerta e tudo**, preservando a memória.
  *
- * Isto desfaz de propósito a regra de `purgeClosedJobs` logo acima ("vaga com
- * alerta nunca é apagada"). A troca só é aceitável porque o que aquela regra
- * protegia mudou de lugar: o registro de que alguém foi avisado vive agora em
- * `RadarOfferLog`, desnormalizado (cargo, empresa, país, data) e sem relação
- * com `Job`, portanto imune ao `onDelete: Cascade` que leva o `RadarAlert`
- * junto.
+ * ## Dois critérios, e o `closedAt` não é detalhe
  *
- * Em outras palavras: o alerta some, a memória fica. Apagar isto antes de o
- * log existir destruiria histórico — foi exatamente o defeito que reverteu o
- * PR #71.
+ * Só sai vaga que é velha **e** já está encerrada. A primeira versão disto
+ * olhava só a idade, e teria criado um laço: a vaga publicada há 200 dias que
+ * a fonte ainda lista seria apagada aqui e **recriada pela coleta seguinte**,
+ * com id novo. Além do churn, o id novo quebra o "não se avisa duas vezes" do
+ * §15 — a mesma vaga voltaria a ser avisada como se fosse inédita.
+ *
+ * O que fica de fora por causa disso — vaga velha que a fonte insiste em
+ * listar — já está invisível pelo filtro de `FRESH_MAX_AGE_DAYS`. Ela ocupa
+ * linha no banco e não aparece para ninguém, e é uma troca barata perto de um
+ * laço de apaga-e-recria.
+ *
+ * ## A memória é preservada AQUI, não em outro lugar
+ *
+ * Antes de apagar, cada alerta das vagas condenadas vira linha em
+ * `RadarOfferLog` — cargo, empresa, país e a data em que o alerta saiu. Só
+ * então o apagamento acontece, na mesma transação.
+ *
+ * Fazer isso aqui, e não num script de backfill à parte, é o que fecha o
+ * defeito que derrubou o PR #71 **e** o que a revisão apontou nesta versão: o
+ * log começa a ser escrito no dia do deploy, então todo alerta anterior a ele
+ * não teria cópia nenhuma. Amarrado ao expurgo, o histórico é preservado por
+ * construção — não existe ordem de execução em que se apague algo sem antes
+ * copiá-lo, nem há um passo manual que alguém possa esquecer de rodar.
+ *
+ * `skipDuplicates` com o `@@unique([userId, jobId])` torna a cópia idempotente:
+ * a oferta já registrada na hora do alerta não vira linha dobrada.
  *
  * **Vaga sem `publishedAt` nunca é apagada por aqui.** Apagar de forma
  * irreversível por causa de um campo que a fonte não mandou é a pior versão de
  * "eliminar por dado ausente".
  *
- * Em lotes, e nunca lança — mesmo raciocínio de `purgeClosedJobs`.
+ * Diferente de `closeStaleJobs`, **este relança**: quem chama é o
+ * `runRetentionPurge`, que já isola cada etapa e registra o erro no relatório.
+ * Engolir aqui faria um expurgo permanentemente quebrado parecer um expurgo
+ * vazio no painel do admin.
  */
 export async function purgeAgedJobs(
   options: { now?: Date; afterDays?: number; batchSize?: number } = {}
@@ -134,27 +156,47 @@ export async function purgeAgedJobs(
   const now = options.now ?? new Date()
   const afterDays = options.afterDays ?? DELETE_AFTER_PUBLISHED_DAYS
   const batchSize = options.batchSize ?? 500
-  const cutoff = daysAgo(now, afterDays)
 
   let deleted = 0
 
-  try {
-    for (let batch = 0; batch < 20; batch++) {
-      const candidates = await db.job.findMany({
-        where: { publishedAt: { not: null, lt: cutoff } },
-        select: { id: true },
-        take: batchSize,
-      })
+  for (let batch = 0; batch < 20; batch++) {
+    const candidates = await db.job.findMany({
+      // O recorte mora em `agedJobPurgeWhere` — é a regra mais perigosa do
+      // módulo e merece ser lida e testada como valor, não como consulta.
+      where: agedJobPurgeWhere(now, afterDays),
+      select: {
+        id: true,
+        title: true,
+        company: true,
+        country: true,
+        radarAlerts: { select: { userId: true, createdAt: true } },
+      },
+      take: batchSize,
+    })
 
-      if (candidates.length === 0) break
+    if (candidates.length === 0) break
 
-      const result = await db.job.deleteMany({ where: { id: { in: candidates.map((c) => c.id) } } })
-      deleted += result.count
+    const memories = candidates.flatMap((job) =>
+      job.radarAlerts.map((alert) => ({
+        userId: alert.userId,
+        jobId: job.id,
+        title: job.title,
+        company: job.company,
+        country: job.country,
+        offeredAt: alert.createdAt,
+      }))
+    )
 
-      if (candidates.length < batchSize) break
-    }
-  } catch (e: any) {
-    console.warn('[jobs] expurgo por idade falhou:', e?.message || e)
+    // Copiar e apagar numa transação só: se o apagamento acontecesse sem a
+    // cópia ter entrado, o histórico sumiria — e é para impedir exatamente
+    // isso que esta função foi reescrita.
+    await db.$transaction([
+      db.radarOfferLog.createMany({ data: memories, skipDuplicates: true }),
+      db.job.deleteMany({ where: { id: { in: candidates.map((c) => c.id) } } }),
+    ])
+
+    deleted += candidates.length
+    if (candidates.length < batchSize) break
   }
 
   return deleted

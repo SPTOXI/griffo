@@ -1154,6 +1154,17 @@ model RadarOfferLog {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// Id que a vaga tinha no momento da oferta. **Texto puro, sem relação.**
+  ///
+  /// A primeira versão deste modelo não tinha este campo, por medo de
+  /// reintroduzir o `onDelete: Cascade` que apaga o `RadarAlert` junto com a
+  /// vaga. O medo estava no lugar errado: o perigo é a RELAÇÃO, não o valor.
+  /// Uma coluna de texto não cascateia — ela simplesmente continua lá depois
+  /// que a vaga sumiu, que é exatamente o que se quer.
+  ///
+  /// Ter o id de volta é o que permite deduplicar: sem ele, a escrita no
+  /// alerta e o backfill do expurgo criariam duas linhas para a mesma oferta.
+  jobId   String
   /// Cargo, como estava no anúncio no dia da oferta.
   title   String
   /// Empresa, idem. Nome de exibição, não a chave de deduplicação.
@@ -1164,5 +1175,9 @@ model RadarOfferLog {
   /// Quando esta vaga apareceu no Radar desta pessoa.
   offeredAt DateTime @default(now())
 
+  /// Espelha o `@@unique([userId, jobId])` do `RadarAlert`: uma oferta por
+  /// pessoa e vaga. É o que torna o backfill do expurgo idempotente — ele pode
+  /// rodar quantas vezes for, e `skipDuplicates` cuida do resto.
+  @@unique([userId, jobId])
   @@index([userId, offeredAt])
 }

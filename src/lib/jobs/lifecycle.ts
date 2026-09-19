@@ -110,6 +110,34 @@ export function freshOpenJobWhere(now: Date = new Date(), maxAgeDays: number = F
   }
 }
 
+/**
+ * O recorte do que pode ser **apagado** por idade.
+ *
+ * Função à parte, e não um objeto inline lá no `lifecycle.server.ts`, pelo
+ * mesmo motivo de `freshOpenJobWhere`: é a regra mais perigosa do módulo —
+ * apagamento irreversível — e precisa ser legível e testável como um valor, em
+ * vez de ficar escondida dentro de uma consulta.
+ *
+ * **Os dois critérios são obrigatórios, e o `closedAt` é o que evita um laço.**
+ * Uma vaga velha que a fonte AINDA lista seria apagada aqui e recriada pela
+ * coleta seguinte, com id novo — churn permanente, e o "não se avisa duas
+ * vezes" do §15 cairia junto, porque a vaga voltaria parecendo inédita. Só sai
+ * o que já está encerrado e, portanto, não vai voltar sozinho.
+ *
+ * **Vaga sem `publishedAt` nunca entra.** Apagar de forma irreversível por
+ * causa de um campo que a fonte não mandou é a pior versão de "eliminar por
+ * dado ausente".
+ */
+export function agedJobPurgeWhere(
+  now: Date = new Date(),
+  afterDays: number = DELETE_AFTER_PUBLISHED_DAYS
+) {
+  return {
+    publishedAt: { not: null, lt: daysAgo(now, afterDays) },
+    closedAt: { not: null },
+  }
+}
+
 export interface StaleInput {
   /** Última vez que a vaga apareceu numa coleta. */
   lastSeenAt: Date

@@ -646,37 +646,56 @@ export async function runForUser(userId: string): Promise<UserRunResult> {
   for (const opportunity of result.selected) {
     const row = rowById.get(opportunity.jobId)
     try {
-      // Numa transação de propósito: "foi avisado" e "está registrado que foi
-      // avisado" são o mesmo fato. Se o log falhasse à parte, a vaga poderia
-      // ser apagada mais tarde levando junto a única prova da oferta — que é
-      // exatamente o que este log existe para impedir.
-      await db.$transaction([
-        db.radarAlert.create({
-          data: {
-            userId,
-            jobId: opportunity.jobId,
-            overallFit: opportunity.match.overall,
-            recommendation: opportunity.match.recommendation,
-            matchJson: JSON.stringify(opportunity.match),
-            signalScore: internalSignalScore(opportunity.match),
-          },
-        }),
-        db.radarOfferLog.create({
-          data: {
-            userId,
-            title: row?.title ?? '',
-            company: row?.company ?? '',
-            country: row?.country ?? null,
-            offeredAt: new Date(),
-          },
-        }),
-      ])
+      await db.radarAlert.create({
+        data: {
+          userId,
+          jobId: opportunity.jobId,
+          overallFit: opportunity.match.overall,
+          recommendation: opportunity.match.recommendation,
+          matchJson: JSON.stringify(opportunity.match),
+          signalScore: internalSignalScore(opportunity.match),
+        },
+      })
       alerted++
     } catch (e: any) {
       // P2002 = já existe alerta deste usuário para esta vaga. É a garantia do
-      // "não se avisa duas vezes" funcionando sob concorrência, não um erro —
-      // e, dentro da transação, ela impede também o log duplicado.
+      // "não se avisa duas vezes" funcionando sob concorrência, não um erro.
       if (e?.code !== 'P2002') throw e
+      continue
+    }
+
+    // O log da oferta é best-effort, e FORA da transação do alerta — de
+    // propósito, revertendo a decisão da primeira versão deste código.
+    //
+    // Prender os dois num `$transaction` parecia certo ("foi avisado" e "está
+    // registrado que foi avisado" são o mesmo fato), e é errado na prática:
+    // qualquer falha do lado do log — a tabela ainda não existir no banco,
+    // antes do `prisma db push`, é o caso óbvio — derrubaria a criação do
+    // ALERTA. O produto pago pararia de avisar as pessoas para proteger uma
+    // linha de histórico. A troca é claramente ruim nessa direção.
+    //
+    // O que torna isto seguro é `purgeAgedJobs`: ele copia para o log tudo o
+    // que for apagar, então uma linha perdida aqui é reposta antes de a vaga
+    // sumir. Nada de histórico se perde; no máximo aparece mais tarde.
+    if (row) {
+      try {
+        await db.radarOfferLog.create({
+          data: {
+            userId,
+            jobId: opportunity.jobId,
+            title: row.title,
+            company: row.company,
+            country: row.country,
+            offeredAt: new Date(),
+          },
+        })
+      } catch (e: any) {
+        // P2002 aqui é a mesma oferta já registrada — esperado quando o
+        // expurgo já tinha copiado esta vaga. Não é erro.
+        if (e?.code !== 'P2002') {
+          console.warn(`[radar] log de oferta falhou (alerta preservado): ${e?.message || e}`)
+        }
+      }
     }
   }
 
