@@ -12,6 +12,8 @@
  * nunca o conserto.
  */
 
+import { hasSuspiciousInvisibles } from '../text/invisible'
+
 export type AtsIssueCode =
   | 'no_text'
   | 'too_short'
@@ -152,18 +154,6 @@ export function levelFor(score: number): AtsLevel {
   return 'risk'
 }
 
-/**
- * Caracteres que não desenham nada mas entram na extração.
- *
- * Largura zero, junção, marca de ordenação, separadores de linha invisíveis.
- * Aparecem em currículo honesto por acidente de copiar-e-colar — mas em
- * QUANTIDADE só aparecem quando alguém está escondendo ou fatiando texto para
- * driblar leitura.
- */
-const INVISIBLE_RE = /[\u200b-\u200f\u2028\u2029\u202a-\u202e\u2060-\u206f\ufeff]/g
-
-/** Quantos invisíveis já deixam de ser acidente. */
-const INVISIBLE_TOLERANCE = 15
 
 /**
  * Um único termo ocupando fatia grande demais do documento.
@@ -212,7 +202,7 @@ export function scoreAtsReadability(
 
   // Sinais de manipulação. Vêm antes das checagens de legibilidade porque
   // pesam mais: não adianta dizer que o texto é legível se ele foi plantado.
-  if ((text.match(INVISIBLE_RE) || []).length > INVISIBLE_TOLERANCE) found.add('invisible_chars')
+  if (hasSuspiciousInvisibles(text)) found.add('invisible_chars')
   if (stuffedTerm(text, words)) found.add('keyword_stuffing')
   if (options.pages && options.pages > 0 && words / options.pages > MAX_WORDS_PER_PAGE) {
     found.add('hidden_text_suspected')

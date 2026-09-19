@@ -33,6 +33,8 @@
  * original, revisão humana no que decide a vida de alguém.
  */
 
+import { stripSmuggling } from '../text/invisible'
+
 /**
  * Marcadores do bloco de dado não confiável.
  *
@@ -44,6 +46,20 @@ const OPEN = '<<<DOCUMENTO_DO_USUARIO>>>'
 const CLOSE = '<<<FIM_DOCUMENTO_DO_USUARIO>>>'
 
 /**
+ * O escape de marcador supõe que o ataque esteja VISÍVEL no texto.
+ *
+ * Tag characters (U+E0000–U+E007F) quebram essa suposição: são um alfabeto
+ * ASCII inteiro que não desenha nada. Uma instrução escrita com eles é
+ * invisível para quem revisa o arquivo, invisível no laudo, e texto comum para
+ * o modelo. O delimitador continua intacto e a defesa inteira passa por cima
+ * do ataque sem vê-lo.
+ *
+ * Por isso eles são REMOVIDOS antes do embrulho, e não neutralizados como o
+ * marcador: neutralizar serve para o que a pessoa consegue ver, e não há nada
+ * a ver aqui. Ver `text/invisible.ts` para as famílias que ficam.
+ */
+
+/**
  * Neutraliza qualquer ocorrência dos marcadores dentro do próprio conteúdo.
  *
  * Substitui por uma forma visualmente parecida e inofensiva, em vez de apagar:
@@ -51,7 +67,11 @@ const CLOSE = '<<<FIM_DOCUMENTO_DO_USUARIO>>>'
  * veria a análise falar de um currículo que não é o dele.
  */
 function neutralize(content: string): string {
-  return content.split(OPEN).join('«documento»').split(CLOSE).join('«fim-documento»')
+  return stripSmuggling(content)
+    .split(OPEN)
+    .join('«documento»')
+    .split(CLOSE)
+    .join('«fim-documento»')
 }
 
 /**
