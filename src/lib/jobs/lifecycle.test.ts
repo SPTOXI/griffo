@@ -1,14 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {
-  EXPIRED_AFTER_PUBLISHED_DAYS,
-  PURGE_CLOSED_AFTER_DAYS,
-  STALE_AFTER_DAYS,
-  daysAgo,
-  expiredByAgeDecision,
-  staleDecision,
-} from './lifecycle'
-import { EVERGREEN_AFTER_DAYS } from './legitimacy'
+import { PURGE_CLOSED_AFTER_DAYS, STALE_AFTER_DAYS, daysAgo, staleDecision } from './lifecycle'
 
 const AGORA = new Date('2026-08-18T12:00:00Z')
 const opts = { now: AGORA }
@@ -115,85 +107,4 @@ test('a janela é longa o bastante para não punir instabilidade', () => {
 test('daysAgo anda para trás, não para frente', () => {
   assert.ok(daysAgo(AGORA, 5) < AGORA)
   assert.equal(daysAgo(AGORA, 0).getTime(), AGORA.getTime())
-})
-
-/* --- Encerramento por idade de publicação --------------------------------- */
-
-test('vaga publicada dentro da janela não é encerrada por idade', () => {
-  const d = expiredByAgeDecision(
-    { publishedAt: daysAgo(AGORA, EXPIRED_AFTER_PUBLISHED_DAYS - 1), closedAt: null },
-    opts
-  )
-  assert.equal(d.close, false)
-})
-
-test('vaga publicada além da janela é encerrada, ainda que a fonte siga listando', () => {
-  const d = expiredByAgeDecision(
-    { publishedAt: daysAgo(AGORA, EXPIRED_AFTER_PUBLISHED_DAYS + 1), closedAt: null },
-    opts
-  )
-  assert.equal(d.close, true)
-  assert.match(d.reason!, /mais de 120 dias/)
-})
-
-// A borda é exclusiva, igual à de `staleDecision` (`>= cutoff` não fecha):
-// exatamente na janela ainda está dentro. As duas decisões precisam concordar
-// nisso, senão "45 dias" e "120 dias" passam a significar coisas diferentes.
-test('exatamente na janela ainda não fecha — mesma borda do encerramento por ausência', () => {
-  const porIdade = expiredByAgeDecision(
-    { publishedAt: daysAgo(AGORA, EXPIRED_AFTER_PUBLISHED_DAYS), closedAt: null },
-    opts
-  )
-  assert.equal(porIdade.close, false)
-
-  const porAusencia = staleDecision(
-    {
-      lastSeenAt: daysAgo(AGORA, STALE_AFTER_DAYS),
-      closedAt: null,
-      sourceLastSuccessfulCollection: fonteSaudavel,
-    },
-    opts
-  )
-  assert.equal(porAusencia.close, false, 'a borda das duas regras é a mesma')
-})
-
-// A mesma regra que rege o módulo inteiro: "eliminar por dado ausente
-// transforma silêncio em rejeição" (types.ts). Idade desconhecida não é idade
-// demais.
-test('vaga sem data de publicação NUNCA é encerrada por idade', () => {
-  const d = expiredByAgeDecision({ publishedAt: null, closedAt: null }, opts)
-  assert.equal(d.close, false)
-  assert.match(d.explanation, /não informou data/)
-})
-
-test('vaga já encerrada não é reencerrada por idade', () => {
-  const d = expiredByAgeDecision(
-    { publishedAt: daysAgo(AGORA, 400), closedAt: daysAgo(AGORA, 10) },
-    opts
-  )
-  assert.equal(d.close, false)
-})
-
-// Este é o ponto: a trava do §12 desliga o encerramento por ausência quando a
-// fonte para de coletar, e é aí que o acervo congelaria. Idade é fato da vaga,
-// não da coleta, então continua valendo.
-test('idade fecha mesmo quando a fonte está parada — é o fundo falso da trava do §12', () => {
-  const velhaEParada = {
-    lastSeenAt: daysAgo(AGORA, 200),
-    closedAt: null,
-    sourceLastSuccessfulCollection: daysAgo(AGORA, 200),
-  }
-  assert.equal(staleDecision(velhaEParada, opts).close, false, 'ausência não fecha: trava do §12')
-
-  const porIdade = expiredByAgeDecision({ publishedAt: daysAgo(AGORA, 200), closedAt: null }, opts)
-  assert.equal(porIdade.close, true, 'idade fecha assim mesmo')
-})
-
-// Sem isto, mudar um dos dois números desligaria o sinal `evergreen` em
-// silêncio: vaga na idade de expirar já está fechada, e o sinal só olha aberta.
-test('o limiar de anúncio perpétuo fica abaixo do de expiração por idade', () => {
-  assert.ok(
-    EVERGREEN_AFTER_DAYS < EXPIRED_AFTER_PUBLISHED_DAYS,
-    `evergreen (${EVERGREEN_AFTER_DAYS}) precisa ser menor que expiração (${EXPIRED_AFTER_PUBLISHED_DAYS})`
-  )
 })

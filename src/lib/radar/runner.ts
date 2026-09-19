@@ -7,7 +7,7 @@ import { db } from '../db'
 // O lugar de filtrar por mercado é o filtro duro, por usuário.
 import { safeCollect, type JobSourceAdapter } from '../jobs/adapter'
 import { decideCollection, sourceStateAfter } from '../jobs/collection'
-import { closeStaleJobs, expireAgedJobs, type StaleCloseReport } from '../jobs/lifecycle.server'
+import { closeStaleJobs, type StaleCloseReport } from '../jobs/lifecycle.server'
 import { dedupeBatch } from '../jobs/dedup'
 import type { LegitimacyJobRow } from '../jobs/legitimacy'
 import { assessLegitimacyForJobs } from '../jobs/legitimacy.server'
@@ -723,15 +723,6 @@ export async function runRadar(options: {
    * algo que já não existe — o erro que este mecanismo veio corrigir.
    */
   const staleClosed = await closeStaleJobs({ now: new Date() })
-
-  // Encerramento por IDADE, logo depois do encerramento por ausência e pelo
-  // mesmo motivo de ordem: antes de avaliar, para não alertar sobre vaga que
-  // acabou de sair. Os dois critérios são independentes — este continua
-  // valendo quando a trava do §12 desliga o outro.
-  const agedClosed = await expireAgedJobs({ now: new Date() })
-  if (agedClosed > 0) {
-    console.info(`[jobs] ${agedClosed} vaga(s) encerrada(s) por idade de publicação.`)
-  }
 
   // Quem esperou mais vem primeiro. Usuários sem preferência ainda registrada
   // entram na frente — nunca rodaram.
