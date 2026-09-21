@@ -8218,3 +8218,125 @@ da sessão. Comunicado ao operador, que decidiu manter.
 
 `tsc`, `eslint` e suíte — **1069/1069** ao fim da sessão (47 novos desde o
 `bc5c764`) — limpos.
+
+## 2.129 Análise do `linkedin-agent-skill`: o que não serve, e os dois furos que a comparação revelou
+
+Pedido do operador: avaliar se
+[`Jakeschincariol/linkedin-agent-skill`](https://github.com/Jakeschincariol/linkedin-agent-skill)
+(MIT) daria diferencial ao GriffoWork.
+
+### O que o repositório é
+
+Onze skills de Claude em markdown, ~1.500 linhas de código real (dois
+scripts Python e três JSON). **Não automatiza nada** por decisão explícita
+do autor: o README diz que automatizar o LinkedIn viola o User Agreement e
+restringe a conta, então "as skills escrevem, você posta".
+
+### O que NÃO serve, e o porquê
+
+Nove das onze skills são marketing de conteúdo pessoal — post, comentário,
+carrossel, DM, triagem de inbox, plano semanal. Isso é produto de creator,
+não de carreira: adotar seria construir um segundo produto.
+
+E `li-profile` (auditoria de perfil do LinkedIn) **já existe aqui** desde
+antes: `/api/resume/social-analysis` + `social-analysis-panel.tsx` (651
+linhas), que inclusive aceita o PDF do "Mais → Salvar como PDF".
+
+Uma primeira resposta minha ao operador ordenou o aproveitamento como
+"agora: nada", raciocinando que competiria com o trabalho de funil. Estava
+mal calibrado: o trabalho de funil está bloqueado no operador (os dois
+números do §2.128 e o `db push` do #74), então a alternativa a construir não
+era "focar no funil", era ficar parado. A ordem foi corrigida na mesma
+conversa.
+
+### Furo 1 — tag characters (#76)
+
+Fui verificar o soft hyphen que faltava na classe de invisíveis do §2.128 e
+encontrei coisa pior: `U+E0000–U+E007F`, um alfabeto ASCII inteiro
+integralmente invisível, não era coberto.
+
+Não é lacuna de cobertura — vaza **por baixo** da defesa do #75. O escape de
+marcador do `wrapUntrustedDocument` supõe que o ataque esteja visível no
+texto. Instrução escrita em tag characters é invisível para quem abre o
+arquivo, invisível no laudo, e texto comum para o modelo: o delimitador
+continua intacto e a defesa passa por cima do ataque sem vê-lo.
+
+Nasce `src/lib/text/invisible.ts`, com **três famílias e pesos diferentes**,
+porque tratá-las igual erraria nos dois sentidos:
+
+| Família | Tolerância | Razão |
+|---|---|---|
+| Tag characters | zero | Nenhum editor, fonte ou idioma os produz |
+| Largura zero (+ `U+061C`, `U+180E`, que faltavam) | 15 | Copiar-e-colar gera alguns |
+| Soft hyphen `U+00AD` | 40, à parte | É hifenização de verdade |
+
+O soft hyphen é a decisão que importa. Word e LibreOffice o produzem aos
+montes em texto justificado; jogá-lo na família do meio transformaria
+"justifiquei o texto" em acusação crítica de fraude. **Errar para cima mostra
+um currículo manipulado como limpo; errar para baixo chama de fraudador quem
+não é.** A tolerância reflete qual dos dois erros é pior.
+
+Ficaram de fora os espaços **visíveis** (`U+00A0`, `U+2009`, `U+2003`), que o
+levantamento de origem lista: fazem sentido para achar máquina num post, mas
+num currículo seriam fábrica de falso positivo num achado crítico.
+
+Na fronteira do prompt o contrabando é **removido**, e a remoção vem **antes**
+do escape de marcador — um tag character escondido dentro do delimitador
+(`<<<DOCU[tag]MENTO_DO_USUARIO>>>`) montaria o marcador depois de o escape já
+ter passado. Há teste para essa ordem.
+
+### Furo 2 — a saída gerada não tinha crivo nenhum (#77)
+
+O `content-guard.ts` protege a **entrada**. Na **saída**, nada:
+`cover-letter.ts` e `rewrite.ts` geram prosa com IA e ela vai direto para a
+pessoa. O juiz de qualidade não cobre `cover_letter` (`JUDGED_TASKS` não a
+inclui) e roda a 10% de amostragem, porque custa uma chamada de LLM.
+
+O GriffoWork escrevia carta com IA sem ter como saber se ela saía com cara de
+IA. Nasce `src/lib/writing/slop.ts`, determinístico e sem custo, rodando em
+100% do que geramos. **A defesa é o prompt, não a detecção**: a lista de
+proibidos entra no prompt da carta e nas três seções da reescrita; a medição
+existe para saber se adiantou.
+
+Quatro recusas deliberadas, escritas no módulo:
+
+- **não reescreve** — a ferramenta pública que "humaniza" texto existe para
+  derrotar detector (metade legítima, metade fraude), e troca palavra a
+  palavra quebra concordância em português;
+- **não devolve nota composta** — densidade é fato, nível é juízo; somá-los
+  num 0–100 daria aparência de precisão a um limiar escolhido, pelo mesmo
+  motivo que `jobs/legitimacy.ts` não tem número;
+- **não bloqueia** — os limiares não foram calibrados contra produção, e
+  reprovar a carta da pessoa com base num número chutado seria pior que não
+  medir (§2.30: medir antes de automatizar);
+- **não cobre idioma sem léxico** — o produto gera em 12 idiomas e isto cobre
+  3. `writingLangOf` devolve nulo nos outros nove: pedir em português que o
+  modelo evite expressões portuguesas num currículo alemão seria ruído no
+  prompt com aparência de cuidado.
+
+Das cinco heurísticas do `detect.py` de origem, **três** sobreviveram. A
+impressão digital tipográfica não passa (travessão e aspas curvas em
+currículo são normais) e a **voz por contrações não existe em português** —
+"don't" é registro, "da" e "pelo" são obrigatórias.
+
+O léxico é escrito daqui, com critério de entrada duplo: vazio de conteúdo
+**e** desproporcionalmente produzido por modelo. `otimizar`, `liderar`,
+`gerenciar` e `resiliência` ficaram fora, com teste que impede incluí-los
+depois — acusar vocabulário profissional real trocaria detecção de clichê por
+censura.
+
+### Um defeito meu, pego pelo próprio teste
+
+Eu descartava os clichês encontrados **junto com** as densidades quando o
+texto era curto. Presença literal de clichê é fato, não inferência: o piso
+protege a inferência, não o fato. Os achados passaram a ser levantados
+sempre, e `judged: false` diz que o nível não é veredito.
+
+### O contrapeso, que continua valendo
+
+Nada disto resolve conversão. O item 0 do `HANDOFF-CONTINUIDADE.md` segue
+esperando os dois números do operador: quantas vagas passam de 120 dias, e
+qual etapa zera no `/admin`.
+
+`tsc`, `eslint` e suíte — **1094/1094** no #76 e **1097/1097** no #77 (14 e
+17 testes novos, cada PR medido sobre `main`) — limpos.
