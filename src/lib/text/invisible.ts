@@ -10,16 +10,21 @@
  * necessário em OUTRO lugar — na fronteira do prompt. Regra repetida em dois
  * arquivos é regra que vai divergir, então ela mora aqui.
  *
- * ## As três famílias, que NÃO são a mesma coisa
+ * ## As famílias, que NÃO são a mesma coisa
  *
  * Tratá-las com o mesmo peso seria errado nas duas direções: acusaria
  * currículo honesto e deixaria passar o ataque de verdade.
  *
  * 1. **Tag characters (U+E0000–U+E007F)** — um alfabeto ASCII inteiro,
- *    integralmente invisível. Não existe uso legítimo: nenhum editor, nenhuma
- *    fonte, nenhum idioma os produz. É o caminho conhecido para contrabandear
- *    texto dentro de outro texto, e o destinatário natural desse contrabando é
- *    um modelo de linguagem — o nosso. Tolerância **zero**.
+ *    integralmente invisível. É o caminho conhecido para contrabandear texto
+ *    dentro de outro texto, e o destinatário natural desse contrabando é um
+ *    modelo de linguagem — o nosso. Tolerância **zero**.
+ *
+ *    Com UMA exceção, descoberta na revisão: a bandeira de subdivisão
+ *    (Inglaterra, Escócia, País de Gales) é montada com tag characters. Ver
+ *    `EMOJI_TAG_SEQUENCE_RE` — sem ela, um currículo britânico seria acusado
+ *    de fraude. "Não existe uso legítimo" era o que eu achava ao escrever
+ *    este arquivo, e estava errado.
  *
  * 2. **Formatação de largura zero** — junção, não-junção, marcas de direção,
  *    BOM. Aparecem por acidente de copiar-e-colar em currículo honesto, mas em
