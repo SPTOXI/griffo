@@ -118,11 +118,25 @@ export function freshOpenJobWhere(now: Date = new Date(), maxAgeDays: number = F
  * apagamento irreversível — e precisa ser legível e testável como um valor, em
  * vez de ficar escondida dentro de uma consulta.
  *
- * **Os dois critérios são obrigatórios, e o `closedAt` é o que evita um laço.**
- * Uma vaga velha que a fonte AINDA lista seria apagada aqui e recriada pela
- * coleta seguinte, com id novo — churn permanente, e o "não se avisa duas
- * vezes" do §15 cairia junto, porque a vaga voltaria parecendo inédita. Só sai
- * o que já está encerrado e, portanto, não vai voltar sozinho.
+ * **A idade basta. `closedAt` não é mais exigido** — decisão do operador, pelo
+ * mesmo critério do JobBase: passou de 180 dias, a vaga sai, esteja a fonte
+ * ainda listando ou não. Uma vaga com meio ano de publicação não é uma
+ * oportunidade, é entulho que infla a contagem pública e polui o Radar.
+ *
+ * **O laço que isso abriria, e como ele fica fechado.** A versão anterior
+ * exigia `closedAt` justamente para não apagar o que a fonte ainda lista: o
+ * JobBase documenta `status` sempre `'open'`, nada lá expira, então a vaga
+ * apagada voltaria na coleta seguinte com **id novo**. `RadarAlert` cai por
+ * cascata junto da vaga, e o "já avisei" é checado por `jobId` — a pessoa
+ * seria avisada de novo de uma vaga que já viu, ou que já marcou 👎, todo dia.
+ * O §15 em laço.
+ *
+ * A trava não está mais aqui: está na **importação**. `isTooOldToImport`
+ * recusa na coleta exatamente o que esta regra apaga, e as duas usam o mesmo
+ * `DELETE_AFTER_PUBLISHED_DAYS`. Se uma vaga de 180 dias merece ser apagada,
+ * ela também não merece entrar — a mesma régua nas duas pontas, e nada volta.
+ *
+ * Mexer numa sem mexer na outra reabre o laço. Há teste amarrando as duas.
  *
  * **Vaga sem `publishedAt` nunca entra.** Apagar de forma irreversível por
  * causa de um campo que a fonte não mandou é a pior versão de "eliminar por
@@ -134,8 +148,28 @@ export function agedJobPurgeWhere(
 ) {
   return {
     publishedAt: { not: null, lt: daysAgo(now, afterDays) },
-    closedAt: { not: null },
   }
+}
+
+/**
+ * A vaga é velha demais para sequer entrar no banco?
+ *
+ * O outro lado de `agedJobPurgeWhere`, e a razão de aquela regra poder
+ * dispensar o `closedAt` sem virar um laço de apagar-e-recriar. Vale só para
+ * vaga NOVA: o que já está no banco continua sendo atualizado normalmente pela
+ * coleta, porque parar de atualizar faria a fonte parecer que a perdeu de
+ * vista, e isso é o §12.
+ *
+ * `publishedAt` nulo entra, pela mesma regra de sempre: idade desconhecida não
+ * é idade demais.
+ */
+export function isTooOldToImport(
+  publishedAt: Date | null | undefined,
+  now: Date = new Date(),
+  afterDays: number = DELETE_AFTER_PUBLISHED_DAYS
+): boolean {
+  if (!publishedAt) return false
+  return publishedAt < daysAgo(now, afterDays)
 }
 
 export interface StaleInput {
