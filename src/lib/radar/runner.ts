@@ -7,6 +7,8 @@ import { db } from '../db'
 // O lugar de filtrar por mercado é o filtro duro, por usuário.
 import { safeCollect, type JobSourceAdapter } from '../jobs/adapter'
 import { decideCollection, sourceStateAfter } from '../jobs/collection'
+import { freshOpenJobWhere } from '../jobs/lifecycle'
+import { preserveOffers } from './offer-log.server'
 import { closeStaleJobs, type StaleCloseReport } from '../jobs/lifecycle.server'
 import { dedupeBatch } from '../jobs/dedup'
 import type { LegitimacyJobRow } from '../jobs/legitimacy'
@@ -448,7 +450,7 @@ async function openJobsWithinBudget(profile: ProfessionalProfile) {
   const scope = marketScopeOf(profile)
 
   const inScope = await db.job.findMany({
-    where: { closedAt: null, market: { in: scope } },
+    where: { ...freshOpenJobWhere(), market: { in: scope } },
     orderBy: NEWEST_FIRST,
     take: MAX_JOBS_PER_USER,
   })
@@ -456,12 +458,21 @@ async function openJobsWithinBudget(profile: ProfessionalProfile) {
   if (inScope.length >= MAX_JOBS_PER_USER) return inScope
 
   const rest = await db.job.findMany({
+    // `AND` explícito, e não espalhamento: `freshOpenJobWhere()` já traz um
+    // `OR` (a vaga sem data de publicação que nunca é eliminada), e o filtro de
+    // mercado abaixo traz outro. Espalhar os dois no mesmo objeto faria o
+    // segundo `OR` sobrescrever o primeiro em silêncio — e o filtro de frescor
+    // sumiria justamente desta consulta.
     where: {
-      closedAt: null,
-      // `notIn` sozinho deixaria de fora as vagas sem mercado: em SQL,
-      // `market NOT IN (...)` com `market` nulo não é verdadeiro. São
-      // justamente as vagas que "desconhecido nunca elimina" protege.
-      OR: [{ market: null }, { market: { notIn: scope } }],
+      AND: [
+        freshOpenJobWhere(),
+        {
+          // `notIn` sozinho deixaria de fora as vagas sem mercado: em SQL,
+          // `market NOT IN (...)` com `market` nulo não é verdadeiro. São
+          // justamente as vagas que "desconhecido nunca elimina" protege.
+          OR: [{ market: null }, { market: { notIn: scope } }],
+        },
+      ],
     },
     orderBy: NEWEST_FIRST,
     take: MAX_JOBS_PER_USER - inScope.length,
@@ -501,7 +512,15 @@ async function pruneUnfoundedAlerts(
 ): Promise<number> {
   const alerts = await db.radarAlert.findMany({
     where: { userId },
-    select: { id: true, job: true, overallFit: true, recommendation: true, matchJson: true },
+    select: {
+      id: true,
+      jobId: true,
+      createdAt: true,
+      job: true,
+      overallFit: true,
+      recommendation: true,
+      matchJson: true,
+    },
   })
 
   if (alerts.length === 0) return 0
@@ -534,6 +553,19 @@ async function pruneUnfoundedAlerts(
   }
 
   if (unfounded.length === 0) return 0
+
+  // Memória antes do apagamento. O alerta retirado deixa de ser recomendação,
+  // mas continua tendo acontecido — ver o cabeçalho de `offer-log.server.ts`.
+  const preserved = await preserveOffers(
+    alerts
+      .filter((a) => unfounded.includes(a.id))
+      .map((a) => ({ userId, jobId: a.jobId, createdAt: a.createdAt, job: a.job }))
+  )
+
+  // Memória não preservada, alerta não apagado. O alerta sobrevive mais uma
+  // rodada — custo nenhum — e a próxima tenta de novo. Apagar assim mesmo
+  // destruiria em silêncio o histórico que a preservação existe para salvar.
+  if (!preserved.ok) return 0
 
   const res = await db.radarAlert.deleteMany({ where: { id: { in: unfounded } } })
   console.warn(
@@ -589,7 +621,19 @@ export async function runForUser(userId: string): Promise<UserRunResult> {
     //
     // O custo é perder o histórico de feedback desses alertas. É aceitável:
     // feedback sobre um aviso que nunca deveria ter saído não mede nada.
-    const removed = await db.radarAlert.deleteMany({ where: { userId } })
+    // Mesma regra do `pruneUnfoundedAlerts`: nenhum alerta é destruído sem
+    // virar memória antes, inclusive nesta limpeza mais agressiva.
+    const doomed = await db.radarAlert.findMany({
+      where: { userId },
+      select: { jobId: true, createdAt: true, job: true },
+    })
+    const kept = await preserveOffers(doomed.map((a) => ({ userId, ...a })))
+
+    // Mesma regra do `pruneUnfoundedAlerts`: sem memória preservada, não se
+    // apaga. A limpeza fica para a rodada seguinte.
+    const removed = kept.ok
+      ? await db.radarAlert.deleteMany({ where: { userId } })
+      : { count: 0 }
     if (removed.count > 0) {
       console.warn(
         `[radar] usuário ${userId}: perfil sem sinal profissional; ` +
@@ -627,8 +671,14 @@ export async function runForUser(userId: string): Promise<UserRunResult> {
     alreadyAlertedJobIds: alreadyAlerted.map((a) => a.jobId),
   })
 
+  // Os dados da vaga na mão para o log de ofertas: ele guarda uma CÓPIA
+  // (cargo, empresa, país), não uma referência, e é isso que o faz sobreviver
+  // ao apagamento da vaga aos 180 dias.
+  const rowById = new Map(trustworthy.map((row) => [row.id, row]))
+
   let alerted = 0
   for (const opportunity of result.selected) {
+    const row = rowById.get(opportunity.jobId)
     try {
       await db.radarAlert.create({
         data: {
@@ -645,6 +695,41 @@ export async function runForUser(userId: string): Promise<UserRunResult> {
       // P2002 = já existe alerta deste usuário para esta vaga. É a garantia do
       // "não se avisa duas vezes" funcionando sob concorrência, não um erro.
       if (e?.code !== 'P2002') throw e
+      continue
+    }
+
+    // O log da oferta é best-effort, e FORA da transação do alerta — de
+    // propósito, revertendo a decisão da primeira versão deste código.
+    //
+    // Prender os dois num `$transaction` parecia certo ("foi avisado" e "está
+    // registrado que foi avisado" são o mesmo fato), e é errado na prática:
+    // qualquer falha do lado do log — a tabela ainda não existir no banco,
+    // antes do `prisma db push`, é o caso óbvio — derrubaria a criação do
+    // ALERTA. O produto pago pararia de avisar as pessoas para proteger uma
+    // linha de histórico. A troca é claramente ruim nessa direção.
+    //
+    // O que torna isto seguro é `purgeAgedJobs`: ele copia para o log tudo o
+    // que for apagar, então uma linha perdida aqui é reposta antes de a vaga
+    // sumir. Nada de histórico se perde; no máximo aparece mais tarde.
+    if (row) {
+      try {
+        await db.radarOfferLog.create({
+          data: {
+            userId,
+            jobId: opportunity.jobId,
+            title: row.title,
+            company: row.company,
+            country: row.country,
+            offeredAt: new Date(),
+          },
+        })
+      } catch (e: any) {
+        // P2002 aqui é a mesma oferta já registrada — esperado quando o
+        // expurgo já tinha copiado esta vaga. Não é erro.
+        if (e?.code !== 'P2002') {
+          console.warn(`[radar] log de oferta falhou (alerta preservado): ${e?.message || e}`)
+        }
+      }
     }
   }
 

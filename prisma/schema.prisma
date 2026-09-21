@@ -71,6 +71,7 @@ model User {
   professionalProfile ProfessionalProfile?
   radarPreference     RadarPreference?
   radarAlerts         RadarAlert[]
+  radarOfferLog       RadarOfferLog[]
 
   // Griffo Enterprise (B2B) — ver Organization/OrganizationMembership abaixo.
   organizationMemberships OrganizationMembership[]
@@ -1131,4 +1132,56 @@ model LaborMarketPoint {
   @@unique([country, source, metric, period])
   @@index([country, metric, period])
   @@index([source, period])
+}
+
+/// O que o Radar já ofereceu a uma pessoa — em forma que sobrevive à vaga.
+///
+/// `RadarAlert` é o alerta vivo: aponta para `Job` com `onDelete: Cascade`, e
+/// some junto quando a vaga é apagada. Isso é correto para o alerta (não faz
+/// sentido abrir um aviso de uma vaga que não existe mais) e errado para a
+/// memória da pessoa: ela continua tendo o direito de saber o que lhe foi
+/// oferecido, e quando.
+///
+/// Por isso esta tabela é **desnormalizada de propósito**: guarda uma cópia dos
+/// quatro campos que importam em vez de uma referência. Não há relação com
+/// `Job` — nem opcional —, porque qualquer relação reintroduziria a dependência
+/// que esta tabela existe para cortar.
+///
+/// É o que permite `purgeAgedJobs` apagar vaga com alerta e tudo aos 180 dias
+/// sem destruir histórico de ninguém.
+model RadarOfferLog {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Id que a vaga tinha no momento da oferta. **Texto puro, sem relação.**
+  ///
+  /// A primeira versão deste modelo não tinha este campo, por medo de
+  /// reintroduzir o `onDelete: Cascade` que apaga o `RadarAlert` junto com a
+  /// vaga. O medo estava no lugar errado: o perigo é a RELAÇÃO, não o valor.
+  /// Uma coluna de texto não cascateia — ela simplesmente continua lá depois
+  /// que a vaga sumiu, que é exatamente o que se quer.
+  ///
+  /// Ter o id de volta é o que permite deduplicar: sem ele, a escrita no
+  /// alerta e o backfill do expurgo criariam duas linhas para a mesma oferta.
+  jobId   String
+  /// Cargo, como estava no anúncio no dia da oferta.
+  title   String
+  /// Empresa, idem. Nome de exibição, não a chave de deduplicação.
+  company String
+  /// País da vaga (ISO-2). Nulo quando a vaga não tinha país resolvido.
+  country String?
+
+  /// Quando esta vaga apareceu no Radar desta pessoa.
+  offeredAt DateTime @default(now())
+
+  /// Espelha o `@@unique([userId, jobId])` do `RadarAlert`: uma oferta por
+  /// pessoa e vaga. É o que torna o backfill do expurgo idempotente — ele pode
+  /// rodar quantas vezes for, e `skipDuplicates` cuida do resto.
+  @@unique([userId, jobId])
+  @@index([userId, offeredAt])
+  /// A varredura de retenção filtra só por `offeredAt`, sem `userId`, e o
+  /// índice composto acima não serve para isso — o primeiro campo dele é o
+  /// usuário. Sem este, o expurgo de conformidade vira varredura da tabela.
+  @@index([offeredAt])
 }

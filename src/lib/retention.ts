@@ -1,7 +1,7 @@
 import 'server-only'
 import { db } from './db'
-import { purgeClosedJobs } from './jobs/lifecycle.server'
-import { PURGE_CLOSED_AFTER_DAYS } from './jobs/lifecycle'
+import { purgeAgedJobs, purgeClosedJobs } from './jobs/lifecycle.server'
+import { DELETE_AFTER_PUBLISHED_DAYS, PURGE_CLOSED_AFTER_DAYS } from './jobs/lifecycle'
 
 /**
  * Política de retenção.
@@ -33,11 +33,35 @@ export const RETENTION_DAYS = {
    * Vagas encerradas. Não são dado pessoal — são anúncio público que já saiu
    * do ar, e guardá-los para sempre faz o banco crescer sem teto.
    *
-   * Vaga sobre a qual alguém foi avisado NUNCA é apagada, independente do
-   * prazo: `RadarAlert` cai junto por cascata, e isso destruiria o histórico da
-   * pessoa. Ver `jobs/lifecycle.server.ts`.
+   * Vaga sobre a qual alguém foi avisado sobrevive a ESTE prazo — `RadarAlert`
+   * cai junto por cascata. Ela não sobrevive ao `agedJob` abaixo. Ver
+   * `jobs/lifecycle.server.ts`.
    */
   closedJob: PURGE_CLOSED_AFTER_DAYS,
+  /**
+   * Vagas velhas, apagadas **com alerta e tudo**.
+   *
+   * O prazo maior que `closedJob` não é acaso: aquele é o caminho suave (só
+   * vaga sem alerta), este é o duro, e o duro precisa de mais folga.
+   *
+   * O que tornou isto aceitável foi `RadarOfferLog`: o registro de que alguém
+   * foi avisado deixou de depender da linha da vaga, então apagá-la não destrói
+   * mais o histórico de ninguém.
+   */
+  agedJob: DELETE_AFTER_PUBLISHED_DAYS,
+  /**
+   * O histórico de vagas ofertadas (`RadarOfferLog`).
+   *
+   * **É dado pessoal** — diz o que uma pessoa identificável procurou e recebeu
+   * —, e por isso precisa de teto como qualquer outro neste arquivo. Sem esta
+   * linha, o módulo que existe para limitar retenção estaria guardando para
+   * sempre justamente o dado que ele acabou de criar.
+   *
+   * Dois anos, alinhado ao currículo inativo: é memória da própria pessoa
+   * sobre a própria busca, e bem além dos 180 dias em que a vaga original
+   * deixa de existir.
+   */
+  radarOfferLog: 730,
 }
 
 function cutoff(days: number): Date {
@@ -51,6 +75,10 @@ export interface PurgeReport {
   resumes: number
   /** Vagas encerradas há tempo e sem alerta nenhum apontando para elas. */
   closedJobs: number
+  /** Vagas publicadas há mais de 180 dias, apagadas com alerta e tudo. */
+  agedJobs: number
+  /** Linhas do histórico de ofertas além do prazo de retenção. */
+  offerLogs: number
   errors: string[]
 }
 
@@ -67,6 +95,8 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
     auditLogs: 0,
     resumes: 0,
     closedJobs: 0,
+    agedJobs: 0,
+    offerLogs: 0,
     errors: [],
   }
 
@@ -110,11 +140,58 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
   })
 
   /**
+   * O teto do histórico de ofertas vem ANTES dos dois expurgos de vaga, de
+   * propósito.
+   *
+   * Esta rota tem `maxDuration = 60`, e `purgeAgedJobs` pode gastar quase tudo
+   * num acervo acumulado (até 20 transações de 20s). Se ele viesse antes, uma
+   * execução carregada seria interrompida sem nunca chegar aqui, e o teto de
+   * retenção de DADO PESSOAL nunca se aplicaria — enquanto a etapa que só
+   * economiza espaço rodaria sempre. A ordem certa é a inversa: conformidade
+   * primeiro, faxina depois.
+   */
+  report.offerLogs = await step('radarOfferLog', async () => {
+    // Em lotes, como os expurgos de vaga. Um `deleteMany` único sobre uma
+    // tabela de dois anos de histórico estoura o `maxDuration = 60` da rota e
+    // passa a falhar IGUAL em toda execução — e uma etapa de conformidade
+    // travada é pior que uma etapa lenta.
+    const limite = cutoff(RETENTION_DAYS.radarOfferLog)
+    let apagadas = 0
+
+    for (let lote = 0; lote < 20; lote++) {
+      const alvos = await db.radarOfferLog.findMany({
+        where: { offeredAt: { lt: limite } },
+        select: { id: true },
+        take: 500,
+      })
+      if (alvos.length === 0) break
+
+      const r = await db.radarOfferLog.deleteMany({ where: { id: { in: alvos.map((a) => a.id) } } })
+      apagadas += r.count
+      if (alvos.length < 500) break
+    }
+
+    return apagadas
+  })
+
+  /**
    * Vagas encerradas não são dado pessoal — são anúncio público fora do ar. O
    * motivo de apagá-las é espaço, não conformidade, e por isso o critério é
-   * diferente: vaga sobre a qual alguém foi avisado fica, sempre.
+   * diferente: vaga sobre a qual alguém foi avisado fica — até os 180 dias,
+   * quando `purgeAgedJobs` abaixo a leva de qualquer jeito.
    */
   report.closedJobs = await step('closedJob', () => purgeClosedJobs())
+
+  /**
+   * Aos 180 dias a vaga sai, com alerta e tudo.
+   *
+   * O que antes impedia isto — não destruir o registro de que alguém foi
+   * avisado — passou a viver em `RadarOfferLog`, que guarda cargo, empresa,
+   * país e data sem referência à vaga, e por isso sobrevive ao apagamento.
+   * A pessoa perde o anúncio de uma vaga que não existe há meio ano, e mantém
+   * a memória de que ela lhe foi oferecida.
+   */
+  report.agedJobs = await step('agedJob', () => purgeAgedJobs())
 
   return report
 }

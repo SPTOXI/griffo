@@ -24,7 +24,8 @@ export async function GET() {
       return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 })
     }
 
-    const [resumes, analysisLedger, creditTransactions, subscriptions, auditLogs] = await Promise.all([
+    const [resumes, analysisLedger, creditTransactions, subscriptions, auditLogs, radarOffers] =
+      await Promise.all([
       db.resume.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
@@ -47,6 +48,16 @@ export async function GET() {
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
         take: 1000,
+      }),
+      // Histórico de vagas que o Radar ofereceu. É dado do titular — diz o que
+      // ele procurou e o que recebeu —, tem teto de retenção em
+      // `lib/retention.ts`, e por isso precisa sair na portabilidade. Fora
+      // daqui, a página de privacidade prometeria uma exportação completa que
+      // não é completa.
+      db.radarOfferLog.findMany({
+        where: { userId: user.id },
+        orderBy: { offeredAt: 'desc' },
+        select: { title: true, company: true, country: true, offeredAt: true },
       }),
     ])
 
@@ -72,6 +83,7 @@ export async function GET() {
         // `passwordHash` fica de fora de propósito: é credencial, não dado do
         // titular, e exportá-la só ampliaria a superfície de vazamento.
       },
+      radarOffers,
       resumes: resumes.map((r) => ({
         id: r.id,
         originalContent: r.originalContent,
