@@ -29,7 +29,7 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 15/09/2026: **Lista "vagas por país" na home, e um bug real achado na verificação (§2.127, fase 3 de 4)** — continuação do §2.125/§2.126: seção nova entre "Diferenciais" e a barra de estatísticas, com `getOpenJobsCountByCountry()` (`groupBy(['country'])` só de vaga aberta e país preenchido) resolvida em paralelo com a contagem total em `page.tsx`. Piso de exibição de 30 vagas por país (decisão de apresentação, mesma disciplina do mapa de contratação: país abaixo do piso some no "+N outros países" com número real, nunca omitido); `country-labels.ts` novo, dicionário fechado de 31 códigos em 12 idiomas, evitando de propósito `Intl.DisplayNames` (a mesma armadilha de ICU divergente Node/navegador que já tinha quebrado `map-model.ts`). **O bug**: depois do `build`+`start` local, a seção aparecia no HTML de `curl` (dado real, "4.884" ao lado de Brasil) mas nunca no navegador depois da página carregar — descartado cache do Chrome, cookie e *service worker* um por um antes de achar a causa real: `home-client.tsx` tem dois pontos que renderizam `<Landing>` (um antes da hidratação, outro depois que `hydrated` vira `true`, o estado de qualquer visitante real) e só o segundo esquecia de passar `jobsByCountry`, caindo no `[]` default — a seção nascia visível e desaparecia sozinha no instante da hidratação, sem erro de console porque não é exceção, é prop ausente com fallback válido. Corrigido; confirmado em aba nova, sem histórico, por leitura direta do DOM. `tsc`, `eslint`, `build` e suíte — **989/989**, mesma contagem do §2.126 — limpos. |
+| Última revisão | 21/09/2026: **Ciclo de vida da vaga fecha, e duas defesas contra manipulação (§2.129, §2.130)** — quatro PRs em produção. **#74**: frescor de 120 dias por filtro na LEITURA (idade depende de `now`, e fato dependente de tempo não se grava), expurgo aos 180 dias com alerta e tudo, e `RadarOfferLog` preservando cargo/empresa/país/data — a invariante é que nenhum alerta é destruído sem virar memória antes, e é acoplada: falhou a preservação, não apaga. **#78**: o expurgo deixa de exigir `closedAt` (pedido do operador, critério do JobBase) e a trava contra o laço apaga-reimporta-reavisa migra para `isTooOldToImport` na coleta — a mesma régua nas duas pontas. **#76**: tag characters (U+E0000–U+E007F) vazavam instrução invisível por baixo do escape do `wrapUntrustedDocument`; nasce `text/invisible.ts` com famílias de peso diferente, e a bandeira de subdivisão (🏴󠁧󠁢󠁥󠁮󠁧󠁿, feita de tag characters) fica isenta para não acusar currículo britânico de fraude. **#77**: o `content-guard` protegia a entrada e a SAÍDA não tinha crivo nenhum — `slop.ts` mede clichê, variação de frase e concretude no que nós mesmos geramos, e a lista de proibidos entra no prompt da carta e da reescrita. Revisão em nível alto nos dois últimos achou **oito defeitos, quatro deles acusando gente honesta** (o `como ia` do imperfeito de IR, a carta densa em sigla medindo concretude zero, a frase curta descartada, a bandeira). `tsc`, `eslint` e suíte — **1139/1139** — limpos; CI e deploy Vercel verdes em `cbae3d7`.
 | Anterior | 15/09/2026: **Pendência 16 reaberta com dado real — causa raiz era país vazio, não falta de vaga (§2.125, fase 1 de 4)** — o JobBase (projeto irmão) avisou de uma categorização própria por vaga e uma view por país; verificando os números pra decidir onde usar, a pergunta do operador ("por que tão poucas vagas fora do Brasil?") revelou a causa real: 48% das vagas abertas não tinham `country`, mas 90% dessas tinham `city` em texto livre nunca parseado ("San Francisco, CA \| New York City, NY", "Brazil (São Paulo - Hybrid)"). Plano em 4 fases aprovado antes de codar. **Fase 1, feita**: `src/lib/jobs/location-country.ts` (`inferCountryFromLocation`) infere país por lista fechada de país/cidade contra o que realmente aparece nos dados — mesma classe de inferência que `normalizeRemoteType` já faz pro texto de localização, não uma nova exceção a "não inventar". Wiring em `normalize.ts`; teste novo (10 casos). Backfill único (`backfill-job-country.ts`, `--dry-run` primeiro) rodado com autorização do operador: **3.975 de 4.197 vagas resolvidas (94,7%)**, cobertura de país sobe de 52% para **93%**. O quadro muda de figura: Brasil 4.441→4.884, **Estados Unidos 53→2.477**, Reino Unido 112→315, Canadá e Irlanda (que não apareciam) entram com 140 e 123. Achado à parte: o rodízio direto de Adzuna do Griffo está parado há 11-13 dias, mas o operador esclareceu que importa menos — o JobBase também coleta Adzuna por conta própria (500 vagas, fresco), e a query do adapter do JobBase nunca filtrou por `source`: InfoJobs (2.942) e Catho (1.154) já chegam ao Griffo automaticamente, comentário desatualizado do adapter corrigido. Frescor de "até 12h" do operador já coberto pelo ISR de 5 minutos que já existe. **Fase 2, código pronto, aguardando o operador (§2.126)**: campo aditivo `Job.category` (setor amplo, do `category_slug` do JobBase — 19 categorias, ~74% de cobertura, bem melhor que os ~24% de `normalizedTitle`) + `'vaga_remota'` sempre sobrepondo quando `remoteType === 'remote'` (pedido explícito do operador). Tradução das 19 categorias + "vaga remota" nos 12 idiomas (`category-labels.ts`). **Operador rodou `npx prisma db push` no mesmo dia** — confirmado por consulta direta ao banco (`information_schema.columns`, não só pela ausência de erro): coluna `category` existe em produção, `text`, aceita nulo. Push pro `origin/main` liberado e feito. Próximas fases: lista por país na home (3), detalhamento por categoria em `/market-pulse` (4). `tsc`, `eslint`, `build` e suíte — **989/989**, 15 novos no total desde a Fase 1 — limpos.
 | Anterior (2) | 13/09/2026: **Google Trends real nos 12 idiomas — termo isolado de currículo entra, termo de vaga fica de fora por direção (§2.124)** — pedido do operador: ir ao Google Trends de verdade, achar o termo mais buscado em cada idioma do site e usar para atrair lead orgânico (mesmo método do §2.96/§2.119, desta vez pesquisado ao vivo). Comparação real feita país-sede por idioma (BR, US, ES, DE, FR, IT, JP, NL, SE, CN, SA+EG, KR), 12 meses, contra os termos já usados em `job-search-terms.ts`. **O achado maior não virou código**: em quase todo mercado, "vagas de emprego"/"ofertas de empleo"/`Stellenangebote`/"offres d'emploi"/"offerte di lavoro"/`求人`/`vacatures`/"lediga jobb"/`招聘` bateu 3 a 10× o volume de qualquer termo já usado — mas ficou de fora por decisão de direção: mesma regra do §2.84 para "hiring", quem busca vaga quer um quadro de vagas, não a auditoria pós-candidatura que `/hiring` responde. **O que entrou**: o termo isolado de currículo/CV/resume, 2º lugar (ou empatado em 1º, Brasil e Itália) em 9 de 12 mercados — direção certa, porque é a dúvida exata que `/hiring` responde. Confirmado contra o texto visível de `hiringPage.searchBody` nos 12 idiomas antes de entrar: a palavra já estava lá, nenhuma cópia nova. Teste novo trava as duas pontas (árabe precisou de raiz `سير` por causa da flexão possessiva). **Três sinônimos trocados** em `[country]/page.tsx` — mesma frase, mesma posição do Hero D (§2.120), só a palavra virou a de maior volume confirmado: alemão `Stellenanzeigen`→`Stellenangeboten`, italiano `annunci di lavoro`→`offerte di lavoro`, sueco `jobbannonser`→`lediga jobb`; as outras 9 línguas já estavam certas. Achado à parte, registrado sem virar código: os dois países árabes testados divergiram (Arábia Saudita emparelhado, Egito disparado para o termo de currículo) — decisão foi para o lado que a maioria e a população maior indicam. A ferramenta do Trends travou o carregamento repetidas vezes (FR/JA/SV/KO) — resolvido reabrindo aba, nenhum dado lido de gráfico que não carregou. `tsc`, `eslint`, `build` (`/[country]` segue `●` SSG) e suíte — **974/974**, 1 novo — limpos; conferido também contra o HTML servido de verdade (`build`+`start`, `curl` em `/de`, `/it`, `/se`, `/hiring?lang=`)
 | Anterior (3) | 13/09/2026: **Cartão do Hero D mudava de altura ao trocar de aba, empurrando o texto lateral (§2.123)** — reportado pelo operador: "quando clicamos em 'como ATS te vê' o bloco branco diminuiu de tamanho e o texto lateral se move para cima". Causa: o "Corpo" do cartão só renderizava a aba ativa, com `min-h-[320px]` como PISO, não teto — a visão humana (4 requisitos) é mais alta que a ATS (diagnóstico mais curto), e a coluna esquerda do hero é centralizada verticalmente contra a direita (`items-center`), então uma altura de cartão diferente recentralizava as duas colunas e empurrava o texto. Corrigido sem tocar em conteúdo: as duas abas ficam sempre montadas, empilhadas na mesma célula de grid (`col-start-1 row-start-1` — a altura da linha vira automaticamente o maior conteúdo entre as duas, sem número mágico em pixel, o que importa porque o texto muda de tamanho por idioma nos 12 idiomas do site); a aba inativa fica `invisible` (não `hidden`), continuando a contribuir pra altura sem aparecer nem ser clicável ou focável. Verificado por `getBoundingClientRect` via `javascript_tool` em produção local (`build`+`start` — o modo dev/Turbopack tinha um erro de módulo à parte, sem relação com esta mudança, que não reproduziu em produção): altura, topo e base do cartão idênticos bit a bit entre as duas abas. `tsc`, `eslint`, `build` e suíte (973/973) limpos |
@@ -47,39 +47,48 @@ o quanto confiar nele.
 
 **Pendências que estão esperando alguém, não código:**
 
-0. ⏳ **ABERTA em 18/09/2026 — conferir o volume do primeiro encerramento por
-   idade.** O PR #71 (mesclado, `db08a11`) implementou o `expired_by_age` que o
-   schema já previa e o código nunca fazia: vaga publicada há mais de 120 dias
-   passa a ser encerrada mesmo que a fonte siga listando. Importa porque o
-   adapter do JobBase documenta que o `status` de lá é sempre `'open'` — nada
-   naquele projeto expira vaga, então o acervo inteiro dependia do ciclo de
-   vida daqui, que só media ausência.
+0. ⏳ **ABERTA em 21/09/2026 — conferir o volume do primeiro EXPURGO por
+   idade, e o efeito na contagem pública.**
 
-   **O que falta**: rodar o cron e ver o número. A **primeira** rodada fecha o
-   acumulado histórico de uma vez e pode derrubar visivelmente a contagem de
-   vagas abertas do Hero D; as seguintes fecham só o que envelheceu no dia. É
-   melhor ver o tamanho antes de ele aparecer na home.
+   **Este item foi reescrito.** A versão anterior descrevia o `expired_by_age`
+   do PR #71, que **foi revertido no #73** depois que a revisão achou dois
+   defeitos: ele gravava idade em `closedAt`, herdando sem querer o segundo
+   significado do campo ("pode limpar"). O mecanismo atual é outro, e chegou em
+   duas etapas:
 
-   O encerramento roda dentro de `runRadar`, então o gatilho é o cron do Radar
-   (`/api/cron/radar`, Vercel, `0 6 * * *` UTC — 03:00 em Brasília). Disparo
-   manual exige o mesmo cabeçalho que o Vercel manda, comparado em tempo
-   constante por `lib/cron-auth.ts`:
+   | | |
+   |---|---|
+   | **#74** (§2.129) | Frescor por **filtro na leitura** — vaga publicada há +120 dias some do Radar e das contagens, sem gravar nada. Expurgo aos 180 dias, com alerta e tudo, preservando a memória em `RadarOfferLog` |
+   | **#78** (§2.130) | O expurgo deixa de exigir `closedAt`: **idade basta**. A trava contra o laço apaga-reimporta-reavisa migra para `isTooOldToImport`, na coleta |
+
+   **O que falta**: rodar o cron e ver dois números, não um.
+
+   O gatilho é o cron do Radar (`/api/cron/radar`, Vercel, `0 6 * * *` UTC —
+   03:00 em Brasília). Disparo manual exige o mesmo cabeçalho que o Vercel
+   manda, comparado em tempo constante por `lib/cron-auth.ts`:
 
    ```
    curl -X GET https://griffo.work/api/cron/radar \
      -H "Authorization: Bearer $CRON_SECRET"
    ```
 
-   A rota tem `maxDuration = 60`; a rodada inteira (coleta + avaliação + digest)
-   pode encostar nesse teto, e o encerramento por idade acontece **antes** de
-   avaliar, então ele conclui mesmo que o resto seja cortado.
-
-   **O número, depois** — não depende do log sobreviver (runtime log do Vercel
-   expira rápido):
+   **Os dois números, medidos ANTES de rodar** — depois o primeiro deixa de
+   existir, porque as linhas terão sido apagadas:
 
    ```sql
-   SELECT count(*) FROM "Job" WHERE "closedReason" LIKE 'Publicada há mais de%';
+   -- 1. O que o expurgo vai apagar na próxima rodada (e nas seguintes)
+   SELECT count(*) FROM "Job" WHERE "publishedAt" < now() - interval '180 days';
+
+   -- 2. O que já está invisível pelo frescor mas AINDA não é apagado
+   SELECT count(*) FROM "Job"
+    WHERE "closedAt" IS NULL
+      AND "publishedAt" < now() - interval '120 days'
+      AND "publishedAt" >= now() - interval '180 days';
    ```
+
+   O expurgo drena em lotes de 100, teto de 20 por execução — **2.000 vagas por
+   rodada**. Acúmulo maior que isso leva alguns dias, o que é desejável: dá
+   tempo de acompanhar.
 
    **Por que isto não é só curiosidade**: o número decide o que o site pode
    afirmar. Se sobrar pouca vaga acima de 120 dias, "acervo atualizado, nenhuma
@@ -87,6 +96,11 @@ o quanto confiar nele.
    para o reposicionamento em vagas discutido com o operador. Se for alto, a
    frase honesta é a outra, que o sistema já garantia: "toda vaga foi confirmada
    como aberta nos últimos 45 dias" (`STALE_AFTER_DAYS`).
+
+   **E confira a contagem do Hero D depois da primeira rodada.** Desde o #78 o
+   expurgo alcança também a vaga velha que a fonte ainda lista — categoria que
+   antes só ficava invisível, ocupando linha no banco. A queda pode ser
+   visível na home.
 
 1. ✅ **RESOLVIDO em 08/09/2026.** `RADAR_DIGEST_ENABLED=true` ligado pelo
    operador, e o primeiro envio real do digest — o caminho que

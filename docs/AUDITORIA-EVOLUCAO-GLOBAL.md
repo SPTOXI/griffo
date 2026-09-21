@@ -8340,3 +8340,71 @@ qual etapa zera no `/admin`.
 
 `tsc`, `eslint` e suíte — **1094/1094** no #76 e **1097/1097** no #77 (14 e
 17 testes novos, cada PR medido sobre `main`) — limpos.
+
+## 2.130 Idade basta para apagar a vaga, e a trava do laço muda para a importação
+
+Pedido do operador, direto: *"as vagas que passaram 180 dias devem ser
+deletadas, o JobBase também funciona assim"*. `agedJobPurgeWhere` deixa de
+exigir `closedAt`.
+
+### Por que não foi só apagar a condição
+
+A exigência de `closedAt` tinha sido escrita no §2.128 justamente para evitar
+um laço, e removê-la sozinha o reabriria.
+
+O adapter do JobBase documenta que o `status` de lá é **sempre `'open'`**:
+nada naquele projeto expira vaga. Logo, a vaga velha que ele ainda lista seria
+apagada pelo expurgo e **recriada na coleta seguinte, com id novo**.
+
+O estrago não é o churn. `RadarAlert` tem `onDelete: Cascade` e cai junto da
+vaga, enquanto o "já avisei esta pessoa" é checado por `jobId`
+(`runner.ts:667`):
+
+```
+apaga → reimporta com id novo → avisa de novo → apaga → ...
+```
+
+A pessoa seria reavisada de uma vaga que já viu — ou que já marcou 👎 — todo
+dia. O §15 em laço, levando o feedback do §30 junto.
+
+### A trava mudou de lugar, não sumiu
+
+> Se uma vaga de 180 dias merece ser apagada, ela também não merece entrar.
+
+`isTooOldToImport` recusa na coleta exatamente o que o expurgo apaga, com o
+mesmo `DELETE_AFTER_PUBLISHED_DAYS`. Nada volta porque nada é reimportado —
+sem tabela de lápide, sem migração, sem passo manual que alguém possa
+esquecer. Um teste amarra as duas funções: mexer numa sem mexer na outra
+reabre o laço, e a suíte passa a dizer isso em voz alta.
+
+### O que ficou decidido junto, e não era óbvio
+
+- **A guarda vale só para vaga NOVA.** Vaga já existente segue sendo
+  atualizada mesmo velha — parar de atualizar faria a fonte parecer que a
+  perdeu de vista, e isso é o §12.
+- **`publishedAt` nulo entra e não é apagado**, dos dois lados. Idade
+  desconhecida não é idade demais, a mesma regra do `types.ts`.
+- **O limite exato não elimina** (180 dias cravados ainda passa), mesma
+  convenção do `staleDecision`.
+- **`CollectionRunResult` ganha `skippedTooOld`.** Recusa silenciosa numa
+  coleta é indistinguível de fonte vazia, e o §12 existe para impedir
+  exatamente esse tipo de confusão.
+
+Um comentário sobreviveu por outro motivo, e foi corrigido: o critério
+repetido dentro da transação do expurgo existia para pegar vaga *reaberta*
+entre a leitura e o apagamento (`closedAt: null`). Com o `closedAt` fora do
+critério isso deixou de valer — mas o caminho de *update* da coleta grava o
+`publishedAt` que a fonte mandou, e uma correção na origem pode rejuvenescer a
+vaga nesse intervalo. A guarda continua certa; a justificativa estava errada.
+
+### O que esperar na primeira rodada
+
+O expurgo apaga em lotes de 100 com teto de 20 por execução — 2.000 vagas por
+rodada. Acúmulo maior que isso drena ao longo de alguns dias em vez de num
+golpe só, o que é desejável: dá tempo de ver o número antes de ele sumir.
+
+**Vale conferir a contagem pública do Hero D depois da primeira rodada**,
+porque agora sai também a vaga velha que a fonte insiste em listar —
+categoria que, até aqui, só ficava invisível ocupando linha no banco.
+
+`tsc`, `eslint` e suíte — **1139/1139**, 5 novos — limpos.
