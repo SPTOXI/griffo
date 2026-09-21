@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   DELETE_AFTER_PUBLISHED_DAYS,
+  isTooOldToImport,
   FRESH_MAX_AGE_DAYS,
   PURGE_CLOSED_AFTER_DAYS,
   STALE_AFTER_DAYS,
@@ -169,11 +170,43 @@ test('o filtro de frescor não propõe escrita nenhuma — só leitura', () => {
 
 /* --- A trava do expurgo --------------------------------------------------- */
 
-// Sem o `closedAt`, a vaga que a fonte ainda lista seria apagada e recriada na
-// coleta seguinte com id novo: churn permanente, e o "não se avisa duas vezes"
-// do §15 cairia junto, porque a vaga voltaria parecendo inédita.
-test('o expurgo exige vaga JÁ ENCERRADA, não só velha', () => {
-  assert.deepEqual(agedJobPurgeWhere(AGORA).closedAt, { not: null })
+// Decisão do operador (mesmo critério do JobBase): passou do prazo, a vaga
+// sai, esteja a fonte ainda listando ou não.
+test('IDADE BASTA — o expurgo não exige mais vaga encerrada', () => {
+  assert.equal('closedAt' in agedJobPurgeWhere(AGORA), false)
+})
+
+// O laço que a exigência de `closedAt` evitava agora é fechado na importação.
+// Se estas duas deixarem de usar o mesmo prazo, a vaga apagada volta na coleta
+// seguinte com id novo, `RadarAlert` cai por cascata, e a pessoa é avisada de
+// novo de algo que já viu — o §15 em laço, todo dia.
+test('O QUE O EXPURGO APAGA, A IMPORTAÇÃO RECUSA — mesmo prazo nas duas pontas', () => {
+  const umDiaAlemDoCorte = daysAgo(AGORA, DELETE_AFTER_PUBLISHED_DAYS + 1)
+  const corte = agedJobPurgeWhere(AGORA).publishedAt.lt as Date
+
+  assert.ok(umDiaAlemDoCorte < corte, 'o expurgo apagaria esta vaga')
+  assert.equal(isTooOldToImport(umDiaAlemDoCorte, AGORA), true, 'e a importação precisa recusá-la')
+})
+
+test('vaga dentro do prazo entra normalmente', () => {
+  assert.equal(isTooOldToImport(daysAgo(AGORA, DELETE_AFTER_PUBLISHED_DAYS - 1), AGORA), false)
+})
+
+test('bem no limite do prazo a vaga ainda entra', () => {
+  // Mesma convenção do `staleDecision`: o limite exato não elimina.
+  assert.equal(isTooOldToImport(daysAgo(AGORA, DELETE_AFTER_PUBLISHED_DAYS), AGORA), false)
+})
+
+test('SEM DATA DE PUBLICAÇÃO A VAGA ENTRA — idade desconhecida não é idade demais', () => {
+  assert.equal(isTooOldToImport(null, AGORA), false)
+  assert.equal(isTooOldToImport(undefined, AGORA), false)
+})
+
+test('a importação recusa exatamente o que o expurgo apaga, e nada além', () => {
+  // A vaga velha que a fonte ainda lista É apagada agora (era o que o
+  // `closedAt` impedia), então ela TEM que ser recusada na volta.
+  const where = agedJobPurgeWhere(AGORA)
+  assert.equal(where.publishedAt.lt.getTime(), daysAgo(AGORA, DELETE_AFTER_PUBLISHED_DAYS).getTime())
 })
 
 test('o expurgo nunca apaga vaga sem data de publicação', () => {

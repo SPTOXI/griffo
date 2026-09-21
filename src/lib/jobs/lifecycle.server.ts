@@ -117,18 +117,22 @@ export async function purgeClosedJobs(
 /**
  * Apaga vaga velha demais — **com alerta e tudo**, preservando a memória.
  *
- * ## Dois critérios, e o `closedAt` não é detalhe
+ * ## Um critério só: idade
  *
- * Só sai vaga que é velha **e** já está encerrada. A primeira versão disto
- * olhava só a idade, e teria criado um laço: a vaga publicada há 200 dias que
- * a fonte ainda lista seria apagada aqui e **recriada pela coleta seguinte**,
- * com id novo. Além do churn, o id novo quebra o "não se avisa duas vezes" do
- * §15 — a mesma vaga voltaria a ser avisada como se fosse inédita.
+ * Passou do prazo, a vaga sai — esteja a fonte ainda listando ou não. Decisão
+ * do operador, pelo mesmo critério do JobBase, e ela desfaz de propósito a
+ * exigência de `closedAt` que esta função tinha antes.
  *
- * O que fica de fora por causa disso — vaga velha que a fonte insiste em
- * listar — já está invisível pelo filtro de `FRESH_MAX_AGE_DAYS`. Ela ocupa
- * linha no banco e não aparece para ninguém, e é uma troca barata perto de um
- * laço de apaga-e-recria.
+ * Aquela exigência não era capricho: ela evitava um laço. A vaga publicada há
+ * 200 dias que a fonte ainda lista seria apagada aqui e **recriada pela coleta
+ * seguinte**, com id novo — e `RadarAlert` cai por cascata junto da vaga,
+ * enquanto o "já avisei" é checado por `jobId`. A pessoa seria avisada de novo
+ * de uma vaga que já viu, ou que já marcou 👎. Todo dia.
+ *
+ * **O laço agora é fechado na outra ponta**: `isTooOldToImport` recusa na
+ * coleta exatamente o que esta função apaga, com o mesmo
+ * `DELETE_AFTER_PUBLISHED_DAYS`. Nada volta, porque nada é reimportado. Mexer
+ * numa das duas sem mexer na outra reabre o laço, e há teste amarrando-as.
  *
  * ## A memória é preservada AQUI, não em outro lugar
  *
@@ -206,10 +210,11 @@ export async function purgeAgedJobs(
       async (tx) => {
         await tx.radarOfferLog.createMany({ data: memories, skipDuplicates: true })
         // O critério é REPETIDO aqui, e não só a lista de ids: entre a leitura
-        // dos candidatos e esta transação, a coleta pode ter reaberto uma
-        // delas (`closedAt: null`). Apagar por id apagaria a vaga reaberta
-        // assim mesmo, e a coleta seguinte a recriaria com cuid novo — o laço
-        // de apaga-e-recria que o `closedAt` no critério existe para impedir.
+        // dos candidatos e esta transação, a coleta pode ter ATUALIZADO o
+        // `publishedAt` de uma delas — o caminho de update grava o valor que
+        // a fonte mandou, e uma correção na origem pode rejuvenescer a vaga.
+        // Apagar por id apagaria assim mesmo uma vaga que acabou de deixar de
+        // ser velha.
         const res = await tx.job.deleteMany({
           where: { AND: [{ id: { in: candidates.map((c) => c.id) } }, agedJobPurgeWhere(now, afterDays)] },
         })

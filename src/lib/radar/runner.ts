@@ -7,7 +7,7 @@ import { db } from '../db'
 // O lugar de filtrar por mercado é o filtro duro, por usuário.
 import { safeCollect, type JobSourceAdapter } from '../jobs/adapter'
 import { decideCollection, sourceStateAfter } from '../jobs/collection'
-import { freshOpenJobWhere } from '../jobs/lifecycle'
+import { isTooOldToImport,freshOpenJobWhere } from '../jobs/lifecycle'
 import { preserveOffers } from './offer-log.server'
 import { closeStaleJobs, type StaleCloseReport } from '../jobs/lifecycle.server'
 import { dedupeBatch } from '../jobs/dedup'
@@ -105,6 +105,8 @@ export interface CollectionRunResult {
   updated: number
   duplicates: number
   closed: number
+  /** Vagas novas recusadas por já nascerem mais velhas que o corte de expurgo. */
+  skippedTooOld: number
   status: string
   explanation: string
 }
@@ -183,6 +185,7 @@ export async function runCollection(
 
   let inserted = 0
   let updated = 0
+  let skippedTooOld = 0
 
   // Verdadeiro enquanto TODAS as vagas coletadas foram gravadas. Se o prazo
   // acabar no meio, vira falso — e aí a coleta é tratada como parcial, porque
@@ -204,7 +207,17 @@ export async function runCollection(
     })
     const existingKeys = new Set(existing.map((r) => r.dedupeKey))
 
-    const toCreate = batch.filter((j) => !existingKeys.has(j.dedupeKey))
+    const candidates = batch.filter((j) => !existingKeys.has(j.dedupeKey))
+
+    // A trava que fecha o laço do expurgo por idade. Sem ela, toda vaga que o
+    // expurgo apaga e a fonte ainda lista voltaria aqui com id novo — e o
+    // alerta cascateado junto da vaga faria a pessoa ser avisada de novo.
+    // Ver `agedJobPurgeWhere`: é o mesmo prazo, de propósito.
+    const toCreate = candidates.filter((j) => !isTooOldToImport(j.publishedAt, now))
+    skippedTooOld += candidates.length - toCreate.length
+
+    // Vaga JÁ existente segue sendo atualizada mesmo que velha: parar de
+    // atualizar faria a fonte parecer que a perdeu de vista, e isso é o §12.
     const toUpdate = batch.filter((j) => existingKeys.has(j.dedupeKey))
 
     if (toCreate.length > 0) {
@@ -282,6 +295,7 @@ export async function runCollection(
     updated,
     duplicates,
     closed,
+    skippedTooOld,
     status: decision.status,
     explanation: decision.explanation,
   }
@@ -793,6 +807,7 @@ export async function runRadar(options: {
         updated: 0,
         duplicates: 0,
         closed: 0,
+        skippedTooOld: 0,
         status: 'error',
         explanation: `Falha ao gravar a coleta: ${e?.message || String(e)}`,
       })
