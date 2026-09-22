@@ -1207,6 +1207,67 @@ o porquê está na nota no fim daquela seção). `tsc`, `eslint`, `build` e
 suíte limpos: 939/939 na sessão original, 972/972 depois de a `main`
 receber os testes do §2.117.
 
+### 7.12 Functions Storage estourado no Vercel — metade é código, metade é painel
+
+A conta estourou o **Functions Storage**: 15,47 GB contra os 10 GB do plano
+Hobby. É a única métrica acima do teto — CPU, invocações, ISR e transferência
+estão folgadas.
+
+O que quase todo mundo erra ao ler essa métrica: ela **não** é o tamanho do
+deployment atual. É a soma do peso das funções de **TODOS os deployments
+retidos**. São dois botões independentes, e mexer só num não resolve:
+
+| Botão | Onde | O que muda |
+|---|---|---|
+| peso por deployment | código (`outputFileTracingExcludes`) | quanto cada deployment NOVO custa |
+| nº de deployments retidos | painel do Vercel | a cota que já está consumida |
+
+**O lado do código, feito.** Duas rodadas, as duas medidas no rastro real do
+build (`.next/**/*.nft.json`, somando os arquivos de todas as funções — o
+mesmo script nas duas pontas de cada rodada, nunca estimativa):
+
+| | por deployment |
+|---|---|
+| antes do PR #81 | ~2.810 MB |
+| PR #81 — motores de mysql/sqlite/sqlserver/cockroachdb saem | −1.010 MB |
+| medição de hoje, antes desta rodada | 1.677 MB |
+| esta rodada — runtimes de edge/WASM/binary/browser/tipos saem | **1.227 MB** (−450 MB, −27%) |
+
+(A medição de hoje dá 1.677 MB onde o PR #81 anotou ~1,80 GB. Provável
+diferença de contagem entre sessões; o que vale é que o antes e o depois de
+cada rodada saíram do mesmo script, no mesmo dia.)
+
+Dos 1.227 MB que restam, **1.019 MB são um arquivo só**:
+`libquery_engine-debian-openssl-3.0.x.so.node`, 16,7 MB copiados para dentro de
+cada uma das 61 funções. O detalhamento de tudo o que saiu, e de como cada
+arquivo foi provado dispensável antes de sair, está no comentário de
+`outputFileTracingExcludes` em `next.config.ts` — não se repete aqui.
+
+**O que falta do lado do código, e por que não foi feito.** O motor nativo só
+sai trocando-o por driver adapter (`@prisma/adapter-pg` + preview
+`queryCompiler`, que devolve ~115 MB de compilador WASM): saldo de cerca de
+−900 MB, levando o deployment para ~310 MB. É migração de verdade — muda como
+TODA query chega ao banco — e não dá para validar sem um Postgres de teste.
+Fazer isso às cegas troca uma conta estourada por um site fora do ar.
+
+**A rodada também mexeu no número de deployments.** `vercel.json` ganhou um
+`ignoreCommand` que cancela o build quando o commit só mexe em `.md`/`docs/`.
+Medido em 25 commits reais do histórico: 4 seriam pulados, nenhum
+classificado errado. Se o `git diff` falhar por qualquer motivo, ele sai com
+código ≠ 0 e o build **acontece** — a falha aponta para o lado seguro.
+
+**O que só o operador pode fazer, e é o que destrava a cota de hoje.** Nada no
+código apaga deployment já feito. No painel:
+
+1. **Deployment Retention Policy** (Project Settings → Deployment Retention):
+   o padrão retém preview e produção para sempre. Encurtar preview (1 mês, ou
+   1 semana) é o que impede a cota de voltar a encher sozinha.
+2. **Apagar os previews antigos** que já estão lá (Deployments → filtro
+   Preview). Cada um vale ~1,2–2,8 GB conforme a época em que foi feito.
+
+Enquanto esses dois não forem feitos, a conta continua acima de 10 GB mesmo
+com todo deployment novo custando 27% menos.
+
 ---
 
 ## 8. O que fazer antes de tocar em qualquer coisa

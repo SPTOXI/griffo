@@ -113,43 +113,74 @@ const HTML_ONLY = '/:path((?!api/|_next/static/).*)'
 
 const nextConfig: NextConfig = {
   /**
-   * Motores de banco que este projeto nunca vai usar.
+   * O que o rastreador copia para dentro de cada função — e o que não precisa.
    *
    * ## O problema, medido
    *
-   * O `@prisma/client` publica os motores de TODOS os bancos que suporta, e o
-   * rastreador do Next os copia para dentro de CADA função. São 61 rotas de
-   * API aqui, e o rastro real do build mostrava, por deployment:
+   * O `@prisma/client` publica, num diretório só, os runtimes de TODOS os
+   * ambientes que suporta (Node, edge, WASM, React Native, browser) e os
+   * motores de TODOS os bancos. O rastreador do Next não sabe qual deles o
+   * processo vai carregar, então copia tudo — para CADA função. São 61 rotas
+   * de API aqui, e o trace real do build (`.nft.json`, somando os arquivos de
+   * todas as funções) dava **1.677 MB por deployment**, dos quais **1.508 MB
+   * eram Prisma**. O plano Hobby dá 10 GB de Functions Storage somando TODOS
+   * os deployments retidos: meia dúzia de previews estoura a cota.
    *
-   * | | por função | × 61 |
-   * |---|---|---|
-   * | `libquery_engine` nativo (necessário) | 17,5 MB | 1,07 GB |
-   * | WASM de cockroachdb, mysql, sqlserver, sqlite | 9,0 MB | 0,55 GB |
-   * | compiladores dos mesmos quatro | 7,5 MB | 0,46 GB |
+   * ## O que sai, e por quê
    *
-   * A conta fecha em ~2,4 GB de Prisma por deployment, e o plano Hobby dá
-   * 10 GB de Functions Storage somando TODOS os deployments retidos — o que
-   * significa que meia dúzia de previews estoura a cota.
+   * A configuração aqui é `provider = "postgresql"`, `prisma-client-js`, motor
+   * de biblioteca, runtime de Node. O cliente gerado
+   * (`node_modules/.prisma/client/index.js`) tem UM require de runtime, fixo no
+   * código: `require('@prisma/client/runtime/library.js')`. Todo o resto do
+   * diretório `runtime/` é alcançável apenas por caminhos que esta configuração
+   * não tem — e nenhuma rota declara `export const runtime = 'edge'`, nem o
+   * middleware toca no banco.
    *
-   * ## O recorte, e por que ele é seguro
+   * | Saiu | Por função | × 61 | Só é alcançado por |
+   * |---|---|---|---|
+   * | `query_engine_bg.postgresql.*` | 2,2 MB | 138 MB | `wasm-engine-edge` (runtime edge) |
+   * | `query_compiler_bg.postgresql.*` | 1,8 MB | 115 MB | preview `queryCompiler`, não habilitado |
+   * | `binary.*` | 1,3 MB | 80 MB | `engineType = "binary"` |
+   * | `client.js` / `client.mjs` | 0,4 MB | 26 MB | gerador `prisma-client` (novo), não este |
+   * | `wasm-compiler-edge.*` | 0,4 MB | 23 MB | runtime edge |
+   * | `edge.js` / `edge-esm.js` | 0,3 MB | 20 MB | `@prisma/client/edge` |
+   * | `wasm-engine-edge.*` | 0,3 MB | 16 MB | runtime edge |
+   * | `*.d.ts` / `*.d.mts` do runtime | 0,2 MB | 15 MB | TypeScript — nunca executa |
+   * | `react-native.js` | 0,2 MB | 11 MB | React Native |
+   * | `.prisma/client/edge.js` | 0,2 MB | 13 MB | `@prisma/client/edge` |
+   * | `index-browser.js` (os dois) | 0,05 MB | 4 MB | bundle de browser |
+   * | motores de mysql/sqlite/sqlserver/cockroachdb | 16,5 MB | 1.000 MB | outros bancos |
    *
-   * O `datasource` é `postgresql` (Supabase). Um motor de MySQL, SQLite,
-   * SQL Server ou CockroachDB não tem como ser carregado em tempo de execução:
-   * não existe caminho de código que o alcance com esta configuração.
+   * ## Como isso foi verificado, e não deduzido
    *
-   * O que **fica**: o `libquery_engine` nativo, que é o motor de verdade, e os
-   * arquivos `postgresql` — engine e compilador. Excluí-los quebraria a
-   * aplicação inteira, e nenhuma economia justifica isso.
+   * Os 27 arquivos foram REMOVIDOS de `node_modules` e o cliente foi exercitado
+   * em CJS (`require`) e em ESM (`import`), com `findMany` + `include` de
+   * relação, `$transaction` e `$queryRaw`. Nos dois casos o cliente carregou, o
+   * motor nativo subiu e a query foi compilada — o único erro foi de conexão
+   * (`PrismaClientInitializationError: Can't reach database server`), que é o
+   * esperado sem banco. Se algum deles fosse necessário, o erro teria sido de
+   * módulo ausente, antes de chegar à conexão.
    *
-   * Reduz ~16,5 MB por função, ~1 GB por deployment — cerca de 40% do peso do
-   * Prisma, com zero risco. O resto do 1,07 GB só sai trocando o motor nativo
-   * por driver adapter, que é migração de verdade e não cabe aqui.
+   * ## O que FICA, e não pode sair
    *
-   * Se algum dia o projeto ganhar um segundo banco, esta lista é o primeiro
-   * lugar a olhar — e o build vai falhar alto, não em silêncio.
+   * - `.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node` — 16,7 MB
+   *   por função, 1.019 MB por deployment: o motor de verdade. É o maior item
+   *   isolado que resta, e o único jeito de tirá-lo é trocar o motor nativo por
+   *   driver adapter (`@prisma/adapter-pg` + preview `queryCompiler`), que é
+   *   migração com risco de runtime e precisa de banco para ser testada.
+   * - `runtime/library.js` — o require fixo do cliente gerado.
+   * - `runtime/library.mjs` — o gêmeo ESM do ÚNICO arquivo que é usado de fato.
+   *   As sondas passaram sem ele, mas é o único do diretório onde uma condição
+   *   de exports do empacotador poderia virar a escolha; 12 MB somados não
+   *   pagam esse risco.
+   * - `.prisma/client/schema.prisma`, `index.js`, `default.js`, `package.json`.
+   *
+   * Se algum dia o projeto ganhar um segundo banco, ou uma rota em runtime
+   * edge, esta lista é o primeiro lugar a olhar.
    */
   outputFileTracingExcludes: {
     '**': [
+      // Bancos que este projeto não usa.
       'node_modules/@prisma/client/runtime/query_engine_bg.mysql.*',
       'node_modules/@prisma/client/runtime/query_engine_bg.sqlite.*',
       'node_modules/@prisma/client/runtime/query_engine_bg.sqlserver.*',
@@ -158,6 +189,28 @@ const nextConfig: NextConfig = {
       'node_modules/@prisma/client/runtime/query_compiler_bg.sqlite.*',
       'node_modules/@prisma/client/runtime/query_compiler_bg.sqlserver.*',
       'node_modules/@prisma/client/runtime/query_compiler_bg.cockroachdb.*',
+      // Postgres em WASM: só o runtime edge o carrega, e não há rota edge.
+      'node_modules/@prisma/client/runtime/query_engine_bg.postgresql.*',
+      // Compilador de query: só com o preview `queryCompiler`, não habilitado.
+      'node_modules/@prisma/client/runtime/query_compiler_bg.postgresql.*',
+      // Runtimes de ambientes que não existem aqui.
+      'node_modules/@prisma/client/runtime/binary.*',
+      'node_modules/@prisma/client/runtime/edge.js',
+      'node_modules/@prisma/client/runtime/edge-esm.js',
+      'node_modules/@prisma/client/runtime/wasm-engine-edge.*',
+      'node_modules/@prisma/client/runtime/wasm-compiler-edge.*',
+      'node_modules/@prisma/client/runtime/react-native.js',
+      'node_modules/@prisma/client/runtime/index-browser.js',
+      // Runtime do gerador `prisma-client`; aqui o gerador é `prisma-client-js`.
+      'node_modules/@prisma/client/runtime/client.js',
+      'node_modules/@prisma/client/runtime/client.mjs',
+      // Tipos não executam.
+      'node_modules/@prisma/client/runtime/*.d.ts',
+      'node_modules/@prisma/client/runtime/*.d.mts',
+      // Entradas do cliente gerado para edge e para browser.
+      'node_modules/.prisma/client/edge.js',
+      'node_modules/.prisma/client/index-browser.js',
+      'node_modules/.prisma/client/wasm.js',
     ],
   },
 
