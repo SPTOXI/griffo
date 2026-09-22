@@ -52,6 +52,55 @@ import { PrismaPg } from '@prisma/adapter-pg'
  */
 export const DB_POOL_MAX = 5
 
+/**
+ * Semântica de `sslmode` — a diferença que derrubou o primeiro deploy.
+ *
+ * O `sslmode=require` da URL do Supabase significa coisas DIFERENTES nos dois
+ * motores, e é a única incompatibilidade que a validação contra Postgres local
+ * não pegou (banco local não tinha TLS ligado):
+ *
+ * | | o que `require` faz |
+ * |---|---|
+ * | motor nativo do Prisma (semântica libpq) | criptografa, NÃO verifica a cadeia |
+ * | `pg` 8.23 | trata como `verify-full` — verifica a cadeia inteira |
+ *
+ * O Supabase apresenta uma cadeia com raiz própria. O motor antigo nunca a
+ * verificou; o `pg` verifica e recusa com
+ * `SELF_SIGNED_CERT_IN_CHAIN: self-signed certificate in certificate chain`,
+ * derrubando o build de produção inteiro no prerender.
+ *
+ * O `uselibpqcompat=true` é a saída que o próprio aviso do `pg` indica, e é
+ * para onde o `pg@9` vai por padrão — então isto não é gambiarra, é adotar
+ * cedo o comportamento futuro.
+ *
+ * ## O que foi medido, contra Postgres local com TLS autoassinado
+ *
+ * | tentativa | resultado |
+ * |---|---|
+ * | `sslmode=require` | falha, reproduz a produção |
+ * | `sslmode=require&uselibpqcompat=true` | **conecta, e `pg_stat_ssl.ssl = true`** |
+ * | `ssl: { rejectUnauthorized: false }` no PoolConfig | **falha** — o `sslmode` da URL tem precedência |
+ * | `sslmode=verify-full&uselibpqcompat=true` | falha, como deve — não afrouxa quem pediu rigor |
+ *
+ * A correção reflexa (`rejectUnauthorized: false`) NÃO funciona aqui, e ainda
+ * por cima desligaria a verificação para todo mundo. Esta só toca `require`.
+ *
+ * ## O que esta função NÃO faz, de propósito
+ *
+ * URL sem `sslmode` nenhum fica como está. O `pg` conecta em TEXTO PURO nesse
+ * caso (medido), enquanto o motor nativo usava `prefer` e tentava TLS — é uma
+ * diferença real. Mas `sslmode=prefer` no `pg` não faz fallback: ele ERRA
+ * contra servidor sem TLS (medido), o que quebraria qualquer Postgres local de
+ * desenvolvimento. Forçar TLS aqui trocaria uma quebra por outra; o lugar de
+ * corrigir isso é a variável de ambiente, acrescentando `sslmode=require` a
+ * ela. Registrado no §7.12.
+ */
+export function withLibpqSslSemantics(connectionString: string): string {
+  if (!/[?&]sslmode=require(?:&|$)/i.test(connectionString)) return connectionString
+  if (/[?&]uselibpqcompat=/i.test(connectionString)) return connectionString
+  return `${connectionString}&uselibpqcompat=true`
+}
+
 type LogLevel = 'query' | 'info' | 'warn' | 'error'
 
 export function createPrismaClient(
@@ -59,7 +108,7 @@ export function createPrismaClient(
   options: { log?: LogLevel[]; max?: number } = {}
 ): PrismaClient {
   const adapter = new PrismaPg({
-    connectionString,
+    connectionString: withLibpqSslSemantics(connectionString),
     max: options.max ?? DB_POOL_MAX,
   })
   return new PrismaClient({ adapter, ...(options.log ? { log: options.log } : {}) })

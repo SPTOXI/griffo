@@ -1322,6 +1322,65 @@ dia como aquele (dois PRs entrando, previews a cada push), 8,6 × 7 × 0,328 dá
 `ignoreCommand` do `vercel.json` ajuda por outro lado, cortando os commits que
 só mexem em `.md`.
 
+#### O deploy de produção quebrou, e por quê — a lição mais cara desta rodada
+
+O primeiro deploy de produção com o driver adapter **falhou**, mesmo depois de
+toda a validação descrita acima. Vale entender por quê, porque o furo não foi
+descuido de execução: foi um ponto cego do método.
+
+```
+code: SELF_SIGNED_CERT_IN_CHAIN
+self-signed certificate in certificate chain
+Error occurred prerendering page "/es"
+```
+
+**Dois fatos se combinaram.**
+
+O primeiro: `POSTGRES_PRISMA_URL` e `POSTGRES_URL_NON_POOLING` existem **só no
+ambiente `production`** da Vercel; `DATABASE_URL` existe em `preview` e
+`production`. Como `getDatabaseUrl()` resolve
+`POSTGRES_PRISMA_URL || DATABASE_URL`, **preview e produção nunca usaram a
+mesma connection string**. Todo o teste feito no preview — build, home com
+10.900, `/api/hiring-index` — exercitou o `DATABASE_URL`. A URL que a produção
+usa nunca foi tocada.
+
+O segundo: `sslmode=require` significa coisas diferentes nos dois motores.
+
+| | o que `require` faz |
+|---|---|
+| motor nativo do Prisma (semântica libpq) | criptografa, NÃO verifica a cadeia |
+| `pg` 8.23 | trata como `verify-full` — verifica a cadeia inteira |
+
+O Supabase apresenta cadeia com raiz própria. O motor antigo nunca verificou; o
+`pg` verifica e recusa. O Postgres local usado na validação **não tinha TLS
+ligado**, então essa diferença era invisível ali.
+
+**A correção** está em `withLibpqSslSemantics()`, em `src/lib/prisma-client.ts`:
+acrescenta `uselibpqcompat=true` quando o `sslmode` é `require`. É a saída que o
+próprio aviso do `pg` indica, e é para onde o `pg@9` vai por padrão. Reproduzido
+localmente ligando TLS com certificado autoassinado no Postgres de teste — o
+erro apareceu idêntico, e a correção o resolveu mantendo
+`pg_stat_ssl.ssl = true`. Quatro testes travam o comportamento.
+
+**O que NÃO funcionou, e por que registrar:** `ssl: { rejectUnauthorized: false }`
+no PoolConfig — a correção reflexa — **não resolve**, porque o `sslmode` da URL
+tem precedência sobre o objeto `ssl`. Teria dado a sensação de conserto sem
+consertar, e de quebra afrouxaria a verificação de toda conexão.
+
+**Pendência de ambiente, não de código.** Sem `sslmode` nenhum, o `pg` conecta em
+TEXTO PURO (medido), enquanto o motor nativo usava `prefer` e tentava TLS. Se o
+`DATABASE_URL` do preview não tiver `sslmode`, a conexão de preview com o
+Supabase deixou de ser criptografada. Forçar em código não serve: `sslmode=prefer`
+no `pg` **erra** contra servidor sem TLS em vez de cair para texto puro (medido),
+o que quebraria qualquer Postgres local. **O lugar de corrigir é a variável:
+acrescentar `sslmode=require` ao `DATABASE_URL`.**
+
+**As duas lições.** Antes de declarar uma migração validada contra um serviço
+externo, confira o **escopo das variáveis de ambiente** — "testei no preview"
+não quer dizer "testei com o que a produção usa". E um banco de teste sem TLS
+não valida nada sobre TLS: a paridade de 21/21 era verdadeira e continuava
+cega para isto.
+
 A lição para quem vier depois: quando uma cota de armazenamento acumulado
 estoura, **olhe os carimbos de data antes de culpar a retenção**. Oito
 deployments em um dia e oito deployments em um mês dão o mesmo número no
