@@ -1367,13 +1367,34 @@ no PoolConfig — a correção reflexa — **não resolve**, porque o `sslmode` 
 tem precedência sobre o objeto `ssl`. Teria dado a sensação de conserto sem
 consertar, e de quebra afrouxaria a verificação de toda conexão.
 
-**Pendência de ambiente, não de código.** Sem `sslmode` nenhum, o `pg` conecta em
-TEXTO PURO (medido), enquanto o motor nativo usava `prefer` e tentava TLS. Se o
-`DATABASE_URL` do preview não tiver `sslmode`, a conexão de preview com o
-Supabase deixou de ser criptografada. Forçar em código não serve: `sslmode=prefer`
-no `pg` **erra** contra servidor sem TLS em vez de cair para texto puro (medido),
-o que quebraria qualquer Postgres local. **O lugar de corrigir é a variável:
-acrescentar `sslmode=require` ao `DATABASE_URL`.**
+**Pendência de ambiente, não de código — ✅ RESOLVIDA em 22/09/2026.** Sem
+`sslmode` nenhum, o `pg` conecta em TEXTO PURO (medido), enquanto o motor nativo
+usava `prefer` e tentava TLS. Se o `DATABASE_URL` do preview não tivesse
+`sslmode`, a conexão de preview com o Supabase deixava de ser criptografada.
+Forçar em código não serve: `sslmode=prefer` no `pg` **erra** contra servidor
+sem TLS em vez de cair para texto puro (medido), o que quebraria qualquer
+Postgres local. O lugar de corrigir era o ambiente.
+
+**Como foi resolvida — sem tocar no `DATABASE_URL`.** Ele é `sensitive` (o
+Vercel não devolve o valor) e o Supabase não expõe a senha do banco, então
+remontar a URL exigiria resetar a senha — o que derrubaria a produção. Em vez
+disso, a `POSTGRES_PRISMA_URL` (que já tem `sslmode=require` e já estava
+provada em produção) passou a valer **também em `preview`**: só o alvo mudou,
+o valor ficou intacto. Como `getDatabaseUrl()` resolve
+`POSTGRES_PRISMA_URL || DATABASE_URL`, preview e produção agora usam **a mesma
+connection string** — o que de quebra fecha o primeiro dos "dois fatos" acima.
+O `DATABASE_URL` segue existindo como reserva; não apagar. Verificado: redeploy
+do preview (`dpl_9mBBKAMn…`, commit `b245dc8`) ficou READY com o prerender
+consultando o banco, e `/api/hiring-index` no preview devolveu o payload
+completo (98 países, `distribution`, `byContinent`) — rota dinâmica, então é a
+função em execução, não artefato de build. `POSTGRES_URL_NON_POOLING` não foi
+estendida: só entra como `directUrl` do `prisma migrate`/`db push`, que o build
+não roda.
+
+**Cuidado a partir daqui:** a `POSTGRES_PRISMA_URL` é gerenciada pela
+integração do Supabase (`configurationId` preenchido). Se a integração for
+reconectada ou reconfigurada, confira se o alvo `preview` continua marcado —
+se sumir, o preview volta a cair no `DATABASE_URL` sem aviso nenhum.
 
 **As duas lições.** Antes de declarar uma migração validada contra um serviço
 externo, confira o **escopo das variáveis de ambiente** — "testei no preview"
