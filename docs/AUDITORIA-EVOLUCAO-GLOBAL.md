@@ -8408,3 +8408,80 @@ porque agora sai também a vaga velha que a fonte insiste em listar —
 categoria que, até aqui, só ficava invisível ocupando linha no banco.
 
 `tsc`, `eslint` e suíte — **1139/1139**, 5 novos — limpos.
+
+## 2.131 O expurgo nunca teve gatilho, e a documentação que eu escrevi dizia que tinha
+
+Operador mandou rodar o cron para ver o primeiro expurgo. Ele rodou: 269 vagas
+novas coletadas, última coleta registrada. E **nada foi apagado** — as 287
+vagas acima de 180 dias continuaram lá, `RadarOfferLog` com zero linhas.
+
+### A causa
+
+O cron do Radar chama `closeStaleJobs`, que **encerra** vaga parada (marca
+`closedAt`). Quem **apaga** por idade é `purgeAgedJobs`, alcançável apenas por
+`runRetentionPurge` — e essa função tinha um único chamador em todo o código:
+`POST /api/admin/retention`, acionado por um humano clicando no painel. O
+comentário daquela rota dizia, com todas as letras, que o agendamento "fica
+como passo operacional, não de código". Ficou, e não aconteceu.
+
+**A documentação errada é minha.** No §2.130 eu reescrevi o item 0 do handoff
+para o mecanismo novo e mantive a frase "o gatilho é o cron do Radar", herdada
+da versão do `expired_by_age` (#71, revertido) — aquele *de fato* rodava dentro
+do `runRadar`. Troquei o conteúdo e não verifiquei o gatilho. É exatamente o
+erro que o §2.130 existia para corrigir, repetido dentro do próprio texto que o
+corrigia.
+
+### O que estava em jogo além da faxina
+
+`runRetentionPurge` não limpa só vaga. É ela que aplica os tetos de retenção de
+**dado pessoal**: currículo de conta inativa (730 dias), log de IA (365),
+trilha de auditoria (730), evento de webhook (90) e o histórico de ofertas do
+Radar. Uma política de retenção que depende de alguém lembrar de clicar não é
+política, é intenção — e é ela que o `/privacy` descreve publicamente nos 12
+idiomas.
+
+### A correção
+
+`/api/cron/retention`, com a mesma forma das outras rotas de cron, inclusive na
+parte que importa: **503 quando falta `CRON_SECRET`**, nunca 200 aberto.
+
+Duas decisões que não eram óbvias:
+
+- **Não entrou no `vercel.json`.** O plano Hobby agenda dois crons e os dois
+  estão ocupados (`radar` 06:00, `dedup` 18:00). Um terceiro ali não falharia
+  ruidosamente — seria ignorado, que é o mesmo tipo de armadilha que estamos
+  fechando. O gatilho é GitHub Actions (`retention-daily.yml`, 09:00 UTC), pelo
+  precedente do §2.101.
+- **Não foi pendurada no cron do Radar.** Orçamento: o Radar divide 60s entre
+  coleta, avaliação e digest, e `purgeAgedJobs` sozinho pode gastar quase tudo
+  (até 20 transações de 20s). Somar as cargas faria as duas terminarem pela
+  metade, e a cortada seria sempre a última.
+
+A rota devolve **500 quando qualquer etapa falhou**, mesmo com as outras
+verdes: `runRetentionPurge` isola cada etapa e nunca lança, então um 200 faria
+o workflow passar verde sobre uma retenção quebrada.
+
+### O teste que generaliza o bug
+
+`cron-triggers.test.ts` afirma que **toda rota em `api/cron/` é chamada por
+alguém** — `vercel.json` ou algum workflow. Rota de cron sem gatilho não falha,
+não avisa, não aparece em log: só não acontece. O teste foi verificado por
+mutação (quebrar o caminho no workflow faz o caso 1 reprovar).
+
+Mais três invariantes no mesmo arquivo: o teto de dois crons do Hobby, toda
+rota de cron passando por `cronAuthorized` **e** fechando com 503, e o Radar
+não chamando `runRetentionPurge`.
+
+### Os números, medidos antes e depois da rodada
+
+| | antes | depois da coleta |
+|---|---|---|
+| Acima de 180 dias | 287 | 287 (nada apagado — era o bug) |
+| Home (Hero D) | 10.631 | 10.900 |
+| Linhas totais | 11.111 | 11.380 |
+
+Um sinal bom escondido aí: as 287 **não aumentaram** depois de importar 269
+vagas. O `isTooOldToImport` do §2.130 está funcionando — nenhuma vaga velha
+entrou pela coleta.
+
+`tsc`, `eslint` e suíte — **1143/1143**, 4 novos — limpos.

@@ -1,0 +1,42 @@
+name: Retenção diária (expurgo e tetos de dado pessoal)
+
+# Gatilho nosso, fora do Vercel, pelo mesmo motivo do hiring-index (§2.101): o
+# plano Hobby dá direito a dois crons e os dois já estão ocupados (radar às
+# 06:00, dedup às 18:00, ver vercel.json). Um terceiro lá não falha — é
+# ignorado, que é pior.
+#
+# Antes disto, `runRetentionPurge` só era alcançável por um humano clicando em
+# POST /api/admin/retention. Além da faxina de vagas, é essa função que aplica
+# os tetos de retenção de DADO PESSOAL (currículo inativo, log de IA, trilha de
+# auditoria, webhook, histórico de ofertas do Radar) — obrigação que não pode
+# depender de memória humana.
+#
+# Exige o secret CRON_SECRET no repositório (Settings > Secrets and variables >
+# Actions), com o MESMO valor das env vars da Vercel. Já está cadastrado desde
+# o §2.101; sem ele a rota responde 503 e este workflow falha de propósito.
+
+on:
+  schedule:
+    # 09:00 UTC (06:00 em Brasília) — três horas depois do radar e bem longe do
+    # dedup. Cada um com os seus 60s, sem disputa.
+    - cron: '0 9 * * *'
+  workflow_dispatch: {} # roda sob demanda pela aba Actions
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar /api/cron/retention
+        run: |
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://griffo.work/api/cron/retention)
+          echo "HTTP $status"
+          cat /tmp/response.json
+          # A rota devolve 500 quando QUALQUER etapa da retenção falhou, mesmo
+          # que as outras tenham ido bem — um expurgo parcialmente quebrado não
+          # pode passar verde aqui.
+          if [ "$status" -ge 300 ]; then
+            echo "Retenção falhou (HTTP $status) — ver o relatório acima."
+            exit 1
+          fi
