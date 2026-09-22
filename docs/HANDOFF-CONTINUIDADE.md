@@ -1291,17 +1291,41 @@ dentro de `PgTransaction.performIO`) — é código do próprio Prisma, é só a
 no `pg@8` e viraria erro no `pg@9`, que o `^8.23.0` do `package.json` não
 alcança. E `queryCompiler` ainda é preview no Prisma 6.11.
 
-**O que só o operador pode fazer, e é o que destrava a cota de hoje.** Nada no
-código apaga deployment já feito. No painel:
+#### A limpeza, feita — e o diagnóstico que ela corrigiu
 
-1. **Deployment Retention Policy** (Project Settings → Deployment Retention):
-   o padrão retém preview e produção para sempre. Encurtar preview é o que
-   impede a cota de voltar a encher sozinha.
-2. **Apagar os previews antigos** que já estão lá (Deployments → filtro
-   Preview). Cada um vale ~1,2–2,8 GB conforme a época em que foi feito.
+O operador apagou 5 dos 8 deployments retidos pela CLI
+(`vercel remove <url> --scope griffojobs --yes`); a lista foi conferida pelo
+MCP do Vercel antes e depois, alias por alias. **15,97 GB caíram para ~4,8 GB.**
+Sobraram três, e são os certos: a produção no ar (que carrega `griffo.work` e
+mais seis domínios — conferido DEPOIS das exclusões, intacto), a produção
+anterior como alvo de rollback, e o preview do PR em revisão.
 
-Enquanto esses dois não forem feitos, a conta continua acima de 10 GB mesmo
-com cada deployment novo custando 20% do que custava.
+E aí veio a correção que importa mais que a limpeza. Durante toda a
+investigação eu afirmei que **o padrão do Vercel retém para sempre**. Está
+errado, e o operador corrigiu: estava em **30 dias**, e ele passou para 7.
+
+Isso reescreve a causa. Os carimbos de criação dos 8 deployments mostram que
+**todos foram feitos em 22,4 horas** — nenhum chegou perto de 30 dias. A
+retenção nunca foi o gargalo; o **ritmo de deployment** era:
+
+| | |
+|---|---|
+| Orçamento | 10 GB |
+| Custo por deployment (depois desta rodada) | 328 MB |
+| Cabem na janela retida | ~31 |
+| Retenção de 7 dias → ritmo sustentável | **~4,4 por dia** |
+| Ritmo observado no dia da investigação | **8,6 por dia** |
+
+Ou seja: 7 dias segura **enquanto a média ficar abaixo de ~4,4 por dia**. Num
+dia como aquele (dois PRs entrando, previews a cada push), 8,6 × 7 × 0,328 dá
+~19,7 GB e estouraria de novo — nesse regime a régua certa seria 3 dias. O
+`ignoreCommand` do `vercel.json` ajuda por outro lado, cortando os commits que
+só mexem em `.md`.
+
+A lição para quem vier depois: quando uma cota de armazenamento acumulado
+estoura, **olhe os carimbos de data antes de culpar a retenção**. Oito
+deployments em um dia e oito deployments em um mês dão o mesmo número no
+painel e pedem correções opostas.
 
 ---
 
