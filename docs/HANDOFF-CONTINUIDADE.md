@@ -1219,36 +1219,23 @@ retidos**. São dois botões independentes, e mexer só num não resolve:
 
 | Botão | Onde | O que muda |
 |---|---|---|
-| peso por deployment | código (`outputFileTracingExcludes`) | quanto cada deployment NOVO custa |
+| peso por deployment | código | quanto cada deployment NOVO custa |
 | nº de deployments retidos | painel do Vercel | a cota que já está consumida |
 
-**O lado do código, feito.** Duas rodadas, as duas medidas no rastro real do
-build (`.next/**/*.nft.json`, somando os arquivos de todas as funções — o
-mesmo script nas duas pontas de cada rodada, nunca estimativa):
+**O lado do código, feito.** Três rodadas, todas medidas no rastro real do
+build (`.next/**/*.nft.json`, somando os arquivos das 79 funções — o mesmo
+script nas duas pontas de cada rodada, nunca estimativa):
 
-| | por deployment |
-|---|---|
-| antes do PR #81 | ~2.810 MB |
-| PR #81 — motores de mysql/sqlite/sqlserver/cockroachdb saem | −1.010 MB |
-| medição de hoje, antes desta rodada | 1.677 MB |
-| esta rodada — runtimes de edge/WASM/binary/browser/tipos saem | **1.227 MB** (−450 MB, −27%) |
+| | por deployment | deployments até 10 GB |
+|---|---|---|
+| antes do PR #81 | ~2.810 MB | ~3 |
+| PR #81 — motores de mysql/sqlite/sqlserver/cockroachdb saem | 1.677 MB | 6 |
+| runtimes de edge/WASM/binary/browser/tipos saem | 1.227 MB | 8 |
+| **motor nativo sai: driver adapter** | **328 MB** | **31** |
 
-(A medição de hoje dá 1.677 MB onde o PR #81 anotou ~1,80 GB. Provável
-diferença de contagem entre sessões; o que vale é que o antes e o depois de
-cada rodada saíram do mesmo script, no mesmo dia.)
-
-Dos 1.227 MB que restam, **1.019 MB são um arquivo só**:
-`libquery_engine-debian-openssl-3.0.x.so.node`, 16,7 MB copiados para dentro de
-cada uma das 61 funções. O detalhamento de tudo o que saiu, e de como cada
-arquivo foi provado dispensável antes de sair, está no comentário de
-`outputFileTracingExcludes` em `next.config.ts` — não se repete aqui.
-
-**O que falta do lado do código, e por que não foi feito.** O motor nativo só
-sai trocando-o por driver adapter (`@prisma/adapter-pg` + preview
-`queryCompiler`, que devolve ~115 MB de compilador WASM): saldo de cerca de
-−900 MB, levando o deployment para ~310 MB. É migração de verdade — muda como
-TODA query chega ao banco — e não dá para validar sem um Postgres de teste.
-Fazer isso às cegas troca uma conta estourada por um site fora do ar.
+De 1.677 MB para 328 MB é **−80%**. A parte do Prisma caiu de 1.508 MB para
+147 MB. O detalhamento de cada arquivo está no comentário de
+`outputFileTracingExcludes` em `next.config.ts`.
 
 **A rodada também mexeu no número de deployments.** `vercel.json` ganhou um
 `ignoreCommand` que cancela o build quando o commit só mexe em `.md`/`docs/`.
@@ -1256,17 +1243,65 @@ Medido em 25 commits reais do histórico: 4 seriam pulados, nenhum
 classificado errado. Se o `git diff` falhar por qualquer motivo, ele sai com
 código ≠ 0 e o build **acontece** — a falha aponta para o lado seguro.
 
+#### A migração do motor: o que ela é, e o que ela custou descobrir
+
+O Prisma deixou de falar com o Postgres por motor nativo (`libquery_engine`,
+16,7 MB copiados para dentro de CADA uma das 61 funções) e passa a falar pelo
+`pg`, com o Prisma só compilando a query — um WASM de 1,9 MB. Preview
+`queryCompiler` + `driverAdapters` no schema, `@prisma/adapter-pg` no
+`src/lib/prisma-client.ts`.
+
+Isso é migração de verdade: muda como TODA query chega ao banco. Foi validada
+contra um Postgres 16 de verdade, não contra suposição — e a validação achou
+**três coisas que teriam ido para produção**:
+
+1. **`apply-rls.ts` parava de funcionar.** O driver adapter não desserializa o
+   tipo `name` do Postgres (`relname`, `rolname`); o motor nativo
+   desserializava. Derrubava justamente o script que aplica Row Level
+   Security. Corrigido com `::text` no SQL, em `apply-rls.ts` e em
+   `prisma/rls.sql` — cast que vale nos dois motores e não muda resultado.
+2. **Cinco scripts operacionais quebrariam.** `new PrismaClient()` sem adapter
+   lança `P2038`. Entre eles o `fetch-hiring-index.ts`, que roda num cron
+   mensal do GitHub Actions — onde ninguém está olhando para ver falhar.
+   Todos passam agora por `createPrismaClient()`.
+3. **O tamanho do pool não é detalhe.** O motor nativo tinha pool próprio; o
+   `pg` não herda isso. `max: 1`, que parecia a escolha conservadora, custava
+   65% de latência a mais num leque de 8 queries em paralelo — e o app tem 25
+   pontos com `Promise.all`. Medido e fixado em 5, a faixa do que o motor
+   nativo já fazia. O raciocínio e a tabela estão em `src/lib/prisma-client.ts`.
+
+**Como a paridade foi provada.** Uma sonda exercitou 21 asserções — CRUD
+completo, `groupBy`, `aggregate`, `upsert` nos dois ramos, transação
+interativa (o caminho da cobrança), rollback, transação em lote, `$queryRaw`,
+`$queryRawUnsafe`, `$executeRawUnsafe`, os códigos de erro P2002/P2025 e o
+mapeamento de tipos — contra o MESMO banco, primeiro com o motor nativo e
+depois com o adapter. Saída idêntica byte a byte, 21/21. A sonda NÃO está
+versionada de propósito: ela apaga tabelas para ter estado determinístico, e
+um script assim no repositório é uma armadilha esperando alguém rodá-lo
+apontado para produção. Quem precisar repetir, o método está aqui.
+
+A prova final não foi a sonda: foi `next build` completo contra o Postgres
+real (o primeiro build deste projeto a passar da etapa de prerender numa
+máquina de desenvolvimento) e `next start` servindo — a home renderizou a
+contagem exata que tinha sido semeada.
+
+**Duas coisas que ficam sabidas, sem ação por ora.** O `@prisma/adapter-pg`
+dispara um `DeprecationWarning` do `pg` (query concorrente no mesmo cliente,
+dentro de `PgTransaction.performIO`) — é código do próprio Prisma, é só aviso
+no `pg@8` e viraria erro no `pg@9`, que o `^8.23.0` do `package.json` não
+alcança. E `queryCompiler` ainda é preview no Prisma 6.11.
+
 **O que só o operador pode fazer, e é o que destrava a cota de hoje.** Nada no
 código apaga deployment já feito. No painel:
 
 1. **Deployment Retention Policy** (Project Settings → Deployment Retention):
-   o padrão retém preview e produção para sempre. Encurtar preview (1 mês, ou
-   1 semana) é o que impede a cota de voltar a encher sozinha.
+   o padrão retém preview e produção para sempre. Encurtar preview é o que
+   impede a cota de voltar a encher sozinha.
 2. **Apagar os previews antigos** que já estão lá (Deployments → filtro
    Preview). Cada um vale ~1,2–2,8 GB conforme a época em que foi feito.
 
 Enquanto esses dois não forem feitos, a conta continua acima de 10 GB mesmo
-com todo deployment novo custando 27% menos.
+com cada deployment novo custando 20% do que custava.
 
 ---
 

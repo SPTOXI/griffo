@@ -11,7 +11,7 @@
  * Idempotente: `encryptSecret` devolve intacto o que já está cifrado.
  * Precisa de `ENCRYPTION_KEY` no `.env` — a MESMA da Vercel.
  */
-import { PrismaClient } from '@prisma/client'
+import { createPrismaClient } from '../lib/prisma-client'
 import { loadEnvFile } from './load-env'
 import { encryptSecret, isEncrypted, decryptSecret } from '../lib/crypto'
 import { isSensitiveConfigKey } from '../lib/system-config'
@@ -21,7 +21,7 @@ loadEnvFile()
 async function main() {
   const url = process.env.POSTGRES_URL_NON_POOLING?.trim() || process.env.POSTGRES_PRISMA_URL?.trim()
   if (!url) throw new Error('Defina POSTGRES_URL_NON_POOLING no .env.')
-  const db = new PrismaClient({ datasources: { db: { url } } })
+  const db = createPrismaClient(url)
 
   try {
     let changed = 0

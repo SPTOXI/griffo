@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { createPrismaClient, databaseUrlFromEnv } from '../lib/prisma-client'
 import { loadEnvFile } from './load-env'
 import { CREDITS_PER_ANALYSIS, analysesForCredits } from '../lib/pricing/migration'
 
@@ -35,7 +35,7 @@ if (!process.env.POSTGRES_PRISMA_URL) {
   )
 }
 
-const db = new PrismaClient()
+const db = createPrismaClient(databaseUrlFromEnv())
 
 /** Converte um usuário. Devolve quantas análises foram creditadas. */
 async function migrateUser(userId: string, credits: number): Promise<number> {

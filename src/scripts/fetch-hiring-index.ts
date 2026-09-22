@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { createPrismaClient, databaseUrlFromEnv } from '../lib/prisma-client'
 import { loadEnvFile } from './load-env'
 import {
   DEFAULT_TIME_BUDGET_MS,
@@ -89,7 +89,7 @@ async function run(): Promise<void> {
     return
   }
 
-  const db = new PrismaClient()
+  const db = createPrismaClient(databaseUrlFromEnv())
   try {
     const written = await persistHiringIndexPoints(db, points)
     console.log(`\n${written} ponto(s) gravado(s).`)

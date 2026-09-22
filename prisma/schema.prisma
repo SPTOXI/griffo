@@ -2,7 +2,8 @@
 // PostgreSQL - via Supabase for users, resumes, analyses, subscriptions
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters", "queryCompiler"]
 }
 
 datasource db {
