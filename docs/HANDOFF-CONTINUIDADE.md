@@ -63,14 +63,22 @@ o quanto confiar nele.
 
    **O que falta**: rodar o cron e ver dois números, não um.
 
-   O gatilho é o cron do Radar (`/api/cron/radar`, Vercel, `0 6 * * *` UTC —
-   03:00 em Brasília). Disparo manual exige o mesmo cabeçalho que o Vercel
-   manda, comparado em tempo constante por `lib/cron-auth.ts`:
+   **CORREÇÃO (22/09/2026).** A versão anterior deste item dizia que o gatilho
+   era o cron do Radar. Estava errado, e o erro veio de herdar a frase da
+   versão do `expired_by_age` (#71, revertido): *aquele* rodava dentro do
+   `runRadar`. O expurgo por idade, não.
 
-   ```
-   curl -X GET https://griffo.work/api/cron/radar \
-     -H "Authorization: Bearer $CRON_SECRET"
-   ```
+   O cron do Radar chama `closeStaleJobs`, que **encerra** vaga parada. Quem
+   **apaga** é `purgeAgedJobs`, alcançável só por `runRetentionPurge` — que até
+   o §2.131 tinha um único chamador: `POST /api/admin/retention`, acionado por
+   um humano clicando no painel. O sintoma foi nenhum: o cron rodava, respondia
+   200, coletava vagas, e o expurgo não acontecia.
+
+   Desde o §2.131 existe `/api/cron/retention`, agendada por
+   `.github/workflows/retention-daily.yml` (09:00 UTC / 06:00 Brasília), pelo
+   precedente do §2.101 — o plano Hobby só agenda dois crons e os dois já estão
+   ocupados. Para rodar sob demanda: aba **Actions** do repositório → *Retenção
+   diária* → **Run workflow**.
 
    **Os dois números, medidos ANTES de rodar** — depois o primeiro deixa de
    existir, porque as linhas terão sido apagadas:

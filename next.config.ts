@@ -113,6 +113,55 @@ const HTML_ONLY = '/:path((?!api/|_next/static/).*)'
 
 const nextConfig: NextConfig = {
   /**
+   * Motores de banco que este projeto nunca vai usar.
+   *
+   * ## O problema, medido
+   *
+   * O `@prisma/client` publica os motores de TODOS os bancos que suporta, e o
+   * rastreador do Next os copia para dentro de CADA função. São 61 rotas de
+   * API aqui, e o rastro real do build mostrava, por deployment:
+   *
+   * | | por função | × 61 |
+   * |---|---|---|
+   * | `libquery_engine` nativo (necessário) | 17,5 MB | 1,07 GB |
+   * | WASM de cockroachdb, mysql, sqlserver, sqlite | 9,0 MB | 0,55 GB |
+   * | compiladores dos mesmos quatro | 7,5 MB | 0,46 GB |
+   *
+   * A conta fecha em ~2,4 GB de Prisma por deployment, e o plano Hobby dá
+   * 10 GB de Functions Storage somando TODOS os deployments retidos — o que
+   * significa que meia dúzia de previews estoura a cota.
+   *
+   * ## O recorte, e por que ele é seguro
+   *
+   * O `datasource` é `postgresql` (Supabase). Um motor de MySQL, SQLite,
+   * SQL Server ou CockroachDB não tem como ser carregado em tempo de execução:
+   * não existe caminho de código que o alcance com esta configuração.
+   *
+   * O que **fica**: o `libquery_engine` nativo, que é o motor de verdade, e os
+   * arquivos `postgresql` — engine e compilador. Excluí-los quebraria a
+   * aplicação inteira, e nenhuma economia justifica isso.
+   *
+   * Reduz ~16,5 MB por função, ~1 GB por deployment — cerca de 40% do peso do
+   * Prisma, com zero risco. O resto do 1,07 GB só sai trocando o motor nativo
+   * por driver adapter, que é migração de verdade e não cabe aqui.
+   *
+   * Se algum dia o projeto ganhar um segundo banco, esta lista é o primeiro
+   * lugar a olhar — e o build vai falhar alto, não em silêncio.
+   */
+  outputFileTracingExcludes: {
+    '**': [
+      'node_modules/@prisma/client/runtime/query_engine_bg.mysql.*',
+      'node_modules/@prisma/client/runtime/query_engine_bg.sqlite.*',
+      'node_modules/@prisma/client/runtime/query_engine_bg.sqlserver.*',
+      'node_modules/@prisma/client/runtime/query_engine_bg.cockroachdb.*',
+      'node_modules/@prisma/client/runtime/query_compiler_bg.mysql.*',
+      'node_modules/@prisma/client/runtime/query_compiler_bg.sqlite.*',
+      'node_modules/@prisma/client/runtime/query_compiler_bg.sqlserver.*',
+      'node_modules/@prisma/client/runtime/query_compiler_bg.cockroachdb.*',
+    ],
+  },
+
+  /**
    * Pacotes que o servidor carrega do disco, sem passar pelo empacotador.
    *
    * `pdf-parse` depende de `@napi-rs/canvas` — um binário nativo `.node` — e
