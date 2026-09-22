@@ -1207,6 +1207,185 @@ o porquê está na nota no fim daquela seção). `tsc`, `eslint`, `build` e
 suíte limpos: 939/939 na sessão original, 972/972 depois de a `main`
 receber os testes do §2.117.
 
+### 7.12 Functions Storage estourado no Vercel — metade é código, metade é painel
+
+A conta estourou o **Functions Storage**: 15,47 GB contra os 10 GB do plano
+Hobby. É a única métrica acima do teto — CPU, invocações, ISR e transferência
+estão folgadas.
+
+O que quase todo mundo erra ao ler essa métrica: ela **não** é o tamanho do
+deployment atual. É a soma do peso das funções de **TODOS os deployments
+retidos**. São dois botões independentes, e mexer só num não resolve:
+
+| Botão | Onde | O que muda |
+|---|---|---|
+| peso por deployment | código | quanto cada deployment NOVO custa |
+| nº de deployments retidos | painel do Vercel | a cota que já está consumida |
+
+**O lado do código, feito.** Três rodadas, todas medidas no rastro real do
+build (`.next/**/*.nft.json`, somando os arquivos das 79 funções — o mesmo
+script nas duas pontas de cada rodada, nunca estimativa):
+
+| | por deployment | deployments até 10 GB |
+|---|---|---|
+| antes do PR #81 | ~2.810 MB | ~3 |
+| PR #81 — motores de mysql/sqlite/sqlserver/cockroachdb saem | 1.677 MB | 6 |
+| runtimes de edge/WASM/binary/browser/tipos saem | 1.227 MB | 8 |
+| **motor nativo sai: driver adapter** | **328 MB** | **31** |
+
+De 1.677 MB para 328 MB é **−80%**. A parte do Prisma caiu de 1.508 MB para
+147 MB. O detalhamento de cada arquivo está no comentário de
+`outputFileTracingExcludes` em `next.config.ts`.
+
+**A rodada também mexeu no número de deployments.** `vercel.json` ganhou um
+`ignoreCommand` que cancela o build quando o commit só mexe em `.md`/`docs/`.
+Medido em 25 commits reais do histórico: 4 seriam pulados, nenhum
+classificado errado. Se o `git diff` falhar por qualquer motivo, ele sai com
+código ≠ 0 e o build **acontece** — a falha aponta para o lado seguro.
+
+#### A migração do motor: o que ela é, e o que ela custou descobrir
+
+O Prisma deixou de falar com o Postgres por motor nativo (`libquery_engine`,
+16,7 MB copiados para dentro de CADA uma das 61 funções) e passa a falar pelo
+`pg`, com o Prisma só compilando a query — um WASM de 1,9 MB. Preview
+`queryCompiler` + `driverAdapters` no schema, `@prisma/adapter-pg` no
+`src/lib/prisma-client.ts`.
+
+Isso é migração de verdade: muda como TODA query chega ao banco. Foi validada
+contra um Postgres 16 de verdade, não contra suposição — e a validação achou
+**três coisas que teriam ido para produção**:
+
+1. **`apply-rls.ts` parava de funcionar.** O driver adapter não desserializa o
+   tipo `name` do Postgres (`relname`, `rolname`); o motor nativo
+   desserializava. Derrubava justamente o script que aplica Row Level
+   Security. Corrigido com `::text` no SQL, em `apply-rls.ts` e em
+   `prisma/rls.sql` — cast que vale nos dois motores e não muda resultado.
+2. **Cinco scripts operacionais quebrariam.** `new PrismaClient()` sem adapter
+   lança `P2038`. Entre eles o `fetch-hiring-index.ts`, que roda num cron
+   mensal do GitHub Actions — onde ninguém está olhando para ver falhar.
+   Todos passam agora por `createPrismaClient()`.
+3. **O tamanho do pool não é detalhe.** O motor nativo tinha pool próprio; o
+   `pg` não herda isso. `max: 1`, que parecia a escolha conservadora, custava
+   65% de latência a mais num leque de 8 queries em paralelo — e o app tem 25
+   pontos com `Promise.all`. Medido e fixado em 5, a faixa do que o motor
+   nativo já fazia. O raciocínio e a tabela estão em `src/lib/prisma-client.ts`.
+
+**Como a paridade foi provada.** Uma sonda exercitou 21 asserções — CRUD
+completo, `groupBy`, `aggregate`, `upsert` nos dois ramos, transação
+interativa (o caminho da cobrança), rollback, transação em lote, `$queryRaw`,
+`$queryRawUnsafe`, `$executeRawUnsafe`, os códigos de erro P2002/P2025 e o
+mapeamento de tipos — contra o MESMO banco, primeiro com o motor nativo e
+depois com o adapter. Saída idêntica byte a byte, 21/21. A sonda NÃO está
+versionada de propósito: ela apaga tabelas para ter estado determinístico, e
+um script assim no repositório é uma armadilha esperando alguém rodá-lo
+apontado para produção. Quem precisar repetir, o método está aqui.
+
+A prova final não foi a sonda: foi `next build` completo contra o Postgres
+real (o primeiro build deste projeto a passar da etapa de prerender numa
+máquina de desenvolvimento) e `next start` servindo — a home renderizou a
+contagem exata que tinha sido semeada.
+
+**Duas coisas que ficam sabidas, sem ação por ora.** O `@prisma/adapter-pg`
+dispara um `DeprecationWarning` do `pg` (query concorrente no mesmo cliente,
+dentro de `PgTransaction.performIO`) — é código do próprio Prisma, é só aviso
+no `pg@8` e viraria erro no `pg@9`, que o `^8.23.0` do `package.json` não
+alcança. E `queryCompiler` ainda é preview no Prisma 6.11.
+
+#### A limpeza, feita — e o diagnóstico que ela corrigiu
+
+O operador apagou 5 dos 8 deployments retidos pela CLI
+(`vercel remove <url> --scope griffojobs --yes`); a lista foi conferida pelo
+MCP do Vercel antes e depois, alias por alias. **15,97 GB caíram para ~4,8 GB.**
+Sobraram três, e são os certos: a produção no ar (que carrega `griffo.work` e
+mais seis domínios — conferido DEPOIS das exclusões, intacto), a produção
+anterior como alvo de rollback, e o preview do PR em revisão.
+
+E aí veio a correção que importa mais que a limpeza. Durante toda a
+investigação eu afirmei que **o padrão do Vercel retém para sempre**. Está
+errado, e o operador corrigiu: estava em **30 dias**, e ele passou para 7.
+
+Isso reescreve a causa. Os carimbos de criação dos 8 deployments mostram que
+**todos foram feitos em 22,4 horas** — nenhum chegou perto de 30 dias. A
+retenção nunca foi o gargalo; o **ritmo de deployment** era:
+
+| | |
+|---|---|
+| Orçamento | 10 GB |
+| Custo por deployment (depois desta rodada) | 328 MB |
+| Cabem na janela retida | ~31 |
+| Retenção de 7 dias → ritmo sustentável | **~4,4 por dia** |
+| Ritmo observado no dia da investigação | **8,6 por dia** |
+
+Ou seja: 7 dias segura **enquanto a média ficar abaixo de ~4,4 por dia**. Num
+dia como aquele (dois PRs entrando, previews a cada push), 8,6 × 7 × 0,328 dá
+~19,7 GB e estouraria de novo — nesse regime a régua certa seria 3 dias. O
+`ignoreCommand` do `vercel.json` ajuda por outro lado, cortando os commits que
+só mexem em `.md`.
+
+#### O deploy de produção quebrou, e por quê — a lição mais cara desta rodada
+
+O primeiro deploy de produção com o driver adapter **falhou**, mesmo depois de
+toda a validação descrita acima. Vale entender por quê, porque o furo não foi
+descuido de execução: foi um ponto cego do método.
+
+```
+code: SELF_SIGNED_CERT_IN_CHAIN
+self-signed certificate in certificate chain
+Error occurred prerendering page "/es"
+```
+
+**Dois fatos se combinaram.**
+
+O primeiro: `POSTGRES_PRISMA_URL` e `POSTGRES_URL_NON_POOLING` existem **só no
+ambiente `production`** da Vercel; `DATABASE_URL` existe em `preview` e
+`production`. Como `getDatabaseUrl()` resolve
+`POSTGRES_PRISMA_URL || DATABASE_URL`, **preview e produção nunca usaram a
+mesma connection string**. Todo o teste feito no preview — build, home com
+10.900, `/api/hiring-index` — exercitou o `DATABASE_URL`. A URL que a produção
+usa nunca foi tocada.
+
+O segundo: `sslmode=require` significa coisas diferentes nos dois motores.
+
+| | o que `require` faz |
+|---|---|
+| motor nativo do Prisma (semântica libpq) | criptografa, NÃO verifica a cadeia |
+| `pg` 8.23 | trata como `verify-full` — verifica a cadeia inteira |
+
+O Supabase apresenta cadeia com raiz própria. O motor antigo nunca verificou; o
+`pg` verifica e recusa. O Postgres local usado na validação **não tinha TLS
+ligado**, então essa diferença era invisível ali.
+
+**A correção** está em `withLibpqSslSemantics()`, em `src/lib/prisma-client.ts`:
+acrescenta `uselibpqcompat=true` quando o `sslmode` é `require`. É a saída que o
+próprio aviso do `pg` indica, e é para onde o `pg@9` vai por padrão. Reproduzido
+localmente ligando TLS com certificado autoassinado no Postgres de teste — o
+erro apareceu idêntico, e a correção o resolveu mantendo
+`pg_stat_ssl.ssl = true`. Quatro testes travam o comportamento.
+
+**O que NÃO funcionou, e por que registrar:** `ssl: { rejectUnauthorized: false }`
+no PoolConfig — a correção reflexa — **não resolve**, porque o `sslmode` da URL
+tem precedência sobre o objeto `ssl`. Teria dado a sensação de conserto sem
+consertar, e de quebra afrouxaria a verificação de toda conexão.
+
+**Pendência de ambiente, não de código.** Sem `sslmode` nenhum, o `pg` conecta em
+TEXTO PURO (medido), enquanto o motor nativo usava `prefer` e tentava TLS. Se o
+`DATABASE_URL` do preview não tiver `sslmode`, a conexão de preview com o
+Supabase deixou de ser criptografada. Forçar em código não serve: `sslmode=prefer`
+no `pg` **erra** contra servidor sem TLS em vez de cair para texto puro (medido),
+o que quebraria qualquer Postgres local. **O lugar de corrigir é a variável:
+acrescentar `sslmode=require` ao `DATABASE_URL`.**
+
+**As duas lições.** Antes de declarar uma migração validada contra um serviço
+externo, confira o **escopo das variáveis de ambiente** — "testei no preview"
+não quer dizer "testei com o que a produção usa". E um banco de teste sem TLS
+não valida nada sobre TLS: a paridade de 21/21 era verdadeira e continuava
+cega para isto.
+
+A lição para quem vier depois: quando uma cota de armazenamento acumulado
+estoura, **olhe os carimbos de data antes de culpar a retenção**. Oito
+deployments em um dia e oito deployments em um mês dão o mesmo número no
+painel e pedem correções opostas.
+
 ---
 
 ## 8. O que fazer antes de tocar em qualquer coisa

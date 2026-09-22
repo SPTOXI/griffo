@@ -113,51 +113,78 @@ const HTML_ONLY = '/:path((?!api/|_next/static/).*)'
 
 const nextConfig: NextConfig = {
   /**
-   * Motores de banco que este projeto nunca vai usar.
+   * O que o rastreador copia para dentro de cada função — e o que não precisa.
    *
    * ## O problema, medido
    *
-   * O `@prisma/client` publica os motores de TODOS os bancos que suporta, e o
-   * rastreador do Next os copia para dentro de CADA função. São 61 rotas de
-   * API aqui, e o rastro real do build mostrava, por deployment:
+   * O `@prisma/client` publica, num diretório só, os runtimes de TODOS os
+   * ambientes que suporta (Node, edge, WASM, React Native, browser) e os
+   * motores de TODOS os bancos. O rastreador do Next não sabe qual deles o
+   * processo vai carregar, então copia tudo — para CADA função. São 61 rotas
+   * de API aqui, e o trace real do build (`.nft.json`, somando os arquivos de
+   * todas as funções) dava **1.677 MB por deployment**, dos quais **1.508 MB
+   * eram Prisma**. O plano Hobby dá 10 GB de Functions Storage somando TODOS
+   * os deployments retidos: meia dúzia de previews estoura a cota.
    *
-   * | | por função | × 61 |
-   * |---|---|---|
-   * | `libquery_engine` nativo (necessário) | 17,5 MB | 1,07 GB |
-   * | WASM de cockroachdb, mysql, sqlserver, sqlite | 9,0 MB | 0,55 GB |
-   * | compiladores dos mesmos quatro | 7,5 MB | 0,46 GB |
+   * ## A lista depende do motor, e o motor mudou
    *
-   * A conta fecha em ~2,4 GB de Prisma por deployment, e o plano Hobby dá
-   * 10 GB de Functions Storage somando TODOS os deployments retidos — o que
-   * significa que meia dúzia de previews estoura a cota.
+   * Com o driver adapter (`src/lib/db.ts`), o cliente gerado tem exatamente
+   * três dependências de runtime, todas verificáveis no `require` do próprio
+   * arquivo gerado:
    *
-   * ## O recorte, e por que ele é seguro
+   * ```
+   * .prisma/client/index.js
+   *   ├─ ./query_compiler_bg.js  →  ./query_compiler_bg.wasm   (1,9 MB)
+   *   └─ @prisma/client/runtime/client.js  →  só builtins do Node
+   * ```
    *
-   * O `datasource` é `postgresql` (Supabase). Um motor de MySQL, SQLite,
-   * SQL Server ou CockroachDB não tem como ser carregado em tempo de execução:
-   * não existe caminho de código que o alcance com esta configuração.
+   * Isso INVERTE a lista que existia aqui antes. Com o motor nativo, o único
+   * runtime necessário era `library.js` e `client.js` era descartável; agora é
+   * o contrário. Uma lista de exclusão herdada sem reconferir teria removido
+   * justamente o runtime em uso — e o erro apareceria só em produção, no
+   * primeiro acesso ao banco.
    *
-   * O que **fica**: o `libquery_engine` nativo, que é o motor de verdade, e os
-   * arquivos `postgresql` — engine e compilador. Excluí-los quebraria a
-   * aplicação inteira, e nenhuma economia justifica isso.
+   * `libquery_engine-*.so.node` NÃO aparece nesta lista de propósito. Ele
+   * simplesmente deixa de ser gerado quando o gerador roda com
+   * `queryCompiler`, e é assim que ele deve sumir: por ausência, não por
+   * exclusão. Excluí-lo por nome seria plantar uma armadilha — o dia em que
+   * alguém voltasse ao motor nativo, o build continuaria verde e o site cairia
+   * inteiro em runtime.
    *
-   * Reduz ~16,5 MB por função, ~1 GB por deployment — cerca de 40% do peso do
-   * Prisma, com zero risco. O resto do 1,07 GB só sai trocando o motor nativo
-   * por driver adapter, que é migração de verdade e não cabe aqui.
+   * ## Como isso foi verificado, e não deduzido
    *
-   * Se algum dia o projeto ganhar um segundo banco, esta lista é o primeiro
-   * lugar a olhar — e o build vai falhar alto, não em silêncio.
+   * Os arquivos foram REMOVIDOS de `node_modules` e o cliente foi exercitado
+   * em CJS (`require`) e em ESM (`import`). Ver também o cabeçalho de
+   * `src/lib/db.ts` para a prova de paridade entre os dois motores.
+   *
+   * Se algum dia o projeto ganhar um segundo banco, uma rota em runtime edge,
+   * ou voltar ao motor nativo, esta lista é o primeiro lugar a olhar.
    */
   outputFileTracingExcludes: {
     '**': [
-      'node_modules/@prisma/client/runtime/query_engine_bg.mysql.*',
-      'node_modules/@prisma/client/runtime/query_engine_bg.sqlite.*',
-      'node_modules/@prisma/client/runtime/query_engine_bg.sqlserver.*',
-      'node_modules/@prisma/client/runtime/query_engine_bg.cockroachdb.*',
-      'node_modules/@prisma/client/runtime/query_compiler_bg.mysql.*',
-      'node_modules/@prisma/client/runtime/query_compiler_bg.sqlite.*',
-      'node_modules/@prisma/client/runtime/query_compiler_bg.sqlserver.*',
-      'node_modules/@prisma/client/runtime/query_compiler_bg.cockroachdb.*',
+      // Runtime do motor nativo e do motor binário: não são mais o caminho.
+      'node_modules/@prisma/client/runtime/library.js',
+      'node_modules/@prisma/client/runtime/library.mjs',
+      'node_modules/@prisma/client/runtime/binary.js',
+      'node_modules/@prisma/client/runtime/binary.mjs',
+      // Motores WASM por banco, do pacote publicado: o compilador em uso é o
+      // `.prisma/client/query_compiler_bg.wasm`, gerado para ESTE schema.
+      'node_modules/@prisma/client/runtime/query_engine_bg.*',
+      'node_modules/@prisma/client/runtime/query_compiler_bg.*',
+      // Runtimes de ambientes que não existem aqui.
+      'node_modules/@prisma/client/runtime/edge.js',
+      'node_modules/@prisma/client/runtime/edge-esm.js',
+      'node_modules/@prisma/client/runtime/wasm-engine-edge.*',
+      'node_modules/@prisma/client/runtime/wasm-compiler-edge.*',
+      'node_modules/@prisma/client/runtime/react-native.js',
+      'node_modules/@prisma/client/runtime/index-browser.js',
+      // Tipos não executam.
+      'node_modules/@prisma/client/runtime/*.d.ts',
+      'node_modules/@prisma/client/runtime/*.d.mts',
+      // Entradas do cliente gerado para edge e para browser.
+      'node_modules/.prisma/client/edge.js',
+      'node_modules/.prisma/client/index-browser.js',
+      'node_modules/.prisma/client/wasm.js',
     ],
   },
 

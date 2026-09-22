@@ -186,7 +186,13 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM PUBLI
 -- "permission denied for table". Revogar de `PUBLIC` atingiria todo papel do
 -- banco, extensões inclusive, e é da mesma categoria do FORCE descrito
 -- abaixo: não se aplica às cegas.
-SELECT c.relname AS tabela_sem_rls
+-- O `::text` não é enfeite: `relname` é do tipo `name` do Postgres, e o driver
+-- adapter do Prisma (`@prisma/adapter-pg`) não desserializa `name` — devolve
+-- "Failed to deserialize column of type 'name'" e derruba o `db:rls` inteiro.
+-- O motor nativo aceitava. O cast vale nos dois e não muda o resultado.
+-- As outras referências a `relname` neste arquivo estão dentro de blocos
+-- PL/pgSQL: resolvem no servidor e nunca atravessam a rede.
+SELECT c.relname::text AS tabela_sem_rls
 FROM pg_class c
 JOIN pg_namespace n ON n.oid = c.relnamespace
 WHERE n.nspname = 'public'

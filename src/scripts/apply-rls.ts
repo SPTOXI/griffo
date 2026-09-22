@@ -31,7 +31,7 @@
 
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { PrismaClient } from '@prisma/client'
+import { createPrismaClient } from '../lib/prisma-client'
 import { loadEnvFile } from './load-env'
 import { returnsRows, splitSqlStatements } from '../lib/sql-split'
 
@@ -94,10 +94,10 @@ async function main() {
     throw new Error(`Nenhuma instrução SQL encontrada em ${sqlPath}.`)
   }
 
-  const db = new PrismaClient({
-    datasources: { db: { url: directDatabaseUrl() } },
-    log: ['error'],
-  })
+  // Conexão DIRETA, não o pool: este script altera catálogo (RLS) e precisa
+  // falar com o Postgres, não com o pooler. `max: 1` porque é um script
+  // sequencial — nada aqui roda em paralelo.
+  const db = createPrismaClient(directDatabaseUrl(), { log: ['error'], max: 1 })
 
   try {
     // Estado ANTES: sem isto o script não consegue dizer o que de fato mudou,
@@ -179,9 +179,17 @@ async function main() {
  * referenciar nomes, e sem privilégio de tabela nenhuma linha sai. Revogar de
  * `PUBLIC` afetaria todo papel do banco, inclusive extensões, e é da mesma
  * categoria do FORCE: não se aplica às cegas.
+ *
+ * Nota sobre os `::text`: `relname` e `rolname` são do tipo `name` do
+ * Postgres, não `text`. O motor nativo do Prisma desserializava `name`
+ * sozinho; o driver adapter (`@prisma/adapter-pg`) NÃO, e devolve
+ * `Failed to deserialize column of type 'name'` — derrubando este script
+ * inteiro, que é justamente o que aplica Row Level Security. O cast é a
+ * correção que o próprio erro do Prisma sugere, vale nos dois motores e não
+ * muda o resultado: `name` e `text` têm a mesma representação textual.
  */
 const EXPOSED_TABLES_QUERY = `
-  SELECT r.rolname AS papel, c.relname AS tabela
+  SELECT r.rolname::text AS papel, c.relname::text AS tabela
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
   CROSS JOIN pg_roles r
@@ -199,7 +207,7 @@ const EXPOSED_TABLES_QUERY = `
 
 /** Tabelas do schema `public` ainda sem RLS. Vazio = tudo protegido. */
 const PENDING_TABLES_QUERY = `
-  SELECT c.relname AS tabela_sem_rls
+  SELECT c.relname::text AS tabela_sem_rls
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
   WHERE n.nspname = 'public'

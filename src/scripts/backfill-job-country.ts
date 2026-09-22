@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { createPrismaClient, databaseUrlFromEnv } from '../lib/prisma-client'
 import { loadEnvFile } from './load-env'
 import { inferCountryFromLocation } from '../lib/jobs/location-country'
 
@@ -37,7 +37,7 @@ if (!DRY_RUN && !process.env.POSTGRES_PRISMA_URL) {
 const BATCH_SIZE = 500
 
 async function run(): Promise<void> {
-  const db = new PrismaClient()
+  const db = createPrismaClient(databaseUrlFromEnv())
   try {
     const candidates = await db.job.findMany({
       where: { closedAt: null, country: null, city: { not: null } },

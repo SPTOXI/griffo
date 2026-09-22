@@ -3,6 +3,7 @@
 // hydration and renders Next's "This page couldn't load" screen.
 import 'server-only'
 import { PrismaClient } from '@prisma/client'
+import { createPrismaClient } from './prisma-client'
 import { getDatabaseUrl } from './env'
 
 const globalForPrisma = globalThis as unknown as {
@@ -12,10 +13,13 @@ const globalForPrisma = globalThis as unknown as {
 function createClient(): PrismaClient {
   // Sem fallback embutido: antes havia aqui uma connection string de produção
   // completa, com senha, versionada no repositório.
-  return new PrismaClient({
-    datasources: { db: { url: getDatabaseUrl() } },
-    log: ['error'],
-  })
+  //
+  // O driver adapter substitui o motor nativo do Prisma (`libquery_engine`,
+  // 16,7 MB que o rastreador do Next copiava para dentro de cada uma das 61
+  // funções). Quem fala com o Postgres agora é o `pg`; o Prisma só compila a
+  // query, em WASM de 1,9 MB. O porquê do tamanho do pool, e por que a
+  // construção mora num módulo à parte, estão em `./prisma-client`.
+  return createPrismaClient(getDatabaseUrl(), { log: ['error'] })
 }
 
 function getClient(): PrismaClient {
