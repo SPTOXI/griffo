@@ -17,7 +17,7 @@ export function auditQualityOfAiResult(taskType: string, content: string): Quali
    * de uma lista mais cheia, que só poderia vir inventada. Aqui basta ser um
    * objeto JSON; quem limpa os itens é `lib/jobs/intelligence.ts`.
    */
-  if (taskType === 'job_intelligence') {
+  if (taskType === 'job_intelligence' || taskType === 'job_intelligence_backfill') {
     const stripped = (content || '').trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim()
     const match = stripped.match(/\{[\s\S]*\}/)
     try {

@@ -8914,13 +8914,19 @@ O proxy deste ambiente recusa conexão com `poesywqtwnihizhkkbii.supabase.co`, e
 
 **Primeira rodada em produção (23/09/2026, 18:04 UTC, DeepSeek):** 48 vagas lidas (45 Gupy, 3 Greenhouse), 48 com itens, 0 falhas, US$ 0,0383 no total — US$ 0,0008/vaga, 3,4s na mediana, ~1.500 tokens de entrada e ~708 de saída (a maior parte raciocínio). `fromRequirementsText = 0`, esperado: as vagas do JobBase só ganham descrição na coleta de 24/09 06:00 UTC. Amostra boa ("Graduação em Direito", "Registro ativo na OAB", "Contencioso trabalhista"…).
 
-**Decisão:** o operador tem crédito sobrando no Kimi e pediu que a ficha rode nele. `INITIAL_TASK_ROUTING.job_intelligence = 'kimi'`.
+**Decisão do operador:** usar o crédito que sobra no Kimi K3 para ler o ESTOQUE, só nesta transição. O dia a dia continua no DeepSeek.
 
-**O que isso custa, dito antes da troca:**
+**Por que o estoque não vai pelo cron.** O cron roda a cada 30 min numa função de 60s e só começa leituras nos primeiros ~27s (cada chamada tem 25s para terminar antes do prazo). No DeepSeek (3,4s, 6 em paralelo) isso dá ~48 vagas por rodada — medido —, ~2.300 por dia: o estoque de ~6,5 mil em ~3 dias. No Kimi (~12s na mediana, teto de 3 simultâneas por organização, 2.34) daria ~9 por rodada, ~430 por dia; descontadas as ~230 novas por dia, o estoque levaria cerca de um mês.
 
-- **Crédito, não caixa:** ~US$ 0,015/vaga no Kimi K3 ($3/$15 por 1M), contra US$ 0,0008 no DeepSeek. O estoque (~6,5 mil vagas) consome ~US$ 100 de crédito; as novas, ~US$ 3/dia.
-- **Velocidade:** ~12s por chamada na mediana (`job_deduplication`, 30 dias) e teto de 3 simultâneas por organização (2.34). A concorrência da rodada caiu de 6 para 3; o estoque leva ~2 semanas em vez de ~3 dias.
-- **Exceção consciente à regra "Kimi só em função serial" (26/08/2026):** esta tarefa dispara 3 em paralelo, exatamente o teto. O risco da regra — saturar o Kimi quando várias tarefas caem nele ao mesmo tempo — não se aplica aqui do mesmo jeito, porque o Kimi é o primário e o excedente (429) cai no DeepSeek, barato. O agente de deduplicação, serial e diário, pode coincidir; o custo disso é velocidade, não dinheiro.
-- **Suplente:** `FALLBACK_CHAIN.kimi` começa pelo DeepSeek, e só dois provedores são tentados — o Claude sai do caminho desta tarefa, o que fecha o risco apontado antes (DeepSeek fora do ar mandando o estoque inteiro para o Claude, ~US$ 50–70).
+**O que foi feito:**
 
-**Para medir:** custo/vaga e tempo no `AiLog` (`taskType = 'job_intelligence'`, `provider = 'kimi'`), taxa de failover para o DeepSeek, e o `pending` caindo na resposta do cron. Se o Kimi ficar lento demais para acompanhar as ~230 novas por dia, a volta é uma linha em `registry.ts`.
+- Tipo de tarefa novo, `job_intelligence_backfill`, roteado ao Kimi; `job_intelligence` (o cron) segue no DeepSeek. O agente de qualidade trata os dois igual.
+- `extractPendingJobIntelligence(deadline, mode)`: `cron` = DeepSeek, 6 em paralelo, mais recentes primeiro; `backfill` = Kimi, 3 em paralelo, mais ANTIGAS primeiro — os dois podem rodar juntos sem disputar as mesmas vagas.
+- Script `npm run jobs:backfill-intelligence` (`src/scripts/backfill-job-intelligence.ts`): lê sem o teto de 60s, em voltas de 5 min, imprimindo o progresso. ~15 vagas/min → o estoque em algumas horas. Travas: `--max-usd` (padrão 120), `--hours` (padrão 12), Ctrl+C para no fim da volta. Idempotente. Precisa só de `POSTGRES_PRISMA_URL`; as chaves de IA vêm do banco.
+- **Suplente:** `FALLBACK_CHAIN.kimi` começa pelo DeepSeek e só dois provedores são tentados, então o Claude fica fora do backfill. Verificado localmente: sem chaves, o diagnóstico mostra `KIMI` e depois `DEEPSEEK`, nada mais.
+
+**Custo estimado do backfill:** ~US$ 0,015/vaga em crédito ($3/$15 por 1M, ~1,5 mil tokens de entrada e ~700 de saída), ~US$ 100 para ~6,5 mil vagas — menos onde a seção de requisitos do JobBase encurta a entrada.
+
+**Quando rodar:** depois da coleta de 24/09 06:00 UTC, que é quando as vagas do JobBase ganham descrição. Antes disso o estoque tem só ~475 vagas.
+
+**Exceção registrada à regra "Kimi só em função serial" (26/08/2026):** o backfill faz 3 chamadas em paralelo, o teto. O risco da regra é saturar o Kimi quando várias tarefas caem nele ao mesmo tempo; aqui ele é o primário, e o excedente (429) cai no DeepSeek, barato. O agente de deduplicação, serial e diário, pode coincidir; o custo é velocidade, não dinheiro.
