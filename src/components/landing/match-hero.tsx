@@ -152,7 +152,7 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
   }
 
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-b from-white to-blue-50/60">
+    <section id="upload" className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-b from-white to-blue-50/60">
       <div className="relative mx-auto max-w-[1200px] px-4 py-14 sm:px-8 sm:py-20">
         <div className="grid grid-cols-1 gap-10 min-[900px]:grid-cols-[1fr_1.1fr] min-[900px]:items-start">
           <div className="flex min-w-0 flex-col gap-5">
