@@ -440,11 +440,10 @@ export function Landing({
           </Badge>
           <h3 className="text-xl sm:text-2xl font-bold text-white">{t.pricing.previewTitle}</h3>
           <p className="text-slate-300 text-xs sm:text-sm max-w-xl mx-auto">{t.pricing.previewDesc}</p>
-          <Button
-            onClick={() => onNavigate('signup')}
-            className="bg-white text-[#0B192E] hover:bg-blue-50 font-extrabold h-11 px-6"
-          >
-            {t.pricing.previewCta} <ArrowRight className="w-4 h-4 ml-2 text-[#0B63E5]" />
+          <Button asChild className="bg-white text-[#0B192E] hover:bg-blue-50 font-extrabold h-11 px-6">
+            <a href="#upload">
+              {t.pricing.previewCta} <ArrowRight className="w-4 h-4 ml-2 text-[#0B63E5]" />
+            </a>
           </Button>
         </div>
 
@@ -518,8 +517,10 @@ export function Landing({
             {t.ctaFinal.subtitle}
           </p>
           <div className="pt-2">
-            <Button onClick={() => onNavigate('signup')} size="lg" className="w-full sm:w-auto bg-white text-[#0B192E] hover:bg-blue-50 h-auto min-h-12 sm:min-h-13 py-3 px-8 text-base font-extrabold shadow-lg whitespace-normal">
-              {t.ctaFinal.button} <ArrowRight className="w-5 h-5 ml-2 text-[#0B63E5] shrink-0" />
+            <Button asChild size="lg" className="w-full sm:w-auto bg-white text-[#0B192E] hover:bg-blue-50 h-auto min-h-12 sm:min-h-13 py-3 px-8 text-base font-extrabold shadow-lg whitespace-normal">
+              <a href="#upload">
+                {t.ctaFinal.button} <ArrowRight className="w-5 h-5 ml-2 text-[#0B63E5] shrink-0" />
+              </a>
             </Button>
           </div>
         </div>
