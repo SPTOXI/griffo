@@ -32,18 +32,24 @@ import {
  * - `backfill` (Kimi): 3, o teto do Kimi por organização (ver 2.34 na
  *   auditoria). Acima disso ele devolve 429 e o excedente cai no DeepSeek.
  */
+/**
+ * Orçamento de uma chamada, por modo. O roteador o DIVIDE entre as duas
+ * tentativas (primário e suplente), então cada uma fica com pouco menos da
+ * metade:
+ *
+ * - `cron`: 25s → ~12s para o DeepSeek (3,4s na mediana) e ~12s para o suplente.
+ *   Cabe no prazo de 60s da função.
+ * - `backfill`: 60s → ~29s para o Kimi e ~29s para o DeepSeek. Com 25s aqui o
+ *   Kimi ficaria com ~12s — a mediana dele (AiLog, set/2026) —, metade das
+ *   chamadas estouraria, e o estoque que devia sair do crédito do Kimi iria
+ *   para o DeepSeek em silêncio. O script não tem o prazo de 60s, então pode.
+ */
 const MODES = {
-  cron: { taskType: 'job_intelligence', concurrency: 6, order: 'desc' },
-  backfill: { taskType: 'job_intelligence_backfill', concurrency: 3, order: 'asc' },
+  cron: { taskType: 'job_intelligence', concurrency: 6, order: 'desc', callBudgetMs: 25_000 },
+  backfill: { taskType: 'job_intelligence_backfill', concurrency: 3, order: 'asc', callBudgetMs: 60_000 },
 } as const
 
 export type JobIntelligenceMode = keyof typeof MODES
-
-/**
- * Orçamento de uma chamada. DeepSeek: 3,4s na mediana; Kimi K3: ~12s
- * (AiLog, set/2026).
- */
-const CALL_BUDGET_MS = 25_000
 
 /**
  * Falhas seguidas que encerram a rodada. Provedor fora do ar não é defeito da
@@ -65,6 +71,12 @@ export interface JobIntelligenceRun {
   read: number
   /** Lidas pela seção de requisitos do JobBase, e não pela descrição inteira. */
   fromRequirementsText: number
+  /**
+   * Lidas pelo SUPLENTE, porque o primário não respondeu. No backfill é o
+   * sinal de que o Kimi está fora: o script avisa quando isto passa de um
+   * terço das lidas.
+   */
+  viaFallback: number
   withItems: number
   empty: number
   tooShort: number
@@ -108,10 +120,11 @@ export async function extractPendingJobIntelligence(
   deadlineAt: number,
   mode: JobIntelligenceMode = 'cron'
 ): Promise<JobIntelligenceRun> {
-  const { taskType, concurrency, order } = MODES[mode]
+  const { taskType, concurrency, order, callBudgetMs } = MODES[mode]
   const run: JobIntelligenceRun = {
     read: 0,
     fromRequirementsText: 0,
+    viaFallback: 0,
     withItems: 0,
     empty: 0,
     tooShort: 0,
@@ -125,7 +138,7 @@ export async function extractPendingJobIntelligence(
   // seria buscada de novo em cada página.
   const skip = new Set<string>()
 
-  const hasTime = () => Date.now() + CALL_BUDGET_MS < deadlineAt
+  const hasTime = () => Date.now() + callBudgetMs < deadlineAt
 
   const jobBaseSourceId = (await db.jobSource.findUnique({ where: { slug: 'jobbase' }, select: { id: true } }))?.id
 
@@ -146,9 +159,10 @@ export async function extractPendingJobIntelligence(
         maxTokens: 600,
         disableThinking: true,
         internal: true,
-        timeBudgetMs: CALL_BUDGET_MS,
+        timeBudgetMs: callBudgetMs,
       })
       run.costUsd += ai.costUsd ?? 0
+      if (ai.failoverCount > 0) run.viaFallback++
       consecutiveFailures = 0
 
       const parsed = parseJobIntelligence(ai.content)
