@@ -8485,3 +8485,139 @@ vagas. O `isTooOldToImport` do §2.130 está funcionando — nenhuma vaga velha
 entrou pela coleta.
 
 `tsc`, `eslint` e suíte — **1143/1143**, 4 novos — limpos.
+
+## 2.132 Foco de venda invertido: "envie seu currículo, a gente mostra as oportunidades" — decisões do operador e plano
+
+Esta seção é a marcação que o operador pediu para encontrar ("falamos sobre
+alterar o foco da venda para atrair leads"). A decisão de origem já estava no
+§2.128 — *"O operador decidiu inverter: atrair por vaga/emprego e usar a
+auditoria como a ponte"* —, mas ficou uma frase dentro de outra seção, sem
+plano nem decisões de produto. Aqui ela ganha as duas coisas. **Nenhum código
+mudou nesta seção**: é registro de decisão, com os números que a sustentam.
+
+### O dado que decide a ordem do trabalho
+
+Leitura do funil que o §2.128 deixou pendente (`AnalyticsEvent`, 30 dias até
+23/09/2026, pessoas distintas por `visitorId`/`userId`):
+
+| Degrau | Pessoas |
+|---|---|
+| `page_view` | 925 |
+| `pricing_viewed` | 17 |
+| `ats_check_done` | 2 |
+| `checkout_initiated` | 2 |
+| `cv_uploaded`, `signup_done`, `preview_viewed`, `purchase_done` | nenhum evento registrado |
+
+O funil **zera no primeiro gesto**, não no preço: 0,2% dos visitantes fazem o
+teste grátis e ninguém envia currículo. Não é oferta fraca — a pessoa não chega
+a ver a oferta. Isso decide que a mudança começa pela porta (fase 1), e não
+pelo preço (fase 2).
+
+### A ideia, e por que ela resolve a tensão do §2.84/§2.124
+
+Em vez de a pessoa caçar vaga, ela envia o currículo e o produto mostra as
+oportunidades que combinam com ela. O §2.84 e o §2.124 excluíram "vagas de
+emprego" porque "quem busca vaga quer um quadro de vagas, não a auditoria". A
+inversão atende exatamente isso: quem busca vaga **recebe vaga**, e a
+auditoria aparece como o caminho até ela — a "ponte" do §2.128. É também o
+fluxo que `job-fit.ts` já documenta como "a inversão do §19" (currículo →
+perfil → vaga encontrada → match → currículo adaptado).
+
+Comparação de mercado discutida (de conhecimento geral, não verificada ao vivo
+nesta sessão): LinkedIn (vaga pública, candidatura e Premium atrás de login),
+Indeed/Jooble/Talent.com (tráfego de vaga, monetização do lado da empresa),
+Gupy (portal de vagas como captura para o ATS B2B), Catho (vaga visível,
+assinatura do candidato), Jobscan/Teal (vaga + nota de compatibilidade do
+currículo — o análogo mais próximo do Griffo).
+
+### Decisões do operador (23/09/2026)
+
+1. **Chamada**: *"Procurando emprego? Envie seu currículo e descubra as
+   oportunidades que combinam com você."* — "oportunidades" em vez de "vagas"
+   para casar com o Hero D (§2.120). A proposta do operador ("…Encontra as
+   oportunidades…") foi ajustada por gramática (verbo sem sujeito). "Vagas"
+   continua nos metadados e no texto de apoio: é a palavra que se busca.
+2. **Grátis = uma oportunidade completa**, e a chamada *"Há mais oportunidades
+   com o seu perfil — a GriffoWork encontrou mais para você"*. O resto é pago.
+3. **Lista completa só para quem paga.** E-mail capturado **no envio** do
+   currículo ("receba seu resultado"), não para destravar a lista — assim quem
+   não compra na hora continua alcançável pelo Radar.
+4. **Isca quantificada, sem revelar a correção**: *"Encontramos N pontos que
+   reduzem sua visibilidade nos sistemas de triagem — X em palavras-chave, Y em
+   formatação, Z em experiência. Corrigir pode aumentar suas chances de ser
+   chamado para entrevista."* Os números vêm do diagnóstico real daquele
+   currículo. Frase genérica mostrada a todo mundo ("seu currículo pode ser
+   melhorado") foi **descartada**: é afirmação que não se sustenta quando o
+   currículo já é bom — CDC art. 37, §17 e "nunca invente nada".
+5. **Não entregar o ouro**: `targeted_changes`, reescrita e carta nunca
+   aparecem de graça. O grátis é a prova de competência (1 vaga) e o tamanho
+   do problema (a contagem do item 4).
+6. **Isto vem antes da home**: o envio do currículo vira o hero; o Hero D
+   desce para explicação logo abaixo. As 41 rotas `/[country]` seguem SSG —
+   o envio é componente de cliente — e a página mantém texto indexável.
+7. **Passe 24h a US$ 2,60** (preço de referência), **sem Análise Completa**:
+   lista completa de oportunidades com match, diagnóstico por vaga e 2 buscas
+   ao vivo. A Análise Completa, a reescrita e a orientação profissional ficam
+   no Essencial (R$ 19,90) e no Trimestral. O passe é degrau deliberado para o
+   Essencial ("por mais R$ 5, a análise completa") — escolha do operador para
+   "forçar" o Essencial.
+
+Uma versão do passe **com** Análise Completa a US$ 2 foi descartada por três
+razões já codificadas: violaria `ANALYSIS_FLOOR_USD = 2.6`; inverteria a
+escada contra o Essencial (mesmo motivo da saída do `pack5`); e a taxa fixa por
+transação pesa demais num pagamento de US$ 2.
+
+### Custos de IA medidos (`AiLog`, 60 dias, só chamadas bem-sucedidas)
+
+Funil grátis, por pessoa que envia o currículo:
+
+| Etapa | Modelo | Custo médio |
+|---|---|---|
+| Extração de texto do PDF | nenhum | US$ 0 |
+| OCR (só PDF escaneado) | Sonnet 5 | US$ 0,057 (p90 US$ 0,086) |
+| `profile_extraction` | DeepSeek | US$ 0,008 |
+| `free_preview` | DeepSeek | US$ 0,0014 |
+| Teste ATS público | nenhum (regra) | US$ 0 |
+| `matchJob` (cruzamento com vagas) | nenhum (determinístico) | US$ 0 |
+
+**~US$ 0,01 por pessoa, ~US$ 0,07 com OCR.** Mostrar oportunidades com match
+não custa IA; o risco de custo é abuso, e o limite por IP de
+`ats-check/quota.ts` precisa valer também para o envio novo.
+
+Análise Completa: 5 × `analysis_segment` (US$ 0,036) + `rewrite` (0,029) +
+`career_orientation` (0,034) + `social_advice` (0,023) + `cover_letter`
+(0,032) ≈ **US$ 0,30–0,36 de IA**. O `ANALYSIS_DIRECT_COST_USD` de US$ 1,04 é
+conservador de propósito (overrun de 1,6×, 8% de retry, suporte e infra).
+
+O passe, sem análise, custa ~US$ 0,01 de IA mais a taxa do meio de pagamento.
+
+### O que ficou pendente de decisão
+
+- **Preço local do passe fora do Brasil.** O Essencial não é US$ 9,90 em todo
+  lugar: a âncora é US$ 9,90 na Faixa 1, 6,90 na 2, **3,70 na 3 (R$ 19,90)**
+  e 2,90 na 4. US$ 2,60 fixo funciona como degrau onde o Essencial é barato
+  (Brasil: ~R$ 14,90 contra R$ 19,90), mas na Faixa 1 fica a um quarto do
+  Essencial e passa a competir com ele. Opções: US$ 2,60 fixo em todas as
+  faixas, ou proporcional ao Essencial de cada faixa. Invariante que o teste
+  do catálogo deve ganhar em qualquer caso: **passe < Essencial em toda
+  moeda**.
+- **Licença das fontes para acesso PAGO à lista.** Cruzar vaga com currículo
+  internamente é um uso; vender acesso à lista agregada é outro. Os termos da
+  API do Adzuna e a origem do que chega via JobBase (InfoJobs, Catho) precisam
+  ser conferidos antes do lançamento do passe. Decisão do operador, não
+  técnica.
+- **LGPD do visitante**: currículo de quem não tem conta precisa de base legal
+  e prazo de retenção declarados em `/privacy` (12 idiomas) antes da fase 1 ir
+  ao ar.
+
+### Plano
+
+- **Fase 1 — a porta** (não depende de preço): hero de envio em `/[country]`,
+  e-mail no envio, `profile_extraction` + `matchJob`, uma oportunidade completa,
+  contagem trancada e isca quantificada; eventos de funil novos para os degraus
+  novos; limite por IP; copy com o português como fonte, depois os 12 idiomas
+  pelo `translation-reviewer`.
+- **Fase 2 — o passe**: SKU de 24h no catálogo com preços locais, direito de
+  acesso de 24h (lista + diagnóstico + 2 buscas), checkout, e o teste da escada.
+- **Fase 3 — a volta**: Radar para os leads com e-mail (novas oportunidades,
+  lista trancada) e o degrau passe → Essencial.

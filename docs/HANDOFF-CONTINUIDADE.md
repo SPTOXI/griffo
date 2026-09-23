@@ -47,6 +47,18 @@ o quanto confiar nele.
 
 **Pendências que estão esperando alguém, não código:**
 
+★ ⏳ **ABERTA em 23/09/2026 — foco de venda invertido (§2.132).** Decidido
+   com o operador: o envio do currículo vira o hero ("Procurando emprego?
+   Envie seu currículo e descubra as oportunidades que combinam com você."),
+   uma oportunidade grátis, lista completa paga, passe de 24h a US$ 2,60 sem
+   Análise Completa como degrau para o Essencial. O funil medido zera no
+   primeiro gesto (925 visitantes em 30 dias, 2 testes ATS, nenhum currículo),
+   então a fase 1 (a porta) vem antes do preço. Três decisões esperam o
+   operador antes de ir ao ar: **preço local do passe fora do Brasil** (US$ 2,60
+   fixo compete com o Essencial na Faixa 1), **licença das fontes para acesso
+   pago à lista** (Adzuna, e InfoJobs/Catho via JobBase) e **base legal e
+   retenção do currículo de visitante** em `/privacy`.
+
 0. ⏳ **ABERTA em 21/09/2026 — conferir o volume do primeiro EXPURGO por
    idade, e o efeito na contagem pública.**
 
