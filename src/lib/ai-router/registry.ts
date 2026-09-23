@@ -217,9 +217,15 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   // (com `modelOverride` Haiku 4.5 na chamada), o mais rápido da cadeia para
   // JSON curto. O DeepSeek Pro leva ~53s na mediana nesta tarefa.
   lead_profile_extraction: 'claude',
-  // Ficha da vaga: extração curta, em lote, milhares de vezes. Maquinário
-  // interno — o modelo barato, pelo mesmo motivo de `profile_extraction`.
-  job_intelligence: 'deepseek',
+  // Ficha da vaga: extração curta, em lote, milhares de vezes. Começou no
+  // DeepSeek (US$ 0,0008/vaga, 3,4s na primeira rodada, 23/09/2026) e foi para
+  // o Kimi por decisão do operador no mesmo dia: há crédito sobrando lá, e o
+  // gasto sai do crédito, não do caixa (~US$ 0,015/vaga). O preço disso é
+  // velocidade — ~12s por chamada e teto de 3 simultâneas por organização —,
+  // e é por isso que `lib/jobs/intelligence.server.ts` usa 3 de concorrência.
+  // O suplente é o DeepSeek (`FALLBACK_CHAIN.kimi`), o que também tira o
+  // Claude, dez vezes mais caro, do caminho desta tarefa.
+  job_intelligence: 'kimi',
   // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
   normalization: 'deepseek',

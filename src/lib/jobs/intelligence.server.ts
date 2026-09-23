@@ -24,10 +24,16 @@ import {
  * cada rodada só pega o que entrou desde a anterior.
  */
 
-/** Chamadas simultâneas. O DeepSeek aguenta; o Kimi (3 por organização) fica fora da cadeia. */
-const CONCURRENCY = 6
+/**
+ * Chamadas simultâneas: 3, o teto do Kimi por organização (ver 2.34 na
+ * auditoria). Acima disso ele devolve 429, e cada 429 vira uma chamada ao
+ * suplente. O agente de deduplicação também usa o Kimi, uma chamada por vez,
+ * uma vez por dia; se as duas rodadas coincidirem, o excedente cai no DeepSeek,
+ * que é barato — perda de crédito nenhuma, só de velocidade.
+ */
+const CONCURRENCY = 3
 
-/** Orçamento de uma chamada. Uma extração curta leva 3–8s no DeepSeek Flash. */
+/** Orçamento de uma chamada. O Kimi K3 leva ~12s na mediana (AiLog, set/2026). */
 const CALL_BUDGET_MS = 25_000
 
 /**

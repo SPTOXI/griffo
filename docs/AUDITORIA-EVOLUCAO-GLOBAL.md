@@ -8909,3 +8909,18 @@ O proxy deste ambiente recusa conexão com `poesywqtwnihizhkkbii.supabase.co`, e
 - **Fechar aqui o que o JobBase encerra.** Hoje a vaga `expired` continua aberta no Griffo por até 45 dias: fora da extração (pelo corte de 3 dias), mas ainda no matching e na contagem pública. O caminho é o adapter ler as `expired` recentes e encerrá-las com `closedReason: 'source_reported'`.
 - `content_hash` ainda não é usado: 374 linhas em 118 grupos é pouco para justificar agora.
 - SmartRecruiters sem descrição: devolver ao JobBase.
+
+## 2.138 A ficha da vaga passa do DeepSeek para o Kimi K3 — decisão do operador, por crédito
+
+**Primeira rodada em produção (23/09/2026, 18:04 UTC, DeepSeek):** 48 vagas lidas (45 Gupy, 3 Greenhouse), 48 com itens, 0 falhas, US$ 0,0383 no total — US$ 0,0008/vaga, 3,4s na mediana, ~1.500 tokens de entrada e ~708 de saída (a maior parte raciocínio). `fromRequirementsText = 0`, esperado: as vagas do JobBase só ganham descrição na coleta de 24/09 06:00 UTC. Amostra boa ("Graduação em Direito", "Registro ativo na OAB", "Contencioso trabalhista"…).
+
+**Decisão:** o operador tem crédito sobrando no Kimi e pediu que a ficha rode nele. `INITIAL_TASK_ROUTING.job_intelligence = 'kimi'`.
+
+**O que isso custa, dito antes da troca:**
+
+- **Crédito, não caixa:** ~US$ 0,015/vaga no Kimi K3 ($3/$15 por 1M), contra US$ 0,0008 no DeepSeek. O estoque (~6,5 mil vagas) consome ~US$ 100 de crédito; as novas, ~US$ 3/dia.
+- **Velocidade:** ~12s por chamada na mediana (`job_deduplication`, 30 dias) e teto de 3 simultâneas por organização (2.34). A concorrência da rodada caiu de 6 para 3; o estoque leva ~2 semanas em vez de ~3 dias.
+- **Exceção consciente à regra "Kimi só em função serial" (26/08/2026):** esta tarefa dispara 3 em paralelo, exatamente o teto. O risco da regra — saturar o Kimi quando várias tarefas caem nele ao mesmo tempo — não se aplica aqui do mesmo jeito, porque o Kimi é o primário e o excedente (429) cai no DeepSeek, barato. O agente de deduplicação, serial e diário, pode coincidir; o custo disso é velocidade, não dinheiro.
+- **Suplente:** `FALLBACK_CHAIN.kimi` começa pelo DeepSeek, e só dois provedores são tentados — o Claude sai do caminho desta tarefa, o que fecha o risco apontado antes (DeepSeek fora do ar mandando o estoque inteiro para o Claude, ~US$ 50–70).
+
+**Para medir:** custo/vaga e tempo no `AiLog` (`taskType = 'job_intelligence'`, `provider = 'kimi'`), taxa de failover para o DeepSeek, e o `pending` caindo na resposta do cron. Se o Kimi ficar lento demais para acompanhar as ~230 novas por dia, a volta é uma linha em `registry.ts`.
