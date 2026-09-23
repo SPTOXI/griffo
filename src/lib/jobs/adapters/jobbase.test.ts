@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { decideCollection } from '../collection'
 import {
   createJobBaseAdapter,
+  fetchJobBaseRequirementTexts,
   jobBaseAdapters,
   jobBaseCredentials,
   parseJobBasePayload,
@@ -86,6 +87,15 @@ test('category_slug do JobBase mapeia para category; sem ele fica null', () => {
   ])
   assert.equal(jobs[0].category, 'ti')
   assert.equal(jobs[1].category, null)
+})
+
+test('description_text do JobBase vira a descrição da vaga; ausente fica null (§2.136, §2.137)', () => {
+  const jobs = parseJobBasePayload([
+    { ...payloadValido[0], description_text: 'Requisitos: Hematologia, CRBM ativo.', external_id: 'd1' },
+    { ...payloadValido[1], external_id: 'd2' },
+  ])
+  assert.equal(jobs[0].description, 'Requisitos: Hematologia, CRBM ativo.')
+  assert.equal(jobs[1].description, null)
 })
 
 test('publishedAt prefere posted_at; sem ele cai para first_seen_at', () => {
@@ -210,4 +220,37 @@ test('sem toggle, a fonte roda com as credenciais padrão', () => {
   const adapters = jobBaseAdapters({})
   assert.equal(adapters.length, 1)
   assert.equal(adapters[0].descriptor.slug, 'jobbase')
+})
+
+test('requisitos: uma busca por fonte, id entre aspas, só os que têm seção (§2.137)', async () => {
+  const urls: string[] = []
+  const fetchImpl = (async (url: string) => {
+    urls.push(decodeURIComponent(url))
+    const rows = url.includes('source=eq.greenhouse')
+      ? [{ source: 'greenhouse', external_id: '1', requirements_text: 'SQL, Python' }]
+      : [{ source: 'gupy', external_id: 'a"b', requirements_text: '  CRBM ativo ' }]
+    return { ok: true, status: 200, json: async () => rows } as Response
+  }) as unknown as typeof fetch
+
+  const map = await fetchJobBaseRequirementTexts(['greenhouse:1', 'greenhouse:2', 'gupy:a"b', 'semdoispontos', 'x:'], {
+    credentials: jobBaseCredentials(),
+    fetchImpl,
+  })
+
+  assert.equal(urls.length, 2)
+  assert.ok(urls[0].includes('external_id=in.("1","2")'))
+  assert.ok(urls[1].includes('external_id=in.("a\\"b")'))
+  assert.ok(urls.every((u) => u.includes('requirements_text=not.is.null')))
+  assert.deepEqual([...map.entries()], [
+    ['greenhouse:1', 'SQL, Python'],
+    ['gupy:a"b', 'CRBM ativo'],
+  ])
+})
+
+test('requisitos: falha de rede devolve mapa vazio — a extração cai na descrição', async () => {
+  const fetchImpl = (async () => {
+    throw new Error('rede')
+  }) as unknown as typeof fetch
+  const map = await fetchJobBaseRequirementTexts(['greenhouse:1'], { credentials: jobBaseCredentials(), fetchImpl })
+  assert.equal(map.size, 0)
 })

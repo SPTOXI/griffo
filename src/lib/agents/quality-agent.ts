@@ -10,6 +10,25 @@ export interface QualityAuditResult {
 }
 
 export function auditQualityOfAiResult(taskType: string, content: string): QualityAuditResult {
+  /**
+   * Ficha da vaga: antes do piso de tamanho, de propósito. Um anúncio que não
+   * pede nada técnico produz `{"requirements":[],"skills":[]}` — 30
+   * caracteres, e correto. Reprovar isso mandaria o roteador ao suplente atrás
+   * de uma lista mais cheia, que só poderia vir inventada. Aqui basta ser um
+   * objeto JSON; quem limpa os itens é `lib/jobs/intelligence.ts`.
+   */
+  if (taskType === 'job_intelligence') {
+    const stripped = (content || '').trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim()
+    const match = stripped.match(/\{[\s\S]*\}/)
+    try {
+      const json = JSON.parse(match ? match[0] : stripped)
+      if (json && typeof json === 'object' && !Array.isArray(json)) return { approved: true, score: 9.0 }
+    } catch {
+      // cai no reprovado abaixo
+    }
+    return { approved: false, score: 2, feedback: 'A ficha da vaga não veio como objeto JSON.' }
+  }
+
   if (!content || content.trim().length < 50) {
     return { approved: false, score: 2, feedback: 'Resposta muito curta ou vazia.' }
   }

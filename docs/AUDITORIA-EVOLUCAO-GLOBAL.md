@@ -8793,3 +8793,119 @@ Verificado: `next build`, `.nft.json` das 5 rotas com os dois arquivos (e
 `resume/analyze`, que não lê PDF, sem eles), e a mesma reprodução só com os
 arquivos rastreados lendo o PDF nas rotas `ats-check`, `match-preview` e
 `upload`. `tsc`, `eslint` e suíte — **1163/1163**, 3 novos.
+
+## 2.135 Primeiro envio real da landing: o PDF foi lido, e nenhuma vaga "combinou" — três causas, uma corrigida
+
+**Contexto.** 23/09/2026, depois do deploy do §2.134. O operador reenviou o currículo em griffo.work: currículo de uma coordenadora de unidade de análises clínicas, 13 anos, pós-graduação, BR. Resultado: legibilidade 73/100 (o PDF agora é lido), 4 pontos no teaser, e "Ainda não encontramos uma oportunidade forte para o seu perfil".
+
+**O que o banco mostrou.** `VisitorLead` `ready` em 7s, perfil extraído certo, `matchesJson` vazio, e-mail enviado. `AiLog`: `lead_profile_extraction` com `status: failover`, custo US$ 0,0015, respondido pelo `deepseek-flash`. O `AuditLog` do failover diz por quê:
+
+> CLAUDE (claude-haiku-4-5): ERR ([Claude API 400] output_config.format.schema: Invalid schema: Enum value 'intern' does not match declared type '['string', 'null']') após 525ms
+
+### Causa 1 — corrigida aqui: o esquema da extração é recusado pelo Claude
+
+`PROFILE_EXTRACTION_JSON_SCHEMA` declarava `seniority` e `educationLevel` como `{ type: ['string','null'], enum: [..., null] }`. A API do Claude recusa essa forma; toda extração da landing caía no suplente. O mesmo esquema é o da extração de conta, cujo primário é o DeepSeek (que recebe só `json_object`), então lá o defeito ficava escondido — só apareceria no dia em que o fallback fosse o Claude.
+
+Correção: `anyOf: [{ type: 'string', enum }, { type: 'null' }]`. Teste em `extract.test.ts` impede voltar a combinar `enum` com `type` em lista.
+
+Observação menor, não corrigida: o `AiLog.primaryModel` registra o modelo do painel (`claude-sonnet-5`), não o `modelOverride` efetivamente tentado (`claude-haiku-4-5`). O diagnóstico do `AuditLog` tem o nome certo.
+
+### Causa 2 — estrutural, NÃO corrigida: nenhuma vaga aberta lista requisitos
+
+Contagem em produção, vagas abertas: BR 6.084 com `requirements` preenchido = **0**, `skills` = **0**; US, GB, AU, GLOBAL idem. Só 401 vagas sem mercado têm `skills`. `intelligenceJson` vazio em todas.
+
+Consequência em `matchJob`: sem requisito, `jobFitAxis` devolve 50 sem evidência, e a regra comentada em `matchJob` (o perfil de gestão hospitalar que recebeu "Analista de Dados") manda o desfecho para `partial` sempre que o cargo não for **confirmado** como o mesmo. Hoje, portanto, o único caminho para `good` é `confirmedSameRole`.
+
+### Causa 3 — estrutural, NÃO corrigida: a taxonomia de cargos tem 12 conceitos
+
+`isSameRole` só confirma cargo quando os dois títulos caem num dos 12 conceitos (`data_analyst`, `software_engineer`, `nurse`, `project_manager`…). Das 6.068 vagas BR frescas, **5.523 (91%) não caem em conceito nenhum**. "Coordenadora de Unidade" (perfil) e "Coordenador de Unidade" (vaga) são dois desconhecidos, e dois desconhecidos não são o mesmo cargo.
+
+Somando 2 e 3: fora desses 12 cargos, **nenhum** perfil recebe oportunidade na landing — nem no Radar de quem paga. Reproduzido localmente: as 47 vagas BR de saúde/laboratório/coordenação, com o perfil deste envio, saem todas `partial`/`stretch`.
+
+### Agravante — o teto de 500
+
+`openJobsWithinBudget` avalia as 500 vagas mais recentes do mercado (`MAX_JOBS_PER_USER`). O BR tem 6.068 frescas; a primeira vaga de laboratório está na posição 1.068. Mesmo com as causas 2 e 3 resolvidas, este perfil nunca veria essas vagas.
+
+### Decisão pendente do operador
+
+Não é correção pontual: muda o que "combina" significa para o produto inteiro. Opções em ordem de custo:
+
+1. **Requisitos da descrição, sem IA** — quando a vaga não lista requisito, procurar as competências declaradas no texto da descrição e contar como evidência ("a descrição menciona Hematologia"). Barato, determinístico; risco de falso positivo com competências genéricas (5S, Workflow).
+2. **Extração de requisitos por IA na ingestão** — preencher `requirements`/`skills` uma vez por vaga (DeepSeek Flash, da ordem de US$ 0,0005 por vaga, ~US$ 3 para o estoque atual). Resolve a causa 2 de verdade, para landing e Radar.
+3. **Similaridade de título para cargos fora da taxonomia** — títulos normalizados (sem gênero, acento, senioridade) iguais contam como mesmo cargo. Resolve "Coordenadora/Coordenador de Unidade", mas "Coordenador de Unidade" de academia não é o de laboratório: sem a área, erra.
+4. **Pré-filtro por área antes do teto de 500** — gastar o orçamento nas vagas cujo título ou descrição toca a área do perfil, e não nas mais recentes.
+
+Recomendação: 2 + 4. A 2 é a que torna a nota honesta e medível; a 4 impede que o teto esconda o que existe.
+
+## 2.136 Opções 2 e 4 do §2.135: a ficha da vaga por IA e o teto de 500 gasto por área
+
+**Decisão do operador (23/09/2026):** seguir com a extração de requisitos por IA (opção 2) e com o teto de 500 gasto pela área do perfil (opção 4). Perguntou também de quem era a falha das descrições ausentes.
+
+### De quem é a falha — medido nos dois bancos
+
+| Brasil, vagas abertas | Total | Com descrição ≥ 200 caracteres |
+|---|---|---|
+| JobBase · InfoJobs | 4.845 | 0 |
+| JobBase · Catho | 1.627 | 0 |
+| JobBase · Adzuna | 1.000 | 919 (cortadas em 500 pela API da Adzuna) |
+| JobBase · Gupy | 259 | 259 (mediana 2.378) |
+| JobBase · SmartRecruiters | 44 | 0 |
+
+- **Do JobBase (a maior parte):** os coletores de InfoJobs e Catho não guardam descrição — 6.472 das 7.775 vagas BR dele. Nenhuma mudança no Griffo resolve isso.
+- **Nossa (a menor):** `SELECT_COLUMNS` do adapter nunca pediu `description`. Perdíamos as ~1.178 descrições BR que o JobBase tem (e as ~4.166 longas, de Greenhouse/Lever/Ashby, das vagas sem país). Corrigido aqui.
+- As 4.312 vagas do JobBase no nosso banco com `description` nula são, portanto, quase todas InfoJobs/Catho: continuarão sem texto depois desta correção.
+
+### Opção 2 — a ficha da vaga (`lib/jobs/intelligence.ts`, `intelligence.server.ts`)
+
+É o §27 ("inteligência da vaga, uma vez por vaga"), que o schema já previa em `Job.intelligenceJson` e nunca foi feito.
+
+- **Tarefa de IA própria, `job_intelligence`**, primário DeepSeek (maquinário interno, barato), `internal: true` (fora do juiz por amostragem). O agente de qualidade a trata ANTES do piso de 50 caracteres: `{"requirements":[],"skills":[]}` é resposta certa para anúncio sem nada técnico, e reprovar mandaria o roteador atrás de uma lista inventada.
+- **Formato do matching:** termos curtos (1–4 palavras), no idioma do anúncio, no máximo 8 por lista — `intersectSkills` compara por inclusão de texto, e a nota é `atendidos / pedidos`. Sem comportamentais, benefícios, tempo de experiência. Item repetido entre as listas fica só em `requirements`, para não contar duas vezes.
+- **Anúncio é dado de terceiros:** vai por `wrapUntrustedDocument`, como o currículo. Cortado em 6.000 caracteres.
+- **Grava onde o matching já lê** (`requirements`, `skills`); `intelligenceJson` guarda só o marcador `{ v, at, status }` — `ok`, `too_short` (menos de 200 caracteres, sem chamar IA) ou `unparseable` (pagou e não leu; não relê). Falha de provedor NÃO marca: a vaga volta na próxima rodada; 3 falhas seguidas encerram a rodada.
+- **Recoleta não apaga a ficha:** `rowFor` grava `"[]"` quando a fonte não manda lista, e a atualização diária sobrescreveria o que foi extraído — sem que a extração relesse, porque a vaga já está marcada. `keepExtractedLists` só deixa a recoleta escrever lista quando a fonte mandou uma.
+- **Gatilho:** `/api/cron/job-intelligence`, a cada 30 min por `.github/workflows/job-intelligence.yml` (Hobby: os dois crons da Vercel estão ocupados). Cada rodada inicia leituras até ~27s e termina até ~52s (orçamento de 25s por chamada), 6 simultâneas, mais recentes primeiro, e responde quantas faltam — da ordem de 30–60 vagas por rodada, ~1.500–2.900 por dia.
+- **Custo estimado:** ~US$ 0,0005–0,001 por vaga (DeepSeek Flash, ~1,2 mil tokens de entrada). Estoque atual com descrição, mais o que o JobBase passa a mandar: da ordem de US$ 2–8, uma vez. Depois, ~230 vagas novas/dia ≈ US$ 0,10–0,20/dia. A conferir no `AiLog` depois da primeira rodada.
+
+### Opção 4 — o teto de 500 gasto por área (`lib/matching/area-terms.ts`, `openJobsWithinBudget`)
+
+Mesmo raciocínio do comentário existente ("a mudança é de ORDEM, não de escopo"), um nível abaixo: dentro do mercado, as camadas agora são (1) título toca a área, (2) descrição ou ficha toca a área, (3) o resto do mercado por data, (4) o resto do mundo. Nada sai do lote por não casar; filtro duro e `matchJob` continuam decidindo.
+
+- Termos = frases inteiras do perfil (cargos, área, especializações, competências), com e sem acento, mínimo 4 caracteres; frases, não palavras, porque "gestão" sozinha está em milhares de vagas.
+- Medido em produção para o perfil do §2.135: a camada de texto acha 245 vagas BR (entre elas "Coordenador de Aférese Terapêutica (TMO)" e "Enfermeiro Supervisor Medicina Diagnóstica"), em ~1,4s de varredura. Aceitável para a landing (roda em `after()`) e para o Radar com a base de usuários atual; se crescer, o caminho é um índice trigram (`pg_trgm`) em `title`/`description`.
+- Verificado localmente com vagas semeadas: as vagas da área saem antes da mais recente de outra área.
+
+### O que continua sem solução
+
+As vagas sem descrição (InfoJobs/Catho, ~71% do Brasil) não ganham ficha. Para elas o único sinal segue sendo o cargo — a opção 3 do §2.135, que fica para decisão futura. Também sem solução aqui: a taxonomia de 12 cargos.
+
+## 2.137 O JobBase fez a sua parte: vaga encerrada, texto limpo, seção de requisitos — e o Griffo passa a usar
+
+**Contexto.** 23/09/2026, depois do §2.136. O operador levou à IA do JobBase um pedido com seis itens para reduzir o que pagamos na ficha da vaga. Conferido direto no banco do JobBase:
+
+| Item pedido | Estado | Medido |
+|---|---|---|
+| Marcar vaga encerrada | ✅ | 7.228 `expired`, 9.035 `open` (antes: 16.263 `open`, 9.650 sem ser vistas há ≥3 dias) |
+| `description_text` sem HTML | ✅ | 100% das que têm descrição; 0 com marcação |
+| `requirements_text` (seção de requisitos, sem IA) | ✅ | Greenhouse 1.983/2.085 (média 1.426 caracteres, contra 6.475 do texto inteiro), Ashby 263/284, Lever 53/54, Gupy 77/84, Remotive 15/22; Adzuna 0 (trecho de 500 caracteres, sem seção) |
+| `content_hash` | ✅ | 118 grupos repetidos, 374 linhas |
+| Descrição onde faltava | parcial | InfoJobs, Catho e LinkedIn continuam sem (esperado: termos de uso). **SmartRecruiters também continua sem** (251 abertas), embora a API oficial permita — pendência a devolver ao JobBase |
+| Leitura pela chave publicável | ✅ | colunas novas com `SELECT` para `anon`; a única policy é de leitura |
+
+### O que muda no Griffo
+
+- **Adapter lê `description_text`**, não `description`: texto limpo é token a menos na extração.
+- **Paginação com ordem fixa** (`order=id.desc`). Sem ordem, o PostgREST devolve na ordem física, que muda a cada escrita: vaga saindo em duas páginas e outra em nenhuma. E com 9 mil abertas contra 5 páginas de mil por rodada, a ordem decide quem fica de fora — as mais antigas.
+- **A extração usa `requirements_text` quando ela tem ≥ 60 caracteres** (`pickExtractionText`), e cai na descrição inteira quando não. É buscada no JobBase na hora da extração, uma requisição por fonte de origem por lote (`fetchJobBaseRequirementTexts`), e não guardada na coleta: guardar pediria coluna nova em `Job`, e toda leitura de `Job` sem `select` quebraria entre o deploy e o `db push`. Falha de rede devolve mapa vazio e a extração segue pela descrição.
+- **Só lê vaga vista nos últimos 3 dias** (`lastSeenAt`). O JobBase agora tira a vaga encerrada da resposta, mas aqui ela só fecha após 45 dias sem reaparecer (`STALE_AFTER_DAYS`). Sem o corte, pagaríamos para ler o que a fonte já deu como encerrado.
+- O retorno do cron passa a informar `fromRequirementsText`, para medir quanto do estoque vem pela seção curta.
+
+### Não verificado daqui
+
+O proxy deste ambiente recusa conexão com `poesywqtwnihizhkkbii.supabase.co`, então a busca por `requirements_text` não foi exercitada contra a API real — só contra resposta simulada (sintaxe `external_id=in.("…")`, `requirements_text=not.is.null`, padrão do PostgREST). A primeira rodada em produção responde `fromRequirementsText`; se vier 0 com vagas do Greenhouse no lote, é esta busca que falhou.
+
+### Pendências
+
+- **Fechar aqui o que o JobBase encerra.** Hoje a vaga `expired` continua aberta no Griffo por até 45 dias: fora da extração (pelo corte de 3 dias), mas ainda no matching e na contagem pública. O caminho é o adapter ler as `expired` recentes e encerrá-las com `closedReason: 'source_reported'`.
+- `content_hash` ainda não é usado: 374 linhas em 118 grupos é pouco para justificar agora.
+- SmartRecruiters sem descrição: devolver ao JobBase.

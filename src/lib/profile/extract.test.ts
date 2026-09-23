@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { applySuggestion, detectProfileConflicts, parseProfileExtraction } from './extract'
+import { applySuggestion, detectProfileConflicts, parseProfileExtraction, PROFILE_EXTRACTION_JSON_SCHEMA } from './extract'
 import { deriveFromOrientation, parseStoredOrientation, rolesFromOrientation } from './from-orientation'
 import { EMPTY_PROFILE } from './index'
 import { COUNTRIES, countryName, groupedCountries, isKnownCountry } from '../market/countries'
@@ -270,4 +270,11 @@ test('só o cargo mudou: um conflito, não dois', () => {
   })
   assert.equal(conflitos.length, 1)
   assert.equal(conflitos[0].field, 'currentTitle')
+})
+
+test('o esquema não combina `enum` com `type` em lista — a API do Claude recusa (§2.135)', () => {
+  const offenders = Object.entries(PROFILE_EXTRACTION_JSON_SCHEMA.properties)
+    .filter(([, spec]) => 'enum' in spec && Array.isArray((spec as { type?: unknown }).type))
+    .map(([name]) => name)
+  assert.deepEqual(offenders, [])
 })

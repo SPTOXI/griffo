@@ -67,6 +67,14 @@ o quanto confiar nele.
    `lead_profile_extraction` (Haiku 4.5) e se o e-mail saiu (`notifiedAt`).
    Próximo: fase 2, o passe de 24h com preço proporcional por faixa.
 
+   **Primeiro envio real (§2.135): PDF lido, nenhuma vaga.** Causa: nenhuma
+   vaga lista requisito, e o teto de 500 cortava as da área. **§2.136** faz a
+   ficha da vaga por IA (cron `job-intelligence`, 30 min) e gasta o teto por
+   área. Depois do merge: disparar o workflow `job-intelligence.yml` à mão,
+   conferir no `AiLog` o custo por vaga de `job_intelligence`, e acompanhar o
+   `pending` da resposta cair até zerar. Só então reenviar um currículo de
+   teste. Vagas sem descrição (InfoJobs/Catho, ~71% do BR) seguem sem ficha.
+
 0. ⏳ **ABERTA em 21/09/2026 — conferir o volume do primeiro EXPURGO por
    idade, e o efeito na contagem pública.**
 
