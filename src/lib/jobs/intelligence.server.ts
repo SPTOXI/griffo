@@ -24,10 +24,25 @@ import {
  * cada rodada só pega o que entrou desde a anterior.
  */
 
-/** Chamadas simultâneas. O DeepSeek aguenta; o Kimi (3 por organização) fica fora da cadeia. */
-const CONCURRENCY = 6
+/**
+ * Chamadas simultâneas por modo.
+ *
+ * - `cron` (DeepSeek): 6 — o DeepSeek aguenta, e a rodada tem ~27s para
+ *   começar leituras.
+ * - `backfill` (Kimi): 3, o teto do Kimi por organização (ver 2.34 na
+ *   auditoria). Acima disso ele devolve 429 e o excedente cai no DeepSeek.
+ */
+const MODES = {
+  cron: { taskType: 'job_intelligence', concurrency: 6, order: 'desc' },
+  backfill: { taskType: 'job_intelligence_backfill', concurrency: 3, order: 'asc' },
+} as const
 
-/** Orçamento de uma chamada. Uma extração curta leva 3–8s no DeepSeek Flash. */
+export type JobIntelligenceMode = keyof typeof MODES
+
+/**
+ * Orçamento de uma chamada. DeepSeek: 3,4s na mediana; Kimi K3: ~12s
+ * (AiLog, set/2026).
+ */
 const CALL_BUDGET_MS = 25_000
 
 /**
@@ -83,7 +98,17 @@ function pendingWhere() {
   }
 }
 
-export async function extractPendingJobIntelligence(deadlineAt: number): Promise<JobIntelligenceRun> {
+/**
+ * `mode` escolhe provedor, concorrência e ORDEM: o cron pega as mais recentes
+ * e o backfill as mais antigas, para que os dois rodando ao mesmo tempo não
+ * disputem as mesmas vagas — e, se disputarem uma, o pior caso é ela ser lida
+ * duas vezes.
+ */
+export async function extractPendingJobIntelligence(
+  deadlineAt: number,
+  mode: JobIntelligenceMode = 'cron'
+): Promise<JobIntelligenceRun> {
+  const { taskType, concurrency, order } = MODES[mode]
   const run: JobIntelligenceRun = {
     read: 0,
     fromRequirementsText: 0,
@@ -114,7 +139,7 @@ export async function extractPendingJobIntelligence(deadlineAt: number): Promise
 
     try {
       const ai = await executeAiTask({
-        taskType: 'job_intelligence',
+        taskType,
         systemPrompt: jobIntelligenceSystemPrompt(),
         userPrompt: jobIntelligenceUserPrompt({ title: job.title, company: job.company, description: picked.text }),
         jsonSchema: JOB_INTELLIGENCE_JSON_SCHEMA as unknown as Record<string, unknown>,
@@ -163,7 +188,7 @@ export async function extractPendingJobIntelligence(deadlineAt: number): Promise
 
     const batch: Candidate[] = await db.job.findMany({
       where: { ...pendingWhere(), ...(skip.size ? { id: { notIn: [...skip] } } : {}) },
-      orderBy: { publishedAt: { sort: 'desc', nulls: 'last' } },
+      orderBy: { publishedAt: { sort: order, nulls: 'last' } },
       take: PAGE,
       select: { id: true, sourceId: true, sourceJobId: true, title: true, company: true, description: true, skills: true },
     })
@@ -185,7 +210,7 @@ export async function extractPendingJobIntelligence(deadlineAt: number): Promise
         await processOne(job, fromSource)
       }
     }
-    await Promise.all(Array.from({ length: CONCURRENCY }, worker))
+    await Promise.all(Array.from({ length: concurrency }, worker))
 
     if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
       run.stoppedBy = 'provider_failures'

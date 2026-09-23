@@ -217,9 +217,16 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   // (com `modelOverride` Haiku 4.5 na chamada), o mais rápido da cadeia para
   // JSON curto. O DeepSeek Pro leva ~53s na mediana nesta tarefa.
   lead_profile_extraction: 'claude',
-  // Ficha da vaga: extração curta, em lote, milhares de vezes. Maquinário
-  // interno — o modelo barato, pelo mesmo motivo de `profile_extraction`.
+  // Ficha da vaga no dia a dia: extração curta, ~230 vagas novas por dia.
+  // Maquinário interno — o modelo barato (US$ 0,0008/vaga e 3,4s na primeira
+  // rodada, 23/09/2026).
   job_intelligence: 'deepseek',
+  // A mesma ficha, para ler o ESTOQUE de uma vez (~6,5 mil vagas) pelo script
+  // `jobs:backfill-intelligence`. No Kimi por decisão do operador: há crédito
+  // sobrando lá, e o gasto (~US$ 0,015/vaga) sai do crédito, não do caixa. É
+  // só para esta transição — depois dela, só o tipo acima roda. O suplente é o
+  // DeepSeek (`FALLBACK_CHAIN.kimi`), então o Claude fica fora do caminho.
+  job_intelligence_backfill: 'kimi',
   // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
   normalization: 'deepseek',

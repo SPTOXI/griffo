@@ -16,7 +16,8 @@
     "test": "npx --yes tsx --import ./scripts/test-setup.mjs --test \"src/**/*.test.ts\"",
     "stripe:setup": "npx --yes tsx src/scripts/setup-stripe.ts",
     "migrate:analyses": "npx --yes tsx src/scripts/migrate-credits-to-analyses.ts",
-    "indexnow:submit": "npx --yes tsx src/scripts/submit-indexnow.ts"
+    "indexnow:submit": "npx --yes tsx src/scripts/submit-indexnow.ts",
+    "jobs:backfill-intelligence": "npx --yes tsx --import ./scripts/test-setup.mjs src/scripts/backfill-job-intelligence.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^6.11.1",

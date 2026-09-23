@@ -34,6 +34,9 @@ export type TaskType =
   /// certa pode ser curta — duas listas vazias quando o anúncio não pede nada
   /// técnico — e o piso de tamanho do agente de qualidade a reprovaria.
   | 'job_intelligence'
+  /// A mesma ficha, para ler o estoque de uma vez (§2.138): tipo próprio só
+  /// para rotear a outro provedor — o do dia a dia fica onde está.
+  | 'job_intelligence_backfill'
   | 'support_chat'
   /// Análise semântica de similaridade entre pares de vagas para deduplicação avançada.
   | 'job_deduplication'

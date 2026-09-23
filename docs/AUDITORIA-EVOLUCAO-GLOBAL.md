@@ -8909,3 +8909,24 @@ O proxy deste ambiente recusa conexão com `poesywqtwnihizhkkbii.supabase.co`, e
 - **Fechar aqui o que o JobBase encerra.** Hoje a vaga `expired` continua aberta no Griffo por até 45 dias: fora da extração (pelo corte de 3 dias), mas ainda no matching e na contagem pública. O caminho é o adapter ler as `expired` recentes e encerrá-las com `closedReason: 'source_reported'`.
 - `content_hash` ainda não é usado: 374 linhas em 118 grupos é pouco para justificar agora.
 - SmartRecruiters sem descrição: devolver ao JobBase.
+
+## 2.138 A ficha da vaga passa do DeepSeek para o Kimi K3 — decisão do operador, por crédito
+
+**Primeira rodada em produção (23/09/2026, 18:04 UTC, DeepSeek):** 48 vagas lidas (45 Gupy, 3 Greenhouse), 48 com itens, 0 falhas, US$ 0,0383 no total — US$ 0,0008/vaga, 3,4s na mediana, ~1.500 tokens de entrada e ~708 de saída (a maior parte raciocínio). `fromRequirementsText = 0`, esperado: as vagas do JobBase só ganham descrição na coleta de 24/09 06:00 UTC. Amostra boa ("Graduação em Direito", "Registro ativo na OAB", "Contencioso trabalhista"…).
+
+**Decisão do operador:** usar o crédito que sobra no Kimi K3 para ler o ESTOQUE, só nesta transição. O dia a dia continua no DeepSeek.
+
+**Por que o estoque não vai pelo cron.** O cron roda a cada 30 min numa função de 60s e só começa leituras nos primeiros ~27s (cada chamada tem 25s para terminar antes do prazo). No DeepSeek (3,4s, 6 em paralelo) isso dá ~48 vagas por rodada — medido —, ~2.300 por dia: o estoque de ~6,5 mil em ~3 dias. No Kimi (~12s na mediana, teto de 3 simultâneas por organização, 2.34) daria ~9 por rodada, ~430 por dia; descontadas as ~230 novas por dia, o estoque levaria cerca de um mês.
+
+**O que foi feito:**
+
+- Tipo de tarefa novo, `job_intelligence_backfill`, roteado ao Kimi; `job_intelligence` (o cron) segue no DeepSeek. O agente de qualidade trata os dois igual.
+- `extractPendingJobIntelligence(deadline, mode)`: `cron` = DeepSeek, 6 em paralelo, mais recentes primeiro; `backfill` = Kimi, 3 em paralelo, mais ANTIGAS primeiro — os dois podem rodar juntos sem disputar as mesmas vagas.
+- Script `npm run jobs:backfill-intelligence` (`src/scripts/backfill-job-intelligence.ts`): lê sem o teto de 60s, em voltas de 5 min, imprimindo o progresso. ~15 vagas/min → o estoque em algumas horas. Travas: `--max-usd` (padrão 120), `--hours` (padrão 12), Ctrl+C para no fim da volta. Idempotente. Precisa só de `POSTGRES_PRISMA_URL`; as chaves de IA vêm do banco.
+- **Suplente:** `FALLBACK_CHAIN.kimi` começa pelo DeepSeek e só dois provedores são tentados, então o Claude fica fora do backfill. Verificado localmente: sem chaves, o diagnóstico mostra `KIMI` e depois `DEEPSEEK`, nada mais.
+
+**Custo estimado do backfill:** ~US$ 0,015/vaga em crédito ($3/$15 por 1M, ~1,5 mil tokens de entrada e ~700 de saída), ~US$ 100 para ~6,5 mil vagas — menos onde a seção de requisitos do JobBase encurta a entrada.
+
+**Quando rodar:** depois da coleta de 24/09 06:00 UTC, que é quando as vagas do JobBase ganham descrição. Antes disso o estoque tem só ~475 vagas.
+
+**Exceção registrada à regra "Kimi só em função serial" (26/08/2026):** o backfill faz 3 chamadas em paralelo, o teto. O risco da regra é saturar o Kimi quando várias tarefas caem nele ao mesmo tempo; aqui ele é o primário, e o excedente (429) cai no DeepSeek, barato. O agente de deduplicação, serial e diário, pode coincidir; o custo é velocidade, não dinheiro.
