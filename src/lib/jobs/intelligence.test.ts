@@ -5,6 +5,7 @@ import {
   isEmptyList,
   JOB_INTELLIGENCE_VERSION,
   keepExtractedLists,
+  pickExtractionText,
   jobIntelligenceUserPrompt,
   MAX_DESCRIPTION_CHARS,
   MAX_ITEMS,
@@ -81,4 +82,14 @@ test('recoleta sem requisitos não apaga a ficha já extraída; com requisitos, 
     title: 'X',
     requirements: '["COREN"]',
   })
+})
+
+test('texto da extração: a seção de requisitos quando basta, senão a descrição, senão nada', () => {
+  const longDescription = 'd'.repeat(300)
+  assert.deepEqual(pickExtractionText({ requirementsText: '  Superior em Biomedicina; CRBM ativo; experiência com hematologia.  ', description: longDescription }), {
+    text: 'Superior em Biomedicina; CRBM ativo; experiência com hematologia.',
+    source: 'requirements',
+  })
+  assert.equal(pickExtractionText({ requirementsText: 'Requisitos:', description: longDescription })?.source, 'description')
+  assert.equal(pickExtractionText({ requirementsText: null, description: 'curta' }), null)
 })

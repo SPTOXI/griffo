@@ -8878,3 +8878,34 @@ Mesmo raciocínio do comentário existente ("a mudança é de ORDEM, não de esc
 ### O que continua sem solução
 
 As vagas sem descrição (InfoJobs/Catho, ~71% do Brasil) não ganham ficha. Para elas o único sinal segue sendo o cargo — a opção 3 do §2.135, que fica para decisão futura. Também sem solução aqui: a taxonomia de 12 cargos.
+
+## 2.137 O JobBase fez a sua parte: vaga encerrada, texto limpo, seção de requisitos — e o Griffo passa a usar
+
+**Contexto.** 23/09/2026, depois do §2.136. O operador levou à IA do JobBase um pedido com seis itens para reduzir o que pagamos na ficha da vaga. Conferido direto no banco do JobBase:
+
+| Item pedido | Estado | Medido |
+|---|---|---|
+| Marcar vaga encerrada | ✅ | 7.228 `expired`, 9.035 `open` (antes: 16.263 `open`, 9.650 sem ser vistas há ≥3 dias) |
+| `description_text` sem HTML | ✅ | 100% das que têm descrição; 0 com marcação |
+| `requirements_text` (seção de requisitos, sem IA) | ✅ | Greenhouse 1.983/2.085 (média 1.426 caracteres, contra 6.475 do texto inteiro), Ashby 263/284, Lever 53/54, Gupy 77/84, Remotive 15/22; Adzuna 0 (trecho de 500 caracteres, sem seção) |
+| `content_hash` | ✅ | 118 grupos repetidos, 374 linhas |
+| Descrição onde faltava | parcial | InfoJobs, Catho e LinkedIn continuam sem (esperado: termos de uso). **SmartRecruiters também continua sem** (251 abertas), embora a API oficial permita — pendência a devolver ao JobBase |
+| Leitura pela chave publicável | ✅ | colunas novas com `SELECT` para `anon`; a única policy é de leitura |
+
+### O que muda no Griffo
+
+- **Adapter lê `description_text`**, não `description`: texto limpo é token a menos na extração.
+- **Paginação com ordem fixa** (`order=id.desc`). Sem ordem, o PostgREST devolve na ordem física, que muda a cada escrita: vaga saindo em duas páginas e outra em nenhuma. E com 9 mil abertas contra 5 páginas de mil por rodada, a ordem decide quem fica de fora — as mais antigas.
+- **A extração usa `requirements_text` quando ela tem ≥ 60 caracteres** (`pickExtractionText`), e cai na descrição inteira quando não. É buscada no JobBase na hora da extração, uma requisição por fonte de origem por lote (`fetchJobBaseRequirementTexts`), e não guardada na coleta: guardar pediria coluna nova em `Job`, e toda leitura de `Job` sem `select` quebraria entre o deploy e o `db push`. Falha de rede devolve mapa vazio e a extração segue pela descrição.
+- **Só lê vaga vista nos últimos 3 dias** (`lastSeenAt`). O JobBase agora tira a vaga encerrada da resposta, mas aqui ela só fecha após 45 dias sem reaparecer (`STALE_AFTER_DAYS`). Sem o corte, pagaríamos para ler o que a fonte já deu como encerrado.
+- O retorno do cron passa a informar `fromRequirementsText`, para medir quanto do estoque vem pela seção curta.
+
+### Não verificado daqui
+
+O proxy deste ambiente recusa conexão com `poesywqtwnihizhkkbii.supabase.co`, então a busca por `requirements_text` não foi exercitada contra a API real — só contra resposta simulada (sintaxe `external_id=in.("…")`, `requirements_text=not.is.null`, padrão do PostgREST). A primeira rodada em produção responde `fromRequirementsText`; se vier 0 com vagas do Greenhouse no lote, é esta busca que falhou.
+
+### Pendências
+
+- **Fechar aqui o que o JobBase encerra.** Hoje a vaga `expired` continua aberta no Griffo por até 45 dias: fora da extração (pelo corte de 3 dias), mas ainda no matching e na contagem pública. O caminho é o adapter ler as `expired` recentes e encerrá-las com `closedReason: 'source_reported'`.
+- `content_hash` ainda não é usado: 374 linhas em 118 grupos é pouco para justificar agora.
+- SmartRecruiters sem descrição: devolver ao JobBase.

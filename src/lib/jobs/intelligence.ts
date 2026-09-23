@@ -43,6 +43,29 @@ export const MIN_DESCRIPTION_CHARS = 200
  */
 export const MAX_DESCRIPTION_CHARS = 6000
 
+/**
+ * A seção de requisitos que o JobBase separa (§2.137) basta a partir disto.
+ * Mais curta que isso costuma ser um cabeçalho sem corpo, e a descrição
+ * inteira dá mais do que ela.
+ */
+export const MIN_REQUIREMENTS_TEXT_CHARS = 60
+
+/**
+ * O texto que vai para a extração: a seção de requisitos quando existe, a
+ * descrição inteira quando não. `null` quando nenhum dos dois basta — a vaga é
+ * marcada `too_short` sem chamar IA.
+ */
+export function pickExtractionText(input: {
+  requirementsText?: string | null
+  description?: string | null
+}): { text: string; source: 'requirements' | 'description' } | null {
+  const requirements = input.requirementsText?.trim() ?? ''
+  if (requirements.length >= MIN_REQUIREMENTS_TEXT_CHARS) return { text: requirements, source: 'requirements' }
+  const description = input.description?.trim() ?? ''
+  if (description.length >= MIN_DESCRIPTION_CHARS) return { text: description, source: 'description' }
+  return null
+}
+
 /** Teto por lista — ver "a lista é CURTA" no cabeçalho. */
 export const MAX_ITEMS = 8
 

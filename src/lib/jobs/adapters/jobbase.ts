@@ -112,12 +112,23 @@ const SELECT_COLUMNS = [
   // próprio, não é isto que fica `null`).
   'category_slug',
   // Pedida desde 23/09/2026 (§2.136). Sem ela a vaga chegava só com título, e
-  // a extração de requisitos (`lib/jobs/intelligence`) não tinha o que ler. No
-  // JobBase ela é esparsa — InfoJobs e Catho não a coletam, e a da Adzuna
-  // vem cortada em 500 caracteres pela própria API —, então `null` continua
-  // sendo o caso comum no Brasil.
-  'description',
+  // a extração de requisitos (`lib/jobs/intelligence`) não tinha o que ler.
+  // `description_text` e não `description`: o JobBase passou a entregar a
+  // versão sem HTML (§2.137) — a do Greenhouse vinha 100% com marcação, e
+  // marcação é token pago na extração. InfoJobs e Catho continuam sem
+  // descrição nenhuma, então `null` segue sendo o caso comum no Brasil.
+  'description_text',
 ].join(',')
+
+/**
+ * Ordem fixa da paginação: mais novas primeiro, desempate estável pelo `id`.
+ *
+ * Sem ordem, o PostgREST devolve as páginas na ordem física da tabela, que
+ * muda a cada escrita — uma vaga podia sair em duas páginas e outra em
+ * nenhuma. E com mais vagas abertas do que as páginas da rodada cobrem, a
+ * ordem decide QUAIS ficam de fora: melhor as mais antigas.
+ */
+const ORDER = 'id.desc'
 
 const WORK_MODE_TO_REMOTE_TYPE: Record<string, string> = {
   remote: 'remote',
@@ -142,7 +153,7 @@ interface JobBasePosting {
   posted_at?: string | null
   first_seen_at?: string | null
   category_slug?: string | null
-  description?: string | null
+  description_text?: string | null
 }
 
 function pickDate(...candidates: unknown[]): string | null {
@@ -187,7 +198,7 @@ export function parseJobBasePayload(payload: unknown): RawJob[] {
       city: typeof item?.city === 'string' ? item.city : null,
       remoteType: WORK_MODE_TO_REMOTE_TYPE[workMode] || 'unknown',
       category: typeof item?.category_slug === 'string' ? item.category_slug : null,
-      description: typeof item?.description === 'string' ? item.description : null,
+      description: typeof item?.description_text === 'string' ? item.description_text : null,
       salaryMin: typeof item?.salary_min === 'number' ? item.salary_min : null,
       salaryMax: typeof item?.salary_max === 'number' ? item.salary_max : null,
       currency: typeof item?.salary_currency === 'string' ? item.salary_currency : null,
@@ -254,7 +265,7 @@ export function createJobBaseAdapter(options: {
 
         const from = page * pageSize
         const to = from + pageSize - 1
-        const url = `${options.credentials.url}/rest/v1/job_postings?select=${SELECT_COLUMNS}&status=eq.open`
+        const url = `${options.credentials.url}/rest/v1/job_postings?select=${SELECT_COLUMNS}&status=eq.open&order=${ORDER}`
 
         const controller = new AbortController()
         const remaining = budget - (Date.now() - startedAt)
@@ -330,4 +341,77 @@ export function jobBaseAdapters(options: {
 } = {}): JobSourceAdapter[] {
   if (typeof options.toggle === 'string' && options.toggle.trim().toLowerCase() === 'off') return []
   return [createJobBaseAdapter({ credentials: options.credentials ?? jobBaseCredentials() })]
+}
+
+/** Valor dentro de `in.(...)` do PostgREST: entre aspas, com `"` e `\` escapados. */
+function quoted(value: string): string {
+  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+}
+
+/**
+ * Só a seção de requisitos de cada vaga, buscada na hora da extração (§2.137).
+ *
+ * O JobBase separa, sem IA, o trecho "o que pedimos do candidato"
+ * (`requirements_text`): ~1,1–1,4 mil caracteres contra ~6,5 mil do anúncio
+ * inteiro no Greenhouse e no Ashby. Mandar só ele à extração corta a entrada
+ * paga por ~4× — e evita o pior caso do anúncio longo, em que o corte em
+ * `MAX_DESCRIPTION_CHARS` caía antes da seção de requisitos.
+ *
+ * Buscado aqui, e não guardado na coleta, porque guardá-lo pediria uma coluna
+ * nova em `Job`, e toda leitura de `Job` sem `select` quebraria no intervalo
+ * entre o deploy e o `db push`. São no máximo algumas requisições por rodada
+ * de extração, uma por fonte de origem.
+ *
+ * Recebe os `sourceJobId` do Griffo (`fonte:id_externo`) e devolve só os que
+ * têm seção de requisitos. Falha de rede devolve mapa vazio: a extração cai na
+ * descrição inteira, que continua certa, só mais cara.
+ */
+export async function fetchJobBaseRequirementTexts(
+  sourceJobIds: string[],
+  options: { credentials: JobBaseCredentials; fetchImpl?: typeof fetch; timeoutMs?: number }
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>()
+  const doFetch = options.fetchImpl ?? fetch
+
+  const bySource = new Map<string, string[]>()
+  for (const key of sourceJobIds) {
+    const sep = key.indexOf(':')
+    if (sep <= 0 || sep === key.length - 1) continue
+    const source = key.slice(0, sep)
+    const list = bySource.get(source) ?? []
+    list.push(key.slice(sep + 1))
+    bySource.set(source, list)
+  }
+
+  for (const [source, externalIds] of bySource) {
+    const url =
+      `${options.credentials.url}/rest/v1/job_postings?select=source,external_id,requirements_text` +
+      `&source=eq.${encodeURIComponent(source)}` +
+      `&external_id=in.(${encodeURIComponent(externalIds.map(quoted).join(','))})` +
+      `&requirements_text=not.is.null`
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 8000)
+    try {
+      const response = await doFetch(url, {
+        signal: controller.signal,
+        headers: {
+          apikey: options.credentials.anonKey,
+          Authorization: `Bearer ${options.credentials.anonKey}`,
+        },
+      })
+      if (!response.ok) continue
+      const rows = await response.json()
+      if (!Array.isArray(rows)) continue
+      for (const row of rows) {
+        const text = typeof row?.requirements_text === 'string' ? row.requirements_text.trim() : ''
+        if (text && typeof row?.external_id === 'string') out.set(`${source}:${row.external_id}`, text)
+      }
+    } catch (e: any) {
+      console.warn('[jobbase] requisitos não buscados:', e?.message || e)
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  return out
 }

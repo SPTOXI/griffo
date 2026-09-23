@@ -1,15 +1,16 @@
 import 'server-only'
 import { db } from '../db'
 import { executeAiTask } from '../ai-router/router'
-import { freshOpenJobWhere } from './lifecycle'
+import { daysAgo, freshOpenJobWhere } from './lifecycle'
+import { fetchJobBaseRequirementTexts, jobBaseCredentials } from './adapters/jobbase'
 import {
   intelligenceMarker,
   isEmptyList,
   JOB_INTELLIGENCE_JSON_SCHEMA,
   jobIntelligenceSystemPrompt,
   jobIntelligenceUserPrompt,
-  MIN_DESCRIPTION_CHARS,
   parseJobIntelligence,
+  pickExtractionText,
 } from './intelligence'
 
 /**
@@ -37,8 +38,18 @@ const MAX_CONSECUTIVE_FAILURES = 3
 
 const PAGE = 60
 
+/**
+ * Só vaga vista numa coleta recente vale a leitura (§2.137). O JobBase passou
+ * a marcar vaga encerrada, e ela some da resposta dele — mas aqui ela só fecha
+ * depois de `STALE_AFTER_DAYS` sem reaparecer. Sem este corte, pagaríamos para
+ * ler milhares de vagas que a própria fonte já deu como encerradas.
+ */
+const SEEN_WITHIN_DAYS = 3
+
 export interface JobIntelligenceRun {
   read: number
+  /** Lidas pela seção de requisitos do JobBase, e não pela descrição inteira. */
+  fromRequirementsText: number
   withItems: number
   empty: number
   tooShort: number
@@ -48,12 +59,21 @@ export interface JobIntelligenceRun {
   stoppedBy: 'done' | 'deadline' | 'provider_failures'
 }
 
-type Candidate = { id: string; title: string; company: string; description: string | null; skills: string | null }
+type Candidate = {
+  id: string
+  sourceId: string
+  sourceJobId: string | null
+  title: string
+  company: string
+  description: string | null
+  skills: string | null
+}
 
 function pendingWhere() {
   return {
     AND: [
       freshOpenJobWhere(),
+      { lastSeenAt: { gte: daysAgo(new Date(), SEEN_WITHIN_DAYS) } },
       { description: { not: null } },
       { intelligenceJson: null },
       // Nenhuma fonte manda requisito hoje; se uma passar a mandar, a lista
@@ -66,6 +86,7 @@ function pendingWhere() {
 export async function extractPendingJobIntelligence(deadlineAt: number): Promise<JobIntelligenceRun> {
   const run: JobIntelligenceRun = {
     read: 0,
+    fromRequirementsText: 0,
     withItems: 0,
     empty: 0,
     tooShort: 0,
@@ -81,9 +102,11 @@ export async function extractPendingJobIntelligence(deadlineAt: number): Promise
 
   const hasTime = () => Date.now() + CALL_BUDGET_MS < deadlineAt
 
-  async function processOne(job: Candidate): Promise<void> {
-    const description = job.description?.trim() ?? ''
-    if (description.length < MIN_DESCRIPTION_CHARS) {
+  const jobBaseSourceId = (await db.jobSource.findUnique({ where: { slug: 'jobbase' }, select: { id: true } }))?.id
+
+  async function processOne(job: Candidate, requirementsText: string | undefined): Promise<void> {
+    const picked = pickExtractionText({ requirementsText, description: job.description })
+    if (!picked) {
       await db.job.update({ where: { id: job.id }, data: { intelligenceJson: intelligenceMarker('too_short') } })
       run.tooShort++
       return
@@ -93,7 +116,7 @@ export async function extractPendingJobIntelligence(deadlineAt: number): Promise
       const ai = await executeAiTask({
         taskType: 'job_intelligence',
         systemPrompt: jobIntelligenceSystemPrompt(),
-        userPrompt: jobIntelligenceUserPrompt({ title: job.title, company: job.company, description }),
+        userPrompt: jobIntelligenceUserPrompt({ title: job.title, company: job.company, description: picked.text }),
         jsonSchema: JOB_INTELLIGENCE_JSON_SCHEMA as unknown as Record<string, unknown>,
         maxTokens: 600,
         disableThinking: true,
@@ -121,6 +144,7 @@ export async function extractPendingJobIntelligence(deadlineAt: number): Promise
         },
       })
       run.read++
+      if (picked.source === 'requirements') run.fromRequirementsText++
       if (parsed.requirements.length + parsed.skills.length > 0) run.withItems++
       else run.empty++
     } catch (e: any) {
@@ -141,15 +165,24 @@ export async function extractPendingJobIntelligence(deadlineAt: number): Promise
       where: { ...pendingWhere(), ...(skip.size ? { id: { notIn: [...skip] } } : {}) },
       orderBy: { publishedAt: { sort: 'desc', nulls: 'last' } },
       take: PAGE,
-      select: { id: true, title: true, company: true, description: true, skills: true },
+      select: { id: true, sourceId: true, sourceJobId: true, title: true, company: true, description: true, skills: true },
     })
     if (batch.length === 0) break
+
+    const fromJobBase = batch.filter((j) => j.sourceId === jobBaseSourceId && j.sourceJobId)
+    const requirementTexts = fromJobBase.length
+      ? await fetchJobBaseRequirementTexts(
+          fromJobBase.map((j) => j.sourceJobId!),
+          { credentials: jobBaseCredentials(process.env.JOBBASE_URL, process.env.JOBBASE_ANON_KEY) }
+        )
+      : new Map<string, string>()
 
     const queue = [...batch]
     const worker = async () => {
       while (queue.length > 0 && hasTime() && consecutiveFailures < MAX_CONSECUTIVE_FAILURES) {
         const job = queue.shift()!
-        await processOne(job)
+        const fromSource = job.sourceId === jobBaseSourceId && job.sourceJobId ? requirementTexts.get(job.sourceJobId) : undefined
+        await processOne(job, fromSource)
       }
     }
     await Promise.all(Array.from({ length: CONCURRENCY }, worker))
