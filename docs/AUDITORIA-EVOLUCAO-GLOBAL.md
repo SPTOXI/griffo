@@ -8930,3 +8930,7 @@ O proxy deste ambiente recusa conexão com `poesywqtwnihizhkkbii.supabase.co`, e
 **Quando rodar:** depois da coleta de 24/09 06:00 UTC, que é quando as vagas do JobBase ganham descrição. Antes disso o estoque tem só ~475 vagas.
 
 **Exceção registrada à regra "Kimi só em função serial" (26/08/2026):** o backfill faz 3 chamadas em paralelo, o teto. O risco da regra é saturar o Kimi quando várias tarefas caem nele ao mesmo tempo; aqui ele é o primário, e o excedente (429) cai no DeepSeek, barato. O agente de deduplicação, serial e diário, pode coincidir; o custo é velocidade, não dinheiro.
+
+**Correção logo depois do merge (mesmo dia): o orçamento por chamada do backfill.** O roteador divide `timeBudgetMs` entre as duas tentativas (primário e suplente). Com os 25s herdados do cron, o Kimi ficaria com ~12s — a mediana dele —, e o `AuditLog` já mostra o Kimi estourando o tempo no agente de deduplicação (`Request timed out` após ~24,5s, 20–22/09). Metade do estoque cairia no DeepSeek sem ninguém ver. O modo `backfill` passa a usar 60s por chamada (~29s para o Kimi, ~29s para o DeepSeek); o `cron` segue com 25s, que cabe no prazo da função.
+
+**Sinal de Kimi fora do ar:** `JobIntelligenceRun.viaFallback` conta as vagas lidas pelo suplente. O script mostra esse número em cada volta e escreve um ATENÇÃO quando passa de um terço das lidas — a vaga é lida mesmo assim, pelo DeepSeek, mas não pelo crédito que se decidiu usar.

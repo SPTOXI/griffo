@@ -62,7 +62,7 @@ async function main() {
   )
 
   const endsAt = Date.now() + HOURS * 3_600_000
-  const total = { read: 0, fromRequirementsText: 0, empty: 0, tooShort: 0, unparseable: 0, failed: 0, costUsd: 0 }
+  const total = { read: 0, fromRequirementsText: 0, viaFallback: 0, empty: 0, tooShort: 0, unparseable: 0, failed: 0, costUsd: 0 }
 
   console.log(`Pendentes: ${await countPendingJobIntelligence()}. Teto: US$ ${MAX_USD}, ${HOURS}h.`)
 
@@ -72,9 +72,20 @@ async function main() {
 
     const pending = await countPendingJobIntelligence()
     console.log(
-      `${new Date().toISOString().slice(11, 19)}  lidas ${total.read} (seção de requisitos: ${total.fromRequirementsText})` +
-        `  curtas ${total.tooShort}  falhas ${total.failed}  US$ ${total.costUsd.toFixed(2)}  pendentes ${pending}`
+      `${new Date().toISOString().slice(11, 19)}  lidas ${total.read} (seção de requisitos: ${total.fromRequirementsText},` +
+        ` no DeepSeek por falha do Kimi: ${total.viaFallback})  curtas ${total.tooShort}  falhas ${total.failed}` +
+        `  US$ ${total.costUsd.toFixed(2)}  pendentes ${pending}`
     )
+
+    // O sinal de que o Kimi parou de responder: as leituras seguem, mas pelo
+    // DeepSeek. Não é erro — a vaga é lida do mesmo jeito —, mas não é o que
+    // foi decidido, e quem roda precisa saber.
+    if (run.read >= 6 && run.viaFallback / run.read > 1 / 3) {
+      console.log(
+        `\n  ATENÇÃO: ${run.viaFallback} de ${run.read} vagas desta volta foram lidas pelo DeepSeek porque o Kimi` +
+          ` não respondeu a tempo. Confira o saldo e o status da Moonshot, ou pare com Ctrl+C.\n`
+      )
+    }
 
     if (pending === 0) break
     if (run.stoppedBy === 'provider_failures') {
