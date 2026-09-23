@@ -8746,3 +8746,50 @@ ambiente não tem as chaves. É o primeiro envio em produção que vai prová-lo
    tabela nova — o laço do `rls.sql` pega sozinho).
 2. Só então o merge. Antes disso, o envio responde erro genérico e o workflow
    horário falha a cada hora (sem apagar nada, porque não há o que apagar).
+
+## 2.134 Todo PDF virava "sem texto" em produção: o rastreador não levava o canvas nem o worker do pdfjs
+
+Achado no primeiro envio real da landing (§2.133), feito pelo operador com o
+próprio currículo: nota de legibilidade **5/100** — exatamente a penalidade de
+`no_text` —, perfil insuficiente, nenhuma chamada de IA, nenhuma vaga. O único
+outro teste ATS com PDF já feito em produção (17/09) também deu 5; os feitos
+com texto colado deram notas normais. Dois PDFs em dois não era coincidência.
+
+### A causa, reproduzida
+
+O pdfjs (dependência do `pdf-parse`) carrega duas coisas por caminho montado
+em tempo de execução: `@napi-rs/canvas` (via `createRequire`, de onde vem o
+`DOMMatrix`) e `pdf.worker.mjs` (`import("./pdf.worker.mjs")`). O rastreador
+da Vercel só copia para a função o que é importado de forma estática — e o
+`.nft.json` das rotas não tinha nenhum dos dois. Sem o canvas, o `pdf.mjs`
+lança já na carga (`new DOMMatrix()`); o `catch` de `parsePdfBuffer` devolve
+string vazia, e o PDF passa por "sem texto selecionável". Local funcionava
+porque `node_modules` está inteiro.
+
+Reprodução: copiar **só** os arquivos rastreados da rota `ats-check` para uma
+pasta e ler um PDF com texto → falha na carga. Acrescentar o canvas → falha no
+worker. Acrescentar os dois → 1.624 caracteres. Os dois são necessários.
+
+### O custo que isso escondia
+
+O upload pago cai na transcrição por imagem quando a extração local vem vazia
+— `ocr_extraction` no Sonnet, ~US$ 0,057 e mais lento. O `AiLog` já mostrava
+11 transcrições em 60 dias para ~21 análises: boa parte deve ter sido PDF com
+texto pago como se fosse imagem. A conferir depois do deploy: essa contagem
+deve cair.
+
+### A correção
+
+`outputFileTracingIncludes` em `next.config.ts`, **só nas 5 rotas que
+importam `lib/pdf-text`** (`PDF_ROUTES`), com o canvas, o binário
+`canvas-linux-x64-gnu` e o worker (`PDF_RUNTIME_FILES`). Não em `/api/**`: o
+binário pesa ~30 MB, e o armazenamento de funções é o limite do §7.12 — são
+~160 MB a mais por deployment, contra os 328 MB de hoje.
+
+`pdf-routes.test.ts` falha se uma rota passar a importar `lib/pdf-text` sem
+entrar na lista, ou se a lista perder o canvas ou o worker.
+
+Verificado: `next build`, `.nft.json` das 5 rotas com os dois arquivos (e
+`resume/analyze`, que não lê PDF, sem eles), e a mesma reprodução só com os
+arquivos rastreados lendo o PDF nas rotas `ats-check`, `match-preview` e
+`upload`. `tsc`, `eslint` e suíte — **1163/1163**, 3 novos.

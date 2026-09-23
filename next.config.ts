@@ -111,6 +111,22 @@ const securityHeaders = [
  */
 const HTML_ONLY = '/:path((?!api/|_next/static/).*)'
 
+/** Rotas que leem PDF (importam `lib/pdf-text`). Ver `outputFileTracingIncludes`. */
+export const PDF_ROUTES = [
+  '/api/public/ats-check',
+  '/api/public/match-preview',
+  '/api/resume/upload',
+  '/api/resume/profile-pdf-text',
+  '/api/resume/social-analysis',
+]
+
+/** O que o pdfjs carrega em tempo de execução e o rastreador não vê. */
+export const PDF_RUNTIME_FILES = [
+  './node_modules/@napi-rs/canvas/**/*',
+  './node_modules/@napi-rs/canvas-linux-x64-gnu/**/*',
+  './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
+]
+
 const nextConfig: NextConfig = {
   /**
    * O que o rastreador copia para dentro de cada função — e o que não precisa.
@@ -205,6 +221,33 @@ const nextConfig: NextConfig = {
    * `pdfkit` está aqui pelo mesmo motivo: lê arquivos de fonte do disco.
    */
   serverExternalPackages: ['pdf-parse', 'pdfjs-dist', '@napi-rs/canvas', 'pdfkit'],
+
+  /**
+   * O que o rastreador NÃO enxerga, e a leitura de PDF precisa.
+   *
+   * Tirar o `pdf-parse` do empacotador (acima) não bastou. O rastreador copia
+   * para a função o que é importado de forma estática, e o pdfjs carrega duas
+   * coisas em tempo de execução, por caminho montado:
+   *
+   * - `@napi-rs/canvas` (via `createRequire`), de onde vem o `DOMMatrix`. Sem
+   *   ele, o `pdf.mjs` lança já na carga do módulo (`new DOMMatrix()`);
+   * - `pdf.worker.mjs` (`import("./pdf.worker.mjs")`), o "worker falso" que
+   *   faz a extração no Node.
+   *
+   * Nenhum dos dois entrava no `.nft.json` das rotas. Em produção, todo PDF
+   * virava "sem texto": o envio da landing e o teste ATS davam nota 5 (o
+   * código `no_text`) e o upload pago caía na transcrição por IA. Reproduzido
+   * copiando SÓ os arquivos rastreados de uma rota para uma pasta e lendo um
+   * PDF com texto: falha; com estes três caminhos acrescentados: 1.624
+   * caracteres. Ver §2.134.
+   *
+   * Só nas rotas que leem PDF, e não em `/api/**`: o binário do canvas pesa
+   * ~30 MB, e o armazenamento de funções é o limite do §7.12.
+   * `pdf-routes.test.ts` falha se uma rota nova passar a ler PDF sem entrar aqui.
+   */
+  outputFileTracingIncludes: Object.fromEntries(
+    PDF_ROUTES.map((route) => [route, PDF_RUNTIME_FILES])
+  ),
   images: {
     /**
      * O padrão do Next pula de 128 para 256 — para um logo fixo de ~94px
