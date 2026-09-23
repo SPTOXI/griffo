@@ -8610,6 +8610,29 @@ O passe, sem análise, custa ~US$ 0,01 de IA mais a taxa do meio de pagamento.
   e prazo de retenção declarados em `/privacy` (12 idiomas) antes da fase 1 ir
   ao ar.
 
+### As três respondidas pelo operador (23/09/2026, mesma conversa)
+
+1. **Preço do passe: proporcional por faixa.** A razão é a que o operador fixou
+   no Brasil — US$ 2,60 contra os US$ 3,70 do Essencial, **~70%**. Aplicada a
+   cada faixa: Faixa 1 ≈ US$ 6,90 (Essencial 9,90), Faixa 2 ≈ US$ 4,90 (6,90),
+   Faixa 3 = R$ 14,90 (19,90), Faixa 4 ≈ US$ 2,00 (2,90). Os valores locais
+   arredondados saem na fase 2, com o teste da escada. A Faixa 4 precisa ser
+   conferida contra a taxa fixa do meio de pagamento (`payment-methods.ts`
+   registra que ali ela pesa) antes de fechar.
+2. **Fonte das vagas: JobBase, com nome e link da vaga.** Decisão do operador:
+   as vagas vêm do JobBase (projeto irmão), e cada oportunidade exibida leva
+   o título, a empresa e o link de candidatura da origem (`Job.applicationUrl`).
+   A candidatura nunca acontece dentro do Griffo.
+3. **Currículo do visitante: a pessoa escolhe.** Ou os dados são apagados em
+   24 horas, ou ficam guardados para empresas a encontrarem. As duas opções são
+   gratuitas. Pela LGPD, a opção pré-marcada é a que protege mais: **apagar em
+   24 horas**. Guardar exige marcação ativa. Consequência aceita: quem escolhe
+   apagar sai também da base de e-mails, então o Radar só alcança quem escolheu
+   guardar (ou quem cria conta). A consulta por empresas ainda não existe como
+   produto: `User.recruiterOptIn` e `Organization.marketplaceEnabled` estão no
+   schema, mas nenhum código lê o opt-in hoje. O texto da opção diz "para que
+   empresas possam te encontrar", sem prometer que já estão procurando.
+
 ### Plano
 
 - **Fase 1 — a porta** (não depende de preço): hero de envio em `/[country]`,
@@ -8621,3 +8644,105 @@ O passe, sem análise, custa ~US$ 0,01 de IA mais a taxa do meio de pagamento.
   acesso de 24h (lista + diagnóstico + 2 buscas), checkout, e o teste da escada.
 - **Fase 3 — a volta**: Radar para os leads com e-mail (novas oportunidades,
   lista trancada) e o degrau passe → Essencial.
+
+## 2.133 Fase 1 do foco invertido: o envio de currículo vira a porta da landing
+
+Implementação da fase 1 do §2.132, com as decisões de produto daquela seção.
+**Exige `prisma db push` antes do deploy** (tabela nova `VisitorLead`) — ver
+"Para ir ao ar", no fim.
+
+### O fluxo
+
+1. O topo da landing (antes do Hero D, em `/` e nas 41 rotas `/[country]`)
+   passa a ser `components/landing/match-hero.tsx`: *"Procurando emprego? Envie
+   seu currículo e descubra as oportunidades que combinam com você."* — PDF ou
+   texto colado, e-mail, e a escolha LGPD (apagar em até 24h, pré-marcada; ou
+   guardar para empresas, marcação ativa).
+2. `POST /api/public/match-preview` reserva a cota (1 por pessoa a cada 24h,
+   por navegador e por hash de IP, o mesmo esquema do teste ATS), lê o PDF sem
+   OCR, roda o teste de legibilidade (sem IA), grava a linha e responde. O
+   resto roda em `after()`.
+3. `processLead` (`lib/match-preview/server.ts`) lê o perfil com IA, cruza com
+   as vagas pelo **mesmo pipeline do Radar** e manda o e-mail de resultado.
+4. A tela consulta `GET /api/public/match-result/[token]` a cada 2s. O token
+   vai para a URL (`?lead=`), que é também o link do e-mail.
+
+### Decisões de implementação que não eram óbvias
+
+- **Um pipeline só.** O trecho de `runForUser` que lê as vagas, descarta banco
+  de talentos, aplica o filtro duro e roda `matchJob` virou
+  `evaluateOpenJobsForProfile` (`radar/runner.ts`), usado pelo Radar e pelo
+  visitante. A régua é a do Radar: `curate` com `minimumFit: 'good'`. As 28
+  verificações do Radar passaram sem alteração depois da extração.
+- **Modelo rápido para quem espera na tela.** A extração de perfil das contas
+  leva **~53s na mediana** no DeepSeek Pro (`AiLog`: p50 52,8s, máx. 77s).
+  Tipo novo `lead_profile_extraction`, roteado ao Claude com `modelOverride`
+  Haiku 4.5. O prompt foi movido para `profileExtractionSystemPrompt` em
+  `profile/extract.ts`, compartilhado pelas duas extrações, com o texto
+  intacto.
+- **A lista trancada é trancada no servidor.** `buildPublicResult` devolve a
+  vaga grátis inteira e, das outras, só a contagem (e quantas são de alta
+  compatibilidade). Não saem `evidence` nem `gaps` do `MatchResult`: são
+  frases em português e são o diagnóstico que se vende. Teste trava isso.
+- **A isca vem do teste ATS determinístico**, agrupada em quatro categorias
+  grossas (`rules.ts`). "Pode aumentar suas chances" só aparece com pelo menos
+  um ponto achado; currículo sem problema recebe "é bem lido". Nenhum número
+  ou porcentagem de chance (§17), verificado por teste nos 12 idiomas.
+- **24 horas, de verdade.** A linha vence em 22h, a leitura recusa linha
+  vencida desde o primeiro segundo, e `/api/cron/visitor-leads` apaga de hora
+  em hora (`.github/workflows/visitor-leads-hourly.yml`, fora do
+  `vercel.json` pelo limite de dois crons do Hobby). A retenção diária também
+  apaga, como reserva. Quem escolhe apagar **nem tem o texto do currículo
+  gravado**: é processado em memória. Quem escolhe guardar fica 730 dias.
+- **Falha nossa devolve a cota.** Se o processamento em segundo plano falha
+  (IA fora do ar), a reserva do dia é apagada — sem isso o "enviar de novo"
+  bateria no limite. Achado no teste de navegador, não no código.
+- **Prefixos de limite separados.** O envio tem 3/10min; a consulta, que é
+  chamada a cada 2s, tem prefixo próprio com 300/10min — o defeito que o
+  cabeçalho de `rate-rules.ts` registra (status herdando o limite da rota pai).
+- **Um `h1` por página.** O título do Hero D virou `h2`.
+- **Plural.** "Há mais 1 oportunidades" apareceu no teste; nascem as chaves
+  `lockedTitleOne`, `lockedStrongOne` e `emailBodyOne` nos 12 idiomas.
+
+### Custo
+
+Funil grátis por envio: US$ 0 para PDF com texto até a IA; extração no Haiku
+4.5 (estimativa pela tabela de `pricing.ts`, ~4k tokens de entrada e ~0,5k de
+saída: menos de US$ 0,01); cruzamento com vagas sem IA. O número medido virá
+do `AiLog` com `taskType = 'lead_profile_extraction'`.
+
+### O que foi verificado, e como
+
+- `tsc`, `eslint` e suíte — **1160/1160** (17 novos em
+  `match-preview.test.ts`), incluindo `cron-triggers.test.ts` com a rota nova.
+- `next build` e `next start` contra um **Postgres local** com o schema novo
+  (`db push` local) e cinco vagas semeadas. O pipeline real de cruzamento,
+  rodado com um perfil de analista de dados, devolveu as três vagas de dados
+  como `strong` e descartou a de enfermagem como `weak`.
+- Navegador (Chromium, 1280px e 390px, português e árabe): formulário, envio
+  de PDF gerado na hora, falha por falta de chave de IA local e "enviar de
+  novo" sem bater no limite, tela de resultado (com o resultado gravado
+  manualmente no banco local, porque sem chave de IA a extração não roda
+  aqui), zero rolagem horizontal, `rtl` correto.
+- Leitura de token vencido e malformado → 404 igual; cron sem segredo → 401;
+  com segredo → apagou a linha vencida.
+
+**Não verificado**: a extração real no Haiku e o e-mail real no Resend — este
+ambiente não tem as chaves. É o primeiro envio em produção que vai prová-los.
+
+### O que ficou para depois
+
+- **Fase 2 (o passe de 24h)**: o botão "ver todas as oportunidades" leva por
+  ora ao cadastro (Essencial/Trimestral).
+- **Ligar o envio à conta**: quem se cadastra depois com o mesmo e-mail ainda
+  envia o currículo de novo.
+- **Limite de corpo da Vercel (~4,5 MB)** abaixo dos 5 MB anunciados — o mesmo
+  vale desde sempre para o teste ATS; um PDF entre ~3,3 e 5 MB falha na
+  plataforma antes de chegar à rota.
+
+### Para ir ao ar
+
+1. `npx prisma db push` (cria `VisitorLead`) e `npm run db:rls` (liga RLS na
+   tabela nova — o laço do `rls.sql` pega sozinho).
+2. Só então o merge. Antes disso, o envio responde erro genérico e o workflow
+   horário falha a cada hora (sem apagar nada, porque não há o que apagar).

@@ -39,6 +39,10 @@ export const it: PrivacyContent = {
       title: 'Preferenza di lingua',
       body: 'La lingua dell\'interfaccia che scegli, salvata affinché il sito la ricordi alla tua prossima visita.',
     },
+    {
+      title: "Curriculum inviato senza account (pagina iniziale)",
+      body: "Se invii il curriculum tramite il modulo della pagina iniziale senza creare un account, riceviamo il file (o il testo incollato) e la tua email. Usiamo il curriculum per individuare il tuo ruolo, il tuo settore e le tue competenze e confrontarli con le offerte aperte, e l’email per inviarti il link al risultato. Al momento dell’invio scegli: cancellare tutto entro 24 ore, oppure conservare il curriculum perché le aziende possano trovarti. Per conservarlo devi selezionare questa opzione; l’impostazione predefinita è la cancellazione.",
+    },
   ],
 
   howWeUseHeading: 'A cosa li usiamo',
@@ -90,6 +94,8 @@ export const it: PrivacyContent = {
     { category: 'Registro di audit (registro di conformità e sicurezza)', period: 'Fino a 730 giorni' },
     { category: 'Registri di pagamento/webhook', period: 'Fino a 90 giorni' },
     { category: 'Cronologia delle offerte del Radar (posizioni che il Radar ti ha mostrato)', period: 'Fino a 730 giorni' },
+    { category: "Curriculum inviato senza account, con l’opzione «cancellare entro 24 ore»", period: "Fino a 24 ore. Il testo del curriculum non viene conservato; solo il risultato e l’email, cancellati nello stesso termine" },
+    { category: "Curriculum inviato senza account, con l’opzione «conservare per le aziende»", period: "Fino a 730 giorni, o finché non ne chiedi la cancellazione" },
   ],
 
   rightsHeading: 'I tuoi diritti e le tue scelte',

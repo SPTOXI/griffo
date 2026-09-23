@@ -39,6 +39,10 @@ export const sv: PrivacyContent = {
       title: 'Språkinställning',
       body: 'Det gränssnittsspråk du väljer, sparat så att webbplatsen kommer ihåg det vid nästa besök.',
     },
+    {
+      title: "CV skickat utan konto (startsidan)",
+      body: "Om du skickar ditt CV via formuläret på startsidan utan att skapa ett konto tar vi emot filen (eller den inklistrade texten) och din e-postadress. Vi använder CV:t för att identifiera din befattning, ditt område och dina kompetenser och jämföra dem med lediga jobb, och e-postadressen för att skicka länken till ditt resultat. När du skickar väljer du: radera allt inom 24 timmar, eller spara CV:t så att företag kan hitta dig. Att spara kräver att du väljer det alternativet; standard är att radera.",
+    },
   ],
 
   howWeUseHeading: 'Vad vi använder det till',
@@ -90,6 +94,8 @@ export const sv: PrivacyContent = {
     { category: 'Granskningslogg (efterlevnads- och säkerhetslogg)', period: 'Upp till 730 dagar' },
     { category: 'Betalnings-/webhook-poster', period: 'Upp till 90 dagar' },
     { category: 'Radarhistorik över erbjudanden (tjänster som Radarn visade dig)', period: 'Upp till 730 dagar' },
+    { category: "CV skickat utan konto, med alternativet ”radera inom 24 timmar”", period: "Upp till 24 timmar. CV-texten sparas inte, bara resultatet och e-postadressen, som raderas inom samma tid" },
+    { category: "CV skickat utan konto, med alternativet ”spara för företag”", period: "Upp till 730 dagar, eller tills du ber oss radera det" },
   ],
 
   rightsHeading: 'Dina rättigheter och val',

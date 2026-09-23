@@ -75,9 +75,11 @@ export function HeroD({ t, lang, openJobsCount, onNavigate }: HeroDProps) {
               {t.heroD.eyebrow}
             </p>
 
-            <h1 className="text-pretty text-[34px] font-bold leading-[1.02] tracking-[-0.035em] text-white sm:text-[40px] min-[830px]:text-[58px]">
+            {/* `h2` desde o §2.132: o `h1` da página passou a ser o envio de
+                currículo (`match-hero.tsx`), que vem antes deste bloco. */}
+            <h2 className="text-pretty text-[34px] font-bold leading-[1.02] tracking-[-0.035em] text-white sm:text-[40px] min-[830px]:text-[58px]">
               {t.heroD.title}
-            </h1>
+            </h2>
 
             <p className="max-w-[520px] text-[19px] leading-[1.6] text-[#a9bcd6]">
               {paragraphBeforeCount}

@@ -53,11 +53,19 @@ o quanto confiar nele.
    uma oportunidade grátis, lista completa paga, passe de 24h a US$ 2,60 sem
    Análise Completa como degrau para o Essencial. O funil medido zera no
    primeiro gesto (925 visitantes em 30 dias, 2 testes ATS, nenhum currículo),
-   então a fase 1 (a porta) vem antes do preço. Três decisões esperam o
-   operador antes de ir ao ar: **preço local do passe fora do Brasil** (US$ 2,60
-   fixo compete com o Essencial na Faixa 1), **licença das fontes para acesso
-   pago à lista** (Adzuna, e InfoJobs/Catho via JobBase) e **base legal e
-   retenção do currículo de visitante** em `/privacy`.
+   então a fase 1 (a porta) vem antes do preço. As três decisões abertas foram
+   respondidas no mesmo dia: passe **proporcional por faixa** (~70% do
+   Essencial), vagas do **JobBase com nome e link de origem**, e o visitante
+   **escolhe entre apagar em 24h (padrão) ou guardar para empresas**, ambos
+   grátis.
+
+   **Fase 1 implementada no §2.133** (envio no topo da landing, 1
+   oportunidade grátis, lista trancada, isca quantificada, e-mail de
+   resultado, purga horária). **Para ir ao ar, nesta ordem**: `npx prisma db
+   push` (tabela `VisitorLead`), `npm run db:rls`, e só então o merge. Depois
+   do primeiro envio real, conferir no `AiLog` o custo e o tempo de
+   `lead_profile_extraction` (Haiku 4.5) e se o e-mail saiu (`notifiedAt`).
+   Próximo: fase 2, o passe de 24h com preço proporcional por faixa.
 
 0. ⏳ **ABERTA em 21/09/2026 — conferir o volume do primeiro EXPURGO por
    idade, e o efeito na contagem pública.**

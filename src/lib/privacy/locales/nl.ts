@@ -39,6 +39,10 @@ export const nl: PrivacyContent = {
       title: 'Taalvoorkeur',
       body: 'De interfacetaal die je kiest, opgeslagen zodat de site deze bij je volgende bezoek onthoudt.',
     },
+    {
+      title: "Cv verstuurd zonder account (startpagina)",
+      body: "Als je je cv via het formulier op de startpagina verstuurt zonder een account aan te maken, ontvangen we het bestand (of de geplakte tekst) en je e-mailadres. We gebruiken het cv om je functie, je vakgebied en je vaardigheden te herkennen en te vergelijken met openstaande vacatures, en het e-mailadres om je de link naar je resultaat te sturen. Bij het versturen kies je: alles binnen 24 uur verwijderen, of het cv bewaren zodat bedrijven je kunnen vinden. Bewaren vereist dat je die optie aanvinkt; standaard wordt alles verwijderd.",
+    },
   ],
 
   howWeUseHeading: 'Waarvoor we het gebruiken',
@@ -90,6 +94,8 @@ export const nl: PrivacyContent = {
     { category: 'Auditlog (compliance- en beveiligingslog)', period: 'Tot 730 dagen' },
     { category: 'Betalings-/webhookgegevens', period: 'Tot 90 dagen' },
     { category: 'Radar-aanbodgeschiedenis (vacatures die de Radar je toonde)', period: 'Tot 730 dagen' },
+    { category: "Cv verstuurd zonder account, met de optie \"binnen 24 uur verwijderen\"", period: "Tot 24 uur. De tekst van het cv wordt niet opgeslagen; alleen het resultaat en het e-mailadres, die binnen dezelfde termijn worden verwijderd" },
+    { category: "Cv verstuurd zonder account, met de optie \"bewaren voor bedrijven\"", period: "Tot 730 dagen, of tot je om verwijdering vraagt" },
   ],
 
   rightsHeading: 'Jouw rechten en keuzes',

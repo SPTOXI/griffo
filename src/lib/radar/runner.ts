@@ -589,6 +589,38 @@ async function pruneUnfoundedAlerts(
 }
 
 /**
+ * As vagas abertas avaliadas contra um perfil — a parte da rodada que não
+ * depende de quem é o dono do perfil.
+ *
+ * Separada de `runForUser` para que o envio sem conta da landing (§2.132) use
+ * exatamente o mesmo caminho do Radar: mesmo orçamento de leitura, mesmo
+ * descarte de banco de talentos, mesmo filtro duro, mesmo `matchJob`. Uma
+ * segunda cópia deste trecho divergiria na primeira correção feita só numa.
+ *
+ * Não consulta o sinal do perfil: quem chama decide antes (`hasMatchableSignal`),
+ * porque o que fazer sem sinal é diferente em cada caso.
+ */
+export async function evaluateOpenJobsForProfile(profile: ProfessionalProfile) {
+  const rows = await openJobsWithinBudget(profile)
+  const trustworthy = await dropDeclaredTalentPools(rows)
+
+  const jobs = trustworthy.map(jobFromRow)
+  const { eligible } = filterJobs(jobs, profile)
+
+  const opportunities: EvaluatedOpportunity<{ id: string }>[] = eligible.map((job) => {
+    const match = matchJob(profile, job)
+    return {
+      job: { id: (job as any).id },
+      jobId: (job as any).id,
+      match,
+      publishedAt: job.publishedAt,
+    }
+  })
+
+  return { rows: trustworthy, eligible: eligible.length, opportunities }
+}
+
+/**
  * A rodada de um usuário.
  *
  * Não envia nada: grava `RadarAlert`. O envio — e-mail, push — é uma camada
@@ -662,21 +694,7 @@ export async function runForUser(userId: string): Promise<UserRunResult> {
   // Com sinal: a rodada revisa o que já foi avisado antes de avisar de novo.
   await pruneUnfoundedAlerts(userId, profile)
 
-  const rows = await openJobsWithinBudget(profile)
-  const trustworthy = await dropDeclaredTalentPools(rows)
-
-  const jobs = trustworthy.map(jobFromRow)
-  const { eligible } = filterJobs(jobs, profile)
-
-  const opportunities: EvaluatedOpportunity<{ id: string }>[] = eligible.map((job) => {
-    const match = matchJob(profile, job)
-    return {
-      job: { id: (job as any).id },
-      jobId: (job as any).id,
-      match,
-      publishedAt: job.publishedAt,
-    }
-  })
+  const { rows: trustworthy, eligible, opportunities } = await evaluateOpenJobsForProfile(profile)
 
   const alreadyAlerted = await db.radarAlert.findMany({ where: { userId }, select: { jobId: true } })
 
@@ -751,7 +769,7 @@ export async function runForUser(userId: string): Promise<UserRunResult> {
 
   return {
     userId,
-    eligible: eligible.length,
+    eligible,
     evaluated: result.evaluated,
     alerted,
     silenceReason: result.silenceReason,

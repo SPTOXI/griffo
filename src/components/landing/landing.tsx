@@ -25,6 +25,7 @@ import type { CountryJobCount } from '@/lib/jobs/open-count.server'
 import { countryLabel } from '@/lib/jobs/country-labels'
 import { HiringIndexTeaser } from './hiring-index-teaser'
 import { HeroD } from './hero-d'
+import { MatchHero } from './match-hero'
 import { TrackWhenVisible } from '@/components/analytics/track-when-visible'
 import { AtsCheckBanner } from '@/components/ats-check/ats-check-banner'
 import { OrderBand } from './order-band'
@@ -181,6 +182,11 @@ export function Landing({
       </header>
 
       <main>
+      {/* Envio de currículo — a porta de entrada desde o §2.132: quem procura
+          emprego recebe oportunidades, e a auditoria aparece como a ponte. Vem
+          antes do Hero D, que desce para explicar a cadeia. */}
+      <MatchHero lang={lang} openJobsCount={openJobsCount} countryCode={countryCode} onNavigate={onNavigate} />
+
       {/* HERO D — única direção aprovada do handoff de design; ver hero-d.tsx */}
       <HeroD t={t} lang={lang} openJobsCount={openJobsCount} onNavigate={onNavigate} />
 

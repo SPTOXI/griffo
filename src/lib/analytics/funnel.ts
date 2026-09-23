@@ -17,6 +17,8 @@ export const CLIENT_EVENTS = [
   'upsell_viewed',
   'pricing_viewed',
   'ats_check_shared',
+  // Clique em "ver todas as oportunidades" no resultado do envio da landing.
+  'lead_unlock_clicked',
   // Mantido por compatibilidade: versões antigas da tela ainda o enviam.
   'checkout_initiated',
 ] as const
@@ -25,6 +27,12 @@ export const SERVER_EVENTS = [
   'ats_check_done',
   // Tentativa de robô: conta para a cota do teste, mas fica fora do funil.
   'ats_check_bot',
+  // Envio do currículo no topo da landing (§2.132), sem conta. É também a
+  // cota: um por pessoa a cada 24h, contado aqui como o `ats_check_done`.
+  'lead_submitted',
+  'lead_bot',
+  // O resultado ficou pronto com ao menos uma oportunidade para mostrar.
+  'lead_matched',
   'signup_done',
   'cv_uploaded',
   'preview_viewed',
@@ -38,6 +46,9 @@ export type FunnelEvent = ClientEvent | ServerEvent
 /** Ordem do funil, do topo ao fundo, como o painel mostra. */
 export const FUNNEL_STEPS = [
   { event: 'page_view', label: 'Visitantes' },
+  { event: 'lead_submitted', label: 'Currículos na landing' },
+  { event: 'lead_matched', label: 'Com oportunidade encontrada' },
+  { event: 'lead_unlock_clicked', label: 'Quiseram ver todas' },
   { event: 'ats_check_done', label: 'Teste ATS grátis' },
   { event: 'signup_done', label: 'Cadastros' },
   { event: 'cv_uploaded', label: 'Currículos enviados' },

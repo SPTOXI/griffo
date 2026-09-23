@@ -24,6 +24,11 @@ export type TaskType =
   /// as chaves do perfil", e reaproveitar a regra de outra tarefa reprovaria
   /// respostas corretas — o defeito que já derrubou o diagnóstico vocacional.
   | 'profile_extraction'
+  /// A mesma extração, para quem enviou o currículo na landing sem conta
+  /// (§2.132). Tipo próprio porque a exigência é outra: a pessoa está
+  /// olhando a tela esperando, e a extração de conta leva ~53s na mediana
+  /// no DeepSeek Pro (AiLog, set/2026). Esta vai para um modelo rápido.
+  | 'lead_profile_extraction'
   | 'support_chat'
   /// Análise semântica de similaridade entre pares de vagas para deduplicação avançada.
   | 'job_deduplication'

@@ -39,6 +39,10 @@ export const de: PrivacyContent = {
       title: 'Spracheinstellung',
       body: 'Die von Ihnen gewählte Oberflächensprache, gespeichert, damit die Seite sie bei Ihrem nächsten Besuch erinnert.',
     },
+    {
+      title: "Lebenslauf ohne Konto gesendet (Startseite)",
+      body: "Wenn Sie Ihren Lebenslauf über das Formular auf der Startseite senden, ohne ein Konto zu erstellen, erhalten wir die Datei (oder den eingefügten Text) und Ihre E-Mail-Adresse. Den Lebenslauf nutzen wir, um Ihre Position, Ihr Fachgebiet und Ihre Kompetenzen zu erkennen und mit offenen Stellen zu vergleichen, die E-Mail-Adresse, um Ihnen den Link zu Ihrem Ergebnis zu senden. Beim Senden wählen Sie: alles innerhalb von 24 Stunden löschen oder den Lebenslauf speichern, damit Unternehmen Sie finden können. Speichern erfordert, dass Sie diese Option auswählen; standardmäßig wird gelöscht.",
+    },
   ],
 
   howWeUseHeading: 'Wofür wir es verwenden',
@@ -90,6 +94,8 @@ export const de: PrivacyContent = {
     { category: 'Audit-Trail (Compliance- und Sicherheitsprotokoll)', period: 'Bis zu 730 Tage' },
     { category: 'Zahlungs-/Webhook-Datensätze', period: 'Bis zu 90 Tage' },
     { category: 'Radar-Angebotsverlauf (Stellen, die der Radar Ihnen gezeigt hat)', period: 'Bis zu 730 Tage' },
+    { category: "Lebenslauf ohne Konto, mit der Option „innerhalb von 24 Stunden löschen“", period: "Bis zu 24 Stunden. Der Text des Lebenslaufs wird nicht gespeichert, nur das Ergebnis und die E-Mail-Adresse, die in derselben Frist gelöscht werden" },
+    { category: "Lebenslauf ohne Konto, mit der Option „speichern, damit Unternehmen mich finden“", period: "Bis zu 730 Tage oder bis Sie die Löschung verlangen" },
   ],
 
   rightsHeading: 'Ihre Rechte und Wahlmöglichkeiten',
