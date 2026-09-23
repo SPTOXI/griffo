@@ -8793,3 +8793,46 @@ Verificado: `next build`, `.nft.json` das 5 rotas com os dois arquivos (e
 `resume/analyze`, que não lê PDF, sem eles), e a mesma reprodução só com os
 arquivos rastreados lendo o PDF nas rotas `ats-check`, `match-preview` e
 `upload`. `tsc`, `eslint` e suíte — **1163/1163**, 3 novos.
+
+## 2.135 Primeiro envio real da landing: o PDF foi lido, e nenhuma vaga "combinou" — três causas, uma corrigida
+
+**Contexto.** 23/09/2026, depois do deploy do §2.134. O operador reenviou o currículo em griffo.work: currículo de uma coordenadora de unidade de análises clínicas, 13 anos, pós-graduação, BR. Resultado: legibilidade 73/100 (o PDF agora é lido), 4 pontos no teaser, e "Ainda não encontramos uma oportunidade forte para o seu perfil".
+
+**O que o banco mostrou.** `VisitorLead` `ready` em 7s, perfil extraído certo, `matchesJson` vazio, e-mail enviado. `AiLog`: `lead_profile_extraction` com `status: failover`, custo US$ 0,0015, respondido pelo `deepseek-flash`. O `AuditLog` do failover diz por quê:
+
+> CLAUDE (claude-haiku-4-5): ERR ([Claude API 400] output_config.format.schema: Invalid schema: Enum value 'intern' does not match declared type '['string', 'null']') após 525ms
+
+### Causa 1 — corrigida aqui: o esquema da extração é recusado pelo Claude
+
+`PROFILE_EXTRACTION_JSON_SCHEMA` declarava `seniority` e `educationLevel` como `{ type: ['string','null'], enum: [..., null] }`. A API do Claude recusa essa forma; toda extração da landing caía no suplente. O mesmo esquema é o da extração de conta, cujo primário é o DeepSeek (que recebe só `json_object`), então lá o defeito ficava escondido — só apareceria no dia em que o fallback fosse o Claude.
+
+Correção: `anyOf: [{ type: 'string', enum }, { type: 'null' }]`. Teste em `extract.test.ts` impede voltar a combinar `enum` com `type` em lista.
+
+Observação menor, não corrigida: o `AiLog.primaryModel` registra o modelo do painel (`claude-sonnet-5`), não o `modelOverride` efetivamente tentado (`claude-haiku-4-5`). O diagnóstico do `AuditLog` tem o nome certo.
+
+### Causa 2 — estrutural, NÃO corrigida: nenhuma vaga aberta lista requisitos
+
+Contagem em produção, vagas abertas: BR 6.084 com `requirements` preenchido = **0**, `skills` = **0**; US, GB, AU, GLOBAL idem. Só 401 vagas sem mercado têm `skills`. `intelligenceJson` vazio em todas.
+
+Consequência em `matchJob`: sem requisito, `jobFitAxis` devolve 50 sem evidência, e a regra comentada em `matchJob` (o perfil de gestão hospitalar que recebeu "Analista de Dados") manda o desfecho para `partial` sempre que o cargo não for **confirmado** como o mesmo. Hoje, portanto, o único caminho para `good` é `confirmedSameRole`.
+
+### Causa 3 — estrutural, NÃO corrigida: a taxonomia de cargos tem 12 conceitos
+
+`isSameRole` só confirma cargo quando os dois títulos caem num dos 12 conceitos (`data_analyst`, `software_engineer`, `nurse`, `project_manager`…). Das 6.068 vagas BR frescas, **5.523 (91%) não caem em conceito nenhum**. "Coordenadora de Unidade" (perfil) e "Coordenador de Unidade" (vaga) são dois desconhecidos, e dois desconhecidos não são o mesmo cargo.
+
+Somando 2 e 3: fora desses 12 cargos, **nenhum** perfil recebe oportunidade na landing — nem no Radar de quem paga. Reproduzido localmente: as 47 vagas BR de saúde/laboratório/coordenação, com o perfil deste envio, saem todas `partial`/`stretch`.
+
+### Agravante — o teto de 500
+
+`openJobsWithinBudget` avalia as 500 vagas mais recentes do mercado (`MAX_JOBS_PER_USER`). O BR tem 6.068 frescas; a primeira vaga de laboratório está na posição 1.068. Mesmo com as causas 2 e 3 resolvidas, este perfil nunca veria essas vagas.
+
+### Decisão pendente do operador
+
+Não é correção pontual: muda o que "combina" significa para o produto inteiro. Opções em ordem de custo:
+
+1. **Requisitos da descrição, sem IA** — quando a vaga não lista requisito, procurar as competências declaradas no texto da descrição e contar como evidência ("a descrição menciona Hematologia"). Barato, determinístico; risco de falso positivo com competências genéricas (5S, Workflow).
+2. **Extração de requisitos por IA na ingestão** — preencher `requirements`/`skills` uma vez por vaga (DeepSeek Flash, da ordem de US$ 0,0005 por vaga, ~US$ 3 para o estoque atual). Resolve a causa 2 de verdade, para landing e Radar.
+3. **Similaridade de título para cargos fora da taxonomia** — títulos normalizados (sem gênero, acento, senioridade) iguais contam como mesmo cargo. Resolve "Coordenadora/Coordenador de Unidade", mas "Coordenador de Unidade" de academia não é o de laboratório: sem a área, erra.
+4. **Pré-filtro por área antes do teto de 500** — gastar o orçamento nas vagas cujo título ou descrição toca a área do perfil, e não nas mais recentes.
+
+Recomendação: 2 + 4. A 2 é a que torna a nota honesta e medível; a 4 impede que o teto esconda o que existe.

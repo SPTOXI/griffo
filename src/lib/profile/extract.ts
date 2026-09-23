@@ -64,12 +64,15 @@ export const PROFILE_EXTRACTION_JSON_SCHEMA = {
   ],
   properties: {
     currentTitle: { type: ['string', 'null'] },
-    seniority: { type: ['string', 'null'], enum: [...SENIORITY_LEVELS, null] },
+    // `anyOf`, e não `type: ['string', 'null']` com `enum`: a API do Claude
+    // recusa essa forma (400 "Enum value 'intern' does not match declared
+    // type"), e a extração da landing caía no suplente em toda chamada (§2.135).
+    seniority: { anyOf: [{ type: 'string', enum: [...SENIORITY_LEVELS] }, { type: 'null' }] },
     field: { type: ['string', 'null'] },
     specializations: { type: 'array', items: { type: 'string' } },
     skills: { type: 'array', items: { type: 'string' } },
     yearsExperience: { type: ['number', 'null'] },
-    educationLevel: { type: ['string', 'null'], enum: [...EDUCATION_LEVELS, null] },
+    educationLevel: { anyOf: [{ type: 'string', enum: [...EDUCATION_LEVELS] }, { type: 'null' }] },
     targetRoles: { type: 'array', items: { type: 'string' } },
   },
 } as const
