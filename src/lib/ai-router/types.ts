@@ -29,6 +29,11 @@ export type TaskType =
   /// olhando a tela esperando, e a extração de conta leva ~53s na mediana
   /// no DeepSeek Pro (AiLog, set/2026). Esta vai para um modelo rápido.
   | 'lead_profile_extraction'
+  /// A ficha da vaga (§27, §2.136): o que o anúncio pede, lido uma vez por
+  /// vaga, em lote, sem ninguém esperando. Tipo próprio porque a resposta
+  /// certa pode ser curta — duas listas vazias quando o anúncio não pede nada
+  /// técnico — e o piso de tamanho do agente de qualidade a reprovaria.
+  | 'job_intelligence'
   | 'support_chat'
   /// Análise semântica de similaridade entre pares de vagas para deduplicação avançada.
   | 'job_deduplication'

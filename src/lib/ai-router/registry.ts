@@ -217,6 +217,9 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   // (com `modelOverride` Haiku 4.5 na chamada), o mais rápido da cadeia para
   // JSON curto. O DeepSeek Pro leva ~53s na mediana nesta tarefa.
   lead_profile_extraction: 'claude',
+  // Ficha da vaga: extração curta, em lote, milhares de vezes. Maquinário
+  // interno — o modelo barato, pelo mesmo motivo de `profile_extraction`.
+  job_intelligence: 'deepseek',
   // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
   normalization: 'deepseek',

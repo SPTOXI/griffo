@@ -8836,3 +8836,45 @@ Não é correção pontual: muda o que "combina" significa para o produto inteir
 4. **Pré-filtro por área antes do teto de 500** — gastar o orçamento nas vagas cujo título ou descrição toca a área do perfil, e não nas mais recentes.
 
 Recomendação: 2 + 4. A 2 é a que torna a nota honesta e medível; a 4 impede que o teto esconda o que existe.
+
+## 2.136 Opções 2 e 4 do §2.135: a ficha da vaga por IA e o teto de 500 gasto por área
+
+**Decisão do operador (23/09/2026):** seguir com a extração de requisitos por IA (opção 2) e com o teto de 500 gasto pela área do perfil (opção 4). Perguntou também de quem era a falha das descrições ausentes.
+
+### De quem é a falha — medido nos dois bancos
+
+| Brasil, vagas abertas | Total | Com descrição ≥ 200 caracteres |
+|---|---|---|
+| JobBase · InfoJobs | 4.845 | 0 |
+| JobBase · Catho | 1.627 | 0 |
+| JobBase · Adzuna | 1.000 | 919 (cortadas em 500 pela API da Adzuna) |
+| JobBase · Gupy | 259 | 259 (mediana 2.378) |
+| JobBase · SmartRecruiters | 44 | 0 |
+
+- **Do JobBase (a maior parte):** os coletores de InfoJobs e Catho não guardam descrição — 6.472 das 7.775 vagas BR dele. Nenhuma mudança no Griffo resolve isso.
+- **Nossa (a menor):** `SELECT_COLUMNS` do adapter nunca pediu `description`. Perdíamos as ~1.178 descrições BR que o JobBase tem (e as ~4.166 longas, de Greenhouse/Lever/Ashby, das vagas sem país). Corrigido aqui.
+- As 4.312 vagas do JobBase no nosso banco com `description` nula são, portanto, quase todas InfoJobs/Catho: continuarão sem texto depois desta correção.
+
+### Opção 2 — a ficha da vaga (`lib/jobs/intelligence.ts`, `intelligence.server.ts`)
+
+É o §27 ("inteligência da vaga, uma vez por vaga"), que o schema já previa em `Job.intelligenceJson` e nunca foi feito.
+
+- **Tarefa de IA própria, `job_intelligence`**, primário DeepSeek (maquinário interno, barato), `internal: true` (fora do juiz por amostragem). O agente de qualidade a trata ANTES do piso de 50 caracteres: `{"requirements":[],"skills":[]}` é resposta certa para anúncio sem nada técnico, e reprovar mandaria o roteador atrás de uma lista inventada.
+- **Formato do matching:** termos curtos (1–4 palavras), no idioma do anúncio, no máximo 8 por lista — `intersectSkills` compara por inclusão de texto, e a nota é `atendidos / pedidos`. Sem comportamentais, benefícios, tempo de experiência. Item repetido entre as listas fica só em `requirements`, para não contar duas vezes.
+- **Anúncio é dado de terceiros:** vai por `wrapUntrustedDocument`, como o currículo. Cortado em 6.000 caracteres.
+- **Grava onde o matching já lê** (`requirements`, `skills`); `intelligenceJson` guarda só o marcador `{ v, at, status }` — `ok`, `too_short` (menos de 200 caracteres, sem chamar IA) ou `unparseable` (pagou e não leu; não relê). Falha de provedor NÃO marca: a vaga volta na próxima rodada; 3 falhas seguidas encerram a rodada.
+- **Recoleta não apaga a ficha:** `rowFor` grava `"[]"` quando a fonte não manda lista, e a atualização diária sobrescreveria o que foi extraído — sem que a extração relesse, porque a vaga já está marcada. `keepExtractedLists` só deixa a recoleta escrever lista quando a fonte mandou uma.
+- **Gatilho:** `/api/cron/job-intelligence`, a cada 30 min por `.github/workflows/job-intelligence.yml` (Hobby: os dois crons da Vercel estão ocupados). Cada rodada inicia leituras até ~27s e termina até ~52s (orçamento de 25s por chamada), 6 simultâneas, mais recentes primeiro, e responde quantas faltam — da ordem de 30–60 vagas por rodada, ~1.500–2.900 por dia.
+- **Custo estimado:** ~US$ 0,0005–0,001 por vaga (DeepSeek Flash, ~1,2 mil tokens de entrada). Estoque atual com descrição, mais o que o JobBase passa a mandar: da ordem de US$ 2–8, uma vez. Depois, ~230 vagas novas/dia ≈ US$ 0,10–0,20/dia. A conferir no `AiLog` depois da primeira rodada.
+
+### Opção 4 — o teto de 500 gasto por área (`lib/matching/area-terms.ts`, `openJobsWithinBudget`)
+
+Mesmo raciocínio do comentário existente ("a mudança é de ORDEM, não de escopo"), um nível abaixo: dentro do mercado, as camadas agora são (1) título toca a área, (2) descrição ou ficha toca a área, (3) o resto do mercado por data, (4) o resto do mundo. Nada sai do lote por não casar; filtro duro e `matchJob` continuam decidindo.
+
+- Termos = frases inteiras do perfil (cargos, área, especializações, competências), com e sem acento, mínimo 4 caracteres; frases, não palavras, porque "gestão" sozinha está em milhares de vagas.
+- Medido em produção para o perfil do §2.135: a camada de texto acha 245 vagas BR (entre elas "Coordenador de Aférese Terapêutica (TMO)" e "Enfermeiro Supervisor Medicina Diagnóstica"), em ~1,4s de varredura. Aceitável para a landing (roda em `after()`) e para o Radar com a base de usuários atual; se crescer, o caminho é um índice trigram (`pg_trgm`) em `title`/`description`.
+- Verificado localmente com vagas semeadas: as vagas da área saem antes da mais recente de outra área.
+
+### O que continua sem solução
+
+As vagas sem descrição (InfoJobs/Catho, ~71% do Brasil) não ganham ficha. Para elas o único sinal segue sendo o cargo — a opção 3 do §2.135, que fica para decisão futura. Também sem solução aqui: a taxonomia de 12 cargos.

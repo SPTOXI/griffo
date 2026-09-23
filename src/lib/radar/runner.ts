@@ -1,5 +1,6 @@
 import 'server-only'
 import { db } from '../db'
+import { keepExtractedLists } from '../jobs/intelligence'
 // `sourceservesMarkets` NÃO entra aqui de propósito, e estava importado sem uso.
 // Coletar é por FONTE e serve a todo mundo: filtrar a coleta pelo mercado de
 // quem está na fila desta rodada faria a mesma fonte ser coletada ou não
@@ -16,6 +17,7 @@ import { assessLegitimacyForJobs } from '../jobs/legitimacy.server'
 import { normalizeJob } from '../jobs/normalize'
 import { JobNormalizationError, type NormalizedJob } from '../jobs/types'
 import { filterJobs, hasMatchableSignal, marketScopeOf } from '../matching/filters'
+import { areaTermsOf } from '../matching/area-terms'
 import { internalSignalScore, matchJob } from '../matching/compatibility'
 import { fromRecord as profileFromRecord, type ProfessionalProfile } from '../profile'
 import { curate, DEFAULT_RADAR_PREFERENCES, type EvaluatedOpportunity, type RadarPreferences } from './curation'
@@ -183,6 +185,8 @@ export async function runCollection(
     lastSeenAt: now,
   })
 
+  const refreshRowFor = (job: NormalizedJob) => keepExtractedLists(rowFor(job), job)
+
   let inserted = 0
   let updated = 0
   let skippedTooOld = 0
@@ -240,7 +244,7 @@ export async function runCollection(
         toUpdate.map((j) =>
           db.job.update({
             where: { dedupeKey: j.dedupeKey },
-            data: { ...rowFor(j), closedAt: null, closedReason: null },
+            data: { ...refreshRowFor(j), closedAt: null, closedReason: null },
           })
         )
       )
@@ -410,6 +414,16 @@ const NEWEST_FIRST = { publishedAt: { sort: 'desc', nulls: 'last' } } as const
  * mudança é de ORDEM, não de escopo. Só quando 500 vagas do mercado da pessoa
  * já não cabem é que o resto fica de fora — e aí ficar de fora é a decisão
  * certa.
+ *
+ * ## Dentro do mercado, a área antes da data (§2.136)
+ *
+ * "Mais recentes do mercado" repetiu o mesmo erro um nível abaixo. O Brasil
+ * passou de 6 mil vagas frescas, e as 500 mais recentes não tinham relação com
+ * quem estava sendo atendido: a primeira vaga de laboratório estava na posição
+ * 1.068, e uma coordenadora de análises clínicas nunca a via. Agora o teto é
+ * gasto primeiro nas vagas cujo título toca a área do perfil, depois nas que a
+ * mencionam na descrição ou na ficha, e só então nas mais recentes. Os termos
+ * vêm de `areaTermsOf`; continua sendo ORDEM — nada sai do lote por não casar.
  */
 /**
  * Tira do lote o que o próprio anúncio declara não ser vaga, e MEDE o resto.
@@ -462,37 +476,55 @@ async function dropDeclaredTalentPools<T extends LegitimacyJobRow>(rows: T[]): P
 
 async function openJobsWithinBudget(profile: ProfessionalProfile) {
   const scope = marketScopeOf(profile)
-
-  const inScope = await db.job.findMany({
-    where: { ...freshOpenJobWhere(), market: { in: scope } },
-    orderBy: NEWEST_FIRST,
-    take: MAX_JOBS_PER_USER,
+  const terms = areaTermsOf(profile)
+  const contains = (field: 'title' | 'description' | 'requirements' | 'skills', term: string) => ({
+    [field]: { contains: term, mode: 'insensitive' as const },
   })
 
-  if (inScope.length >= MAX_JOBS_PER_USER) return inScope
+  const picked: Awaited<ReturnType<typeof db.job.findMany>> = []
+  const pickedIds = new Set<string>()
 
-  const rest = await db.job.findMany({
-    // `AND` explícito, e não espalhamento: `freshOpenJobWhere()` já traz um
-    // `OR` (a vaga sem data de publicação que nunca é eliminada), e o filtro de
-    // mercado abaixo traz outro. Espalhar os dois no mesmo objeto faria o
-    // segundo `OR` sobrescrever o primeiro em silêncio — e o filtro de frescor
-    // sumiria justamente desta consulta.
-    where: {
-      AND: [
-        freshOpenJobWhere(),
-        {
-          // `notIn` sozinho deixaria de fora as vagas sem mercado: em SQL,
-          // `market NOT IN (...)` com `market` nulo não é verdadeiro. São
-          // justamente as vagas que "desconhecido nunca elimina" protege.
-          OR: [{ market: null }, { market: { notIn: scope } }],
-        },
-      ],
-    },
-    orderBy: NEWEST_FIRST,
-    take: MAX_JOBS_PER_USER - inScope.length,
-  })
+  // Cada camada gasta o que sobrou do teto e não repete o que uma anterior já
+  // pegou. `AND` explícito em tudo: `freshOpenJobWhere()` já traz um `OR`, e
+  // as camadas trazem outros — espalhá-los no mesmo objeto faria um sobrescrever
+  // o outro em silêncio (ver o comentário da última camada).
+  async function layer(where: object) {
+    const room = MAX_JOBS_PER_USER - picked.length
+    if (room <= 0) return
+    const rows = await db.job.findMany({
+      where: {
+        AND: [freshOpenJobWhere(), where, ...(pickedIds.size ? [{ id: { notIn: [...pickedIds] } }] : [])],
+      },
+      orderBy: NEWEST_FIRST,
+      take: room,
+    })
+    for (const row of rows) {
+      pickedIds.add(row.id)
+      picked.push(row)
+    }
+  }
 
-  return [...inScope, ...rest]
+  // 1–2. A área primeiro: título, depois descrição e ficha (§2.136).
+  if (terms.title.length > 0) {
+    await layer({ market: { in: scope }, OR: terms.title.map((t) => contains('title', t)) })
+  }
+  if (terms.text.length > 0) {
+    await layer({
+      market: { in: scope },
+      OR: terms.text.flatMap((t) => [contains('description', t), contains('requirements', t), contains('skills', t)]),
+    })
+  }
+
+  // 3. O resto do mercado da pessoa, mais recentes primeiro.
+  await layer({ market: { in: scope } })
+
+  // 4. O resto do mundo, enquanto sobrar orçamento. `notIn` sozinho deixaria de
+  // fora as vagas sem mercado: em SQL, `market NOT IN (...)` com `market` nulo
+  // não é verdadeiro. São justamente as vagas que "desconhecido nunca elimina"
+  // protege.
+  await layer({ OR: [{ market: null }, { market: { notIn: scope } }] })
+
+  return picked
 }
 
 /**

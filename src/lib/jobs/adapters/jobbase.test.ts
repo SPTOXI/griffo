@@ -88,6 +88,15 @@ test('category_slug do JobBase mapeia para category; sem ele fica null', () => {
   assert.equal(jobs[1].category, null)
 })
 
+test('description do JobBase vira a descrição da vaga; ausente fica null (§2.136)', () => {
+  const jobs = parseJobBasePayload([
+    { ...payloadValido[0], description: 'Requisitos: Hematologia, CRBM ativo.', external_id: 'd1' },
+    { ...payloadValido[1], external_id: 'd2' },
+  ])
+  assert.equal(jobs[0].description, 'Requisitos: Hematologia, CRBM ativo.')
+  assert.equal(jobs[1].description, null)
+})
+
 test('publishedAt prefere posted_at; sem ele cai para first_seen_at', () => {
   const jobs = parseJobBasePayload(payloadValido)
   assert.equal(jobs[0].publishedAt, '2026-08-10T12:00:00Z')

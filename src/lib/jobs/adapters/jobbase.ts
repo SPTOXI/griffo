@@ -111,6 +111,12 @@ const SELECT_COLUMNS = [
   // quando o título não bate com nenhuma categoria ("outros" tem slug
   // próprio, não é isto que fica `null`).
   'category_slug',
+  // Pedida desde 23/09/2026 (§2.136). Sem ela a vaga chegava só com título, e
+  // a extração de requisitos (`lib/jobs/intelligence`) não tinha o que ler. No
+  // JobBase ela é esparsa — InfoJobs e Catho não a coletam, e a da Adzuna
+  // vem cortada em 500 caracteres pela própria API —, então `null` continua
+  // sendo o caso comum no Brasil.
+  'description',
 ].join(',')
 
 const WORK_MODE_TO_REMOTE_TYPE: Record<string, string> = {
@@ -136,6 +142,7 @@ interface JobBasePosting {
   posted_at?: string | null
   first_seen_at?: string | null
   category_slug?: string | null
+  description?: string | null
 }
 
 function pickDate(...candidates: unknown[]): string | null {
@@ -180,6 +187,7 @@ export function parseJobBasePayload(payload: unknown): RawJob[] {
       city: typeof item?.city === 'string' ? item.city : null,
       remoteType: WORK_MODE_TO_REMOTE_TYPE[workMode] || 'unknown',
       category: typeof item?.category_slug === 'string' ? item.category_slug : null,
+      description: typeof item?.description === 'string' ? item.description : null,
       salaryMin: typeof item?.salary_min === 'number' ? item.salary_min : null,
       salaryMax: typeof item?.salary_max === 'number' ? item.salary_max : null,
       currency: typeof item?.salary_currency === 'string' ? item.salary_currency : null,

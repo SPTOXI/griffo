@@ -1,0 +1,30 @@
+name: Ficha das vagas (requisitos extraídos da descrição)
+
+# Lê as vagas ainda sem ficha e grava o que o anúncio pede em
+# `requirements`/`skills` (§2.136). Sem isto nenhuma vaga lista requisito e o
+# matching só reconhece os 12 cargos da taxonomia. Cada rodada trabalha até o
+# prazo da função e para; a seguinte continua de onde parou.
+#
+# Fora do vercel.json pelo mesmo motivo da retenção: o plano Hobby agenda só
+# dois crons e os dois estão ocupados. Usa o mesmo secret CRON_SECRET.
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar /api/cron/job-intelligence
+        run: |
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" --max-time 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://griffo.work/api/cron/job-intelligence)
+          echo "HTTP $status"
+          cat /tmp/response.json
+          if [ "$status" -ge 300 ]; then
+            echo "Leitura das vagas falhou (HTTP $status)."
+            exit 1
+          fi
