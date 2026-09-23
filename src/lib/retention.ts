@@ -79,6 +79,8 @@ export interface PurgeReport {
   agedJobs: number
   /** Linhas do histórico de ofertas além do prazo de retenção. */
   offerLogs: number
+  /** Currículos enviados sem conta na landing, já vencidos. */
+  visitorLeads: number
   errors: string[]
 }
 
@@ -97,6 +99,7 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
     closedJobs: 0,
     agedJobs: 0,
     offerLogs: 0,
+    visitorLeads: 0,
     errors: [],
   }
 
@@ -172,6 +175,17 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
     }
 
     return apagadas
+  })
+
+  /**
+   * Reserva da purga horária (`/api/cron/visitor-leads`). É ela que cumpre as
+   * 24 horas; esta linha só garante que um dia inteiro sem o workflow horário
+   * não deixe currículo vencido para trás. Vem antes dos expurgos de vaga pelo
+   * mesmo motivo do histórico de ofertas: conformidade primeiro.
+   */
+  report.visitorLeads = await step('visitorLead', async () => {
+    const r = await db.visitorLead.deleteMany({ where: { expiresAt: { lt: new Date() } } })
+    return r.count
   })
 
   /**

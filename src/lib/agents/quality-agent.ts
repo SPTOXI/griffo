@@ -189,7 +189,7 @@ export function auditQualityOfAiResult(taskType: string, content: string): Quali
    * outro provedor atrás de uma resposta mais cheia, que só poderia ser mais
    * cheia inventando. Quem descarta campo ruim é `lib/profile/extract.ts`.
    */
-  if (taskType === 'profile_extraction') {
+  if (taskType === 'profile_extraction' || taskType === 'lead_profile_extraction') {
     const stripped = text.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim()
     let json: any
     try {

@@ -74,6 +74,32 @@ export const PROFILE_EXTRACTION_JSON_SCHEMA = {
   },
 } as const
 
+/**
+ * O prompt da extração. Um só, para a extração de conta e a do envio sem conta
+ * da landing: as duas leem o mesmo currículo para alimentar o mesmo matching,
+ * e duas cópias do texto divergiriam na primeira correção feita só numa.
+ */
+export function profileExtractionSystemPrompt(languageDirective: string): string {
+  return `${languageDirective}
+
+Você lê currículos e extrai o que ESTÁ ESCRITO neles. Você não avalia, não recomenda e não melhora nada.
+
+REGRA ÚNICA E INEGOCIÁVEL: se o currículo não diz, o campo é null (ou lista vazia). Não deduza, não estime, não complete com o que "costuma ser". Um campo nulo é uma resposta correta; um campo inventado corrompe o perfil da pessoa e muda as vagas que ela vai receber.
+
+CAMPOS:
+
+- "currentTitle": o cargo mais recente, exatamente como escrito. Se a pessoa está entre empregos, o último que teve.
+- "seniority": um de ${SENIORITY_LEVELS.join(', ')}. Baseie-se no cargo declarado e no tempo de carreira — NÃO em quão impressionante o currículo parece. Se o cargo não indica nível, null.
+- "field": a área de atuação em duas ou três palavras (ex: "enfermagem", "engenharia de software", "logística").
+- "specializations": até 8 subáreas ou domínios em que a pessoa efetivamente trabalhou.
+- "skills": até 20 competências, ferramentas e tecnologias CITADAS no currículo. Não acrescente as que "quem faz isso costuma ter".
+- "yearsExperience": anos de experiência profissional, somando os períodos declarados. Se as datas não permitem somar, null. Nunca arredonde para cima.
+- "educationLevel": um de ${EDUCATION_LEVELS.join(', ')} — a MAIOR formação CONCLUÍDA. Curso em andamento não conta.
+- "targetRoles": cargos que a pessoa declara buscar, se o currículo tiver objetivo profissional. Se não tiver, lista vazia — NÃO deduza a partir do cargo atual.
+
+Responda APENAS o JSON do schema, sem texto antes ou depois.`
+}
+
 function text(value: unknown, maxLength: number): string | undefined {
   if (typeof value !== 'string') return undefined
   const trimmed = value.trim()

@@ -1186,3 +1186,57 @@ model RadarOfferLog {
   /// usuário. Sem este, o expurgo de conformidade vira varredura da tabela.
   @@index([offeredAt])
 }
+
+/// Currículo enviado por quem ainda não tem conta, no envio da landing
+/// (§2.132): "envie seu currículo e descubra as oportunidades que combinam
+/// com você".
+///
+/// **A pessoa escolhe quanto tempo isto vive.** O padrão é apagar em 24 horas;
+/// guardar para empresas a encontrarem exige marcação ativa (LGPD: o
+/// consentimento não pode vir pré-marcado). `expiresAt` é a única regra de
+/// retenção desta tabela, e vale nas duas pontas: a leitura recusa linha
+/// vencida e a purga horária (`/api/cron/visitor-leads`) apaga.
+///
+/// O texto do currículo só é gravado quando a pessoa escolhe guardar. Quem
+/// escolhe apagar é processado em memória, e aqui fica só o resultado.
+model VisitorLead {
+  /// Também é a credencial de leitura do resultado: 32 caracteres hex
+  /// aleatórios gerados no servidor, e não `cuid()`, que é previsível.
+  id        String  @id
+  email     String
+  /// Idioma da tela no envio — é o do resultado e o do e-mail.
+  lang      String
+  /// País da borda (ou da rota) no envio. Ordena o mercado das vagas quando
+  /// o currículo não diz onde a pessoa está.
+  country   String?
+  /// processing | ready | failed
+  status    String  @default("processing")
+  /// Por que falhou, para a tela escolher a mensagem. Nunca texto de erro cru.
+  failureCode String?
+  /// `AtsCheckResult` do teste de legibilidade, em JSON.
+  atsJson     String
+  /// `ProfileSuggestion` lida do currículo, em JSON.
+  profileJson String?
+  /// Oportunidades em ordem de exibição: `[{ jobId, overall, recommendation }]`.
+  matchesJson String?
+  /// O currículo não trouxe cargo, área nem competências para comparar
+  /// (`hasMatchableSignal`). Diferente de "nenhuma vaga": aqui não houve busca.
+  profileInsufficient Boolean @default(false)
+  /// Só preenchido quando `recruiterOptIn` é verdadeiro.
+  resumeText  String?
+  /// A pessoa escolheu guardar os dados para empresas a encontrarem.
+  recruiterOptIn Boolean  @default(false)
+  consentAt      DateTime @default(now())
+  expiresAt      DateTime
+  /// E-mail de resultado já enviado. Nulo quando não saiu.
+  notifiedAt     DateTime?
+  visitorId      String?
+  /// Hash do IP (nunca o IP), para a cota — mesmo esquema de `ats-check/quota.ts`.
+  ipKey          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@index([ipKey, createdAt])
+  @@index([visitorId, createdAt])
+}

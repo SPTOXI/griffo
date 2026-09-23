@@ -139,6 +139,12 @@ const RULES: Rule[] = [
   // Teste ATS público: a cota real (1 por pessoa a cada 24h) fica no banco,
   // na própria rota. Isto só barra rajadas antes de chegar lá.
   { prefix: '/api/public/ats-check', limit: 3, windowMs: 10 * 60_000 },
+  // Envio de currículo da landing (§2.132): mesma lógica — a cota real (1 por
+  // pessoa a cada 24h) fica na rota; isto barra rajadas.
+  { prefix: '/api/public/match-preview', limit: 3, windowMs: 10 * 60_000 },
+  // A consulta do resultado é chamada a cada 2s enquanto ele fica pronto. Prefixo
+  // PRÓPRIO, sem nada em comum com o envio, e limite alto: ver `rate-rules.ts`.
+  { prefix: '/api/public/match-result', limit: 300, windowMs: 10 * 60_000 },
   // Exportação lê todos os dados do titular de uma vez; exclusão é
   // irreversível. Ambas são legítimas e raras — o limite é baixo de propósito.
   { prefix: '/api/user/export', limit: 5, windowMs: 60 * 60_000 },

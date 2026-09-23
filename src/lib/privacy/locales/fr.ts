@@ -39,6 +39,10 @@ export const fr: PrivacyContent = {
       title: 'Préférence de langue',
       body: "La langue d'interface que vous choisissez, enregistrée pour que le site s'en souvienne lors de votre prochaine visite.",
     },
+    {
+      title: "CV envoyé sans compte (page d’accueil)",
+      body: "Si vous envoyez votre CV via le formulaire de la page d’accueil sans créer de compte, nous recevons le fichier (ou le texte collé) et votre adresse e-mail. Nous utilisons le CV pour identifier votre poste, votre domaine et vos compétences et les comparer aux offres ouvertes, et l’e-mail pour vous envoyer le lien vers votre résultat. Lors de l’envoi, vous choisissez : tout supprimer sous 24 heures, ou conserver le CV pour que des entreprises puissent vous trouver. La conservation exige que vous cochiez cette option ; par défaut, tout est supprimé.",
+    },
   ],
 
   howWeUseHeading: 'À quoi cela sert',
@@ -90,6 +94,8 @@ export const fr: PrivacyContent = {
     { category: "Journal d'audit (registre de conformité et de sécurité)", period: "Jusqu'à 730 jours" },
     { category: 'Enregistrements de paiement/webhook', period: "Jusqu'à 90 jours" },
     { category: "Historique des offres du Radar (postes que le Radar vous a présentés)", period: "Jusqu'à 730 jours" },
+    { category: "CV envoyé sans compte, avec l’option « tout supprimer sous 24 heures »", period: "Jusqu’à 24 heures. Le texte du CV n’est pas conservé ; seuls le résultat et l’e-mail le sont, supprimés dans le même délai" },
+    { category: "CV envoyé sans compte, avec l’option « conserver pour les entreprises »", period: "Jusqu’à 730 jours, ou jusqu’à ce que vous en demandiez la suppression" },
   ],
 
   rightsHeading: 'Vos droits et choix',

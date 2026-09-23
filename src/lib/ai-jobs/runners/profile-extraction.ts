@@ -7,10 +7,10 @@ import {
   detectProfileConflicts,
   parseProfileExtraction,
   PROFILE_EXTRACTION_JSON_SCHEMA,
+  profileExtractionSystemPrompt,
 } from '../../profile/extract'
 import { fromRecord } from '../../profile'
 import { parseStoredOrientation, rolesFromOrientation } from '../../profile/from-orientation'
-import { EDUCATION_LEVELS, SENIORITY_LEVELS } from '../../profile'
 import { registerAiJobRunner } from '../engine'
 import { runSingleCallJob } from './single-call'
 
@@ -35,24 +35,7 @@ export async function processProfileExtractionJob(jobId: string): Promise<void> 
 
     const lang = job.lang as 'pt' | 'en' | 'es'
 
-    const systemPrompt = `${LANGUAGE_DIRECTIVE[lang]}
-
-Você lê currículos e extrai o que ESTÁ ESCRITO neles. Você não avalia, não recomenda e não melhora nada.
-
-REGRA ÚNICA E INEGOCIÁVEL: se o currículo não diz, o campo é null (ou lista vazia). Não deduza, não estime, não complete com o que "costuma ser". Um campo nulo é uma resposta correta; um campo inventado corrompe o perfil da pessoa e muda as vagas que ela vai receber.
-
-CAMPOS:
-
-- "currentTitle": o cargo mais recente, exatamente como escrito. Se a pessoa está entre empregos, o último que teve.
-- "seniority": um de ${SENIORITY_LEVELS.join(', ')}. Baseie-se no cargo declarado e no tempo de carreira — NÃO em quão impressionante o currículo parece. Se o cargo não indica nível, null.
-- "field": a área de atuação em duas ou três palavras (ex: "enfermagem", "engenharia de software", "logística").
-- "specializations": até 8 subáreas ou domínios em que a pessoa efetivamente trabalhou.
-- "skills": até 20 competências, ferramentas e tecnologias CITADAS no currículo. Não acrescente as que "quem faz isso costuma ter".
-- "yearsExperience": anos de experiência profissional, somando os períodos declarados. Se as datas não permitem somar, null. Nunca arredonde para cima.
-- "educationLevel": um de ${EDUCATION_LEVELS.join(', ')} — a MAIOR formação CONCLUÍDA. Curso em andamento não conta.
-- "targetRoles": cargos que a pessoa declara buscar, se o currículo tiver objetivo profissional. Se não tiver, lista vazia — NÃO deduza a partir do cargo atual.
-
-Responda APENAS o JSON do schema, sem texto antes ou depois.`
+    const systemPrompt = profileExtractionSystemPrompt(LANGUAGE_DIRECTIVE[lang])
 
     const aiResponse = await executeAiTask({
       taskType: 'profile_extraction',

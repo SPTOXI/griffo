@@ -47,6 +47,26 @@ o quanto confiar nele.
 
 **Pendências que estão esperando alguém, não código:**
 
+★ ⏳ **ABERTA em 23/09/2026 — foco de venda invertido (§2.132).** Decidido
+   com o operador: o envio do currículo vira o hero ("Procurando emprego?
+   Envie seu currículo e descubra as oportunidades que combinam com você."),
+   uma oportunidade grátis, lista completa paga, passe de 24h a US$ 2,60 sem
+   Análise Completa como degrau para o Essencial. O funil medido zera no
+   primeiro gesto (925 visitantes em 30 dias, 2 testes ATS, nenhum currículo),
+   então a fase 1 (a porta) vem antes do preço. As três decisões abertas foram
+   respondidas no mesmo dia: passe **proporcional por faixa** (~70% do
+   Essencial), vagas do **JobBase com nome e link de origem**, e o visitante
+   **escolhe entre apagar em 24h (padrão) ou guardar para empresas**, ambos
+   grátis.
+
+   **Fase 1 implementada no §2.133** (envio no topo da landing, 1
+   oportunidade grátis, lista trancada, isca quantificada, e-mail de
+   resultado, purga horária). **Para ir ao ar, nesta ordem**: `npx prisma db
+   push` (tabela `VisitorLead`), `npm run db:rls`, e só então o merge. Depois
+   do primeiro envio real, conferir no `AiLog` o custo e o tempo de
+   `lead_profile_extraction` (Haiku 4.5) e se o e-mail saiu (`notifiedAt`).
+   Próximo: fase 2, o passe de 24h com preço proporcional por faixa.
+
 0. ⏳ **ABERTA em 21/09/2026 — conferir o volume do primeiro EXPURGO por
    idade, e o efeito na contagem pública.**
 

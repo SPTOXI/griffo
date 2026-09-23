@@ -1,0 +1,30 @@
+name: Purga horária (currículos enviados sem conta)
+
+# O envio de currículo da landing promete apagar os dados em até 24 horas
+# (§2.132). A linha vence em 22h e esta purga roda de hora em hora; as duas
+# horas de folga cobrem o atraso de agendamento do GitHub Actions. A retenção
+# diária (`retention-daily.yml`) também apaga o que venceu, como reserva.
+#
+# Fora do vercel.json pelo mesmo motivo da retenção: o plano Hobby agenda só
+# dois crons e os dois estão ocupados. Usa o mesmo secret CRON_SECRET.
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar /api/cron/visitor-leads
+        run: |
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://griffo.work/api/cron/visitor-leads)
+          echo "HTTP $status"
+          cat /tmp/response.json
+          if [ "$status" -ge 300 ]; then
+            echo "Purga falhou (HTTP $status)."
+            exit 1
+          fi

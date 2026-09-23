@@ -213,6 +213,10 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   // redação nem julgamento: o modelo barato faz isso bem, e a rota é chamada
   // uma vez por pessoa.
   profile_extraction: 'deepseek',
+  // Mesma extração, com alguém esperando na tela da landing: vai para o Claude
+  // (com `modelOverride` Haiku 4.5 na chamada), o mais rápido da cadeia para
+  // JSON curto. O DeepSeek Pro leva ~53s na mediana nesta tarefa.
+  lead_profile_extraction: 'claude',
   // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
   normalization: 'deepseek',
