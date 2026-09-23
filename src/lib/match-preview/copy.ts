@@ -779,7 +779,7 @@ const ja: MatchPreviewCopy = {
   resultTitleMany: 'あなたに合う求人が {count} 件見つかりました',
   resultTitleOne: 'あなたに合う求人が 1 件見つかりました',
   resultTitleNone: 'あなたのプロフィールに強く合う求人はまだ見つかっていません',
-  resultNoneText: '求人は毎日変わります。アカウントがあれば、合う求人が出たときにレーダーがお知らせします。',
+  resultNoneText: '求人は毎日変わります。アカウントがあれば、合う求人が出たときに Radar がお知らせします。',
   profileInsufficientText: '履歴書から職種・分野・スキルを読み取れなかったため、求人と照合できるものがまだありません。',
   freeBadge: '公開中の求人',
   fit: {
@@ -860,7 +860,7 @@ const ko: MatchPreviewCopy = {
   resultTitleMany: '나에게 맞는 기회를 {count}건 찾았습니다',
   resultTitleOne: '나에게 맞는 기회를 1건 찾았습니다',
   resultTitleNone: '아직 프로필에 잘 맞는 기회를 찾지 못했습니다',
-  resultNoneText: '채용 공고는 매일 바뀝니다. 계정이 있으면 맞는 공고가 나올 때 레이더가 알려드립니다.',
+  resultNoneText: '채용 공고는 매일 바뀝니다. 계정이 있으면 맞는 공고가 나올 때 Radar가 알려드립니다.',
   profileInsufficientText: '이력서에서 직무, 분야, 역량을 확인하지 못해 아직 공고와 비교할 내용이 없습니다.',
   freeBadge: '공개된 기회',
   fit: {
@@ -941,7 +941,7 @@ const zh: MatchPreviewCopy = {
   resultTitleMany: '我们找到了 {count} 个适合你的机会',
   resultTitleOne: '我们找到了 1 个适合你的机会',
   resultTitleNone: '暂时还没有找到与你的资料高度匹配的机会',
-  resultNoneText: '职位每天都在变化。有了账户，雷达会在出现合适职位时通知你。',
+  resultNoneText: '职位每天都在变化。有了账户，Radar 会在出现合适职位时通知你。',
   profileInsufficientText: '我们没能从简历中识别出你的职位、领域或技能，因此暂时还无法与职位进行比对。',
   freeBadge: '已开放的机会',
   fit: {
@@ -959,7 +959,7 @@ const zh: MatchPreviewCopy = {
   lockedStrong: '其中 {n} 个高度匹配',
   lockedStrongOne: '而且高度匹配',
   unlockCta: '查看所有机会',
-  atsScoreLabel: '招聘管理系统可读性',
+  atsScoreLabel: '招聘筛选系统可读性',
   teaserMany: '我们发现 {n} 处降低你在招聘筛选系统中可见度的问题',
   teaserOne: '我们发现 1 处降低你在招聘筛选系统中可见度的问题',
   teaserNone: '招聘筛选系统可以顺利读取你的简历。',
@@ -971,7 +971,7 @@ const zh: MatchPreviewCopy = {
   },
   teaserClose: '修正这些问题可能会提高你获得面试邀请的机会。',
   teaserCta: '查看完整诊断',
-  keptNote: '你的简历已保存，企业可以找到你。如需删除，请写信至 {email}。',
+  keptNote: '你的简历已保存，让企业可以找到你。如需删除，请写信至 {email}。',
   deleteNote: '你的数据将在 24 小时内删除。',
   emailSubject: '你的 GriffoWork 结果',
   emailHeading: '你的结果已经准备好了',
@@ -1022,7 +1022,7 @@ const ar: MatchPreviewCopy = {
   resultTitleMany: 'وجدنا {count} فرصة تناسبك',
   resultTitleOne: 'وجدنا فرصة واحدة تناسبك',
   resultTitleNone: 'لم نجد بعد فرصة قوية تناسب ملفك',
-  resultNoneText: 'الوظائف تتغير كل يوم. مع حساب، يُبلغك الرادار عندما تظهر وظيفة تناسبك.',
+  resultNoneText: 'الوظائف تتغير كل يوم. مع حساب، يُبلغك Radar عندما تظهر وظيفة تناسبك.',
   profileInsufficientText: 'لم نتمكن من تحديد مسمّاك الوظيفي أو مجالك أو مهاراتك في السيرة الذاتية، لذا لا يوجد بعد ما نقارنه بالوظائف.',
   freeBadge: 'فرصة متاحة',
   fit: {
