@@ -8934,3 +8934,36 @@ O proxy deste ambiente recusa conexão com `poesywqtwnihizhkkbii.supabase.co`, e
 **Correção logo depois do merge (mesmo dia): o orçamento por chamada do backfill.** O roteador divide `timeBudgetMs` entre as duas tentativas (primário e suplente). Com os 25s herdados do cron, o Kimi ficaria com ~12s — a mediana dele —, e o `AuditLog` já mostra o Kimi estourando o tempo no agente de deduplicação (`Request timed out` após ~24,5s, 20–22/09). Metade do estoque cairia no DeepSeek sem ninguém ver. O modo `backfill` passa a usar 60s por chamada (~29s para o Kimi, ~29s para o DeepSeek); o `cron` segue com 25s, que cabe no prazo da função.
 
 **Sinal de Kimi fora do ar:** `JobIntelligenceRun.viaFallback` conta as vagas lidas pelo suplente. O script mostra esse número em cada volta e escreve um ATENÇÃO quando passa de um terço das lidas — a vaga é lida mesmo assim, pelo DeepSeek, mas não pelo crédito que se decidiu usar.
+
+## 2.139 Os dois CTAs de "score grátis" iam para o cadastro, não para o envio grátis
+
+24/09/2026. Pedido do operador: os textos "See your score for free" (bloco de prévia gratuita, seção de preços) e "Ready to elevate your executive presentation?" (CTA final da página) prometem uma pontuação grátis, mas os botões (`previewCta`, `ctaFinal.button`) chamavam `onNavigate('signup')` — iam direto para o cadastro, não para onde a pessoa pode de fato mandar o currículo sem conta.
+
+**Correção:** os dois viram âncoras (`<a href="#upload">`) para a seção do `MatchHero` (o "Choose resume PDF" no topo da landing, §2.132/§2.133), que ganhou `id="upload"`. Mesmo padrão que a navegação já usa para `#pricing`/`#faq`. Nenhuma cópia mudou, só o destino. PR #89.
+
+## 2.140 Conferência em produção (24/09, 13h UTC): PDF confirmado, e a ficha da vaga nunca tocou o JobBase
+
+Três checagens de leitura no banco de produção, pedidas depois do §2.138.
+
+**PDF (§2.134): confirmado corrigido.** 2 envios desde o merge do PR #85: notas 73 e 100 (não mais 5), nenhum `profileInsufficient`, os dois `notifiedAt`. `ocr_extraction` zerado desde 23/09 — o fallback caro por transcrição não dispara mais. A extração de perfil: o envio de 23/09 13:07 (antes do fix do §2.135, que só foi ao ar às 18:01) caiu no DeepSeek por failover; o de 24/09 06:18 (depois do fix) foi direto no Claude, sem failover — confirma a correção do schema.
+
+**Ficha da vaga (§2.136–2.138): dois problemas represando o JobBase, não um.**
+
+- **O cron não roda a cada 30 min.** Agendado `7,37 * * * *` no GitHub Actions, mas em 15,5h só disparou 5 vezes (18:04, 21:26, 23:54, 04:35, 09:30) — intervalos de 3 a 5h. Atraso do agendador do GitHub Actions (runs `schedule` competem por prioridade com o resto da conta), não do código.
+- **A fila é global e "mais recente primeiro", sem filtro por fonte.** Fontes pequenas (Adzuna, Gupy, RemoteOK…) recebem `publishedAt` "hoje" a cada coleta e ficam sempre na frente. Das 289 vagas processadas até 24/09 09:30, **zero eram do JobBase** — que sozinho é 13.161 das ~15.500 vagas abertas (3.138 já com descrição, 24%; o resto é sobretudo InfoJobs/Catho, que o JobBase ainda não envia — §2.137). As fontes pequenas já foram esgotadas (ex.: Adzuna NZ 43/43, Gupy 191/1.447); o JobBase, motivo de essa extração existir, não foi tocado uma vez sequer.
+
+Isso, e não só a cobertura ainda parcial, é por que os dois envios de teste do item anterior deram 0 vagas combinando.
+
+**Kimi K3 (backfill, §2.138): ainda não tinha rodado.** Zero chamadas `job_intelligence_backfill` no `AiLog` — o script `npm run jobs:backfill-intelligence` só existe a partir do commit do PR #87; o operador tentou rodar antes de dar `git pull` e recebeu "Missing script".
+
+**Pendências registradas:** a ordenação por data de publicação, sem prioridade de fonte, esfaminha o JobBase tanto no cron quanto no backfill (que ordena pelas mais ANTIGAS, e por isso bateria primeiro num backlog pequeno e velho de outras fontes — Gupy desde abril — antes de chegar no JobBase); e o atraso do agendador do GitHub Actions não tem correção do nosso lado.
+
+## 2.141 O teto real do Kimi por organização é 1 chamada simultânea, não 3
+
+24/09/2026, rodando o backfill (§2.138) depois do `git pull`. Produção devolveu:
+
+```
+KIMI (kimi-k3): 429 (429 ... max organization concurrency: 1, please try again after 1 seconds)
+```
+
+O `MODES.backfill.concurrency` presumia 3 (§2.138, citando §2.34). Com `concurrency: 3`, duas das três chamadas paralelas caíam sempre em 429 e iam para o suplente (DeepSeek): o backfill não parava, mas gastava o crédito do DeepSeek em vez do Kimi — o motivo do script existir — e lia a um terço da velocidade esperada. Corrigido para `concurrency: 1`. PR #90.
