@@ -91,7 +91,7 @@ export function Landing({
       <DocumentLanguage lang={lang} />
       {/* NAV */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-slate-200/80 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-20 sm:min-h-22 py-2 flex items-center justify-between gap-4 flex-wrap transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-20 sm:min-h-22 py-2 flex items-center justify-between gap-4 transition-all">
           <div className="flex items-center gap-3.5 sm:gap-4 cursor-pointer group shrink-0" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <Image
               src="/logo-icon.png"
@@ -107,34 +107,38 @@ export function Landing({
             </div>
           </div>
 
-          {/* DESKTOP NAV */}
-          <nav className="hidden md:flex flex-wrap items-center justify-end gap-x-6 lg:gap-x-8 gap-y-1.5 text-sm font-medium">
-            <a href="#features" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.features}</a>
-            <a href="#social" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.social}</a>
-            <a href="#how" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a>
-            <a href="#pricing" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.plans}</a>
-            <a href="#faq" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.faq}</a>
-            <a href="/market-pulse" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.marketPulse}</a>
-          </nav>
+          {/* DESKTOP NAV + CTAS: um único grupo flex-wrap alinhado à direita, para
+              que idiomas mais longos (DE, PT…) quebrem linha de forma limpa (ainda
+              à direita) em vez de a barra de ações cair solta e alinhada à
+              esquerda embaixo da logo. */}
+          <div className="hidden md:flex min-w-0 flex-1 flex-wrap items-center justify-end gap-x-5 gap-y-2 lg:gap-x-7">
+            <nav className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1.5 text-sm font-medium lg:gap-x-7">
+              <a href="#features" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.features}</a>
+              <a href="#social" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.social}</a>
+              <a href="#how" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a>
+              <a href="#pricing" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.plans}</a>
+              <a href="#faq" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.faq}</a>
+              <a href="/market-pulse" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.marketPulse}</a>
+            </nav>
 
-          {/* DESKTOP CTAS & LANGUAGE SELECTOR */}
-          <div className="hidden md:flex items-center gap-3 shrink-0 flex-wrap justify-end">
-            <LanguageSelector />
+            <div className="flex shrink-0 items-center gap-2.5">
+              <LanguageSelector />
 
-            {user ? (
-              <Button onClick={() => onNavigate('app')} size="sm" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md font-semibold">
-                {t.nav.myPanel} <ArrowRight className="w-4 h-4 ml-1.5" />
-              </Button>
-            ) : (
-              <>
-                <Button onClick={() => onNavigate('login')} size="sm" variant="ghost" className="text-slate-700 hover:text-slate-900 font-medium">
-                  {t.nav.login}
+              {user ? (
+                <Button onClick={() => onNavigate('app')} size="sm" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md font-semibold">
+                  {t.nav.myPanel} <ArrowRight className="w-4 h-4 ml-1.5" />
                 </Button>
-                <Button onClick={() => onNavigate('signup')} size="sm" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md font-semibold px-4">
-                  {t.nav.freeAnalysis}
-                </Button>
-              </>
-            )}
+              ) : (
+                <>
+                  <Button onClick={() => onNavigate('login')} size="sm" variant="ghost" className="text-slate-700 hover:text-slate-900 font-medium">
+                    {t.nav.login}
+                  </Button>
+                  <Button onClick={() => onNavigate('signup')} size="sm" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md font-semibold px-3.5">
+                    {t.nav.freeAnalysis}
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
           {/* MOBILE TOGGLE BUTTON & LANGUAGE SELECTOR */}
