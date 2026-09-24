@@ -75,6 +75,31 @@ o quanto confiar nele.
    `pending` da resposta cair até zerar. Só então reenviar um currículo de
    teste. Vagas sem descrição (InfoJobs/Catho, ~71% do BR) seguem sem ficha.
 
+   **CORREÇÃO (24/09/2026, §2.140): a ficha nunca chegou a tocar o JobBase.**
+   A conferência em produção às 13h UTC achou dois problemas represando o
+   estoque, não a falta de descrição:
+
+   - o cron `job-intelligence.yml` está agendado a cada 30 min mas, em
+     15,5h, só disparou 5 vezes (intervalos de 3 a 5h) — atraso do
+     agendador do GitHub Actions, sem correção do nosso lado;
+   - a fila do cron e do backfill é global, ordenada só por data de
+     publicação, sem prioridade de fonte. Fontes pequenas (Adzuna, Gupy…)
+     recebem `publishedAt` "hoje" a cada coleta e ficam sempre na frente:
+     das 289 vagas já processadas, **zero eram do JobBase**, que sozinho é
+     13.161 das ~15.500 vagas abertas.
+
+   **Ainda não corrigido** — precisa de prioridade de fonte na fila (dar ao
+   JobBase uma fatia garantida por rodada, não só "mais recente primeiro"
+   global). Até lá, o PDF e o schema estão certos, mas a landing pode
+   continuar devolvendo poucas vagas mesmo depois do backfill do Kimi
+   terminar, porque o cron diário vai continuar quase sem tocar o JobBase.
+
+   **Kimi K3 (§2.138): rodado pela primeira vez em 24/09, achou `concurrency:
+   3` errado — o teto real da organização é 1 (§2.141, corrigido). O script
+   (`npm run jobs:backfill-intelligence`) segue rodando; acompanhar
+   `viaFallback` no output e o `AiLog` (`job_intelligence_backfill` por
+   `provider`) até o `pending` do JobBase cair.
+
 0. ⏳ **ABERTA em 21/09/2026 — conferir o volume do primeiro EXPURGO por
    idade, e o efeito na contagem pública.**
 
