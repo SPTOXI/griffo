@@ -29,8 +29,10 @@ import {
  *
  * - `cron` (DeepSeek): 6 — o DeepSeek aguenta, e a rodada tem ~27s para
  *   começar leituras.
- * - `backfill` (Kimi): 3, o teto do Kimi por organização (ver 2.34 na
- *   auditoria). Acima disso ele devolve 429 e o excedente cai no DeepSeek.
+ * - `backfill` (Kimi): 1. O teto real da organização, visto em produção
+ *   (§2.139) — "max organization concurrency: 1" no 429 — é menor que os 3
+ *   presumidos antes. Acima disso ele devolve 429 e o excedente cai no
+ *   DeepSeek, o que ainda funciona mas gasta o crédito errado.
  */
 /**
  * Orçamento de uma chamada, por modo. O roteador o DIVIDE entre as duas
@@ -46,7 +48,7 @@ import {
  */
 const MODES = {
   cron: { taskType: 'job_intelligence', concurrency: 6, order: 'desc', callBudgetMs: 25_000 },
-  backfill: { taskType: 'job_intelligence_backfill', concurrency: 3, order: 'asc', callBudgetMs: 60_000 },
+  backfill: { taskType: 'job_intelligence_backfill', concurrency: 1, order: 'asc', callBudgetMs: 60_000 },
 } as const
 
 export type JobIntelligenceMode = keyof typeof MODES
