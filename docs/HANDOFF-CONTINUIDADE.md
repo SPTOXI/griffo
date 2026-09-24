@@ -88,11 +88,14 @@ o quanto confiar nele.
      das 289 vagas já processadas, **zero eram do JobBase**, que sozinho é
      13.161 das ~15.500 vagas abertas.
 
-   **Ainda não corrigido** — precisa de prioridade de fonte na fila (dar ao
-   JobBase uma fatia garantida por rodada, não só "mais recente primeiro"
-   global). Até lá, o PDF e o schema estão certos, mas a landing pode
-   continuar devolvendo poucas vagas mesmo depois do backfill do Kimi
-   terminar, porque o cron diário vai continuar quase sem tocar o JobBase.
+   **Fila corrigida (§2.142):** `JOBBASE_MIN_SHARE` reserva metade de cada
+   página ao JobBase antes da ordem global — garante progresso nele todo
+   round, sem zerar as demais fontes. **O atraso do agendador do GitHub
+   Actions continua sem correção do nosso lado** — a cadência real do cron
+   (3-5h em vez de 30 min) segue sendo o teto de quanto o estoque avança por
+   dia, mesmo com a fila corrigida. Depois do próximo deploy, conferir no
+   `AiLog` (`job_intelligence`) se as vagas processadas passam a incluir o
+   JobBase.
 
    **Kimi K3 (§2.138): rodado pela primeira vez em 24/09, achou `concurrency:
    3` errado — o teto real da organização é 1 (§2.141, corrigido). O script

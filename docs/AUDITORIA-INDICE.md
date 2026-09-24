@@ -158,3 +158,4 @@ já lista os três documentos de continuidade; este é o quarto.
 | 2.139 | 8938 | produto,landing | Os CTAs "See your score for free" e "Ready to elevate..." iam para o cadastro; viram âncora para `#upload` (o `MatchHero`), mesmo padrão da navegação |
 | 2.140 | 8944 | jobs,ia,infra,decisao | Conferência em produção: PDF confirmado corrigido; achado que a ficha da vaga (§2.136) nunca processou uma vaga do JobBase — cron do GitHub Actions dispara a cada 3-5h (não 30 min) e a fila global ordena por mais recente, sem prioridade de fonte; backfill do Kimi ainda não tinha rodado |
 | 2.141 | 8961 | ia,custo | O teto real do Kimi por organização é 1 chamada simultânea (429 em produção), não 3 como o §2.138 presumia; `MODES.backfill.concurrency` corrigido |
+| 2.142 | 8971 | jobs,ia,decisao | Corrige a fila esfaimada do §2.140: `JOBBASE_MIN_SHARE` reserva metade da página ao JobBase antes da ordem global, garantindo progresso nele todo round sem zerar as demais fontes |
