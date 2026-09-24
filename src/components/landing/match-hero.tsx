@@ -164,9 +164,26 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
             </h1>
             <p className="text-pretty text-xl font-semibold leading-snug text-[#0B63E5] sm:text-2xl">{c.lead}</p>
             {openJobsCount > 0 && (
-              <p className="max-w-[520px] text-base leading-relaxed text-slate-600">
-                {fill(c.subtitle, { N: new Intl.NumberFormat(locale).format(openJobsCount) })}
-              </p>
+              <div className="flex w-fit max-w-[560px] items-start gap-3 rounded-2xl border border-blue-100 bg-white/90 px-4 py-3.5 shadow-[0_1px_2px_rgba(11,99,229,0.06),0_8px_24px_-12px_rgba(11,99,229,0.25)]">
+                <span className="relative mt-1.5 flex h-2.5 w-2.5 shrink-0" title="Atualizado em tempo real">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                </span>
+                <p className="text-pretty text-lg font-semibold leading-snug text-slate-800 sm:text-xl">
+                  {(() => {
+                    const [before, after] = c.subtitle.split('{N}')
+                    return (
+                      <>
+                        {before}
+                        <span className="font-extrabold text-[#0B63E5]">
+                          {new Intl.NumberFormat(locale).format(openJobsCount)}
+                        </span>
+                        {after}
+                      </>
+                    )
+                  })()}
+                </p>
+              </div>
             )}
           </div>
 
