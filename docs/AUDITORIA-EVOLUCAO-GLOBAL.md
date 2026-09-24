@@ -8967,3 +8967,15 @@ KIMI (kimi-k3): 429 (429 ... max organization concurrency: 1, please try again a
 ```
 
 O `MODES.backfill.concurrency` presumia 3 (§2.138, citando §2.34). Com `concurrency: 3`, duas das três chamadas paralelas caíam sempre em 429 e iam para o suplente (DeepSeek): o backfill não parava, mas gastava o crédito do DeepSeek em vez do Kimi — o motivo do script existir — e lia a um terço da velocidade esperada. Corrigido para `concurrency: 1`. PR #90.
+
+## 2.142 A fila da ficha da vaga passa a reservar metade da página ao JobBase
+
+24/09/2026, resolvendo a pendência do §2.140 (item 1: prioridade de fonte).
+
+**Antes:** cada página da fila (`PAGE = 60`) vinha de uma única consulta, ordenada só por `publishedAt`, sem olhar a fonte. Fontes pequenas que republicam todo dia (Adzuna, Gupy...) têm `publishedAt` sempre "hoje"; o JobBase, cujo estoque é grande mas coletado uma vez por dia, tinha a vaga pendente mais nova de véspera. Na ordem "mais recente primeiro" (cron) ele nunca alcançava a frente; na ordem "mais antiga primeiro" (backfill) ele ficava atrás de backlogs pequenos e velhos de outras fontes (Gupy desde abril). Medido: 289 vagas processadas, zero do JobBase.
+
+**Depois:** `JOBBASE_MIN_SHARE = 30` (metade da página) — a primeira consulta busca só do JobBase, na mesma ordem do modo; a segunda completa o resto da página com qualquer fonte, excluindo o que a primeira já pegou. `queue.shift()` processa nessa ordem, então a fatia do JobBase é lida antes do resto sempre que existir alguma pendente. Sem fonte de sobra (JobBase esgotado no momento), a segunda consulta cobre a página inteira normalmente — nada deixa de ser lido.
+
+**Por que 30, não mais.** O JobBase é ~85% do estoque aberto, mas as outras fontes também têm vaga esperando ficha; reservar a página inteira as deixaria paradas enquanto o JobBase tiver pendência (o que, com 3.138 já elegíveis, é o caso agora). Metade garante progresso todo round sem zerar as demais.
+
+Sem teste dedicado (arquivo `server-only`); suíte completa (1182/1182), `tsc` e `eslint` limpos.

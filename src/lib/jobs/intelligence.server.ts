@@ -62,6 +62,18 @@ const MAX_CONSECUTIVE_FAILURES = 3
 const PAGE = 60
 
 /**
+ * Fatia mínima do JobBase em cada página, garantida ANTES da ordem global
+ * (§2.142). Sem isto, a fila inteira é "mais recente publicada primeiro" sem
+ * olhar a fonte, e fontes pequenas que republicam todo dia (Adzuna, Gupy...)
+ * têm `publishedAt` sempre mais novo que o do JobBase — cuja vaga mais nova
+ * pendente pode ser de dias atrás. Resultado medido em produção (§2.140):
+ * 289 vagas lidas, ZERO do JobBase, que sozinho é ~85% do estoque aberto e o
+ * motivo desta extração existir. Metade da página reservada a ele garante
+ * progresso todo round, mesmo com fontes pequenas se realimentando.
+ */
+const JOBBASE_MIN_SHARE = Math.floor(PAGE / 2)
+
+/**
  * Só vaga vista numa coleta recente vale a leitura (§2.137). O JobBase passou
  * a marcar vaga encerrada, e ela some da resposta dele — mas aqui ela só fecha
  * depois de `STALE_AFTER_DAYS` sem reaparecer. Sem este corte, pagaríamos para
@@ -202,12 +214,30 @@ export async function extractPendingJobIntelligence(
       break
     }
 
-    const batch: Candidate[] = await db.job.findMany({
-      where: { ...pendingWhere(), ...(skip.size ? { id: { notIn: [...skip] } } : {}) },
-      orderBy: { publishedAt: { sort: order, nulls: 'last' } },
-      take: PAGE,
-      select: { id: true, sourceId: true, sourceJobId: true, title: true, company: true, description: true, skills: true },
-    })
+    const select = { id: true, sourceId: true, sourceJobId: true, title: true, company: true, description: true, skills: true } as const
+
+    // Fatia do JobBase primeiro, à parte da ordem global — ver JOBBASE_MIN_SHARE.
+    const jobBaseBatch: Candidate[] = jobBaseSourceId
+      ? await db.job.findMany({
+          where: { ...pendingWhere(), sourceId: jobBaseSourceId, ...(skip.size ? { id: { notIn: [...skip] } } : {}) },
+          orderBy: { publishedAt: { sort: order, nulls: 'last' } },
+          take: JOBBASE_MIN_SHARE,
+          select,
+        })
+      : []
+
+    const restTake = PAGE - jobBaseBatch.length
+    const excludeIds = [...skip, ...jobBaseBatch.map((j) => j.id)]
+    const restBatch: Candidate[] = restTake > 0
+      ? await db.job.findMany({
+          where: { ...pendingWhere(), id: { notIn: excludeIds } },
+          orderBy: { publishedAt: { sort: order, nulls: 'last' } },
+          take: restTake,
+          select,
+        })
+      : []
+
+    const batch = [...jobBaseBatch, ...restBatch]
     if (batch.length === 0) break
 
     const fromJobBase = batch.filter((j) => j.sourceId === jobBaseSourceId && j.sourceJobId)
