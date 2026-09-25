@@ -107,12 +107,14 @@ export function Landing({
             </div>
           </div>
 
-          {/* DESKTOP NAV + CTAS: um único grupo flex-wrap alinhado à direita, para
-              que idiomas mais longos (DE, PT…) quebrem linha de forma limpa (ainda
-              à direita) em vez de a barra de ações cair solta e alinhada à
-              esquerda embaixo da logo. */}
-          <div className="hidden md:flex min-w-0 flex-1 flex-wrap items-center justify-end gap-x-5 gap-y-2 lg:gap-x-7">
-            <nav className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1.5 text-sm font-medium lg:gap-x-7">
+          {/* DESKTOP NAV + CTAS: a nav vira uma grade de 2 linhas x 3 colunas em vez
+              de 6 links numa linha só. Isso corta pela metade a largura que a nav
+              precisa, então o mesmo layout compacto funciona de forma padrão em
+              qualquer idioma (PT, DE…) sem depender do tamanho dos rótulos — e o
+              grupo inteiro ainda pode quebrar (alinhado à direita) como último
+              recurso em telas bem estreitas. */}
+          <div className="hidden md:flex min-w-0 flex-1 flex-wrap items-center justify-end gap-x-6 gap-y-2 lg:gap-x-8">
+            <nav className="grid grid-flow-col grid-rows-2 gap-x-5 gap-y-1.5 text-sm font-medium lg:gap-x-7">
               <a href="#features" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.features}</a>
               <a href="#social" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.social}</a>
               <a href="#how" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a>
@@ -120,6 +122,8 @@ export function Landing({
               <a href="#faq" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.faq}</a>
               <a href="/market-pulse" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.marketPulse}</a>
             </nav>
+
+            <span className="hidden h-9 w-px shrink-0 bg-slate-200 lg:block" aria-hidden="true" />
 
             <div className="flex shrink-0 items-center gap-2.5">
               <LanguageSelector />
