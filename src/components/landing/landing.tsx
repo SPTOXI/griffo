@@ -108,16 +108,18 @@ export function Landing({
           </div>
 
           {/* DESKTOP NAV + CTAS: a nav é uma grade de 2 linhas x 3 colunas em vez de
-              6 links numa linha só. As colunas e os botões de CTA têm largura
-              mínima reservada (calculada para a tradução mais longa entre os 12
-              idiomas em cada posição), então trocar de idioma só troca o texto —
-              o painel inteiro não se desloca de um lado para o outro. O grupo
-              ainda pode quebrar (alinhado à direita) como último recurso em telas
-              bem estreitas. */}
+              6 links numa linha só. As colunas e os botões de CTA usam uma largura
+              MÍNIMA confortável para o português (o idioma padrão) com
+              minmax(…, max-content): o grupo fica puxado para a direita, colado
+              perto do CTA, em vez de sobrar um vão enorme depois da logo — e só
+              cresce além do mínimo se um idioma raro (ex. alemão) precisar de
+              mais espaço, sem nunca cortar ou sobrepor texto. O grupo ainda pode
+              quebrar (alinhado à direita) como último recurso em telas bem
+              estreitas. */}
           <div className="hidden md:flex min-w-0 flex-1 flex-wrap items-center justify-end gap-x-6 gap-y-2 lg:gap-x-8">
             <nav
               className="grid grid-flow-col grid-rows-2 gap-x-5 gap-y-1.5 text-sm font-medium lg:gap-x-7"
-              style={{ gridTemplateColumns: '10.5rem 9.5rem 11rem' }}
+              style={{ gridTemplateColumns: 'minmax(9rem, max-content) minmax(7.5rem, max-content) minmax(10rem, max-content)' }}
             >
               <a href="#features" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.features}</a>
               <a href="#social" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.social}</a>
@@ -138,10 +140,10 @@ export function Landing({
                 </Button>
               ) : (
                 <>
-                  <Button onClick={() => onNavigate('login')} size="sm" variant="ghost" className="min-w-[8.5rem] text-slate-700 hover:text-slate-900 font-medium">
+                  <Button onClick={() => onNavigate('login')} size="sm" variant="ghost" className="min-w-[6rem] text-slate-700 hover:text-slate-900 font-medium">
                     {t.nav.login}
                   </Button>
-                  <Button onClick={() => onNavigate('signup')} size="sm" className="min-w-[12rem] bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md font-semibold px-3.5">
+                  <Button onClick={() => onNavigate('signup')} size="sm" className="min-w-[9.5rem] bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md font-semibold px-3.5">
                     {t.nav.freeAnalysis}
                   </Button>
                 </>
