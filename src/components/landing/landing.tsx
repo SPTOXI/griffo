@@ -107,18 +107,22 @@ export function Landing({
             </div>
           </div>
 
-          {/* DESKTOP NAV + CTAS: a nav vira uma grade de 2 linhas x 3 colunas em vez
-              de 6 links numa linha só. Isso corta pela metade a largura que a nav
-              precisa, então o mesmo layout compacto funciona de forma padrão em
-              qualquer idioma (PT, DE…) sem depender do tamanho dos rótulos — e o
-              grupo inteiro ainda pode quebrar (alinhado à direita) como último
-              recurso em telas bem estreitas. */}
+          {/* DESKTOP NAV + CTAS: a nav é uma grade de 2 linhas x 3 colunas em vez de
+              6 links numa linha só. As colunas e os botões de CTA têm largura
+              mínima reservada (calculada para a tradução mais longa entre os 12
+              idiomas em cada posição), então trocar de idioma só troca o texto —
+              o painel inteiro não se desloca de um lado para o outro. O grupo
+              ainda pode quebrar (alinhado à direita) como último recurso em telas
+              bem estreitas. */}
           <div className="hidden md:flex min-w-0 flex-1 flex-wrap items-center justify-end gap-x-6 gap-y-2 lg:gap-x-8">
-            <nav className="grid grid-flow-col grid-rows-2 gap-x-5 gap-y-1.5 text-sm font-medium lg:gap-x-7">
+            <nav
+              className="grid grid-flow-col grid-rows-2 gap-x-5 gap-y-1.5 text-sm font-medium lg:gap-x-7"
+              style={{ gridTemplateColumns: '10.5rem 9.5rem 11rem' }}
+            >
               <a href="#features" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.features}</a>
               <a href="#social" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.social}</a>
-              <a href="#how" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a>
               <a href="#pricing" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.plans}</a>
+              <a href="#how" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a>
               <a href="#faq" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.faq}</a>
               <a href="/market-pulse" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.marketPulse}</a>
             </nav>
@@ -134,10 +138,10 @@ export function Landing({
                 </Button>
               ) : (
                 <>
-                  <Button onClick={() => onNavigate('login')} size="sm" variant="ghost" className="text-slate-700 hover:text-slate-900 font-medium">
+                  <Button onClick={() => onNavigate('login')} size="sm" variant="ghost" className="min-w-[8.5rem] text-slate-700 hover:text-slate-900 font-medium">
                     {t.nav.login}
                   </Button>
-                  <Button onClick={() => onNavigate('signup')} size="sm" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md font-semibold px-3.5">
+                  <Button onClick={() => onNavigate('signup')} size="sm" className="min-w-[12rem] bg-[#0B63E5] hover:bg-[#0052CC] text-white shadow-md font-semibold px-3.5">
                     {t.nav.freeAnalysis}
                   </Button>
                 </>
