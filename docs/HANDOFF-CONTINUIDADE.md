@@ -109,10 +109,13 @@ o quanto confiar nele.
    **Sincronização do JobBase (§2.144, 28/09).** O Radar só relia as 5 mil
    vagas mais novas do JobBase (ele tem 12,2 mil). Agora
    `jobbase-sync.yml` (07:20 UTC) lê a base inteira por cursor, fecha o que o
-   JobBase encerrou (`source_reported`) e roda até 10 fichas. Conferir a
-   primeira execução no Actions; depois dela, rodar uma vez o
-   `jobs:backfill-intelligence` para as ~3 mil descrições novas (Greenhouse,
-   Ashby) — o cron sozinho levaria dias.
+   JobBase encerrou (`source_reported`) e roda até 10 fichas. **Primeira
+   execução em 28/09 (12:27 UTC), ok:** abertas do JobBase 15.974 → 12.025,
+   com descrição 4.608 → 7.897, 5.166 fechadas por `source_reported`. Estoque
+   de ficha rodado em seguida (§2.145): 480 + 2.593 vagas, US$ 1,49, 0 falhas,
+   pendentes 0. Abertas sem ficha que sobram: JobBase sem descrição
+   (InfoJobs/Catho/LinkedIn) e vagas de outras fontes não vistas há 3+ dias
+   (fora da fila de propósito; fecham pelo `STALE_AFTER_DAYS`).
 
 0. ⏳ **ABERTA em 21/09/2026 — conferir o volume do primeiro EXPURGO por
    idade, e o efeito na contagem pública.**

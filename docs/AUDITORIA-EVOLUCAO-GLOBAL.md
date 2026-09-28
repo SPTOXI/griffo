@@ -9025,3 +9025,5 @@ A concorrência 1 bate com o 429 do §2.141. O teto de 1,5 mi de tokens por dia 
 **Correção, só no script:** `uncaughtException` ignora erro de conexão de banco derrubada (o pool já descartou a conexão e abre outra na próxima consulta) e encerra em qualquer outro erro; a volta que rejeitar por queda de rede espera 15s, 30s, … e segue, até 6 quedas seguidas. Falha do provedor de IA continua tratada como antes (suplente; três falhas seguidas param a volta).
 
 **Não mexido:** as funções da Vercel. Lá o processo vive uma chamada de 60s e a conexão ociosa raramente fica aberta tempo bastante para cair; se aparecer, o lugar é passar um ouvinte de `error` ao pool (exige criar o `pg.Pool` à parte, que o `PrismaPg` desta versão não aceita).
+
+**Rodada completa depois da correção (28/09, 13:03–13:23):** 2.593 vagas lidas (1.571 pela seção de requisitos), 351 sem requisito aproveitável, 1 curta, 0 falhas, 0 pelo suplente, US$ 1,24; pendentes 0. Com as 480 da tentativa interrompida, o estoque novo do JobBase saiu por ~US$ 1,49. Fichas nas abertas do JobBase: 7.782 das 7.897 com descrição.
