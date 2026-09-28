@@ -97,11 +97,13 @@ o quanto confiar nele.
    `AiLog` (`job_intelligence`) se as vagas processadas passam a incluir o
    JobBase.
 
-   **Kimi K3 (§2.138): rodado pela primeira vez em 24/09, achou `concurrency:
-   3` errado — o teto real da organização é 1 (§2.141, corrigido). O script
-   (`npm run jobs:backfill-intelligence`) segue rodando; acompanhar
-   `viaFallback` no output e o `AiLog` (`job_intelligence_backfill` por
-   `provider`) até o `pending` do JobBase cair.
+   **Estoque da ficha no DeepSeek (§2.143, 28/09).** O Kimi da conta está no
+   Tier0 da Moonshot (1 chamada simultânea, ~700 vagas/dia, ~20s cada), então
+   o script `npm run jobs:backfill-intelligence` passou a usar o DeepSeek (6
+   em paralelo, ~US$ 2 para ~3,1 mil vagas). Rodar no computador do operador
+   depois do `git pull` e acompanhar `pendentes` cair. Se o operador recarregar
+   o Kimi para o Tier1 (US$ 10), dá para reapontar o tipo
+   `job_intelligence_backfill` ao Kimi.
 
 0. ⏳ **ABERTA em 21/09/2026 — conferir o volume do primeiro EXPURGO por
    idade, e o efeito na contagem pública.**

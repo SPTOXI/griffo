@@ -1,27 +1,23 @@
 import { loadEnvFile } from './load-env'
 
 /**
- * Lê de uma vez o estoque de vagas ainda sem ficha, no Kimi K3 (§2.138).
+ * Lê de uma vez o estoque de vagas ainda sem ficha (§2.138, §2.143).
  *
  *   npm run jobs:backfill-intelligence
- *   npm run jobs:backfill-intelligence -- --max-usd 50 --hours 3
+ *   npm run jobs:backfill-intelligence -- --max-usd 5 --hours 3
  *
  * ## Por que um script, e não o cron
  *
- * O cron roda a cada 30 minutos numa função de 60s, e só começa leituras nos
- * primeiros ~27s dela. No DeepSeek (3,4s, 6 em paralelo) isso dá ~48 vagas por
- * rodada, ~2.300 por dia. No Kimi (~12s, teto de 3 simultâneas por
- * organização) daria ~9 por rodada, ~430 por dia — e com ~230 vagas novas por
- * dia entrando, o estoque de ~6,5 mil levaria um mês para acabar.
- *
- * Aqui não há teto de 60s: o script lê sem parar, 3 de cada vez, ~15 vagas por
- * minuto — o estoque inteiro em algumas horas. Pega as MAIS ANTIGAS primeiro;
- * o cron pega as mais recentes, então os dois podem rodar juntos.
+ * O cron roda numa função de 60s e só começa leituras nos primeiros ~27s dela
+ * (~48 vagas por rodada), e o agendador do GitHub Actions o dispara a cada
+ * 3–5h, não a cada 30 min (§2.140). Aqui não há teto de 60s: o script lê sem
+ * parar, 6 de cada vez no DeepSeek. Pega as MAIS ANTIGAS primeiro; o cron pega
+ * as mais recentes, então os dois podem rodar juntos.
  *
  * ## Travas
  *
  * - `--max-usd` (padrão 120): para quando o custo somado da rodada passa disto.
- *   É crédito do Kimi, mas crédito também acaba.
+ *   No DeepSeek o estoque inteiro custa poucos dólares; a trava é contra erro.
  * - `--hours` (padrão 12): para depois disto, termine ou não.
  * - Ctrl+C para no fim da vaga em andamento; o que foi lido fica gravado.
  * - Idempotente: vaga lida ganha marcador e não volta. Rodar de novo continua
@@ -73,17 +69,16 @@ async function main() {
     const pending = await countPendingJobIntelligence()
     console.log(
       `${new Date().toISOString().slice(11, 19)}  lidas ${total.read} (seção de requisitos: ${total.fromRequirementsText},` +
-        ` no DeepSeek por falha do Kimi: ${total.viaFallback})  curtas ${total.tooShort}  falhas ${total.failed}` +
+        ` pelo suplente: ${total.viaFallback})  curtas ${total.tooShort}  falhas ${total.failed}` +
         `  US$ ${total.costUsd.toFixed(2)}  pendentes ${pending}`
     )
 
-    // O sinal de que o Kimi parou de responder: as leituras seguem, mas pelo
-    // DeepSeek. Não é erro — a vaga é lida do mesmo jeito —, mas não é o que
-    // foi decidido, e quem roda precisa saber.
+    // O sinal de que o provedor principal parou de responder: as leituras
+    // seguem, mas pelo suplente — que pode ser bem mais caro.
     if (run.read >= 6 && run.viaFallback / run.read > 1 / 3) {
       console.log(
-        `\n  ATENÇÃO: ${run.viaFallback} de ${run.read} vagas desta volta foram lidas pelo DeepSeek porque o Kimi` +
-          ` não respondeu a tempo. Confira o saldo e o status da Moonshot, ou pare com Ctrl+C.\n`
+        `\n  ATENÇÃO: ${run.viaFallback} de ${run.read} vagas desta volta foram lidas pelo suplente porque o` +
+          ` provedor principal não respondeu a tempo. Confira saldo e status dele, ou pare com Ctrl+C.\n`
       )
     }
 

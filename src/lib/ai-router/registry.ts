@@ -221,12 +221,13 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   // Maquinário interno — o modelo barato (US$ 0,0008/vaga e 3,4s na primeira
   // rodada, 23/09/2026).
   job_intelligence: 'deepseek',
-  // A mesma ficha, para ler o ESTOQUE de uma vez (~6,5 mil vagas) pelo script
-  // `jobs:backfill-intelligence`. No Kimi por decisão do operador: há crédito
-  // sobrando lá, e o gasto (~US$ 0,015/vaga) sai do crédito, não do caixa. É
-  // só para esta transição — depois dela, só o tipo acima roda. O suplente é o
-  // DeepSeek (`FALLBACK_CHAIN.kimi`), então o Claude fica fora do caminho.
-  job_intelligence_backfill: 'kimi',
+  // A mesma ficha, para ler o ESTOQUE de uma vez pelo script
+  // `jobs:backfill-intelligence`. Nasceu no Kimi (§2.138, pelo crédito), mas a
+  // conta está no Tier0 da Moonshot — 1 chamada simultânea, 1,5 mi de tokens
+  // por dia (~700 vagas) — e o Kimi leva ~20s por vaga: o estoque levaria dias.
+  // Voltou ao DeepSeek (§2.143); o tipo próprio fica para reapontar ao Kimi
+  // se a conta subir de faixa.
+  job_intelligence_backfill: 'deepseek',
   // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
   normalization: 'deepseek',

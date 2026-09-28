@@ -8979,3 +8979,20 @@ O `MODES.backfill.concurrency` presumia 3 (§2.138, citando §2.34). Com `concur
 **Por que 30, não mais.** O JobBase é ~85% do estoque aberto, mas as outras fontes também têm vaga esperando ficha; reservar a página inteira as deixaria paradas enquanto o JobBase tiver pendência (o que, com 3.138 já elegíveis, é o caso agora). Metade garante progresso todo round sem zerar as demais.
 
 Sem teste dedicado (arquivo `server-only`); suíte completa (1182/1182), `tsc` e `eslint` limpos.
+
+## 2.143 O estoque da ficha sai do Kimi e vai para o DeepSeek — a conta do Kimi está no Tier0
+
+28/09/2026. Rodando o backfill depois do §2.141 (3.112 vagas pendentes), metade das chamadas ao Kimi estourava o tempo (`Request timed out` em ~28,5s) e caía no DeepSeek. `AiLog` dos primeiros 4 minutos: Kimi, 5 vagas, ~18–20s cada, ~US$ 0,013/vaga; DeepSeek (suplente), 5 vagas, ~3s, ~US$ 0,0006/vaga. Ritmo: ~2,5 vagas/min, o estoque em ~20h, acima da trava de 12h do script.
+
+**A causa é a faixa da conta na Moonshot**, não o nosso código. Tabela de limites trazida pelo operador (colunas lidas como recarga acumulada, concorrência, RPM, TPM, TPD):
+
+| Faixa | Recarga | Concorrência | RPM | TPM | TPD |
+|---|---|---|---|---|---|
+| **Tier0 (a conta)** | US$ 1 | 1 | 3 | 500 mil | 1,5 mi |
+| Tier1 | US$ 10 | 15 | 100 | 2 mi | ilimitado |
+| Tier2 | US$ 20 | 40 | 100 | 3 mi | ilimitado |
+| Tier3 | US$ 100 | 50 | 200 | 3 mi | ilimitado |
+
+A concorrência 1 bate com o 429 do §2.141. O teto de 1,5 mi de tokens por dia é o pior limite: a ~2.200 tokens por vaga, o Kimi leria no máximo ~700 vagas por dia. A faixa sobe pelo valor RECARREGADO; o "crédito sobrando" que motivou o §2.138 não conta para isso.
+
+**Decisão do operador:** o estoque vai pelo DeepSeek agora (~US$ 2 para ~3,1 mil vagas, ~30–40 min com 6 em paralelo); ele recarrega o Kimi depois. `job_intelligence_backfill` passa a apontar para o DeepSeek, com concorrência 6 e 25s por chamada, iguais ao cron. O tipo próprio fica, para reapontar ao Kimi se a conta subir de faixa (Tier1: subir a concorrência até ~12 e o orçamento para ~60s). Mensagens do script ficam neutras quanto ao provedor ("pelo suplente").
