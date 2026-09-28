@@ -343,6 +343,96 @@ export function jobBaseAdapters(options: {
   return [createJobBaseAdapter({ credentials: options.credentials ?? jobBaseCredentials() })]
 }
 
+function authHeaders(credentials: JobBaseCredentials): Record<string, string> {
+  return { apikey: credentials.anonKey, Authorization: `Bearer ${credentials.anonKey}` }
+}
+
+async function fetchJson(
+  url: string,
+  options: { credentials: JobBaseCredentials; fetchImpl?: typeof fetch; timeoutMs?: number }
+): Promise<unknown[]> {
+  const doFetch = options.fetchImpl ?? fetch
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 20_000)
+  try {
+    const response = await doFetch(url, { signal: controller.signal, headers: authHeaders(options.credentials) })
+    if (!response.ok) throw new Error(`HTTP ${response.status} do JobBase`)
+    const payload = await response.json()
+    if (!Array.isArray(payload)) throw new Error('Resposta do JobBase não veio como lista')
+    return payload
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/**
+ * Uma página das vagas ABERTAS do JobBase, por cursor (§2.144).
+ *
+ * A coleta do Radar (`createJobBaseAdapter`) divide 60s com todas as outras
+ * fontes e só cabe nas 5 mil vagas mais novas — o JobBase tem mais de 12 mil.
+ * A sincronização própria (`lib/jobs/jobbase-sync.server`) percorre a base
+ * inteira em várias chamadas, e para isso precisa de paginação que não mude
+ * entre uma chamada e outra: cursor pelo `id` (`id < último visto`), e não
+ * deslocamento, que pularia ou repetiria vaga se a base mudasse no meio.
+ *
+ * `nextCursor` é `null` quando a página veio menor que o tamanho pedido — era
+ * a última. Falha de rede ou resposta inválida LANÇA: quem chama decide.
+ */
+export async function fetchJobBaseOpenPage(options: {
+  credentials: JobBaseCredentials
+  cursor?: number | null
+  pageSize?: number
+  fetchImpl?: typeof fetch
+  timeoutMs?: number
+}): Promise<{ jobs: RawJob[]; rows: number; nextCursor: number | null }> {
+  const pageSize = options.pageSize ?? PAGE_SIZE
+  const url =
+    `${options.credentials.url}/rest/v1/job_postings?select=id,${SELECT_COLUMNS}` +
+    `&status=eq.open&order=id.desc&limit=${pageSize}` +
+    (options.cursor != null ? `&id=lt.${options.cursor}` : '')
+  const payload = await fetchJson(url, options)
+  const lastId = Number((payload[payload.length - 1] as { id?: unknown } | undefined)?.id)
+  return {
+    jobs: parseJobBasePayload(payload),
+    rows: payload.length,
+    nextCursor: payload.length === pageSize && Number.isFinite(lastId) ? lastId : null,
+  }
+}
+
+/**
+ * As vagas que o JobBase ENCERROU, como `sourceJobId` do Griffo (§2.144).
+ *
+ * O JobBase marca `expired` quando a origem tira a vaga do ar (§2.137). É a
+ * evidência que o §12 aceita para fechar: a fonte declarando, e não a vaga
+ * sumindo de uma busca. Só `source` e `external_id` — são milhares de linhas,
+ * e o resto não interessa aqui. Falha LANÇA: sem a lista inteira, nada fecha.
+ */
+export async function fetchJobBaseClosedKeys(options: {
+  credentials: JobBaseCredentials
+  pageSize?: number
+  fetchImpl?: typeof fetch
+  timeoutMs?: number
+}): Promise<string[]> {
+  const pageSize = options.pageSize ?? PAGE_SIZE
+  const keys: string[] = []
+  let cursor: number | null = null
+  for (;;) {
+    const url =
+      `${options.credentials.url}/rest/v1/job_postings?select=id,source,external_id` +
+      `&status=neq.open&order=id.desc&limit=${pageSize}` +
+      (cursor != null ? `&id=lt.${cursor}` : '')
+    const rows = (await fetchJson(url, options)) as { id?: unknown; source?: unknown; external_id?: unknown }[]
+    for (const row of rows) {
+      if (typeof row.source === 'string' && typeof row.external_id === 'string') {
+        keys.push(`${row.source}:${row.external_id}`)
+      }
+    }
+    const lastId = Number(rows[rows.length - 1]?.id)
+    if (rows.length < pageSize || !Number.isFinite(lastId)) return keys
+    cursor = lastId
+  }
+}
+
 /** Valor dentro de `in.(...)` do PostgREST: entre aspas, com `"` e `\` escapados. */
 function quoted(value: string): string {
   return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
@@ -392,13 +482,7 @@ export async function fetchJobBaseRequirementTexts(
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 8000)
     try {
-      const response = await doFetch(url, {
-        signal: controller.signal,
-        headers: {
-          apikey: options.credentials.anonKey,
-          Authorization: `Bearer ${options.credentials.anonKey}`,
-        },
-      })
+      const response = await doFetch(url, { signal: controller.signal, headers: authHeaders(options.credentials) })
       if (!response.ok) continue
       const rows = await response.json()
       if (!Array.isArray(rows)) continue
