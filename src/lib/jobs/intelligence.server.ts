@@ -25,30 +25,20 @@ import {
  */
 
 /**
- * Chamadas simultâneas por modo.
+ * Concorrência e orçamento por chamada, por modo. Os dois rodam no DeepSeek
+ * (3,4s na mediana), que aguenta 6 em paralelo. O roteador DIVIDE o orçamento
+ * entre primário e suplente: 25s dão ~12s a cada um, e cabem no prazo de 60s
+ * da função do cron.
  *
- * - `cron` (DeepSeek): 6 — o DeepSeek aguenta, e a rodada tem ~27s para
- *   começar leituras.
- * - `backfill` (Kimi): 1. O teto real da organização, visto em produção
- *   (§2.139) — "max organization concurrency: 1" no 429 — é menor que os 3
- *   presumidos antes. Acima disso ele devolve 429 e o excedente cai no
- *   DeepSeek, o que ainda funciona mas gasta o crédito errado.
- */
-/**
- * Orçamento de uma chamada, por modo. O roteador o DIVIDE entre as duas
- * tentativas (primário e suplente), então cada uma fica com pouco menos da
- * metade:
- *
- * - `cron`: 25s → ~12s para o DeepSeek (3,4s na mediana) e ~12s para o suplente.
- *   Cabe no prazo de 60s da função.
- * - `backfill`: 60s → ~29s para o Kimi e ~29s para o DeepSeek. Com 25s aqui o
- *   Kimi ficaria com ~12s — a mediana dele (AiLog, set/2026) —, metade das
- *   chamadas estouraria, e o estoque que devia sair do crédito do Kimi iria
- *   para o DeepSeek em silêncio. O script não tem o prazo de 60s, então pode.
+ * O `backfill` nasceu no Kimi (§2.138), mas a conta está no Tier0 da Moonshot:
+ * 1 chamada simultânea, 1,5 mi de tokens por dia, ~20s por vaga (§2.141,
+ * §2.143). Se a conta subir de faixa e o tipo voltar ao Kimi, subir aqui a
+ * concorrência até o teto da faixa e o orçamento para ~60s (o roteador daria
+ * ~29s ao Kimi).
  */
 const MODES = {
   cron: { taskType: 'job_intelligence', concurrency: 6, order: 'desc', callBudgetMs: 25_000 },
-  backfill: { taskType: 'job_intelligence_backfill', concurrency: 1, order: 'asc', callBudgetMs: 60_000 },
+  backfill: { taskType: 'job_intelligence_backfill', concurrency: 6, order: 'asc', callBudgetMs: 25_000 },
 } as const
 
 export type JobIntelligenceMode = keyof typeof MODES
