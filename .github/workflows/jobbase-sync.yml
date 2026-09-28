@@ -1,0 +1,54 @@
+name: Sincronização do JobBase (todas as vagas abertas + encerradas)
+
+# A coleta do Radar só cabe nas 5 mil vagas mais novas do JobBase, que tem mais
+# de 12 mil (§2.144). Este workflow lê a base inteira em várias chamadas de
+# 60s, fecha aqui o que o JobBase encerrou e, por fim, dá algumas rodadas da
+# ficha da vaga para as descrições que acabaram de chegar.
+#
+# Fora do vercel.json pelo motivo de sempre: o plano Hobby agenda dois crons e
+# os dois estão ocupados. Usa o secret CRON_SECRET, o mesmo das outras rotas.
+
+on:
+  schedule:
+    # 07:20 UTC — o JobBase termina a varredura diária por volta de 06:20.
+    - cron: '20 7 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Ler as vagas abertas (por cursor, até o fim)
+        run: |
+          cursor=""
+          for i in $(seq 1 40); do
+            status=$(curl -s -o /tmp/r.json -w "%{http_code}" --max-time 90 \
+              -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+              "https://griffo.work/api/cron/jobbase-sync?cursor=${cursor}")
+            echo "[$i] HTTP $status $(cat /tmp/r.json)"
+            if [ "$status" -ge 300 ]; then echo "Sincronização falhou."; exit 1; fi
+            if [ "$(jq -r '.done' /tmp/r.json)" = "true" ]; then exit 0; fi
+            cursor=$(jq -r '.nextCursor // empty' /tmp/r.json)
+          done
+          echo "Parou no teto de 40 chamadas sem terminar."
+          exit 1
+
+      - name: Fechar o que o JobBase encerrou
+        run: |
+          status=$(curl -s -o /tmp/r.json -w "%{http_code}" --max-time 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://griffo.work/api/cron/jobbase-sync?phase=close")
+          echo "HTTP $status $(cat /tmp/r.json)"
+          if [ "$status" -ge 300 ]; then exit 1; fi
+
+      - name: Ficha das vagas que ganharam descrição
+        run: |
+          for i in $(seq 1 10); do
+            status=$(curl -s -o /tmp/r.json -w "%{http_code}" --max-time 90 \
+              -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+              https://griffo.work/api/cron/job-intelligence)
+            echo "[$i] HTTP $status $(cat /tmp/r.json)"
+            if [ "$status" -ge 300 ]; then exit 1; fi
+            if [ "$(jq -r '.pending' /tmp/r.json)" = "0" ]; then exit 0; fi
+          done

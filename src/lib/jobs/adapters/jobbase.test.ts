@@ -3,6 +3,8 @@ import assert from 'node:assert/strict'
 import { decideCollection } from '../collection'
 import {
   createJobBaseAdapter,
+  fetchJobBaseClosedKeys,
+  fetchJobBaseOpenPage,
   fetchJobBaseRequirementTexts,
   jobBaseAdapters,
   jobBaseCredentials,
@@ -253,4 +255,70 @@ test('requisitos: falha de rede devolve mapa vazio — a extração cai na descr
   }) as unknown as typeof fetch
   const map = await fetchJobBaseRequirementTexts(['greenhouse:1'], { credentials: jobBaseCredentials(), fetchImpl })
   assert.equal(map.size, 0)
+})
+
+/** Uma resposta por chamada, na ordem; guarda as URLs pedidas. */
+function scriptedFetch(pages: unknown[][]) {
+  const urls: string[] = []
+  const fetchImpl = (async (url: string) => {
+    urls.push(url)
+    const jsonValue = pages[urls.length - 1] ?? []
+    return { ok: true, status: 200, json: async () => jsonValue } as Response
+  }) as unknown as typeof fetch
+  return { urls, fetchImpl }
+}
+
+test('sincronização: página cheia devolve cursor pelo último id; sem cursor, começa do topo (§2.144)', async () => {
+  const rows = payloadValido.map((p, i) => ({ ...p, id: 900 - i }))
+  const { urls, fetchImpl } = scriptedFetch([rows])
+  const page = await fetchJobBaseOpenPage({ credentials: jobBaseCredentials(), pageSize: 2, fetchImpl })
+
+  assert.equal(page.rows, 2)
+  assert.equal(page.jobs.length, 2)
+  assert.equal(page.nextCursor, 899)
+  assert.ok(urls[0].includes('select=id,'))
+  assert.ok(urls[0].includes('status=eq.open&order=id.desc&limit=2'))
+  assert.ok(!urls[0].includes('id=lt.'))
+})
+
+test('sincronização: com cursor pede id menor; página incompleta é a última', async () => {
+  const { urls, fetchImpl } = scriptedFetch([[{ ...payloadValido[0], id: 5 }]])
+  const page = await fetchJobBaseOpenPage({ credentials: jobBaseCredentials(), cursor: 899, pageSize: 2, fetchImpl })
+
+  assert.ok(urls[0].includes('&id=lt.899'))
+  assert.equal(page.nextCursor, null)
+})
+
+test('sincronização: HTTP ruim lança — quem chama não confunde falha com base vazia', async () => {
+  await assert.rejects(
+    fetchJobBaseOpenPage({ credentials: jobBaseCredentials(), fetchImpl: fakeFetch({ ok: false, status: 500 }) }),
+    /HTTP 500/
+  )
+})
+
+test('encerradas: pagina por cursor até o fim e devolve fonte:id_externo', async () => {
+  const { urls, fetchImpl } = scriptedFetch([
+    [
+      { id: 30, source: 'greenhouse', external_id: '1' },
+      { id: 20, source: 'adzuna', external_id: '2' },
+    ],
+    [{ id: 10, source: 'gupy', external_id: '3' }, { id: 9, source: null, external_id: 'x' }],
+    [],
+  ])
+  const keys = await fetchJobBaseClosedKeys({ credentials: jobBaseCredentials(), pageSize: 2, fetchImpl })
+
+  assert.deepEqual(keys, ['greenhouse:1', 'adzuna:2', 'gupy:3'])
+  assert.ok(urls[0].includes('status=neq.open'))
+  assert.ok(urls[1].includes('&id=lt.20'))
+  assert.ok(urls[2].includes('&id=lt.9'))
+})
+
+test('encerradas: falha no meio lança — sem a lista inteira, nada fecha', async () => {
+  let call = 0
+  const fetchImpl = (async () => {
+    call++
+    if (call === 2) return { ok: false, status: 503, json: async () => ({}) } as Response
+    return { ok: true, status: 200, json: async () => [{ id: 2, source: 'a', external_id: '1' }, { id: 1, source: 'a', external_id: '2' }] } as Response
+  }) as unknown as typeof fetch
+  await assert.rejects(fetchJobBaseClosedKeys({ credentials: jobBaseCredentials(), pageSize: 2, fetchImpl }), /HTTP 503/)
 })

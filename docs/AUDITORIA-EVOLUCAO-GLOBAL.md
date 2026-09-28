@@ -8996,3 +8996,22 @@ Sem teste dedicado (arquivo `server-only`); suíte completa (1182/1182), `tsc` e
 A concorrência 1 bate com o 429 do §2.141. O teto de 1,5 mi de tokens por dia é o pior limite: a ~2.200 tokens por vaga, o Kimi leria no máximo ~700 vagas por dia. A faixa sobe pelo valor RECARREGADO; o "crédito sobrando" que motivou o §2.138 não conta para isso.
 
 **Decisão do operador:** o estoque vai pelo DeepSeek agora (~US$ 2 para ~3,1 mil vagas, ~30–40 min com 6 em paralelo); ele recarrega o Kimi depois. `job_intelligence_backfill` passa a apontar para o DeepSeek, com concorrência 6 e 25s por chamada, iguais ao cron. O tipo próprio fica, para reapontar ao Kimi se a conta subir de faixa (Tier1: subir a concorrência até ~12 e o orçamento para ~60s). Mensagens do script ficam neutras quanto ao provedor ("pelo suplente").
+
+## 2.144 O JobBase ganha sincronização própria: a base inteira, e o que ele encerra fecha aqui
+
+28/09/2026, achado ao conferir o estoque da ficha (§2.143).
+
+**O problema.** O JobBase entrava na rodada do Radar como mais uma fonte: 12s de coleta dentro da função de 60s, até 5 páginas de 1.000 (`maxPages ?? 5`), mais novas primeiro. Em 28/09 o JobBase tinha **12.230 abertas** (e 7.433 `expired`); só as 5 mil mais novas eram relidas. As outras nunca voltavam: sem descrição (Greenhouse: 2.012 com descrição lá, 300 aqui), sem ficha, e "abertas" aqui até 45 dias depois de encerradas lá (`STALE_AFTER_DAYS`). Das 15.770 vagas do JobBase contadas como abertas, ~9.500 não eram vistas havia mais de 3 dias — e o número da landing contava todas. A `JobSource` do JobBase marcava `partial` todo dia ("Coleta incompleta").
+
+**A correção.**
+
+- `/api/cron/jobbase-sync` + `.github/workflows/jobbase-sync.yml` (07:20 UTC, depois da varredura do JobBase ~06:20; também sob demanda):
+  1. Lê as abertas por **cursor de `id`** (`id < último visto`, `order=id.desc`), uma página de 1.000 por vez, gravando cada página pelo mesmo `runCollection` do Radar. Não começa página nova depois de 35s; devolve `nextCursor` e o workflow chama de novo até `done` (teto de 40 chamadas). Se a gravação de uma página for cortada pelo prazo (`runCollection` devolve `partial`), o cursor não avança e a página é refeita.
+  2. `?phase=close`: busca a lista de `status <> open` do JobBase (só `id,source,external_id`, paginada) e fecha aqui as abertas com esse `sourceJobId`, `closedReason: 'source_reported'`. É a evidência que o §12 aceita — a fonte declarando —, nunca ausência de página. Falha no meio da lista lança e nada fecha.
+  3. Até 10 rodadas de `/api/cron/job-intelligence` para as descrições recém-chegadas.
+- O JobBase **sai da rodada do Radar** (libera os 45s para as outras fontes). A busca avulsa (`/api/radar/search-now`) continua usando o adapter antigo, que lê as mais novas.
+- Adapter: `fetchJobBaseOpenPage` e `fetchJobBaseClosedKeys`, com testes (cursor, última página, falha que lança).
+
+**Verificado localmente** contra o Postgres, com um JobBase falso de 2.500 abertas e 2 encerradas: 3 páginas numa chamada (2,5s), 2.500 com descrição, as 2 encerradas fechadas com `source_reported`, e a segunda rodada virou 2.500 atualizações sem duplicar. Em produção, conferir a primeira execução do workflow: número de chamadas, `closed` da fase de fechamento, e a contagem de abertas do JobBase caindo para perto das 12,2 mil do JobBase.
+
+**Efeito esperado na landing:** a contagem de vagas cai alguns milhares (as encerradas no JobBase deixam de contar). É o número honesto; o anterior incluía vaga morta.

@@ -103,7 +103,16 @@ o quanto confiar nele.
    em paralelo, ~US$ 2 para ~3,1 mil vagas). Rodar no computador do operador
    depois do `git pull` e acompanhar `pendentes` cair. Se o operador recarregar
    o Kimi para o Tier1 (US$ 10), dá para reapontar o tipo
-   `job_intelligence_backfill` ao Kimi.
+   `job_intelligence_backfill` ao Kimi. **Rodado em 28/09:** 3.049 vagas em
+   ~17 min, US$ 1,19, 1 pelo suplente, 0 falhas.
+
+   **Sincronização do JobBase (§2.144, 28/09).** O Radar só relia as 5 mil
+   vagas mais novas do JobBase (ele tem 12,2 mil). Agora
+   `jobbase-sync.yml` (07:20 UTC) lê a base inteira por cursor, fecha o que o
+   JobBase encerrou (`source_reported`) e roda até 10 fichas. Conferir a
+   primeira execução no Actions; depois dela, rodar uma vez o
+   `jobs:backfill-intelligence` para as ~3 mil descrições novas (Greenhouse,
+   Ashby) — o cron sozinho levaria dias.
 
 0. ⏳ **ABERTA em 21/09/2026 — conferir o volume do primeiro EXPURGO por
    idade, e o efeito na contagem pública.**
