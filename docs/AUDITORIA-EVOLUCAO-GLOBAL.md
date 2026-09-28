@@ -9015,3 +9015,13 @@ A concorrência 1 bate com o 429 do §2.141. O teto de 1,5 mi de tokens por dia 
 **Verificado localmente** contra o Postgres, com um JobBase falso de 2.500 abertas e 2 encerradas: 3 páginas numa chamada (2,5s), 2.500 com descrição, as 2 encerradas fechadas com `source_reported`, e a segunda rodada virou 2.500 atualizações sem duplicar. Em produção, conferir a primeira execução do workflow: número de chamadas, `closed` da fase de fechamento, e a contagem de abertas do JobBase caindo para perto das 12,2 mil do JobBase.
 
 **Efeito esperado na landing:** a contagem de vagas cai alguns milhares (as encerradas no JobBase deixam de contar). É o número honesto; o anterior incluía vaga morta.
+
+**Primeira execução em produção (28/09, 12:27 UTC, run 36421919569):** leitura das abertas em 85s, fechamento em 3s. Vagas do JobBase abertas aqui: 15.974 → **12.025**; abertas com descrição: 4.608 → **7.897**; fechadas com `source_reported`: **5.166**. Total de abertas no Griffo: 17.734 → **15.348**. Ficaram ~3.400 vagas pendentes de ficha para o script de estoque (§2.143).
+
+## 2.145 Script de estoque da ficha sobrevive a queda de rede
+
+28/09/2026. Rodando o `jobs:backfill-intelligence` na máquina do operador, depois de 480 vagas a rede caiu por alguns segundos: o DeepSeek deu `Connection error` e, no mesmo instante, o Postgres (pooler do Supabase) derrubou uma conexão ociosa. O pool do `pg` emite `error` nesse caso e, sem ouvinte — o `PrismaPg` 6.11 cria o pool por dentro e não põe um —, o Node derruba o processo (`Unhandled 'error' event … Connection terminated unexpectedly`). O lido ficou gravado (idempotente), mas o script parou.
+
+**Correção, só no script:** `uncaughtException` ignora erro de conexão de banco derrubada (o pool já descartou a conexão e abre outra na próxima consulta) e encerra em qualquer outro erro; a volta que rejeitar por queda de rede espera 15s, 30s, … e segue, até 6 quedas seguidas. Falha do provedor de IA continua tratada como antes (suplente; três falhas seguidas param a volta).
+
+**Não mexido:** as funções da Vercel. Lá o processo vive uma chamada de 60s e a conexão ociosa raramente fica aberta tempo bastante para cair; se aparecer, o lugar é passar um ouvinte de `error` ao pool (exige criar o `pg.Pool` à parte, que o `PrismaPg` desta versão não aceita).
