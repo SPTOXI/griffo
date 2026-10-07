@@ -316,4 +316,96 @@ export const atsPt: AtsLocale = {
       },
     ],
   },
+  oraclerecruiting: {
+    marketName: "Grandes Empresas e Empregadores Globais",
+    description:
+      "O Oracle Recruiting é o módulo de recrutamento da suíte de RH em nuvem da Oracle, usado por grandes empresas para manter site de carreiras, receber candidaturas e gerenciar candidatos. É o equivalente em nuvem do Taleo dentro da família Oracle HCM e monta o perfil do candidato a partir do currículo e das respostas da candidatura.",
+    marketShare: "Escolha comum em grandes empresas que já usam Oracle para RH.",
+    howItWorks: [
+      {
+        title: "Site de carreiras e perfil do candidato",
+        description:
+          "O candidato se inscreve pelo site de carreiras da empresa. O currículo e as respostas do formulário se juntam em um único perfil que o recrutador busca e filtra.",
+      },
+      {
+        title: "Questionários e pré-triagem",
+        description:
+          "A empresa pode anexar perguntas a uma vaga, como certificações, idiomas ou disponibilidade, e usar as respostas para reduzir o grupo de candidatos.",
+      },
+      {
+        title: "Avaliação estruturada",
+        description:
+          "Recrutadores e gestores avaliam candidatos em etapas definidas, então datas e cargos consistentes e resultados claros ajudam seu perfil a se sustentar.",
+      },
+    ],
+    eliminationFactors: [
+      "Layouts que quebram a ordem em que o sistema lê sua trajetória.",
+      "Datas ou cargos diferentes entre o currículo e o formulário da candidatura.",
+      "Experiência que não se liga com clareza aos requisitos da vaga.",
+    ],
+    howGriffoWorkHelps: [
+      "Verifica se seu currículo é lido como texto limpo e na ordem correta.",
+      "Mantém datas, cargos e seções consistentes entre currículo e formulário.",
+      "Compara sua experiência com os requisitos da descrição da vaga.",
+      "Gera uma carta de apresentação direcionada à vaga.",
+    ],
+    faqs: [
+      {
+        question: "O Oracle Recruiting é o mesmo que o Taleo?",
+        answer:
+          "Não. O Taleo é o produto de recrutamento mais antigo da Oracle, enquanto o Oracle Recruiting é o módulo mais novo da suíte de RH em nuvem. Empresas podem usar qualquer um, então os mesmos bons hábitos valem para os dois.",
+      },
+      {
+        question: "O currículo deve bater com as respostas da candidatura?",
+        answer:
+          "Sim. O recrutador vê os dois, e diferenças de datas, cargos ou empresas geram dúvida. Mantenha tudo coerente.",
+      },
+    ],
+  },
+  breezyhr: {
+    marketName: "Pequenas Empresas e Equipes em Crescimento",
+    description:
+      "O Breezy HR é um sistema de acompanhamento de candidatos para pequenas empresas e equipes em crescimento. Ele publica vagas em vários sites, reúne as candidaturas em um só lugar e mostra os candidatos em um funil visual, com ferramentas que ajudam o recrutador a pontuar e comparar.",
+    marketShare: "Popular entre pequenas empresas e equipes de recrutamento enxutas.",
+    howItWorks: [
+      {
+        title: "Leitura do currículo",
+        description:
+          "O Breezy lê o currículo enviado e preenche um perfil do candidato. O que ele não consegue ler como texto, como texto dentro de imagens, se perde desse perfil.",
+      },
+      {
+        title: "Questionários",
+        description:
+          "A empresa pode incluir perguntas na candidatura, e as respostas ajudam a separar candidatos rapidamente.",
+      },
+      {
+        title: "Pontuação e funil",
+        description:
+          "Recrutadores avaliam candidatos e os movem entre etapas do funil, então um perfil fácil de avaliar em poucos segundos leva vantagem.",
+      },
+    ],
+    eliminationFactors: [
+      "Informação em imagens, gráficos ou barras de habilidade que o sistema não consegue ler.",
+      "Um perfil que nunca cita as competências e ferramentas pedidas na vaga.",
+      "Documentos longos demais que escondem a experiência mais relevante.",
+    ],
+    howGriffoWorkHelps: [
+      "Verifica se seu currículo é legível como texto simples, sem nada escondido.",
+      "Encontra competências e termos da vaga que seu currículo não menciona.",
+      "Avalia se sua experiência mais relevante é fácil de encontrar.",
+      "Gera uma carta de apresentação direcionada à vaga.",
+    ],
+    faqs: [
+      {
+        question: "O Breezy HR ranqueia candidatos automaticamente?",
+        answer:
+          "Ele oferece ferramentas de pontuação que o recrutador pode usar junto com o próprio julgamento. O peso que dá a elas é escolha de cada empresa, então escreva para um leitor automático e para uma pessoa.",
+      },
+      {
+        question: "Preciso usar exatamente as palavras da vaga?",
+        answer:
+          "Use quando forem verdadeiras. Os mesmos termos do anúncio facilitam encontrar e comparar sua experiência.",
+      },
+    ],
+  },
 }

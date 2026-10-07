@@ -26,6 +26,11 @@ Each guide explains how the system screens resumes, what breaks parsing, and ans
 - [SAP SuccessFactors](https://griffo.work/ats/successfactors): Recruiting module of SAP's HR suite, common in large corporations.
 - [Workable](https://griffo.work/ats/workable): Recruiting platform for growing and mid-sized companies.
 - [Teamtailor](https://griffo.work/ats/teamtailor): Swedish recruiting platform with branded career sites.
+- [Oracle Recruiting](https://griffo.work/ats/oraclerecruiting): Recruiting module of Oracle's cloud HR suite, the cloud-era counterpart to Taleo.
+- [BambooHR](https://griffo.work/ats/bamboohr): HR platform with applicant tracking for small and mid-sized companies.
+- [Jobvite](https://griffo.work/ats/jobvite): Talent acquisition suite for mid-market and enterprise employers.
+- [Recruitee](https://griffo.work/ats/recruitee): Dutch collaborative hiring platform.
+- [Breezy HR](https://griffo.work/ats/breezyhr): Applicant tracking system for small businesses and growing teams.
 - [InfoJobs](https://griffo.work/ats/infojobs): Spanish job board and applicant system.
 
 ## Griffo Enterprise (for recruiting and HR teams)

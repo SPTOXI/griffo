@@ -340,4 +340,142 @@ export const atsEs: AtsLocale = {
       },
     ],
   },
+  oraclerecruiting: {
+    marketName: "Grandes Empresas y Empleadores Globales",
+    description:
+      "Oracle Recruiting es el módulo de selección de la suite de RR. HH. en la nube de Oracle, que usan las grandes empresas para mantener su portal de empleo, recibir candidaturas y gestionar candidatos. Es el equivalente en la nube de Taleo dentro de la familia Oracle HCM y crea el perfil del candidato a partir del currículum y de las respuestas de la candidatura.",
+    marketShare: "Elección habitual en grandes empresas que ya usan Oracle para RR. HH.",
+    howItWorks: [
+      {
+        title: "Portal de empleo y perfil del candidato",
+        description:
+          "El candidato se inscribe a través del portal de empleo de la empresa. El currículum y las respuestas del formulario se combinan en un único perfil que el reclutador busca y filtra.",
+      },
+      {
+        title: "Cuestionarios y preselección",
+        description:
+          "La empresa puede adjuntar preguntas a una oferta, como certificaciones, idiomas o disponibilidad, y usar las respuestas para reducir el grupo de candidatos.",
+      },
+      {
+        title: "Revisión estructurada",
+        description:
+          "Reclutadores y responsables evalúan a los candidatos en etapas definidas, así que fechas y puestos coherentes y resultados claros ayudan a que tu perfil se sostenga.",
+      },
+    ],
+    eliminationFactors: [
+      "Diseños que rompen el orden en que el sistema lee tu trayectoria.",
+      "Fechas o puestos distintos entre el currículum y el formulario de la candidatura.",
+      "Experiencia que no se relaciona con claridad con los requisitos de la oferta.",
+    ],
+    howGriffoWorkHelps: [
+      "Comprueba que tu currículum se lea como texto limpio y en el orden correcto.",
+      "Mantiene fechas, puestos y secciones coherentes entre el currículum y el formulario.",
+      "Compara tu experiencia con los requisitos de la oferta.",
+      "Genera una carta de presentación dirigida al puesto.",
+    ],
+    faqs: [
+      {
+        question: "¿Oracle Recruiting es lo mismo que Taleo?",
+        answer:
+          "No. Taleo es el producto de selección más antiguo de Oracle, mientras que Oracle Recruiting es el módulo más reciente de la suite de RR. HH. en la nube. Las empresas pueden usar cualquiera, así que los mismos buenos hábitos valen para ambos.",
+      },
+      {
+        question: "¿El currículum debe coincidir con las respuestas de la candidatura?",
+        answer:
+          "Sí. El reclutador ve ambos, y las diferencias en fechas, puestos o empresas generan dudas. Mantén todo coherente.",
+      },
+    ],
+  },
+  bamboohr: {
+    marketName: "Pequeñas y Medianas Empresas",
+    description:
+      "BambooHR es una plataforma de RR. HH. para pequeñas y medianas empresas cuya herramienta de selección permite publicar ofertas, recibir candidaturas y seguir a los candidatos en un flujo sencillo. Con frecuencia, RR. HH. y el responsable de contratación revisan a los candidatos juntos en el mismo sistema.",
+    marketShare: "Popular entre pequeñas y medianas empresas que gestionan RR. HH. en un solo lugar.",
+    howItWorks: [
+      {
+        title: "Candidatura y currículum",
+        description:
+          "El candidato envía su currículum y responde las preguntas que añadió la empresa. Los datos llegan a una ficha que el equipo puede leer lado a lado.",
+      },
+      {
+        title: "Flujo de selección sencillo",
+        description:
+          "Los candidatos pasan por las etapas que define la empresa, y los miembros del equipo añaden valoraciones y comentarios por el camino.",
+      },
+      {
+        title: "Revisión compartida",
+        description:
+          "Como RR. HH. y los responsables leen el mismo perfil, funciona mejor un currículum claro incluso para quien no es especialista.",
+      },
+    ],
+    eliminationFactors: [
+      "Currículums que entierran la experiencia relevante bajo secciones largas y densas.",
+      "Formato que corrompe el texto cuando el sistema lee el archivo.",
+      "Redacción genérica que nunca refleja el puesto que se busca cubrir.",
+    ],
+    howGriffoWorkHelps: [
+      "Comprueba que tu currículum se lea con claridad, sin perder nada por el formato.",
+      "Evalúa si tu experiencia más relevante aparece pronto y con claridad.",
+      "Compara tu redacción con la oferta para detectar términos ausentes.",
+      "Genera una carta de presentación dirigida al puesto.",
+    ],
+    faqs: [
+      {
+        question: "¿BambooHR filtra currículums automáticamente?",
+        answer:
+          "Está pensado en torno a un flujo de equipo: la empresa configura preguntas y etapas, y las personas revisan a los candidatos. Lo que más importa es un currículum claro y buenas respuestas a las preguntas.",
+      },
+      {
+        question: "¿Quién lee mi currículum en una empresa pequeña?",
+        answer:
+          "A menudo, una persona de RR. HH. generalista y el responsable de contratación. Escribe para que alguien ajeno a la especialidad vea tus resultados enseguida.",
+      },
+    ],
+  },
+  breezyhr: {
+    marketName: "Pequeñas Empresas y Equipos en Crecimiento",
+    description:
+      "Breezy HR es un sistema de seguimiento de candidatos para pequeñas empresas y equipos en crecimiento. Publica ofertas en varios portales, reúne las candidaturas en un solo lugar y muestra a los candidatos en un flujo visual, con herramientas que ayudan al reclutador a puntuar y comparar.",
+    marketShare: "Popular entre pequeñas empresas y equipos de selección reducidos.",
+    howItWorks: [
+      {
+        title: "Lectura del currículum",
+        description:
+          "Breezy lee el currículum que subes y rellena un perfil del candidato. Lo que no puede leer como texto, como el texto dentro de imágenes, se pierde de ese perfil.",
+      },
+      {
+        title: "Cuestionarios",
+        description:
+          "La empresa puede añadir preguntas a la candidatura, y las respuestas ayudan a ordenar candidatos con rapidez.",
+      },
+      {
+        title: "Puntuación y flujo",
+        description:
+          "Los reclutadores valoran a los candidatos y los mueven entre etapas, así que un perfil fácil de evaluar en pocos segundos tiene ventaja.",
+      },
+    ],
+    eliminationFactors: [
+      "Información en imágenes, gráficos o barras de nivel que el sistema no puede leer.",
+      "Un perfil que nunca nombra las habilidades y herramientas que pide la oferta.",
+      "Documentos demasiado largos que ocultan la experiencia más relevante.",
+    ],
+    howGriffoWorkHelps: [
+      "Comprueba que tu currículum se pueda leer como texto simple, sin nada oculto.",
+      "Encuentra habilidades y términos de la oferta que tu currículum no menciona.",
+      "Evalúa si tu experiencia más relevante es fácil de encontrar.",
+      "Genera una carta de presentación dirigida al puesto.",
+    ],
+    faqs: [
+      {
+        question: "¿Breezy HR ordena a los candidatos automáticamente?",
+        answer:
+          "Ofrece herramientas de puntuación que el reclutador puede usar junto con su propio criterio. El peso que les da depende de cada empresa, así que escribe para un lector automático y para una persona.",
+      },
+      {
+        question: "¿Necesito las palabras exactas de la oferta?",
+        answer:
+          "Úsalas cuando sean ciertas. Los mismos términos del anuncio hacen más fácil encontrar y comparar tu experiencia.",
+      },
+    ],
+  },
 }

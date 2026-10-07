@@ -642,6 +642,11 @@ export function Landing({
             <a href="/ats/successfactors" className="inline-block py-1.5 hover:text-primary transition-colors">SuccessFactors</a>
             <a href="/ats/workable" className="inline-block py-1.5 hover:text-primary transition-colors">Workable</a>
             <a href="/ats/teamtailor" className="inline-block py-1.5 hover:text-primary transition-colors">Teamtailor</a>
+            <a href="/ats/oraclerecruiting" className="inline-block py-1.5 hover:text-primary transition-colors">Oracle Recruiting</a>
+            <a href="/ats/bamboohr" className="inline-block py-1.5 hover:text-primary transition-colors">BambooHR</a>
+            <a href="/ats/jobvite" className="inline-block py-1.5 hover:text-primary transition-colors">Jobvite</a>
+            <a href="/ats/recruitee" className="inline-block py-1.5 hover:text-primary transition-colors">Recruitee</a>
+            <a href="/ats/breezyhr" className="inline-block py-1.5 hover:text-primary transition-colors">Breezy HR</a>
           </div>
         </div>
 

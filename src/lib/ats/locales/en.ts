@@ -393,4 +393,234 @@ export const atsEn: AtsLocale = {
       },
     ],
   },
+  oraclerecruiting: {
+    marketName: "Large Enterprises & Global Employers",
+    description:
+      "Oracle Recruiting is the hiring module of Oracle’s cloud HR suite, used by large employers to run career sites, collect applications and manage candidates. It is the cloud-era counterpart to Taleo inside the Oracle HCM family, and it builds a candidate profile from your resume and application answers.",
+    marketShare: "A common choice among large enterprises that already run Oracle for HR.",
+    howItWorks: [
+      {
+        title: "Career site and candidate profile",
+        description:
+          "Candidates apply through the employer’s career site. The resume and the form answers are combined into one candidate profile that recruiters search and filter.",
+      },
+      {
+        title: "Questionnaires and pre-screening",
+        description:
+          "Employers can attach questions to a requisition, such as certifications, languages or availability, and use the answers to narrow the pool.",
+      },
+      {
+        title: "Structured review",
+        description:
+          "Recruiters and hiring managers review candidates in defined stages, so consistent dates, titles and clear results help your profile hold up.",
+      },
+    ],
+    eliminationFactors: [
+      "Layouts that break the order in which the parser reads your work history.",
+      "Dates or titles that differ between the resume and the application form.",
+      "Experience that does not clearly connect to the requirements of the requisition.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks that your resume reads as clean, correctly ordered text.",
+      "Keeps dates, titles and sections consistent between resume and form.",
+      "Matches your experience against the requirements in the job description.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Is Oracle Recruiting the same as Taleo?",
+        answer:
+          "No. Taleo is Oracle’s older recruiting product, while Oracle Recruiting is the newer module in Oracle’s cloud HR suite. Employers may use either, so the same good habits apply to both.",
+      },
+      {
+        question: "Should the resume match my application answers?",
+        answer:
+          "Yes. Recruiters see both, so differences in dates, titles or employers raise questions. Keep them consistent.",
+      },
+    ],
+  },
+  bamboohr: {
+    marketName: "Small & Mid-Sized Companies",
+    description:
+      "BambooHR is an HR platform for small and mid-sized companies whose hiring tool lets teams post jobs, collect applications and track candidates through a simple workflow. Hiring managers and HR often review candidates together in the same system.",
+    marketShare: "Popular among small and mid-sized companies that manage HR in one place.",
+    howItWorks: [
+      {
+        title: "Application and resume",
+        description:
+          "Candidates submit a resume and answer the questions the employer added. The details land in a candidate record that the hiring team can read side by side.",
+      },
+      {
+        title: "Simple hiring workflow",
+        description:
+          "Candidates move through stages that the company defines, and team members add ratings and comments along the way.",
+      },
+      {
+        title: "Shared review",
+        description:
+          "Because HR and managers both read the profile, a resume that is clear without specialist knowledge works best.",
+      },
+    ],
+    eliminationFactors: [
+      "Resumes that bury relevant experience under long, dense sections.",
+      "Formatting that corrupts the text when the file is read by the system.",
+      "Generic wording that never reflects the role being filled.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks that your resume is read cleanly, with nothing lost to formatting.",
+      "Audits whether your most relevant experience appears early and clearly.",
+      "Compares your wording with the job description to surface missing terms.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Does BambooHR screen resumes automatically?",
+        answer:
+          "It is built around a team workflow: employers set up questions and stages, and people review candidates. A clear resume and good answers to the application questions matter most.",
+      },
+      {
+        question: "Who reads my resume in a small company?",
+        answer:
+          "Often an HR generalist and the hiring manager. Write so that someone outside the specialty can see your results quickly.",
+      },
+    ],
+  },
+  jobvite: {
+    marketName: "Mid-Market & Enterprise Employers, Mostly in North America",
+    description:
+      "Jobvite is a talent acquisition suite that employers use to publish jobs, run career sites and manage candidates through the hiring process. Applications become candidate records that recruiters search, sort and share with hiring managers.",
+    marketShare: "Used by mid-market and enterprise employers, especially in North America.",
+    howItWorks: [
+      {
+        title: "Candidate records",
+        description:
+          "Your resume and application answers become a candidate record. Details the system cannot read from the file may be missing from that record.",
+      },
+      {
+        title: "Search and filters",
+        description:
+          "Recruiters search and filter their pool by experience, skills and application answers, so the terms in the job description shape what they find.",
+      },
+      {
+        title: "Sharing with hiring managers",
+        description:
+          "Recruiters pass shortlisted candidates to managers, who see a condensed view first. A clear opening summary helps there.",
+      },
+    ],
+    eliminationFactors: [
+      "Tables, columns or text boxes that scramble the text the system extracts.",
+      "Skills and tools that appear in the job description but not in your resume.",
+      "A first section that does not state what you do and what you achieved.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks that your resume is readable as plain text in the right order.",
+      "Finds terms from the job description that your resume does not mention.",
+      "Audits the opening of your resume for clarity and measurable impact.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Do keywords matter for Jobvite?",
+        answer:
+          "Yes, where they are truthful. Recruiters search by skills and experience, so using the same terms as the posting helps your profile appear.",
+      },
+      {
+        question: "Should I use a PDF or a Word file?",
+        answer:
+          "Follow the employer’s instruction. If it is open, a text-based PDF or a simple single-column .docx is the safest option.",
+      },
+    ],
+  },
+  recruitee: {
+    marketName: "Europe & Fast-Growing Companies Hiring Collaboratively",
+    description:
+      "Recruitee is a collaborative hiring platform from the Netherlands that combines an applicant tracking system with career-site building and job multiposting. Teams move candidates through a visual pipeline and discuss them together.",
+    marketShare: "Popular among growing companies across Europe.",
+    howItWorks: [
+      {
+        title: "Career-site application",
+        description:
+          "Candidates usually apply through the employer’s career site, where the resume and a short form become the candidate profile.",
+      },
+      {
+        title: "Visual pipeline",
+        description:
+          "Candidates sit in pipeline stages that the team moves them through, often scanning profiles quickly, so the top of your resume carries the most weight.",
+      },
+      {
+        title: "Team collaboration",
+        description:
+          "Several people comment on the same candidate, which favours resumes that are easy to summarise in a sentence or two.",
+      },
+    ],
+    eliminationFactors: [
+      "A resume that needs a long read before the relevant experience appears.",
+      "Columns or graphics that make the parsed profile incomplete.",
+      "Contact details and links hidden in headers or images.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks that your resume is read cleanly and key details survive parsing.",
+      "Audits the first lines of your resume for clarity and impact.",
+      "Compares your wording with the job description to surface missing terms.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Does Recruitee read resumes in several languages?",
+        answer:
+          "Employers receive the application in the language you submit it. Write in the language of the posting and keep section headings plain.",
+      },
+      {
+        question: "How much does the top of my resume matter?",
+        answer:
+          "A lot. In a pipeline view recruiters review many candidates quickly, so lead with your most relevant role and results.",
+      },
+    ],
+  },
+  breezyhr: {
+    marketName: "Small Businesses & Growing Teams",
+    description:
+      "Breezy HR is an applicant tracking system for small businesses and growing teams. It posts jobs to multiple boards, collects applications in one place and shows candidates in a visual pipeline, with tools that help recruiters score and compare them.",
+    marketShare: "Popular among small businesses and growing teams with lean recruiting.",
+    howItWorks: [
+      {
+        title: "Resume parsing",
+        description:
+          "Breezy reads the resume you upload and fills in a candidate profile. Content it cannot read as text, such as text inside images, is lost from that profile.",
+      },
+      {
+        title: "Questionnaires",
+        description:
+          "Employers can add questions to the application, and the answers help sort candidates quickly.",
+      },
+      {
+        title: "Scoring and pipeline",
+        description:
+          "Recruiters rate candidates and move them across pipeline stages, so a profile that is easy to assess in seconds has an advantage.",
+      },
+    ],
+    eliminationFactors: [
+      "Information in images, graphics or skill bars that the parser cannot read.",
+      "A profile that never names the skills and tools the job asks for.",
+      "Overlong documents that hide the most relevant experience.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks that your resume is readable as plain text with nothing hidden.",
+      "Finds skills and terms from the job description that your resume does not mention.",
+      "Audits whether your most relevant experience is easy to find.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Does Breezy HR rank candidates automatically?",
+        answer:
+          "It offers scoring tools that recruiters can use alongside their own judgment. How much weight they give them is each employer’s choice, so write for both a parser and a person.",
+      },
+      {
+        question: "Do I need the exact keywords of the posting?",
+        answer:
+          "Use them where they are true. The same terms as the posting make your experience easier to find and compare.",
+      },
+    ],
+  },
 }
