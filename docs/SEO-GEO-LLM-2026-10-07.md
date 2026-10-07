@@ -184,3 +184,57 @@ marca em 1ª posição para "griffowork"; ≥ 50 cliques/semana vindos de ATS.
   Cloudflare nem o estado real do índice (`site:`).
 - 38 dias de dado e 4 cliques: qualquer proporção é indicativa, não estatística.
 - Não tive acesso a Bing Webmaster, GA ou ao painel da Vercel.
+
+## 7. Exposição das APIs (auditoria de 2026-10-07)
+
+66 rotas em `src/app/api`. Conferido no código e por chamadas sem credencial a
+produção (só leitura):
+
+| Grupo | Proteção | Resultado sem credencial |
+|---|---|---|
+| `admin/*` (15) | `getAdminUser` + limite no middleware | 403 |
+| `cron/*` (7) | `CRON_SECRET` + limite | 401 |
+| `resume/*`, `user/*`, `radar/*`, `analyses/*`, `checkout`, `support/chat` | sessão | 401 |
+| `webhooks/stripe` | assinatura Stripe | — |
+| `public/ats-check`, `public/match-preview` | sem sessão, **limite de 3 por 10 min por IP** + cota diária no banco | — |
+| `public/match-result/[token]`, `radar/unsubscribe` | token válido/assinado; inexistente e vencido respondem igual | 404 |
+| `hiring-index`, `pricing`, `i18n/geo`, `auth/me` | públicas de propósito | 200 |
+
+Mutações passam por checagem de mesma origem (CSRF) no middleware; o preflight
+`OPTIONS` não devolve `Access-Control-Allow-Origin`, então outro site não lê as
+rotas autenticadas pelo navegador do usuário. **Nenhuma rota privada ficou
+aberta.**
+
+Achados e o que foi feito:
+
+1. **`robots.txt` não protegia `/admin` e `/api/cron/` dos bots nomeados.** Um grupo
+   `User-agent` substitui o grupo `*`; o grupo do Googlebot/GPTBot/etc. só tinha
+   `Allow: /`. Eram rotas autenticadas (nada vazou), mas o rastreio era
+   desperdiçado. Os `Disallow` agora estão nos dois grupos. ✅
+2. **`public/robots.txt` e `src/app/robots.ts` coexistiam** (o Next acusa
+   "conflicting public file and page file"). Em produção valia o gerado, mas a
+   ambiguidade é frágil. Arquivo estático removido. ✅
+3. **`GET /api` devolvia `{"message":"Hello, world!"}`**, resto do scaffold.
+   Rota removida. ✅
+4. **`/api/hiring-index` (32 KB, público, CC BY 4.0) saía com `no-store`**, porque o
+   `next.config.ts` força isso em todo `/api/*`. O dado já é cacheado 1 h na
+   memória da função; agora a CDN também guarda (`s-maxage=3600`). ✅
+5. **Sem limite de taxa** em `hiring-index`, `pricing` e `i18n/geo` (fora do
+   `matcher` do middleware). Risco baixo — são leituras baratas — e o cache do item 4
+   cobre a primeira. Se `pricing` passar a consultar o banco, incluir no `matcher`.
+6. **Decisão sua, não alterada:** liberar CORS (`Access-Control-Allow-Origin: *`) só
+   em `/api/hiring-index` permitiria a terceiros consumirem o dataset do navegador.
+   Não é necessário para SEO/GEO; só vale se quiser que o dado seja usado em sites
+   de terceiros.
+
+Não bloqueei `/api/` inteiro no robots de propósito: componentes de cliente
+buscam `pricing` e `i18n/geo`, e o Googlebot precisa dessas respostas para
+renderizar a página.
+
+## 8. Novos guias de ATS
+
+`smartrecruiters`, `successfactors` e `workable` em en/pt/es/de; `teamtailor` em
+en/de/sv. Idiomas limitados aos que têm público (mesmo critério do `meta.ts`):
+`/ats/teamtailor?lang=pt` cai no inglês, como já ocorre com `gupy?lang=de`. Todos
+com `marketShare` qualitativo, sem número sem fonte. Entram no sitemap, nas rotas
+estáticas, no rodapé da landing e no `llms.txt`.

@@ -175,4 +175,50 @@ export const atsSv: AtsLocale = {
       },
     ],
   },
+  teamtailor: {
+    marketName: "Norden, Europa och team med fokus på arbetsgivarvarumärke",
+    description:
+      "Teamtailor är en svensk rekryteringsplattform som kombinerar ett rekryteringssystem med en karriärsida i företagets egen profil. Arbetsgivare använder den för att publicera jobb, ta emot ansökningar och flytta kandidater genom en visuell pipeline.",
+    marketShare: "Populär bland företag i Norden och i övriga Europa.",
+    howItWorks: [
+      {
+        title: "Ansökan via karriärsidan",
+        description:
+          "Kandidater söker oftast via arbetsgivarens egen karriärsida, där CV:t och några formulärfält blir kandidatprofilen.",
+      },
+      {
+        title: "Visuell pipeline",
+        description:
+          "Rekryterare flyttar kandidater mellan steg och skummar ofta profiler snabbt, så toppen av ditt CV måste bära dina starkaste punkter.",
+      },
+      {
+        title: "Samarbete i teamet",
+        description:
+          "Rekryteringsteam kommenterar kandidater tillsammans, vilket gynnar ett CV som går att sammanfatta i en eller två meningar.",
+      },
+    ],
+    eliminationFactors: [
+      "Ett CV där den relevanta erfarenheten syns först efter en lång läsning.",
+      "Layouter med kolumner eller grafik som gör den inlästa profilen ofullständig.",
+      "Kontaktuppgifter och länkar gömda i sidhuvud eller bilder.",
+    ],
+    howGriffoWorkHelps: [
+      "Kontrollerar att ditt CV läses rent och att viktiga uppgifter överlever inläsningen.",
+      "Bedömer de första raderna i ditt CV för tydlighet och genomslag.",
+      "Jämför din formulering med jobbannonsen och visar vilka termer som saknas.",
+      "Skapar ett personligt brev riktat till den specifika tjänsten.",
+    ],
+    faqs: [
+      {
+        question: "Läser Teamtailor CV på svenska och engelska?",
+        answer:
+          "Arbetsgivare tar emot ansökningar på det språk kandidaten skickar in. Skriv på annonsens språk och håll rubrikerna enkla.",
+      },
+      {
+        question: "Hur viktig är början av mitt CV?",
+        answer:
+          "Mycket viktig. Rekryterare går ofta igenom många kandidater i en pipeline, så lägg din mest relevanta tjänst och dina resultat först.",
+      },
+    ],
+  },
 }

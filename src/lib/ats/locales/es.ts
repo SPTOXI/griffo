@@ -202,4 +202,142 @@ export const atsEs: AtsLocale = {
       },
     ],
   },
+  smartrecruiters: {
+    marketName: "Empresas Medianas y Grandes con Presencia Internacional",
+    description:
+      "SmartRecruiters es una plataforma de adquisición de talento que empresas medianas y grandes usan para publicar ofertas, recibir candidaturas y gestionar candidatos en un único flujo. El currículum se lee y se convierte en un perfil que el reclutador busca, filtra y compara.",
+    marketShare: "Muy utilizado por empresas internacionales medianas y grandes.",
+    howItWorks: [
+      {
+        title: "Lectura del currículum como perfil",
+        description:
+          "El sistema lee el archivo y crea un perfil estructurado: datos de contacto, experiencia, formación y habilidades. Lo que no se lee como texto puede no llegar nunca al reclutador.",
+      },
+      {
+        title: "Preguntas en la candidatura",
+        description:
+          "La empresa puede añadir preguntas de filtro al formulario, como permiso de trabajo, ubicación o experiencia exigida, y el reclutador usa las respuestas para filtrar la lista.",
+      },
+      {
+        title: "Evaluación en equipo",
+        description:
+          "Reclutadores y responsables comparan perfiles lado a lado, por lo que un resumen claro y resultados cuantificados facilitan la comparación.",
+      },
+    ],
+    eliminationFactors: [
+      "Diseños de varias columnas, tablas o cuadros de texto que desordenan la lectura de tu trayectoria.",
+      "Datos de contacto o habilidades clave en encabezados, pies de página o imágenes, que los lectores suelen ignorar.",
+      "Términos distintos a los de la oferta, lo que debilita las búsquedas y los filtros.",
+    ],
+    howGriffoWorkHelps: [
+      "Comprueba si un lector típico de ATS interpreta tu currículum como texto limpio y en el orden correcto.",
+      "Compara tus habilidades y tu redacción con la oferta para encontrar palabras clave ausentes.",
+      "Evalúa si tus logros y métricas destacan cuando el reclutador compara perfiles.",
+      "Genera una carta de presentación dirigida al puesto.",
+    ],
+    faqs: [
+      {
+        question: "¿SmartRecruiters descarta mi currículum automáticamente?",
+        answer:
+          "Depende de cómo haya configurado la oferta cada empresa. Muchas usan preguntas y filtros, y el reclutador decide el resto. Un currículum que el sistema no lee bien pasa más fácilmente desapercibido, por eso importa un diseño limpio.",
+      },
+      {
+        question: "¿Qué formato de archivo funciona mejor?",
+        answer:
+          "Sigue el formato que pida la empresa. Si es libre, un PDF con texto seleccionable o un .docx sencillo de una columna es la opción más segura.",
+      },
+    ],
+  },
+  successfactors: {
+    marketName: "Grandes Corporaciones y Multinacionales",
+    description:
+      "SAP SuccessFactors Recruiting es el módulo de selección de la suite de gestión de personas de SAP. Las grandes organizaciones lo usan para llevar procesos de selección estructurados y orientados al cumplimiento, con el currículum alimentando el perfil del candidato junto al formulario.",
+    marketShare: "Elección habitual en grandes corporaciones que ya trabajan con SAP.",
+    howItWorks: [
+      {
+        title: "Formulario estructurado",
+        description:
+          "El candidato suele rellenar un formulario detallado en el portal de empleo de la empresa, y el currículum se adjunta o se lee para completar partes del perfil. Los campos incoherentes con el currículum llaman la atención.",
+      },
+      {
+        title: "Preguntas de preselección",
+        description:
+          "La empresa puede configurar preguntas por oferta, como certificaciones, idiomas o disponibilidad, que el reclutador usa para reducir el grupo de candidatos.",
+      },
+      {
+        title: "Proceso y cumplimiento",
+        description:
+          "Las candidaturas pasan por etapas definidas y con registro de cada una; fechas y puestos completos y coherentes ayudan a que tu trayectoria se sostenga en la revisión.",
+      },
+    ],
+    eliminationFactors: [
+      "Fechas de empleo ausentes, solapadas o distintas entre el formulario y el currículum.",
+      "Puestos y responsabilidades que no se relacionan con claridad con los requisitos de la oferta.",
+      "Formato decorativo que oculta texto al lector o rompe el orden de tu trayectoria.",
+    ],
+    howGriffoWorkHelps: [
+      "Comprueba que fechas, puestos y secciones sean coherentes entre el currículum y el formulario.",
+      "Compara tu experiencia con los requisitos de la oferta.",
+      "Evalúa la claridad y el impacto medible para la selección en grandes empresas.",
+      "Genera una carta de presentación dirigida al puesto.",
+    ],
+    faqs: [
+      {
+        question: "¿Mi currículum debe coincidir con el formulario?",
+        answer:
+          "Sí. El reclutador ve ambos, y las diferencias en fechas, puestos o empresas generan dudas. Mantén los dos coherentes.",
+      },
+      {
+        question: "¿SuccessFactors solo lo usan empresas enormes?",
+        answer:
+          "Es más habitual en grandes organizaciones, por eso los procesos suelen ser formales y estar bien documentados. Las empresas pequeñas lo usan con menos frecuencia.",
+      },
+    ],
+  },
+  workable: {
+    marketName: "Empresas en Crecimiento y Medianas en Todo el Mundo",
+    description:
+      "Workable es una plataforma de reclutamiento que usan empresas en crecimiento y medianas para publicar ofertas en varios portales, recibir candidaturas en un solo lugar y ordenar candidatos. Lee cada currículum como un perfil y ofrece herramientas con IA que ayudan al reclutador a preseleccionar.",
+    marketShare: "Popular entre pequeñas y medianas empresas que contratan a nivel internacional.",
+    howItWorks: [
+      {
+        title: "Lectura del currículum",
+        description:
+          "Workable extrae experiencia, formación y habilidades del archivo que subes. El texto que no puede leer, como el contenido dentro de imágenes, se pierde del perfil.",
+      },
+      {
+        title: "Preguntas de filtro",
+        description:
+          "Las empresas suelen añadir preguntas a la candidatura, y las respuestas ayudan al reclutador a ordenar candidatos con rapidez.",
+      },
+      {
+        title: "Preselección con apoyo de IA",
+        description:
+          "La plataforma ofrece funciones que ayudan al reclutador a ordenar y preseleccionar candidatos para el puesto, así que las habilidades y términos de tu currículum importan.",
+      },
+    ],
+    eliminationFactors: [
+      "Información dentro de imágenes, gráficos o barras de nivel que el sistema no puede leer.",
+      "Un perfil que nunca nombra las herramientas y habilidades que pide la oferta.",
+      "Documentos demasiado largos que entierran la experiencia más relevante.",
+    ],
+    howGriffoWorkHelps: [
+      "Comprueba que tu currículum se pueda leer como texto simple, sin contenido oculto.",
+      "Encuentra habilidades y términos de la oferta que tu currículum no menciona.",
+      "Evalúa si tu experiencia más relevante es fácil de encontrar.",
+      "Genera una carta de presentación dirigida al puesto.",
+    ],
+    faqs: [
+      {
+        question: "¿Workable usa IA para ordenar currículums?",
+        answer:
+          "Ofrece funciones con IA que las empresas pueden usar al preseleccionar. Cuánto confían en ellas depende de cada empresa, así que escribe para un lector automático y para una persona.",
+      },
+      {
+        question: "¿Necesito usar las palabras clave de la oferta?",
+        answer:
+          "Sí, cuando sean ciertas. Usar los mismos términos del anuncio hace más fácil encontrar y comparar tu experiencia.",
+      },
+    ],
+  },
 }

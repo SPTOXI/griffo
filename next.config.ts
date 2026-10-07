@@ -286,6 +286,14 @@ const nextConfig: NextConfig = {
         headers: [{ key: "Cache-Control", value: "no-store, no-cache, must-revalidate" }],
       },
       {
+        // Exceção ao `no-store` acima, DEPOIS dele (o último que casa vence): é
+        // dado público (CC BY 4.0) que `loadHiringAtlas` já guarda por 1h na
+        // memória. Com `no-store`, cada rastreador e cada motor de resposta
+        // atravessava a CDN até a função; assim a CDN absorve a repetição.
+        source: "/api/hiring-index",
+        headers: [{ key: "Cache-Control", value: "public, s-maxage=3600, stale-while-revalidate=86400" }],
+      },
+      {
         source: "/_next/static/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },

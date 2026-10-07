@@ -178,4 +178,142 @@ export const atsPt: AtsLocale = {
       { question: 'Como funciona a busca de candidatos no InfoJobs?', answer: 'Recrutadores filtram por palavras-chave e localização antes de abrir os currículos individualmente.' },
     ],
   },
+  smartrecruiters: {
+    marketName: "Empresas Médias e Grandes com Operação Internacional",
+    description:
+      "O SmartRecruiters é uma plataforma de aquisição de talentos que empresas de médio e grande porte usam para publicar vagas, receber candidaturas e gerenciar candidatos em um único funil. O currículo é lido e transformado em um perfil que o recrutador busca, filtra e compara.",
+    marketShare: "Muito usado por empresas internacionais de médio e grande porte.",
+    howItWorks: [
+      {
+        title: "Leitura do currículo em perfil",
+        description:
+          "O sistema lê o arquivo e monta um perfil estruturado: contatos, experiências, formação e competências. O que não é lido como texto pode nunca chegar ao recrutador.",
+      },
+      {
+        title: "Perguntas na candidatura",
+        description:
+          "A empresa pode incluir perguntas de triagem no formulário, como autorização de trabalho, localização ou experiência exigida, e o recrutador usa as respostas para filtrar a lista.",
+      },
+      {
+        title: "Avaliação em equipe",
+        description:
+          "Recrutadores e gestores comparam perfis lado a lado, então um resumo claro e resultados quantificados facilitam a comparação.",
+      },
+    ],
+    eliminationFactors: [
+      "Layouts em várias colunas, tabelas ou caixas de texto que embaralham a ordem em que o sistema lê sua trajetória.",
+      "Contatos ou competências importantes em cabeçalho, rodapé ou imagem, que os leitores costumam ignorar.",
+      "Termos diferentes dos da vaga, o que enfraquece buscas e filtros.",
+    ],
+    howGriffoWorkHelps: [
+      "Verifica se um leitor típico de ATS lê seu currículo como texto limpo e na ordem certa.",
+      "Compara suas competências e termos com a descrição da vaga para achar palavras-chave ausentes.",
+      "Avalia se conquistas e métricas se destacam quando o recrutador compara perfis.",
+      "Gera uma carta de apresentação direcionada à vaga.",
+    ],
+    faqs: [
+      {
+        question: "O SmartRecruiters descarta meu currículo automaticamente?",
+        answer:
+          "Depende de como cada empresa configurou a vaga. Muitas usam perguntas e filtros, e o recrutador decide o restante. Um currículo que o sistema não lê direito é mais fácil de passar despercebido, por isso o layout limpo importa.",
+      },
+      {
+        question: "Qual formato de arquivo funciona melhor?",
+        answer:
+          "Siga o formato que a empresa pedir. Se for livre, um PDF com texto selecionável ou um .docx simples, em uma coluna, é a escolha mais segura.",
+      },
+    ],
+  },
+  successfactors: {
+    marketName: "Grandes Corporações e Multinacionais",
+    description:
+      "O SAP SuccessFactors Recruiting é o módulo de recrutamento da suíte de gestão de pessoas da SAP. Grandes organizações o usam para conduzir processos seletivos estruturados e orientados a conformidade, com o currículo alimentando o perfil do candidato junto do formulário.",
+    marketShare: "Escolha comum em grandes corporações que já usam SAP.",
+    howItWorks: [
+      {
+        title: "Formulário estruturado",
+        description:
+          "O candidato costuma preencher um formulário detalhado no site de carreiras da empresa, e o currículo é anexado ou lido para preencher partes do perfil. Campos incoerentes com o currículo chamam atenção.",
+      },
+      {
+        title: "Perguntas de pré-triagem",
+        description:
+          "A empresa pode configurar perguntas por vaga, como certificações, idiomas ou disponibilidade, que o recrutador usa para reduzir o grupo de candidatos.",
+      },
+      {
+        title: "Processo e conformidade",
+        description:
+          "As candidaturas passam por etapas definidas, com registro de cada uma; datas e cargos completos e consistentes ajudam sua trajetória a se sustentar na análise.",
+      },
+    ],
+    eliminationFactors: [
+      "Datas de emprego ausentes, sobrepostas ou diferentes entre formulário e currículo.",
+      "Cargos e responsabilidades que não se ligam claramente aos requisitos da vaga.",
+      "Formatação decorativa que esconde texto do leitor ou quebra a ordem da trajetória.",
+    ],
+    howGriffoWorkHelps: [
+      "Confere se datas, cargos e seções ficam consistentes entre currículo e formulário.",
+      "Compara sua experiência com os requisitos listados na vaga.",
+      "Avalia clareza e impacto mensurável para a triagem de grandes empresas.",
+      "Gera uma carta de apresentação direcionada à vaga.",
+    ],
+    faqs: [
+      {
+        question: "Meu currículo deve ser idêntico ao formulário?",
+        answer:
+          "Sim. O recrutador vê os dois, e diferenças de datas, cargos ou empresas geram dúvida. Mantenha os dois coerentes.",
+      },
+      {
+        question: "O SuccessFactors só é usado por empresas enormes?",
+        answer:
+          "É mais comum em grandes organizações, por isso os processos tendem a ser formais e bem documentados. Empresas menores o usam com menos frequência.",
+      },
+    ],
+  },
+  workable: {
+    marketName: "Empresas em Crescimento e de Médio Porte no Mundo Todo",
+    description:
+      "O Workable é uma plataforma de recrutamento usada por empresas em crescimento e de médio porte para divulgar vagas em vários sites, receber candidaturas em um só lugar e ranquear candidatos. Ele lê cada currículo em um perfil e oferece ferramentas com IA que ajudam o recrutador a montar a lista final.",
+    marketShare: "Popular entre pequenas e médias empresas que contratam internacionalmente.",
+    howItWorks: [
+      {
+        title: "Leitura do currículo",
+        description:
+          "O Workable extrai experiência, formação e competências do arquivo enviado. Texto que ele não consegue ler, como conteúdo dentro de imagens, se perde do perfil.",
+      },
+      {
+        title: "Perguntas de triagem",
+        description:
+          "As empresas costumam incluir perguntas na candidatura, e as respostas ajudam o recrutador a separar candidatos rapidamente.",
+      },
+      {
+        title: "Seleção com apoio de IA",
+        description:
+          "A plataforma oferece recursos que ajudam o recrutador a ranquear e selecionar candidatos para a vaga, então as competências e termos do seu currículo importam.",
+      },
+    ],
+    eliminationFactors: [
+      "Informação dentro de imagens, gráficos ou barras de habilidade que o sistema não consegue ler.",
+      "Um perfil que nunca cita as ferramentas e competências pedidas na vaga.",
+      "Documentos muito longos que escondem a experiência mais relevante.",
+    ],
+    howGriffoWorkHelps: [
+      "Verifica se seu currículo é legível como texto simples, sem conteúdo escondido.",
+      "Encontra competências e termos da vaga que seu currículo não menciona.",
+      "Avalia se sua experiência mais relevante é fácil de encontrar.",
+      "Gera uma carta de apresentação direcionada à vaga.",
+    ],
+    faqs: [
+      {
+        question: "O Workable usa IA para ranquear currículos?",
+        answer:
+          "Ele oferece recursos com IA que as empresas podem usar na seleção. O quanto dependem deles é escolha de cada empresa, então escreva para um leitor automático e para uma pessoa.",
+      },
+      {
+        question: "Preciso usar as palavras-chave da vaga?",
+        answer:
+          "Sim, quando forem verdadeiras. Usar os mesmos termos do anúncio facilita encontrar e comparar sua experiência.",
+      },
+    ],
+  },
 }
