@@ -175,4 +175,50 @@ export const atsNl: AtsLocale = {
       },
     ],
   },
+  recruitee: {
+    marketName: "Nederland, Europa en snelgroeiende bedrijven met teamgericht werven",
+    description:
+      "Recruitee is een Nederlands samenwerkingsplatform voor werving dat een sollicitantenvolgsysteem combineert met het bouwen van vacaturesites en het plaatsen van vacatures op meerdere kanalen. Teams begeleiden kandidaten door een visuele pipeline en bespreken ze samen.",
+    marketShare: "Populair bij groeiende bedrijven in heel Europa.",
+    howItWorks: [
+      {
+        title: "Solliciteren via de vacaturesite",
+        description:
+          "Kandidaten solliciteren meestal via de eigen vacaturesite van de werkgever. Het cv en een kort formulier vormen samen het kandidaatprofiel.",
+      },
+      {
+        title: "Visuele pipeline",
+        description:
+          "Kandidaten staan in fases van de pipeline waar het team ze doorheen schuift, en profielen worden vaak snel bekeken. Het begin van je cv telt daarom het zwaarst.",
+      },
+      {
+        title: "Samenwerking in het team",
+        description:
+          "Meerdere mensen geven commentaar op dezelfde kandidaat, wat cv’s bevoordeelt die in een of twee zinnen samen te vatten zijn.",
+      },
+    ],
+    eliminationFactors: [
+      "Een cv waarbij de relevante ervaring pas na lang lezen zichtbaar wordt.",
+      "Kolommen of afbeeldingen waardoor het ingelezen profiel onvolledig blijft.",
+      "Contactgegevens en links in kop- of voetteksten of in afbeeldingen.",
+    ],
+    howGriffoWorkHelps: [
+      "Controleert of je cv netjes wordt ingelezen en of belangrijke gegevens het inlezen overleven.",
+      "Beoordeelt de eerste regels van je cv op duidelijkheid en impact.",
+      "Vergelijkt je formuleringen met de vacaturetekst en laat ontbrekende termen zien.",
+      "Maakt een sollicitatiebrief die is toegespitst op de specifieke functie.",
+    ],
+    faqs: [
+      {
+        question: "Leest Recruitee cv’s in meerdere talen?",
+        answer:
+          "Werkgevers ontvangen de sollicitatie in de taal waarin je die indient. Schrijf in de taal van de vacature en houd kopjes eenvoudig.",
+      },
+      {
+        question: "Hoe belangrijk is het begin van mijn cv?",
+        answer:
+          "Heel belangrijk. In de pipeline bekijken recruiters veel kandidaten snel, dus zet je meest relevante functie en je resultaten vooraan.",
+      },
+    ],
+  },
 }

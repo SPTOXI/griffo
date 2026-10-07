@@ -238,3 +238,15 @@ en/de/sv. Idiomas limitados aos que têm público (mesmo critério do `meta.ts`)
 `/ats/teamtailor?lang=pt` cai no inglês, como já ocorre com `gupy?lang=de`. Todos
 com `marketShare` qualitativo, sem número sem fonte. Entram no sitemap, nas rotas
 estáticas, no rodapé da landing e no `llms.txt`.
+
+### 8.1 Segunda leva (+5 guias, total de 19)
+
+`oraclerecruiting` (en/pt/es/de — sucessor de nuvem do Taleo, que já aparece no
+Search Console), `bamboohr` (en/es), `jobvite` (en), `recruitee` (en/de/nl) e
+`breezyhr` (en/pt/es). Mesmo critério: só idiomas com público, `marketShare`
+qualitativo, nenhuma afirmação de rejeição automática.
+
+Fora desta leva, de propósito: ATS brasileiros menores (Kenoby, Abler, Pandapé etc.)
+e Phenom/Eightfold. Não tenho como confirmar com segurança o que cada um faz hoje,
+e um guia com fato errado custa mais que um guia a menos. Entram quando alguém
+com acesso ao produto conferir o texto.

@@ -392,4 +392,96 @@ export const atsDe: AtsLocale = {
       },
     ],
   },
+  oraclerecruiting: {
+    marketName: "Große Unternehmen und globale Arbeitgeber",
+    description:
+      "Oracle Recruiting ist das Recruiting-Modul der Cloud-HR-Suite von Oracle, mit dem große Arbeitgeber Karriereseiten betreiben, Bewerbungen sammeln und Kandidaten verwalten. Es ist das Cloud-Pendant zu Taleo innerhalb der Oracle-HCM-Familie und erstellt das Kandidatenprofil aus Lebenslauf und Antworten im Bewerbungsformular.",
+    marketShare: "Häufige Wahl bei großen Unternehmen, die bereits Oracle für HR einsetzen.",
+    howItWorks: [
+      {
+        title: "Karriereseite und Kandidatenprofil",
+        description:
+          "Kandidaten bewerben sich über die Karriereseite des Arbeitgebers. Lebenslauf und Formularantworten werden zu einem Profil zusammengeführt, das Recruiter durchsuchen und filtern.",
+      },
+      {
+        title: "Fragebögen und Vorauswahl",
+        description:
+          "Arbeitgeber können einer Stelle Fragen zuordnen, etwa zu Zertifikaten, Sprachen oder Verfügbarkeit, und mit den Antworten den Bewerberkreis eingrenzen.",
+      },
+      {
+        title: "Strukturierte Prüfung",
+        description:
+          "Recruiter und Fachbereiche prüfen Kandidaten in festgelegten Phasen. Konsistente Daten und Positionen sowie klare Ergebnisse helfen Ihrem Profil, standzuhalten.",
+      },
+    ],
+    eliminationFactors: [
+      "Layouts, die die Lesereihenfolge Ihres Werdegangs durcheinanderbringen.",
+      "Daten oder Positionsbezeichnungen, die zwischen Lebenslauf und Bewerbungsformular abweichen.",
+      "Erfahrung, die sich nicht klar auf die Anforderungen der Stelle beziehen lässt.",
+    ],
+    howGriffoWorkHelps: [
+      "Prüft, ob Ihr Lebenslauf als sauberer Text in der richtigen Reihenfolge gelesen wird.",
+      "Hält Daten, Positionen und Abschnitte zwischen Lebenslauf und Formular konsistent.",
+      "Gleicht Ihre Erfahrung mit den Anforderungen der Stellenanzeige ab.",
+      "Erstellt ein auf die Stelle zugeschnittenes Anschreiben.",
+    ],
+    faqs: [
+      {
+        question: "Ist Oracle Recruiting dasselbe wie Taleo?",
+        answer:
+          "Nein. Taleo ist das ältere Recruiting-Produkt von Oracle, Oracle Recruiting das neuere Modul der Cloud-HR-Suite. Unternehmen können beides einsetzen, deshalb gelten dieselben guten Gewohnheiten für beide.",
+      },
+      {
+        question: "Muss der Lebenslauf zu meinen Antworten im Formular passen?",
+        answer:
+          "Ja. Recruiter sehen beides, und Abweichungen bei Daten, Positionen oder Arbeitgebern werfen Fragen auf. Halten Sie alles konsistent.",
+      },
+    ],
+  },
+  recruitee: {
+    marketName: "Europa und schnell wachsende Unternehmen mit Team-Recruiting",
+    description:
+      "Recruitee ist eine kollaborative Recruiting-Plattform aus den Niederlanden, die ein Bewerbermanagementsystem mit dem Aufbau von Karriereseiten und Multiposting verbindet. Teams führen Kandidaten durch eine visuelle Pipeline und besprechen sie gemeinsam.",
+    marketShare: "Beliebt bei wachsenden Unternehmen in ganz Europa.",
+    howItWorks: [
+      {
+        title: "Bewerbung über die Karriereseite",
+        description:
+          "Kandidaten bewerben sich meist über die Karriereseite des Arbeitgebers. Lebenslauf und ein kurzes Formular bilden das Kandidatenprofil.",
+      },
+      {
+        title: "Visuelle Pipeline",
+        description:
+          "Kandidaten liegen in Pipeline-Phasen, durch die das Team sie schiebt, und Profile werden oft schnell überflogen. Der Anfang Ihres Lebenslaufs hat deshalb das größte Gewicht.",
+      },
+      {
+        title: "Zusammenarbeit im Team",
+        description:
+          "Mehrere Personen kommentieren denselben Kandidaten, was Lebensläufe begünstigt, die sich in ein bis zwei Sätzen zusammenfassen lassen.",
+      },
+    ],
+    eliminationFactors: [
+      "Ein Lebenslauf, bei dem die relevante Erfahrung erst nach langem Lesen sichtbar wird.",
+      "Spalten oder Grafiken, die das ausgelesene Profil unvollständig machen.",
+      "Kontaktdaten und Links in Kopfzeilen oder Bildern.",
+    ],
+    howGriffoWorkHelps: [
+      "Prüft, ob Ihr Lebenslauf sauber gelesen wird und wichtige Angaben das Auslesen überstehen.",
+      "Bewertet die ersten Zeilen Ihres Lebenslaufs auf Klarheit und Wirkung.",
+      "Vergleicht Ihre Formulierungen mit der Stellenanzeige und zeigt fehlende Begriffe.",
+      "Erstellt ein auf die Stelle zugeschnittenes Anschreiben.",
+    ],
+    faqs: [
+      {
+        question: "Liest Recruitee Lebensläufe in mehreren Sprachen?",
+        answer:
+          "Arbeitgeber erhalten die Bewerbung in der Sprache, in der Sie sie einreichen. Schreiben Sie in der Sprache der Stellenanzeige und halten Sie Abschnittsüberschriften schlicht.",
+      },
+      {
+        question: "Wie wichtig ist der Anfang meines Lebenslaufs?",
+        answer:
+          "Sehr. In der Pipeline-Ansicht prüfen Recruiter viele Kandidaten schnell, also stellen Sie Ihre relevanteste Station und Ihre Ergebnisse an den Anfang.",
+      },
+    ],
+  },
 }

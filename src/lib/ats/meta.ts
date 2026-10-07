@@ -205,6 +205,48 @@ export const ATS_META: Record<string, AtsMeta> = {
     languages: ['en', 'de', 'sv'],
     marketShare: { kind: 'qualitative' },
   },
+  oraclerecruiting: {
+    slug: 'oraclerecruiting',
+    name: 'Oracle Recruiting',
+    fullName: 'Oracle Recruiting (Oracle Fusion Cloud HCM)',
+    country: 'US',
+    // Sucessor de nuvem do Taleo; o público de Taleo já aparece no Search Console.
+    languages: ['en', 'pt', 'es', 'de'],
+    marketShare: { kind: 'qualitative' },
+  },
+  bamboohr: {
+    slug: 'bamboohr',
+    name: 'BambooHR',
+    fullName: 'BambooHR Applicant Tracking',
+    country: 'US',
+    languages: ['en', 'es'],
+    marketShare: { kind: 'qualitative' },
+  },
+  jobvite: {
+    slug: 'jobvite',
+    name: 'Jobvite',
+    fullName: 'Jobvite Talent Acquisition Suite',
+    country: 'US',
+    // Base de clientes concentrada na América do Norte.
+    languages: ['en'],
+    marketShare: { kind: 'qualitative' },
+  },
+  recruitee: {
+    slug: 'recruitee',
+    name: 'Recruitee',
+    fullName: 'Recruitee Collaborative Hiring Software',
+    country: 'NL',
+    languages: ['en', 'nl', 'de'],
+    marketShare: { kind: 'qualitative' },
+  },
+  breezyhr: {
+    slug: 'breezyhr',
+    name: 'Breezy HR',
+    fullName: 'Breezy HR Applicant Tracking System',
+    country: 'US',
+    languages: ['en', 'pt', 'es'],
+    marketShare: { kind: 'qualitative' },
+  },
 }
 
 export const ATS_SLUGS = Object.keys(ATS_META)
