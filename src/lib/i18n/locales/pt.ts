@@ -1102,8 +1102,8 @@ export const pt: TranslationDictionary = {
       southAmerica: "América do Sul",
     },
     atsPage: {
-      metaTitle: '{resume} para ATS {ats} — Como funciona a triagem | GriffoWork',
-      metaDescription: 'Como funciona o processo seletivo nas empresas que usam o {fullName} — um ATS que faz a triagem automática de currículos — e como o GriffoWork audita seu documento em 8 dimensões.',
+      metaTitle: '{ats}: seu {resume} passa na triagem? Teste grátis | GriffoWork',
+      metaDescription: 'Veja como o {fullName} filtra currículos e o que faz o seu ser descartado. Envie o arquivo e receba o diagnóstico grátis, sem cadastro.',
       breadcrumbHome: 'Início',
       breadcrumbSystems: 'Sistemas ATS',
       heroBadge: 'Triagem automática por ATS & Diagnóstico por IA',

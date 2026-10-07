@@ -263,6 +263,14 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: true,
   poweredByHeader: false,
+  // `/carreiras/*` existiu e foi removido (§2.43), mas o Google ainda lista
+  // `www.griffo.work/carreiras/gerente-de-projetos`. 301 para o guia ATS de
+  // maior impressão em português em vez de deixar o 404 consumir o rastreio.
+  async redirects() {
+    return [
+      { source: "/carreiras/:path*", destination: "/ats/gupy", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

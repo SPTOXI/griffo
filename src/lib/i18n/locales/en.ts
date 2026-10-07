@@ -1102,8 +1102,8 @@ export const en: TranslationDictionary = {
       southAmerica: "South America",
     },
     atsPage: {
-      metaTitle: '{resume} for {ats} ATS — How screening works | GriffoWork',
-      metaDescription: 'How the hiring process works at companies using {fullName} — an ATS (Applicant Tracking System) that screens resumes — and how GriffoWork audits your document across 8 dimensions.',
+      metaTitle: '{ats} ATS: will your {resume} pass? Free check | GriffoWork',
+      metaDescription: 'See how {fullName} screens resumes and what gets yours rejected. Upload your file and get a free diagnosis, no sign-up.',
       breadcrumbHome: 'Home',
       breadcrumbSystems: 'ATS Systems',
       heroBadge: 'ATS (Applicant Tracking System) Screening & AI Audit',

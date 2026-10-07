@@ -6,7 +6,23 @@
 
 - [GriffoWork](https://griffo.work): AI-powered resume audit across 8 executive dimensions, ATS optimization, resume rewriting, and career orientation for job seekers, in 12 languages.
 - [Hiring](https://griffo.work/hiring): Entry point for candidates who just applied to a job and want to check their resume against it.
-- [ATS Compatibility Guides](https://griffo.work/ats/workday): How major applicant tracking systems (Workday, Greenhouse, Lever, Taleo, Ashby, Gupy, and others) parse and screen resumes, and what breaks a resume's compatibility with each.
+- [Free ATS resume check](https://griffo.work/ats-check): Upload a resume and see in seconds how an applicant tracking system reads it. No sign-up required.
+- [Country pages](https://griffo.work/global): Localized landing pages for 40+ markets (e.g. [/br](https://griffo.work/br), [/us](https://griffo.work/us), [/de](https://griffo.work/de), [/gb](https://griffo.work/gb)) with local ATS vendors, resume terminology and pricing.
+
+## ATS compatibility guides (one per system)
+
+Each guide explains how the system screens resumes, what breaks parsing, and answers common questions. Available in up to 12 languages via `?lang=` (en, pt, es, de, fr, it, ja, ko, zh, ar, nl, sv).
+
+- [Gupy](https://griffo.work/ats/gupy): Brazil's most used ATS.
+- [Solides](https://griffo.work/ats/solides): Brazilian recruiting and screening platform.
+- [Workday](https://griffo.work/ats/workday): Enterprise HCM/ATS used by large employers worldwide.
+- [Greenhouse](https://griffo.work/ats/greenhouse): Structured-hiring ATS common in tech.
+- [Lever](https://griffo.work/ats/lever): ATS/CRM for tech and startup hiring.
+- [Taleo](https://griffo.work/ats/taleo): Oracle's legacy enterprise ATS.
+- [iCIMS](https://griffo.work/ats/icims): Enterprise talent-acquisition platform.
+- [Ashby](https://griffo.work/ats/ashby): All-in-one recruiting platform for growth-stage companies.
+- [Personio](https://griffo.work/ats/personio): HR and recruiting software for European SMEs.
+- [InfoJobs](https://griffo.work/ats/infojobs): Spanish job board and applicant system.
 
 ## Griffo Enterprise (for recruiting and HR teams)
 

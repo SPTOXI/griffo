@@ -2,6 +2,7 @@ import { jsonLd } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import { dirForLang, localeForLang, LANGUAGES, type Language } from '@/lib/i18n'
 import { resolveRequestLanguage } from '@/lib/i18n/resolve-request-language'
+import { langAlternates } from '@/lib/seo/lang-alternates'
 import { salesMailto } from '@/lib/i18n/contact'
 import { enterpriseContentFor } from '@/lib/enterprise/content'
 import type { EnterprisePillarContent } from '@/lib/enterprise/content-types'
@@ -25,17 +26,14 @@ export async function generatePillarMetadata(
 ): Promise<Metadata> {
   const lang = await resolveRequestLanguage(searchParams)
   const content = enterpriseContentFor(lang)[section]
+  const { lang: requestedLang } = await searchParams
+  const alternates = langAlternates(canonical, requestedLang, LANGUAGES, localeForLang)
 
   return {
     title: content.metaTitle,
     description: content.metaDescription,
     keywords: content.keywords,
-    alternates: {
-      canonical,
-      languages: Object.fromEntries(
-        LANGUAGES.map((l) => [localeForLang(l), `${canonical}?lang=${l}`])
-      ),
-    },
+    alternates,
     openGraph: {
       title: content.metaTitle,
       description: content.metaDescription,

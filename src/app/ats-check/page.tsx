@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import { langAlternates } from '@/lib/seo/lang-alternates'
 import { cookies, headers } from 'next/headers'
 import { jsonLd } from '@/lib/json-ld'
 import { detectLanguageFromCountry, dirForLang, localeForLang } from '@/lib/i18n'
@@ -44,20 +45,16 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const lang = await resolveLang(searchParams)
   const c = ATS_CHECK_COPY[lang]
   const canonical = `${BASE}${ATS_CHECK_PATH}`
+  const { lang: requestedLang } = await searchParams
+  const alternates = langAlternates(canonical, requestedLang, ATS_CHECK_LANGS, localeForLang)
   return {
     title: c.metaTitle,
     description: c.metaDescription,
-    alternates: {
-      canonical: lang === 'en' ? canonical : `${canonical}?lang=${lang}`,
-      languages: {
-        ...Object.fromEntries(ATS_CHECK_LANGS.map((l) => [localeForLang(l), `${canonical}?lang=${l}`])),
-        'x-default': canonical,
-      },
-    },
+    alternates,
     openGraph: {
       title: c.metaTitle,
       description: c.metaDescription,
-      url: `${canonical}?lang=${lang}`,
+      url: alternates.canonical,
       siteName: 'GriffoWork',
       images: [{ url: '/logo-full.png', width: 693, height: 694, alt: c.title }],
       type: 'website',

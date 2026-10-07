@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { ATS_META } from '@/lib/ats/meta'
 import { ATS_CHECK_COPY, ATS_CHECK_PATH, isAtsCheckLang } from '@/lib/ats-check/copy'
 import { atsContentFor, atsLanguagesFor } from '@/lib/ats/content'
+import { langAlternates } from '@/lib/seo/lang-alternates'
 import { resumeTermFor } from '@/lib/market/regional-terms'
 import {
   DICTIONARIES,
@@ -106,6 +107,8 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   // custou uma vez a este projeto.
   const langs = atsLanguagesFor(slug)
   const canonical = `${BASE}/ats/${slug}`
+  const { lang: requestedLang } = await searchParams
+  const alternates = langAlternates(canonical, requestedLang, langs, localeForLang)
 
   return {
     title,
@@ -120,16 +123,11 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       `${meta.name.toLowerCase()} ${t.breadcrumbSystems.toLowerCase()}`,
       'griffowork',
     ],
-    alternates: {
-      canonical,
-      languages: Object.fromEntries(
-        langs.map((l) => [localeForLang(l), `${canonical}?lang=${l}`])
-      ),
-    },
+    alternates,
     openGraph: {
       title,
       description,
-      url: canonical,
+      url: alternates.canonical,
       siteName: 'GriffoWork',
       images: [{ url: '/logo-full.png', width: 693, height: 694, alt: title }],
       type: 'article',
@@ -154,8 +152,8 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
   //
   // Um `?lang=` que aquele ATS não tem (ex.: `/ats/gupy?lang=de`) NÃO é 404:
   // `resolveLanguage` recua para o idioma próprio do ATS. Isso é seguro
-  // porque o canonical desta página aponta sempre para `/ats/{slug}` sem
-  // parâmetro, e o hreflang só lista os idiomas que existem — então o
+  // porque o canonical dela volta para `/ats/{slug}` sem parâmetro (só um
+  // `?lang=` que o ATS tem vira canonical próprio), e o hreflang só lista os idiomas que existem — então o
   // buscador nunca vê nem indexa a combinação inválida. Devolver 404 para
   // um parâmetro digitado à mão seria hostil sem ganhar nada.
   if (!meta || !lang || !ats) notFound()

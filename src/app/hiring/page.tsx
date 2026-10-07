@@ -10,6 +10,7 @@ import {
   localeForLang,
   type Language,
 } from '@/lib/i18n'
+import { langAlternates } from '@/lib/seo/lang-alternates'
 import { jobSearchKeywords } from '@/lib/market/job-search-terms'
 import { DocumentLanguage } from '@/components/i18n/document-language'
 import { Button } from '@/components/ui/button'
@@ -64,6 +65,8 @@ async function resolveLanguage(searchParams: Promise<{ lang?: string }>): Promis
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const lang = await resolveLanguage(searchParams)
   const t = DICTIONARIES[lang].hiringPage
+  const { lang: requestedLang } = await searchParams
+  const alternates = langAlternates(CANONICAL, requestedLang, LANGUAGES, localeForLang)
 
   return {
     title: t.metaTitle,
@@ -74,12 +77,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     // bloco visível `searchTitle`/`searchBody` no corpo da página. Isto aqui
     // acompanha o que `/ats` e o layout já fazem, e o Bing ainda considera.
     keywords: [...jobSearchKeywords(lang), 'ATS', 'GriffoWork'],
-    alternates: {
-      canonical: CANONICAL,
-      languages: Object.fromEntries(
-        LANGUAGES.map((l) => [localeForLang(l), `${CANONICAL}?lang=${l}`])
-      ),
-    },
+    alternates,
     openGraph: {
       title: t.metaTitle,
       description: t.metaDescription,

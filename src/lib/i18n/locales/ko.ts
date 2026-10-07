@@ -1101,8 +1101,8 @@ export const ko: TranslationDictionary = {
     southAmerica: "남아메리카",
   },
   atsPage: {
-    metaTitle: '{ats}(ATS) {resume} 통과 방법 — 서류 필터링 방식 | GriffoWork',
-    metaDescription: '{fullName}(ATS, 채용관리시스템)을 사용하는 기업의 채용 프로세스와 서류 필터링 방식, 그리고 GriffoWork가 이력서를 8개 차원에서 진단하는 방법을 알아보세요.',
+    metaTitle: '{ats}(ATS) {resume} 통과할까? 무료 진단 | GriffoWork',
+    metaDescription: '{fullName}가 이력서를 거르는 방식과 탈락 원인을 확인하세요. 파일을 올리면 가입 없이 무료로 진단해 드립니다.',
     breadcrumbHome: '홈',
     breadcrumbSystems: 'ATS 시스템',
     heroBadge: 'ATS(채용관리시스템) 서류 필터링 및 AI 진단',

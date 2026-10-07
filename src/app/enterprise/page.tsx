@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { dirForLang, localeForLang, LANGUAGES } from '@/lib/i18n'
 import { resolveRequestLanguage } from '@/lib/i18n/resolve-request-language'
+import { langAlternates } from '@/lib/seo/lang-alternates'
 import { salesMailto } from '@/lib/i18n/contact'
 import { enterpriseContentFor } from '@/lib/enterprise/content'
 
@@ -26,17 +27,14 @@ interface PageProps {
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const lang = await resolveRequestLanguage(searchParams)
   const content = enterpriseContentFor(lang).landing
+  const { lang: requestedLang } = await searchParams
+  const alternates = langAlternates(CANONICAL, requestedLang, LANGUAGES, localeForLang)
 
   return {
     title: content.metaTitle,
     description: content.metaDescription,
     keywords: content.keywords,
-    alternates: {
-      canonical: CANONICAL,
-      languages: Object.fromEntries(
-        LANGUAGES.map((l) => [localeForLang(l), `${CANONICAL}?lang=${l}`])
-      ),
-    },
+    alternates,
     openGraph: {
       title: content.metaTitle,
       description: content.metaDescription,
