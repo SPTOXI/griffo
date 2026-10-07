@@ -98,7 +98,11 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   // `resumeTermFor`, a mesma fonte única do §2.79, para não repetir aqui a
   // decisão de "CV" vs "resume" por idioma.
   const term = resumeTermFor(meta.country, lang)
-  const title = t.metaTitle.replace('{ats}', meta.name).replace('{resume}', term.noun)
+  // `{resume}` abre frase (maiúscula); `{resumeLower}` fica no meio dela.
+  const title = t.metaTitle
+    .replace('{ats}', meta.name)
+    .replace('{resume}', term.noun)
+    .replace('{resumeLower}', term.nounLower)
   const description = t.metaDescription.replace('{fullName}', meta.fullName)
 
   // hreflang só entre os idiomas que a página REALMENTE tem. Declarar um

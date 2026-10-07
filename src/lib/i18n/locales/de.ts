@@ -1101,7 +1101,7 @@ export const de: TranslationDictionary = {
     southAmerica: "Südamerika",
   },
   atsPage: {
-    metaTitle: '{ats} (ATS): Besteht Ihr {resume} das Screening? Gratis-Test | GriffoWork',
+    metaTitle: '{ats} (ATS): Besteht Ihr {resumeLower} das Screening? Gratis-Test | GriffoWork',
     metaDescription: 'So sortiert {fullName} Lebensläufe vor und woran Ihrer scheitert. Datei hochladen und kostenlos prüfen lassen, ohne Registrierung.',
     breadcrumbHome: 'Start',
     breadcrumbSystems: 'ATS-Systeme',

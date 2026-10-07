@@ -1101,7 +1101,7 @@ export const ko: TranslationDictionary = {
     southAmerica: "남아메리카",
   },
   atsPage: {
-    metaTitle: '{ats}(ATS) {resume} 통과할까? 무료 진단 | GriffoWork',
+    metaTitle: '{ats}(ATS) {resumeLower} 통과할까? 무료 진단 | GriffoWork',
     metaDescription: '{fullName}가 이력서를 거르는 방식과 탈락 원인을 확인하세요. 파일을 올리면 가입 없이 무료로 진단해 드립니다.',
     breadcrumbHome: '홈',
     breadcrumbSystems: 'ATS 시스템',
