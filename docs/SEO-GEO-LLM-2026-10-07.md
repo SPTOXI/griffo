@@ -79,11 +79,12 @@ lista os 10 guias ATS com uma linha cada, o teste gratuito e as páginas de paí
 `layout.tsx` define `alternates.canonical = "https://griffo.work"` e
 `languages: rootHreflang()` para todas as rotas. Páginas que **não** definem o
 próprio `alternates` herdam o canonical da home. Já definem: país, ATS, hiring,
-enterprise, market-pulse, ats-check, privacy. Conferir `/verificar-curriculo` (e
-qualquer rota nova) — se não definir, vira duplicata da home. Dê preferência a
+enterprise, market-pulse, ats-check, privacy. Conferir `/verificar-curriculo` (já verificado: redireciona 308 para `/ats-check`, sem problema; e qualquer rota nova) — se não definir, vira duplicata da home. Dê preferência a
 tirar o canonical do layout.
 
-### 3.4 Títulos e descrições que não vendem (não alterado — decisão de copy)
+### 3.4 Títulos e descrições que não vendem — **reescritos em pt, en, es, de, ko**
+
+Novo padrão: `{ATS}: seu currículo passa na triagem? Teste grátis`. Medir CTR por 2–3 semanas no Search Console antes de estender aos outros 7 idiomas. O texto original, para comparação:
 
 Título atual das ATS: `Currículo para ATS Gupy — Como funciona a triagem | GriffoWork`.
 Descreve; não promete resultado. Posição 7–10 com CTR 0% é sinal de que o snippet
@@ -115,7 +116,7 @@ Ordem por retorno esperado. Itens com ✅ já estão neste PR.
    `npm run indexnow:submit`.
 2. Reescrever título/descrição dos 4 guias com impressão e posição ≤10 (solides,
    gupy, personio, infojobs) — 3.4.
-3. Resolver `www/carreiras/*`: 410 ou redirect para `/ats/gupy`.
+3. ✅ `/carreiras/*` agora dá 301 para `/ats/gupy` (`next.config.ts`).
 4. Confirmar no Search Console a propriedade de **domínio** (cobre www + apex) e
    enviar o sitemap.
 
