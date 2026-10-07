@@ -170,6 +170,41 @@ export const ATS_META: Record<string, AtsMeta> = {
     languages: ['de'],
     marketShare: { kind: 'qualitative' },
   },
+  smartrecruiters: {
+    slug: 'smartrecruiters',
+    name: 'SmartRecruiters',
+    fullName: 'SmartRecruiters Talent Acquisition Suite',
+    country: 'US',
+    // Idiomas em que o público já aparece no Search Console e que têm guia
+    // escrito; os demais entram quando houver demanda, não por simetria.
+    languages: ['en', 'pt', 'es', 'de'],
+    marketShare: { kind: 'qualitative' },
+  },
+  successfactors: {
+    slug: 'successfactors',
+    name: 'SuccessFactors',
+    fullName: 'SAP SuccessFactors Recruiting',
+    country: 'DE',
+    languages: ['en', 'pt', 'es', 'de'],
+    marketShare: { kind: 'qualitative' },
+  },
+  workable: {
+    slug: 'workable',
+    name: 'Workable',
+    fullName: 'Workable Recruiting Software',
+    country: 'US',
+    languages: ['en', 'pt', 'es', 'de'],
+    marketShare: { kind: 'qualitative' },
+  },
+  teamtailor: {
+    slug: 'teamtailor',
+    name: 'Teamtailor',
+    fullName: 'Teamtailor Recruitment Software',
+    country: 'SE',
+    // Sede sueca; alemão porque o público DACH já converte nas outras páginas.
+    languages: ['en', 'de', 'sv'],
+    marketShare: { kind: 'qualitative' },
+  },
 }
 
 export const ATS_SLUGS = Object.keys(ATS_META)

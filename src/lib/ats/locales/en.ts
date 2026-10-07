@@ -209,4 +209,188 @@ export const atsEn: AtsLocale = {
       },
     ],
   },
+  smartrecruiters: {
+    marketName: "Global Mid-Market & Enterprise Employers",
+    description:
+      "SmartRecruiters is a talent acquisition platform that mid-sized and large employers use to publish jobs, collect applications and manage candidates in a single pipeline. Resumes are parsed into a candidate profile that recruiters search, filter and compare.",
+    marketShare: "Widely used by international mid-market and enterprise employers.",
+    howItWorks: [
+      {
+        title: "Resume parsing into a profile",
+        description:
+          "The system reads your file and turns it into a structured profile: contact details, work history, education and skills. Anything it cannot read as text may never reach the recruiter.",
+      },
+      {
+        title: "Application questions",
+        description:
+          "Employers can add screening questions to the form, such as work authorisation, location or required experience, and recruiters use the answers to filter the candidate list.",
+      },
+      {
+        title: "Team evaluation",
+        description:
+          "Recruiters and hiring managers review profiles side by side, so a clear, scannable summary and quantified results make comparison easier.",
+      },
+    ],
+    eliminationFactors: [
+      "Multi-column layouts, tables or text boxes that scramble the order in which the parser reads your history.",
+      "Contact details or key skills placed in headers, footers or images, which parsers often skip.",
+      "Wording that does not mirror the job description, which weakens search and filter results.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks whether a typical parser reads your resume as clean text, in the right order.",
+      "Compares your skills and wording with the job description to find missing keywords.",
+      "Audits how clearly achievements and metrics stand out when a recruiter compares profiles.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Does SmartRecruiters reject my resume automatically?",
+        answer:
+          "It depends on how each employer configured the job. Many use screening questions and filters, and recruiters decide the rest. A resume the parser cannot read properly is easier to overlook, so a clean layout matters.",
+      },
+      {
+        question: "Which file format works best?",
+        answer:
+          "Follow the format the employer asks for. If it is open, a text-based PDF or a simple single-column .docx is the safest choice.",
+      },
+    ],
+  },
+  successfactors: {
+    marketName: "Large Corporations & Global Enterprises",
+    description:
+      "SAP SuccessFactors Recruiting is the hiring module of SAP’s human capital management suite. Large organisations use it to run structured, compliance-driven application processes, with resumes feeding a candidate profile alongside the application form.",
+    marketShare: "A common choice among large corporations that already run SAP.",
+    howItWorks: [
+      {
+        title: "Structured application form",
+        description:
+          "Candidates usually complete a detailed form on the employer’s career site, and the resume is attached or parsed to fill in parts of the profile. Fields left inconsistent with the resume stand out.",
+      },
+      {
+        title: "Pre-screening questions",
+        description:
+          "Employers can configure questions tied to each requisition, such as certifications, languages or availability, which recruiters use to narrow the candidate pool.",
+      },
+      {
+        title: "Process and compliance",
+        description:
+          "Applications move through defined stages with records kept for each, so complete, consistent dates and job titles help your history hold up through review.",
+      },
+    ],
+    eliminationFactors: [
+      "Employment dates that are missing, overlapping or inconsistent between the form and the resume.",
+      "Job titles and responsibilities that do not clearly map to the requirements of the requisition.",
+      "Decorative formatting that hides text from the parser or breaks the order of your history.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks that your dates, titles and sections stay consistent from the resume to the form.",
+      "Matches your experience against the requirements listed in the job description.",
+      "Audits clarity and measurable impact for large-company screening.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Should my resume match the application form exactly?",
+        answer:
+          "Yes. Recruiters see both, so differences in dates, titles or employers raise questions. Keep the two consistent.",
+      },
+      {
+        question: "Is SuccessFactors used only by very large companies?",
+        answer:
+          "It is most common in large organisations, which is why processes tend to be formal and well documented. Smaller companies use it less often.",
+      },
+    ],
+  },
+  workable: {
+    marketName: "Growing Companies & Mid-Sized Employers Worldwide",
+    description:
+      "Workable is a recruiting platform used by growing and mid-sized companies to post jobs on multiple boards, receive applications in one place and rank candidates. It parses each resume into a profile and offers AI-assisted tools that help recruiters shortlist.",
+    marketShare: "Popular among small and mid-sized companies hiring internationally.",
+    howItWorks: [
+      {
+        title: "Resume parsing",
+        description:
+          "Workable extracts your experience, education and skills from the file you upload. Text it cannot read, such as content inside images, is lost from the profile.",
+      },
+      {
+        title: "Screening questions",
+        description:
+          "Employers often add questions to the application, and the answers help recruiters sort candidates quickly.",
+      },
+      {
+        title: "AI-assisted shortlisting",
+        description:
+          "The platform offers tools that help recruiters rank and shortlist candidates against the role, so the skills and terms in your resume matter.",
+      },
+    ],
+    eliminationFactors: [
+      "Information inside images, graphics or skill bars that the parser cannot read.",
+      "A profile that never names the tools and skills the job description asks for.",
+      "Very long documents that bury the most relevant experience.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks that your resume is readable as plain text, with no hidden content.",
+      "Finds skills and terms from the job description that your resume does not mention.",
+      "Audits whether your most relevant experience is easy to find.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Does Workable use AI to rank resumes?",
+        answer:
+          "It offers AI-assisted features that employers can use when shortlisting. How much they rely on them is each company’s choice, so write for both a parser and a human reader.",
+      },
+      {
+        question: "Do I need keywords from the job description?",
+        answer:
+          "Yes, where they are true. Using the same terms as the posting makes your experience easier to find and compare.",
+      },
+    ],
+  },
+  teamtailor: {
+    marketName: "Nordic Region, Europe & Employer-Branding-Focused Teams",
+    description:
+      "Teamtailor is a recruiting platform from Sweden that combines an applicant tracking system with a branded career site. Employers use it to publish jobs, receive applications and move candidates through a visual pipeline.",
+    marketShare: "Popular among companies in the Nordic countries and across Europe.",
+    howItWorks: [
+      {
+        title: "Career-site application",
+        description:
+          "Candidates usually apply through the employer’s own career site, where the resume and a few form fields become the candidate profile.",
+      },
+      {
+        title: "Visual pipeline",
+        description:
+          "Recruiters move candidates through stages, often scanning profiles quickly, so the top of your resume has to carry your strongest points.",
+      },
+      {
+        title: "Team collaboration",
+        description:
+          "Hiring teams comment on candidates together, which rewards a resume that is easy to summarise in a sentence or two.",
+      },
+    ],
+    eliminationFactors: [
+      "A resume that needs a long read before the relevant experience appears.",
+      "Layouts with columns or graphics that make the parsed profile incomplete.",
+      "Contact details and links hidden in headers or images.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks that your resume is read cleanly and your key details survive parsing.",
+      "Audits the first lines of your resume for clarity and impact.",
+      "Compares your wording with the job description to surface missing terms.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Does Teamtailor read resumes in Swedish and English?",
+        answer:
+          "Employers receive applications in the language the candidate submits. Write in the language of the posting and keep section headings plain.",
+      },
+      {
+        question: "How much does the first part of my resume matter?",
+        answer:
+          "A lot. Recruiters often review many candidates in a pipeline view, so lead with your most relevant role and results.",
+      },
+    ],
+  },
 }
