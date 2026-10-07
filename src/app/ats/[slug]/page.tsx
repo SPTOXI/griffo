@@ -98,11 +98,11 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   // `resumeTermFor`, a mesma fonte única do §2.79, para não repetir aqui a
   // decisão de "CV" vs "resume" por idioma.
   const term = resumeTermFor(meta.country, lang)
-  // `{resume}` abre frase (maiúscula); `{resumeLower}` fica no meio dela.
-  const title = t.metaTitle
-    .replace('{ats}', meta.name)
-    .replace('{resume}', term.noun)
-    .replace('{resumeLower}', term.nounLower)
+  // Maiúscula só quando `{resume}` abre o título; no meio da frase vai em
+  // minúscula ("will your resume pass?"). O conjunto de placeholders continua
+  // igual nos 12 idiomas, que é o que o `i18n.test.ts` exige.
+  const resumeWord = t.metaTitle.startsWith('{resume}') ? term.noun : term.nounLower
+  const title = t.metaTitle.replace('{ats}', meta.name).replace('{resume}', resumeWord)
   const description = t.metaDescription.replace('{fullName}', meta.fullName)
 
   // hreflang só entre os idiomas que a página REALMENTE tem. Declarar um

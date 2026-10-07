@@ -1102,7 +1102,7 @@ export const es: TranslationDictionary = {
       southAmerica: "América del Sur",
     },
     atsPage: {
-      metaTitle: '{ats} ATS: ¿pasa tu {resumeLower} el filtro? Prueba gratis | GriffoWork',
+      metaTitle: '{ats} ATS: ¿pasa tu {resume} el filtro? Prueba gratis | GriffoWork',
       metaDescription: 'Descubre cómo {fullName} filtra currículums y qué hace que descarten el tuyo. Sube tu archivo y recibe un diagnóstico gratis, sin registro.',
       breadcrumbHome: 'Inicio',
       breadcrumbSystems: 'Sistemas ATS',
