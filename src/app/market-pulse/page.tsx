@@ -1,4 +1,5 @@
 import { jsonLd } from '@/lib/json-ld'
+import { langAlternates } from '@/lib/seo/lang-alternates'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { cookies, headers } from 'next/headers'
@@ -84,6 +85,8 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   }
 
   const title = dict.hiringMap.pageTitle
+  const { lang: requestedLang } = await searchParams
+  const alternates = langAlternates(CANONICAL, requestedLang, LANGUAGES, localeForLang)
   const description = dict.hiringMap.metaDescription.replace(
     '{count}',
     new Intl.NumberFormat(localeForLang(lang)).format(tracked)
@@ -99,12 +102,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     // pesa no Google desde 2009, mas o Bing ainda considera (mesmo caso do
     // `/hiring`, ver o comentário de `job-search-terms.ts`).
     keywords: employmentKeywords(lang),
-    alternates: {
-      canonical: CANONICAL,
-      languages: Object.fromEntries(
-        LANGUAGES.map((l) => [localeForLang(l), `${CANONICAL}?lang=${l}`])
-      ),
-    },
+    alternates,
     openGraph: {
       title,
       description,
