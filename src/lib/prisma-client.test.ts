@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { withLibpqSslSemantics } from './prisma-client'
+import { sslOptionsFor, withLibpqSslSemantics } from './prisma-client'
 
 const BASE = 'postgresql://u:p@host.pooler.supabase.com:6543/postgres'
 
@@ -49,4 +49,16 @@ test('é idempotente — não duplica o parâmetro', () => {
   const uma = withLibpqSslSemantics(`${BASE}?sslmode=require`)
   assert.equal(withLibpqSslSemantics(uma), uma)
   assert.equal(uma.match(/uselibpqcompat/g)?.length, 1)
+})
+
+test('com a CA do banco, verifica o certificado em vez de só criptografar', () => {
+  const opts = sslOptionsFor(`${BASE}?pgbouncer=true&sslmode=require`, '-----BEGIN CERTIFICATE-----\\nabc\\n-----END CERTIFICATE-----')
+  assert.equal(opts.connectionString, `${BASE}?pgbouncer=true`)
+  assert.deepEqual(opts.ssl, { ca: '-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----', rejectUnauthorized: true })
+})
+
+test('sem a CA, mantém a semântica libpq de antes', () => {
+  assert.deepEqual(sslOptionsFor(`${BASE}?sslmode=require`, undefined), {
+    connectionString: `${BASE}?sslmode=require&uselibpqcompat=true`,
+  })
 })

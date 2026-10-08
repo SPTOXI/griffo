@@ -12,9 +12,10 @@
  * requisições de griffo.work, e o mesmo valor vai para `CF_ORIGIN_SECRET` na
  * Vercel. Só quem conhece o segredo produz o cabeçalho.
  *
- * Enquanto `CF_ORIGIN_SECRET` não estiver definido, o comportamento antigo é
- * mantido (os cabeçalhos são aceitos) para o deploy não quebrar a detecção de
- * país antes da regra existir — com um aviso no log.
+ * Em produção, sem `CF_ORIGIN_SECRET` os cabeçalhos `cf-*` são RECUSADOS
+ * (falha fechada): aceitá-los deixava qualquer um zerar o limitador de login
+ * trocando `cf-connecting-ip` a cada tentativa. País e IP caem nos cabeçalhos
+ * que a própria Vercel escreve. Fora de produção (dev/teste) continuam aceitos.
  *
  * Sem `node:crypto`: roda no Edge Runtime do middleware.
  */
@@ -32,11 +33,12 @@ function constantTimeEqual(a: string, b: string): boolean {
 export function cameThroughCloudflare(headers: { get(name: string): string | null }): boolean {
   const secret = process.env.CF_ORIGIN_SECRET?.trim()
   if (!secret) {
-    if (!warned && process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV !== 'production') return true
+    if (!warned) {
       warned = true
-      console.warn('[edge-trust] CF_ORIGIN_SECRET ausente: cabeçalhos cf-* aceitos sem verificação.')
+      console.warn('[edge-trust] CF_ORIGIN_SECRET ausente: cabeçalhos cf-* ignorados em produção.')
     }
-    return true
+    return false
   }
   const sent = headers.get(EDGE_SECRET_HEADER)?.trim() || ''
   return constantTimeEqual(sent, secret)

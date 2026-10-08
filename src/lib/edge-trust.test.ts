@@ -7,10 +7,24 @@ import { edgeCountry } from './pricing/edge-country'
 const h = (o: Record<string, string>) => new Headers(o)
 const req = (o: Record<string, string>) => new Request('https://griffo.work/', { headers: o })
 
-test('sem CF_ORIGIN_SECRET o comportamento antigo é mantido', () => {
+test('sem CF_ORIGIN_SECRET fora de produção os cabeçalhos cf-* são aceitos', () => {
   delete process.env.CF_ORIGIN_SECRET
   assert.equal(cameThroughCloudflare(h({})), true)
   assert.equal(edgeCountry(req({ 'cf-ipcountry': 'BR' })), 'BR')
+})
+
+test('sem CF_ORIGIN_SECRET em produção os cabeçalhos cf-* são recusados', () => {
+  delete process.env.CF_ORIGIN_SECRET
+  const env = process.env as Record<string, string | undefined>
+  const previous = env.NODE_ENV
+  env.NODE_ENV = 'production'
+  try {
+    assert.equal(cameThroughCloudflare(h({})), false)
+    assert.equal(clientIpFrom(h({ 'cf-connecting-ip': '1.2.3.4', 'x-real-ip': '198.51.100.4' })), '198.51.100.4')
+    assert.equal(edgeCountry(req({ 'cf-ipcountry': 'IN', 'x-vercel-ip-country': 'BR' })), 'BR')
+  } finally {
+    env.NODE_ENV = previous
+  }
 })
 
 test('com CF_ORIGIN_SECRET, cf-ipcountry forjado direto na origem é ignorado', () => {

@@ -5,6 +5,13 @@ import { db } from '@/lib/db'
 import { hashPassword, verifyPassword, verifyPasswordConstantTime, createSession } from '@/lib/auth'
 import { isConfigError } from '@/lib/env'
 
+// Trava por CONTA, independente do IP: o limitador do middleware é por IP e em
+// memória por instância, então sozinho não segura quem distribui tentativas
+// entre IPs. Depois de MAX_FAILED_LOGINS erros na janela, a conta recusa novas
+// tentativas (mesmo com a senha certa) até a janela passar.
+const FAILED_LOGIN_WINDOW_MS = 15 * 60 * 1000
+const MAX_FAILED_LOGINS = 10
+
 const schema = z.object({
   email: z.string().min(1, 'Informe seu e-mail'),
   password: z.string().min(1, 'Informe sua senha'),
@@ -34,6 +41,27 @@ export async function POST(req: Request) {
     // executa o scrypt com hash dummy para ter idêntico tempo de CPU,
     // eliminando qualquer oráculo de tempo para enumeração de e-mails.
     const passwordValid = verifyPasswordConstantTime(password, user?.passwordHash)
+
+    if (user) {
+      const recentFailures = await db.auditLog.count({
+        where: {
+          userId: user.id,
+          action: 'login_failed',
+          createdAt: { gte: new Date(Date.now() - FAILED_LOGIN_WINDOW_MS) },
+        },
+      })
+      if (recentFailures >= MAX_FAILED_LOGINS) {
+        return NextResponse.json(
+          { error: 'Muitas tentativas de login. Aguarde 15 minutos e tente novamente.' },
+          { status: 429, headers: { 'Retry-After': String(FAILED_LOGIN_WINDOW_MS / 1000) } }
+        )
+      }
+      if (!passwordValid) {
+        await db.auditLog.create({ data: { userId: user.id, action: 'login_failed' } }).catch((e) => {
+          console.warn('AuditLog login_failed create failed non-critically:', e)
+        })
+      }
+    }
 
     if (!user || !passwordValid) {
       return NextResponse.json({ error: 'E-mail ou senha incorretos.' }, { status: 401 })

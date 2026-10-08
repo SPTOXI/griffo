@@ -1,6 +1,10 @@
 import 'server-only'
 import { isIP } from 'net'
 import { lookup } from 'dns/promises'
+import { lookup as lookupCallback, type LookupAddress } from 'dns'
+import http from 'http'
+import https from 'https'
+import { Readable } from 'stream'
 
 /**
  * Defesa contra SSRF para as duas rotas que buscam URLs fornecidas por
@@ -217,20 +221,76 @@ export async function fetchPublicUrl(
   let currentUrl = (await assertPublicUrl(rawUrl)).toString()
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    const res = await fetch(currentUrl, {
-      ...rest,
-      redirect: 'manual',
-      signal: AbortSignal.timeout(timeoutMs),
-    })
+    const res = await pinnedFetch(currentUrl, rest, timeoutMs)
 
     if (res.status < 300 || res.status >= 400) return res
 
     const location = res.headers.get('location')
     if (!location) return res
+    await res.body?.cancel().catch(() => {})
 
     const next = new URL(location, currentUrl)
     currentUrl = (await assertPublicUrl(next.toString())).toString()
   }
 
   throw new BlockedUrlError('Excesso de redirecionamentos.')
+}
+
+/**
+ * O `lookup` que a conexão usa, conferindo de novo cada endereço resolvido.
+ *
+ * `assertPublicUrl` resolve o nome uma vez e o `fetch` resolveria de novo ao
+ * conectar: um DNS de TTL curto responde um IP público na checagem e
+ * `169.254.169.254` na conexão (DNS rebinding). Aqui a conexão só segue com
+ * endereços que passam pela mesma regra, na mesma resolução que ela usa.
+ */
+export function guardedLookup(
+  hostname: string,
+  options: object,
+  callback: (err: NodeJS.ErrnoException | null, address: string | LookupAddress[], family?: number) => void
+): void {
+  lookupCallback(hostname, { ...options, all: true }, (err, addresses) => {
+    if (err) return callback(err, [])
+    const list = addresses as LookupAddress[]
+    if (list.length === 0 || list.some((a) => addressIsReserved(a.address))) {
+      return callback(new BlockedUrlError('URL não permitida. Utilize apenas endereços públicos.'), [])
+    }
+    if ((options as { all?: boolean }).all) return callback(null, list)
+    callback(null, list[0].address, list[0].family)
+  })
+}
+
+async function pinnedFetch(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const target = new URL(url)
+  const client = target.protocol === 'https:' ? https : http
+  // `http.request` não descomprime como o `fetch`: pede o corpo sem compressão.
+  const headers = { ...Object.fromEntries(new Headers(init.headers).entries()), 'accept-encoding': 'identity' }
+  const body = init.body == null ? undefined : typeof init.body === 'string' ? init.body : String(init.body)
+
+  return new Promise<Response>((resolve, reject) => {
+    const req = client.request(
+      target,
+      { method: init.method || 'GET', headers, lookup: guardedLookup, timeout: timeoutMs },
+      (res) => {
+        const responseHeaders = new Headers()
+        for (const [key, value] of Object.entries(res.headers)) {
+          if (Array.isArray(value)) value.forEach((v) => responseHeaders.append(key, v))
+          else if (value != null) responseHeaders.set(key, String(value))
+        }
+        const status = res.statusCode || 500
+        const noBody = status === 204 || status === 304 || (init.method || 'GET').toUpperCase() === 'HEAD'
+        resolve(
+          new Response(noBody ? null : (Readable.toWeb(res) as unknown as ReadableStream<Uint8Array>), {
+            status,
+            statusText: res.statusMessage,
+            headers: responseHeaders,
+          })
+        )
+      }
+    )
+    req.on('timeout', () => req.destroy(new Error('Tempo esgotado.')))
+    req.on('error', reject)
+    if (body) req.write(body)
+    req.end()
+  })
 }

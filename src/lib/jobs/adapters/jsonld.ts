@@ -44,6 +44,7 @@
  * Por isso `closesByAbsence` fica no padrão (verdadeiro), diferente da Gupy.
  */
 
+import { readTextCapped, tagBlocks } from '../../html-scan'
 import type { CollectContext, CollectResult, JobSourceAdapter, JobSourceDescriptor } from '../adapter'
 import type { RawJob } from '../types'
 import { stripHtml } from '../text'
@@ -60,7 +61,6 @@ export const JSONLD_DESCRIPTOR: JobSourceDescriptor = {
     'Dados estruturados que a própria empresa publica na página da vaga, no padrão aberto schema.org/JobPosting, para consumo automatizado. Não é API interna nem raspagem de conteúdo.',
 }
 
-const SCRIPT_RE = /<script[^>]+type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
 
 /**
  * Acha todos os objetos `JobPosting` num HTML.
@@ -100,8 +100,11 @@ export function extractJobPostings(html: string): Record<string, unknown>[] {
     if (obj['@graph']) visit(obj['@graph'], depth + 1)
   }
 
-  for (const match of html.matchAll(SCRIPT_RE)) {
-    const raw = match[1]?.trim()
+  // Varredura linear: a regex anterior (`[^>]+type...([\s\S]*?)<\/script>`)
+  // era quadrática em página com muitos `<script` sem fechamento.
+  for (const block of tagBlocks(html, 'script')) {
+    if (!/type\s*=\s*["']application\/ld\+json["']/i.test(block.open)) continue
+    const raw = block.body.trim()
     if (!raw) continue
     try {
       visit(JSON.parse(raw), 0)
@@ -248,7 +251,7 @@ export function createCareerPageAdapter(options: {
             continue
           }
 
-          const html = await response.text()
+          const html = await readTextCapped(response)
           pagesFetched++
 
           for (const posting of extractJobPostings(html)) {

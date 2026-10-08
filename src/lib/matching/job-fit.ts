@@ -28,6 +28,7 @@
  * chance". A recomendação é sobre o que fazer, não sobre o que vai acontecer.
  */
 
+import { wrapUntrustedDocument } from '../analysis/untrusted'
 import type { MatchResult } from './compatibility'
 import type { NormalizedJob } from '../jobs/types'
 import type { ProfessionalProfile } from '../profile'
@@ -203,22 +204,25 @@ export function buildJobFit(
  * exigem.
  */
 export function jobPromptContext(job: NormalizedJob, match: MatchResult): string {
-  const lines: string[] = [
-    `VAGA ENCONTRADA PELO RADAR:`,
+  // O anúncio é texto de terceiros e este contexto vai como prompt de sistema:
+  // passa pelo mesmo envelope de documento não confiável das outras rotas,
+  // para que instrução escrita no anúncio seja lida como dado, não como ordem.
+  const ad: string[] = [
     `Cargo: ${job.title}`,
     `Empresa: ${job.company}`,
     `Local: ${locationOf(job)} (${WORK_MODE_LABEL[job.remoteType] ?? 'modelo não informado'})`,
   ]
-
   if (job.requirements.length) {
-    lines.push(`Requisitos declarados: ${job.requirements.join('; ')}`)
+    ad.push(`Requisitos declarados: ${job.requirements.join('; ')}`)
   }
   if (job.skills.length) {
-    lines.push(`Competências pedidas: ${job.skills.join('; ')}`)
+    ad.push(`Competências pedidas: ${job.skills.join('; ')}`)
   }
   if (job.description) {
-    lines.push(`Descrição: ${job.description.slice(0, 3000)}`)
+    ad.push(`Descrição: ${job.description.slice(0, 3000)}`)
   }
+
+  const lines: string[] = [`VAGA ENCONTRADA PELO RADAR:`, wrapUntrustedDocument(ad.join('\n'), 'anúncio da vaga')]
 
   const matched = match.jobFit.evidence
   if (matched.length) {
