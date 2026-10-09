@@ -373,8 +373,8 @@ function AdminViewContent() {
     if (provider === 'moonshot') setNewKeyModel('kimi-k3')
     else if (provider === 'anthropic') setNewKeyModel('claude-sonnet-5')
     else if (provider === 'deepseek') setNewKeyModel('deepseek-flash')
-    else if (provider === 'gemini') setNewKeyModel('gemini-3.6-flash')
-    else if (provider === 'openai') setNewKeyModel('gpt-5.6-luna')
+    else if (provider === 'gemini') setNewKeyModel('gemini-3.8-flash')
+    else if (provider === 'openai') setNewKeyModel('gpt-6-luna')
   }
 
   // Register a new AI API Key
@@ -1498,8 +1498,8 @@ function AdminViewContent() {
                         <SelectItem value="moonshot">Moonshot AI (Kimi K3)</SelectItem>
                         <SelectItem value="anthropic">Anthropic (Claude Sonnet 5)</SelectItem>
                         <SelectItem value="deepseek">DeepSeek (DeepSeek V4 Flash)</SelectItem>
-                        <SelectItem value="gemini">Google (Gemini 3.6 Flash)</SelectItem>
-                        <SelectItem value="openai">OpenAI (GPT-5.6 Luna)</SelectItem>
+                        <SelectItem value="gemini">Google (Gemini 3.8 Flash)</SelectItem>
+                        <SelectItem value="openai">OpenAI (GPT-6 Luna)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -2398,7 +2398,7 @@ function AdminViewContent() {
                     deepseek: 'DeepSeek AI',
                     claude: 'Claude (Anthropic)',
                     gemini: 'Google Gemini',
-                    openai: 'OpenAI (GPT-5.6 Luna)',
+                    openai: 'OpenAI (GPT-6 Luna)',
                   }
 
                   let statusBg = 'bg-slate-800/80 border-slate-700 text-slate-300'

@@ -67,7 +67,9 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
     // logo abaixo. Zero chamada ao Gemini está registrada em `AiLog` desde
     // sempre (só é candidato de suplente distante, quase nunca alcançado),
     // então isto pode ter estado quebrado por um bom tempo sem ninguém notar.
-    defaultModel: 'gemini-3.6-flash',
+    // Padrão trocado para o 3.8 Flash a pedido do operador (09/10/2026); o
+    // preço abaixo segue sendo estimativa, não confirmado para este modelo.
+    defaultModel: 'gemini-3.8-flash',
     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
     apiKeyEnvVar: 'GEMINI_API_KEY',
     // Preço herdado do `gemini-2.0-flash` — NÃO confirmado para o
@@ -82,10 +84,13 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   openai: {
     id: 'openai',
     name: 'OpenAI',
+    // Padrão trocado para o GPT-6 Luna a pedido do operador (09/10/2026). O
+    // preço abaixo continua sendo o do gpt-5.6-luna — NÃO confirmado para o
+    // GPT-6 Luna; o painel de custo é estimativa até o valor real ser cadastrado.
     // Cadastrado em 26/08/2026 a pedido do operador. Nenhuma tarefa foi
     // roteada pra cá ainda — só disponibilizado no painel administrativo,
     // pra ser atribuído depois. Ver 2.36 na auditoria.
-    defaultModel: 'gpt-5.6-luna',
+    defaultModel: 'gpt-6-luna',
     baseURL: 'https://api.openai.com/v1',
     // O .env local do operador tem a chave em `ChatGPT_KEY`, não neste nome —
     // isso só importa se ninguém cadastrar a chave pelo painel (que decifra
@@ -132,8 +137,8 @@ const CURRENT_MODELS: Record<ProviderId, string[]> = {
   // acima: aposentado pelo Google (descoberto em 26/08/2026, ver o
   // cabeçalho de PROVIDER_CONFIGS.gemini). Mantê-lo aqui faria uma chave já
   // cadastrada continuar chamando um ID que devolve 404.
-  gemini: ['gemini-3.6-flash'],
-  openai: ['gpt-5.6-luna'],
+  gemini: ['gemini-3.8-flash', 'gemini-3.6-flash'],
+  openai: ['gpt-6-luna', 'gpt-5.6-luna'],
 }
 
 /** Formato aceito de ID de modelo por provedor (família do provedor). */
