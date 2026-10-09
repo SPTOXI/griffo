@@ -9047,6 +9047,6 @@ A concorrência 1 bate com o 429 do §2.141. O teto de 1,5 mi de tokens por dia 
 
 **Não corrigido, de propósito:** o cadastro devolve 409 quando o e-mail já existe, o que permite enumerar contas. Fechar isso exige verificação de e-mail, que é decisão de produto. A trava por conta reduz o risco.
 
-**Configuração do operador, conferida em 09/10:** `CF_ORIGIN_SECRET` está na Vercel (Production) desde 16/09, e a Transform Rule `x-griffo-edge` está no Cloudflare. `griffo.work/api/pricing` aberto do Brasil devolveu `"country":"BR","countrySource":"edge"`, o que prova que o segredo confere. Com isso, o fail-closed do PR não muda nada em produção. `DATABASE_CA_CERT` continua pendente.
+**Configuração do operador, conferida em 09/10:** `CF_ORIGIN_SECRET` está na Vercel (Production) desde 16/09, e a Transform Rule `x-griffo-edge` está no Cloudflare. `griffo.work/api/pricing` aberto do Brasil devolveu `"country":"BR","countrySource":"edge"`, o que prova que o segredo confere. Com isso, o fail-closed do PR não muda nada em produção. `DATABASE_CA_CERT` foi configurado em 09/10, primeiro em Preview, onde `/api/hiring-index` leu o banco com o certificado, e depois em Production.
 
 **Incidente à parte:** de 08/10 por volta de 18h30 UTC até 09/10 por volta de 11h35 UTC, o GitHub Actions da conta não atribuiu runner a nenhum job, que falhava em 2 s sem log. Ficaram parados o CI e os crons, incluindo a **purga horária de currículos de visitantes**. O operador corrigiu na conta, e o CI do #106 passou em `855ee7c` (1197/1197).
