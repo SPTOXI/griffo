@@ -478,4 +478,50 @@ export const atsEs: AtsLocale = {
       },
     ],
   },
+  zohorecruit: {
+    marketName: "Agencias de Selección y Empresas que Contratan en Todo el Mundo",
+    description:
+      "Zoho Recruit es un software de seguimiento de candidatos y selección que usan tanto equipos internos como agencias de selección. Publica ofertas en varios portales, lee los currículums como fichas de candidato y permite al reclutador buscar, etiquetar y preseleccionar.",
+    marketShare: "Lo usan equipos internos y agencias de selección de distintos tamaños en todo el mundo.",
+    howItWorks: [
+      {
+        title: "Lectura del currículum como ficha",
+        description:
+          "El sistema lee tu currículum y crea una ficha con experiencia, formación y habilidades. Lo que no pueda leer como texto puede faltar en esa ficha.",
+      },
+      {
+        title: "Base de datos de búsqueda",
+        description:
+          "Los reclutadores buscan en la base de candidatos por habilidades, puestos y palabras clave, así que los términos de tu currículum deciden si apareces en los resultados.",
+      },
+      {
+        title: "Preselección",
+        description:
+          "Los reclutadores etiquetan candidatos y envían una preselección al cliente o al responsable, que ve primero un perfil resumido.",
+      },
+    ],
+    eliminationFactors: [
+      "Información en imágenes o gráficos que el sistema no puede convertir en texto.",
+      "Habilidades y herramientas ausentes en tu currículum que el puesto pide expresamente.",
+      "Puestos o términos distintos de como el sector suele nombrar el rol.",
+    ],
+    howGriffoWorkHelps: [
+      "Comprueba que un lector típico interprete tu currículum como texto limpio.",
+      "Encuentra términos de la oferta que tu currículum no menciona.",
+      "Evalúa si tu experiencia más relevante es fácil de encontrar y preseleccionar.",
+      "Genera una carta de presentación dirigida al puesto.",
+    ],
+    faqs: [
+      {
+        question: "¿Zoho Recruit lo usan agencias o empresas?",
+        answer:
+          "Ambas. Las agencias lo usan para gestionar muchos puestos y candidatos de sus clientes, y las empresas para su propia selección.",
+      },
+      {
+        question: "¿Cómo me encuentran los reclutadores en la base de datos?",
+        answer:
+          "Sobre todo buscando habilidades, puestos y palabras clave. Usa los nombres estándar de tus herramientas y de tu rol para que una búsqueda encuentre tu currículum.",
+      },
+    ],
+  },
 }

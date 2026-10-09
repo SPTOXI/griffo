@@ -247,6 +247,56 @@ export const ATS_META: Record<string, AtsMeta> = {
     languages: ['en', 'pt', 'es'],
     marketShare: { kind: 'qualitative' },
   },
+  softgarden: {
+    slug: 'softgarden',
+    name: 'softgarden',
+    fullName: 'softgarden Bewerbermanagement',
+    country: 'DE',
+    // A Alemanha é o melhor país do Search Console; o eixo germânico vem primeiro.
+    languages: ['de', 'en'],
+    marketShare: { kind: 'qualitative' },
+  },
+  join: {
+    slug: 'join',
+    name: 'JOIN',
+    fullName: 'JOIN Recruiting Software',
+    country: 'CH',
+    languages: ['de', 'en'],
+    marketShare: { kind: 'qualitative' },
+  },
+  rexx: {
+    slug: 'rexx',
+    name: 'rexx systems',
+    fullName: 'rexx systems Recruiting',
+    country: 'DE',
+    languages: ['de'],
+    marketShare: { kind: 'qualitative' },
+  },
+  zohorecruit: {
+    slug: 'zohorecruit',
+    name: 'Zoho Recruit',
+    fullName: 'Zoho Recruit Applicant Tracking System',
+    country: 'IN',
+    languages: ['en', 'es', 'pt'],
+    marketShare: { kind: 'qualitative' },
+  },
+  jazzhr: {
+    slug: 'jazzhr',
+    name: 'JazzHR',
+    fullName: 'JazzHR Applicant Tracking',
+    country: 'US',
+    languages: ['en'],
+    marketShare: { kind: 'qualitative' },
+  },
+  bullhorn: {
+    slug: 'bullhorn',
+    name: 'Bullhorn',
+    fullName: 'Bullhorn Applicant Tracking & CRM',
+    country: 'US',
+    // Plataforma de agências de recrutamento; público de língua inglesa.
+    languages: ['en'],
+    marketShare: { kind: 'qualitative' },
+  },
 }
 
 export const ATS_SLUGS = Object.keys(ATS_META)

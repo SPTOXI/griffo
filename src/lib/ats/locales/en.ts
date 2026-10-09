@@ -623,4 +623,234 @@ export const atsEn: AtsLocale = {
       },
     ],
   },
+  softgarden: {
+    marketName: "Germany, Austria, Switzerland & Mid-Sized Employers",
+    description:
+      "softgarden is applicant management software from Germany that employers use to run career sites, publish jobs on job boards and process applications as a team. Your resume and the form answers become one candidate profile that HR and the hiring department review together.",
+    marketShare: "Widely used by employers in German-speaking countries.",
+    howItWorks: [
+      {
+        title: "Application through the career site",
+        description:
+          "Candidates usually apply on the employer’s career site. Resume, cover letter and form fields are combined into a single candidate profile.",
+      },
+      {
+        title: "Joint review",
+        description:
+          "HR and the hiring department see the same profile and rate it in turn. A clearly structured resume is easy to grasp without specialist knowledge.",
+      },
+      {
+        title: "Talent pool",
+        description:
+          "Candidates can stay in a talent pool for later openings, so clear job titles and skills make it easier to be found again.",
+      },
+    ],
+    eliminationFactors: [
+      "Multi-column layouts or graphics that leave the parsed profile incomplete.",
+      "Gaps or unclear date ranges in your history that go unexplained.",
+      "Job titles and skills that do not match the terms in the job posting.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks that your resume is read cleanly and in the right order.",
+      "Audits the structure and traceability of your history against German-market expectations.",
+      "Compares your terms with the job posting and shows missing keywords.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Does softgarden evaluate my resume automatically?",
+        answer:
+          "The software supports team processing: it collects applications, reads out details and makes them comparable. People decide who moves forward. A clean, readable resume still helps.",
+      },
+      {
+        question: "Which format should my resume use?",
+        answer:
+          "Follow the posting. If it is open, a PDF with selectable text or a simple single-column .docx is the safest choice.",
+      },
+    ],
+  },
+  join: {
+    marketName: "Small & Mid-Sized Companies, Mainly in German-Speaking Countries",
+    description:
+      "JOIN is a recruiting tool that lets companies publish a job on several job boards at once and manage all incoming applications in one place. The team sees candidates in a pipeline, rates them and gives feedback.",
+    marketShare: "Popular among small and mid-sized companies that post jobs on many boards.",
+    howItWorks: [
+      {
+        title: "Applications from many boards",
+        description:
+          "Because a job appears on several boards, applications arrive from different sources and end up as profiles in one shared pipeline.",
+      },
+      {
+        title: "Quick screening",
+        description:
+          "Small teams go through many profiles in little time, so your most relevant roles and results should come first.",
+      },
+      {
+        title: "Team rating",
+        description:
+          "Several people rate the same candidate. A resume that can be summed up in a few sentences makes agreement easier.",
+      },
+    ],
+    eliminationFactors: [
+      "A resume where the relevant experience only appears after a long read.",
+      "Graphics, tables or text boxes that disturb how the details are read.",
+      "Generic wording that never addresses the advertised role.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks that your resume is read as clean text with nothing lost.",
+      "Audits the first lines of your resume for clarity and impact.",
+      "Compares your wording with the job posting and shows missing terms.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Does JOIN reject applications automatically?",
+        answer:
+          "JOIN collects and organises applications; the team rates them, partly with the system’s helper features. Expect a person to skim your profile in a short time.",
+      },
+      {
+        question: "Should my resume be the same on every board?",
+        answer:
+          "Yes, keep one consistent, current resume. Different dates or positions stand out when applications come together in the same system.",
+      },
+    ],
+  },
+  zohorecruit: {
+    marketName: "Recruiting Agencies & Companies Hiring Worldwide",
+    description:
+      "Zoho Recruit is applicant tracking and recruiting software used both by in-house hiring teams and by staffing agencies. It posts jobs to multiple boards, parses resumes into candidate records and lets recruiters search, tag and shortlist candidates.",
+    marketShare: "Used by in-house teams and staffing agencies of many sizes around the world.",
+    howItWorks: [
+      {
+        title: "Resume parsing into records",
+        description:
+          "The system reads your resume and creates a candidate record with experience, education and skills. Anything it cannot read as text may be missing from that record.",
+      },
+      {
+        title: "Searchable database",
+        description:
+          "Recruiters search the candidate database by skills, titles and keywords, so the terms in your resume decide whether you appear in the results.",
+      },
+      {
+        title: "Shortlisting",
+        description:
+          "Recruiters tag candidates and send a shortlist to the client or hiring manager, who sees a condensed profile first.",
+      },
+    ],
+    eliminationFactors: [
+      "Information in images or graphics that the parser cannot turn into text.",
+      "Skills and tools missing from your resume that the role explicitly asks for.",
+      "Titles or terms that differ from how the industry normally names the role.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks that your resume is read cleanly as text by a typical parser.",
+      "Finds terms from the job description that your resume does not mention.",
+      "Audits whether your most relevant experience is easy to find and shortlist.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Is Zoho Recruit used by agencies or by companies?",
+        answer:
+          "By both. Agencies use it to manage many roles and candidates for clients, and companies use it for their own hiring.",
+      },
+      {
+        question: "How do recruiters find me in the database?",
+        answer:
+          "Mostly by searching skills, job titles and keywords. Use the standard names for your tools and role so a search can match your resume.",
+      },
+    ],
+  },
+  jazzhr: {
+    marketName: "Small & Growing Businesses",
+    description:
+      "JazzHR is applicant tracking software for small and growing businesses. Employers post a job to multiple boards, collect applications in one place and move candidates through a hiring workflow with their team.",
+    marketShare: "Popular among small and growing businesses with lean hiring teams.",
+    howItWorks: [
+      {
+        title: "Application and resume",
+        description:
+          "Candidates upload a resume and answer the questions the employer added. The details appear in a candidate record for the team.",
+      },
+      {
+        title: "Screening questions",
+        description:
+          "Employers often add questions to the application, and the answers help sort candidates quickly.",
+      },
+      {
+        title: "Team workflow",
+        description:
+          "Candidates move through stages that the company defines, and team members rate and comment on them along the way.",
+      },
+    ],
+    eliminationFactors: [
+      "Resumes that bury relevant experience under long, dense sections.",
+      "Formatting that corrupts the text when the system reads the file.",
+      "Generic wording that never reflects the role being filled.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks that your resume is read cleanly, with nothing lost to formatting.",
+      "Audits whether your most relevant experience appears early and clearly.",
+      "Compares your wording with the job description to surface missing terms.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Does JazzHR screen resumes automatically?",
+        answer:
+          "It supports a team workflow: employers set up questions and stages, and people review candidates. A clear resume and good answers to the questions matter most.",
+      },
+      {
+        question: "Who reads my resume in a small business?",
+        answer:
+          "Often the owner, an HR generalist or the hiring manager. Write so that someone outside your specialty can see your results quickly.",
+      },
+    ],
+  },
+  bullhorn: {
+    marketName: "Staffing & Recruiting Agencies",
+    description:
+      "Bullhorn is applicant tracking and CRM software built for staffing and recruiting agencies. When you apply to a role advertised by an agency, your resume is parsed into a candidate record in a database that recruiters search to fill current and future openings.",
+    marketShare: "A common platform among staffing and recruiting agencies.",
+    howItWorks: [
+      {
+        title: "Resume parsing into a record",
+        description:
+          "Your resume is read into a candidate record with experience, skills and contact details. Content the system cannot read as text may be missing.",
+      },
+      {
+        title: "Database search",
+        description:
+          "Recruiters search the whole database by skills, titles, location and keywords, so your record may be found for roles other than the one you applied to.",
+      },
+      {
+        title: "Submission to the client",
+        description:
+          "Recruiters shortlist candidates and submit them to the client company, often with a condensed profile, so a clear summary helps them present you.",
+      },
+    ],
+    eliminationFactors: [
+      "Columns, tables or graphics that make the parsed record incomplete.",
+      "Skills, tools or certifications that are missing or named non-standardly.",
+      "Outdated contact details or location, which stop recruiters reaching you.",
+    ],
+    howGriffoWorkHelps: [
+      "Checks that your resume is read cleanly as text and the record is complete.",
+      "Finds standard skill and title terms your resume should include.",
+      "Audits the clarity of your summary, which recruiters reuse when submitting you.",
+      "Generates a cover letter targeted at the specific role.",
+    ],
+    faqs: [
+      {
+        question: "Why does an agency recruiter contact me about other roles?",
+        answer:
+          "Your record stays in the agency’s database, and recruiters search it for other openings. Keep your skills and contact details current.",
+      },
+      {
+        question: "Does my resume go to the client as I sent it?",
+        answer:
+          "Often a recruiter reformats or summarises it before submitting. A clear structure and summary give them good material to work with.",
+      },
+    ],
+  },
 }

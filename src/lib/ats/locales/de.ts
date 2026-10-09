@@ -484,4 +484,142 @@ export const atsDe: AtsLocale = {
       },
     ],
   },
+  softgarden: {
+    marketName: "Deutschland, Österreich, Schweiz & mittelständische Arbeitgeber",
+    description:
+      "softgarden ist eine Bewerbermanagement-Software aus Deutschland, mit der Arbeitgeber Karriereseiten betreiben, Stellen auf Jobportalen ausschreiben und Bewerbungen im Team bearbeiten. Der Lebenslauf wird zusammen mit den Formularangaben zu einem Bewerberprofil, das Recruiter und Fachbereiche gemeinsam prüfen.",
+    marketShare: "Weit verbreitet bei Arbeitgebern im deutschsprachigen Raum.",
+    howItWorks: [
+      {
+        title: "Bewerbung über die Karriereseite",
+        description:
+          "Bewerber nutzen meist die Karriereseite des Arbeitgebers. Lebenslauf, Anschreiben und Formularfelder werden zu einem Bewerberprofil zusammengeführt.",
+      },
+      {
+        title: "Gemeinsame Bearbeitung",
+        description:
+          "Personalabteilung und Fachbereich sehen dasselbe Profil und bewerten es nacheinander. Ein klar gegliederter Lebenslauf lässt sich dabei ohne Fachwissen schnell erfassen.",
+      },
+      {
+        title: "Talentpool",
+        description:
+          "Bewerber können für spätere Stellen im Talentpool bleiben. Klare Berufsbezeichnungen und Kenntnisse erleichtern, später wiedergefunden zu werden.",
+      },
+    ],
+    eliminationFactors: [
+      "Mehrspaltige Layouts oder Grafiken, die das ausgelesene Profil unvollständig machen.",
+      "Lücken oder unklare Zeiträume im Werdegang, die ohne Erklärung bleiben.",
+      "Berufsbezeichnungen und Kenntnisse, die nicht zu den Begriffen der Stellenanzeige passen.",
+    ],
+    howGriffoWorkHelps: [
+      "Prüft, ob Ihr Lebenslauf sauber und in der richtigen Reihenfolge ausgelesen wird.",
+      "Bewertet Struktur und Nachvollziehbarkeit Ihres Werdegangs nach deutschem Standard.",
+      "Gleicht Ihre Begriffe mit der Stellenanzeige ab und zeigt fehlende Schlüsselbegriffe.",
+      "Erstellt ein auf die Stelle zugeschnittenes Anschreiben.",
+    ],
+    faqs: [
+      {
+        question: "Wertet softgarden meinen Lebenslauf automatisch aus?",
+        answer:
+          "Die Software unterstützt die Bearbeitung im Team: Sie sammelt Bewerbungen, liest Angaben aus und macht sie vergleichbar. Über die Auswahl entscheiden Menschen. Ein sauberer, gut lesbarer Lebenslauf hilft dabei trotzdem.",
+      },
+      {
+        question: "Welches Format sollte mein Lebenslauf haben?",
+        answer:
+          "Halten Sie sich an die Vorgabe der Stellenanzeige. Ist sie offen, sind ein PDF mit auswählbarem Text oder ein einfaches einspaltiges .docx die sicherste Wahl.",
+      },
+    ],
+  },
+  join: {
+    marketName: "Mittelstand und wachsende Unternehmen im deutschsprachigen Raum",
+    description:
+      "JOIN ist ein Recruiting-Tool, mit dem Unternehmen Stellenanzeigen auf mehreren Jobportalen gleichzeitig veröffentlichen und die eingehenden Bewerbungen an einem Ort verwalten. Das Team sieht die Bewerber in einer Pipeline, bewertet sie und gibt Rückmeldung.",
+    marketShare: "Beliebt bei kleinen und mittleren Unternehmen, die Stellen auf vielen Portalen ausschreiben.",
+    howItWorks: [
+      {
+        title: "Bewerbungen aus vielen Portalen",
+        description:
+          "Da Stellen auf mehreren Portalen erscheinen, laufen Bewerbungen aus unterschiedlichen Quellen zusammen und landen als Profile in einer gemeinsamen Pipeline.",
+      },
+      {
+        title: "Schnelle Sichtung",
+        description:
+          "Kleine Teams sichten viele Profile in kurzer Zeit. Die relevantesten Stationen und Ergebnisse sollten deshalb am Anfang stehen.",
+      },
+      {
+        title: "Bewertung im Team",
+        description:
+          "Mehrere Personen bewerten denselben Bewerber. Ein Lebenslauf, der sich in wenigen Sätzen zusammenfassen lässt, erleichtert die Abstimmung.",
+      },
+    ],
+    eliminationFactors: [
+      "Ein Lebenslauf, bei dem die passende Erfahrung erst nach langem Lesen sichtbar wird.",
+      "Grafiken, Tabellen oder Textfelder, die das Auslesen der Angaben stören.",
+      "Allgemeine Formulierungen, die nie auf die ausgeschriebene Stelle eingehen.",
+    ],
+    howGriffoWorkHelps: [
+      "Prüft, ob Ihr Lebenslauf als sauberer Text gelesen wird, ohne verlorene Angaben.",
+      "Bewertet die ersten Zeilen Ihres Lebenslaufs auf Klarheit und Wirkung.",
+      "Vergleicht Ihre Formulierungen mit der Stellenanzeige und zeigt fehlende Begriffe.",
+      "Erstellt ein auf die Stelle zugeschnittenes Anschreiben.",
+    ],
+    faqs: [
+      {
+        question: "Sortiert JOIN Bewerbungen automatisch aus?",
+        answer:
+          "JOIN sammelt und ordnet Bewerbungen; die Bewertung übernimmt das Team, teils mit Hilfsfunktionen des Systems. Rechnen Sie damit, dass ein Mensch Ihr Profil in kurzer Zeit überfliegt.",
+      },
+      {
+        question: "Soll ich mich auf jedem Portal gleich bewerben?",
+        answer:
+          "Ja, sinnvoll ist ein einheitlicher, aktueller Lebenslauf. Unterschiedliche Angaben zu Zeiträumen oder Positionen fallen auf, wenn Bewerbungen im selben System zusammenlaufen.",
+      },
+    ],
+  },
+  rexx: {
+    marketName: "Deutschland, Österreich, Schweiz & Unternehmen jeder Größe",
+    description:
+      "rexx systems ist ein deutscher Anbieter von HR-Software, dessen Recruiting-Lösung Bewerbermanagement, Karriereseiten und die Ausschreibung auf Jobportalen verbindet. Bewerbungen werden als strukturierte Profile geführt, die Personalabteilung und Fachbereiche gemeinsam bearbeiten.",
+    marketShare: "Verbreitet bei Arbeitgebern im deutschsprachigen Raum, vom Mittelstand bis zum Konzern.",
+    howItWorks: [
+      {
+        title: "Strukturierte Profile",
+        description:
+          "Aus Lebenslauf und Formularangaben entsteht ein Bewerberprofil mit Stationen, Ausbildung und Kenntnissen. Was sich nicht als Text auslesen lässt, fehlt im Profil.",
+      },
+      {
+        title: "Prozess mit Beteiligten",
+        description:
+          "Personalabteilung, Fachbereich und gegebenenfalls Betriebsrat sind an der Auswahl beteiligt, deshalb zählen nachvollziehbare, vollständige Angaben.",
+      },
+      {
+        title: "Dokumentierte Schritte",
+        description:
+          "Auswahlschritte werden festgehalten. Eindeutige Zeiträume und Positionsbezeichnungen machen Ihren Werdegang in jeder Phase leicht prüfbar.",
+      },
+    ],
+    eliminationFactors: [
+      "Layouts, die die Lesereihenfolge Ihres Werdegangs durcheinanderbringen.",
+      "Fehlende oder widersprüchliche Zeiträume und Positionsbezeichnungen.",
+      "Anforderungen der Stelle, die sich im Lebenslauf nicht wiederfinden.",
+    ],
+    howGriffoWorkHelps: [
+      "Prüft, ob Ihr Lebenslauf sauber und in der richtigen Reihenfolge ausgelesen wird.",
+      "Hält Zeiträume, Positionen und Abschnitte konsistent und nachvollziehbar.",
+      "Gleicht Ihre Erfahrung mit den Anforderungen der Stellenanzeige ab.",
+      "Erstellt ein auf die Stelle zugeschnittenes Anschreiben.",
+    ],
+    faqs: [
+      {
+        question: "Entscheidet rexx über meine Bewerbung?",
+        answer:
+          "Nein, die Software unterstützt den Prozess. Die Entscheidung treffen die Beteiligten im Unternehmen. Ein vollständiger, klar strukturierter Lebenslauf erleichtert ihnen die Prüfung.",
+      },
+      {
+        question: "Wie wichtig sind lückenlose Angaben?",
+        answer:
+          "Sehr. Im dokumentierten Prozess fallen unklare Zeiträume auf. Nennen Sie Stationen mit Monat und Jahr und erklären Sie Lücken kurz.",
+      },
+    ],
+  },
 }
