@@ -259,8 +259,18 @@ impressões, posição 7,4): `softgarden` (de/en), `join` (de/en), `rexx` (de). 
 recrutamento). Mesmos critérios: idiomas com público, `marketShare` qualitativo,
 nada de rejeição automática afirmada.
 
-**Vale conferir antes de divulgar:** os guias de `join` e `rexx` descrevem o produto
-em termos gerais (publicação em vários portais; HR de empresa alemã). Se você ou o
-time conhece o produto de perto, uma leitura rápida dos textos em `locales/de.ts`
-evita qualquer imprecisão sobre funcionalidades.
+**Conferência contra os sites oficiais (2026-10-09).** Li as páginas públicas dos
+produtos dos guias novos e ajustei o que não se sustentava:
 
+- `softgarden`: o site lista Multiposting, Career Page, ATS e KI-Screening-Assistent,
+  mas não "Talentpool" — o passo foi trocado por um que o site confirma.
+- `rexx`: o site mostra Bewerbermanagement, Multiposting, CV-Parsing e um portal
+  próprio; não mostra "Karriereseiten" nem fala de Betriebsrat — ambos saíram do texto.
+- `jobvite`: a região "América do Norte" não aparece no site — removida.
+- `recruitee`: o produto agora se chama **Tellent Recruitee** — `fullName` atualizado.
+- Sem divergência: `join` (empresa registrada na Suíça e na Alemanha, o que sustenta
+  `country: 'CH'`), `teamtailor` (Estocolmo), `zohorecruit`, `jazzhr`, `bullhorn`,
+  `bamboohr`, `oraclerecruiting`, `smartrecruiters`, `workable`.
+- Não verificável: `successfactors` (o site da SAP bloqueou a leitura automática).
+
+Regra para os próximos guias: ler o site oficial do produto **antes** de escrever.
