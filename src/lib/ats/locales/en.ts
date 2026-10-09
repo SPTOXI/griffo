@@ -486,10 +486,10 @@ export const atsEn: AtsLocale = {
     ],
   },
   jobvite: {
-    marketName: "Mid-Market & Enterprise Employers, Mostly in North America",
+    marketName: "Mid-Market & Enterprise Employers",
     description:
       "Jobvite is a talent acquisition suite that employers use to publish jobs, run career sites and manage candidates through the hiring process. Applications become candidate records that recruiters search, sort and share with hiring managers.",
-    marketShare: "Used by mid-market and enterprise employers, especially in North America.",
+    marketShare: "Used by mid-market and enterprise employers.",
     howItWorks: [
       {
         title: "Candidate records",
@@ -640,9 +640,9 @@ export const atsEn: AtsLocale = {
           "HR and the hiring department see the same profile and rate it in turn. A clearly structured resume is easy to grasp without specialist knowledge.",
       },
       {
-        title: "Talent pool",
+        title: "AI assistants",
         description:
-          "Candidates can stay in a talent pool for later openings, so clear job titles and skills make it easier to be found again.",
+          "softgarden offers, among other things, an AI screening assistant. How far a company uses it is its own choice; clear job titles and skills help either way.",
       },
     ],
     eliminationFactors: [

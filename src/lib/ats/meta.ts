@@ -227,14 +227,14 @@ export const ATS_META: Record<string, AtsMeta> = {
     name: 'Jobvite',
     fullName: 'Jobvite Talent Acquisition Suite',
     country: 'US',
-    // Base de clientes concentrada na América do Norte.
+    // Só inglês: geografia dos clientes não confirmada no site, então não declaramos região.
     languages: ['en'],
     marketShare: { kind: 'qualitative' },
   },
   recruitee: {
     slug: 'recruitee',
     name: 'Recruitee',
-    fullName: 'Recruitee Collaborative Hiring Software',
+    fullName: 'Tellent Recruitee Collaborative Hiring Software',
     country: 'NL',
     languages: ['en', 'nl', 'de'],
     marketShare: { kind: 'qualitative' },

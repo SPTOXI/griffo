@@ -501,9 +501,9 @@ export const atsDe: AtsLocale = {
           "Personalabteilung und Fachbereich sehen dasselbe Profil und bewerten es nacheinander. Ein klar gegliederter Lebenslauf lässt sich dabei ohne Fachwissen schnell erfassen.",
       },
       {
-        title: "Talentpool",
+        title: "KI-Assistenten",
         description:
-          "Bewerber können für spätere Stellen im Talentpool bleiben. Klare Berufsbezeichnungen und Kenntnisse erleichtern, später wiedergefunden zu werden.",
+          "softgarden bietet unter anderem einen KI-Screening-Assistenten. Wie stark ein Unternehmen ihn nutzt, entscheidet es selbst; klare Berufsbezeichnungen und Kenntnisse helfen in jedem Fall.",
       },
     ],
     eliminationFactors: [
@@ -579,7 +579,7 @@ export const atsDe: AtsLocale = {
   rexx: {
     marketName: "Deutschland, Österreich, Schweiz & Unternehmen jeder Größe",
     description:
-      "rexx systems ist ein deutscher Anbieter von HR-Software, dessen Recruiting-Lösung Bewerbermanagement, Karriereseiten und die Ausschreibung auf Jobportalen verbindet. Bewerbungen werden als strukturierte Profile geführt, die Personalabteilung und Fachbereiche gemeinsam bearbeiten.",
+      "rexx systems ist ein deutscher Anbieter von HR-Software, dessen Recruiting-Lösung Bewerbermanagement, Multiposting und das Auslesen von Lebensläufen (CV-Parsing) verbindet. Bewerbungen werden als strukturierte Profile geführt, die Personalabteilung und Fachbereiche gemeinsam bearbeiten.",
     marketShare: "Verbreitet bei Arbeitgebern im deutschsprachigen Raum, vom Mittelstand bis zum Konzern.",
     howItWorks: [
       {
@@ -590,7 +590,7 @@ export const atsDe: AtsLocale = {
       {
         title: "Prozess mit Beteiligten",
         description:
-          "Personalabteilung, Fachbereich und gegebenenfalls Betriebsrat sind an der Auswahl beteiligt, deshalb zählen nachvollziehbare, vollständige Angaben.",
+          "Personalabteilung und Fachbereich sind an der Auswahl beteiligt, deshalb zählen nachvollziehbare, vollständige Angaben.",
       },
       {
         title: "Dokumentierte Schritte",
