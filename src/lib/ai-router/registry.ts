@@ -357,6 +357,32 @@ export async function getProvidersWithActiveKeys(): Promise<ProviderId[]> {
   return [...ids]
 }
 
+/**
+ * Hosts para onde a chave de um provedor pode ir. A URL base vem do painel
+ * (AiApiKey.baseUrl ou `*_BASE_URL` no SystemConfig): sem esta lista, quem
+ * mexesse nela mandava a chave decifrada — e o currículo dos usuários — para
+ * qualquer servidor, inclusive interno.
+ */
+const ALLOWED_PROVIDER_HOSTS = new Set([
+  ...Object.values(PROVIDER_CONFIGS).map((c) => new URL(c.baseURL).hostname),
+  'api.moonshot.cn',
+])
+
+export function isAllowedProviderBaseUrl(candidate: string): boolean {
+  try {
+    const url = new URL(candidate.trim())
+    return url.protocol === 'https:' && !url.port && ALLOWED_PROVIDER_HOSTS.has(url.hostname.toLowerCase())
+  } catch {
+    return false
+  }
+}
+
+function acceptBaseUrl(candidate: string, current: string, source: string): string {
+  if (isAllowedProviderBaseUrl(candidate)) return candidate
+  console.warn(`[AI Registry] URL base recusada em ${source}: só https para hosts de provedores conhecidos.`)
+  return current
+}
+
 export async function getProviderRuntimeConfig(providerId: ProviderId) {
   const base = PROVIDER_CONFIGS[providerId]
   if (!base) {
@@ -384,7 +410,7 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
     if (matchingKey.apiKey) {
       apiKey = tryDecryptSecret(matchingKey.apiKey, `AiApiKey.${matchingKey.id}`) || apiKey
     }
-    if (matchingKey.baseUrl) baseURL = matchingKey.baseUrl
+    if (matchingKey.baseUrl) baseURL = acceptBaseUrl(matchingKey.baseUrl, baseURL, `AiApiKey.${matchingKey.id}`)
     if (matchingKey.model) model = matchingKey.model
   }
 
@@ -398,7 +424,7 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
       model = c.value
     }
     if (c.key === `${providerId.toUpperCase()}_BASE_URL` && c.value) {
-      baseURL = c.value
+      baseURL = acceptBaseUrl(c.value, baseURL, `SystemConfig.${c.key}`)
     }
   }
 

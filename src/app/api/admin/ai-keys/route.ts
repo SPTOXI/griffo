@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
 import { encryptSecret, maskSecret } from '@/lib/crypto'
-import { clearProviderConfigCache, effectiveModel, normalizeProviderId } from '@/lib/ai-router/registry'
+import { clearProviderConfigCache, effectiveModel, isAllowedProviderBaseUrl, normalizeProviderId } from '@/lib/ai-router/registry'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,6 +62,10 @@ export async function POST(req: Request) {
     const validProviders = ['moonshot', 'anthropic', 'deepseek', 'gemini', 'openai']
     if (!validProviders.includes(provider.toLowerCase())) {
       return NextResponse.json({ error: 'Provedor de IA inválido. Escolha: Moonshot, Anthropic, DeepSeek, Gemini ou OpenAI.' }, { status: 400 })
+    }
+
+    if (baseUrl && !isAllowedProviderBaseUrl(String(baseUrl))) {
+      return NextResponse.json({ error: 'URL base inválida: use https e o endereço oficial do provedor.' }, { status: 400 })
     }
 
     const newKey = await db.aiApiKey.create({

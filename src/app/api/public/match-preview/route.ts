@@ -73,24 +73,42 @@ export async function POST(req: Request) {
     const admin = await getAdminUser().catch(() => null)
 
     if (!admin) {
-      const used = await db.analyticsEvent.findFirst({
+      // Um envio grátis por endereço na janela, além do por pessoa: sem isso,
+      // trocando IP e `visitorId` a cada envio, a rota virava um disparador de
+      // e-mails do Griffo para qualquer caixa de entrada.
+      const emailUsed = await db.visitorLead.findFirst({
         where: {
-          event: { in: ['lead_submitted', 'lead_bot'] },
-          createdAt: { gte: new Date(Date.now() - WINDOW_MS) },
-          OR: [{ meta: { contains: ipMetaNeedle(ipKey) } }, ...(visitorId ? [{ visitorId }] : [])],
+          email,
+          consentAt: { gte: new Date(Date.now() - WINDOW_MS) },
         },
         select: { id: true },
       })
-      if (used) return NextResponse.json({ error: 'LIMIT_REACHED' }, { status: 402, headers: noStore })
+      if (emailUsed) return NextResponse.json({ error: 'LIMIT_REACHED' }, { status: 402, headers: noStore })
 
-      const claim = await db.analyticsEvent.create({
-        data: {
-          event: bot ? 'lead_bot' : 'lead_submitted',
-          visitorId: visitorId || null,
-          meta: JSON.stringify({ ipKey, keep, ...(country ? { country } : {}) }),
-        },
-        select: { id: true },
+      // Conferir e reservar numa transação com trava por `ipKey`: sem ela,
+      // envios em paralelo liam "ninguém usou" juntos e todos passavam.
+      const claim = await db.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`match-preview:${ipKey}`}))`
+        const used = await tx.analyticsEvent.findFirst({
+          where: {
+            event: { in: ['lead_submitted', 'lead_bot'] },
+            createdAt: { gte: new Date(Date.now() - WINDOW_MS) },
+            OR: [{ meta: { contains: ipMetaNeedle(ipKey) } }, ...(visitorId ? [{ visitorId }] : [])],
+          },
+          select: { id: true },
+        })
+        if (used) return null
+        return tx.analyticsEvent.create({
+          data: {
+            event: bot ? 'lead_bot' : 'lead_submitted',
+            visitorId: visitorId || null,
+            meta: JSON.stringify({ ipKey, keep, ...(country ? { country } : {}) }),
+          },
+          select: { id: true },
+        })
       })
+      if (!claim) return NextResponse.json({ error: 'LIMIT_REACHED' }, { status: 402, headers: noStore })
+
       claimId = claim.id
       if (bot) return NextResponse.json({ error: 'GENERIC' }, { status: 400, headers: noStore })
     }

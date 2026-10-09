@@ -9027,3 +9027,26 @@ A concorrência 1 bate com o 429 do §2.141. O teto de 1,5 mi de tokens por dia 
 **Não mexido:** as funções da Vercel. Lá o processo vive uma chamada de 60s e a conexão ociosa raramente fica aberta tempo bastante para cair; se aparecer, o lugar é passar um ouvinte de `error` ao pool (exige criar o `pg.Pool` à parte, que o `PrismaPg` desta versão não aceita).
 
 **Rodada completa depois da correção (28/09, 13:03–13:23):** 2.593 vagas lidas (1.571 pela seção de requisitos), 351 sem requisito aproveitável, 1 curta, 0 falhas, 0 pelo suplente, US$ 1,24; pendentes 0. Com as 480 da tentativa interrompida, o estoque novo do JobBase saiu por ~US$ 1,49. Fichas nas abertas do JobBase: 7.782 das 7.897 com descrição.
+
+## 2.146 Auditoria de segurança de 07–08/10 e as correções do PR #106
+
+**Gatilho:** alertas do GitGuardian, em 07/10, sobre segredos no repositório: webhook do Stripe, chave do DeepSeek, URI do Postgres e um segredo genérico. Conferido no código atual e no histórico de todos os branches: só existem valores de exemplo (`.env.example`, testes com `sk-teste-*` e `postgresql://u:p@…`). Nenhum segredo real apareceu. O commit apontado no alerta não está em nenhum branch visível. Tratado como falso positivo, mas falta confirmar o arquivo exato no painel do GitGuardian.
+
+**Varredura:** Claude Security em duas rodadas, com 3 verificadores independentes por achado. As duas pararam no limite de uso da conta. Leram auth, pagamentos, upload/IA de currículo, job-fetch, user e admin (rodada 1), e cron, Radar e índice de contratação (rodada 2). **Não foram lidos:** lib do Radar/e-mail, adaptadores de vagas (fora o que os achados alcançaram), análise/agentes, roteador de IA, páginas públicas, componentes, scripts e Prisma. Os relatórios ficam em `CLAUDE-SECURITY-2026100*/`, ignorados pelo git.
+
+**Corrigido no PR #106:**
+- `edge-trust.ts` agora **falha fechado em produção**: sem `CF_ORIGIN_SECRET`, os cabeçalhos `cf-*` são ignorados. Antes eram aceitos, e um `cf-connecting-ip` novo a cada requisição zerava o limitador do login.
+- O login trava **por conta**: com 10 `login_failed` em 15 minutos no `AuditLog`, devolve 429, sem depender do IP.
+- `prisma-client.ts`: com `DATABASE_CA_CERT` definido, o TLS do Postgres passa a verificar cadeia e hostname. Sem ela, fica a semântica libpq de antes, com aviso no log.
+- ReDoS: regex com quantificador limitado no `ats-check` (rota pública) e varredura linear com leitura de no máximo 2 MB no job-fetch e no adaptador JSON-LD (`lib/html-scan.ts` é novo).
+- Dedup por IA: o modelo não escolhe mais os ids. Fica a vaga que chegou primeiro ao Griffo, só entre as duas do par, e o texto dos anúncios vai em `wrapUntrustedDocument`. Antes, um anúncio injetado podia apagar qualquer vaga e herdar os alertas do Radar.
+- O interview-prep envelopa o anúncio como documento não confiável.
+- match-preview: um envio grátis por e-mail a cada 24 h, com reserva atômica (`pg_advisory_xact_lock` por ipKey). A busca avulsa do Radar consome a cota sob trava por usuário.
+- `url-guard`: a conexão usa um `lookup` que revalida cada endereço resolvido, contra DNS rebinding.
+- URL base de provedor de IA: só `https` para hosts oficiais, checada na gravação e no uso.
+
+**Não corrigido, de propósito:** o cadastro devolve 409 quando o e-mail já existe, o que permite enumerar contas. Fechar isso exige verificação de e-mail, que é decisão de produto. A trava por conta reduz o risco.
+
+**Configuração do operador, conferida em 09/10:** `CF_ORIGIN_SECRET` está na Vercel (Production) desde 16/09, e a Transform Rule `x-griffo-edge` está no Cloudflare. `griffo.work/api/pricing` aberto do Brasil devolveu `"country":"BR","countrySource":"edge"`, o que prova que o segredo confere. Com isso, o fail-closed do PR não muda nada em produção. `DATABASE_CA_CERT` foi configurado em 09/10, primeiro em Preview, onde `/api/hiring-index` leu o banco com o certificado, e depois em Production.
+
+**Incidente à parte:** de 08/10 por volta de 18h30 UTC até 09/10 por volta de 11h35 UTC, o GitHub Actions da conta não atribuiu runner a nenhum job, que falhava em 2 s sem log. Ficaram parados o CI e os crons, incluindo a **purga horária de currículos de visitantes**. O operador corrigiu na conta, e o CI do #106 passou em `855ee7c` (1197/1197).

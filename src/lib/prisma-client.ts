@@ -101,6 +101,40 @@ export function withLibpqSslSemantics(connectionString: string): string {
   return `${connectionString}&uselibpqcompat=true`
 }
 
+/**
+ * Verificação completa do certificado do banco, quando a CA está disponível.
+ *
+ * `sslmode=require` + `uselibpqcompat` criptografa mas NÃO autentica o
+ * servidor: quem estiver no caminho de rede apresenta um certificado
+ * autoassinado e lê/reescreve o tráfego. Com a CA do Supabase em
+ * `DATABASE_CA_CERT` (o PEM baixado em Settings → Database → SSL), o `sslmode`
+ * sai da URL — ele tem precedência sobre o objeto `ssl` — e o `pg` passa a
+ * verificar cadeia e hostname contra essa CA.
+ */
+export function sslOptionsFor(
+  connectionString: string,
+  caCert: string | undefined = process.env.DATABASE_CA_CERT
+): { connectionString: string; ssl?: { ca: string; rejectUnauthorized: true } } {
+  const ca = caCert?.trim().replace(/\\n/g, '\n')
+  if (ca) {
+    const url = new URL(connectionString)
+    url.searchParams.delete('sslmode')
+    url.searchParams.delete('uselibpqcompat')
+    return { connectionString: url.toString(), ssl: { ca, rejectUnauthorized: true } }
+  }
+  if (process.env.NODE_ENV === 'production' && /[?&]sslmode=require(?:&|$)/i.test(connectionString)) {
+    warnUnverifiedTlsOnce()
+  }
+  return { connectionString: withLibpqSslSemantics(connectionString) }
+}
+
+let warnedUnverifiedTls = false
+function warnUnverifiedTlsOnce() {
+  if (warnedUnverifiedTls) return
+  warnedUnverifiedTls = true
+  console.warn('[db] DATABASE_CA_CERT ausente: TLS do Postgres sem verificação de certificado.')
+}
+
 type LogLevel = 'query' | 'info' | 'warn' | 'error'
 
 export function createPrismaClient(
@@ -108,7 +142,7 @@ export function createPrismaClient(
   options: { log?: LogLevel[]; max?: number } = {}
 ): PrismaClient {
   const adapter = new PrismaPg({
-    connectionString: withLibpqSslSemantics(connectionString),
+    ...sslOptionsFor(connectionString),
     max: options.max ?? DB_POOL_MAX,
   })
   return new PrismaClient({ adapter, ...(options.log ? { log: options.log } : {}) })

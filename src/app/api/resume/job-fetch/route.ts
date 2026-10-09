@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/auth'
 import { assertPublicUrl, fetchPublicUrl, BlockedUrlError } from '@/lib/url-guard'
+import { metaContent, readTextCapped, stripTagBlocks, stripTags, tagBlocks } from '@/lib/html-scan'
 
 const schema = z.object({
   url: z.string().url('Informe uma URL válida.'),
@@ -16,11 +17,11 @@ function extractMetadataFromHtml(html: string): { title?: string; description?: 
   let description: string | undefined
 
   // 1. JSON-LD JobPosting Schema (LinkedIn, Gupy, Catho, Glassdoor, Indeed, etc.)
-  const jsonLdMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)
-  if (jsonLdMatches) {
+  const jsonLdMatches = tagBlocks(html, 'script').filter((b) => /application\/ld\+json/i.test(b.open))
+  if (jsonLdMatches.length) {
     for (const match of jsonLdMatches) {
       try {
-        const jsonText = match.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '').trim()
+        const jsonText = match.body.trim()
         const parsed = JSON.parse(jsonText)
         const items = Array.isArray(parsed) ? parsed : [parsed]
         const job = items.find(i => i && (i['@type'] === 'JobPosting' || i['@type'] === 'JobDeclaration'))
@@ -28,7 +29,7 @@ function extractMetadataFromHtml(html: string): { title?: string; description?: 
           if (job.title || job.name) title = String(job.title || job.name).trim()
           let desc = job.description || job.responsibilities || job.skills
           if (typeof desc === 'string') {
-            desc = desc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+            desc = stripTags(desc).replace(/\s+/g, ' ').trim()
             if (desc.length > 30) description = desc
           }
           if (title || description) break
@@ -39,16 +40,16 @@ function extractMetadataFromHtml(html: string): { title?: string; description?: 
 
   // 2. OpenGraph and Twitter Meta Tags
   if (!title) {
-    const titleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i)?.[1] ||
-                       html.match(/<meta[^>]*name=["']twitter:title["'][^>]*content=["']([^"']+)["']/i)?.[1] ||
-                       html.match(/<title[^>]*>(.*?)<\/title>/i)?.[1]
+    const titleMatch = metaContent(html, 'property', 'og:title') ||
+                       metaContent(html, 'name', 'twitter:title') ||
+                       tagBlocks(html, 'title')[0]?.body.slice(0, 500)
     if (titleMatch) title = titleMatch.trim()
   }
 
   if (!description) {
-    const descMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i)?.[1] ||
-                      html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)?.[1] ||
-                      html.match(/<meta[^>]*name=["']twitter:description["'][^>]*content=["']([^"']+)["']/i)?.[1]
+    const descMatch = metaContent(html, 'property', 'og:description') ||
+                      metaContent(html, 'name', 'description') ||
+                      metaContent(html, 'name', 'twitter:description')
     if (descMatch && descMatch.trim().length > 30) {
       description = descMatch.trim()
     }
@@ -106,7 +107,7 @@ export async function POST(req: Request) {
       })
 
       if (res.ok) {
-        const text = await res.text()
+        const text = await readTextCapped(res)
         const titleMatch = text.match(/^Title:\s*(.+)/m)
         if (titleMatch) pageTitle = titleMatch[1].trim()
         extractedContent = text.trim()
@@ -129,17 +130,14 @@ export async function POST(req: Request) {
         })
 
         if (fallbackRes.ok) {
-          const html = await fallbackRes.text()
+          const html = await readTextCapped(fallbackRes)
           const meta = extractMetadataFromHtml(html)
           if (meta.title) pageTitle = meta.title
 
           if (meta.description && meta.description.length > 50) {
             extractedContent = meta.description
           } else {
-            const cleanText = html
-              .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
-              .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
-              .replace(/<[^>]+>/g, ' ')
+            const cleanText = stripTags(stripTagBlocks(stripTagBlocks(html, 'script'), 'style'))
               .replace(/\s+/g, ' ')
               .trim()
             extractedContent = cleanText

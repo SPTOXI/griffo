@@ -30,36 +30,38 @@ export async function peekOnDemandSearch(
 /**
  * Consome uma busca avulsa, se houver, e grava o novo estado.
  *
- * Leitura e escrita não estão na mesma transação: o pior caso de dois cliques
- * simultâneos é o contador passar do limite por uma unidade, não um saldo negativo
- * nem uma coleta duplicada gravada errado — o mesmo nível de tolerância que
- * `MIN_INTERVAL_MS` já assume em `/api/radar/run`.
+ * Leitura e escrita na mesma transação, sob trava por usuário: sem ela, N
+ * requisições paralelas liam o mesmo contador e todas eram liberadas — cada
+ * uma disparando uma coleta inteira no JobBase.
  */
 export async function consumeOnDemandSearch(
   userId: string,
   limit?: number
 ): Promise<OnDemandSearchDecision> {
-  const pref = await db.radarPreference.findUnique({
-    where: { userId },
-    select: { onDemandSearchCount: true, onDemandSearchWindowStart: true },
+  return db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`on-demand-search:${userId}`}))`
+    const pref = await tx.radarPreference.findUnique({
+      where: { userId },
+      select: { onDemandSearchCount: true, onDemandSearchWindowStart: true },
+    })
+
+    const decision = onDemandSearchDecision(
+      {
+        count: pref?.onDemandSearchCount ?? 0,
+        windowStart: pref?.onDemandSearchWindowStart ?? null,
+      },
+      new Date(),
+      limit
+    )
+
+    if (!decision.allowed) return decision
+
+    await tx.radarPreference.upsert({
+      where: { userId },
+      create: { userId, onDemandSearchCount: decision.nextCount!, onDemandSearchWindowStart: decision.windowStart },
+      update: { onDemandSearchCount: decision.nextCount!, onDemandSearchWindowStart: decision.windowStart },
+    })
+
+    return decision
   })
-
-  const decision = onDemandSearchDecision(
-    {
-      count: pref?.onDemandSearchCount ?? 0,
-      windowStart: pref?.onDemandSearchWindowStart ?? null,
-    },
-    new Date(),
-    limit
-  )
-
-  if (!decision.allowed) return decision
-
-  await db.radarPreference.upsert({
-    where: { userId },
-    create: { userId, onDemandSearchCount: decision.nextCount!, onDemandSearchWindowStart: decision.windowStart },
-    update: { onDemandSearchCount: decision.nextCount!, onDemandSearchWindowStart: decision.windowStart },
-  })
-
-  return decision
 }

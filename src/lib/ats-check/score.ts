@@ -176,6 +176,8 @@ function stuffedTerm(text: string, words: number): boolean {
   return false
 }
 
+const MAX_SCORED_CHARS = 200_000
+
 export function scoreAtsReadability(
   input: string | null | undefined,
   /**
@@ -184,7 +186,10 @@ export function scoreAtsReadability(
    */
   options: { pages?: number } = {}
 ): AtsCheckResult {
-  const text = (input ?? '').replace(/\r/g, '')
+  // Teto de tamanho ANTES de qualquer regex: o texto vem de rota pública sem
+  // login (texto colado ou extraído de PDF, sem limite próprio). Currículo real
+  // não chega perto disso.
+  const text = (input ?? '').slice(0, MAX_SCORED_CHARS).replace(/\r/g, '')
   const rawLines = text.split('\n').map((l) => l.trim()).filter(Boolean)
   const spaced = text.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length
   // Japonês e chinês não separam palavras por espaço: conta ~2 caracteres por
@@ -211,8 +216,11 @@ export function scoreAtsReadability(
   if (words < MIN_WORDS) found.add('too_short')
   if (words > MAX_WORDS) found.add('too_long')
 
-  if (!/[\w.+-]+@[\w-]+\.[\w.-]+/.test(text)) found.add('no_email')
-  const phoneDigits = (text.match(/\+?\(?\d[\d\s().-]{7,}\d/g) || []).some(
+  // Quantificadores limitados (RFC 5321: 64 no local, 255 no domínio): sem
+  // limite, uma sequência longa sem '@' fazia a regex varrer o resto do texto a
+  // partir de cada posição — tempo quadrático em rota pública.
+  if (!/[\w.+-]{1,64}@[\w-]{1,63}\.[\w.-]{1,190}/.test(text)) found.add('no_email')
+  const phoneDigits = (text.match(/\+?\(?\d[\d\s().-]{7,30}\d/g) || []).some(
     (m) => m.replace(/\D/g, '').length >= 8 && !/^(19|20)\d{2}\s*[-–]\s*(19|20)\d{2}$/.test(m.trim())
   )
   if (!phoneDigits) found.add('no_phone')
@@ -236,7 +244,7 @@ export function scoreAtsReadability(
   }
 
   const hasMetric =
-    /\d+([.,]\d+)?\s?%/.test(text) ||
+    /\d{1,15}([.,]\d{1,6})?\s?%/.test(text) ||
     /(R\$|US\$|€|£|¥|₩|\$)\s?\d/.test(text) ||
     /\d\s?(€|円|万|억|元)/.test(text) ||
     /\b\d{2,}\s?(mil|k|clientes|pessoas|projetos|lojas|vendas|clients|people|projects|clientes|personas|proyectos)\b/i.test(flat)
