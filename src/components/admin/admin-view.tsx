@@ -371,7 +371,7 @@ function AdminViewContent() {
   const handleProviderChange = (provider: string) => {
     setNewKeyProvider(provider)
     if (provider === 'moonshot') setNewKeyModel('kimi-k3')
-    else if (provider === 'anthropic') setNewKeyModel('claude-sonnet-5')
+    else if (provider === 'anthropic') setNewKeyModel('claude-sonnet-5-5')
     else if (provider === 'deepseek') setNewKeyModel('deepseek-flash')
     else if (provider === 'gemini') setNewKeyModel('gemini-3.8-flash')
     else if (provider === 'openai') setNewKeyModel('gpt-6-luna')
@@ -1472,7 +1472,7 @@ function AdminViewContent() {
                 <Plus className="w-5 h-5 text-emerald-600" /> Cadastrar Nova API de Inteligência Artificial
               </CardTitle>
               <CardDescription>
-                Cadastre e configure as chaves de API para os 5 provedores de IA (Kimi K3, Claude Sonnet 5, DeepSeek, Gemini e OpenAI).
+                Cadastre e configure as chaves de API para os 5 provedores de IA (Kimi K3, Claude Sonnet 5.5, DeepSeek, Gemini e OpenAI).
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1496,7 +1496,7 @@ function AdminViewContent() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="moonshot">Moonshot AI (Kimi K3)</SelectItem>
-                        <SelectItem value="anthropic">Anthropic (Claude Sonnet 5)</SelectItem>
+                        <SelectItem value="anthropic">Anthropic (Claude Sonnet 5.5)</SelectItem>
                         <SelectItem value="deepseek">DeepSeek (DeepSeek V4 Flash)</SelectItem>
                         <SelectItem value="gemini">Google (Gemini 3.8 Flash)</SelectItem>
                         <SelectItem value="openai">OpenAI (GPT-6 Luna)</SelectItem>
@@ -2338,7 +2338,7 @@ function AdminViewContent() {
             <Card className="bg-gradient-to-br from-slate-900 to-slate-950 text-white">
               <CardContent className="p-4 space-y-1">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">Roteamento Inteligente</p>
-                <p className="text-sm font-medium">Kimi K3, Claude Sonnet 5, DeepSeek, Gemini, OpenAI</p>
+                <p className="text-sm font-medium">Kimi K3, Claude Sonnet 5.5, DeepSeek, Gemini, OpenAI</p>
                 <p className="text-xs text-slate-300">Roteamento por menor custo e failover automático.</p>
               </CardContent>
             </Card>

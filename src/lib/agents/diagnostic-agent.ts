@@ -38,7 +38,7 @@ export async function runDiagnosticAndHealing(incidentId?: string): Promise<Diag
             'content-type': 'application/json',
           },
           body: JSON.stringify({
-            model: config.model || 'claude-sonnet-5',
+            model: config.model || 'claude-sonnet-5-5',
             max_tokens: 10,
             messages: [{ role: 'user', content: 'Ping' }],
           }),

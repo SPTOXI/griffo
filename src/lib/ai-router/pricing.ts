@@ -20,6 +20,8 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   // Anthropic
   'claude-opus-5': { inputPer1k: 0.005, outputPer1k: 0.025 },
   'claude-sonnet-5': { inputPer1k: 0.003, outputPer1k: 0.015 },
+  // Sonnet 5.5: preço NÃO confirmado — assumido igual ao do Sonnet 5 até conferir.
+  'claude-sonnet-5-5': { inputPer1k: 0.003, outputPer1k: 0.015 },
   'claude-haiku-4-5': { inputPer1k: 0.001, outputPer1k: 0.005 },
   // Moonshot
   'kimi-k3': { inputPer1k: 0.003, outputPer1k: 0.015 },

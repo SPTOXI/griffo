@@ -20,7 +20,7 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
     name: 'Claude (Anthropic)',
     // Sonnet 5 é o primário: medido em 1,8s no commit 2aefa6d, contra o Opus 5
     // que não termina dentro do maxDuration de 60s das rotas de análise.
-    defaultModel: 'claude-sonnet-5',
+    defaultModel: 'claude-sonnet-5-5',
     baseURL: 'https://api.anthropic.com/v1',
     apiKeyEnvVar: 'ANTHROPIC_API_KEY',
     pricing: {
@@ -118,7 +118,7 @@ export { resolveModelPricing } from './pricing'
 // painel para um lançamento novo (ex.: um Claude, Gemini ou GPT mais recente)
 // era descartado em silêncio e a API continuava recebendo o padrão.
 const CURRENT_MODELS: Record<ProviderId, string[]> = {
-  claude: ['claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5'],
+  claude: ['claude-opus-5', 'claude-sonnet-5-5', 'claude-sonnet-5', 'claude-haiku-4-5'],
   kimi: ['kimi-k3'],
   // `deepseek-chat` saiu da lista porque foi retirado pelo provedor em
   // 24/07/2026. Mantê-lo aqui faria uma configuração antiga do painel continuar

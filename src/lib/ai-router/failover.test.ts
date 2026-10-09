@@ -209,7 +209,7 @@ test('o AiLog do failover guarda o primário pretendido e o que de fato responde
       await executeAiTask(tarefa())
       const log = fake.state.aiLogs[0]
       assert.equal(log.provider, 'deepseek')
-      assert.equal(log.primaryModel, 'claude-sonnet-5')
+      assert.equal(log.primaryModel, 'claude-sonnet-5-5')
       assert.equal(log.usedModel, 'deepseek-flash')
       assert.equal(log.failoverCount, 1)
       assert.equal(log.status, 'failover')
@@ -356,7 +356,7 @@ test('PDF anexado desvia para o Claude mesmo numa tarefa roteada para outro prov
       // AiLog diria que a tarefa pretendia o DeepSeek e "caiu" para o Claude,
       // inventando um failover que nunca houve. Segunda mutação necessária para
       // fechar este teste — a asserção de destino sozinha não pegava.
-      assert.equal(res.primaryModel, 'claude-sonnet-5')
+      assert.equal(res.primaryModel, 'claude-sonnet-5-5')
     }
   )
 })
