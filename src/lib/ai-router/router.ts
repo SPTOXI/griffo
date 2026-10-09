@@ -208,7 +208,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         // novo.
         const claudeBody = (useCache: boolean) =>
           JSON.stringify({
-            model: runtime.model || 'claude-sonnet-5',
+            model: runtime.model || 'claude-sonnet-5-5',
             max_tokens: req.maxTokens ?? 3500,
             system: req.cacheableContext
               ? useCache

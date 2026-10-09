@@ -125,15 +125,28 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json()
-    const { id, status } = body
+    const { id, status, model } = body
 
-    if (!id || !['active', 'paused'].includes(status)) {
-      return NextResponse.json({ error: 'ID e status (active/paused) são obrigatórios.' }, { status: 400 })
+    const hasStatus = status !== undefined
+    const hasModel = model !== undefined
+
+    if (!id || (!hasStatus && !hasModel)) {
+      return NextResponse.json({ error: 'Informe o ID e o status (active/paused) ou o modelo.' }, { status: 400 })
+    }
+    if (hasStatus && !['active', 'paused'].includes(status)) {
+      return NextResponse.json({ error: 'Status deve ser active ou paused.' }, { status: 400 })
+    }
+    const newModel = hasModel ? String(model).trim() : undefined
+    if (hasModel && !(newModel && /^[A-Za-z0-9][A-Za-z0-9._:\/-]{0,99}$/.test(newModel))) {
+      return NextResponse.json({ error: 'ID de modelo inválido.' }, { status: 400 })
     }
 
     const updated = await db.aiApiKey.update({
       where: { id },
-      data: { status },
+      data: {
+        ...(hasStatus ? { status } : {}),
+        ...(newModel ? { model: newModel } : {}),
+      },
     })
 
     clearProviderConfigCache()
@@ -141,10 +154,12 @@ export async function PATCH(req: Request) {
     await db.auditLog.create({
       data: {
         userId: admin.id,
-        action: 'admin_toggle_ai_key',
-        meta: JSON.stringify({ keyId: id, status }),
+        action: newModel ? 'admin_update_ai_key_model' : 'admin_toggle_ai_key',
+        meta: JSON.stringify({ keyId: id, ...(hasStatus ? { status } : {}), ...(newModel ? { model: newModel } : {}) }),
       },
     })
+
+    const providerId = normalizeProviderId(updated.provider)
 
     return NextResponse.json({
       success: true,
@@ -154,12 +169,15 @@ export async function PATCH(req: Request) {
         provider: updated.provider,
         baseUrl: updated.baseUrl,
         model: updated.model,
+        effectiveModel: providerId ? effectiveModel(providerId, updated.model) : updated.model,
         status: updated.status,
         createdAt: updated.createdAt,
         updatedAt: updated.updatedAt,
         maskedKey: maskSecret(updated.apiKey),
       },
-      message: `Status da API "${updated.name}" alterado para ${status === 'active' ? 'ATIVA' : 'PAUSADA'}.`,
+      message: newModel
+        ? `Modelo da API "${updated.name}" alterado para ${newModel}.`
+        : `Status da API "${updated.name}" alterado para ${status === 'active' ? 'ATIVA' : 'PAUSADA'}.`,
     })
   } catch (e: any) {
     console.error('ai-keys patch error', e)

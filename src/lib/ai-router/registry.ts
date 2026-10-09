@@ -20,7 +20,7 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
     name: 'Claude (Anthropic)',
     // Sonnet 5 é o primário: medido em 1,8s no commit 2aefa6d, contra o Opus 5
     // que não termina dentro do maxDuration de 60s das rotas de análise.
-    defaultModel: 'claude-sonnet-5',
+    defaultModel: 'claude-sonnet-5-5',
     baseURL: 'https://api.anthropic.com/v1',
     apiKeyEnvVar: 'ANTHROPIC_API_KEY',
     pricing: {
@@ -67,7 +67,9 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
     // logo abaixo. Zero chamada ao Gemini está registrada em `AiLog` desde
     // sempre (só é candidato de suplente distante, quase nunca alcançado),
     // então isto pode ter estado quebrado por um bom tempo sem ninguém notar.
-    defaultModel: 'gemini-3.6-flash',
+    // Padrão trocado para o 3.8 Flash a pedido do operador (09/10/2026); o
+    // preço abaixo segue sendo estimativa, não confirmado para este modelo.
+    defaultModel: 'gemini-3.8-flash',
     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
     apiKeyEnvVar: 'GEMINI_API_KEY',
     // Preço herdado do `gemini-2.0-flash` — NÃO confirmado para o
@@ -82,10 +84,13 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
   openai: {
     id: 'openai',
     name: 'OpenAI',
+    // Padrão trocado para o GPT-6 Luna a pedido do operador (09/10/2026). O
+    // preço abaixo continua sendo o do gpt-5.6-luna — NÃO confirmado para o
+    // GPT-6 Luna; o painel de custo é estimativa até o valor real ser cadastrado.
     // Cadastrado em 26/08/2026 a pedido do operador. Nenhuma tarefa foi
     // roteada pra cá ainda — só disponibilizado no painel administrativo,
     // pra ser atribuído depois. Ver 2.36 na auditoria.
-    defaultModel: 'gpt-5.6-luna',
+    defaultModel: 'gpt-6-luna',
     baseURL: 'https://api.openai.com/v1',
     // O .env local do operador tem a chave em `ChatGPT_KEY`, não neste nome —
     // isso só importa se ninguém cadastrar a chave pelo painel (que decifra
@@ -107,8 +112,13 @@ export { resolveModelPricing } from './pricing'
 
 // Modelos correntes por provedor. Um modelo configurado fora desta lista é
 // tratado como desatualizado e substituído pelo padrão do provedor.
+//
+// Exceção: um ID que tenha o formato da família do provedor (MODEL_ID_FAMILY)
+// e não conste em RETIRED_MODELS também vale. Sem isso, trocar o modelo no
+// painel para um lançamento novo (ex.: um Claude, Gemini ou GPT mais recente)
+// era descartado em silêncio e a API continuava recebendo o padrão.
 const CURRENT_MODELS: Record<ProviderId, string[]> = {
-  claude: ['claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5'],
+  claude: ['claude-opus-5', 'claude-sonnet-5-5', 'claude-sonnet-5', 'claude-haiku-4-5'],
   kimi: ['kimi-k3'],
   // `deepseek-chat` saiu da lista porque foi retirado pelo provedor em
   // 24/07/2026. Mantê-lo aqui faria uma configuração antiga do painel continuar
@@ -127,8 +137,33 @@ const CURRENT_MODELS: Record<ProviderId, string[]> = {
   // acima: aposentado pelo Google (descoberto em 26/08/2026, ver o
   // cabeçalho de PROVIDER_CONFIGS.gemini). Mantê-lo aqui faria uma chave já
   // cadastrada continuar chamando um ID que devolve 404.
-  gemini: ['gemini-3.6-flash'],
-  openai: ['gpt-5.6-luna'],
+  gemini: ['gemini-3.8-flash', 'gemini-3.6-flash'],
+  openai: ['gpt-6-luna', 'gpt-5.6-luna'],
+}
+
+/** Formato aceito de ID de modelo por provedor (família do provedor). */
+const MODEL_ID_FAMILY: Record<ProviderId, RegExp> = {
+  claude: /^claude-[a-z0-9][a-z0-9.\-]*$/,
+  kimi: /^kimi-[a-z0-9][a-z0-9.\-]*$/,
+  deepseek: /^deepseek-[a-z0-9][a-z0-9.\-]*$/,
+  gemini: /^gemini-[a-z0-9][a-z0-9.\-]*$/,
+  openai: /^(gpt-|chatgpt-|o\d)[a-z0-9.\-]*$/,
+}
+
+/** IDs já retirados pelos provedores: nunca devem ser enviados à API. */
+const RETIRED_MODELS = new Set([
+  'deepseek-chat',
+  'deepseek-reasoner',
+  'deepseek-v4-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
+])
+
+function isUsableModel(providerId: ProviderId, model: string): boolean {
+  if (CURRENT_MODELS[providerId].includes(model)) return true
+  if (RETIRED_MODELS.has(model) || /^claude-3/.test(model)) return false
+  return MODEL_ID_FAMILY[providerId].test(model)
 }
 
 // Normalize provider names that may differ between DB records and PROVIDER_CONFIGS keys
@@ -157,7 +192,7 @@ export function effectiveModel(providerId: ProviderId, storedModel: string | nul
   const base = PROVIDER_CONFIGS[providerId]
   if (!base) return storedModel?.trim() || ''
   const trimmed = (storedModel || '').trim().toLowerCase()
-  return CURRENT_MODELS[providerId].includes(trimmed) ? trimmed : base.defaultModel
+  return isUsableModel(providerId, trimmed) ? trimmed : base.defaultModel
 }
 
 export function normalizeProviderId(raw: string): ProviderId | null {
@@ -438,7 +473,7 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
   // anterior reescrevia por correspondência de substring — qualquer modelo com
   // "sonnet" no nome virava Opus 5, e qualquer "v4" do DeepSeek virava
   // deepseek-chat — o que desfazia silenciosamente a configuração do painel.
-  if (!CURRENT_MODELS[providerId].includes(trimmedModel)) {
+  if (!isUsableModel(providerId, trimmedModel)) {
     trimmedModel = base.defaultModel
   }
 

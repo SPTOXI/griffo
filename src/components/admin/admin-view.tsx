@@ -371,10 +371,10 @@ function AdminViewContent() {
   const handleProviderChange = (provider: string) => {
     setNewKeyProvider(provider)
     if (provider === 'moonshot') setNewKeyModel('kimi-k3')
-    else if (provider === 'anthropic') setNewKeyModel('claude-sonnet-5')
+    else if (provider === 'anthropic') setNewKeyModel('claude-sonnet-5-5')
     else if (provider === 'deepseek') setNewKeyModel('deepseek-flash')
-    else if (provider === 'gemini') setNewKeyModel('gemini-3.6-flash')
-    else if (provider === 'openai') setNewKeyModel('gpt-5.6-luna')
+    else if (provider === 'gemini') setNewKeyModel('gemini-3.8-flash')
+    else if (provider === 'openai') setNewKeyModel('gpt-6-luna')
   }
 
   // Register a new AI API Key
@@ -435,6 +435,43 @@ function AdminViewContent() {
       setAiKeys(aiKeys.map((k) => (k.id === id ? { ...k, status: nextStatus } : k)))
     } catch {
       toast.error('Falha de conexão')
+    }
+  }
+
+  // Edit the model of a registered API Key
+  const [editingKeyId, setEditingKeyId] = useState<string | null>(null)
+  const [editingModel, setEditingModel] = useState('')
+  const [savingModel, setSavingModel] = useState(false)
+
+  const handleSaveAiKeyModel = async (id: string) => {
+    const model = editingModel.trim()
+    if (!model) {
+      toast.error('Informe o ID do modelo.')
+      return
+    }
+    setSavingModel(true)
+    try {
+      const r = await internalFetch('/api/admin/ai-keys', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, model }),
+      })
+      const data = await r.json()
+      if (!r.ok) {
+        toast.error(data.error || 'Erro ao alterar modelo')
+        return
+      }
+      toast.success(data.message || 'Modelo alterado com sucesso')
+      setAiKeys(
+        aiKeys.map((k) =>
+          k.id === id ? { ...k, model: data.key.model, effectiveModel: data.key.effectiveModel } : k,
+        ),
+      )
+      setEditingKeyId(null)
+    } catch {
+      toast.error('Falha de conexão')
+    } finally {
+      setSavingModel(false)
     }
   }
 
@@ -1435,7 +1472,7 @@ function AdminViewContent() {
                 <Plus className="w-5 h-5 text-emerald-600" /> Cadastrar Nova API de Inteligência Artificial
               </CardTitle>
               <CardDescription>
-                Cadastre e configure as chaves de API para os 5 provedores de IA (Kimi K3, Claude Sonnet 5, DeepSeek, Gemini e OpenAI).
+                Cadastre e configure as chaves de API para os 5 provedores de IA (Kimi K3, Claude Sonnet 5.5, DeepSeek, Gemini e OpenAI).
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1459,10 +1496,10 @@ function AdminViewContent() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="moonshot">Moonshot AI (Kimi K3)</SelectItem>
-                        <SelectItem value="anthropic">Anthropic (Claude Sonnet 5)</SelectItem>
+                        <SelectItem value="anthropic">Anthropic (Claude Sonnet 5.5)</SelectItem>
                         <SelectItem value="deepseek">DeepSeek (DeepSeek V4 Flash)</SelectItem>
-                        <SelectItem value="gemini">Google (Gemini 3.6 Flash)</SelectItem>
-                        <SelectItem value="openai">OpenAI (GPT-5.6 Luna)</SelectItem>
+                        <SelectItem value="gemini">Google (Gemini 3.8 Flash)</SelectItem>
+                        <SelectItem value="openai">OpenAI (GPT-6 Luna)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1620,6 +1657,36 @@ function AdminViewContent() {
                               nunca seria visto por quem já configurou. */}
                           <td className="px-4 py-3 font-mono font-bold text-slate-700">
                             <span className="flex flex-col gap-1">
+                              {editingKeyId === key.id ? (
+                                <span className="flex items-center gap-1.5">
+                                  <Input
+                                    value={editingModel}
+                                    onChange={(e) => setEditingModel(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveAiKeyModel(key.id)
+                                      if (e.key === 'Escape') setEditingKeyId(null)
+                                    }}
+                                    className="h-7 w-48 text-xs font-mono"
+                                    autoFocus
+                                  />
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleSaveAiKeyModel(key.id)}
+                                    disabled={savingModel}
+                                    className="h-7 px-2 text-[11px] bg-emerald-600 hover:bg-emerald-700"
+                                  >
+                                    {savingModel ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingKeyId(null)}
+                                    className="h-7 px-2 text-[11px]"
+                                  >
+                                    Cancelar
+                                  </Button>
+                                </span>
+                              ) : (
                               <span className="flex items-center gap-1.5">
                                 {key.model}
                                 {slowModelWarning(key.effectiveModel || key.model) && (
@@ -1631,6 +1698,7 @@ function AdminViewContent() {
                                   </span>
                                 )}
                               </span>
+                              )}
                               {/* O painel mostrava um modelo e a API recebia
                                   outro. Quem investigasse latência ou custo
                                   raciocinava sobre um modelo que nunca rodou. */}
@@ -1658,6 +1726,17 @@ function AdminViewContent() {
                             )}
                           </td>
                           <td className="px-4 py-3 text-right space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingKeyId(key.id)
+                                setEditingModel(key.model)
+                              }}
+                              className="h-7 text-[11px] px-2.5 text-blue-700 border-blue-300 hover:bg-blue-50"
+                            >
+                              <Pencil className="w-3 h-3 mr-1" /> Modelo
+                            </Button>
                             <Button
                               size="sm"
                               variant="outline"
@@ -2259,7 +2338,7 @@ function AdminViewContent() {
             <Card className="bg-gradient-to-br from-slate-900 to-slate-950 text-white">
               <CardContent className="p-4 space-y-1">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">Roteamento Inteligente</p>
-                <p className="text-sm font-medium">Kimi K3, Claude Sonnet 5, DeepSeek, Gemini, OpenAI</p>
+                <p className="text-sm font-medium">Kimi K3, Claude Sonnet 5.5, DeepSeek, Gemini, OpenAI</p>
                 <p className="text-xs text-slate-300">Roteamento por menor custo e failover automático.</p>
               </CardContent>
             </Card>
@@ -2319,7 +2398,7 @@ function AdminViewContent() {
                     deepseek: 'DeepSeek AI',
                     claude: 'Claude (Anthropic)',
                     gemini: 'Google Gemini',
-                    openai: 'OpenAI (GPT-5.6 Luna)',
+                    openai: 'OpenAI (GPT-6 Luna)',
                   }
 
                   let statusBg = 'bg-slate-800/80 border-slate-700 text-slate-300'
