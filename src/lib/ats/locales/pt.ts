@@ -408,4 +408,50 @@ export const atsPt: AtsLocale = {
       },
     ],
   },
+  zohorecruit: {
+    marketName: "Consultorias de Recrutamento e Empresas que Contratam no Mundo Todo",
+    description:
+      "O Zoho Recruit é um software de acompanhamento de candidatos e recrutamento usado tanto por equipes internas quanto por consultorias de recrutamento. Ele publica vagas em vários sites, lê currículos em fichas de candidato e permite ao recrutador buscar, etiquetar e montar listas finais.",
+    marketShare: "Usado por equipes internas e consultorias de recrutamento de vários tamanhos no mundo todo.",
+    howItWorks: [
+      {
+        title: "Leitura do currículo em ficha",
+        description:
+          "O sistema lê seu currículo e cria uma ficha com experiência, formação e competências. O que ele não consegue ler como texto pode faltar nessa ficha.",
+      },
+      {
+        title: "Base de dados pesquisável",
+        description:
+          "Recrutadores buscam na base de candidatos por competências, cargos e palavras-chave, então os termos do seu currículo decidem se você aparece nos resultados.",
+      },
+      {
+        title: "Lista final",
+        description:
+          "Recrutadores etiquetam candidatos e enviam uma lista ao cliente ou ao gestor, que vê primeiro um perfil resumido.",
+      },
+    ],
+    eliminationFactors: [
+      "Informação em imagens ou gráficos que o sistema não consegue transformar em texto.",
+      "Competências e ferramentas ausentes do seu currículo que a vaga pede expressamente.",
+      "Cargos ou termos diferentes de como o mercado costuma nomear a função.",
+    ],
+    howGriffoWorkHelps: [
+      "Verifica se um leitor típico interpreta seu currículo como texto limpo.",
+      "Encontra termos da vaga que seu currículo não menciona.",
+      "Avalia se sua experiência mais relevante é fácil de encontrar e de incluir na lista final.",
+      "Gera uma carta de apresentação direcionada à vaga.",
+    ],
+    faqs: [
+      {
+        question: "O Zoho Recruit é usado por consultorias ou por empresas?",
+        answer:
+          "Pelos dois. As consultorias o usam para gerenciar muitas vagas e candidatos de seus clientes, e as empresas para a própria seleção.",
+      },
+      {
+        question: "Como os recrutadores me encontram na base de dados?",
+        answer:
+          "Principalmente buscando competências, cargos e palavras-chave. Use os nomes padrão das suas ferramentas e da sua função para que uma busca encontre seu currículo.",
+      },
+    ],
+  },
 }

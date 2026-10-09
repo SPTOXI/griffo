@@ -647,6 +647,12 @@ export function Landing({
             <a href="/ats/jobvite" className="inline-block py-1.5 hover:text-primary transition-colors">Jobvite</a>
             <a href="/ats/recruitee" className="inline-block py-1.5 hover:text-primary transition-colors">Recruitee</a>
             <a href="/ats/breezyhr" className="inline-block py-1.5 hover:text-primary transition-colors">Breezy HR</a>
+            <a href="/ats/softgarden" className="inline-block py-1.5 hover:text-primary transition-colors">softgarden</a>
+            <a href="/ats/join" className="inline-block py-1.5 hover:text-primary transition-colors">JOIN</a>
+            <a href="/ats/rexx" className="inline-block py-1.5 hover:text-primary transition-colors">rexx systems</a>
+            <a href="/ats/zohorecruit" className="inline-block py-1.5 hover:text-primary transition-colors">Zoho Recruit</a>
+            <a href="/ats/jazzhr" className="inline-block py-1.5 hover:text-primary transition-colors">JazzHR</a>
+            <a href="/ats/bullhorn" className="inline-block py-1.5 hover:text-primary transition-colors">Bullhorn</a>
           </div>
         </div>
 

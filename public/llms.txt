@@ -31,6 +31,12 @@ Each guide explains how the system screens resumes, what breaks parsing, and ans
 - [Jobvite](https://griffo.work/ats/jobvite): Talent acquisition suite for mid-market and enterprise employers.
 - [Recruitee](https://griffo.work/ats/recruitee): Dutch collaborative hiring platform.
 - [Breezy HR](https://griffo.work/ats/breezyhr): Applicant tracking system for small businesses and growing teams.
+- [softgarden](https://griffo.work/ats/softgarden): German applicant management software, common in German-speaking countries.
+- [JOIN](https://griffo.work/ats/join): Recruiting tool with multiposting for small and mid-sized companies.
+- [rexx systems](https://griffo.work/ats/rexx): German HR software with recruiting and applicant management.
+- [Zoho Recruit](https://griffo.work/ats/zohorecruit): Applicant tracking software for in-house teams and staffing agencies.
+- [JazzHR](https://griffo.work/ats/jazzhr): Applicant tracking software for small and growing businesses.
+- [Bullhorn](https://griffo.work/ats/bullhorn): Applicant tracking and CRM for staffing and recruiting agencies.
 - [InfoJobs](https://griffo.work/ats/infojobs): Spanish job board and applicant system.
 
 ## Griffo Enterprise (for recruiting and HR teams)

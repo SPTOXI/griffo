@@ -250,3 +250,17 @@ Fora desta leva, de propósito: ATS brasileiros menores (Kenoby, Abler, Pandapé
 e Phenom/Eightfold. Não tenho como confirmar com segurança o que cada um faz hoje,
 e um guia com fato errado custa mais que um guia a menos. Entram quando alguém
 com acesso ao produto conferir o texto.
+
+### 8.2 Terceira leva (+6 guias, total de 25)
+
+Foco no eixo germânico, o melhor país do Search Console (Alemanha: 2 cliques em 37
+impressões, posição 7,4): `softgarden` (de/en), `join` (de/en), `rexx` (de). Mais
+`zohorecruit` (en/es/pt), `jazzhr` (en) e `bullhorn` (en, plataforma de agências de
+recrutamento). Mesmos critérios: idiomas com público, `marketShare` qualitativo,
+nada de rejeição automática afirmada.
+
+**Vale conferir antes de divulgar:** os guias de `join` e `rexx` descrevem o produto
+em termos gerais (publicação em vários portais; HR de empresa alemã). Se você ou o
+time conhece o produto de perto, uma leitura rápida dos textos em `locales/de.ts`
+evita qualquer imprecisão sobre funcionalidades.
+
