@@ -107,6 +107,11 @@ export { resolveModelPricing } from './pricing'
 
 // Modelos correntes por provedor. Um modelo configurado fora desta lista é
 // tratado como desatualizado e substituído pelo padrão do provedor.
+//
+// Exceção: um ID que tenha o formato da família do provedor (MODEL_ID_FAMILY)
+// e não conste em RETIRED_MODELS também vale. Sem isso, trocar o modelo no
+// painel para um lançamento novo (ex.: um Claude, Gemini ou GPT mais recente)
+// era descartado em silêncio e a API continuava recebendo o padrão.
 const CURRENT_MODELS: Record<ProviderId, string[]> = {
   claude: ['claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5'],
   kimi: ['kimi-k3'],
@@ -129,6 +134,31 @@ const CURRENT_MODELS: Record<ProviderId, string[]> = {
   // cadastrada continuar chamando um ID que devolve 404.
   gemini: ['gemini-3.6-flash'],
   openai: ['gpt-5.6-luna'],
+}
+
+/** Formato aceito de ID de modelo por provedor (família do provedor). */
+const MODEL_ID_FAMILY: Record<ProviderId, RegExp> = {
+  claude: /^claude-[a-z0-9][a-z0-9.\-]*$/,
+  kimi: /^kimi-[a-z0-9][a-z0-9.\-]*$/,
+  deepseek: /^deepseek-[a-z0-9][a-z0-9.\-]*$/,
+  gemini: /^gemini-[a-z0-9][a-z0-9.\-]*$/,
+  openai: /^(gpt-|chatgpt-|o\d)[a-z0-9.\-]*$/,
+}
+
+/** IDs já retirados pelos provedores: nunca devem ser enviados à API. */
+const RETIRED_MODELS = new Set([
+  'deepseek-chat',
+  'deepseek-reasoner',
+  'deepseek-v4-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
+])
+
+function isUsableModel(providerId: ProviderId, model: string): boolean {
+  if (CURRENT_MODELS[providerId].includes(model)) return true
+  if (RETIRED_MODELS.has(model) || /^claude-3/.test(model)) return false
+  return MODEL_ID_FAMILY[providerId].test(model)
 }
 
 // Normalize provider names that may differ between DB records and PROVIDER_CONFIGS keys
@@ -157,7 +187,7 @@ export function effectiveModel(providerId: ProviderId, storedModel: string | nul
   const base = PROVIDER_CONFIGS[providerId]
   if (!base) return storedModel?.trim() || ''
   const trimmed = (storedModel || '').trim().toLowerCase()
-  return CURRENT_MODELS[providerId].includes(trimmed) ? trimmed : base.defaultModel
+  return isUsableModel(providerId, trimmed) ? trimmed : base.defaultModel
 }
 
 export function normalizeProviderId(raw: string): ProviderId | null {
@@ -438,7 +468,7 @@ export async function getProviderRuntimeConfig(providerId: ProviderId) {
   // anterior reescrevia por correspondência de substring — qualquer modelo com
   // "sonnet" no nome virava Opus 5, e qualquer "v4" do DeepSeek virava
   // deepseek-chat — o que desfazia silenciosamente a configuração do painel.
-  if (!CURRENT_MODELS[providerId].includes(trimmedModel)) {
+  if (!isUsableModel(providerId, trimmedModel)) {
     trimmedModel = base.defaultModel
   }
 

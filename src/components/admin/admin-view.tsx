@@ -438,6 +438,43 @@ function AdminViewContent() {
     }
   }
 
+  // Edit the model of a registered API Key
+  const [editingKeyId, setEditingKeyId] = useState<string | null>(null)
+  const [editingModel, setEditingModel] = useState('')
+  const [savingModel, setSavingModel] = useState(false)
+
+  const handleSaveAiKeyModel = async (id: string) => {
+    const model = editingModel.trim()
+    if (!model) {
+      toast.error('Informe o ID do modelo.')
+      return
+    }
+    setSavingModel(true)
+    try {
+      const r = await internalFetch('/api/admin/ai-keys', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, model }),
+      })
+      const data = await r.json()
+      if (!r.ok) {
+        toast.error(data.error || 'Erro ao alterar modelo')
+        return
+      }
+      toast.success(data.message || 'Modelo alterado com sucesso')
+      setAiKeys(
+        aiKeys.map((k) =>
+          k.id === id ? { ...k, model: data.key.model, effectiveModel: data.key.effectiveModel } : k,
+        ),
+      )
+      setEditingKeyId(null)
+    } catch {
+      toast.error('Falha de conexão')
+    } finally {
+      setSavingModel(false)
+    }
+  }
+
   // Delete API Key
   const handleDeleteAiKey = async (id: string, name: string) => {
     if (!confirm(`Tem certeza que deseja deletar a chave de API "${name}"?`)) return
@@ -1620,6 +1657,36 @@ function AdminViewContent() {
                               nunca seria visto por quem já configurou. */}
                           <td className="px-4 py-3 font-mono font-bold text-slate-700">
                             <span className="flex flex-col gap-1">
+                              {editingKeyId === key.id ? (
+                                <span className="flex items-center gap-1.5">
+                                  <Input
+                                    value={editingModel}
+                                    onChange={(e) => setEditingModel(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveAiKeyModel(key.id)
+                                      if (e.key === 'Escape') setEditingKeyId(null)
+                                    }}
+                                    className="h-7 w-48 text-xs font-mono"
+                                    autoFocus
+                                  />
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleSaveAiKeyModel(key.id)}
+                                    disabled={savingModel}
+                                    className="h-7 px-2 text-[11px] bg-emerald-600 hover:bg-emerald-700"
+                                  >
+                                    {savingModel ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingKeyId(null)}
+                                    className="h-7 px-2 text-[11px]"
+                                  >
+                                    Cancelar
+                                  </Button>
+                                </span>
+                              ) : (
                               <span className="flex items-center gap-1.5">
                                 {key.model}
                                 {slowModelWarning(key.effectiveModel || key.model) && (
@@ -1631,6 +1698,7 @@ function AdminViewContent() {
                                   </span>
                                 )}
                               </span>
+                              )}
                               {/* O painel mostrava um modelo e a API recebia
                                   outro. Quem investigasse latência ou custo
                                   raciocinava sobre um modelo que nunca rodou. */}
@@ -1658,6 +1726,17 @@ function AdminViewContent() {
                             )}
                           </td>
                           <td className="px-4 py-3 text-right space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingKeyId(key.id)
+                                setEditingModel(key.model)
+                              }}
+                              className="h-7 text-[11px] px-2.5 text-blue-700 border-blue-300 hover:bg-blue-50"
+                            >
+                              <Pencil className="w-3 h-3 mr-1" /> Modelo
+                            </Button>
                             <Button
                               size="sm"
                               variant="outline"
