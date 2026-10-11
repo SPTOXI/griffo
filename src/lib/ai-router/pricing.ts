@@ -20,8 +20,8 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   // Anthropic
   'claude-opus-5': { inputPer1k: 0.005, outputPer1k: 0.025 },
   'claude-sonnet-5': { inputPer1k: 0.003, outputPer1k: 0.015 },
-  // Sonnet 5.5: preço NÃO confirmado — assumido igual ao do Sonnet 5 até conferir.
-  'claude-sonnet-5-5': { inputPer1k: 0.003, outputPer1k: 0.015 },
+  // Sonnet 5.5 — preço informado pelo operador em 11/10/2026.
+  'claude-sonnet-5-5': { inputPer1k: 0.002, outputPer1k: 0.01 }, // $2,00 / $10,00 por 1M
   'claude-haiku-4-5': { inputPer1k: 0.001, outputPer1k: 0.005 },
   // Moonshot
   'kimi-k3': { inputPer1k: 0.003, outputPer1k: 0.015 },
@@ -35,6 +35,10 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   // DeepSeek) porque o uso do Griffo — currículo, alguns milhares de
   // tokens — fica bem abaixo do limiar de contexto longo.
   'gpt-5.6-luna': { inputPer1k: 0.0002, outputPer1k: 0.0012 },
+  // GPT-6 Luna — preço informado pelo operador em 11/10/2026.
+  'gpt-6-luna': { inputPer1k: 0.0001, outputPer1k: 0.0005 }, // $0,10 / $0,50 por 1M
+  // Google — Gemini 3.8 Flash, preço informado pelo operador em 11/10/2026.
+  'gemini-3.8-flash': { inputPer1k: 0.00075, outputPer1k: 0.00375 }, // $0,75 / $3,75 por 1M
 }
 
 /**

@@ -24,8 +24,8 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
     baseURL: 'https://api.anthropic.com/v1',
     apiKeyEnvVar: 'ANTHROPIC_API_KEY',
     pricing: {
-      inputPer1k: 0.003, // $3.00 / 1M (Sonnet 5)
-      outputPer1k: 0.015, // $15.00 / 1M (Sonnet 5)
+      inputPer1k: 0.002, // $2.00 / 1M (Sonnet 5.5)
+      outputPer1k: 0.01, // $10.00 / 1M (Sonnet 5.5)
     },
   },
   deepseek: {
@@ -67,26 +67,20 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
     // logo abaixo. Zero chamada ao Gemini está registrada em `AiLog` desde
     // sempre (só é candidato de suplente distante, quase nunca alcançado),
     // então isto pode ter estado quebrado por um bom tempo sem ninguém notar.
-    // Padrão trocado para o 3.8 Flash a pedido do operador (09/10/2026); o
-    // preço abaixo segue sendo estimativa, não confirmado para este modelo.
+    // Padrão trocado para o 3.8 Flash a pedido do operador (09/10/2026).
     defaultModel: 'gemini-3.8-flash',
     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
     apiKeyEnvVar: 'GEMINI_API_KEY',
-    // Preço herdado do `gemini-2.0-flash` — NÃO confirmado para o
-    // `gemini-3.6-flash`. Mantido como estimativa até alguém confirmar o
-    // valor real na página de pricing do Google; o painel de custo pode
-    // estar errado para este provedor até lá.
+    // Preço do `gemini-3.8-flash`, informado pelo operador em 11/10/2026.
     pricing: {
-      inputPer1k: 0.000075, // $0.075 / 1M — herdado, não confirmado
-      outputPer1k: 0.0003, // $0.30 / 1M — herdado, não confirmado
+      inputPer1k: 0.00075, // $0.75 / 1M
+      outputPer1k: 0.00375, // $3.75 / 1M
     },
   },
   openai: {
     id: 'openai',
     name: 'OpenAI',
-    // Padrão trocado para o GPT-6 Luna a pedido do operador (09/10/2026). O
-    // preço abaixo continua sendo o do gpt-5.6-luna — NÃO confirmado para o
-    // GPT-6 Luna; o painel de custo é estimativa até o valor real ser cadastrado.
+    // Padrão trocado para o GPT-6 Luna a pedido do operador (09/10/2026).
     // Cadastrado em 26/08/2026 a pedido do operador. Nenhuma tarefa foi
     // roteada pra cá ainda — só disponibilizado no painel administrativo,
     // pra ser atribuído depois. Ver 2.36 na auditoria.
@@ -99,8 +93,8 @@ export const PROVIDER_CONFIGS: Record<ProviderId, ProviderConfig> = {
     // painel, o nome da variável local não faz diferença nenhuma.
     apiKeyEnvVar: 'OPENAI_API_KEY',
     pricing: {
-      inputPer1k: 0.0002, // $0.20 / 1M (gpt-5.6-luna, contexto curto)
-      outputPer1k: 0.0012, // $1.20 / 1M
+      inputPer1k: 0.0001, // $0.10 / 1M (gpt-6-luna)
+      outputPer1k: 0.0005, // $0.50 / 1M
     },
   },
 }
