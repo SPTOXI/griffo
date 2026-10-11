@@ -138,10 +138,8 @@ function datasetJsonLd(atlas: HiringAtlas, lang: Language, canonical: string) {
   const sources = [
     ...new Set(atlas.countries.map((c) => c.sourceName).filter((name): name is string => Boolean(name))),
   ].sort()
-  const sourceMetadata: Record<
-    string,
-    { url: string; description: string; creator: string; license?: string }
-  > = {
+  type SourceMetadata = { url?: string; description: string; creator: string; license?: string }
+  const sourceMetadata: Record<string, SourceMetadata> = {
     CEPALSTAT: {
       url: 'https://statistics.cepal.org/portal/cepalstat/index.html?lang=en',
       description:
@@ -170,6 +168,14 @@ function datasetJsonLd(atlas: HiringAtlas, lang: Language, canonical: string) {
       creator: 'U.S. Bureau of Labor Statistics',
       license: 'https://www.bls.gov/opub/copyright-information.htm',
     },
+  }
+  const sourceMetadataFor = (name: string) => {
+    const exact = sourceMetadata[name]
+    if (exact) return exact
+    const match = Object.entries(sourceMetadata).find(([key]) =>
+      name.toLowerCase().startsWith(key.toLowerCase().split(' (')[0])
+    )
+    return match?.[1]
   }
 
   return {
@@ -206,18 +212,18 @@ function datasetJsonLd(atlas: HiringAtlas, lang: Language, canonical: string) {
     ...(atlas.updatedAt ? { dateModified: atlas.updatedAt } : {}),
     ...(atlas.latestPeriod ? { temporalCoverage: `../${atlas.latestPeriod.slice(0, 10)}` } : {}),
     isBasedOn: sources.map((name) => {
-      const source = sourceMetadata[name] ?? {
-        url: 'https://griffo.work/market-pulse',
+      const source = sourceMetadataFor(name) ?? {
         description: `Official statistical source used by GriffoWork in the Market Pulse dataset: ${name}.`,
         creator: name,
       }
+      const sourceId = source.url ?? `https://griffo.work/market-pulse#source-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
       return {
         '@type': 'Dataset',
-        '@id': `${source.url}#dataset`,
+        '@id': `${sourceId}#dataset`,
         name,
         description: source.description,
-        url: source.url,
-        creator: { '@type': 'Organization', name: source.creator, url: source.url },
+        ...(source.url ? { url: source.url } : {}),
+        creator: { '@type': 'Organization', name: source.creator, ...(source.url ? { url: source.url } : {}) },
         ...(source.license ? { license: source.license } : {}),
       }
     }),
