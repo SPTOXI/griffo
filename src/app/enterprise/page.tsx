@@ -38,7 +38,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     openGraph: {
       title: content.metaTitle,
       description: content.metaDescription,
-      url: CANONICAL,
+      url: alternates.canonical,
       siteName: 'Griffo Enterprise',
       images: [{ url: '/logo-full.png', width: 693, height: 694, alt: content.metaTitle }],
       type: 'website',
