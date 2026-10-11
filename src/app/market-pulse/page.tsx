@@ -135,7 +135,42 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
  */
 function datasetJsonLd(atlas: HiringAtlas, lang: Language, canonical: string) {
   const dict = DICTIONARIES[lang]
-  const sources = [...new Set(atlas.countries.map((c) => c.sourceName).filter(Boolean))].sort()
+  const sources = [
+    ...new Set(atlas.countries.map((c) => c.sourceName).filter((name): name is string => Boolean(name))),
+  ].sort()
+  const sourceMetadata: Record<
+    string,
+    { url: string; description: string; creator: string; license?: string }
+  > = {
+    CEPALSTAT: {
+      url: 'https://statistics.cepal.org/portal/cepalstat/index.html?lang=en',
+      description:
+        'Statistical data portal of the Economic Commission for Latin America and the Caribbean, covering socioeconomic indicators for the region.',
+      creator: 'Economic Commission for Latin America and the Caribbean (ECLAC)',
+      license: 'https://www.cepal.org/en/legal-notice',
+    },
+    Eurostat: {
+      url: 'https://ec.europa.eu/eurostat',
+      description:
+        'Statistical office of the European Union providing comparable European statistics, including labour-market and job-vacancy data.',
+      creator: 'Eurostat, European Commission',
+      license: 'https://ec.europa.eu/eurostat/help/copyright-notice',
+    },
+    ILOSTAT: {
+      url: 'https://ilostat.ilo.org/',
+      description:
+        'International Labour Organization database of labour statistics and internationally comparable labour-market indicators.',
+      creator: 'International Labour Organization',
+      license: 'https://ilostat.ilo.org/about/dissemination-and-analysis/',
+    },
+    'U.S. Bureau of Labor Statistics (JOLTS)': {
+      url: 'https://www.bls.gov/jlt/',
+      description:
+        'U.S. Bureau of Labor Statistics Job Openings and Labor Turnover Survey data on job openings, hires, and separations.',
+      creator: 'U.S. Bureau of Labor Statistics',
+      license: 'https://www.bls.gov/opub/copyright-information.htm',
+    },
+  }
 
   return {
     '@context': 'https://schema.org',
@@ -170,7 +205,22 @@ function datasetJsonLd(atlas: HiringAtlas, lang: Language, canonical: string) {
     },
     ...(atlas.updatedAt ? { dateModified: atlas.updatedAt } : {}),
     ...(atlas.latestPeriod ? { temporalCoverage: `../${atlas.latestPeriod.slice(0, 10)}` } : {}),
-    isBasedOn: sources.map((name) => ({ '@type': 'Dataset', name })),
+    isBasedOn: sources.map((name) => {
+      const source = sourceMetadata[name] ?? {
+        url: 'https://griffo.work/market-pulse',
+        description: `Official statistical source used by GriffoWork in the Market Pulse dataset: ${name}.`,
+        creator: name,
+      }
+      return {
+        '@type': 'Dataset',
+        '@id': `${source.url}#dataset`,
+        name,
+        description: source.description,
+        url: source.url,
+        creator: { '@type': 'Organization', name: source.creator, url: source.url },
+        ...(source.license ? { license: source.license } : {}),
+      }
+    }),
     // Onde os dados podem ser BAIXADOS, não só vistos.
     //
     // O endpoint já era público e sem autenticação (é o mesmo que o teaser
