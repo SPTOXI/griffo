@@ -271,6 +271,9 @@ export const ko: TranslationDictionary = {
     back: '뒤로가기',
     professionPlaceholder: '예: 수석 소프트웨어 엔지니어, 프로덕트 매니저...',
     dataTransferConsent: '개인정보 처리방침에 따른 데이터 수집 및 처리에 동의합니다.',
+    checkEmailTitle: '이메일을 확인하세요',
+    checkEmailBody: '사용 가능한 주소라면 링크를 보냈습니다. 링크를 열어 계정을 활성화하고 로그인하세요. 받지 못했다면 스팸함을 확인하세요.',
+    verifyInvalid: '확인 링크가 유효하지 않거나 만료되었습니다. 이메일과 비밀번호로 로그인하면 새 링크를 받을 수 있습니다.',
   },
   app: {
     dashboard: '대시보드',

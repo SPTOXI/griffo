@@ -271,6 +271,9 @@ export const fr: TranslationDictionary = {
     back: 'Retour',
     professionPlaceholder: 'ex: Développeur Full Stack, Chef de Produit...',
     dataTransferConsent: 'J\'accepte le traitement de mes données conformément à la politique de confidentialité.',
+    checkEmailTitle: 'Vérifiez votre e-mail',
+    checkEmailBody: 'Si cette adresse peut être utilisée, nous y avons envoyé un lien. Ouvrez-le pour activer votre compte et vous connecter. Rien reçu ? Vérifiez vos spams.',
+    verifyInvalid: 'Le lien de confirmation est invalide ou a expiré. Connectez-vous avec votre e-mail et votre mot de passe pour en recevoir un nouveau.',
   },
   app: {
     dashboard: 'Tableau de bord',

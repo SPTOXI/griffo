@@ -272,6 +272,9 @@ export const en: TranslationDictionary = {
       back: 'Back',
       professionPlaceholder: 'E.g.: Software Engineer',
       dataTransferConsent: 'I authorize the processing of my resume by artificial intelligence services located abroad, strictly for analysis, rewrite, and career optimization purposes, in compliance with GDPR and international standards.',
+      checkEmailTitle: 'Check your email',
+      checkEmailBody: 'If this address can be used, we\'ve sent it a link. Open the link to activate your account and sign in. Didn\'t get it? Check your spam folder.',
+      verifyInvalid: 'The confirmation link is invalid or has expired. Sign in with your email and password to get a new one.',
     },
     app: {
       dashboard: 'Dashboard',

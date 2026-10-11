@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { hashPassword, verifyPassword, verifyPasswordConstantTime, createSession } from '@/lib/auth'
 import { isConfigError } from '@/lib/env'
+import { sendVerificationEmail } from '@/lib/email/verify-email.server'
 
 // Trava por CONTA, independente do IP: o limitador do middleware é por IP e em
 // memória por instância, então sozinho não segura quem distribui tentativas
@@ -73,6 +74,21 @@ export async function POST(req: Request) {
     // porque `getCurrentUser` não abria a mesma exceção.
     if (user.disabled) {
       return NextResponse.json({ error: 'Sua conta foi desabilitada pelo administrador do sistema.' }, { status: 403 })
+    }
+
+    // Cadastro ainda não confirmado (§2.147). Só chega aqui quem acertou a
+    // senha, então dizer "confirme seu e-mail" não revela nada a terceiros.
+    // Reenvia o link, com o mesmo limite de 5 minutos do cadastro.
+    if (user.emailVerificationPending) {
+      const last = user.emailVerificationSentAt?.getTime() ?? 0
+      if (Date.now() - last > 5 * 60 * 1000) {
+        await db.user.update({ where: { id: user.id }, data: { emailVerificationSentAt: new Date() } })
+        await sendVerificationEmail(user, typeof body?.lang === 'string' ? body.lang : 'pt')
+      }
+      return NextResponse.json(
+        { error: 'Confirme seu e-mail para entrar. Enviamos um link para a sua caixa de entrada.', code: 'EMAIL_NOT_VERIFIED' },
+        { status: 403 }
+      )
     }
 
     try {

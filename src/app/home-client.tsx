@@ -51,6 +51,9 @@ export function HomeClient({ openJobsCount, jobsByCountry }: HomeClientProps) {
       // que não é onde o aviso dela está.
       // Vindo do teste ATS grátis: abre direto o cadastro.
       if (v === 'signup' && !user) setScreen('signup')
+      // Vindo do e-mail de confirmação de cadastro (link vencido) ou do aviso
+      // de conta existente: abre direto a tela de entrada.
+      if (v === 'login' && !user) setScreen('login')
       if (v === 'admin' || v === 'upload' || v === 'analysis' || v === 'rewrite' || v === 'plans' || v === 'radar') {
         setNavView(v as any)
       }

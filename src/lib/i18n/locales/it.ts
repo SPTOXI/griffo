@@ -271,6 +271,9 @@ export const it: TranslationDictionary = {
     back: 'Indietro',
     professionPlaceholder: 'es: Senior Software Engineer, Product Manager...',
     dataTransferConsent: 'Accetto il trattamento dei dati personali ai sensi dell\'Informativa sulla Privacy.',
+    checkEmailTitle: 'Controlla la tua email',
+    checkEmailBody: 'Se l\'indirizzo può essere usato, ti abbiamo inviato un link. Aprilo per attivare l\'account ed entrare. Non è arrivato? Controlla lo spam.',
+    verifyInvalid: 'Il link di conferma non è valido o è scaduto. Accedi con email e password per riceverne uno nuovo.',
   },
   app: {
     dashboard: 'Dashboard',

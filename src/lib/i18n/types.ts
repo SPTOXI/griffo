@@ -276,6 +276,9 @@ export interface TranslationDictionary {
     back: string
     professionPlaceholder: string
     dataTransferConsent: string
+    checkEmailTitle: string
+    checkEmailBody: string
+    verifyInvalid: string
   }
   app: {
     dashboard: string

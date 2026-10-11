@@ -271,6 +271,9 @@ export const de: TranslationDictionary = {
     back: 'Zurück',
     professionPlaceholder: 'z.B. Softwareentwickler, Marketing Manager...',
     dataTransferConsent: 'Ich stimme der Verarbeitung meiner Daten gemäß der Datenschutzerklärung zu.',
+    checkEmailTitle: 'Prüfen Sie Ihre E-Mails',
+    checkEmailBody: 'Falls diese Adresse verwendet werden kann, haben wir einen Link dorthin gesendet. Öffnen Sie ihn, um Ihr Konto zu aktivieren und sich anzumelden. Nichts erhalten? Sehen Sie im Spam-Ordner nach.',
+    verifyInvalid: 'Der Bestätigungslink ist ungültig oder abgelaufen. Melden Sie sich mit E-Mail und Passwort an, um einen neuen zu erhalten.',
   },
   app: {
     dashboard: 'Dashboard',
