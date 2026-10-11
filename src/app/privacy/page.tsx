@@ -4,6 +4,7 @@ import { dirForLang, localeForLang, LANGUAGES } from '@/lib/i18n'
 import { resolveRequestLanguage } from '@/lib/i18n/resolve-request-language'
 import { CONTACT_EMAIL } from '@/lib/i18n/contact'
 import { privacyContentFor } from '@/lib/privacy/content'
+import { langAlternates } from '@/lib/seo/lang-alternates'
 
 /**
  * `/privacy` — política de privacidade pública, nos 12 idiomas do site.
@@ -37,15 +38,29 @@ interface PageProps {
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const lang = await resolveRequestLanguage(searchParams)
   const content = privacyContentFor(lang)
+  const { lang: requestedLang } = await searchParams
+  const alternates = langAlternates(CANONICAL, requestedLang, LANGUAGES, localeForLang)
 
   return {
     title: content.metaTitle,
     description: content.metaDescription,
-    alternates: {
-      canonical: CANONICAL,
-      languages: Object.fromEntries(LANGUAGES.map((l) => [localeForLang(l), `${CANONICAL}?lang=${l}`])),
-    },
+    alternates,
     robots: { index: true, follow: true },
+    openGraph: {
+      title: content.metaTitle,
+      description: content.metaDescription,
+      url: alternates.canonical,
+      siteName: 'GriffoWork',
+      images: [{ url: '/logo-full.png', width: 693, height: 694, alt: content.metaTitle }],
+      type: 'website',
+      locale: localeForLang(lang),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: content.metaTitle,
+      description: content.metaDescription,
+      images: ['/logo-full.png'],
+    },
   }
 }
 

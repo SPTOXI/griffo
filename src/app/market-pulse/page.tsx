@@ -106,7 +106,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     openGraph: {
       title,
       description,
-      url: CANONICAL,
+      url: alternates.canonical,
       siteName: 'GriffoWork',
       images: [{ url: '/logo-full.png', width: 693, height: 694, alt: title }],
       type: 'website',
@@ -133,20 +133,20 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
  * uma cobertura maior que a real seria a mesma fabricação que o produto
  * recusa na tela, só que dita para uma máquina.
  */
-function datasetJsonLd(atlas: HiringAtlas, lang: Language) {
+function datasetJsonLd(atlas: HiringAtlas, lang: Language, canonical: string) {
   const dict = DICTIONARIES[lang]
   const sources = [...new Set(atlas.countries.map((c) => c.sourceName).filter(Boolean))].sort()
 
   return {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
-    '@id': `${CANONICAL}#dataset`,
+    '@id': `${canonical}#dataset`,
     name: dict.hiringMap.pageTitle,
     description: dict.hiringMap.metaDescription.replace(
       '{count}',
       String(atlas.distribution.tracked)
     ),
-    url: CANONICAL,
+    url: canonical,
     inLanguage: localeForLang(lang),
     // Decisão do operador em 09/09/2026: CC BY 4.0 — uso livre, atribuição
     // obrigatória. Números de origem (BLS/Eurostat/ILOSTAT/CEPALSTAT) já são
@@ -203,6 +203,8 @@ function datasetJsonLd(atlas: HiringAtlas, lang: Language) {
 export default async function MarketPulsePage({ searchParams }: PageProps) {
   const lang = await resolveLanguage(searchParams)
   const dict = DICTIONARIES[lang]
+  const { lang: requestedLang } = await searchParams
+  const canonical = langAlternates(CANONICAL, requestedLang, LANGUAGES, localeForLang).canonical
 
   let atlas: HiringAtlas | null = null
   try {
@@ -221,7 +223,7 @@ export default async function MarketPulsePage({ searchParams }: PageProps) {
       {atlas && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: jsonLd(datasetJsonLd(atlas, lang)) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(datasetJsonLd(atlas, lang, canonical)) }}
         />
       )}
 
