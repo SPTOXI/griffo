@@ -115,3 +115,9 @@ test('gpt-5.6-luna (OpenAI, cadastrado em 26/08/2026) — preço fixo, sem tabel
   assert.deepEqual(resolveModelPricing('gpt-5.6-luna', antes(2)), luna)
   assert.deepEqual(resolveModelPricing('gpt-5.6-luna', depois(2)), luna)
 })
+
+test('modelos de 11/10/2026 (Sonnet 5.5, GPT-6 Luna, Gemini 3.8 Flash) — preço informado pelo operador', () => {
+  assert.deepEqual(resolveModelPricing('claude-sonnet-5-5', depois(2)), { inputPer1k: 0.002, outputPer1k: 0.01 })
+  assert.deepEqual(resolveModelPricing('gpt-6-luna', depois(2)), { inputPer1k: 0.0001, outputPer1k: 0.0005 })
+  assert.deepEqual(resolveModelPricing('gemini-3.8-flash', depois(2)), { inputPer1k: 0.00075, outputPer1k: 0.00375 })
+})
