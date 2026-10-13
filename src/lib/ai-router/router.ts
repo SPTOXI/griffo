@@ -66,6 +66,19 @@ const JSON_TASK_TOKEN_FLOOR = 16_000
 const CACHE_WRITE_MULTIPLIER = 1.25
 const CACHE_READ_MULTIPLIER = 0.1
 
+// Como desligar o raciocínio muda por modelo. No Sonnet 5.5 o
+// `{ type: 'disabled' }` virou 400 e o equivalente é `between_tools` (aceito
+// só com effort `high` ou menor — aqui não mandamos effort, e o padrão do
+// Sonnet 5.5 é `high`). No Opus 5.5 não há como desligar: qualquer valor
+// explícito além de `adaptive` é 400, então o parâmetro é omitido. Descoberto
+// em 13/10/2026: o fallback para o Claude falhava em toda chamada com
+// `disableThinking`, e a ficha das vagas parou quando o DeepSeek ficou sem saldo.
+function claudeThinkingOff(model: string): { thinking?: { type: string } } {
+  if (model.startsWith('claude-sonnet-5-5')) return { thinking: { type: 'between_tools' } }
+  if (model.startsWith('claude-opus-5-5') || model.startsWith('claude-fable')) return {}
+  return { thinking: { type: 'disabled' } }
+}
+
 export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   const taskStartTime = Date.now()
 
@@ -256,7 +269,7 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
             // raciocínio e resposta somados. Numa chamada de orçamento curto o
             // raciocínio consome a cota e a resposta chega truncada — o JSON não
             // fecha e a validação do segmento reprova. Precisa ser explícito.
-            ...(req.disableThinking ? { thinking: { type: 'disabled' } } : {}),
+            ...(req.disableThinking ? claudeThinkingOff(runtime.model || 'claude-sonnet-5-5') : {}),
             // Structured outputs: a API restringe a geração ao schema, então a
             // resposta é sempre JSON válido no formato pedido. Elimina a classe
             // inteira de "falha de parse" que antes era mascarada com dados
