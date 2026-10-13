@@ -9106,3 +9106,5 @@ O e-mail de "conta já existe" do §2.147 continua sendo o canal privado que con
 - Campo de e-mail com `type="email"` e `autocomplete`.
 - Campo de senha com `current-password` ou `new-password`, para o gerenciador de senhas funcionar.
 - Textos nos 12 idiomas.
+
+**Complemento (13/10/2026):** o olho também foi para os campos de segredo do painel admin: chave de API dos provedores de IA, Stripe Secret Key e Stripe Webhook Secret. Eles usam o novo componente `components/ui/password-input.tsx`. O app não tem outros campos de senha: não há troca nem recuperação de senha.
