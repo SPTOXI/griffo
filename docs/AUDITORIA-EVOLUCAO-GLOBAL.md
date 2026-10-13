@@ -9087,3 +9087,24 @@ A concorrência 1 bate com o 429 do §2.141. O teto de 1,5 mi de tokens por dia 
 | F13 | `lib/jobs/agent-dedup.ts` | Título, empresa e local ficavam fora do bloco de dado no prompt de deduplicação, cujo veredito apaga vagas | Os três passam para dentro do `wrapUntrustedDocument`, via `untrustedLine` |
 
 **Testes:** `lib/jobs/text.test.ts` cobre o resultado igual ao anterior, o tempo linear com 150 mil `<` e a linha única com limite de tamanho. A suíte passou inteira: 1206 de 1206.
+
+## 2.149 Tela de cadastro: mensagem neutra que orienta quem já tem conta, e botão para ver a senha (13/10/2026)
+
+**Problema relatado:** ao cadastrar um e-mail que já tinha conta, a tela parecia "não fazer nada". O §2.147 já bloqueava o cadastro duplicado e mandava um aviso ao dono do e-mail, mas a tela só dizia "se o endereço puder ser usado, enviamos um link", sem orientar quem esqueceu que já tinha conta.
+
+**Opção descartada:** uma mensagem só para e-mail existente, como "e-mail não permitido". Qualquer texto exclusivo desse caso revela que a conta existe e reabre a enumeração que o §2.147 fechou. Também confunde o dono legítimo, que entende que foi bloqueado.
+
+**Solução, no padrão de Google, GitHub e Stripe:** a tela é igual para todos, mas fala com os dois casos:
+- "Enviamos uma mensagem para [endereço]. Se for um cadastro novo, abra o link para ativar sua conta."
+- "Já tem conta com este e-mail? A mensagem traz o link para entrar, ou use o botão abaixo."
+- Botões "Ir para o login" e "Usar outro e-mail".
+
+O e-mail de "conta já existe" do §2.147 continua sendo o canal privado que confirma a situação, e só o dono do endereço o recebe.
+
+**Também:**
+- Ícone de olho para mostrar e ocultar a senha, com `aria-label` e `aria-pressed`.
+- Campo de e-mail com `type="email"` e `autocomplete`.
+- Campo de senha com `current-password` ou `new-password`, para o gerenciador de senhas funcionar.
+- Textos nos 12 idiomas.
+
+**Complemento (13/10/2026):** o olho também foi para os campos de segredo do painel admin: chave de API dos provedores de IA, Stripe Secret Key e Stripe Webhook Secret. Eles usam o novo componente `components/ui/password-input.tsx`. O app não tem outros campos de senha: não há troca nem recuperação de senha.

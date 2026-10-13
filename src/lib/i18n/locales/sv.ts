@@ -272,7 +272,12 @@ export const sv: TranslationDictionary = {
     professionPlaceholder: 't.ex. Senior Software Engineer, Product Manager...',
     dataTransferConsent: 'Jag godkänner behandling av personuppgifter enligt Integritetspolicyn.',
     checkEmailTitle: 'Kolla din e-post',
-    checkEmailBody: 'Om adressen kan användas har vi skickat en länk till den. Öppna länken för att aktivera ditt konto och logga in. Fick du inget? Kolla skräpposten.',
+    checkEmailBody: "Vi har skickat ett meddelande till adressen nedan. Om det är en ny registrering, öppna länken för att aktivera ditt konto.",
+    checkEmailExisting: "Har du redan ett konto med den här e-postadressen? Meddelandet innehåller en inloggningslänk, eller använd knappen nedan. Inget efter några minuter? Kolla skräpposten.",
+    checkEmailGoLogin: "Till inloggning",
+    checkEmailUseOther: "Använd en annan e-post",
+    showPassword: "Visa lösenord",
+    hidePassword: "Dölj lösenord",
     verifyInvalid: 'Bekräftelselänken är ogiltig eller har gått ut. Logga in med e-post och lösenord för att få en ny.',
   },
   app: {

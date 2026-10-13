@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { FileText, ArrowLeft, Mail, Lock, User, Briefcase, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { FileText, ArrowLeft, Mail, Lock, User, Briefcase, Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/store/auth'
 import { useI18n } from '@/context/i18n-context'
 import { DocumentLanguage } from '@/components/i18n/document-language'
@@ -28,6 +28,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
   const [loading, setLoading] = useState(false)
   // Cadastro enviado: a conta só abre pelo link do e-mail (§2.147).
   const [checkEmail, setCheckEmail] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const { hydrate } = useAuth()
   const { t, lang } = useI18n()
 
@@ -97,6 +98,25 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
                   <h1 className="text-2xl font-bold text-[#0B192E]">{t.auth.checkEmailTitle}</h1>
                   <p className="text-sm text-slate-600 mt-2 leading-relaxed">{t.auth.checkEmailBody}</p>
                   <p className="text-sm font-semibold text-slate-800 mt-3 break-all">{email}</p>
+                  {/* Mesmo texto para e-mail novo e existente: a tela não revela se há conta (§2.147). */}
+                  <p className="text-sm text-slate-600 mt-4 leading-relaxed">{t.auth.checkEmailExisting}</p>
+                  <div className="mt-6 flex flex-col gap-2">
+                    <Button
+                      type="button"
+                      className="w-full"
+                      onClick={() => { setCheckEmail(false); setMode('login'); setPassword(''); setError(null) }}
+                    >
+                      {t.auth.checkEmailGoLogin}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full"
+                      onClick={() => { setCheckEmail(false); setEmail(''); setPassword(''); setError(null) }}
+                    >
+                      {t.auth.checkEmailUseOther}
+                    </Button>
+                  </div>
                 </div>
               ) : (
               <>
@@ -141,7 +161,8 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
                     <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <Input
                       id="email"
-                      type="text"
+                      type="email"
+                      autoComplete="email"
                       placeholder="seuemail@exemplo.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -157,13 +178,24 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
                     <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <Input
                       id="password"
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-9"
+                      className="pl-9 pr-10"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? t.auth.hidePassword : t.auth.showPassword}
+                      aria-pressed={showPassword}
+                      title={showPassword ? t.auth.hidePassword : t.auth.showPassword}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-400 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B63E5]"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
 

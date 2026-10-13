@@ -5,6 +5,7 @@ import { useAuth } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
@@ -1523,8 +1524,7 @@ function AdminViewContent() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-700">Chave Secreta (API Key)</label>
-                    <Input
-                      type="password"
+                    <PasswordInput
                       placeholder="sk-..."
                       value={newKeyApiKey}
                       onChange={(e) => setNewKeyApiKey(e.target.value)}
@@ -2180,8 +2180,7 @@ function AdminViewContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-700">Stripe Secret Key (sk_...)</label>
-                    <Input
-                      type="password"
+                    <PasswordInput
                       placeholder={isMasked(configs.STRIPE_SECRET_KEY) ? `Cadastrada (${configs.STRIPE_SECRET_KEY}) — preencha só para substituir` : 'sk_live_... ou sk_test_...'}
                       value={isMasked(configs.STRIPE_SECRET_KEY) ? '' : (configs.STRIPE_SECRET_KEY || '')}
                       onChange={(e) => setConfigs({ ...configs, STRIPE_SECRET_KEY: e.target.value })}
@@ -2200,8 +2199,7 @@ function AdminViewContent() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-700">Stripe Webhook Secret (whsec_...)</label>
-                    <Input
-                      type="password"
+                    <PasswordInput
                       placeholder={isMasked(configs.STRIPE_WEBHOOK_SECRET) ? `Cadastrado (${configs.STRIPE_WEBHOOK_SECRET}) — preencha só para substituir` : 'whsec_...'}
                       value={isMasked(configs.STRIPE_WEBHOOK_SECRET) ? '' : (configs.STRIPE_WEBHOOK_SECRET || '')}
                       onChange={(e) => setConfigs({ ...configs, STRIPE_WEBHOOK_SECRET: e.target.value })}

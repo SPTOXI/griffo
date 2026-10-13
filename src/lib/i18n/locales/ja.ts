@@ -272,7 +272,12 @@ export const ja: TranslationDictionary = {
     professionPlaceholder: '例: シニアソフトウェアエンジニア、プロダクトマネージャー',
     dataTransferConsent: '利用規約およびプライバシーポリシーに同意して利用します。',
     checkEmailTitle: 'メールを確認してください',
-    checkEmailBody: 'このアドレスが使用可能な場合、リンクを送信しました。リンクを開いてアカウントを有効にし、ログインしてください。届かない場合は迷惑メールフォルダをご確認ください。',
+    checkEmailBody: "下記のアドレスにメッセージを送信しました。新規登録の場合は、リンクを開いてアカウントを有効にしてください。",
+    checkEmailExisting: "このメールアドレスで既にアカウントをお持ちですか？メッセージにログイン用リンクがあります。下のボタンからもログインできます。数分経っても届かない場合は迷惑メールフォルダをご確認ください。",
+    checkEmailGoLogin: "ログインへ",
+    checkEmailUseOther: "別のメールアドレスを使う",
+    showPassword: "パスワードを表示",
+    hidePassword: "パスワードを隠す",
     verifyInvalid: '確認リンクが無効か、有効期限が切れています。メールアドレスとパスワードでログインすると、新しいリンクが届きます。',
   },
   app: {

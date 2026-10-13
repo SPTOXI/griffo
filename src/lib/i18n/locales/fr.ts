@@ -272,7 +272,12 @@ export const fr: TranslationDictionary = {
     professionPlaceholder: 'ex: Développeur Full Stack, Chef de Produit...',
     dataTransferConsent: 'J\'accepte le traitement de mes données conformément à la politique de confidentialité.',
     checkEmailTitle: 'Vérifiez votre e-mail',
-    checkEmailBody: 'Si cette adresse peut être utilisée, nous y avons envoyé un lien. Ouvrez-le pour activer votre compte et vous connecter. Rien reçu ? Vérifiez vos spams.',
+    checkEmailBody: "Nous avons envoyé un message à l'adresse ci-dessous. S'il s'agit d'une nouvelle inscription, ouvrez le lien pour activer votre compte.",
+    checkEmailExisting: "Vous avez déjà un compte avec cette adresse ? Le message contient un lien de connexion — ou utilisez le bouton ci-dessous. Rien après quelques minutes ? Vérifiez vos spams.",
+    checkEmailGoLogin: "Aller à la connexion",
+    checkEmailUseOther: "Utiliser une autre adresse",
+    showPassword: "Afficher le mot de passe",
+    hidePassword: "Masquer le mot de passe",
     verifyInvalid: 'Le lien de confirmation est invalide ou a expiré. Connectez-vous avec votre e-mail et votre mot de passe pour en recevoir un nouveau.',
   },
   app: {

@@ -272,7 +272,12 @@ export const zh: TranslationDictionary = {
     professionPlaceholder: '例如：高级软件工程师、资深产品经理...',
     dataTransferConsent: '我同意按照《隐私政策》处理我的个人数据。',
     checkEmailTitle: '请查收邮件',
-    checkEmailBody: '如果该地址可用，我们已向其发送链接。打开链接即可激活账户并登录。没收到？请查看垃圾邮件。',
+    checkEmailBody: "我们已向下方地址发送了一封邮件。如果是新注册，请打开链接激活账户。",
+    checkEmailExisting: "已用此邮箱注册过账户？邮件中包含登录链接，也可以使用下方按钮。几分钟后仍未收到？请查看垃圾邮件。",
+    checkEmailGoLogin: "前往登录",
+    checkEmailUseOther: "使用其他邮箱",
+    showPassword: "显示密码",
+    hidePassword: "隐藏密码",
     verifyInvalid: '确认链接无效或已过期。用邮箱和密码登录即可收到新链接。',
   },
   app: {

@@ -272,7 +272,12 @@ export const de: TranslationDictionary = {
     professionPlaceholder: 'z.B. Softwareentwickler, Marketing Manager...',
     dataTransferConsent: 'Ich stimme der Verarbeitung meiner Daten gemäß der Datenschutzerklärung zu.',
     checkEmailTitle: 'Prüfen Sie Ihre E-Mails',
-    checkEmailBody: 'Falls diese Adresse verwendet werden kann, haben wir einen Link dorthin gesendet. Öffnen Sie ihn, um Ihr Konto zu aktivieren und sich anzumelden. Nichts erhalten? Sehen Sie im Spam-Ordner nach.',
+    checkEmailBody: "Wir haben eine Nachricht an die unten stehende Adresse gesendet. Bei einer neuen Registrierung öffnen Sie den Link, um Ihr Konto zu aktivieren.",
+    checkEmailExisting: "Sie haben bereits ein Konto mit dieser Adresse? Die Nachricht enthält einen Anmeldelink – oder nutzen Sie die Schaltfläche unten. Nach einigen Minuten nichts erhalten? Sehen Sie im Spam-Ordner nach.",
+    checkEmailGoLogin: "Zur Anmeldung",
+    checkEmailUseOther: "Andere E-Mail verwenden",
+    showPassword: "Passwort anzeigen",
+    hidePassword: "Passwort verbergen",
     verifyInvalid: 'Der Bestätigungslink ist ungültig oder abgelaufen. Melden Sie sich mit E-Mail und Passwort an, um einen neuen zu erhalten.',
   },
   app: {

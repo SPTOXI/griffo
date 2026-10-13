@@ -273,7 +273,12 @@ export const pt: TranslationDictionary = {
       professionPlaceholder: 'Ex: Engenheiro de Software',
       dataTransferConsent: 'Autorizo o processamento do meu currículo por serviços de inteligência artificial localizados no exterior, estritamente para fins de análise, reescrita e otimização profissional, em conformidade com a LGPD e GDPR.',
       checkEmailTitle: 'Confira seu e-mail',
-      checkEmailBody: 'Se o endereço puder ser usado, enviamos um link para ele. Abra o link para ativar sua conta e entrar. Não chegou? Veja a caixa de spam.',
+      checkEmailBody: "Enviamos uma mensagem para o endereço abaixo. Se for um cadastro novo, abra o link para ativar sua conta.",
+      checkEmailExisting: "Já tem conta com este e-mail? A mensagem traz o link para entrar — ou use o botão abaixo. Não chegou em alguns minutos? Veja o spam.",
+      checkEmailGoLogin: "Ir para o login",
+      checkEmailUseOther: "Usar outro e-mail",
+      showPassword: "Mostrar senha",
+      hidePassword: "Ocultar senha",
       verifyInvalid: 'O link de confirmação é inválido ou venceu. Entre com seu e-mail e senha para receber um novo.',
     },
     app: {
