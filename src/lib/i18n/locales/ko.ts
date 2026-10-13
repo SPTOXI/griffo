@@ -272,7 +272,12 @@ export const ko: TranslationDictionary = {
     professionPlaceholder: '예: 수석 소프트웨어 엔지니어, 프로덕트 매니저...',
     dataTransferConsent: '개인정보 처리방침에 따른 데이터 수집 및 처리에 동의합니다.',
     checkEmailTitle: '이메일을 확인하세요',
-    checkEmailBody: '사용 가능한 주소라면 링크를 보냈습니다. 링크를 열어 계정을 활성화하고 로그인하세요. 받지 못했다면 스팸함을 확인하세요.',
+    checkEmailBody: "아래 주소로 메시지를 보냈습니다. 새로 가입하는 경우 링크를 열어 계정을 활성화하세요.",
+    checkEmailExisting: "이 이메일로 이미 계정이 있나요? 메시지에 로그인 링크가 있으며, 아래 버튼을 사용할 수도 있습니다. 몇 분이 지나도 오지 않으면 스팸함을 확인하세요.",
+    checkEmailGoLogin: "로그인으로 이동",
+    checkEmailUseOther: "다른 이메일 사용",
+    showPassword: "비밀번호 표시",
+    hidePassword: "비밀번호 숨기기",
     verifyInvalid: '확인 링크가 유효하지 않거나 만료되었습니다. 이메일과 비밀번호로 로그인하면 새 링크를 받을 수 있습니다.',
   },
   app: {

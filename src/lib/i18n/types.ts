@@ -278,6 +278,11 @@ export interface TranslationDictionary {
     dataTransferConsent: string
     checkEmailTitle: string
     checkEmailBody: string
+    checkEmailExisting: string
+    checkEmailGoLogin: string
+    checkEmailUseOther: string
+    showPassword: string
+    hidePassword: string
     verifyInvalid: string
   }
   app: {

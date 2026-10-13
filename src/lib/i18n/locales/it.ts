@@ -272,7 +272,12 @@ export const it: TranslationDictionary = {
     professionPlaceholder: 'es: Senior Software Engineer, Product Manager...',
     dataTransferConsent: 'Accetto il trattamento dei dati personali ai sensi dell\'Informativa sulla Privacy.',
     checkEmailTitle: 'Controlla la tua email',
-    checkEmailBody: 'Se l\'indirizzo può essere usato, ti abbiamo inviato un link. Aprilo per attivare l\'account ed entrare. Non è arrivato? Controlla lo spam.',
+    checkEmailBody: "Abbiamo inviato un messaggio all'indirizzo qui sotto. Se è una nuova registrazione, apri il link per attivare l'account.",
+    checkEmailExisting: "Hai già un account con questa email? Il messaggio contiene il link per accedere, oppure usa il pulsante qui sotto. Nulla dopo qualche minuto? Controlla lo spam.",
+    checkEmailGoLogin: "Vai all'accesso",
+    checkEmailUseOther: "Usa un'altra email",
+    showPassword: "Mostra password",
+    hidePassword: "Nascondi password",
     verifyInvalid: 'Il link di conferma non è valido o è scaduto. Accedi con email e password per riceverne uno nuovo.',
   },
   app: {

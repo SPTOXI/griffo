@@ -273,7 +273,12 @@ export const en: TranslationDictionary = {
       professionPlaceholder: 'E.g.: Software Engineer',
       dataTransferConsent: 'I authorize the processing of my resume by artificial intelligence services located abroad, strictly for analysis, rewrite, and career optimization purposes, in compliance with GDPR and international standards.',
       checkEmailTitle: 'Check your email',
-      checkEmailBody: 'If this address can be used, we\'ve sent it a link. Open the link to activate your account and sign in. Didn\'t get it? Check your spam folder.',
+      checkEmailBody: "We've sent a message to the address below. If this is a new sign-up, open the link to activate your account.",
+      checkEmailExisting: "Already have an account with this email? The message includes a sign-in link — or use the button below. Nothing after a few minutes? Check your spam folder.",
+      checkEmailGoLogin: "Go to sign in",
+      checkEmailUseOther: "Use a different email",
+      showPassword: "Show password",
+      hidePassword: "Hide password",
       verifyInvalid: 'The confirmation link is invalid or has expired. Sign in with your email and password to get a new one.',
     },
     app: {
