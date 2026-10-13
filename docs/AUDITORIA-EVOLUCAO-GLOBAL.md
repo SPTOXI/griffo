@@ -9073,3 +9073,17 @@ A concorrência 1 bate com o 429 do §2.141. O teto de 1,5 mi de tokens por dia 
 **Efeito no funil:** `signup_done` continua contando no cadastro, não na confirmação. Quem não confirma aparece como cadastro, mas nunca entra.
 
 **Testes:** `verify-email.test.ts` cobre token, vencimento, adulteração, escopo separado do descadastro e os e-mails.
+
+## 2.148 Varredura das áreas que faltavam: Radar, adaptadores, roteador de IA, páginas públicas, componentes, scripts e Prisma (13/10/2026)
+
+**Contexto:** a auditoria do §2.146 parou no limite de uso antes de cobrir essas áreas. A terceira varredura (Claude Security, 268 arquivos) confirmou 5 achados, todos de risco **baixo**, cada um com 3 de 3 votos. Nenhum é crítico, alto ou médio.
+
+| Achado | Onde | Problema | Correção |
+|---|---|---|---|
+| F9 | `lib/jobs/text.ts` `stripHtml` | `/<[^>]*>/g` em descrição de vaga de terceiro tinha tempo quadrático: muitos `<` sem `>` travavam o cron do Radar para todos | Usa `stripTags` linear de `lib/html-scan.ts`, com teto de 200 mil caracteres |
+| F10 | `lib/analysis/segments.ts` | Cargo e empresa vindos do Radar (`radar/prepare`) entravam crus na parte do prompt que vale como instrução | `untrustedLine()`: neutraliza, deixa em uma linha, limita a 200 caracteres e marca como dado |
+| F11 | `lib/analysis/resume-context.ts` | O mesmo problema na reescrita, na carta e na orientação de carreira | Mesma correção |
+| F12 | `lib/radar/digest.server.ts` | O digest ia para o e-mail do cadastro sem confirmação de que a pessoa é dona dele | Conta com `emailVerificationPending` não recebe o digest (`skipped: 'email_unverified'`). Depende do §2.147 |
+| F13 | `lib/jobs/agent-dedup.ts` | Título, empresa e local ficavam fora do bloco de dado no prompt de deduplicação, cujo veredito apaga vagas | Os três passam para dentro do `wrapUntrustedDocument`, via `untrustedLine` |
+
+**Testes:** `lib/jobs/text.test.ts` cobre o resultado igual ao anterior, o tempo linear com 150 mil `<` e a linha única com limite de tamanho. A suíte passou inteira: 1206 de 1206.

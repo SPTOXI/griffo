@@ -67,6 +67,7 @@ export type DigestSkipReason =
   | 'radar_off'
   | 'too_soon'
   | 'no_email'
+  | 'email_unverified'
   | 'send_failed'
   | 'out_of_time'
 
@@ -173,7 +174,7 @@ export async function sendPendingDigests(options: {
   const [users, preferences, profiles, lastSends] = await Promise.all([
     db.user.findMany({
       where: { id: { in: candidateIds }, disabled: false },
-      select: { id: true, email: true, name: true },
+      select: { id: true, email: true, name: true, emailVerificationPending: true },
     }),
     db.radarPreference.findMany({
       where: { userId: { in: candidateIds } },
@@ -219,6 +220,12 @@ export async function sendPendingDigests(options: {
     const user = userById.get(userId)
     if (!user?.email) {
       results.push({ userId, alerts, sent: false, skipped: 'no_email' })
+      continue
+    }
+
+    // E-mail nunca confirmado pode ser de terceiro: não recebe envio recorrente (§2.148).
+    if (user.emailVerificationPending) {
+      results.push({ userId, alerts, sent: false, skipped: 'email_unverified' })
       continue
     }
 
