@@ -272,6 +272,9 @@ export const pt: TranslationDictionary = {
       back: 'Voltar',
       professionPlaceholder: 'Ex: Engenheiro de Software',
       dataTransferConsent: 'Autorizo o processamento do meu currículo por serviços de inteligência artificial localizados no exterior, estritamente para fins de análise, reescrita e otimização profissional, em conformidade com a LGPD e GDPR.',
+      checkEmailTitle: 'Confira seu e-mail',
+      checkEmailBody: 'Se o endereço puder ser usado, enviamos um link para ele. Abra o link para ativar sua conta e entrar. Não chegou? Veja a caixa de spam.',
+      verifyInvalid: 'O link de confirmação é inválido ou venceu. Entre com seu e-mail e senha para receber um novo.',
     },
     app: {
       dashboard: 'Painel',

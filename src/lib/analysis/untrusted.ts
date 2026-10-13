@@ -135,3 +135,12 @@ ${OPEN}
 ${limpo}
 ${CLOSE}`
 }
+
+/**
+ * Texto curto de terceiro (cargo, empresa, cidade) em uma linha só, limpo e
+ * limitado, embrulhado como dado. Sem isto o título de um anúncio do Radar
+ * entrava cru na parte do prompt que vale como instrução (§2.148).
+ */
+export function untrustedLine(value: string, max = 200): string {
+  return neutralize(value).replace(/\s+/g, ' ').trim().slice(0, max)
+}

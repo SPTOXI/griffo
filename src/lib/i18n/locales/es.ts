@@ -272,6 +272,9 @@ export const es: TranslationDictionary = {
       back: 'Volver',
       professionPlaceholder: 'Ej: Ingeniero de Software',
       dataTransferConsent: 'Autorizo el procesamiento de mi currículum por servicios de inteligencia artificial ubicados en el exterior, estrictamente para fines de análisis, reescritura y optimización profesional, en conformidad con el RGPD y estándares internacionales.',
+      checkEmailTitle: 'Revisa tu correo',
+      checkEmailBody: 'Si la dirección puede usarse, le enviamos un enlace. Ábrelo para activar tu cuenta y entrar. ¿No llegó? Revisa la carpeta de spam.',
+      verifyInvalid: 'El enlace de confirmación no es válido o ha caducado. Inicia sesión con tu correo y contraseña para recibir uno nuevo.',
     },
     app: {
       dashboard: 'Panel',

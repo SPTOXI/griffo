@@ -52,6 +52,12 @@ model User {
   /// O currículo é processado por provedores de IA fora do país de origem;
   /// LGPD Art. 33 e GDPR Cap. V exigem base jurídica registrada para isso.
   dataTransferConsent   Boolean   @default(false)
+  /// Cadastro ainda não confirmado pelo link enviado ao e-mail (§2.147).
+  /// Padrão `false` de propósito: contas anteriores à confirmação continuam
+  /// entrando normalmente; só o cadastro novo nasce pendente.
+  emailVerificationPending Boolean  @default(false)
+  /// Último envio do link de confirmação — limita o reenvio pelo login.
+  emailVerificationSentAt  DateTime?
   dataTransferConsentAt DateTime?
   // Profile visibility for future recruiter search (Phase 2)
   profileVisible        Boolean   @default(false)

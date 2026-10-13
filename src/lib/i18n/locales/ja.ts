@@ -271,6 +271,9 @@ export const ja: TranslationDictionary = {
     back: '戻る',
     professionPlaceholder: '例: シニアソフトウェアエンジニア、プロダクトマネージャー',
     dataTransferConsent: '利用規約およびプライバシーポリシーに同意して利用します。',
+    checkEmailTitle: 'メールを確認してください',
+    checkEmailBody: 'このアドレスが使用可能な場合、リンクを送信しました。リンクを開いてアカウントを有効にし、ログインしてください。届かない場合は迷惑メールフォルダをご確認ください。',
+    verifyInvalid: '確認リンクが無効か、有効期限が切れています。メールアドレスとパスワードでログインすると、新しいリンクが届きます。',
   },
   app: {
     dashboard: 'ダッシュボード',

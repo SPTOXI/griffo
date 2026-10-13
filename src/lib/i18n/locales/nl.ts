@@ -271,6 +271,9 @@ export const nl: TranslationDictionary = {
     back: 'Terug',
     professionPlaceholder: 'bijv. Senior Software Engineer, Product Manager...',
     dataTransferConsent: 'Ik ga akkoord met de verwerking van persoonsgegevens conform het Privacybeleid.',
+    checkEmailTitle: 'Controleer je e-mail',
+    checkEmailBody: 'Als dit adres gebruikt kan worden, hebben we er een link naartoe gestuurd. Open de link om je account te activeren en in te loggen. Niets ontvangen? Kijk in je spammap.',
+    verifyInvalid: 'De bevestigingslink is ongeldig of verlopen. Log in met je e-mail en wachtwoord om een nieuwe te ontvangen.',
   },
   app: {
     dashboard: 'Dashboard',

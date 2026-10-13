@@ -271,6 +271,9 @@ export const zh: TranslationDictionary = {
     back: '返回',
     professionPlaceholder: '例如：高级软件工程师、资深产品经理...',
     dataTransferConsent: '我同意按照《隐私政策》处理我的个人数据。',
+    checkEmailTitle: '请查收邮件',
+    checkEmailBody: '如果该地址可用，我们已向其发送链接。打开链接即可激活账户并登录。没收到？请查看垃圾邮件。',
+    verifyInvalid: '确认链接无效或已过期。用邮箱和密码登录即可收到新链接。',
   },
   app: {
     dashboard: '仪表盘',

@@ -9050,3 +9050,40 @@ A concorrência 1 bate com o 429 do §2.141. O teto de 1,5 mi de tokens por dia 
 **Configuração do operador, conferida em 09/10:** `CF_ORIGIN_SECRET` está na Vercel (Production) desde 16/09, e a Transform Rule `x-griffo-edge` está no Cloudflare. `griffo.work/api/pricing` aberto do Brasil devolveu `"country":"BR","countrySource":"edge"`, o que prova que o segredo confere. Com isso, o fail-closed do PR não muda nada em produção. `DATABASE_CA_CERT` foi configurado em 09/10, primeiro em Preview, onde `/api/hiring-index` leu o banco com o certificado, e depois em Production.
 
 **Incidente à parte:** de 08/10 por volta de 18h30 UTC até 09/10 por volta de 11h35 UTC, o GitHub Actions da conta não atribuiu runner a nenhum job, que falhava em 2 s sem log. Ficaram parados o CI e os crons, incluindo a **purga horária de currículos de visitantes**. O operador corrigiu na conta, e o CI do #106 passou em `855ee7c` (1197/1197).
+
+## 2.147 Confirmação de e-mail no cadastro — o cadastro deixa de revelar quem tem conta
+
+**Problema:** era o achado F23 da auditoria do §2.146, deixado em aberto por ser decisão de produto. `POST /api/auth/register` devolvia 409 "E-mail já cadastrado" para endereço com conta e 200 para endereço novo. Qualquer pessoa conseguia confirmar quem usa um serviço de busca de emprego, o que já revela que a pessoa procura emprego, e montar uma lista de logins válidos para ataque de senha.
+
+**Decisão do operador (11/10/2026):** confirmação por e-mail, sabendo que acrescenta um passo ao cadastro e pode baixar a conversão do funil. As alternativas eram só limitar tentativas, que não fecha o vazamento, ou aceitar o risco.
+
+**Como ficou:**
+- O cadastro responde sempre `202 {status:'check_email'}`. Conta nova nasce com `emailVerificationPending = true` e recebe o link. Conta existente recebe um aviso de "tentativa de cadastro com seu e-mail". Cadastro pendente recebe o link de novo, no máximo um a cada 5 minutos, **sem trocar a senha**: trocar deixaria quem não é dono do e-mail escolher a senha que o dono vai usar.
+- O scrypt roda nos dois caminhos, para o tempo de resposta não revelar o que o corpo esconde. Um cadastro simultâneo que bate na chave única (`P2002`) também responde 202.
+- `GET /api/auth/verify-email?t=` confirma, abre a sessão e leva para `/?verified=1`. Link inválido ou vencido leva para `/?view=login&verify=invalid`.
+- O token fica em `lib/email/verify-email.ts`, no mesmo desenho do descadastro: HMAC com chave derivada do `SESSION_SECRET`, em escopo próprio. A diferença é que **vence em 48 h**, porque abre sessão.
+- O login de conta pendente, com a senha certa, responde 403 `EMAIL_NOT_VERIFIED` e reenvia o link. Só quem acertou a senha vê essa mensagem.
+- Os e-mails estão nos 12 idiomas, no idioma da tela, e saem pelo Resend com o mesmo remetente do digest. Falha de envio vai para o log e nunca muda a resposta.
+- A tela de cadastro mostra "Confira seu e-mail". `?view=login` abre a tela de entrada.
+
+**Contas antigas não são afetadas:** o campo nasce `false` por padrão, então só o cadastro novo fica pendente.
+
+**Migração aditiva:** `User.emailVerificationPending Boolean @default(false)` e `User.emailVerificationSentAt DateTime?`. **O `npx prisma db push` precisa rodar ANTES do deploy.** Sem as colunas, o Prisma falha em toda leitura de `User`, e o login cai inteiro.
+
+**Efeito no funil:** `signup_done` continua contando no cadastro, não na confirmação. Quem não confirma aparece como cadastro, mas nunca entra.
+
+**Testes:** `verify-email.test.ts` cobre token, vencimento, adulteração, escopo separado do descadastro e os e-mails.
+
+## 2.148 Varredura das áreas que faltavam: Radar, adaptadores, roteador de IA, páginas públicas, componentes, scripts e Prisma (13/10/2026)
+
+**Contexto:** a auditoria do §2.146 parou no limite de uso antes de cobrir essas áreas. A terceira varredura (Claude Security, 268 arquivos) confirmou 5 achados, todos de risco **baixo**, cada um com 3 de 3 votos. Nenhum é crítico, alto ou médio.
+
+| Achado | Onde | Problema | Correção |
+|---|---|---|---|
+| F9 | `lib/jobs/text.ts` `stripHtml` | `/<[^>]*>/g` em descrição de vaga de terceiro tinha tempo quadrático: muitos `<` sem `>` travavam o cron do Radar para todos | Usa `stripTags` linear de `lib/html-scan.ts`, com teto de 200 mil caracteres |
+| F10 | `lib/analysis/segments.ts` | Cargo e empresa vindos do Radar (`radar/prepare`) entravam crus na parte do prompt que vale como instrução | `untrustedLine()`: neutraliza, deixa em uma linha, limita a 200 caracteres e marca como dado |
+| F11 | `lib/analysis/resume-context.ts` | O mesmo problema na reescrita, na carta e na orientação de carreira | Mesma correção |
+| F12 | `lib/radar/digest.server.ts` | O digest ia para o e-mail do cadastro sem confirmação de que a pessoa é dona dele | Conta com `emailVerificationPending` não recebe o digest (`skipped: 'email_unverified'`). Depende do §2.147 |
+| F13 | `lib/jobs/agent-dedup.ts` | Título, empresa e local ficavam fora do bloco de dado no prompt de deduplicação, cujo veredito apaga vagas | Os três passam para dentro do `wrapUntrustedDocument`, via `untrustedLine` |
+
+**Testes:** `lib/jobs/text.test.ts` cobre o resultado igual ao anterior, o tempo linear com 150 mil `<` e a linha única com limite de tamanho. A suíte passou inteira: 1206 de 1206.

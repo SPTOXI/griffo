@@ -23,7 +23,7 @@
  */
 
 import { foldTitle } from '../market/taxonomy'
-import { wrapUntrustedDocument } from '../analysis/untrusted'
+import { untrustedLine, wrapUntrustedDocument } from '../analysis/untrusted'
 
 export interface JobMinimal {
   id: string
@@ -168,16 +168,10 @@ export function buildDedupUserPrompt(jobA: JobMinimal, jobB: JobMinimal): string
   return `Analise os dois anúncios abaixo e determine se representam a mesma vaga de emprego:
 
 === VAGA A (ID: ${jobA.id}) ===
-Título: ${jobA.title} (Normalizado: ${jobA.normalizedTitle || 'N/A'})
-Empresa: ${jobA.company}
-Localização: ${jobA.city || ''}, ${jobA.region || ''} - ${jobA.country || ''} (Modalidade: ${jobA.remoteType})
 Publicada em: ${jobA.publishedAt?.toISOString() || jobA.createdAt.toISOString()}
 ${wrapUntrustedDocument(jobDocument(jobA), 'anúncio da vaga A')}
 
 === VAGA B (ID: ${jobB.id}) ===
-Título: ${jobB.title} (Normalizado: ${jobB.normalizedTitle || 'N/A'})
-Empresa: ${jobB.company}
-Localização: ${jobB.city || ''}, ${jobB.region || ''} - ${jobB.country || ''} (Modalidade: ${jobB.remoteType})
 Publicada em: ${jobB.publishedAt?.toISOString() || jobB.createdAt.toISOString()}
 ${wrapUntrustedDocument(jobDocument(jobB), 'anúncio da vaga B')}
 
@@ -188,7 +182,11 @@ Responda em JSON com:
 }
 
 function jobDocument(job: JobMinimal): string {
-  return `Requisitos: ${job.requirements || 'Não especificado'}
+  // Título, empresa e local também são de terceiros: vão DENTRO do bloco (§2.148).
+  return `Título: ${untrustedLine(job.title)} (Normalizado: ${untrustedLine(job.normalizedTitle || 'N/A')})
+Empresa: ${untrustedLine(job.company)}
+Localização: ${untrustedLine(`${job.city || ''}, ${job.region || ''} - ${job.country || ''}`)} (Modalidade: ${job.remoteType})
+Requisitos: ${job.requirements || 'Não especificado'}
 Habilidades: ${job.skills || 'Não especificado'}
 Descrição:
 ${(job.description || '').slice(0, 1500)}`

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { hashPassword, createSession } from '@/lib/auth'
+import { hashPassword } from '@/lib/auth'
+import { sendAccountExistsEmail, sendVerificationEmail } from '@/lib/email/verify-email.server'
 import { isConfigError } from '@/lib/env'
 import { trackServerEvent } from '@/lib/analytics/track.server'
 
@@ -16,6 +17,8 @@ const schema = z.object({
   profession: z.string().max(120).optional(),
   // Liga o cadastro à visita anônima que o originou (funil).
   visitorId: z.string().max(100).optional(),
+  // Idioma da tela, para o e-mail de confirmação sair na mesma língua.
+  lang: z.string().max(5).optional(),
   // Consentimento de transferência internacional. Obrigatório: o currículo é
   // processado por provedores de IA fora do país de origem, e sem base
   // jurídica registrada esse tratamento não tem respaldo (LGPD Art. 33,
@@ -26,6 +29,19 @@ const schema = z.object({
   }),
 })
 
+/**
+ * A MESMA resposta para e-mail novo e e-mail já cadastrado.
+ *
+ * Antes, um 409 dizia a qualquer pessoa quem tem conta num serviço de busca de
+ * emprego, e entregava logins válidos para ataque de senha (§2.147). Agora o
+ * que aconteceu só aparece na caixa de entrada: conta nova recebe o link de
+ * confirmação; conta existente recebe um aviso. A sessão só abre no clique do
+ * link (`/api/auth/verify-email`).
+ */
+const CHECK_EMAIL = { status: 'check_email' } as const
+/** Reenvio do link para cadastro pendente: no máximo um a cada 5 minutos. */
+const RESEND_MIN_INTERVAL_MS = 5 * 60 * 1000
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -35,15 +51,33 @@ export async function POST(req: Request) {
     }
     const { name, email, password, profession } = parsed.data
 
-    const existing = await db.user.findUnique({ where: { email: email.toLowerCase() } })
+    const normalizedEmail = email.toLowerCase()
+    const lang = parsed.data.lang || 'pt'
+
+    // O scrypt roda nos dois caminhos: sem isso, a conta existente respondia
+    // mais rápido e o tempo de resposta voltava a revelar o que o corpo esconde.
+    const passwordHash = hashPassword(password)
+
+    const existing = await db.user.findUnique({ where: { email: normalizedEmail } })
     if (existing) {
-      return NextResponse.json({ error: 'E-mail já cadastrado. Faça login.' }, { status: 409 })
+      if (existing.emailVerificationPending) {
+        // Cadastro pendente: reenvia o link (com limite), sem trocar a senha.
+        // Trocar a senha aqui deixaria quem NÃO é dono do e-mail escolher a
+        // senha que o dono vai usar depois de confirmar.
+        const last = existing.emailVerificationSentAt?.getTime() ?? 0
+        if (Date.now() - last > RESEND_MIN_INTERVAL_MS) {
+          await db.user.update({ where: { id: existing.id }, data: { emailVerificationSentAt: new Date() } })
+          await sendVerificationEmail(existing, lang)
+        }
+      } else {
+        await sendAccountExistsEmail(existing.email, lang)
+      }
+      return NextResponse.json(CHECK_EMAIL, { status: 202 })
     }
 
-    const passwordHash = hashPassword(password)
     const user = await db.user.create({
       data: {
-        email: email.toLowerCase(),
+        email: normalizedEmail,
         name,
         passwordHash,
         profession: profession || null,
@@ -54,6 +88,8 @@ export async function POST(req: Request) {
         analysisBalance: 0,
         dataTransferConsent: true,
         dataTransferConsentAt: new Date(),
+        emailVerificationPending: true,
+        emailVerificationSentAt: new Date(),
       },
     })
 
@@ -67,25 +103,18 @@ export async function POST(req: Request) {
       },
     })
 
-    await createSession(user.id)
-
     await trackServerEvent('signup_done', { req, userId: user.id, visitorId: parsed.data.visitorId })
 
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        profession: user.profession,
-        plan: user.plan,
-        analysisBalance: 0,
-        planEndsAt: user.planEndsAt,
-      },
-    })
+    await sendVerificationEmail(user, lang)
+
+    return NextResponse.json(CHECK_EMAIL, { status: 202 })
   } catch (e: any) {
+    // Dois cadastros simultâneos do mesmo e-mail: o segundo bate na chave
+    // única. Responde igual a todo o resto, sem 500 que diferencie.
+    if (e?.code === 'P2002') return NextResponse.json(CHECK_EMAIL, { status: 202 })
     console.error('register error', e)
-    // Mesma distinção do login: o cadastro também cria sessão e depende da
-    // mesma variável.
+    // Mesma distinção do login: o link de confirmação é assinado com a mesma
+    // variável da sessão.
     if (isConfigError(e)) {
       return NextResponse.json(
         {

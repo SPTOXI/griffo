@@ -7,6 +7,11 @@
  * deixa o espaço dela para trás, e o espaço encosta na pontuação.
  */
 
+import { stripTags } from '../html-scan'
+
+/** Teto da descrição bruta: nenhuma vaga legítima chega perto. */
+const MAX_HTML_CHARS = 200_000
+
 const ENTITIES: Record<string, string> = {
   '&amp;': '&',
   '&lt;': '<',
@@ -37,8 +42,9 @@ export function decodeBasicEntities(text: string): string {
  * depois.
  */
 export function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, ' ')
+  // Varredura linear em vez de `/<[^>]*>/g`: descrição de terceiro com muitos
+  // `<` sem `>` custava tempo quadrático e travava o cron do Radar (§2.148).
+  return stripTags(html.slice(0, MAX_HTML_CHARS))
     .replace(/\s+/g, ' ')
     // Espaço antes de pontuação é resíduo da limpeza, nunca escrita de alguém.
     .replace(/\s+([.,;:!?)\]])/g, '$1')

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -26,8 +26,17 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
   const [dataTransferConsent, setDataTransferConsent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  // Cadastro enviado: a conta só abre pelo link do e-mail (§2.147).
+  const [checkEmail, setCheckEmail] = useState(false)
   const { hydrate } = useAuth()
   const { t, lang } = useI18n()
+
+  // Link de confirmação vencido ou inválido: a rota devolve para cá com `verify`.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const v = new URLSearchParams(window.location.search).get('verify')
+    if (v === 'invalid' || v === 'error') setError(t.auth.verifyInvalid)
+  }, [t.auth.verifyInvalid])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,8 +45,8 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
     try {
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register'
       const body = mode === 'login'
-        ? { email, password }
-        : { name, email, password, profession: profession || undefined, dataTransferConsent, visitorId: getVisitorId() }
+        ? { email, password, lang }
+        : { name, email, password, profession: profession || undefined, dataTransferConsent, visitorId: getVisitorId(), lang }
       const r = await internalFetch(endpoint, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -46,6 +55,10 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
       const data = await r.json()
       if (!r.ok) {
         setError(data.error || 'Falha na operação')
+        return
+      }
+      if (data?.status === 'check_email') {
+        setCheckEmail(true)
         return
       }
       await hydrate()
@@ -78,6 +91,15 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
         <div className="w-full max-w-md">
           <Card className="shadow-xl border-slate-200">
             <CardContent className="p-6 sm:p-8">
+              {checkEmail ? (
+                <div className="text-center py-4" role="status">
+                  <Mail className="w-10 h-10 text-[#0B63E5] mx-auto mb-3" />
+                  <h1 className="text-2xl font-bold text-[#0B192E]">{t.auth.checkEmailTitle}</h1>
+                  <p className="text-sm text-slate-600 mt-2 leading-relaxed">{t.auth.checkEmailBody}</p>
+                  <p className="text-sm font-semibold text-slate-800 mt-3 break-all">{email}</p>
+                </div>
+              ) : (
+              <>
               <div className="text-center mb-6">
                 <h1 className="text-2xl font-bold text-[#0B192E]">
                   {mode === 'login' ? t.auth.welcomeBack : t.auth.createAccount}
@@ -200,6 +222,8 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
                   {mode === 'login' ? t.auth.noAccount : t.auth.hasAccount}
                 </button>
               </div>
+              </>
+              )}
             </CardContent>
           </Card>
         </div>
