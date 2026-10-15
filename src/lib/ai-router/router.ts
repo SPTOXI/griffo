@@ -79,6 +79,32 @@ function claudeThinkingOff(model: string): { thinking?: { type: string } } {
   return { thinking: { type: 'disabled' } }
 }
 
+/**
+ * Rejeita quando `signal` dispara, mesmo que `promise` nunca termine — o
+ * cancelamento do SDK pode não alcançar uma leitura de corpo já em andamento.
+ */
+export function withHardDeadline<T>(promise: Promise<T>, signal: AbortSignal, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    // Temporizador próprio, além do sinal: o de `AbortSignal.timeout` não
+    // mantém o processo vivo e não pode ser a única garantia.
+    const timer = setTimeout(() => fail(), timeoutMs)
+    const done = () => {
+      clearTimeout(timer)
+      signal.removeEventListener('abort', fail)
+    }
+    const fail = () => {
+      done()
+      reject(Object.assign(new Error(`Tempo esgotado após ${timeoutMs}ms (resposta não terminou)`), { code: 'ETIMEDOUT' }))
+    }
+    if (signal.aborted) return fail()
+    signal.addEventListener('abort', fail, { once: true })
+    promise.then(
+      (v) => { done(); resolve(v) },
+      (e) => { done(); reject(e) }
+    )
+  })
+}
+
 export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
   const taskStartTime = Date.now()
 
@@ -395,9 +421,21 @@ export async function executeAiTask(req: AiTaskRequest): Promise<AiTaskResult> {
         // failover (sem efeito visível ao usuário, só custo do DeepSeek
         // sendo mais caro que o Kimi nessa fração de chamadas) ou cadastrar
         // uma chave da Moonshot dedicada só à Griffo.
+        // O `timeout` do SDK só vale até os cabeçalhos chegarem: a leitura do
+        // corpo fica sem prazo. O DeepSeek sob carga responde os cabeçalhos e
+        // segura o corpo enquanto a requisição espera na fila — a chamada
+        // fica pendurada até a Vercel matar a função (504 do cron de fichas
+        // em 15/10/2026, sem nenhuma linha no AiLog; sucessos de 32s com
+        // teto de ~12s). Este sinal e a corrida abaixo cobrem a tentativa
+        // inteira, corpo incluído, e o atraso vira erro com failover.
+        const attemptSignal = AbortSignal.timeout(providerTimeoutMs)
         const createCompletion = async (attempt = 1): Promise<any> => {
           try {
-            return await client.chat.completions.create(buildCompletionParams())
+            return await withHardDeadline(
+              client.chat.completions.create(buildCompletionParams(), { signal: attemptSignal }),
+              attemptSignal,
+              providerTimeoutMs
+            )
           } catch (e: any) {
             const status = e?.status ?? e?.response?.status
             if (status === 429 && attempt === 1) {
