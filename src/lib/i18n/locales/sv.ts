@@ -1121,7 +1121,7 @@ export const sv: TranslationDictionary = {
     mechanismBadge: 'Systemets funktion',
     mechanismTitle: 'Hur {ats} behandlar och rangordnar ansökningar',
     mechanismSubtitle: 'De tekniska kriterier programvaran använder för att läsa, sortera och bedöma CV:n.',
-    eliminationTitle: 'Vanligaste orsakerna till gallring i {ats}',
+    eliminationTitle: "Vad som kan minska dina chanser i {ats}",
     helpsTitle: 'Så hjälper GriffoWorks AI dig',
     auditBadge: 'GriffoWork Executive-granskning',
     auditTitle: 'Fullständig granskning i 8 dimensioner för att klara ATS',
@@ -1133,6 +1133,9 @@ export const sv: TranslationDictionary = {
     auditCta: 'Gör en kostnadsfri granskning nu',
     faqBadge: 'Vanliga frågor',
     faqTitle: 'Frågor om {ats} och GriffoWorks granskning',
+    sourcesTitle: "Använda källor",
+    reviewedLabel: "Innehållet granskat",
+    relatedTitle: "Andra rekryteringssystem",
     footerHome: 'Startsida',
   },
   hiringPage: {

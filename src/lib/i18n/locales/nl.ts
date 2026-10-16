@@ -1121,7 +1121,7 @@ export const nl: TranslationDictionary = {
     mechanismBadge: 'Werking van het systeem',
     mechanismTitle: 'Hoe {ats} sollicitaties verwerkt en rangschikt',
     mechanismSubtitle: 'De technische criteria waarmee de software cv\'s leest, ordent en beoordeelt.',
-    eliminationTitle: 'Belangrijkste afwijzingsredenen in {ats}',
+    eliminationTitle: "Wat je kansen in {ats} kan verkleinen",
     helpsTitle: 'Hoe de AI van GriffoWork je helpt',
     auditBadge: 'GriffoWork Executive-analyse',
     auditTitle: 'Volledige analyse in 8 dimensies om ATS te doorstaan',
@@ -1133,6 +1133,9 @@ export const nl: TranslationDictionary = {
     auditCta: 'Start nu een gratis analyse',
     faqBadge: 'Veelgestelde vragen',
     faqTitle: 'Vragen over {ats} en de analyse van GriffoWork',
+    sourcesTitle: "Geraadpleegde bronnen",
+    reviewedLabel: "Inhoud gecontroleerd op",
+    relatedTitle: "Andere selectiesystemen",
     footerHome: 'Startpagina',
   },
   hiringPage: {

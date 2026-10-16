@@ -1122,7 +1122,7 @@ export const en: TranslationDictionary = {
       mechanismBadge: 'How the system works',
       mechanismTitle: 'How {ats} processes and ranks applications',
       mechanismSubtitle: 'The technical criteria the software uses to read, rank and evaluate resumes.',
-      eliminationTitle: 'Main rejection factors in {ats}',
+      eliminationTitle: "What can lower your chances in {ats}",
       helpsTitle: 'How GriffoWork AI helps you',
       auditBadge: 'GriffoWork Executive Audit',
       auditTitle: 'Full 8-dimension audit for ATS approval',
@@ -1134,6 +1134,9 @@ export const en: TranslationDictionary = {
       auditCta: 'Run a free audit now',
       faqBadge: 'Frequently Asked Questions',
       faqTitle: 'Questions about {ats} and the GriffoWork audit',
+      sourcesTitle: "Sources consulted",
+      reviewedLabel: "Content reviewed on",
+      relatedTitle: "Other screening systems",
       footerHome: 'Home',
     },
     hiringPage: {

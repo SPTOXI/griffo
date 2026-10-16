@@ -1227,6 +1227,12 @@ export interface TranslationDictionary {
     auditCta: string
     faqBadge: string
     faqTitle: string
+    /** Rótulo da lista de fontes primárias que embasam o guia. */
+    sourcesTitle: string
+    /** Rótulo da data em que o conteúdo foi conferido contra as fontes. */
+    reviewedLabel: string
+    /** Título do bloco de links para os outros guias. */
+    relatedTitle: string
     footerHome: string
   }
   /**

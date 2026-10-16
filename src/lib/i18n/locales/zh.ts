@@ -1121,7 +1121,7 @@ export const zh: TranslationDictionary = {
     mechanismBadge: '系统运作机制',
     mechanismTitle: '{ats} 如何解析并排序求职申请',
     mechanismSubtitle: '该软件读取、排序和评估简历时所依据的技术标准。',
-    eliminationTitle: '{ats} 中导致淘汰的主要因素',
+    eliminationTitle: "{ats} 中可能降低通过机会的因素",
     helpsTitle: 'GriffoWork 的 AI 如何帮助您',
     auditBadge: 'GriffoWork 高管级诊断',
     auditTitle: '8 维度全面诊断，助您通过 ATS 筛选',
@@ -1133,6 +1133,9 @@ export const zh: TranslationDictionary = {
     auditCta: '立即免费诊断',
     faqBadge: '常见问题',
     faqTitle: '关于 {ats} 与 GriffoWork 诊断的常见问题',
+    sourcesTitle: "参考来源",
+    reviewedLabel: "内容核实日期",
+    relatedTitle: "其他筛选系统",
     footerHome: '首页',
   },
   hiringPage: {

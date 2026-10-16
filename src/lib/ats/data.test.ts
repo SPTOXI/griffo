@@ -145,3 +145,22 @@ test('paridade: todo idioma com conteúdo tem os MESMOS ATS que declarou', () =>
     )
   }
 })
+
+test('reviewedAt e sources andam juntos, com data real e fonte https', () => {
+  // A data aparece na tela e em `dateModified`; fonte sem data (ou data sem
+  // fonte) seria carimbo de revisão que ninguém consegue conferir.
+  for (const slug of ATS_SLUGS) {
+    const m = ATS_META[slug]
+    const temData = m.reviewedAt !== undefined
+    const temFonte = (m.sources?.length ?? 0) > 0
+    assert.equal(temData, temFonte, `'${slug}': reviewedAt e sources devem existir juntos`)
+    if (!temData) continue
+    assert.match(m.reviewedAt!, /^\d{4}-\d{2}-\d{2}$/, `'${slug}': reviewedAt fora do formato AAAA-MM-DD`)
+    const t = Date.parse(`${m.reviewedAt}T00:00:00Z`)
+    assert.ok(!Number.isNaN(t) && t <= Date.now() + 86_400_000, `'${slug}': reviewedAt inválido ou no futuro`)
+    for (const src of m.sources!) {
+      assert.ok(src.label.trim().length > 0, `'${slug}': fonte sem rótulo`)
+      assert.match(src.url, /^https:\/\//, `'${slug}': fonte precisa de URL https`)
+    }
+  }
+})

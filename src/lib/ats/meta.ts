@@ -61,6 +61,16 @@ export interface AtsMeta {
    */
   languages: Language[]
   marketShare: MarketShareAttribution
+  /**
+   * Quando o texto do guia foi conferido contra as fontes abaixo (AAAA-MM-DD).
+   *
+   * Só se preenche com uma conferência que ACONTECEU. Guia sem esta data não
+   * mostra "conferido em" — melhor omitir do que carimbar o que ninguém leu.
+   * Aparece na tela e em `dateModified` do JSON-LD; os dois dizem o mesmo.
+   */
+  reviewedAt?: string
+  /** Páginas oficiais do fornecedor que embasam o texto. Exigem `reviewedAt`. */
+  sources?: { label: string; url: string }[]
 }
 
 /** Todos os 12 — para os ATS que operam globalmente. */
@@ -70,11 +80,13 @@ export const ATS_META: Record<string, AtsMeta> = {
   gupy: {
     slug: 'gupy',
     name: 'Gupy',
-    fullName: 'Gupy Recrutamento & Seleção (IA Gaia)',
+    fullName: 'Gupy Recrutamento & Seleção',
     country: 'BR',
     // Opera só no Brasil.
     languages: ['pt'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-16',
+    sources: [{ label: "Gupy — Como os agentes de IA da Gupy funcionam (30/01/2026)", url: 'https://www.gupy.io/blog-do-emprego/gupy-ia' }],
   },
   workday: {
     slug: 'workday',
@@ -179,6 +191,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     // escrito; os demais entram quando houver demanda, não por simetria.
     languages: ['en', 'pt', 'es', 'de'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "SmartRecruiters — site oficial", url: 'https://www.smartrecruiters.com/' }],
   },
   successfactors: {
     slug: 'successfactors',
@@ -195,6 +209,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     country: 'US',
     languages: ['en', 'pt', 'es', 'de'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "Workable — site oficial", url: 'https://www.workable.com/' }],
   },
   teamtailor: {
     slug: 'teamtailor',
@@ -204,6 +220,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     // Sede sueca; alemão porque o público DACH já converte nas outras páginas.
     languages: ['en', 'de', 'sv'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "Teamtailor — site oficial", url: 'https://www.teamtailor.com/en/' }],
   },
   oraclerecruiting: {
     slug: 'oraclerecruiting',
@@ -213,6 +231,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     // Sucessor de nuvem do Taleo; o público de Taleo já aparece no Search Console.
     languages: ['en', 'pt', 'es', 'de'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "Oracle Recruiting — página oficial", url: 'https://www.oracle.com/human-capital-management/recruiting/' }],
   },
   bamboohr: {
     slug: 'bamboohr',
@@ -221,6 +241,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     country: 'US',
     languages: ['en', 'es'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "BambooHR — site oficial", url: 'https://www.bamboohr.com/' }],
   },
   jobvite: {
     slug: 'jobvite',
@@ -230,6 +252,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     // Só inglês: geografia dos clientes não confirmada no site, então não declaramos região.
     languages: ['en'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "Jobvite — site oficial", url: 'https://www.jobvite.com/' }],
   },
   recruitee: {
     slug: 'recruitee',
@@ -238,6 +262,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     country: 'NL',
     languages: ['en', 'nl', 'de'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "Tellent Recruitee — site oficial", url: 'https://recruitee.com/' }],
   },
   breezyhr: {
     slug: 'breezyhr',
@@ -246,6 +272,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     country: 'US',
     languages: ['en', 'pt', 'es'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "Breezy HR — site oficial", url: 'https://breezy.hr/' }],
   },
   softgarden: {
     slug: 'softgarden',
@@ -255,6 +283,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     // A Alemanha é o melhor país do Search Console; o eixo germânico vem primeiro.
     languages: ['de', 'en'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "softgarden — site oficial", url: 'https://softgarden.com/en/' }],
   },
   join: {
     slug: 'join',
@@ -263,6 +293,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     country: 'CH',
     languages: ['de', 'en'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "JOIN — site oficial", url: 'https://join.com/' }],
   },
   rexx: {
     slug: 'rexx',
@@ -271,6 +303,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     country: 'DE',
     languages: ['de'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "rexx systems — site oficial", url: 'https://www.rexx-systems.com/' }],
   },
   zohorecruit: {
     slug: 'zohorecruit',
@@ -279,6 +313,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     country: 'IN',
     languages: ['en', 'es', 'pt'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "Zoho Recruit — site oficial", url: 'https://www.zoho.com/recruit/' }],
   },
   jazzhr: {
     slug: 'jazzhr',
@@ -287,6 +323,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     country: 'US',
     languages: ['en'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "JazzHR — site oficial", url: 'https://www.jazzhr.com/' }],
   },
   bullhorn: {
     slug: 'bullhorn',
@@ -296,6 +334,8 @@ export const ATS_META: Record<string, AtsMeta> = {
     // Plataforma de agências de recrutamento; público de língua inglesa.
     languages: ['en'],
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-09',
+    sources: [{ label: "Bullhorn — site oficial", url: 'https://www.bullhorn.com/' }],
   },
 }
 
