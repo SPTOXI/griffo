@@ -9,203 +9,203 @@ import type { AtsLocale } from '../content-types'
  */
 export const atsEn: AtsLocale = {
   workday: {
-    marketName: 'United States, Europe & Global Multinationals',
+    marketName: "Large Employers & Global Organisations",
     description:
-      'Workday is the corporate standard across most of the Fortune 500 and large global multinationals. It is known for one of the strictest and most standardized parsers in the HR software market.',
-    marketShare: 'Used by more than 50% of Fortune 500 corporations.',
+      "Workday is an enterprise HR and finance platform. Its talent acquisition software helps large employers manage job requisitions, applications and candidates.",
+    marketShare: "Workday reports use by more than 60% of the Fortune 500.",
     howItWorks: [
       {
-        title: 'Structured field mapping',
+        title: "Candidate profile",
         description:
-          'Workday breaks the resume into predefined fields: company, job title, dates and responsibilities. Any formatting mismatch causes data to be lost during screening.',
+          "Applications become a candidate profile with details such as employer, job title, dates and responsibilities. Clear, consistent entries make that profile easier to read and compare.",
       },
       {
-        title: 'International compliance screening',
+        title: "Requisition requirements",
         description:
-          'Filters applications against global employment compliance rules, requiring clear career progression and seniority.',
-      },
-      {
-        title: 'Metrics and requirement checks',
-        description:
-          'The system favours profiles that show measurable impact aligned with the skills listed in the job requisition.',
+          "Recruiters compare candidates with the requirements of the job requisition, so evidence of the listed skills and measurable results helps.",
       },
     ],
     eliminationFactors: [
-      'Unconventional formats and layouts that corrupt automatic field population.',
-      'Inconsistent dates and periods that prevent the system from calculating years of experience.',
-      'Job titles that do not map clearly onto international market standards.',
+      "Layouts that make job titles and dates hard to read as text.",
+      "Missing or inconsistent dates, which leave your tenure unclear.",
+      "Titles and skills that never echo the wording of the requisition.",
     ],
     howGriffoWorkHelps: [
-      "Ensures your resume's hierarchy is read without errors by the Workday parser.",
-      'Checks alignment with international hiring standards (US, Europe and global).',
-      'Audits the density of metrics and achievements against the corporate filters of the system.',
-      'Generates a cover letter targeted at the specific role.',
+      "Checks that your resume reads as clean text with titles and dates in order.",
+      "Compares your experience with the requirements in the job description.",
+      "Audits clarity and measurable results.",
+      "Generates a cover letter targeted at the specific role.",
     ],
     faqs: [
       {
-        question: 'What makes Workday so demanding?',
+        question: "Does Workday reject resumes automatically?",
         answer:
-          'Because multinationals receive thousands of applications per opening, Workday applies structured criteria that discard resumes with confusing formatting or information it cannot categorise.',
+          "What happens depends on how each employer set up its process; Workday supports recruiters in managing and reviewing candidates. Clear titles, dates and results make your profile easier to read for people and for systems.",
       },
       {
-        question: 'How does GriffoWork prepare my profile for Workday?',
+        question: "How does GriffoWork prepare my profile for Workday?",
         answer:
-          'GriffoWork reviews chronological clarity, formatting and the presence of executive metrics, so Workday extracts your history cleanly.',
+          "GriffoWork reviews chronological clarity, formatting and measurable results, so your history reads cleanly.",
       },
     ],
   },
   greenhouse: {
-    marketName: 'Global Tech, Startups & Scaleups',
+    marketName: "Employers Hiring with Structured Processes",
     description:
-      'Greenhouse is the most widely used recruiting platform across the global technology ecosystem, hypergrowth startups and unicorns, with a focus on skills-based, evidence-driven hiring.',
-    marketShare: 'Leading platform among technology and innovation companies in the US, Europe and Latin America.',
+      "Greenhouse is a hiring platform that combines sourcing, interviewing and applicant tracking. It is built around structured interviews, with questions and rubrics defined by each team.",
+    marketShare: "Greenhouse says thousands of employers use its platform.",
     howItWorks: [
       {
-        title: 'Skills scorecards',
+        title: "Structured evaluation",
         description:
-          'Scores candidates against specific scorecards for technical skills, tools and leadership.',
+          "Teams define questions and scorecards for each role, so interviewers assess candidates against the same criteria.",
       },
       {
-        title: 'Portfolio and profile integration',
+        title: "Resume and profile context",
         description:
-          'Connects resume data with professional links (LinkedIn, GitHub, portfolios) for review by the technical team.',
+          "Your resume, and any links you share such as a portfolio or LinkedIn, give the team context before interviews.",
       },
     ],
     eliminationFactors: [
-      'Generic resumes that do not evidence hands-on command of the tools and frameworks.',
-      'No concrete results from previous roles.',
-      'No clear link between projects and business impact.',
+      "Generic resumes that do not show hands-on use of the tools the role asks for.",
+      "No concrete results from previous roles.",
+      "No clear link between projects and business impact.",
     ],
     howGriffoWorkHelps: [
-      'Maps how well your technical skills and methodologies match the role.',
-      'Audits your professional profiles to keep them consistent with your resume.',
-      "Scores impact and clarity against recruiters' scorecard criteria.",
+      "Maps how well your skills and methods match the role.",
+      "Checks that your professional profiles are consistent with your resume.",
+      "Reviews impact and clarity against typical scorecard criteria.",
     ],
     faqs: [
       {
-        question: 'Why is Greenhouse so popular in tech?',
+        question: "How does Greenhouse evaluate candidates?",
         answer:
-          'Because it lets engineering and product teams assess skills in a structured, collaborative way, reducing bias in the first screening round.',
+          "Greenhouse describes structured interviews in which teams use their own questions and a rubric, with scorecards to record feedback. A resume with clear evidence for each requirement helps your story hold up.",
       },
       {
-        question: 'Does GriffoWork handle international remote roles on Greenhouse?',
+        question: "Does GriffoWork work for remote roles on Greenhouse?",
         answer:
-          'Yes. GriffoWork adapts the audit to global processes and international requirements.',
+          "GriffoWork compares your resume with the job description of the role you apply to, wherever the role is based.",
       },
     ],
   },
   lever: {
-    marketName: 'Scaleups & Big Tech',
+    marketName: "Employers Across Many Industries",
     description:
-      'Lever combines applicant tracking (ATS) with talent relationship management (CRM), letting recruiting teams source and qualify candidates continuously from their own database.',
-    marketShare: 'Widely adopted by mid-sized and large technology companies.',
+      "Lever is a recruiting platform with an applicant tracking system and AI-powered features. Its site highlights automation of admin and scheduling, and AI recommendations that come with context.",
+    marketShare: "Lever says it serves thousands of customers across more than 20 industries.",
     howItWorks: [
       {
-        title: 'Continuous talent indexing',
+        title: "Automation",
         description:
-          "Stores and indexes the candidate's full history to match against current and future openings.",
+          "Admin, scheduling and follow-ups run on automation, so recruiters can spend their time on hiring decisions.",
       },
       {
-        title: 'Semantic skills search',
+        title: "AI recommendations",
         description:
-          'Recruiters filter candidates through detailed semantic searches by tools, job titles and education.',
+          "Lever says its AI surfaces best-fit candidates first, with context for each recommendation, so a resume that clearly shows the role’s requirements is easier to place.",
       },
     ],
     eliminationFactors: [
-      'Missing technical terms, so the system never surfaces the profile in themed searches.',
-      "Vague descriptions that do not convey the depth of the candidate's knowledge.",
+      "Missing terms from the job description, which make your fit harder to see.",
+      "Vague descriptions that do not convey the depth of your experience.",
     ],
     howGriffoWorkHelps: [
-      'Makes sure the strategic keywords are present so your resume is found in Lever searches.',
-      'Sharpens your positioning so the profile keeps working in the talent pool over time.',
+      "Makes sure the keywords the job asks for are present in your resume.",
+      "Sharpens your positioning so your fit is easy to see.",
     ],
     faqs: [
       {
-        question: 'How does the Lever talent pool work?',
+        question: "Does Lever use AI to rank candidates?",
         answer:
-          'Lever keeps archived profiles searchable. A resume with a high density of relevant terms keeps surfacing for new opportunities.',
+          "Lever describes AI-powered recommendations that surface best-fit candidates first, each with context. The hiring decision stays with the recruiting team.",
       },
     ],
   },
   taleo: {
-    marketName: 'Banks, Government & Large Corporations',
+    marketName: "Large Employers",
     description:
-      'Oracle Taleo is one of the most established corporate recruiting systems in the world, widely used in financial services, oil and gas, telecoms and public sector bodies.',
-    marketShare: 'Strong presence in traditional corporations and global financial institutions.',
+      "Oracle Taleo is a talent acquisition suite for sourcing, recruiting and onboarding. Oracle offers Taleo Enterprise Edition and Taleo Business Edition, and also presents Oracle Recruiting as a path for existing Taleo customers.",
+    marketShare: "An established Oracle product used by employers for sourcing and hiring.",
     howItWorks: [
       {
-        title: 'Traditional screening filters',
+        title: "Screening and interviews",
         description:
-          'Applies structured screening rules based on formal job titles, tenure and education levels.',
+          "Oracle lists tools for candidate screening, interview management and offer creation. Each employer configures what it asks and checks.",
+      },
+      {
+        title: "Career sites and sourcing",
+        description:
+          "Branded career sites, campaigns and referral features bring candidates into the system, where recruiters review them.",
       },
     ],
     eliminationFactors: [
-      'Unconventional section headings that the legacy parser cannot classify.',
-      'Graphic elements that break the information hierarchy.',
+      "Unconventional section headings or graphics that may make automatic reading harder.",
+      "Missing dates or job titles that leave your history unclear.",
     ],
     howGriffoWorkHelps: [
-      "Audits the resume's formal structure for compatibility with the Taleo parser.",
-      'Checks the date, job title and section conventions expected by traditional corporations.',
+      "Audits the resume’s structure for clean automatic reading.",
+      "Checks date, job title and section conventions that employers commonly expect.",
     ],
     faqs: [
       {
-        question: 'Is Oracle Taleo still widely used?',
+        question: "Is Oracle Taleo still in use?",
         answer:
-          'Yes, especially in large banks, industrial groups and corporations managing thousands of employees worldwide.',
+          "Oracle still presents Taleo as a product and also offers a move to Oracle Recruiting. Whether a given employer uses it is that employer’s choice.",
       },
     ],
   },
   icims: {
-    marketName: 'United States & United Kingdom',
+    marketName: "United States & United Kingdom",
     description:
-      'iCIMS is one of the most robust screening and talent management platforms in the American and British corporate market, processing millions of applications every year.',
-    marketShare: 'More than 4,000 corporate customers.',
+      "iCIMS is enterprise recruiting software with an AI-powered applicant tracking system, text recruiting, career sites and onboarding.",
+    marketShare: "iCIMS reports more than 4,400 companies as customers.",
     howItWorks: [
       {
-        title: 'Requirement scoring',
+        title: "Requirements matching",
         description:
-          'Calculates a qualification score based on how well the profile matches the essential and desirable requirements of the role.',
+          "Employers set requirements for the role and recruiters compare candidates against them, so the terms in your resume should reflect the job description.",
       },
     ],
     eliminationFactors: [
-      'No direct match with the keywords listed in the job description.',
+      "No match with the terms and requirements listed in the job description.",
     ],
     howGriffoWorkHelps: [
-      'Compares your resume against the target role and reports how closely it meets iCIMS requirements.',
-      'Suggests clarity and impact improvements to raise the application score.',
+      "Compares your resume with the target role and reports how closely it meets the requirements.",
+      "Suggests clarity and impact improvements.",
     ],
     faqs: [
       {
-        question: 'Is iCIMS widely used in the American market?',
+        question: "Which sectors use iCIMS?",
         answer:
-          'Yes. It is one of the most common ATS platforms in large corporations and in sectors such as healthcare, finance and technology across the US and UK.',
+          "iCIMS lists sectors such as retail, healthcare, manufacturing and finance on its site. Whether a given employer uses it is that employer’s choice.",
       },
     ],
   },
   ashby: {
-    marketName: 'Global Startups & AI Scaleups',
+    marketName: "Startups to Enterprises",
     description:
-      'Ashby is a modern recruiting platform growing fast among innovative technology and artificial intelligence companies, built around smart automation and analytics.',
-    marketShare: 'Growing rapidly among technology and AI scaleups.',
+      "Ashby is an all-in-one recruiting platform that combines an applicant tracking system, sourcing and CRM, scheduling and analytics, with AI built in.",
+    marketShare: "Ashby offers plans for startups, growth-stage companies and enterprises.",
     howItWorks: [
       {
-        title: 'Fast screening and AI summaries',
+        title: "Analytics and AI",
         description:
-          "Produces analytical summaries so recruiters can quickly gauge a candidate's impact and seniority.",
+          "Ashby combines recruiting analytics with AI features to help teams review candidates and run the process.",
       },
     ],
     eliminationFactors: [
-      'Long, unfocused resumes that bury the main technical achievements and delivered impact.',
+      "Long, unfocused resumes that bury the main achievements and delivered impact.",
     ],
     howGriffoWorkHelps: [
-      "Audits your resume's executive summary so it reads fast and lands hard.",
-      'Highlights complex projects and technical leadership for the Ashby filters.',
+      "Reviews your resume’s summary so it reads fast and clearly.",
+      "Highlights complex projects and technical leadership.",
     ],
     faqs: [
       {
-        question: 'What sets Ashby apart from other systems?',
+        question: "What sets Ashby apart from other systems?",
         answer:
-          'Ashby offers analytical dashboards and automatic summaries that reward concise, results-driven resumes.',
+          "Ashby presents itself as an all-in-one platform: applicant tracking, sourcing and CRM, scheduling and analytics, with AI built in.",
       },
     ],
   },

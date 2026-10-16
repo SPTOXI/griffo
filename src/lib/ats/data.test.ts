@@ -164,3 +164,15 @@ test('reviewedAt e sources andam juntos, com data real e fonte https', () => {
     }
   }
 })
+
+test('reviewedLangs só lista idiomas que o guia realmente tem', () => {
+  for (const slug of ATS_SLUGS) {
+    const m = ATS_META[slug]
+    if (!m.reviewedLangs) continue
+    assert.ok(m.reviewedAt, `'${slug}': reviewedLangs sem reviewedAt`)
+    assert.ok(m.reviewedLangs.length > 0, `'${slug}': reviewedLangs vazio`)
+    for (const l of m.reviewedLangs) {
+      assert.ok(m.languages.includes(l), `'${slug}': reviewedLangs tem '${l}', que o guia não declara`)
+    }
+  }
+})

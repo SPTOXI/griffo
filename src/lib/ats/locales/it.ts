@@ -6,7 +6,7 @@ export const atsIt: AtsLocale = {
     marketName: 'Stati Uniti, Europa e multinazionali',
     description:
       "Workday è lo standard aziendale nella maggior parte delle società Fortune 500 e nelle grandi multinazionali. È noto per avere uno dei parser più rigorosi e standardizzati del mercato HR.",
-    marketShare: 'Utilizzato da oltre il 50% delle aziende Fortune 500.',
+    marketShare: 'Utilizzato da oltre il 60% delle aziende Fortune 500.',
     howItWorks: [
       {
         title: 'Mappatura strutturata dei campi',
