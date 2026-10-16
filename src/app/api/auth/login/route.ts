@@ -5,13 +5,9 @@ import { db } from '@/lib/db'
 import { hashPassword, verifyPassword, verifyPasswordConstantTime, createSession } from '@/lib/auth'
 import { isConfigError } from '@/lib/env'
 import { sendVerificationEmail } from '@/lib/email/verify-email.server'
+import { ipKeyFor, ipMetaNeedle } from '@/lib/ats-check/quota'
+import { FAILED_LOGIN_WINDOW_MS, loginBlocked } from '@/lib/login-throttle'
 
-// Trava por CONTA, independente do IP: o limitador do middleware é por IP e em
-// memória por instância, então sozinho não segura quem distribui tentativas
-// entre IPs. Depois de MAX_FAILED_LOGINS erros na janela, a conta recusa novas
-// tentativas (mesmo com a senha certa) até a janela passar.
-const FAILED_LOGIN_WINDOW_MS = 15 * 60 * 1000
-const MAX_FAILED_LOGINS = 10
 
 const schema = z.object({
   email: z.string().min(1, 'Informe seu e-mail'),
@@ -44,23 +40,25 @@ export async function POST(req: Request) {
     const passwordValid = verifyPasswordConstantTime(password, user?.passwordHash)
 
     if (user) {
-      const recentFailures = await db.auditLog.count({
-        where: {
-          userId: user.id,
-          action: 'login_failed',
-          createdAt: { gte: new Date(Date.now() - FAILED_LOGIN_WINDOW_MS) },
-        },
-      })
-      if (recentFailures >= MAX_FAILED_LOGINS) {
+      const since = new Date(Date.now() - FAILED_LOGIN_WINDOW_MS)
+      const ipKey = ipKeyFor(clientIpFrom(req.headers))
+      const failures = { userId: user.id, action: 'login_failed', createdAt: { gte: since } }
+      const [fromOrigin, total] = await Promise.all([
+        db.auditLog.count({ where: { ...failures, meta: { contains: ipMetaNeedle(ipKey) } } }),
+        db.auditLog.count({ where: failures }),
+      ])
+      if (loginBlocked(fromOrigin, total)) {
         return NextResponse.json(
           { error: 'Muitas tentativas de login. Aguarde 15 minutos e tente novamente.' },
           { status: 429, headers: { 'Retry-After': String(FAILED_LOGIN_WINDOW_MS / 1000) } }
         )
       }
       if (!passwordValid) {
-        await db.auditLog.create({ data: { userId: user.id, action: 'login_failed' } }).catch((e) => {
-          console.warn('AuditLog login_failed create failed non-critically:', e)
-        })
+        await db.auditLog
+          .create({ data: { userId: user.id, action: 'login_failed', meta: JSON.stringify({ ipKey }) } })
+          .catch((e) => {
+            console.warn('AuditLog login_failed create failed non-critically:', e)
+          })
       }
     }
 

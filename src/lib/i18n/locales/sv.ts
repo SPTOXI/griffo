@@ -279,6 +279,7 @@ export const sv: TranslationDictionary = {
     showPassword: "Visa lösenord",
     hidePassword: "Dölj lösenord",
     verifyInvalid: 'Bekräftelselänken är ogiltig eller har gått ut. Logga in med e-post och lösenord för att få en ny.',
+    verifyDone: 'E-postadressen är bekräftad. Logga in med e-post och lösenord för att fortsätta.',
   },
   app: {
     dashboard: 'Översikt',

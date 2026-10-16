@@ -279,6 +279,7 @@ export const fr: TranslationDictionary = {
     showPassword: "Afficher le mot de passe",
     hidePassword: "Masquer le mot de passe",
     verifyInvalid: 'Le lien de confirmation est invalide ou a expiré. Connectez-vous avec votre e-mail et votre mot de passe pour en recevoir un nouveau.',
+    verifyDone: 'E-mail confirmé. Connectez-vous avec votre e-mail et votre mot de passe pour continuer.',
   },
   app: {
     dashboard: 'Tableau de bord',

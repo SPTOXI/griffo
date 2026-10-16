@@ -35,12 +35,14 @@ const schema = z.object({
  * Antes, um 409 dizia a qualquer pessoa quem tem conta num serviço de busca de
  * emprego, e entregava logins válidos para ataque de senha (§2.147). Agora o
  * que aconteceu só aparece na caixa de entrada: conta nova recebe o link de
- * confirmação; conta existente recebe um aviso. A sessão só abre no clique do
- * link (`/api/auth/verify-email`).
+ * confirmação; conta existente recebe um aviso. O clique no link confirma o
+ * e-mail (`/api/auth/verify-email`), e a sessão abre no login com a senha.
  */
 const CHECK_EMAIL = { status: 'check_email' } as const
 /** Reenvio do link para cadastro pendente: no máximo um a cada 5 minutos. */
 const RESEND_MIN_INTERVAL_MS = 5 * 60 * 1000
+/** Aviso de "você já tem conta": no máximo um a cada 30 minutos por conta. */
+const ACCOUNT_EXISTS_MIN_INTERVAL_MS = 30 * 60 * 1000
 
 export async function POST(req: Request) {
   try {
@@ -61,16 +63,46 @@ export async function POST(req: Request) {
     const existing = await db.user.findUnique({ where: { email: normalizedEmail } })
     if (existing) {
       if (existing.emailVerificationPending) {
-        // Cadastro pendente: reenvia o link (com limite), sem trocar a senha.
-        // Trocar a senha aqui deixaria quem NÃO é dono do e-mail escolher a
-        // senha que o dono vai usar depois de confirmar.
+        // Cadastro pendente: ninguém provou ainda ser dono do e-mail, então a
+        // senha gravada não é de ninguém em particular. Quem se cadastra por
+        // último define a senha, e só ela abre a conta depois da confirmação
+        // (o link não abre sessão — ver `/api/auth/verify-email`).
+        //
+        // Manter a primeira senha era a tomada de conta pré-registrada: alguém
+        // cadastrava o e-mail da vítima com uma senha dele; a vítima se
+        // cadastrava depois, confirmava, e passava a usar uma conta cuja senha
+        // o atacante sabia. Se o atacante sobrescrever de novo depois da
+        // vítima, o pior caso é ela não conseguir entrar — e não pôr dado
+        // nenhum numa conta que outra pessoa abre.
         const last = existing.emailVerificationSentAt?.getTime() ?? 0
-        if (Date.now() - last > RESEND_MIN_INTERVAL_MS) {
-          await db.user.update({ where: { id: existing.id }, data: { emailVerificationSentAt: new Date() } })
-          await sendVerificationEmail(existing, lang)
-        }
+        const resend = Date.now() - last > RESEND_MIN_INTERVAL_MS
+        await db.user.update({
+          where: { id: existing.id },
+          data: {
+            passwordHash,
+            name,
+            profession: profession || null,
+            ...(resend ? { emailVerificationSentAt: new Date() } : {}),
+          },
+        })
+        if (resend) await sendVerificationEmail(existing, lang)
       } else {
-        await sendAccountExistsEmail(existing.email, lang)
+        // No máximo um aviso por conta a cada 30 minutos. Sem teto, repetir o
+        // cadastro com o e-mail de alguém enchia a caixa dessa pessoa com
+        // mensagens do nosso domínio — e cada reclamação de spam pesa contra a
+        // entrega dos e-mails de todo mundo.
+        const recentNotice = await db.auditLog.findFirst({
+          where: {
+            userId: existing.id,
+            action: 'account_exists_notice',
+            createdAt: { gte: new Date(Date.now() - ACCOUNT_EXISTS_MIN_INTERVAL_MS) },
+          },
+          select: { id: true },
+        })
+        if (!recentNotice) {
+          await db.auditLog.create({ data: { userId: existing.id, action: 'account_exists_notice' } })
+          await sendAccountExistsEmail(existing.email, lang)
+        }
       }
       return NextResponse.json(CHECK_EMAIL, { status: 202 })
     }

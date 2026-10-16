@@ -284,6 +284,8 @@ export interface TranslationDictionary {
     showPassword: string
     hidePassword: string
     verifyInvalid: string
+    /** Aviso depois do clique no link de confirmação: a conta abre com a senha, não pelo link. */
+    verifyDone: string
   }
   app: {
     dashboard: string

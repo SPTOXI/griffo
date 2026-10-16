@@ -279,6 +279,7 @@ export const ko: TranslationDictionary = {
     showPassword: "비밀번호 표시",
     hidePassword: "비밀번호 숨기기",
     verifyInvalid: '확인 링크가 유효하지 않거나 만료되었습니다. 이메일과 비밀번호로 로그인하면 새 링크를 받을 수 있습니다.',
+    verifyDone: '이메일이 확인되었습니다. 계속하려면 이메일과 비밀번호로 로그인하세요.',
   },
   app: {
     dashboard: '대시보드',

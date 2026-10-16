@@ -279,6 +279,7 @@ export const zh: TranslationDictionary = {
     showPassword: "显示密码",
     hidePassword: "隐藏密码",
     verifyInvalid: '确认链接无效或已过期。用邮箱和密码登录即可收到新链接。',
+    verifyDone: '邮箱已确认。请用邮箱和密码登录以继续。',
   },
   app: {
     dashboard: '仪表盘',

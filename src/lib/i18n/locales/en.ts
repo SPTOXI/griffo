@@ -280,6 +280,7 @@ export const en: TranslationDictionary = {
       showPassword: "Show password",
       hidePassword: "Hide password",
       verifyInvalid: 'The confirmation link is invalid or has expired. Sign in with your email and password to get a new one.',
+      verifyDone: 'Email confirmed. Sign in with your email and password to continue.',
     },
     app: {
       dashboard: 'Dashboard',
