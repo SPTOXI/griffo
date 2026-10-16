@@ -32,8 +32,6 @@ import {
  * Quem encadeia as chamadas é o workflow `jobbase-sync.yml`.
  */
 
-/** Uma página do JobBase por `runCollection`: ~1000 vagas cabem folgadas. */
-const PAGE_SIZE = 1000
 
 /**
  * A página já coletada, entregue a `runCollection` como se fosse uma fonte.
@@ -83,7 +81,6 @@ export async function syncJobBaseOpen(options: {
     const page = await fetchJobBaseOpenPage({
       credentials: options.credentials,
       cursor: run.nextCursor,
-      pageSize: PAGE_SIZE,
       fetchImpl: options.fetchImpl,
     })
 

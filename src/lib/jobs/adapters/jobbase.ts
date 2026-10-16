@@ -90,6 +90,15 @@ export const JOBBASE_DESCRIPTOR: JobSourceDescriptor = {
 /** Página máxima do PostgREST por requisição. */
 const PAGE_SIZE = 1000
 
+/**
+ * Página da leitura das vagas abertas, menor que a do PostgREST porque ela
+ * traz `description_text`: 1.000 linhas são uns 2 MB de texto das ATS e
+ * levaram 2,4s no banco, contra 13ms sem a coluna. A chave publicável roda
+ * sob um statement_timeout de 3s, e em 16/10/2026 uma página passou disso
+ * (HTTP 500 do JobBase, sincronização interrompida).
+ */
+const OPEN_PAGE_SIZE = 250
+
 /** Colunas realmente usadas. Pedir só estas poupa banda numa base que já é externa. */
 const SELECT_COLUMNS = [
   'company_name_raw',
@@ -385,7 +394,7 @@ export async function fetchJobBaseOpenPage(options: {
   fetchImpl?: typeof fetch
   timeoutMs?: number
 }): Promise<{ jobs: RawJob[]; rows: number; nextCursor: number | null }> {
-  const pageSize = options.pageSize ?? PAGE_SIZE
+  const pageSize = options.pageSize ?? OPEN_PAGE_SIZE
   const url =
     `${options.credentials.url}/rest/v1/job_postings?select=id,${SELECT_COLUMNS}` +
     `&status=eq.open&order=id.desc&limit=${pageSize}` +
