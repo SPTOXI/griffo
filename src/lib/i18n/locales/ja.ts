@@ -1121,7 +1121,7 @@ export const ja: TranslationDictionary = {
     mechanismBadge: 'システムの仕組み',
     mechanismTitle: '{ats}が応募書類を処理・評価する方法',
     mechanismSubtitle: 'ソフトウェアが職務経歴書を読み取り、並べ替え、評価する際の技術的な基準。',
-    eliminationTitle: '{ats}で不合格になる主な要因',
+    eliminationTitle: "{ats}で選考に不利になりうる要因",
     helpsTitle: 'GriffoWorkのAIができること',
     auditBadge: 'GriffoWorkエグゼクティブ診断',
     auditTitle: 'ATS通過のための8次元総合診断',
@@ -1133,6 +1133,9 @@ export const ja: TranslationDictionary = {
     auditCta: '無料で診断を始める',
     faqBadge: 'よくある質問',
     faqTitle: '{ats}とGriffoWork診断に関するご質問',
+    sourcesTitle: "参照した情報源",
+    reviewedLabel: "内容の確認日",
+    relatedTitle: "ほかの選考システム",
     footerHome: 'ホーム',
   },
   hiringPage: {

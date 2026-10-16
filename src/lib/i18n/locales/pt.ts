@@ -1122,7 +1122,7 @@ export const pt: TranslationDictionary = {
       mechanismBadge: 'Mecanismo do Sistema',
       mechanismTitle: 'Como o {ats} processa e classifica candidaturas',
       mechanismSubtitle: 'Conheça os critérios técnicos que o software utiliza para ler, ordenar e avaliar currículos.',
-      eliminationTitle: 'Principais fatores de descarte no {ats}',
+      eliminationTitle: "O que pode reduzir suas chances no {ats}",
       helpsTitle: 'Como a IA do GriffoWork ajuda você',
       auditBadge: 'Auditoria Executiva GriffoWork',
       auditTitle: 'Diagnóstico completo em 8 dimensões para aprovação em ATS',
@@ -1134,6 +1134,9 @@ export const pt: TranslationDictionary = {
       auditCta: 'Fazer auditoria gratuita agora',
       faqBadge: 'Perguntas Frequentes',
       faqTitle: 'Dúvidas sobre o {ats} e a avaliação do GriffoWork',
+      sourcesTitle: "Fontes consultadas",
+      reviewedLabel: "Conteúdo conferido em",
+      relatedTitle: "Outros sistemas de triagem",
       footerHome: 'Página Inicial',
     },
     hiringPage: {

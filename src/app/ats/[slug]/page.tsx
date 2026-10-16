@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { cookies, headers } from 'next/headers'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ATS_META } from '@/lib/ats/meta'
+import { ATS_META, atsSlugsForLanguage } from '@/lib/ats/meta'
 import { ATS_CHECK_COPY, ATS_CHECK_PATH, isAtsCheckLang } from '@/lib/ats-check/copy'
 import { atsContentFor, atsLanguagesFor } from '@/lib/ats/content'
 import { langAlternates } from '@/lib/seo/lang-alternates'
@@ -179,6 +179,9 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
       logo: { '@type': 'ImageObject', url: `${BASE}/logo-full.png` },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${BASE}/ats/${slug}` },
+    // Só o que também está visível na página (bloco "Fontes consultadas").
+    ...(meta.reviewedAt ? { dateModified: meta.reviewedAt } : {}),
+    ...(meta.sources?.length ? { citation: meta.sources.map((src) => src.url) } : {}),
   }
 
   const faqJsonLd = {
@@ -399,6 +402,55 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
           </div>
         </div>
       </section>
+
+      {/* FONTES + DATA DE CONFERÊNCIA */}
+      {meta.reviewedAt && meta.sources && meta.sources.length > 0 && (
+        <section className="py-8 border-t border-slate-200 bg-white">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3 text-xs text-slate-600">
+            <p>
+              <strong className="text-slate-800">{t.reviewedLabel}:</strong>{' '}
+              <time dateTime={meta.reviewedAt}>
+                {new Intl.DateTimeFormat(localeForLang(lang), { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${meta.reviewedAt}T00:00:00Z`))}
+              </time>
+            </p>
+            <div>
+              <strong className="text-slate-800">{t.sourcesTitle}:</strong>
+              <ul className="mt-1 space-y-1 list-disc pl-5">
+                {meta.sources.map((src) => (
+                  <li key={src.url}>
+                    <a href={src.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{src.label}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* OUTROS GUIAS — links laterais com texto descritivo, só para guias que existem neste idioma */}
+      {(() => {
+        const related = atsSlugsForLanguage(lang).filter((other) => other !== slug)
+        if (related.length === 0) return null
+        return (
+          <nav aria-label={t.relatedTitle} className="py-8 border-t border-slate-200 bg-slate-50">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
+              <h2 className="text-sm font-bold text-[#0B192E]">{t.relatedTitle}</h2>
+              <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                {related.map((other) => (
+                  <li key={other}>
+                    <Link
+                      href={atsLanguagesFor(other).length > 1 ? `/ats/${other}?lang=${lang}` : `/ats/${other}`}
+                      className="text-primary hover:underline"
+                    >
+                      {ATS_META[other].name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </nav>
+        )
+      })()}
 
       {/* FOOTER */}
       <footer className="mt-auto border-t border-slate-200 bg-white py-8">

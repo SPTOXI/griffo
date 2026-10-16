@@ -274,3 +274,49 @@ produtos dos guias novos e ajustei o que não se sustentava:
 - Não verificável: `successfactors` (o site da SAP bloqueou a leitura automática).
 
 Regra para os próximos guias: ler o site oficial do produto **antes** de escrever.
+
+## 9. Auditoria com a skill google-seo-geo-elite (2026-10-16)
+
+Regra seguida: recomendar só o que se sustenta, rotulando `[Oficial]`, `[Pesquisa]` ou
+`[Heurística]`, e consultar a documentação do Google antes.
+
+**Documentação consultada (datas das próprias páginas):**
+IA no Search (atualizada 2025-12-10), Conteúdo útil (2026-10-05), Políticas de spam (2026-08-28).
+
+**O que a documentação oficial diz e muda o plano**
+- `[Oficial]` Não há requisito extra, schema especial nem "arquivo de texto para IA" para
+  aparecer em AI Overviews/AI Mode. Logo, o `llms.txt` **não é fator conhecido do Google**;
+  fica como cortesia para outros agentes, sem ser prioridade.
+- `[Oficial]` O rich result de FAQ só aparece para sites governamentais e de saúde conhecidos:
+  o `FAQPage` do site não gera destaque (é inofensivo; não investir tempo nele).
+- `[Oficial]` "Scaled content abuse": muitas páginas com pouco valor próprio, inclusive
+  traduzidas ou geradas por IA, são tratadas como spam. É o **maior risco do site hoje**.
+
+**Medido em produção**
+- Guias com 226 a 502 palavras visíveis; poucos têm profundidade comparável à de quem
+  disputa o top 10. Cerca de 20-30% das frases se repetem entre guias (estrutura em modelo).
+- Não existem páginas `/sobre`, `/contato` nem `/termos` (404). Só `/privacy`.
+- `TechArticle` tinha autor "Organização" e nenhuma data.
+- Teste gratuito com 2 registros: **não há dado próprio** para publicar estatística. Nenhum
+  número foi inventado.
+- Core Web Vitals: **não medido** (cota diária do PageSpeed esgotada). Medir no Search Console.
+
+**Corrigido neste ciclo**
+- Guia da Gupy reescrito com a fonte primária (blog oficial, 30/01/2026): a Gupy diz que a IA
+  ordena por afinidade e que a decisão é humana; o texto antigo afirmava descarte automático,
+  "ranking percentual", "IA Gaia" (páginas oficiais /blog/gaia e /ia-gupy hoje dão 404) e
+  "simula o algoritmo", sem sustentação.
+- Todas as páginas conferidas passam a mostrar **data de conferência** e **fontes** (visível
+  e em `dateModified`/`citation`); guia não conferido não mostra data.
+- Bloco "Outros sistemas" liga cada guia aos demais do mesmo idioma.
+- Título "fatores de descarte" trocado, nas 12 línguas, por "o que pode reduzir suas chances".
+
+**Lacunas que só o dono resolve (nada disso foi inventado)**
+1. Páginas Sobre / Contato / Termos com razão social, CNPJ/registro e responsáveis reais.
+2. Autor identificável (pessoa real, com credencial) e revisor para os guias.
+3. Conferir os guias antigos contra as fontes (Workday, Greenhouse, Lever, Taleo, iCIMS, Ashby,
+   InfoJobs, Personio, Sólides e SuccessFactors — os sites da Sólides e da SAP bloquearam a
+   leitura automática). Até conferir, não mostram data.
+4. Dados próprios (ex.: resultados agregados do teste gratuito) só depois de volume e de base
+   legal clara para uso estatístico dos currículos.
+

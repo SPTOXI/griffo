@@ -1121,7 +1121,7 @@ export const de: TranslationDictionary = {
     mechanismBadge: 'Funktionsweise des Systems',
     mechanismTitle: 'Wie {ats} Bewerbungen verarbeitet und bewertet',
     mechanismSubtitle: 'Die technischen Kriterien, nach denen die Software Lebensläufe liest, sortiert und bewertet.',
-    eliminationTitle: 'Häufigste Ausschlussgründe bei {ats}',
+    eliminationTitle: "Was Ihre Chancen bei {ats} verringern kann",
     helpsTitle: 'So hilft Ihnen die KI von GriffoWork',
     auditBadge: 'GriffoWork Executive-Analyse',
     auditTitle: 'Vollständige Prüfung in 8 Dimensionen für die ATS-Freigabe',
@@ -1133,6 +1133,9 @@ export const de: TranslationDictionary = {
     auditCta: 'Jetzt kostenlos prüfen lassen',
     faqBadge: 'Häufige Fragen',
     faqTitle: 'Fragen zu {ats} und der GriffoWork-Analyse',
+    sourcesTitle: "Konsultierte Quellen",
+    reviewedLabel: "Inhalt geprüft am",
+    relatedTitle: "Weitere Bewerbermanagement-Systeme",
     footerHome: 'Startseite',
   },
   hiringPage: {

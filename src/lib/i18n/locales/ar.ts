@@ -1121,7 +1121,7 @@ export const ar: TranslationDictionary = {
     mechanismBadge: 'آلية عمل النظام',
     mechanismTitle: 'كيف يعالج {ats} الطلبات ويرتّبها',
     mechanismSubtitle: 'المعايير التقنية التي يستخدمها البرنامج لقراءة السير الذاتية وترتيبها وتقييمها.',
-    eliminationTitle: 'أبرز أسباب الاستبعاد في {ats}',
+    eliminationTitle: "ما قد يقلل فرصك في {ats}",
     helpsTitle: 'كيف يساعدك الذكاء الاصطناعي من GriffoWork',
     auditBadge: 'التدقيق التنفيذي من GriffoWork',
     auditTitle: 'تشخيص شامل في 8 أبعاد لاجتياز أنظمة ATS',
@@ -1133,6 +1133,9 @@ export const ar: TranslationDictionary = {
     auditCta: 'ابدأ التدقيق المجاني الآن',
     faqBadge: 'الأسئلة الشائعة',
     faqTitle: 'أسئلة حول {ats} وتدقيق GriffoWork',
+    sourcesTitle: "المصادر التي تمت مراجعتها",
+    reviewedLabel: "تمت مراجعة المحتوى في",
+    relatedTitle: "أنظمة فرز أخرى",
     footerHome: 'الصفحة الرئيسية',
   },
   hiringPage: {

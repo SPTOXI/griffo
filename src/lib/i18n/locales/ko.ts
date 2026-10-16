@@ -1121,7 +1121,7 @@ export const ko: TranslationDictionary = {
     mechanismBadge: '시스템 작동 방식',
     mechanismTitle: '{ats}가 지원서를 처리하고 순위를 매기는 방식',
     mechanismSubtitle: '소프트웨어가 이력서를 읽고 정렬하고 평가할 때 사용하는 기술적 기준입니다.',
-    eliminationTitle: '{ats}에서 탈락으로 이어지는 주요 요인',
+    eliminationTitle: "{ats}에서 불리하게 작용할 수 있는 요인",
     helpsTitle: 'GriffoWork AI가 도와드리는 부분',
     auditBadge: 'GriffoWork 임원급 진단',
     auditTitle: 'ATS 통과를 위한 8개 차원 종합 진단',
@@ -1133,6 +1133,9 @@ export const ko: TranslationDictionary = {
     auditCta: '지금 무료로 진단받기',
     faqBadge: '자주 묻는 질문',
     faqTitle: '{ats} 및 GriffoWork 진단 관련 질문',
+    sourcesTitle: "참고한 출처",
+    reviewedLabel: "내용 확인일",
+    relatedTitle: "다른 서류 선별 시스템",
     footerHome: '홈',
   },
   hiringPage: {
