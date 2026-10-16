@@ -41,6 +41,8 @@ const schema = z.object({
 const CHECK_EMAIL = { status: 'check_email' } as const
 /** Reenvio do link para cadastro pendente: no máximo um a cada 5 minutos. */
 const RESEND_MIN_INTERVAL_MS = 5 * 60 * 1000
+/** Aviso de "você já tem conta": no máximo um a cada 30 minutos por conta. */
+const ACCOUNT_EXISTS_MIN_INTERVAL_MS = 30 * 60 * 1000
 
 export async function POST(req: Request) {
   try {
@@ -85,7 +87,22 @@ export async function POST(req: Request) {
         })
         if (resend) await sendVerificationEmail(existing, lang)
       } else {
-        await sendAccountExistsEmail(existing.email, lang)
+        // No máximo um aviso por conta a cada 30 minutos. Sem teto, repetir o
+        // cadastro com o e-mail de alguém enchia a caixa dessa pessoa com
+        // mensagens do nosso domínio — e cada reclamação de spam pesa contra a
+        // entrega dos e-mails de todo mundo.
+        const recentNotice = await db.auditLog.findFirst({
+          where: {
+            userId: existing.id,
+            action: 'account_exists_notice',
+            createdAt: { gte: new Date(Date.now() - ACCOUNT_EXISTS_MIN_INTERVAL_MS) },
+          },
+          select: { id: true },
+        })
+        if (!recentNotice) {
+          await db.auditLog.create({ data: { userId: existing.id, action: 'account_exists_notice' } })
+          await sendAccountExistsEmail(existing.email, lang)
+        }
       }
       return NextResponse.json(CHECK_EMAIL, { status: 202 })
     }
