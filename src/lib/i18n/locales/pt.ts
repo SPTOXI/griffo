@@ -280,6 +280,7 @@ export const pt: TranslationDictionary = {
       showPassword: "Mostrar senha",
       hidePassword: "Ocultar senha",
       verifyInvalid: 'O link de confirmação é inválido ou venceu. Entre com seu e-mail e senha para receber um novo.',
+      verifyDone: 'E-mail confirmado. Entre com seu e-mail e senha para continuar.',
     },
     app: {
       dashboard: 'Painel',

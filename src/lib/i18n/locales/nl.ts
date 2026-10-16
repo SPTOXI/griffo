@@ -279,6 +279,7 @@ export const nl: TranslationDictionary = {
     showPassword: "Wachtwoord tonen",
     hidePassword: "Wachtwoord verbergen",
     verifyInvalid: 'De bevestigingslink is ongeldig of verlopen. Log in met je e-mail en wachtwoord om een nieuwe te ontvangen.',
+    verifyDone: 'E-mail bevestigd. Log in met je e-mail en wachtwoord om verder te gaan.',
   },
   app: {
     dashboard: 'Dashboard',

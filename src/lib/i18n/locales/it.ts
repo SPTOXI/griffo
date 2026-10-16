@@ -279,6 +279,7 @@ export const it: TranslationDictionary = {
     showPassword: "Mostra password",
     hidePassword: "Nascondi password",
     verifyInvalid: 'Il link di conferma non è valido o è scaduto. Accedi con email e password per riceverne uno nuovo.',
+    verifyDone: 'Email confermata. Accedi con email e password per continuare.',
   },
   app: {
     dashboard: 'Dashboard',

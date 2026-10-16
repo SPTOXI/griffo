@@ -279,6 +279,7 @@ export const ja: TranslationDictionary = {
     showPassword: "パスワードを表示",
     hidePassword: "パスワードを隠す",
     verifyInvalid: '確認リンクが無効か、有効期限が切れています。メールアドレスとパスワードでログインすると、新しいリンクが届きます。',
+    verifyDone: 'メールアドレスを確認しました。続けるには、メールアドレスとパスワードでログインしてください。',
   },
   app: {
     dashboard: 'ダッシュボード',

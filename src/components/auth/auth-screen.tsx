@@ -25,6 +25,7 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
   const [profession, setProfession] = useState('')
   const [dataTransferConsent, setDataTransferConsent] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   // Cadastro enviado: a conta só abre pelo link do e-mail (§2.147).
   const [checkEmail, setCheckEmail] = useState(false)
@@ -37,11 +38,13 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
     if (typeof window === 'undefined') return
     const v = new URLSearchParams(window.location.search).get('verify')
     if (v === 'invalid' || v === 'error') setError(t.auth.verifyInvalid)
-  }, [t.auth.verifyInvalid])
+    else if (v === 'done') setNotice(t.auth.verifyDone)
+  }, [t.auth.verifyInvalid, t.auth.verifyDone])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setNotice(null)
     setLoading(true)
     try {
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register'
@@ -129,6 +132,11 @@ export function AuthScreen({ initialMode, onBack }: { initialMode: Mode; onBack:
                 </p>
               </div>
 
+              {notice && !error && (
+                <div className="mb-4 flex items-start gap-2 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-800">
+                  <span>{notice}</span>
+                </div>
+              )}
               {error && (
                 <div className="mb-4 flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
                   <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />

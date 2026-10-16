@@ -279,6 +279,7 @@ export const de: TranslationDictionary = {
     showPassword: "Passwort anzeigen",
     hidePassword: "Passwort verbergen",
     verifyInvalid: 'Der Bestätigungslink ist ungültig oder abgelaufen. Melden Sie sich mit E-Mail und Passwort an, um einen neuen zu erhalten.',
+    verifyDone: 'E-Mail bestätigt. Melden Sie sich mit E-Mail und Passwort an, um fortzufahren.',
   },
   app: {
     dashboard: 'Dashboard',
