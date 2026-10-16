@@ -71,6 +71,13 @@ export interface AtsMeta {
   reviewedAt?: string
   /** Páginas oficiais do fornecedor que embasam o texto. Exigem `reviewedAt`. */
   sources?: { label: string; url: string }[]
+  /**
+   * Idiomas em que a conferência de fato aconteceu. Sem este campo, vale para
+   * todos os idiomas do guia. Existe porque a data é por guia, mas o texto é por
+   * idioma: carimbar um idioma que ninguém reviu seria afirmar uma conferência
+   * que não houve.
+   */
+  reviewedLangs?: Language[]
 }
 
 /** Todos os 12 — para os ATS que operam globalmente. */
@@ -101,6 +108,9 @@ export const ATS_META: Record<string, AtsMeta> = {
         'https://www.sec.gov/Archives/edgar/data/1327811/000132781124000089/wday-04302024x991.htm',
       asOf: '2024',
     },
+    reviewedAt: '2026-10-16',
+    reviewedLangs: ['en', 'pt', 'es', 'de', 'ko'],
+    sources: [{ label: "Workday — Talent Acquisition (site oficial)", url: 'https://www.workday.com/en-us/products/talent-management/talent-acquisition.html' }],
   },
   greenhouse: {
     slug: 'greenhouse',
@@ -109,6 +119,9 @@ export const ATS_META: Record<string, AtsMeta> = {
     country: 'US',
     languages: GLOBAL,
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-16',
+    reviewedLangs: ['en', 'pt', 'es', 'de', 'ko'],
+    sources: [{ label: "Greenhouse — site oficial", url: 'https://www.greenhouse.com/' }],
   },
   lever: {
     slug: 'lever',
@@ -116,7 +129,15 @@ export const ATS_META: Record<string, AtsMeta> = {
     fullName: 'Lever Talent Acquisition Suite',
     country: 'US',
     languages: GLOBAL,
-    marketShare: { kind: 'qualitative' },
+    marketShare: {
+      kind: 'sourced',
+      source: 'Lever (site oficial)',
+      sourceUrl: 'https://www.lever.co/',
+      asOf: '2026',
+    },
+    reviewedAt: '2026-10-16',
+    reviewedLangs: ['en', 'pt', 'es', 'de', 'ko'],
+    sources: [{ label: "Lever — site oficial", url: 'https://www.lever.co/' }],
   },
   taleo: {
     slug: 'taleo',
@@ -125,6 +146,9 @@ export const ATS_META: Record<string, AtsMeta> = {
     country: 'US',
     languages: GLOBAL,
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-16',
+    reviewedLangs: ['en', 'pt', 'es', 'de', 'ko'],
+    sources: [{ label: "Oracle — Taleo (página oficial)", url: 'https://www.oracle.com/human-capital-management/taleo/' }],
   },
   solides: {
     slug: 'solides',
@@ -150,9 +174,12 @@ export const ATS_META: Record<string, AtsMeta> = {
     marketShare: {
       kind: 'sourced',
       source: 'iCIMS (site oficial)',
-      sourceUrl: 'https://www.icims.com/icims-talent-cloud-3/',
+      sourceUrl: 'https://www.icims.com/',
       asOf: '2026',
     },
+    reviewedAt: '2026-10-16',
+    reviewedLangs: ['en'],
+    sources: [{ label: "iCIMS — site oficial", url: 'https://www.icims.com/' }],
   },
   ashby: {
     slug: 'ashby',
@@ -161,6 +188,9 @@ export const ATS_META: Record<string, AtsMeta> = {
     country: 'US',
     languages: GLOBAL,
     marketShare: { kind: 'qualitative' },
+    reviewedAt: '2026-10-16',
+    reviewedLangs: ['en', 'pt', 'es', 'de', 'ko'],
+    sources: [{ label: "Ashby — site oficial", url: 'https://www.ashbyhq.com/' }],
   },
   infojobs: {
     slug: 'infojobs',

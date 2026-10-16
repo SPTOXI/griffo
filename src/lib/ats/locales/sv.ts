@@ -6,7 +6,7 @@ export const atsSv: AtsLocale = {
     marketName: 'USA, Europa och globala koncerner',
     description:
       'Workday är företagsstandarden hos merparten av Fortune 500 och stora multinationella bolag. Systemet är känt för en av de striktaste och mest standardiserade parsrarna på HR-marknaden.',
-    marketShare: 'Används av mer än 50 % av Fortune 500-bolagen.',
+    marketShare: 'Används av mer än 60 % av Fortune 500-bolagen.',
     howItWorks: [
       {
         title: 'Strukturerad fältmappning',

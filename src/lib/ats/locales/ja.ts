@@ -6,7 +6,7 @@ export const atsJa: AtsLocale = {
     marketName: '米国・欧州・グローバル企業',
     description:
       'Workday は Fortune 500 の大半と大手多国籍企業で標準的に使われている人事システムです。HR ソフトウェア市場でもっとも厳格で標準化されたパーサーのひとつを備えていることで知られています。',
-    marketShare: 'Fortune 500 企業の50%以上が導入。',
+    marketShare: 'Fortune 500 企業の60%以上が導入。',
     howItWorks: [
       {
         title: '項目単位の構造化マッピング',

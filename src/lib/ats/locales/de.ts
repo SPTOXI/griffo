@@ -8,176 +8,176 @@ import type { AtsLocale } from '../content-types'
  */
 export const atsDe: AtsLocale = {
   workday: {
-    marketName: 'USA, Europa & globale Konzerne',
+    marketName: "Große Arbeitgeber und globale Organisationen",
     description:
-      'Workday ist der Unternehmensstandard bei einem Großteil der Fortune 500 und großen internationalen Konzernen. Es gilt als einer der strengsten und am stärksten standardisierten Parser im HR-Softwaremarkt.',
-    marketShare: 'Von mehr als 50 % der Fortune-500-Konzerne eingesetzt.',
+      "Workday ist eine Unternehmensplattform für HR und Finanzen. Die Talent-Acquisition-Software unterstützt große Arbeitgeber bei Stellenausschreibungen, Bewerbungen und Kandidaten.",
+    marketShare: "Workday gibt an, dass mehr als 60% der Fortune 500 die Plattform nutzen.",
     howItWorks: [
       {
-        title: 'Strukturierte Feldzuordnung',
+        title: "Kandidatenprofil",
         description:
-          'Workday zerlegt den Lebenslauf in vordefinierte Felder: Unternehmen, Position, Zeitraum und Aufgaben. Jede Formatabweichung führt dazu, dass Daten beim Screening verloren gehen.',
+          "Aus Bewerbungen entsteht ein Profil mit Angaben wie Arbeitgeber, Position, Zeiträumen und Aufgaben. Klare, konsistente Einträge machen dieses Profil leichter les- und vergleichbar.",
       },
       {
-        title: 'Screening nach internationalen Vorgaben',
+        title: "Anforderungen der Stelle",
         description:
-          'Filtert Bewerbungen anhand globaler arbeitsrechtlicher Vorgaben und erwartet einen klar nachvollziehbaren Karriereverlauf samt Senioritätsstufen.',
-      },
-      {
-        title: 'Prüfung von Kennzahlen und Anforderungen',
-        description:
-          'Das System bevorzugt Profile mit messbarer Wirkung, die zu den in der Stellenanforderung genannten Kompetenzen passt.',
+          "Recruiter vergleichen Kandidaten mit den Anforderungen der Stelle, daher helfen Belege für die genannten Kenntnisse und messbare Ergebnisse.",
       },
     ],
     eliminationFactors: [
-      'Unübliche Formate und Layouts, die das automatische Befüllen der Felder zerstören.',
-      'Widersprüchliche Datumsangaben, die die Berechnung der Berufsjahre verhindern.',
-      'Positionsbezeichnungen ohne klaren Bezug zu internationalen Marktstandards.',
+      "Layouts, die Positionen und Zeiträume als Text schwer lesbar machen.",
+      "Fehlende oder widersprüchliche Zeiträume, die Ihre Berufsdauer unklar lassen.",
+      "Positionen und Kenntnisse, die nie die Wortwahl der Stelle aufgreifen.",
     ],
     howGriffoWorkHelps: [
-      'Stellt sicher, dass der Workday-Parser die Struktur Ihres Lebenslaufs fehlerfrei liest.',
-      'Prüft die Übereinstimmung mit internationalen Einstellungsstandards (USA, Europa, global).',
-      'Analysiert die Dichte von Kennzahlen und Erfolgen im Hinblick auf die Konzernfilter des Systems.',
-      'Erstellt ein auf die Stelle zugeschnittenes Anschreiben.',
+      "Prüft, ob Ihr Lebenslauf als sauberer Text mit Positionen und Zeiträumen in der richtigen Reihenfolge gelesen wird.",
+      "Gleicht Ihre Erfahrung mit den Anforderungen der Stellenanzeige ab.",
+      "Bewertet Klarheit und messbare Ergebnisse.",
+      "Erstellt ein auf die Stelle zugeschnittenes Anschreiben.",
     ],
     faqs: [
       {
-        question: 'Warum ist Workday so anspruchsvoll?',
+        question: "Sortiert Workday Lebensläufe automatisch aus?",
         answer:
-          'Da Konzerne pro Stelle Tausende Bewerbungen erhalten, arbeitet Workday mit strukturierten Kriterien und sortiert Lebensläufe mit unklarer Formatierung oder schwer einzuordnenden Angaben aus.',
+          "Das hängt davon ab, wie das Unternehmen seinen Prozess eingerichtet hat; Workday unterstützt Recruiter bei Verwaltung und Prüfung der Kandidaten. Klare Positionen, Zeiträume und Ergebnisse machen Ihr Profil für Menschen und Systeme leichter lesbar.",
       },
       {
-        question: 'Wie bereitet GriffoWork mein Profil auf Workday vor?',
+        question: "Wie bereitet GriffoWork mein Profil auf Workday vor?",
         answer:
-          'GriffoWork prüft chronologische Klarheit, Formatierung und das Vorhandensein aussagekräftiger Kennzahlen, damit Workday Ihren Werdegang sauber ausliest.',
+          "GriffoWork prüft chronologische Klarheit, Formatierung und messbare Ergebnisse, damit Ihr Werdegang sauber gelesen wird.",
       },
     ],
   },
   greenhouse: {
-    marketName: 'Globale Tech-Branche, Startups & Scaleups',
+    marketName: "Arbeitgeber mit strukturierten Auswahlprozessen",
     description:
-      'Greenhouse ist die meistgenutzte Recruiting-Plattform im globalen Technologieumfeld, bei schnell wachsenden Startups und Unicorns — mit Fokus auf kompetenzbasierte, nachweisorientierte Einstellungen.',
-    marketShare: 'Führend bei Technologie- und Innovationsunternehmen in den USA, Europa und Lateinamerika.',
+      "Greenhouse ist eine Recruiting-Plattform, die Sourcing, Interviews und Bewerbermanagement verbindet. Sie baut auf strukturierten Interviews auf, mit Fragen und Bewertungskriterien, die jedes Team selbst festlegt.",
+    marketShare: "Greenhouse gibt an, dass Tausende Arbeitgeber die Plattform nutzen.",
     howItWorks: [
       {
-        title: 'Kompetenz-Scorecards',
+        title: "Strukturierte Bewertung",
         description:
-          'Bewertet Kandidaten anhand spezifischer Scorecards für Fachkompetenzen, Tools und Führung.',
+          "Teams legen für jede Stelle Fragen und Bewertungsbögen fest, und Interviewer beurteilen Kandidaten nach denselben Kriterien.",
       },
       {
-        title: 'Anbindung von Portfolios und Profilen',
+        title: "Kontext aus Lebenslauf und Profil",
         description:
-          'Verknüpft Angaben aus dem Lebenslauf mit beruflichen Links (LinkedIn, GitHub, Portfolios) für die Prüfung durch das Fachteam.',
+          "Ihr Lebenslauf und Links, die Sie teilen, etwa zu Portfolio oder LinkedIn, geben dem Team vor den Interviews Kontext.",
       },
     ],
     eliminationFactors: [
-      'Allgemein gehaltene Lebensläufe ohne Beleg für den praktischen Umgang mit Tools und Frameworks.',
-      'Fehlende konkrete Ergebnisse aus früheren Positionen.',
-      'Kein erkennbarer Zusammenhang zwischen Projekten und geschäftlicher Wirkung.',
+      "Allgemeine Lebensläufe, die keinen praktischen Umgang mit den geforderten Werkzeugen zeigen.",
+      "Keine konkreten Ergebnisse aus früheren Positionen.",
+      "Kein klarer Zusammenhang zwischen Projekten und Geschäftswirkung.",
     ],
     howGriffoWorkHelps: [
-      'Ermittelt, wie gut Ihre Fachkompetenzen und Methoden zur Stelle passen.',
-      'Prüft Ihre beruflichen Profile auf Konsistenz mit dem Lebenslauf.',
-      'Bewertet Wirkung und Klarheit anhand der Scorecard-Kriterien der Recruiter.',
+      "Zeigt, wie gut Ihre Kenntnisse und Methoden zur Stelle passen.",
+      "Prüft, ob Ihre beruflichen Profile zum Lebenslauf passen.",
+      "Bewertet Wirkung und Klarheit anhand typischer Bewertungskriterien.",
     ],
     faqs: [
       {
-        question: 'Warum ist Greenhouse in der Tech-Branche so verbreitet?',
+        question: "Wie bewertet Greenhouse Kandidaten?",
         answer:
-          'Weil Engineering- und Produktteams damit Kompetenzen strukturiert und gemeinsam bewerten können, was Verzerrungen in der ersten Screening-Runde reduziert.',
+          "Greenhouse beschreibt strukturierte Interviews, bei denen Teams eigene Fragen und eine Bewertungsrubrik nutzen, mit Bewertungsbögen für das Feedback. Ein Lebenslauf mit klaren Belegen für jede Anforderung hilft Ihrer Geschichte, zu überzeugen.",
       },
       {
-        question: 'Deckt GriffoWork auch internationale Remote-Stellen in Greenhouse ab?',
+        question: "Eignet sich GriffoWork für Remote-Stellen bei Greenhouse?",
         answer:
-          'Ja. GriffoWork passt die Analyse an globale Prozesse und internationale Anforderungen an.',
+          "GriffoWork vergleicht Ihren Lebenslauf mit der Stellenanzeige, auf die Sie sich bewerben, unabhängig vom Standort.",
       },
     ],
   },
   lever: {
-    marketName: 'Scaleups & Big Tech',
+    marketName: "Arbeitgeber aus vielen Branchen",
     description:
-      'Lever verbindet Bewerbermanagement (ATS) mit Talent-Relationship-Management (CRM). Recruiting-Teams können damit Kandidaten fortlaufend aus der eigenen Datenbank ansprechen und qualifizieren.',
-    marketShare: 'Weit verbreitet bei mittleren und großen Technologieunternehmen.',
+      "Lever ist eine Recruiting-Plattform mit Bewerbermanagement und KI-Funktionen. Auf der Website hebt Lever die Automatisierung von Verwaltung und Terminplanung sowie KI-Empfehlungen mit Kontext hervor.",
+    marketShare: "Lever gibt an, Tausende Kunden in mehr als 20 Branchen zu betreuen.",
     howItWorks: [
       {
-        title: 'Fortlaufende Talent-Indexierung',
+        title: "Automatisierung",
         description:
-          'Speichert und indexiert den vollständigen Werdegang, um ihn mit aktuellen und künftigen Stellen abzugleichen.',
+          "Verwaltung, Terminplanung und Nachfassen laufen automatisiert, damit das Recruiting-Team seine Zeit für Einstellungsentscheidungen nutzt.",
       },
       {
-        title: 'Semantische Kompetenzsuche',
+        title: "KI-Empfehlungen",
         description:
-          'Recruiter filtern Kandidaten über detaillierte semantische Suchen nach Tools, Positionen und Ausbildung.',
+          "Lever sagt, die KI zeige zuerst die am besten passenden Kandidaten, jeweils mit Kontext; ein Lebenslauf, der die Anforderungen der Stelle klar zeigt, lässt sich leichter einordnen.",
       },
     ],
     eliminationFactors: [
-      'Fehlende Fachbegriffe, sodass das System das Profil bei thematischen Suchen nie findet.',
-      'Vage Beschreibungen, die die Tiefe der Kenntnisse nicht erkennen lassen.',
+      "Fehlende Begriffe aus der Stellenanzeige, die Ihre Eignung schwerer erkennbar machen.",
+      "Vage Beschreibungen, die die Tiefe Ihrer Erfahrung nicht vermitteln.",
     ],
     howGriffoWorkHelps: [
-      'Sorgt dafür, dass die entscheidenden Schlüsselwörter vorhanden sind, damit Ihr Lebenslauf in Lever-Suchen auftaucht.',
-      'Schärft Ihre Positionierung, damit das Profil im Talentpool langfristig wirkt.',
+      "Prüft, ob die geforderten Schlüsselbegriffe in Ihrem Lebenslauf stehen.",
+      "Schärft Ihr Profil, damit Ihre Eignung leicht erkennbar ist.",
     ],
     faqs: [
       {
-        question: 'Wie funktioniert der Talentpool von Lever?',
+        question: "Nutzt Lever KI, um Kandidaten zu ordnen?",
         answer:
-          'Lever hält archivierte Profile durchsuchbar. Ein Lebenslauf mit hoher Dichte relevanter Begriffe wird auch für neue Stellen weiterhin gefunden.',
+          "Lever beschreibt KI-gestützte Empfehlungen, die die am besten passenden Kandidaten zuerst zeigen, jeweils mit Kontext. Die Einstellungsentscheidung bleibt beim Recruiting-Team.",
       },
     ],
   },
   taleo: {
-    marketName: 'Banken, Behörden & Großkonzerne',
+    marketName: "Große Arbeitgeber",
     description:
-      'Oracle Taleo gehört zu den etabliertesten Recruiting-Systemen weltweit und wird vor allem im Finanzsektor, in der Öl- und Gasindustrie, in der Telekommunikation und im öffentlichen Dienst eingesetzt.',
-    marketShare: 'Starke Präsenz in traditionellen Konzernen und globalen Finanzinstituten.',
+      "Oracle Taleo ist eine Talent-Acquisition-Suite für Sourcing, Recruiting und Onboarding. Oracle bietet Taleo Enterprise Edition und Taleo Business Edition an und stellt zugleich Oracle Recruiting als Weg für bestehende Taleo-Kunden vor.",
+    marketShare: "Ein etabliertes Oracle-Produkt, das Arbeitgeber für Sourcing und Einstellung nutzen.",
     howItWorks: [
       {
-        title: 'Klassische Screening-Filter',
+        title: "Vorauswahl und Interviews",
         description:
-          'Wendet strukturierte Screening-Regeln nach formalen Positionsbezeichnungen, Betriebszugehörigkeit und Bildungsabschlüssen an.',
+          "Oracle nennt Werkzeuge für die Kandidatenvorauswahl, die Interviewplanung und das Erstellen von Angeboten. Jeder Arbeitgeber legt selbst fest, was er abfragt und prüft.",
+      },
+      {
+        title: "Karriereseiten und Sourcing",
+        description:
+          "Karriereseiten im Firmenauftritt, Kampagnen und Empfehlungen bringen Kandidaten ins System, wo Recruiter sie prüfen.",
       },
     ],
     eliminationFactors: [
-      'Unübliche Abschnittsüberschriften, die der ältere Parser nicht einordnen kann.',
-      'Grafische Elemente, die die Informationshierarchie zerstören.',
+      "Ungewöhnliche Abschnittsüberschriften oder Grafiken, die das automatische Lesen erschweren können.",
+      "Fehlende Zeiträume oder Positionen, die Ihren Werdegang unklar lassen.",
     ],
     howGriffoWorkHelps: [
-      'Prüft die formale Struktur des Lebenslaufs auf Kompatibilität mit dem Taleo-Parser.',
-      'Kontrolliert Datums-, Positions- und Abschnittskonventionen, wie traditionelle Konzerne sie erwarten.',
+      "Prüft die Struktur Ihres Lebenslaufs auf sauberes automatisches Lesen.",
+      "Kontrolliert Konventionen bei Zeiträumen, Positionen und Abschnitten, die Arbeitgeber häufig erwarten.",
     ],
     faqs: [
       {
-        question: 'Wird Oracle Taleo noch häufig eingesetzt?',
+        question: "Wird Oracle Taleo noch genutzt?",
         answer:
-          'Ja, insbesondere bei großen Banken, Industriegruppen und Konzernen, die weltweit Tausende Mitarbeitende verwalten.',
+          "Oracle stellt Taleo weiterhin als Produkt vor und bietet zugleich den Wechsel zu Oracle Recruiting an. Ob ein Arbeitgeber es nutzt, entscheidet dieser selbst.",
       },
     ],
   },
   ashby: {
-    marketName: 'Globale Startups & KI-Scaleups',
+    marketName: "Von Startups bis Großunternehmen",
     description:
-      'Ashby ist eine moderne Recruiting-Plattform, die bei innovativen Technologie- und KI-Unternehmen schnell wächst — aufgebaut auf intelligenter Automatisierung und Analytics.',
-    marketShare: 'Schnell wachsend bei Technologie- und KI-Scaleups.',
+      "Ashby ist eine All-in-one-Recruiting-Plattform, die Bewerbermanagement, Sourcing und CRM, Terminplanung und Analytics mit integrierter KI verbindet.",
+    marketShare: "Ashby bietet Tarife für Startups, wachsende Unternehmen und Großunternehmen an.",
     howItWorks: [
       {
-        title: 'Schnelles Screening und KI-Zusammenfassungen',
+        title: "Analytics und KI",
         description:
-          'Erstellt analytische Zusammenfassungen, damit Recruiter Wirkung und Senioritätsgrad eines Profils rasch einschätzen können.',
+          "Ashby verbindet Recruiting-Analytics mit KI-Funktionen, damit Teams Kandidaten prüfen und den Prozess steuern können.",
       },
     ],
     eliminationFactors: [
-      'Lange, unfokussierte Lebensläufe, in denen die wichtigsten technischen Erfolge untergehen.',
+      "Lange, unfokussierte Lebensläufe, die die wichtigsten Erfolge und die erzielte Wirkung verstecken.",
     ],
     howGriffoWorkHelps: [
-      'Prüft die Kurzzusammenfassung Ihres Lebenslaufs auf schnelle Lesbarkeit und Wirkung.',
-      'Hebt komplexe Projekte und technische Führung für die Ashby-Filter hervor.',
+      "Prüft die Zusammenfassung Ihres Lebenslaufs, damit sie schnell und klar lesbar ist.",
+      "Hebt komplexe Projekte und fachliche Führung hervor.",
     ],
     faqs: [
       {
-        question: 'Was unterscheidet Ashby von anderen Systemen?',
+        question: "Was unterscheidet Ashby von anderen Systemen?",
         answer:
-          'Ashby bietet analytische Dashboards und automatische Zusammenfassungen, die knappe, ergebnisorientierte Lebensläufe belohnen.',
+          "Ashby versteht sich als All-in-one-Plattform: Bewerbermanagement, Sourcing und CRM, Terminplanung und Analytics mit integrierter KI.",
       },
     ],
   },

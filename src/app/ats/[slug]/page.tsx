@@ -166,6 +166,10 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
   const withName = (s: string) => s.replace('{ats}', meta.name)
   const dims = [t.auditDim1, t.auditDim2, t.auditDim3, t.auditDim4]
 
+  // A data só aparece nos idiomas em que a conferência de fato aconteceu.
+  const reviewed =
+    !!meta.reviewedAt && (!meta.reviewedLangs || meta.reviewedLangs.includes(lang))
+
   const articleJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
@@ -180,8 +184,8 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${BASE}/ats/${slug}` },
     // Só o que também está visível na página (bloco "Fontes consultadas").
-    ...(meta.reviewedAt ? { dateModified: meta.reviewedAt } : {}),
-    ...(meta.sources?.length ? { citation: meta.sources.map((src) => src.url) } : {}),
+    ...(reviewed ? { dateModified: meta.reviewedAt } : {}),
+    ...(reviewed && meta.sources?.length ? { citation: meta.sources.map((src) => src.url) } : {}),
   }
 
   const faqJsonLd = {
@@ -404,7 +408,7 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
       </section>
 
       {/* FONTES + DATA DE CONFERÊNCIA */}
-      {meta.reviewedAt && meta.sources && meta.sources.length > 0 && (
+      {reviewed && meta.reviewedAt && meta.sources && meta.sources.length > 0 && (
         <section className="py-8 border-t border-slate-200 bg-white">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3 text-xs text-slate-600">
             <p>

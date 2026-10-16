@@ -320,3 +320,31 @@ IA no Search (atualizada 2025-12-10), Conteúdo útil (2026-10-05), Políticas d
 4. Dados próprios (ex.: resultados agregados do teste gratuito) só depois de volume e de base
    legal clara para uso estatístico dos currículos.
 
+
+### 9.1 Guias antigos conferidos contra os sites oficiais (2026-10-16)
+
+Workday, Greenhouse, Lever, Taleo, iCIMS e Ashby foram reescritos só com o que o site de
+cada fornecedor diz, em **en, pt, es, de e ko** (iCIMS só en). A data de conferência só
+aparece nessas línguas (`reviewedLangs` em `meta.ts`).
+
+**O que estava errado ou sem apoio**
+- **Workday:** o 8-K da SEC (2024) diz "mais de **60%** da Fortune 500"; o guia dizia 50%,
+  nas 12 línguas — corrigido em todas. Saíram também "padrão corporativo", "parser mais
+  rígido do mercado" e a FAQ que afirmava descarte automático.
+- **iCIMS:** o site diz "mais de **4.400** empresas"; o guia dizia 4.000. Saíram "uma das
+  mais robustas" e "processando milhões de candidaturas".
+- **Greenhouse:** saiu "plataforma mais usada do ecossistema de tecnologia"; o site fala em
+  entrevistas estruturadas, com perguntas e critérios definidos por cada equipe.
+- **Lever:** o site fala em "20+ setores", não só tecnologia; saiu "CRM" e "busca semântica",
+  que a página não menciona.
+- **Taleo:** a Oracle descreve sourcing, recrutamento e onboarding, mais o caminho para o
+  Oracle Recruiting; saíram as regras de triagem por cargo/tempo/formação e o "parser legado".
+- **Ashby:** o site diz "all-in-one" (ATS, sourcing e CRM, agenda, análises) com IA; saiu
+  "crescendo rápido entre startups de IA".
+
+**Ainda sem conferência (sem data na tela)**
+- Workday, Greenhouse, Lever, Taleo e Ashby em **fr, it, ja, nl, sv, zh, ar**: o texto ainda é
+  o antigo, com as afirmações sem apoio. Precisa de tradução revisada dos blocos novos.
+- **InfoJobs** (es/pt/it) e **Personio** (de): o site do Personio bloqueou a leitura e o
+  InfoJobs é um portal de vagas, não um ATS — o enquadramento do guia precisa de decisão.
+- **Sólides** e **SuccessFactors**: os sites bloquearam a leitura automática.

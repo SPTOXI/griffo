@@ -6,7 +6,7 @@ export const atsZh: AtsLocale = {
     marketName: '美国、欧洲及全球跨国企业',
     description:
       'Workday 是绝大多数《财富》500 强企业与大型跨国公司采用的标准人力资源系统，以业内最严格、最标准化的简历解析器之一著称。',
-    marketShare: '超过 50% 的《财富》500 强企业在使用。',
+    marketShare: '超过 60% 的《财富》500 强企业在使用。',
     howItWorks: [
       {
         title: '结构化字段映射',

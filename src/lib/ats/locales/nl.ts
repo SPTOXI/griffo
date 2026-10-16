@@ -6,7 +6,7 @@ export const atsNl: AtsLocale = {
     marketName: 'Verenigde Staten, Europa en wereldwijde multinationals',
     description:
       'Workday is de bedrijfsstandaard bij het merendeel van de Fortune 500 en grote multinationals. Het staat bekend om een van de strengste en meest gestandaardiseerde parsers in de HR-softwaremarkt.',
-    marketShare: 'Gebruikt door meer dan 50% van de Fortune 500-bedrijven.',
+    marketShare: 'Gebruikt door meer dan 60% van de Fortune 500-bedrijven.',
     howItWorks: [
       {
         title: 'Gestructureerde veldtoewijzing',

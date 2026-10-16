@@ -38,90 +38,150 @@ export const atsPt: AtsLocale = {
     ],
   },
   workday: {
-    marketName: 'Estados Unidos, Europa e Multinacionais Globais',
-    description: 'O Workday é o sistema corporativo padrão adotado pela maioria das empresas da Fortune 500 e grandes multinacionais globais. É conhecido por ter um dos parsers mais rigorosos e padronizados do mercado de RH.',
-    marketShare: 'Adotado por mais de 50% das corporações da Fortune 500.',
+    marketName: "Grandes Empresas e Organizações Globais",
+    description:
+      "O Workday é uma plataforma corporativa de RH e finanças. O software de aquisição de talentos ajuda grandes empresas a gerenciar vagas, candidaturas e candidatos.",
+    marketShare: "A Workday informa uso por mais de 60% das empresas da Fortune 500.",
     howItWorks: [
-      { title: 'Mapeamento Estruturado de Campos', description: 'O Workday fragmenta o currículo em campos predefinidos: Empresa, Cargo, Período e Responsabilidades. Qualquer desalinhamento de formato causa perda de dados na triagem.' },
-      { title: 'Triagem em Conformidade Internacional', description: 'Filtra candidaturas considerando conformidades trabalhistas globais, exigindo clareza na progressão de carreira e senioridade.' },
-      { title: 'Verificação de Métricas e Requisitos', description: 'O sistema prioriza perfis que demonstram impacto mensurável alinhado às competências listadas na requisição de vaga.' },
+      {
+        title: "Perfil do candidato",
+        description:
+          "As candidaturas viram um perfil com informações como empresa, cargo, datas e responsabilidades. Entradas claras e consistentes facilitam a leitura e a comparação desse perfil.",
+      },
+      {
+        title: "Requisitos da vaga",
+        description:
+          "Recrutadores comparam candidatos com os requisitos da vaga, então ter evidência das competências pedidas e resultados mensuráveis ajuda.",
+      },
     ],
     eliminationFactors: [
-      'Formatos e leiautes não convencionais que corrompem o preenchimento automático dos campos.',
-      'Inconsistências de datas e períodos que impedem o cálculo de tempo de experiência.',
-      'Falta de clareza nos títulos de cargo em relação aos padrões internacionais de mercado.',
+      "Layouts que dificultam a leitura de cargos e datas como texto.",
+      "Datas ausentes ou inconsistentes, que deixam o tempo de atuação pouco claro.",
+      "Cargos e competências que nunca repetem a linguagem da vaga.",
     ],
     howGriffoWorkHelps: [
-      'Garante que a hierarquia do seu currículo seja interpretada sem falhas pelo parser do Workday.',
-      'Avalia o alinhamento com padrões internacionais de contratação (EUA, Europa e Global).',
-      'Audita a densidade de métricas e realizações para atender aos filtros corporativos do sistema.',
-      'Gera a carta de apresentação direcionada para o processo seletivo.',
+      "Verifica se o currículo é lido como texto limpo, com cargos e datas em ordem.",
+      "Compara sua experiência com os requisitos da descrição da vaga.",
+      "Avalia clareza e resultados mensuráveis.",
+      "Gera uma carta de apresentação direcionada à vaga.",
     ],
     faqs: [
-      { question: 'O que torna o Workday tão exigente?', answer: 'Por receber milhares de aplicações por vaga em multinacionais, o Workday utiliza critérios estruturados que descartam currículos com formatação confusa ou informações difíceis de categorizar.' },
-      { question: 'Como o GriffoWork prepara meu perfil para o Workday?', answer: 'O GriffoWork analisa a clareza cronológica, formatação e presença de métricas executivas, assegurando que o Workday extraia seu histórico de forma impecável.' },
+      {
+        question: "O Workday rejeita currículos automaticamente?",
+        answer:
+          "Depende de como cada empresa configurou o processo; o Workday apoia os recrutadores na gestão e na análise dos candidatos. Cargos, datas e resultados claros deixam seu perfil mais fácil de ler por pessoas e por sistemas.",
+      },
+      {
+        question: "Como o GriffoWork prepara meu perfil para o Workday?",
+        answer:
+          "O GriffoWork revisa a clareza cronológica, a formatação e os resultados mensuráveis, para que seu histórico seja lido sem ruído.",
+      },
     ],
   },
   greenhouse: {
-    marketName: 'Tech Global, Startups & Scaleups',
-    description: 'O Greenhouse é a plataforma de recrutamento mais utilizada no ecossistema global de tecnologia, startups em hipercrescimento e unicórnios, com foco em contratações baseadas em competências e evidências práticas.',
-    marketShare: 'Líder em empresas de tecnologia e inovação nos EUA, Europa e América Latina.',
+    marketName: "Empresas que Contratam com Processos Estruturados",
+    description:
+      "O Greenhouse é uma plataforma de contratação que reúne busca de talentos, entrevistas e acompanhamento de candidatos. É construída em torno de entrevistas estruturadas, com perguntas e critérios definidos por cada equipe.",
+    marketShare: "A Greenhouse informa que milhares de empresas usam a plataforma.",
     howItWorks: [
-      { title: 'Scorecards de Competências', description: 'Avalia a aderência do candidato contra scorecards específicos de habilidades técnicas, ferramentas e liderança.' },
-      { title: 'Integração com Portfólios e Perfis', description: 'Conecta informações do currículo com links profissionais (LinkedIn, GitHub, portfólios) para análise do time técnico.' },
+      {
+        title: "Avaliação estruturada",
+        description:
+          "As equipes definem perguntas e fichas de avaliação para cada vaga, e os entrevistadores avaliam os candidatos pelos mesmos critérios.",
+      },
+      {
+        title: "Contexto do currículo e do perfil",
+        description:
+          "Seu currículo e os links que você compartilha, como portfólio ou LinkedIn, dão contexto à equipe antes das entrevistas.",
+      },
     ],
     eliminationFactors: [
-      'Currículos genéricos que não comprovam o domínio prático das ferramentas e frameworks.',
-      'Ausência de resultados objetivos alcançados em experiências anteriores.',
-      'Falta de conexões claras entre projetos e impacto no negócio.',
+      "Currículos genéricos que não mostram uso prático das ferramentas que a vaga pede.",
+      "Falta de resultados concretos em funções anteriores.",
+      "Falta de ligação clara entre projetos e impacto no negócio.",
     ],
     howGriffoWorkHelps: [
-      'Mapeia a compatibilidade de competências técnicas e metodologias exigidas na vaga.',
-      'Audita seus perfis sociais e profissionais para garantir alinhamento com o currículo.',
-      'Calcula a nota de impacto e clareza para atender aos critérios de scorecard dos recrutadores.',
+      "Mapeia o quanto suas competências e métodos combinam com a vaga.",
+      "Verifica se seus perfis profissionais são coerentes com o currículo.",
+      "Avalia impacto e clareza frente a critérios típicos de avaliação.",
     ],
     faqs: [
-      { question: 'Por que o Greenhouse é tão popular em tecnologia?', answer: 'Porque permite aos times de engenharia e produto avaliar competências de forma estruturada e colaborativa, reduzindo vieses na triagem inicial.' },
-      { question: 'O GriffoWork analisa vagas remotas internacionais no Greenhouse?', answer: 'Sim, a inteligência do GriffoWork adapta o laudo para processos globais e requisitos internacionais.' },
+      {
+        question: "Como o Greenhouse avalia candidatos?",
+        answer:
+          "O Greenhouse descreve entrevistas estruturadas em que as equipes usam suas próprias perguntas e um critério de avaliação, com fichas para registrar o retorno. Um currículo com evidência clara de cada requisito ajuda sua história a se sustentar.",
+      },
+      {
+        question: "O GriffoWork serve para vagas remotas no Greenhouse?",
+        answer:
+          "O GriffoWork compara seu currículo com a descrição da vaga a que você se candidata, onde quer que ela esteja.",
+      },
     ],
   },
   lever: {
-    marketName: 'Scaleups & Big Tech',
-    description: 'O Lever combina recursos de rastreamento de candidatos (ATS) com gestão de relacionamento de talentos (CRM), permitindo que equipes de recrutamento busquem e qualifiquem candidatos continuamente em sua base de dados.',
-    marketShare: 'Amplamente adotado por empresas inovadoras de tecnologia de médio e grande porte.',
+    marketName: "Empresas de Vários Setores",
+    description:
+      "A Lever é uma plataforma de recrutamento com sistema de acompanhamento de candidatos e recursos com IA. O site destaca a automação de tarefas administrativas e de agendamento, e recomendações de IA acompanhadas de contexto.",
+    marketShare: "A Lever informa atender milhares de clientes em mais de 20 setores.",
     howItWorks: [
-      { title: 'Indexação Contínua de Talentos', description: 'Armazena e indexa o histórico completo do candidato para cruzamento com vagas atuais e futuras.' },
-      { title: 'Busca Semântica por Habilidades', description: 'Recrutadores filtram candidatos através de buscas semânticas detalhadas por ferramentas, cargos e formações.' },
+      {
+        title: "Automação",
+        description:
+          "Tarefas administrativas, agendamentos e retornos rodam em automação, para que a equipe de recrutamento use o tempo em decisões de contratação.",
+      },
+      {
+        title: "Recomendações de IA",
+        description:
+          "A Lever diz que sua IA mostra primeiro os candidatos mais aderentes, com contexto em cada recomendação; um currículo que mostra com clareza os requisitos da vaga é mais fácil de posicionar.",
+      },
     ],
     eliminationFactors: [
-      'Falta de termos técnicos que permitam ao sistema encontrar o perfil em buscas temáticas.',
-      'Descrições vagas que não detalham a extensão do conhecimento do candidato.',
+      "Ausência de termos da descrição da vaga, o que dificulta enxergar sua aderência.",
+      "Descrições vagas que não transmitem a profundidade da sua experiência.",
     ],
     howGriffoWorkHelps: [
-      'Assegura a presença de palavras-chave estratégicas para que seu currículo seja encontrado nas buscas do Lever.',
-      'Aprimora o posicionamento profissional para retenção de longo prazo na base de talentos.',
+      "Confere se as palavras-chave que a vaga pede estão no seu currículo.",
+      "Afina seu posicionamento para que sua aderência seja fácil de enxergar.",
     ],
     faqs: [
-      { question: 'Como funciona o banco de talentos do Lever?', answer: 'O Lever mantém perfis arquivados e pesquisáveis. Um currículo com alta densidade de termos relevantes continua sendo localizado para novas oportunidades.' },
+      {
+        question: "A Lever usa IA para ranquear candidatos?",
+        answer:
+          "A Lever descreve recomendações com IA que mostram primeiro os candidatos mais aderentes, cada uma com contexto. A decisão de contratação continua com a equipe de recrutamento.",
+      },
     ],
   },
   taleo: {
-    marketName: 'Bancos, Governos & Grandes Corporações',
-    description: 'O Oracle Taleo é um dos sistemas de recrutamento corporativo mais consolidados do mundo, amplamente utilizado no setor financeiro, óleo e gás, telecomunicações e órgãos públicos.',
-    marketShare: 'Forte presença em corporações tradicionais e instituições financeiras globais.',
+    marketName: "Grandes Empresas",
+    description:
+      "O Oracle Taleo é uma suíte de aquisição de talentos para busca, recrutamento e integração. A Oracle oferece o Taleo Enterprise Edition e o Taleo Business Edition, e também apresenta o Oracle Recruiting como caminho para clientes atuais do Taleo.",
+    marketShare: "Produto consolidado da Oracle, usado por empresas para buscar e contratar talentos.",
     howItWorks: [
-      { title: 'Filtros Tradicionais de Triagem', description: 'Aplica regras estruturadas de triagem baseadas em títulos formais, tempo de serviço e níveis de formação.' },
+      {
+        title: "Triagem e entrevistas",
+        description:
+          "A Oracle lista ferramentas de triagem de candidatos, gestão de entrevistas e criação de ofertas. Cada empresa configura o que pergunta e o que verifica.",
+      },
+      {
+        title: "Sites de carreiras e busca de talentos",
+        description:
+          "Sites de carreiras com a marca da empresa, campanhas e indicações trazem candidatos ao sistema, onde os recrutadores os analisam.",
+      },
     ],
     eliminationFactors: [
-      'Títulos de seções não convencionais que o parser legado não consegue classificar.',
-      'Elementos gráficos que desestruturam a hierarquia das informações.',
+      "Títulos de seção pouco convencionais ou elementos gráficos que podem dificultar a leitura automática.",
+      "Datas ou cargos ausentes que deixam seu histórico pouco claro.",
     ],
     howGriffoWorkHelps: [
-      'Audita a estrutura formal do currículo para compatibilidade com o parser do Taleo.',
-      'Verifica o padrão de datas, cargos e seções clássicas exigidas por corporações tradicionais.',
+      "Avalia a estrutura do currículo para uma leitura automática limpa.",
+      "Confere convenções de datas, cargos e seções que as empresas costumam esperar.",
     ],
     faqs: [
-      { question: 'O Oracle Taleo ainda é amplamente usado?', answer: 'Sim, especialmente em grandes bancos, indústrias e corporações que gerenciam milhares de colaboradores em todo o mundo.' },
+      {
+        question: "O Oracle Taleo ainda é usado?",
+        answer:
+          "A Oracle ainda apresenta o Taleo como produto e também oferece a migração para o Oracle Recruiting. Se uma empresa o usa é escolha dela.",
+      },
     ],
   },
   solides: {
@@ -144,21 +204,30 @@ export const atsPt: AtsLocale = {
     ],
   },
   ashby: {
-    marketName: 'Startups Globais & Scaleups de IA',
-    description: 'O Ashby é uma plataforma moderna de recrutamento de crescimento acelerado entre empresas inovadoras de tecnologia e inteligência artificial, focada em automações inteligentes e analytics.',
-    marketShare: 'Crescimento expressivo em scaleups de tecnologia e IA.',
+    marketName: "De Startups a Grandes Empresas",
+    description:
+      "A Ashby é uma plataforma de recrutamento tudo-em-um que reúne sistema de acompanhamento de candidatos, busca de talentos e CRM, agendamento e análises, com IA integrada.",
+    marketShare: "A Ashby oferece planos para startups, empresas em crescimento e grandes empresas.",
     howItWorks: [
-      { title: 'Triagem Rápida e Resumos com IA', description: 'Disponibiliza sumários analíticos para que recrutadores identifiquem rapidamente o impacto e senioridade do candidato.' },
+      {
+        title: "Análises e IA",
+        description:
+          "A Ashby combina análises de recrutamento com recursos de IA para ajudar as equipes a avaliar candidatos e conduzir o processo.",
+      },
     ],
     eliminationFactors: [
-      'Currículos prolixos e sem foco nas principais realizações técnicas e entregas de impacto.',
+      "Currículos longos e sem foco, que escondem as principais conquistas e o impacto entregue.",
     ],
     howGriffoWorkHelps: [
-      'Audita a síntese executiva do seu currículo para garantir leitura rápida e de alto impacto.',
-      'Destaca projetos complexos e liderança técnica para os filtros do Ashby.',
+      "Revisa o resumo do seu currículo para uma leitura rápida e clara.",
+      "Destaca projetos complexos e liderança técnica.",
     ],
     faqs: [
-      { question: 'O que diferencia o Ashby de outros sistemas?', answer: 'O Ashby oferece dashboards analíticos e resumos automáticos que valorizam currículos objetivos e orientados a resultados.' },
+      {
+        question: "O que diferencia a Ashby de outros sistemas?",
+        answer:
+          "A Ashby se apresenta como plataforma tudo-em-um: acompanhamento de candidatos, busca de talentos e CRM, agendamento e análises, com IA integrada.",
+      },
     ],
   },
   infojobs: {
