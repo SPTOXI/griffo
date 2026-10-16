@@ -28,6 +28,11 @@ import { localMethodLabels } from '@/lib/pricing/payment-methods'
  */
 const MAX_HISTORY_TURNS = 20
 
+/** Teto de incidentes abertos pelo chat: um por pessoa nesta janela. */
+const INCIDENT_PER_USER_MS = 60 * 60 * 1000
+/** Intervalo mínimo entre dois diagnósticos (que chamam todos os provedores de IA). */
+const DIAGNOSTIC_COOLDOWN_MS = 10 * 60 * 1000
+
 const schema = z.object({
   message: z.string().min(1, 'Mensagem em branco').max(1000, 'Mensagem muito longa'),
   history: z
@@ -110,22 +115,44 @@ export async function POST(req: Request) {
     let incidentId: string | undefined
 
     if (isErrorReport) {
-      // 1. Agente 1 registra um incidente para monitoramento
-      const incident = await db.systemIncident.create({
-        data: {
-          reportedByUserId: user.id,
-          title: `Relato do Usuário: ${message.slice(0, 80)}`,
-          description: message,
-          severity: 'medium',
-          status: 'investigating',
-        },
-      })
-      incidentId = incident.id
+      // Um incidente por pessoa por hora, e um diagnóstico por vez no sistema
+      // inteiro. O diagnóstico chama TODOS os provedores de IA; sem estes
+      // tetos, cada mensagem com "erro" de qualquer usuário logado disparava
+      // essa rodada inteira — custo multiplicado e o painel cheio de
+      // incidentes repetidos, sem informação nova nenhuma.
+      const now = Date.now()
+      const [ownRecent, diagnosing] = await Promise.all([
+        db.systemIncident.findFirst({
+          where: { reportedByUserId: user.id, createdAt: { gte: new Date(now - INCIDENT_PER_USER_MS) } },
+          select: { id: true },
+        }),
+        db.systemIncident.findFirst({
+          where: { createdAt: { gte: new Date(now - DIAGNOSTIC_COOLDOWN_MS) } },
+          select: { id: true },
+        }),
+      ])
 
-      // 2. Aciona o Agente 2 (Auto-Diagnóstico e Reparo) em segundo plano
-      runDiagnosticAndHealing(incidentId).catch((err) =>
-        console.error('Background Diagnostic Agent error:', err)
-      )
+      if (!ownRecent) {
+        // 1. Agente 1 registra um incidente para monitoramento
+        const incident = await db.systemIncident.create({
+          data: {
+            reportedByUserId: user.id,
+            title: `Relato do Usuário: ${message.slice(0, 80)}`,
+            description: message,
+            severity: 'medium',
+            status: 'investigating',
+          },
+        })
+        incidentId = incident.id
+
+        // 2. Aciona o Agente 2 (Auto-Diagnóstico e Reparo) em segundo plano,
+        // só se nenhum incidente recente já tiver disparado um.
+        if (!diagnosing) {
+          runDiagnosticAndHealing(incidentId).catch((err) =>
+            console.error('Background Diagnostic Agent error:', err)
+          )
+        }
+      }
     }
 
     // Build dialogue context
