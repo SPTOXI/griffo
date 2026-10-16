@@ -348,3 +348,25 @@ aparece nessas línguas (`reviewedLangs` em `meta.ts`).
 - **InfoJobs** (es/pt/it) e **Personio** (de): o site do Personio bloqueou a leitura e o
   InfoJobs é um portal de vagas, não um ATS — o enquadramento do guia precisa de decisão.
 - **Sólides** e **SuccessFactors**: os sites bloquearam a leitura automática.
+
+## 10. Conversão: guias → teste grátis → cadastro (2026-10-16)
+
+**Vazamento encontrado.** O botão principal e o do cabeçalho de todo guia levavam à home (`/`),
+uma landing longa; o teste gratuito (sem cadastro, o menor compromisso possível) ficava num
+link de texto pequeno abaixo. Quem busca "gupy ats" quer saber *se o currículo passa* — essa é
+a pergunta que o teste responde.
+
+**Mudança.** Botão principal e do cabeçalho → `/ats-check` (teste grátis), na língua do guia,
+com `utm_source=ats_page&utm_medium=<slug>&utm_content=<header|hero|audit>`. A auditoria
+completa continua na página, como segunda opção. A convenção `ats_page`/slug já existia e foi
+mantida; `utm_content` diz qual botão converteu.
+
+**Como medir (sem inventar número).** O `PageViewTracker` já guarda as UTMs da primeira visita
+e o funil já tem `ats_check_done` → `signup_done` → `purchase_done`. Depois de 2-3 semanas de
+tráfego, comparar por `utm_medium` (qual guia) e `utm_content` (qual botão). Com o volume atual
+(4 cliques em ~440 impressões no Search Console de 7/10) qualquer taxa seria ruído: só decidir
+com amostra maior.
+
+**O que isto não resolve.** O gargalo anterior à conversão é tráfego e autoridade (backlinks,
+diretórios, distribuição do `/market-pulse`). Otimizar conversão de pouco tráfego rende pouco;
+as duas frentes têm de andar juntas.

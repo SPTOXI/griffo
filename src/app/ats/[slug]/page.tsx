@@ -170,6 +170,15 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
   const reviewed =
     !!meta.reviewedAt && (!meta.reviewedLangs || meta.reviewedLangs.includes(lang))
 
+  // Para quem chega por "ATS X", a ação de menor atrito é o teste grátis (sem
+  // cadastro); a auditoria completa fica como segunda opção. `utm_content`
+  // diz QUAL botão converteu — o resto da convenção (`ats_page` / slug) já
+  // existia e foi mantida para não quebrar o histórico.
+  const checkCopy = isAtsCheckLang(lang) ? ATS_CHECK_COPY[lang] : null
+  const utm = `utm_source=ats_page&utm_medium=${slug}`
+  const checkHref = (where: string) => `${ATS_CHECK_PATH}?lang=${lang}&${utm}&utm_content=${where}`
+  const auditHref = `/?${utm}&utm_content=audit`
+
   const articleJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
@@ -225,7 +234,7 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
             </span>
           </Link>
           <Button asChild size="sm" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white font-semibold shrink-0">
-            <Link href="/">{t.heroCta}</Link>
+            <Link href={checkCopy ? checkHref('header') : '/'}>{checkCopy ? checkCopy.bannerCta : t.heroCta}</Link>
           </Button>
         </div>
       </header>
@@ -276,17 +285,18 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
 
           <div className="pt-4">
             <Button asChild size="lg" className="bg-[#0B63E5] hover:bg-[#0052CC] text-white text-base h-auto min-h-13 py-3 px-8 shadow-xl font-bold whitespace-normal">
-              <Link href="/">
-                {t.heroCta} <ArrowRight className="w-5 h-5 ml-2 shrink-0" />
+              <Link href={checkCopy ? checkHref('hero') : '/'}>
+                {checkCopy ? `${checkCopy.bannerTitle} ${checkCopy.bannerCta}` : t.heroCta}{' '}
+                <ArrowRight className="w-5 h-5 ml-2 shrink-0" />
               </Link>
             </Button>
-            {isAtsCheckLang(lang) && (
+            {checkCopy && (
               <p className="mt-3 text-sm">
                 <Link
-                  href={`${ATS_CHECK_PATH}?lang=${lang}&utm_source=ats_page&utm_medium=${slug}`}
-                  className="font-semibold text-emerald-700 underline underline-offset-2 hover:text-emerald-800"
+                  href={auditHref}
+                  className="font-semibold text-slate-600 underline underline-offset-2 hover:text-primary"
                 >
-                  {ATS_CHECK_COPY[lang].bannerTitle} {ATS_CHECK_COPY[lang].bannerCta} →
+                  {t.heroCta} →
                 </Link>
               </p>
             )}
@@ -378,7 +388,7 @@ export default async function AtsPage({ params, searchParams }: PageProps) {
 
           <div className="pt-4">
             <Button asChild size="lg" className="bg-white text-[#0B192E] hover:bg-blue-50 font-extrabold h-auto min-h-12 py-2.5 px-8 whitespace-normal">
-              <Link href="/">
+              <Link href={auditHref}>
                 {t.auditCta} <ArrowRight className="w-4 h-4 ml-2 text-primary shrink-0" />
               </Link>
             </Button>
