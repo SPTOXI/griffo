@@ -19,6 +19,9 @@ export const CLIENT_EVENTS = [
   'ats_check_shared',
   // Clique em "ver todas as oportunidades" no resultado do envio da landing.
   'lead_unlock_clicked',
+  // Envio da landing que falhou antes de virar lead: o servidor não vê esses
+  // casos (leitura do arquivo no aparelho, rede, bloqueio antes da rota).
+  'lead_submit_failed',
   // Mantido por compatibilidade: versões antigas da tela ainda o enviam.
   'checkout_initiated',
 ] as const

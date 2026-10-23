@@ -99,8 +99,21 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
     if (file && file.size > MAX_BYTES) return setError(c.errorTooLarge)
 
     setPhase('submitting')
+    // Etapa em que parou, para a mensagem e para a telemetria: falha no aparelho
+    // (ler o arquivo) ou na rede não chega ao servidor e não deixa rastro lá.
+    let stage: 'read' | 'network' | 'response' = 'read'
+    const fail = (message: string, meta: Record<string, string | number | boolean | null> = {}) => {
+      setPhase('form')
+      setError(message)
+      trackOnce('lead_submit_failed', `match_hero_${stage}`, {
+        stage,
+        ...(file ? { fileKb: Math.round(file.size / 1024), fileType: file.type || 'none' } : { pasted: true }),
+        ...meta,
+      })
+    }
     try {
       const payload = file ? { pdfBase64: await readAsBase64(file) } : { text: pasted }
+      stage = 'network'
       const r = await fetch('/api/public/match-preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -113,16 +126,17 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
           visitorId: getVisitorId(),
         }),
       })
+      stage = 'response'
       const data = await r.json().catch(() => ({}))
       if (r.status === 402 && data.error === 'LIMIT_REACHED') return setPhase('limit')
       if (!r.ok || !isValidToken(data.token)) {
-        setPhase('form')
-        setError(
+        fail(
           r.status === 429 ? c.errorRate
           : r.status === 413 || data.error === 'TOO_LARGE' ? c.errorTooLarge
           : data.error === 'NOT_PDF' ? c.errorNotPdf
           : data.error === 'INVALID_EMAIL' ? c.errorEmail
-          : c.errorGeneric
+          : c.errorGeneric,
+          { status: r.status, code: typeof data.error === 'string' ? data.error.slice(0, 40) : null }
         )
         return
       }
@@ -131,8 +145,7 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
       window.history.replaceState(null, '', url.toString())
       startPolling(data.token)
     } catch {
-      setPhase('form')
-      setError(c.errorGeneric)
+      fail(stage === 'read' ? c.errorRead : stage === 'network' ? c.errorNetwork : c.errorGeneric)
     }
   }
 
