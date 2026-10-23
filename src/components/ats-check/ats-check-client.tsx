@@ -10,7 +10,7 @@ import { ATS_CHECK_COPY, ATS_CHECK_PATH, type AtsCheckLang } from '@/lib/ats-che
 import type { AtsCheckResult, AtsSeverity } from '@/lib/ats-check/score'
 import { getVisitorId, trackOnce } from '@/components/analytics/track-client'
 
-const MAX_BYTES = 5 * 1024 * 1024
+const MAX_BYTES = 3 * 1024 * 1024
 /** Marca local de que o teste grátis já foi usado (a trava real é no servidor). */
 const USED_KEY = 'gw_ats_check_used'
 
@@ -76,7 +76,7 @@ export function AtsCheckClient({ lang }: { lang: AtsCheckLang }) {
       if (!r.ok) {
         setError(
           r.status === 429 ? c.errorRate
-          : data.error === 'TOO_LARGE' ? c.errorTooLarge
+          : r.status === 413 || data.error === 'TOO_LARGE' ? c.errorTooLarge
           : data.error === 'NOT_PDF' ? c.errorNotPdf
           : c.errorGeneric
         )

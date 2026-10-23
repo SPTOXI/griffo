@@ -31,7 +31,9 @@ import { createLead, newLeadToken, processLead } from '@/lib/match-preview/serve
  *   é a de erro genérico.
  */
 
-const PUBLIC_MAX_PDF_BYTES = 5 * 1024 * 1024
+// A Vercel recusa corpo acima de 4,5 MB antes de a função rodar, com uma
+// resposta que não é JSON. Em base64 o PDF cresce 4/3: 3 MB viram ~4 MB.
+const PUBLIC_MAX_PDF_BYTES = 3 * 1024 * 1024
 const PUBLIC_MAX_BASE64 = Math.ceil((PUBLIC_MAX_PDF_BYTES * 4) / 3) + 1024
 const WINDOW_MS = 24 * 60 * 60 * 1000
 
@@ -49,8 +51,15 @@ const schema = z
 
 const noStore = { 'Cache-Control': 'no-store' }
 
+// Abaixo do `maxDuration`: se a leitura do PDF travar, a rota ainda responde e
+// devolve a reserva. Morta por tempo, a função não passava pelo `catch` e a
+// pessoa perdia o envio do dia sem ver nada além do erro genérico.
+const PDF_PARSE_TIMEOUT_MS = 25_000
+
 export async function POST(req: Request) {
   let claimId: string | null = null
+  // Em que etapa estava quando falhou — sem isso o log só dizia "match-preview error".
+  let stage = 'parse-body'
   try {
     const body = await req.json().catch(() => null)
     const parsed = schema.safeParse(body)
@@ -72,6 +81,7 @@ export async function POST(req: Request) {
     const ipKey = ipKeyFor(clientIpFrom(req.headers))
     const admin = await getAdminUser().catch(() => null)
 
+    stage = 'quota'
     if (!admin) {
       // Um envio grátis por endereço na janela, além do por pessoa: sem isso,
       // trocando IP e `visitorId` a cada envio, a rota virava um disparador de
@@ -116,7 +126,8 @@ export async function POST(req: Request) {
     let text = parsed.data.text ?? ''
     let pages: number | undefined
     if (pdfBase64) {
-      const decoded = await parsePdfBase64(pdfBase64)
+      stage = 'pdf'
+      const decoded = await withTimeout(parsePdfBase64(pdfBase64), PDF_PARSE_TIMEOUT_MS, 'leitura do PDF')
       if (decoded.code === 'INVALID' || decoded.code === 'EMPTY' || decoded.code === 'TOO_LARGE') {
         await releaseClaim(claimId)
         claimId = null
@@ -128,9 +139,11 @@ export async function POST(req: Request) {
       pages = decoded.pages
     }
 
+    stage = 'ats-score'
     const ats = scoreAtsReadability(text, { pages })
     const token = newLeadToken()
 
+    stage = 'create-lead'
     await createLead({
       id: token,
       email,
@@ -153,7 +166,7 @@ export async function POST(req: Request) {
   } catch (e: any) {
     // Falha nossa não pode consumir o único envio grátis da pessoa.
     await releaseClaim(claimId)
-    console.error('match-preview error:', e?.message || e)
+    console.error(`match-preview error [${stage}]:`, e?.stack || e?.message || e)
     return NextResponse.json({ error: 'GENERIC' }, { status: 500, headers: noStore })
   }
 }
@@ -161,4 +174,12 @@ export async function POST(req: Request) {
 async function releaseClaim(id: string | null) {
   if (!id) return
   await db.analyticsEvent.delete({ where: { id } }).catch(() => {})
+}
+
+function withTimeout<T>(work: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} passou de ${ms}ms`)), ms)
+  })
+  return Promise.race([work, timeout]).finally(() => clearTimeout(timer))
 }
