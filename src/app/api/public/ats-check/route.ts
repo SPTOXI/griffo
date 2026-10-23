@@ -26,7 +26,9 @@ import { MAX_RESUME_CHARS } from '@/lib/validation'
  * - Admin é isento, para testar o produto.
  */
 
-const PUBLIC_MAX_PDF_BYTES = 5 * 1024 * 1024
+// A Vercel recusa corpo acima de 4,5 MB antes de a função rodar, com uma
+// resposta que não é JSON. Em base64 o PDF cresce 4/3: 3 MB viram ~4 MB.
+const PUBLIC_MAX_PDF_BYTES = 3 * 1024 * 1024
 const PUBLIC_MAX_BASE64 = Math.ceil((PUBLIC_MAX_PDF_BYTES * 4) / 3) + 1024
 
 const schema = z

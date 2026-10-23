@@ -11,7 +11,7 @@ import { isValidToken } from '@/lib/match-preview/rules'
 import type { PublicOpportunity, PublicResult } from '@/lib/match-preview/result'
 import { getVisitorId, trackOnce } from '@/components/analytics/track-client'
 
-const MAX_BYTES = 5 * 1024 * 1024
+const MAX_BYTES = 3 * 1024 * 1024
 const POLL_MS = 2000
 /** A tela desiste um pouco depois do servidor (`PROCESSING_TIMEOUT_MS`, 3 min). */
 const POLL_GIVE_UP_MS = 4 * 60 * 1000
@@ -119,7 +119,7 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
         setPhase('form')
         setError(
           r.status === 429 ? c.errorRate
-          : data.error === 'TOO_LARGE' ? c.errorTooLarge
+          : r.status === 413 || data.error === 'TOO_LARGE' ? c.errorTooLarge
           : data.error === 'NOT_PDF' ? c.errorNotPdf
           : data.error === 'INVALID_EMAIL' ? c.errorEmail
           : c.errorGeneric
