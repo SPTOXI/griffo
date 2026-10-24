@@ -84,8 +84,6 @@ export interface MatchPreviewCopy {
   teaserCta: string
   /** Antes do problema revelado de graça. */
   teaserRevealed: string
-  /** Comparação com os currículos já testados. Marcador {p}. */
-  percentileLine: string
   /** Contagem pública de currículos analisados, sob o título. Marcador {n}. */
   socialProof: string
   keptNote: string
@@ -173,7 +171,6 @@ const pt: MatchPreviewCopy = {
   teaserClose: 'Corrigir pode aumentar suas chances de receber convites para entrevista.',
   teaserCta: 'Ver o diagnóstico completo',
   teaserRevealed: 'O mais importante, para você corrigir já:',
-  percentileLine: 'Sua nota é maior que a de {p}% dos currículos já testados na GriffoWork.',
   socialProof: '{n} currículos já analisados na GriffoWork',
   keptNote: 'Seu currículo ficou guardado para empresas te encontrarem. Para apagar, escreva para {email}.',
   deleteNote: 'Seus dados serão apagados em até 24 horas.',
@@ -259,7 +256,6 @@ const en: MatchPreviewCopy = {
   teaserClose: 'Fixing them can improve your chances of being invited to an interview.',
   teaserCta: 'See the full diagnosis',
   teaserRevealed: 'The most important one, to fix right now:',
-  percentileLine: 'Your score is higher than {p}% of the resumes already checked on GriffoWork.',
   socialProof: '{n} resumes already analyzed on GriffoWork',
   keptNote: 'Your resume has been kept so companies can find you. To delete it, write to {email}.',
   deleteNote: 'Your data will be deleted within 24 hours.',
@@ -345,7 +341,6 @@ const es: MatchPreviewCopy = {
   teaserClose: 'Corregirlos puede aumentar tus posibilidades de que te llamen a una entrevista.',
   teaserCta: 'Ver el diagnóstico completo',
   teaserRevealed: 'El más importante, para que lo corrijas ya:',
-  percentileLine: 'Tu nota es mayor que la del {p}% de los currículums ya analizados en GriffoWork.',
   socialProof: '{n} currículums ya analizados en GriffoWork',
   keptNote: 'Tu currículum quedó guardado para que las empresas te encuentren. Para borrarlo, escribe a {email}.',
   deleteNote: 'Tus datos se borrarán en un plazo de 24 horas.',
@@ -431,7 +426,6 @@ const de: MatchPreviewCopy = {
   teaserClose: 'Wenn Sie sie beheben, kann das Ihre Chancen auf eine Einladung zum Vorstellungsgespräch verbessern.',
   teaserCta: 'Vollständige Diagnose ansehen',
   teaserRevealed: 'Der wichtigste Punkt, den Sie sofort beheben können:',
-  percentileLine: 'Ihre Bewertung liegt über der von {p} % der bereits bei GriffoWork geprüften Lebensläufe.',
   socialProof: '{n} Lebensläufe bereits bei GriffoWork analysiert',
   keptNote: 'Ihr Lebenslauf wurde gespeichert, damit Unternehmen Sie finden können. Zum Löschen schreiben Sie an {email}.',
   deleteNote: 'Ihre Daten werden innerhalb von 24 Stunden gelöscht.',
@@ -517,7 +511,6 @@ const fr: MatchPreviewCopy = {
   teaserClose: 'Les corriger peut augmenter vos chances d’obtenir un entretien.',
   teaserCta: 'Voir le diagnostic complet',
   teaserRevealed: 'Le plus important, à corriger tout de suite :',
-  percentileLine: 'Votre note est supérieure à celle de {p} % des CV déjà testés sur GriffoWork.',
   socialProof: '{n} CV déjà analysés sur GriffoWork',
   keptNote: 'Votre CV a été conservé pour que des entreprises puissent vous trouver. Pour le supprimer, écrivez à {email}.',
   deleteNote: 'Vos données seront supprimées sous 24 heures.',
@@ -603,7 +596,6 @@ const it: MatchPreviewCopy = {
   teaserClose: 'Correggerli può aumentare le tue possibilità di ricevere un invito a un colloquio.',
   teaserCta: 'Vedi la diagnosi completa',
   teaserRevealed: 'Il più importante, da correggere subito:',
-  percentileLine: 'Il tuo punteggio è più alto di quello del {p}% dei CV già testati su GriffoWork.',
   socialProof: '{n} CV già analizzati su GriffoWork',
   keptNote: 'Il tuo curriculum è stato conservato perché le aziende possano trovarti. Per cancellarlo, scrivi a {email}.',
   deleteNote: 'I tuoi dati saranno cancellati entro 24 ore.',
@@ -689,7 +681,6 @@ const nl: MatchPreviewCopy = {
   teaserClose: 'Ze oplossen kan je kans op een uitnodiging voor een sollicitatiegesprek vergroten.',
   teaserCta: 'Volledige diagnose bekijken',
   teaserRevealed: 'De belangrijkste, om meteen op te lossen:',
-  percentileLine: 'Je score is hoger dan die van {p}% van de cv’s die al op GriffoWork zijn getest.',
   socialProof: '{n} cv’s al geanalyseerd op GriffoWork',
   keptNote: 'Je cv is bewaard zodat bedrijven je kunnen vinden. Om het te verwijderen, schrijf naar {email}.',
   deleteNote: 'Je gegevens worden binnen 24 uur verwijderd.',
@@ -775,7 +766,6 @@ const sv: MatchPreviewCopy = {
   teaserClose: 'Att åtgärda dem kan öka dina chanser att bli kallad till intervju.',
   teaserCta: 'Se hela diagnosen',
   teaserRevealed: 'Det viktigaste, att åtgärda direkt:',
-  percentileLine: 'Ditt betyg är högre än {p} % av de cv:n som redan testats på GriffoWork.',
   socialProof: '{n} cv:n redan analyserade på GriffoWork',
   keptNote: 'Ditt CV har sparats så att företag kan hitta dig. Skriv till {email} för att radera det.',
   deleteNote: 'Dina uppgifter raderas inom 24 timmar.',
@@ -861,7 +851,6 @@ const ja: MatchPreviewCopy = {
   teaserClose: 'これらを直すことで、面接に呼ばれる可能性が高まることがあります。',
   teaserCta: '詳しい診断を見る',
   teaserRevealed: '最も重要な問題（今すぐ直せます）：',
-  percentileLine: 'あなたのスコアは、GriffoWorkでチェック済みの履歴書の{p}%より高いです。',
   socialProof: 'GriffoWorkで分析済みの履歴書：{n}件',
   keptNote: '企業に見つけてもらえるよう、履歴書を保存しました。削除するには {email} までご連絡ください。',
   deleteNote: 'あなたのデータは24時間以内に削除されます。',
@@ -947,7 +936,6 @@ const ko: MatchPreviewCopy = {
   teaserClose: '이를 고치면 면접 기회가 늘어날 수 있습니다.',
   teaserCta: '전체 진단 보기',
   teaserRevealed: '가장 중요한 문제 (지금 바로 고치세요):',
-  percentileLine: '내 점수는 GriffoWork에서 이미 확인한 이력서의 {p}%보다 높습니다.',
   socialProof: 'GriffoWork에서 분석한 이력서 {n}건',
   keptNote: '기업이 찾을 수 있도록 이력서를 보관했습니다. 삭제하려면 {email}로 연락해 주세요.',
   deleteNote: '데이터는 24시간 이내에 삭제됩니다.',
@@ -1033,7 +1021,6 @@ const zh: MatchPreviewCopy = {
   teaserClose: '修正这些问题可能会提高你获得面试邀请的机会。',
   teaserCta: '查看完整诊断',
   teaserRevealed: '最重要的一个，现在就可以修改：',
-  percentileLine: '你的得分高于 GriffoWork 上已检测简历的 {p}%。',
   socialProof: 'GriffoWork 已分析 {n} 份简历',
   keptNote: '你的简历已保存，让企业可以找到你。如需删除，请写信至 {email}。',
   deleteNote: '你的数据将在 24 小时内删除。',
@@ -1119,7 +1106,6 @@ const ar: MatchPreviewCopy = {
   teaserClose: 'تصحيحها قد يزيد فرص دعوتك إلى مقابلة.',
   teaserCta: 'عرض التشخيص الكامل',
   teaserRevealed: 'الأهم، لتصلحه الآن:',
-  percentileLine: 'درجتك أعلى من {p}% من السير الذاتية التي اختُبرت على GriffoWork.',
   socialProof: 'السير الذاتية التي حللتها GriffoWork: {n}',
   keptNote: 'حُفظت سيرتك الذاتية كي تتمكن الشركات من العثور عليك. لحذفها، راسلنا على {email}.',
   deleteNote: 'ستُحذف بياناتك خلال 24 ساعة.',

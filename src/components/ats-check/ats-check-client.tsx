@@ -9,6 +9,7 @@ import { AlertTriangle, CheckCircle2, FileUp, Info, Loader2, Lock, Share2, Shiel
 import { ATS_CHECK_COPY, ATS_CHECK_PATH, type AtsCheckLang } from '@/lib/ats-check/copy'
 import type { AtsCheckResult, AtsSeverity } from '@/lib/ats-check/score'
 import { getVisitorId, trackOnce } from '@/components/analytics/track-client'
+import { percentileLine } from '@/lib/analytics/percentile-copy'
 
 const MAX_BYTES = 3 * 1024 * 1024
 /** Marca local de que o teste grátis já foi usado (a trava real é no servidor). */
@@ -45,7 +46,7 @@ export function AtsCheckClient({ lang }: { lang: AtsCheckLang }) {
   const c = ATS_CHECK_COPY[lang]
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<AtsCheckResult | null>(null)
+  const [result, setResult] = useState<(AtsCheckResult & { percentile?: number | null }) | null>(null)
   const [pasteOpen, setPasteOpen] = useState(false)
   const [pasted, setPasted] = useState('')
   const [copied, setCopied] = useState(false)
@@ -83,7 +84,7 @@ export function AtsCheckClient({ lang }: { lang: AtsCheckLang }) {
         return
       }
       markUsed()
-      setResult(data as AtsCheckResult)
+      setResult(data as AtsCheckResult & { percentile?: number | null })
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch {
       setError(c.errorGeneric)
@@ -146,6 +147,9 @@ export function AtsCheckClient({ lang }: { lang: AtsCheckLang }) {
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{c.scoreLabel}</p>
               <h2 className="text-xl font-extrabold text-[#0B192E] mt-1">{level.title}</h2>
               <p className="text-sm text-slate-600 mt-1">{level.text}</p>
+              {result.percentile != null && (
+                <p className="text-sm font-semibold text-[#0B63E5] mt-1">{percentileLine(lang, result.percentile)}</p>
+              )}
               <div className="flex flex-wrap gap-2 mt-3 justify-center sm:justify-start">
                 <Button size="sm" variant="outline" onClick={share}>
                   <Share2 className="w-4 h-4 mr-1.5" /> {copied ? c.copied : c.shareCta}
