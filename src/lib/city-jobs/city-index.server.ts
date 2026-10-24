@@ -71,6 +71,7 @@ export interface JobListQuery {
   area: string | null
   work: string | null
   level: string | null
+  /** Quantas levas de `JOBS_PER_PAGE` mostrar, somadas (o "ver mais"). */
   page: number
 }
 
@@ -107,8 +108,8 @@ export const listJobs = unstable_cache(
       db.job.findMany({
         where,
         orderBy: [{ publishedAt: { sort: 'desc', nulls: 'last' } }, { lastSeenAt: 'desc' }],
-        skip: (q.page - 1) * JOBS_PER_PAGE,
-        take: JOBS_PER_PAGE,
+        // "Ver mais" acumula: a página N mostra as N primeiras levas de uma vez.
+        take: q.page * JOBS_PER_PAGE,
         select: JOB_SELECT,
       }),
     ])
