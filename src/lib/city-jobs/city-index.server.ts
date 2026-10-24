@@ -61,29 +61,61 @@ export async function findCity(country: string, slug: string): Promise<CityEntry
 
 export const JOBS_PER_PAGE = 40
 
-export async function listCityJobs(country: string, city: CityEntry, area: string | null) {
-  return db.job.findMany({
-    where: {
-      ...freshOpenJobWhere(),
-      country,
-      city: { in: city.rawCities },
-      ...(area ? { category: area } : {}),
-    },
-    orderBy: [{ publishedAt: { sort: 'desc', nulls: 'last' } }, { lastSeenAt: 'desc' }],
-    take: JOBS_PER_PAGE,
-    select: {
-      id: true,
-      title: true,
-      company: true,
-      city: true,
-      region: true,
-      remoteType: true,
-      seniority: true,
-      category: true,
-      applicationUrl: true,
-      publishedAt: true,
-    },
-  })
+export const WORK_FILTERS = ['remote', 'hybrid', 'onsite'] as const
+export const LEVEL_FILTERS = ['intern', 'junior', 'mid', 'senior', 'lead', 'principal', 'director', 'executive'] as const
+
+export interface JobListQuery {
+  country: string
+  /** Grafias cruas da cidade; `null` = o país inteiro (página de vagas remotas). */
+  rawCities: string[] | null
+  area: string | null
+  work: string | null
+  level: string | null
+  page: number
 }
 
-export type CityJob = Awaited<ReturnType<typeof listCityJobs>>[number]
+const JOB_SELECT = {
+  id: true,
+  title: true,
+  company: true,
+  city: true,
+  region: true,
+  remoteType: true,
+  seniority: true,
+  category: true,
+  applicationUrl: true,
+  publishedAt: true,
+} as const
+
+/**
+ * Uma página da lista de vagas, com o total para a paginação. Guardada por uma
+ * hora pelos argumentos: filtros e páginas são combinações finitas, e a mesma
+ * página não precisa ir ao banco a cada visita.
+ */
+export const listJobs = unstable_cache(
+  async (q: JobListQuery) => {
+    const where = {
+      ...freshOpenJobWhere(),
+      country: q.country,
+      ...(q.rawCities ? { city: { in: q.rawCities } } : {}),
+      ...(q.area ? { category: q.area } : {}),
+      ...(q.work ? { remoteType: q.work } : {}),
+      ...(q.level ? { seniority: q.level } : {}),
+    }
+    const [total, jobs] = await Promise.all([
+      db.job.count({ where }),
+      db.job.findMany({
+        where,
+        orderBy: [{ publishedAt: { sort: 'desc', nulls: 'last' } }, { lastSeenAt: 'desc' }],
+        skip: (q.page - 1) * JOBS_PER_PAGE,
+        take: JOBS_PER_PAGE,
+        select: JOB_SELECT,
+      }),
+    ])
+    return { total, jobs }
+  },
+  ['city-jobs-list-v1'],
+  { revalidate: 3600, tags: [CITY_JOBS_CACHE_TAG] }
+)
+
+export type CityJob = Awaited<ReturnType<typeof listJobs>>['jobs'][number]

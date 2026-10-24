@@ -8,6 +8,7 @@ import { contactEmail } from '@/lib/i18n/contact'
 import { countryLabel } from '@/lib/jobs/country-labels'
 import { fill, matchPreviewCopy } from '@/lib/match-preview/copy'
 import { MIN_SOCIAL_PROOF_COUNT } from '@/lib/analytics/social-proof'
+import { percentileLine } from '@/lib/analytics/percentile-copy'
 import { isValidToken } from '@/lib/match-preview/rules'
 import type { PublicOpportunity, PublicResult } from '@/lib/match-preview/result'
 import { getVisitorId, trackOnce } from '@/components/analytics/track-client'
@@ -345,10 +346,10 @@ function Form(props: {
           para empresas e receber a sequência de e-mails. Sem marcar nada,
           vale a regra de sempre (apagado depois do resultado). A opção
           explícita "apagar em 24h" saiu da tela a pedido do operador. */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-0.5 rounded-lg border border-slate-200 p-1.5">
         <OptIn checked={props.marketing} onChange={props.setMarketing} title={c.marketingOptIn} hint={c.marketingOptInHint} />
         <OptIn checked={props.keep} onChange={props.setKeep} title={c.retentionKeep} hint={c.retentionKeepHint} />
-        <a href={`/privacy?lang=${props.lang}`} target="_blank" rel="noopener noreferrer" className="w-fit text-xs text-slate-500 underline decoration-dotted underline-offset-2 hover:text-[#0B63E5]">
+        <a href={`/privacy?lang=${props.lang}`} target="_blank" rel="noopener noreferrer" className="ms-1 mb-0.5 w-fit text-xs text-slate-500 underline decoration-dotted underline-offset-2 hover:text-[#0B63E5]">
           {c.privacyLink}
         </a>
       </div>
@@ -362,13 +363,17 @@ function Form(props: {
   )
 }
 
+/**
+ * Caixa de consentimento compacta: as duas cabem sem alongar o formulário no
+ * celular. Sem borda de cartão; a dica vai em letra menor, na mesma linha
+ * de leitura.
+ */
 function OptIn({ checked, onChange, title, hint }: { checked: boolean; onChange: (v: boolean) => void; title: string; hint: string }) {
   return (
-    <label className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${checked ? 'border-[#0B63E5] bg-blue-50/60' : 'border-slate-200'}`}>
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-1 accent-[#0B63E5]" />
-      <span className="flex flex-col">
-        <span className="text-sm font-semibold text-[#0B192E]">{title}</span>
-        <span className="text-xs text-slate-500">{hint}</span>
+    <label className="flex cursor-pointer gap-2.5 rounded-md px-1 py-1.5 hover:bg-slate-50">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[#0B63E5]" />
+      <span className="text-[13px] leading-snug text-[#0B192E]">
+        {title} <span className="text-[11px] text-slate-500">{hint}</span>
       </span>
     </label>
   )
@@ -443,7 +448,7 @@ function Result({
         </div>
       )}
 
-      <Teaser c={c} result={result} onDiagnosis={onDiagnosis} />
+      <Teaser c={c} lang={lang} result={result} onDiagnosis={onDiagnosis} />
 
       <p className="flex items-start gap-1.5 text-[11px] text-slate-500">
         <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -501,7 +506,7 @@ function formatSalary(o: PublicOpportunity, locale: string): string | null {
   }
 }
 
-function Teaser({ c, result, onDiagnosis }: { c: Copy; result: PublicResult; onDiagnosis: () => void }) {
+function Teaser({ c, lang, result, onDiagnosis }: { c: Copy; lang: Language; result: PublicResult; onDiagnosis: () => void }) {
   const { teaser, ats } = result
   const headline =
     teaser.total === 0 ? c.teaserNone : teaser.total === 1 ? c.teaserOne : fill(c.teaserMany, { n: teaser.total })
@@ -512,7 +517,7 @@ function Teaser({ c, result, onDiagnosis }: { c: Copy; result: PublicResult; onD
         {c.atsScoreLabel}: <span className="text-white">{ats.score}/100</span>
       </p>
       {result.percentile != null && (
-        <p className="mt-1 text-xs text-[#cfdbeb]">{fill(c.percentileLine, { p: result.percentile })}</p>
+        <p className="mt-1 text-xs text-[#cfdbeb]">{percentileLine(lang, result.percentile)}</p>
       )}
       <p className="mt-1.5 text-sm font-bold leading-snug">{headline}</p>
       {teaser.byCategory.length > 0 && (

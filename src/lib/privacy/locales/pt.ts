@@ -43,6 +43,10 @@ export const pt: PrivacyContent = {
       title: "Currículo enviado sem conta (página inicial)",
       body: "Se você envia o currículo pelo formulário da página inicial sem criar conta, recebemos o arquivo (ou o texto colado) e o seu e-mail. Usamos o currículo para identificar seu cargo, sua área e suas competências e compará-los com as vagas abertas, e o e-mail para mandar o link do resultado. Há duas opções, e as duas vêm desmarcadas: guardar o currículo para que empresas possam te encontrar, e receber por e-mail vagas novas e dicas para o currículo (até 3 e-mails em 7 dias, com um link para cancelar em cada um). Sem marcar nenhuma, apagamos tudo em até 24 horas.",
     },
+    {
+      title: "Depoimentos",
+      body: "Se você comprou a análise e quiser, pode enviar um depoimento pela tela do relatório. Ele só é publicado no site depois que você marca a autorização e nós aprovamos, e aparece só com o nome e a cidade que você informou. Você pode pedir para retirar a qualquer momento, e apagar a conta apaga os depoimentos dela.",
+    },
   ],
 
   howWeUseHeading: 'Para que usamos',

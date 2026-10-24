@@ -43,6 +43,10 @@ export const nl: PrivacyContent = {
       title: "Cv verstuurd zonder account (startpagina)",
       body: "Als je je cv via het formulier op de startpagina verstuurt zonder een account aan te maken, ontvangen we het bestand (of de geplakte tekst) en je e-mailadres. We gebruiken het cv om je functie, je vakgebied en je vaardigheden te herkennen en te vergelijken met openstaande vacatures, en het e-mailadres om je de link naar je resultaat te sturen. Er zijn twee opties, standaard allebei uitgevinkt: het cv bewaren zodat bedrijven je kunnen vinden, en nieuwe vacatures en cv-tips per e-mail ontvangen (maximaal 3 e-mails in 7 dagen, elk met een afmeldlink). Vink je niets aan, dan verwijderen we alles binnen 24 uur.",
     },
+    {
+      title: "Ervaringen",
+      body: "Als je de analyse hebt gekocht, kun je vanaf het rapportscherm vrijwillig een ervaring insturen. Die wordt pas op de website gepubliceerd nadat je de toestemming hebt aangevinkt en wij haar hebben goedgekeurd, en verschijnt alleen met de naam en stad die je opgaf. Je kunt op elk moment vragen haar te verwijderen, en je account verwijderen verwijdert ook de ervaringen ervan.",
+    },
   ],
 
   howWeUseHeading: 'Waarvoor we het gebruiken',

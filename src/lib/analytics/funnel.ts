@@ -36,6 +36,11 @@ export const SERVER_EVENTS = [
   'lead_bot',
   // O resultado ficou pronto com ao menos uma oportunidade para mostrar.
   'lead_matched',
+  // E-mails do envio sem conta: o de resultado e os 3 da sequência. `meta.step`
+  // é `result`, `nurture1`, `nurture2` ou `nurture3`. O clique passa por
+  // `/api/public/lead-click`, que grava e redireciona — por isso é do servidor.
+  'lead_email_sent',
+  'lead_email_clicked',
   'signup_done',
   'cv_uploaded',
   'preview_viewed',
@@ -51,6 +56,7 @@ export const FUNNEL_STEPS = [
   { event: 'page_view', label: 'Visitantes' },
   { event: 'lead_submitted', label: 'Currículos na landing' },
   { event: 'lead_matched', label: 'Com oportunidade encontrada' },
+  { event: 'lead_email_clicked', label: 'Voltaram por um e-mail' },
   { event: 'lead_unlock_clicked', label: 'Quiseram ver todas' },
   { event: 'ats_check_done', label: 'Teste ATS grátis' },
   { event: 'signup_done', label: 'Cadastros' },

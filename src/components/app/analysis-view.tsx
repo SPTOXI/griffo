@@ -18,6 +18,7 @@ import {
 import { UploadProgressModal } from './upload-progress-modal'
 import { jobMatchSeverity, type JobMatchSeverity } from '@/lib/analysis/job-match'
 import { useI18n } from '@/context/i18n-context'
+import { TestimonialAsk } from '@/components/testimonials/testimonial-ask'
 import {
   ProfileConflictPrompt,
   wasConflictDismissed,
@@ -95,7 +96,7 @@ interface Resume {
 }
 
 export function AnalysisView() {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const an = t.analysis
   const { activeResumeId, setView, openResume } = useNav()
   const [resume, setResume] = useState<Resume | null>(null)
@@ -1549,6 +1550,9 @@ export function AnalysisView() {
           )}
         </Card>
       )}
+
+      {/* Pedido de depoimento: só a quem comprou (o servidor confere de novo). */}
+      {resume.unlocked && <TestimonialAsk lang={lang} />}
 
       {/* CTA */}
       <Card className="bg-gradient-to-br from-violet-50 to-fuchsia-50 border-violet-200">

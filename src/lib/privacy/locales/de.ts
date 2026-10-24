@@ -43,6 +43,10 @@ export const de: PrivacyContent = {
       title: "Lebenslauf ohne Konto gesendet (Startseite)",
       body: "Wenn Sie Ihren Lebenslauf über das Formular auf der Startseite senden, ohne ein Konto zu erstellen, erhalten wir die Datei (oder den eingefügten Text) und Ihre E-Mail-Adresse. Den Lebenslauf nutzen wir, um Ihre Position, Ihr Fachgebiet und Ihre Kompetenzen zu erkennen und mit offenen Stellen zu vergleichen, die E-Mail-Adresse, um Ihnen den Link zu Ihrem Ergebnis zu senden. Es gibt zwei Optionen, beide standardmäßig nicht ausgewählt: den Lebenslauf speichern, damit Unternehmen Sie finden können, und neue Stellen sowie Tipps für den Lebenslauf per E-Mail erhalten (bis zu 3 E-Mails in 7 Tagen, jede mit einem Abmeldelink). Wenn Sie keine auswählen, löschen wir alles innerhalb von 24 Stunden.",
     },
+    {
+      title: "Erfahrungsberichte",
+      body: "Wenn Sie die Analyse gekauft haben, können Sie auf der Berichtsseite freiwillig einen Erfahrungsbericht senden. Er wird erst veröffentlicht, nachdem Sie die Einwilligung angekreuzt und wir ihn freigegeben haben, und erscheint nur mit dem Namen und der Stadt, die Sie angegeben haben. Sie können jederzeit verlangen, dass wir ihn entfernen; wenn Sie Ihr Konto löschen, werden auch seine Erfahrungsberichte gelöscht.",
+    },
   ],
 
   howWeUseHeading: 'Wofür wir es verwenden',

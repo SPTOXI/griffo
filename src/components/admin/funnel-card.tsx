@@ -8,10 +8,24 @@ import type { FunnelStepSummary } from '@/lib/analytics/funnel'
 
 const PERIODS = [7, 30, 90] as const
 
+interface EmailStat {
+  step: string
+  sent: number
+  clicked: number
+}
+
+const EMAIL_LABEL: Record<string, string> = {
+  result: 'Resultado',
+  nurture1: 'Dia 1 · problema principal',
+  nurture2: 'Dia 3 · vagas novas',
+  nurture3: 'Dia 7 · último lembrete',
+}
+
 export function FunnelCard() {
   const [days, setDays] = useState<number>(30)
   const [steps, setSteps] = useState<FunnelStepSummary[] | null>(null)
   const [error, setError] = useState(false)
+  const [emails, setEmails] = useState<EmailStat[] | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -19,7 +33,11 @@ export function FunnelCard() {
     setError(false)
     internalFetch(`/api/admin/funnel?days=${days}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d) => alive && setSteps(d.steps))
+      .then((d) => {
+        if (!alive) return
+        setSteps(d.steps)
+        setEmails(d.emails ?? null)
+      })
       .catch(() => alive && setError(true))
     return () => {
       alive = false
@@ -65,6 +83,20 @@ export function FunnelCard() {
             </div>
           </div>
         ))}
+        {emails && emails.some((e) => e.sent > 0) && (
+          <div className="pt-3 mt-2 border-t border-slate-100">
+            <p className="text-xs font-semibold text-slate-700 mb-1">E-mails do envio sem conta (enviados → cliques)</p>
+            {emails.map((e) => (
+              <div key={e.step} className="flex justify-between text-xs text-slate-600">
+                <span>{EMAIL_LABEL[e.step] ?? e.step}</span>
+                <span className="font-mono">
+                  {e.sent} → {e.clicked}
+                  {e.sent > 0 && <span className="text-slate-400"> · {Math.round((e.clicked / e.sent) * 100)}%</span>}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
         <p className="text-[10px] text-slate-400 pt-2">
           Eventos novos (teste ATS, cadastro, upload, prévia, preço visto, compra) só existem a partir desta versão.
         </p>

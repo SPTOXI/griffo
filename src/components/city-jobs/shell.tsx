@@ -50,3 +50,17 @@ export function ResumeCta({ ctx }: { ctx: CityJobsContext }) {
     </section>
   )
 }
+
+/** Versão de uma linha da chamada, para ir antes da lista de vagas. */
+export function ResumeCtaCompact({ ctx }: { ctx: CityJobsContext }) {
+  const { c, lang } = ctx
+  return (
+    <Link
+      href={`/ats-check?lang=${lang}`}
+      className="flex flex-col items-start gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-[#0B192E] hover:bg-blue-100 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+    >
+      <span>{c.ctaTitle}</span>
+      <span className="shrink-0 rounded-lg bg-[#0B63E5] px-3 py-1.5 text-xs text-white">{c.ctaFree}</span>
+    </Link>
+  )
+}

@@ -227,3 +227,18 @@ test('e-mails da sequência: descadastro no corpo e no cabeçalho, nos 12 idioma
     }
   }
 })
+
+test('links dos e-mails: clique contado e destino com UTM', async () => {
+  const { leadClickUrl, leadResultUrl, isLeadEmailStep } = await import('./links')
+  assert.equal(leadClickUrl('https://g.w', 'a'.repeat(32), 'nurture2'), `https://g.w/api/public/lead-click?t=${'a'.repeat(32)}&s=nurture2`)
+  assert.match(leadResultUrl('https://g.w', 'b'.repeat(32), 'result'), /\?lead=b+&utm_source=email&utm_medium=lead&utm_campaign=result$/)
+  assert.equal(isLeadEmailStep('nurture4'), false)
+})
+
+test('e-mail de resultado traz o problema revelado quando há', async () => {
+  const { buildLeadEmail } = await import('./email')
+  const m = buildLeadEmail({ to: 'a@b.co', lang: 'pt', resultUrl: 'https://x', matches: 2, recruiterOptIn: false, issue: { title: 'Sem e-mail', why: 'W' } })
+  assert.ok(m.html.includes('Sem e-mail') && m.text.includes('Sem e-mail'))
+  const n = buildLeadEmail({ to: 'a@b.co', lang: 'pt', resultUrl: 'https://x', matches: 2, recruiterOptIn: false })
+  assert.ok(!n.html.includes('Sem e-mail'))
+})

@@ -43,6 +43,10 @@ export const it: PrivacyContent = {
       title: "Curriculum inviato senza account (pagina iniziale)",
       body: "Se invii il curriculum tramite il modulo della pagina iniziale senza creare un account, riceviamo il file (o il testo incollato) e la tua email. Usiamo il curriculum per individuare il tuo ruolo, il tuo settore e le tue competenze e confrontarli con le offerte aperte, e l’email per inviarti il link al risultato. Ci sono due opzioni, entrambe non selezionate per impostazione predefinita: conservare il curriculum perché le aziende possano trovarti, e ricevere via email nuove offerte e consigli per il curriculum (fino a 3 email in 7 giorni, ognuna con un link per annullare l’iscrizione). Se non ne selezioni nessuna, cancelliamo tutto entro 24 ore.",
     },
+    {
+      title: "Testimonianze",
+      body: "Se hai acquistato l’analisi, puoi inviare una testimonianza dalla schermata del report, se vuoi. Viene pubblicata sul sito solo dopo che hai selezionato l’autorizzazione e l’abbiamo approvata, e compare solo con il nome e la città che hai indicato. Puoi chiederne la rimozione in qualsiasi momento, e cancellare l’account cancella le sue testimonianze.",
+    },
   ],
 
   howWeUseHeading: 'A cosa li usiamo',

@@ -43,6 +43,10 @@ export const es: PrivacyContent = {
       title: "Currículum enviado sin cuenta (página de inicio)",
       body: "Si envías tu currículum desde el formulario de la página de inicio sin crear una cuenta, recibimos el archivo (o el texto pegado) y tu correo electrónico. Usamos el currículum para identificar tu cargo, tu área y tus competencias y compararlos con las ofertas abiertas, y el correo para enviarte el enlace del resultado. Hay dos opciones, ambas desmarcadas por defecto: guardar el currículum para que las empresas puedan encontrarte, y recibir por correo ofertas nuevas y consejos para el currículum (hasta 3 correos en 7 días, cada uno con un enlace para darte de baja). Si no marcas ninguna, borramos todo en un plazo de 24 horas.",
     },
+    {
+      title: "Testimonios",
+      body: "Si compraste el análisis, puedes enviar un testimonio desde la pantalla del informe, si quieres. Solo se publica en el sitio después de que marques la autorización y lo aprobemos, y aparece únicamente con el nombre y la ciudad que indicaste. Puedes pedir que lo retiremos en cualquier momento, y borrar la cuenta borra sus testimonios.",
+    },
   ],
 
   howWeUseHeading: 'Para qué lo usamos',

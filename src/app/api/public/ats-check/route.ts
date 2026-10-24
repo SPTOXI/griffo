@@ -13,6 +13,8 @@ import { isLikelyBot } from '@/lib/analytics/funnel'
 import { clientIpFrom } from '@/lib/request-ip'
 import { edgeCountry } from '@/lib/pricing/edge-country'
 import { MAX_RESUME_CHARS } from '@/lib/validation'
+import { percentileBelow } from '@/lib/analytics/social-proof'
+import { loadAtsScoreDistribution } from '@/lib/analytics/social-proof.server'
 
 /**
  * Teste de legibilidade ATS — PÚBLICO, sem login, UM por pessoa a cada 24h.
@@ -131,7 +133,9 @@ export async function POST(req: Request) {
         .catch(() => {})
     }
 
-    return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } })
+    // Comparação com os currículos já testados. Nula sem amostra suficiente.
+    const percentile = percentileBelow(await loadAtsScoreDistribution().catch(() => []), result.score)
+    return NextResponse.json({ ...result, percentile }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (e: any) {
     // Falha nossa não pode consumir o único teste da pessoa.
     await releaseClaim(claimId)

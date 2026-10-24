@@ -24,6 +24,7 @@ import { localMethodLabels } from '@/lib/pricing/payment-methods'
 import type { CountryJobCount } from '@/lib/jobs/open-count.server'
 import { countryLabel } from '@/lib/jobs/country-labels'
 import { CITY_JOBS_COPY } from '@/lib/city-jobs/copy'
+import { TestimonialsSection } from '@/components/testimonials/testimonials-section'
 import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
 import { HiringIndexTeaser } from './hiring-index-teaser'
 import { HeroD } from './hero-d'
@@ -499,6 +500,9 @@ export function Landing({
       </section>
 
       {/* FAQ SECTION */}
+      {/* Depoimentos aprovados no painel; some enquanto não houver ao menos 3. */}
+      <TestimonialsSection lang={lang} />
+
       <section id="faq" className="bg-slate-50 py-16 md:py-24 border-t border-slate-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">

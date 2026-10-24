@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
 import { FUNNEL_STEPS, summarizeFunnel } from '@/lib/analytics/funnel'
+import { LEAD_EMAIL_STEPS } from '@/lib/match-preview/links'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,5 +22,23 @@ export async function GET(req: Request) {
     take: 200_000,
   })
 
-  return NextResponse.json({ days, since: since.toISOString(), steps: summarizeFunnel(rows) })
+  // E-mails do envio sem conta: enviados e clicados por passo, no mesmo período.
+  const emailRows = await db.analyticsEvent.findMany({
+    where: { createdAt: { gte: since }, event: { in: ['lead_email_sent', 'lead_email_clicked'] } },
+    select: { event: true, meta: true },
+    take: 200_000,
+  })
+  const emails = LEAD_EMAIL_STEPS.map((step) => ({ step, sent: 0, clicked: 0 }))
+  for (const r of emailRows) {
+    let step: string | undefined
+    try {
+      step = JSON.parse(r.meta || '{}').step
+    } catch {}
+    const row = emails.find((e) => e.step === step)
+    if (!row) continue
+    if (r.event === 'lead_email_sent') row.sent++
+    else row.clicked++
+  }
+
+  return NextResponse.json({ days, since: since.toISOString(), steps: summarizeFunnel(rows), emails })
 }
