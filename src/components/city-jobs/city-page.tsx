@@ -330,7 +330,7 @@ export async function HubPage({ country }: { country: string }) {
           {ctx.c.remoteHubLink} <span className="font-normal text-slate-500">({fmt(ctx, remote)})</span>
         </Link>
       )}
-      <ResumeCta ctx={ctx} />
+      <ResumeCtaCompact ctx={ctx} />
       <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {cities.map((x) => (
           <li key={x.slug}>
@@ -344,6 +344,7 @@ export async function HubPage({ country }: { country: string }) {
           </li>
         ))}
       </ul>
+      <ResumeCta ctx={ctx} />
     </CityJobsShell>
   )
 }
