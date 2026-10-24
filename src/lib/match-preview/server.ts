@@ -26,6 +26,7 @@ import { MAX_STORED_MATCHES, PROCESSING_TIMEOUT_MS, expiresAtFor, nurtureAt, tea
 import { buildPublicResult, parseStoredMatches, type PublicJobRow, type PublicResult, type StoredMatch } from './result'
 import { buildLeadEmail } from './email'
 import { buildNurtureEmail } from './nurture-email'
+import { leadClickUrl } from './links'
 
 /**
  * O envio de currículo sem conta da landing, do lado do servidor (§2.132).
@@ -183,20 +184,31 @@ async function notifyLead(id: string): Promise<void> {
   try {
     const lead = await db.visitorLead.findUnique({
       where: { id },
-      select: { email: true, lang: true, matchesJson: true, recruiterOptIn: true, marketingOptIn: true, notifiedAt: true },
+      select: {
+        email: true,
+        lang: true,
+        matchesJson: true,
+        recruiterOptIn: true,
+        marketingOptIn: true,
+        notifiedAt: true,
+        atsJson: true,
+        visitorId: true,
+      },
     })
     if (!lead || lead.notifiedAt) return
 
     const message = buildLeadEmail({
       to: lead.email,
       lang: lead.lang,
-      resultUrl: `${getAppUrl()}/?lead=${id}`,
+      resultUrl: leadClickUrl(getAppUrl(), id, 'result'),
       matches: parseStoredMatches(lead.matchesJson).length,
+      issue: revealedIssueFor(lead.atsJson, lead.lang),
       recruiterOptIn: lead.recruiterOptIn,
       marketingOptIn: lead.marketingOptIn,
     })
     await sendEmail(message, { apiKey, from: getDigestFrom(), replyTo: getDigestReplyTo() })
     await db.visitorLead.update({ where: { id }, data: { notifiedAt: new Date() } })
+    await trackServerEvent('lead_email_sent', { visitorId: lead.visitorId, meta: { step: 'result' } })
   } catch (e: any) {
     console.warn('[match-preview] e-mail de resultado não saiu:', e?.message || e)
   }
@@ -218,6 +230,18 @@ const PUBLIC_JOB_SELECT = {
   applicationUrl: true,
   closedAt: true,
 } as const
+
+/** Título e motivo do problema mais grave, no idioma do lead. `null` sem problema. */
+function revealedIssueFor(atsJson: string, langRaw: string): { title: string; why: string } | null {
+  try {
+    const code = teaserFrom(JSON.parse(atsJson)).revealed
+    if (!code) return null
+    const lang: Language = (LANGUAGES as string[]).includes(langRaw) ? (langRaw as Language) : 'en'
+    return ATS_CHECK_COPY[lang].issues[code]
+  } catch {
+    return null
+  }
+}
 
 /** O resultado público, ou `null` quando não existe ou já venceu. */
 export async function loadLeadResult(id: string, now: Date = new Date()): Promise<PublicResult | null> {
@@ -309,7 +333,7 @@ export async function sendDueNurtureEmails(now: Date = new Date()): Promise<{ se
         to: lead.email,
         lang: lead.lang,
         step,
-        resultUrl: `${appUrl}/?lead=${lead.id}`,
+        resultUrl: leadClickUrl(appUrl, lead.id, `nurture${step}`),
         unsubscribeUrl: `${appUrl}/api/public/lead-unsubscribe?t=${lead.id}`,
       }
       let message: ReturnType<typeof buildNurtureEmail> | null = null
@@ -317,8 +341,7 @@ export async function sendDueNurtureEmails(now: Date = new Date()): Promise<{ se
       if (step === 1) {
         const teaser = teaserFrom(JSON.parse(lead.atsJson))
         if (teaser.revealed) {
-          const lang: Language = (LANGUAGES as string[]).includes(lead.lang) ? (lead.lang as Language) : 'en'
-          message = buildNurtureEmail({ ...base, issue: ATS_CHECK_COPY[lang].issues[teaser.revealed], moreIssues: teaser.total - 1 })
+          message = buildNurtureEmail({ ...base, issue: revealedIssueFor(lead.atsJson, lead.lang), moreIssues: teaser.total - 1 })
         }
       } else if (step === 2) {
         if (lead.profileJson && !lead.profileInsufficient) {
@@ -339,6 +362,7 @@ export async function sendDueNurtureEmails(now: Date = new Date()): Promise<{ se
 
       if (message) {
         await sendEmail(message, { apiKey, from: getDigestFrom(), replyTo: getDigestReplyTo() })
+        await trackServerEvent('lead_email_sent', { visitorId: lead.visitorId, meta: { step: `nurture${step}` } })
         sent++
       } else {
         skipped++
