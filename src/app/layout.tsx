@@ -18,6 +18,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/context/i18n-context";
 import { PageViewTracker } from "@/components/analytics/page-view-tracker";
+import { WebMcpTools } from "@/components/webmcp/webmcp-tools";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -172,6 +173,7 @@ export default function RootLayout({
       >
         <I18nProvider>
           <PageViewTracker />
+          <WebMcpTools />
           {children}
           <Toaster position="top-center" richColors closeButton />
         </I18nProvider>
