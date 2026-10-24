@@ -3,8 +3,15 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { jsonLd } from '@/lib/json-ld'
 import { categoryLabel, type JobCategorySlug } from '@/lib/jobs/category-labels'
-import { MIN_JOBS_TO_INDEX, areaFromUrl, areaToUrl } from '@/lib/city-jobs/city-index'
-import { findCity, listCityJobs, loadCityIndex } from '@/lib/city-jobs/city-index.server'
+import { MIN_JOBS_TO_INDEX, areaFromUrl, areaToUrl, type CityEntry } from '@/lib/city-jobs/city-index'
+import {
+  JOBS_PER_PAGE,
+  LEVEL_FILTERS,
+  WORK_FILTERS,
+  findCity,
+  listJobs,
+  loadCityIndex,
+} from '@/lib/city-jobs/city-index.server'
 import { cityJobsContext, type CityJobsContext } from '@/lib/city-jobs/context'
 import { fill } from '@/lib/city-jobs/copy'
 import { JobList } from './job-list'
@@ -12,61 +19,156 @@ import { CityJobsShell, ResumeCta } from './shell'
 
 const BASE = 'https://griffo.work'
 
+/** Slug reservado da página de vagas remotas do país. Nunca é cidade (`cityName` o descarta). */
+export const REMOTE_SLUG = 'remote'
+
+export type SearchParams = Promise<Record<string, string | string[] | undefined>>
+
+interface Filters {
+  work: string | null
+  level: string | null
+  page: number
+}
+
+/** Filtros da URL, só com valores conhecidos. O resto é ignorado. */
+function parseFilters(sp: Record<string, string | string[] | undefined>): Filters {
+  const one = (k: string) => (typeof sp[k] === 'string' ? (sp[k] as string) : null)
+  const work = one('work')
+  const level = one('level')
+  const page = Math.max(1, Math.min(50, parseInt(one('page') ?? '1', 10) || 1))
+  return {
+    work: work && (WORK_FILTERS as readonly string[]).includes(work) ? work : null,
+    level: level && (LEVEL_FILTERS as readonly string[]).includes(level) ? level : null,
+    page,
+  }
+}
+
+interface Resolved {
+  ctx: CityJobsContext
+  /** `null` na página de vagas remotas do país. */
+  city: CityEntry | null
+  area: JobCategorySlug | null
+}
+
 /** Resolve país, cidade e área da URL. `null` quando a combinação não tem vaga: vira 404. */
-async function resolve(countrySlug: string, citySlug: string, areaParam?: string) {
+async function resolve(countrySlug: string, citySlug: string, areaParam?: string): Promise<Resolved | null> {
   const ctx = cityJobsContext(countrySlug)
   if (!ctx) return null
+  if (citySlug === REMOTE_SLUG && areaParam === undefined) return { ctx, city: null, area: null }
   const city = await findCity(ctx.code, citySlug)
   if (!city) return null
-  if (areaParam === undefined) return { ctx, city, area: null, count: city.total }
+  if (areaParam === undefined) return { ctx, city, area: null }
   const area = areaFromUrl(areaParam)
   const count = area ? city.areas.find((a) => a.area === area)?.count ?? 0 : 0
   if (!area || count === 0) return null
-  return { ctx, city, area, count }
+  return { ctx, city, area }
 }
 
-const heading = (ctx: CityJobsContext, cityName: string, area: JobCategorySlug | null) =>
-  area
-    ? fill(ctx.c.areaTitle, { area: categoryLabel(area, ctx.lang), city: cityName })
-    : fill(ctx.c.cityTitle, { city: cityName })
+function query(r: Resolved, f: Filters) {
+  return {
+    country: r.ctx.code,
+    rawCities: r.city ? r.city.rawCities : null,
+    area: r.area,
+    // A página remota é o filtro "remoto" fixo.
+    work: r.city ? f.work : 'remote',
+    level: f.level,
+    page: f.page,
+  }
+}
+
+const heading = (r: Resolved) => {
+  const { ctx, city, area } = r
+  if (!city) return fill(ctx.c.remoteTitle, { country: ctx.countryName })
+  return area
+    ? fill(ctx.c.areaTitle, { area: categoryLabel(area, ctx.lang), city: city.name })
+    : fill(ctx.c.cityTitle, { city: city.name })
+}
 
 const pathFor = (ctx: CityJobsContext, citySlug: string, area: JobCategorySlug | null) =>
   `/${ctx.slug}/jobs/${citySlug}${area ? `/${areaToUrl(area)}` : ''}`
 
+const basePath = (r: Resolved) => pathFor(r.ctx, r.city ? r.city.slug : REMOTE_SLUG, r.area)
+
+/** Link da mesma página com filtros trocados. Mudar filtro volta à página 1. */
+function hrefWith(r: Resolved, f: Filters, change: Partial<Filters>): string {
+  const next = { ...f, ...(change.page === undefined ? { page: 1 } : {}), ...change }
+  const params = new URLSearchParams()
+  if (next.work && r.city) params.set('work', next.work)
+  if (next.level) params.set('level', next.level)
+  if (next.page > 1) params.set('page', String(next.page))
+  const qs = params.toString()
+  return `${basePath(r)}${qs ? `?${qs}` : ''}`
+}
+
 const fmt = (ctx: CityJobsContext, n: number) => n.toLocaleString(ctx.locale)
 
-export async function cityPageMetadata(country: string, city: string, area?: string): Promise<Metadata> {
+export async function cityPageMetadata(country: string, city: string, area: string | undefined, sp: SearchParams): Promise<Metadata> {
   const r = await resolve(country, city, area)
   if (!r) return { title: 'GriffoWork', robots: { index: false } }
+  const f = parseFilters(await sp)
   const { ctx } = r
-  const count = fmt(ctx, r.count)
-  const title = `${heading(ctx, r.city.name, r.area)} — ${fill(ctx.c.metaTitleSuffix, { count })} | GriffoWork`
-  const description = fill(ctx.c.metaDescription, { count, city: r.city.name })
-  const url = `${BASE}${pathFor(ctx, r.city.slug, r.area)}`
+  const { total } = await listJobs({ ...query(r, f), page: 1 })
+  const count = fmt(ctx, total)
+  const title = `${heading(r)} — ${fill(ctx.c.metaTitleSuffix, { count })} | GriffoWork`
+  const description = r.city
+    ? fill(ctx.c.metaDescription, { count, city: r.city.name })
+    : fill(ctx.c.remoteMetaDescription, { count, country: ctx.countryName })
+  const url = `${BASE}${basePath(r)}`
+  // Variante filtrada ou paginada: o Google segue os links, mas indexa só a página-base.
+  const variant = f.work !== null || f.level !== null || f.page > 1
   return {
     title,
     description,
     alternates: { canonical: url },
-    robots: r.count < MIN_JOBS_TO_INDEX ? { index: false, follow: true } : undefined,
+    robots: variant || total < MIN_JOBS_TO_INDEX ? { index: false, follow: true } : undefined,
     openGraph: { title, description, url, siteName: 'GriffoWork', type: 'website', locale: ctx.locale.replace('-', '_') },
   }
 }
 
-export async function CityPage({ country, city: citySlug, area: areaParam }: { country: string; city: string; area?: string }) {
+function Chips({ label, items }: { label: string; items: { key: string; text: string; href: string; active: boolean }[] }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 me-1">{label}</span>
+      {items.map((i) => (
+        <Link
+          key={i.key}
+          href={i.href}
+          rel="nofollow"
+          className={`rounded-full border px-3 py-1 text-xs ${
+            i.active ? 'border-[#0B63E5] bg-[#0B63E5] text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0B63E5]'
+          }`}
+        >
+          {i.text}
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+export async function CityPage({ country, city: citySlug, area: areaParam, searchParams }: { country: string; city: string; area?: string; searchParams: SearchParams }) {
   const r = await resolve(country, citySlug, areaParam)
   if (!r) notFound()
-  const { ctx, city, area, count } = r
+  const f = parseFilters(await searchParams)
+  const { ctx, city, area } = r
   const { c, lang } = ctx
-  const jobs = await listCityJobs(ctx.code, city, area)
-  const title = heading(ctx, city.name, area)
+  const { total, jobs } = await listJobs(query(r, f))
+  // Página remota do país sem nenhuma vaga remota: não há o que mostrar.
+  if (!city && total === 0 && f.page === 1 && !f.level) notFound()
+  const pages = Math.max(1, Math.ceil(total / JOBS_PER_PAGE))
+  const title = heading(r)
 
   const breadcrumb = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: c.breadcrumbRoot, item: `${BASE}/${ctx.slug}/jobs` },
-      { '@type': 'ListItem', position: 2, name: city.name, item: `${BASE}${pathFor(ctx, city.slug, null)}` },
-      ...(area
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: city ? city.name : c.remoteHubLink,
+        item: `${BASE}${pathFor(ctx, city ? city.slug : REMOTE_SLUG, null)}`,
+      },
+      ...(area && city
         ? [{ '@type': 'ListItem', position: 3, name: categoryLabel(area, lang), item: `${BASE}${pathFor(ctx, city.slug, area)}` }]
         : []),
     ],
@@ -79,26 +181,28 @@ export async function CityPage({ country, city: citySlug, area: areaParam }: { c
       <nav className="text-sm text-slate-500">
         <Link href={`/${ctx.slug}/jobs`} className="hover:text-slate-800">{c.breadcrumbRoot}</Link>
         {' › '}
-        {area ? (
+        {area && city ? (
           <>
             <Link href={pathFor(ctx, city.slug, null)} className="hover:text-slate-800">{city.name}</Link>
             {' › '}
             {categoryLabel(area, lang)}
           </>
-        ) : (
+        ) : city ? (
           city.name
+        ) : (
+          c.remoteHubLink
         )}
       </nav>
 
       <div className="space-y-2">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0B192E]">{title}</h1>
         <p className="text-slate-600">
-          {count === 1 ? c.countLineOne : fill(c.countLine, { count: fmt(ctx, count) })}
-          {count > jobs.length && ` ${fill(c.showingRecent, { n: jobs.length })}`}
+          {total === 1 ? c.countLineOne : fill(c.countLine, { count: fmt(ctx, total) })}
+          {pages > 1 && ` ${fill(c.page, { n: f.page })} / ${pages}.`}
         </p>
       </div>
 
-      {!area && city.areas.length > 0 && (
+      {city && !area && city.areas.length > 0 && (
         <section className="space-y-2">
           <h2 className="font-bold text-[#0B192E]">{c.byArea}</h2>
           <div className="flex flex-wrap gap-2">
@@ -115,11 +219,50 @@ export async function CityPage({ country, city: citySlug, area: areaParam }: { c
         </section>
       )}
 
+      <section className="space-y-2">
+        {city && (
+          <Chips
+            label={c.filterWork}
+            items={[
+              { key: 'all', text: c.filterAll, href: hrefWith(r, f, { work: null }), active: f.work === null },
+              ...WORK_FILTERS.map((w) => ({ key: w, text: c.remote[w], href: hrefWith(r, f, { work: w }), active: f.work === w })),
+            ]}
+          />
+        )}
+        <Chips
+          label={c.filterLevel}
+          items={[
+            { key: 'all', text: c.filterAll, href: hrefWith(r, f, { level: null }), active: f.level === null },
+            ...LEVEL_FILTERS.map((l) => ({ key: l, text: c.seniority[l], href: hrefWith(r, f, { level: l }), active: f.level === l })),
+          ]}
+        />
+      </section>
+
       <ResumeCta ctx={ctx} />
 
-      <JobList ctx={ctx} jobs={jobs} />
+      {jobs.length > 0 && <JobList ctx={ctx} jobs={jobs} />}
 
-      {area && (
+      {pages > 1 && (
+        <nav className="flex items-center justify-between gap-3 text-sm">
+          {f.page > 1 ? (
+            <Link href={hrefWith(r, f, { page: f.page - 1 })} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-800 hover:bg-slate-50">
+              ← {c.prev}
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="text-slate-500">{fill(c.page, { n: f.page })} / {pages}</span>
+          {f.page < pages ? (
+            <Link href={hrefWith(r, f, { page: f.page + 1 })} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-800 hover:bg-slate-50">
+              {c.next} →
+            </Link>
+          ) : (
+            <span />
+          )}
+        </nav>
+      )}
+
+      {area && city && (
         <p className="text-sm">
           <Link href={pathFor(ctx, city.slug, null)} className="font-semibold text-[#0B63E5] hover:underline">
             {fill(c.seeAllInCity, { city: city.name })}
@@ -144,13 +287,20 @@ export async function hubMetadata(country: string): Promise<Metadata> {
   }
 }
 
+/** Quantas vagas remotas abertas o país tem (para o link do hub e o sitemap). */
+export async function remoteJobsCount(countryCode: string): Promise<number> {
+  const { total } = await listJobs({ country: countryCode, rawCities: null, area: null, work: 'remote', level: null, page: 1 })
+  return total
+}
+
 export async function HubPage({ country }: { country: string }) {
   const ctx = cityJobsContext(country)
   if (!ctx) notFound()
-  const cities = (await loadCityIndex(ctx.code)).filter((x) => x.total >= MIN_JOBS_TO_INDEX)
-  // País sem nenhuma cidade com vagas suficientes: página vazia não serve a
-  // ninguém, e 404 quebraria o link da home. Vai para a página do país.
-  if (cities.length === 0) redirect(`/${ctx.slug}`)
+  const [index, remote] = await Promise.all([loadCityIndex(ctx.code), remoteJobsCount(ctx.code)])
+  const cities = index.filter((x) => x.total >= MIN_JOBS_TO_INDEX)
+  // País sem nenhuma cidade com vagas suficientes nem vaga remota: página vazia
+  // não serve a ninguém, e 404 quebraria o link da home. Vai para a página do país.
+  if (cities.length === 0 && remote === 0) redirect(`/${ctx.slug}`)
   const total = cities.reduce((s, x) => s + x.total, 0)
   return (
     <CityJobsShell ctx={ctx}>
@@ -160,6 +310,14 @@ export async function HubPage({ country }: { country: string }) {
         </h1>
         <p className="text-slate-600">{fill(ctx.c.hubLead, { count: fmt(ctx, total), n: fmt(ctx, cities.length) })}</p>
       </div>
+      {remote > 0 && (
+        <Link
+          href={pathFor(ctx, REMOTE_SLUG, null)}
+          className="flex w-fit items-center gap-2 rounded-full border border-[#0B63E5] bg-blue-50 px-4 py-2 text-sm font-semibold text-[#0B63E5] hover:bg-blue-100"
+        >
+          {ctx.c.remoteHubLink} <span className="font-normal text-slate-500">({fmt(ctx, remote)})</span>
+        </Link>
+      )}
       <ResumeCta ctx={ctx} />
       <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {cities.map((x) => (

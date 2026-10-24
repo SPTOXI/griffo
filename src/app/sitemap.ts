@@ -170,11 +170,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // `submit-indexnow.ts` roda este arquivo fora do Next — lá a falha cai no
   // `catch` em vez de derrubar o script.
   try {
-    const { loadCityIndex } = await import('@/lib/city-jobs/city-index.server')
+    const { loadCityIndex, listJobs } = await import('@/lib/city-jobs/city-index.server')
     for (const slug of CITY_JOBS_COUNTRY_SLUGS) {
-      const cities = (await loadCityIndex(slug.toUpperCase())).filter((c) => c.total >= MIN_JOBS_TO_INDEX)
-      if (cities.length === 0) continue
+      const code = slug.toUpperCase()
+      const cities = (await loadCityIndex(code)).filter((c) => c.total >= MIN_JOBS_TO_INDEX)
+      const remote = (await listJobs({ country: code, rawCities: null, area: null, work: 'remote', level: null, page: 1 })).total
+      if (cities.length === 0 && remote < MIN_JOBS_TO_INDEX) continue
       routes.push({ url: `${baseUrl}/${slug}/jobs`, lastModified, changeFrequency: 'daily', priority: 0.8 })
+      if (remote >= MIN_JOBS_TO_INDEX) {
+        routes.push({ url: `${baseUrl}/${slug}/jobs/remote`, lastModified, changeFrequency: 'daily', priority: 0.7 })
+      }
       for (const c of cities) {
         const city = `${baseUrl}/${slug}/jobs/${encodeURIComponent(c.slug)}`
         routes.push({ url: city, lastModified, changeFrequency: 'daily', priority: 0.7 })
