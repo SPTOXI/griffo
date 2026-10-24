@@ -327,14 +327,26 @@ function Form(props: {
         <span className="text-xs font-normal text-slate-500">{c.emailHint}</span>
       </label>
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-semibold text-[#0B192E]">{c.retentionTitle}</legend>
-        <RetentionOption checked={!props.keep} onChange={() => props.setKeep(false)} title={c.retentionDelete} hint={c.retentionDeleteHint} />
-        <RetentionOption checked={props.keep} onChange={() => props.setKeep(true)} title={c.retentionKeep} hint={c.retentionKeepHint} />
+      {/* Guardar o currículo é opt-in: sem marcar, vale a regra de sempre
+          (apagado depois do resultado). A opção explícita "apagar em 24h"
+          saiu da tela a pedido do operador. */}
+      <div className="flex flex-col gap-2">
+        <label className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${props.keep ? 'border-[#0B63E5] bg-blue-50/60' : 'border-slate-200'}`}>
+          <input
+            type="checkbox"
+            checked={props.keep}
+            onChange={(e) => props.setKeep(e.target.checked)}
+            className="mt-1 accent-[#0B63E5]"
+          />
+          <span className="flex flex-col">
+            <span className="text-sm font-semibold text-[#0B192E]">{c.retentionKeep}</span>
+            <span className="text-xs text-slate-500">{c.retentionKeepHint}</span>
+          </span>
+        </label>
         <a href={`/privacy?lang=${props.lang}`} target="_blank" rel="noopener noreferrer" className="w-fit text-xs text-slate-500 underline decoration-dotted underline-offset-2 hover:text-[#0B63E5]">
           {c.privacyLink}
         </a>
-      </fieldset>
+      </div>
 
       {props.error && <p className="text-sm text-red-600" role="alert">{props.error}</p>}
 
@@ -342,18 +354,6 @@ function Form(props: {
         {c.submitCta} <ArrowRight className="ms-2 h-5 w-5 rtl:rotate-180" />
       </Button>
     </form>
-  )
-}
-
-function RetentionOption({ checked, onChange, title, hint }: { checked: boolean; onChange: () => void; title: string; hint: string }) {
-  return (
-    <label className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${checked ? 'border-[#0B63E5] bg-blue-50/60' : 'border-slate-200'}`}>
-      <input type="radio" name="retention" checked={checked} onChange={onChange} className="mt-1 accent-[#0B63E5]" />
-      <span className="flex flex-col">
-        <span className="text-sm font-semibold text-[#0B192E]">{title}</span>
-        <span className="text-xs text-slate-500">{hint}</span>
-      </span>
-    </label>
   )
 }
 

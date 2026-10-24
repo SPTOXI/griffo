@@ -23,6 +23,8 @@ import { priceFor } from '@/lib/pricing/catalog'
 import { localMethodLabels } from '@/lib/pricing/payment-methods'
 import type { CountryJobCount } from '@/lib/jobs/open-count.server'
 import { countryLabel } from '@/lib/jobs/country-labels'
+import { CITY_JOBS_COPY } from '@/lib/city-jobs/copy'
+import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
 import { HiringIndexTeaser } from './hiring-index-teaser'
 import { HeroD } from './hero-d'
 import { MatchHero } from './match-hero'
@@ -59,6 +61,9 @@ export function Landing({
   const lang = langManuallySet && contextLang ? contextLang : forcedLang || contextLang || 'pt'
   const t = DICTIONARIES[lang] || contextT || DICTIONARIES.pt
   const effectiveCountry = countryCode || contextCountry || 'BR'
+  const jobsCountrySlug = SUPPORTED_COUNTRY_SLUGS.includes(effectiveCountry.toLowerCase()) && effectiveCountry.toLowerCase() !== 'global'
+    ? effectiveCountry.toLowerCase()
+    : null
   // O país da borda ou rota serve para ESCOLHER A MOEDA que a landing exibe, e para
   // nada além disso. Quem decide o que será cobrado é o país do meio de
   // pagamento, resolvido no servidor — ver lib/pricing/resolve.ts.
@@ -263,17 +268,25 @@ export function Landing({
               </h2>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-              {shownCountries.map(({ country, count }) => (
-                <div
-                  key={country}
-                  className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3.5 text-center"
-                >
-                  <p className="text-lg font-bold text-[#0B192E] tabular-nums">
-                    {numberFormat.format(count)}
-                  </p>
-                  <p className="text-xs text-slate-600 mt-0.5">{countryLabel(country, lang)}</p>
-                </div>
-              ))}
+              {shownCountries.map(({ country, count }) => {
+                const body = (
+                  <>
+                    <p className="text-lg font-bold text-[#0B192E] tabular-nums">
+                      {numberFormat.format(count)}
+                    </p>
+                    <p className="text-xs text-slate-600 mt-0.5">{countryLabel(country, lang)}</p>
+                  </>
+                )
+                const box = 'block rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3.5 text-center'
+                // País com rota própria leva às vagas dele por cidade.
+                return SUPPORTED_COUNTRY_SLUGS.includes(country.toLowerCase()) ? (
+                  <a key={country} href={`/${country.toLowerCase()}/jobs`} className={`${box} hover:border-[#0B63E5] transition-colors`}>
+                    {body}
+                  </a>
+                ) : (
+                  <div key={country} className={box}>{body}</div>
+                )
+              })}
             </div>
             {otherCountries.length > 0 && (
               <p className="text-center text-sm text-slate-500 mt-6">
@@ -577,10 +590,10 @@ export function Landing({
                   `/enterprise`, que ainda não tem nenhum outro backlink
                   interno além do sitemap. */}
               <li><a href="/enterprise" className="hover:text-[#0B63E5] transition-colors">{t.footer.forCompanies}</a></li>
-              {/* `/vagas` só existe em português (vagas do Brasil): o link
-                  aparece só na tela em português, sem chave de tradução. */}
-              {lang === 'pt' && (
-                <li><a href="/vagas" className="hover:text-[#0B63E5] transition-colors">Vagas por cidade</a></li>
+              {/* Vagas por cidade do país da página, no idioma da tela. Some
+                  só quando o país não tem rota própria (`/global`). */}
+              {jobsCountrySlug && (
+                <li><a href={`/${jobsCountrySlug}/jobs`} className="hover:text-[#0B63E5] transition-colors">{CITY_JOBS_COPY[lang as Language]?.navLabel ?? CITY_JOBS_COPY.en.navLabel}</a></li>
               )}
             </ul>
           </div>

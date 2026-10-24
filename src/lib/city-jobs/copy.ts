@@ -1,0 +1,355 @@
+import type { Language } from '@/lib/i18n/types'
+
+/**
+ * Textos das páginas de vagas por cidade, nos 12 idiomas do produto.
+ *
+ * O idioma de cada página é o do mercado do país da rota (`jobLanguage`), o
+ * mesmo critério de `/[country]`: `/de/jobs/berlin` sai em alemão. Mesma
+ * ressalva do resto da camada de i18n: as traduções além de pt/en não
+ * passaram por falante nativo.
+ *
+ * Marcadores: {city}, {area}, {country}, {count}, {n}.
+ */
+export interface CityJobsCopy {
+  navLabel: string
+  breadcrumbRoot: string
+  hubTitle: string
+  hubLead: string
+  hubMetaTitle: string
+  hubMetaDescription: string
+  cityTitle: string
+  areaTitle: string
+  countLine: string
+  countLineOne: string
+  showingRecent: string
+  metaTitleSuffix: string
+  metaDescription: string
+  byArea: string
+  seeAllInCity: string
+  seeJob: string
+  ctaTitle: string
+  ctaText: string
+  ctaFree: string
+  ctaFull: string
+  privacy: string
+  seniority: Record<string, string>
+  remote: Record<string, string>
+}
+
+const pt: CityJobsCopy = {
+  navLabel: 'Vagas por cidade',
+  breadcrumbRoot: 'Vagas',
+  hubTitle: 'Vagas de emprego por cidade — {country}',
+  hubLead: '{count} vagas abertas em {n} cidades, reunidas de várias fontes e atualizadas todo dia.',
+  hubMetaTitle: 'Vagas de emprego por cidade — {country} | GriffoWork',
+  hubMetaDescription: 'Vagas abertas nas principais cidades — {country}, por área, atualizadas todo dia. Teste grátis se o seu currículo passa no ATS das empresas.',
+  cityTitle: 'Vagas de emprego em {city}',
+  areaTitle: 'Vagas de {area} em {city}',
+  countLine: '{count} vagas abertas, reunidas de várias fontes e atualizadas todo dia.',
+  countLineOne: '1 vaga aberta, reunida de várias fontes e atualizada todo dia.',
+  showingRecent: 'Mostrando as {n} mais recentes.',
+  metaTitleSuffix: '{count} abertas',
+  metaDescription: '{count} vagas abertas em {city}, atualizadas todo dia. Veja as vagas e teste grátis se o seu currículo passa no ATS das empresas.',
+  byArea: 'Por área',
+  seeAllInCity: 'Ver todas as vagas em {city}',
+  seeJob: 'Ver vaga',
+  ctaTitle: 'Antes de se candidatar: o sistema da empresa consegue ler seu currículo?',
+  ctaText: 'A maioria das empresas filtra currículos com um ATS antes de alguém ler. Teste grátis, sem cadastro, como o seu currículo aparece para esse sistema — e depois veja a nota dele em 8 dimensões.',
+  ctaFree: 'Testar meu currículo grátis',
+  ctaFull: 'Análise completa do currículo',
+  privacy: 'Privacidade',
+  seniority: { intern: 'Estágio', junior: 'Júnior', mid: 'Pleno', senior: 'Sênior', lead: 'Liderança', principal: 'Especialista', director: 'Diretoria', executive: 'Executivo' },
+  remote: { remote: 'Remoto', hybrid: 'Híbrido', onsite: 'Presencial' },
+}
+
+const en: CityJobsCopy = {
+  navLabel: 'Jobs by city',
+  breadcrumbRoot: 'Jobs',
+  hubTitle: 'Jobs by city — {country}',
+  hubLead: '{count} open jobs in {n} cities, gathered from several sources and updated daily.',
+  hubMetaTitle: 'Jobs by city — {country} | GriffoWork',
+  hubMetaDescription: 'Open jobs in the main cities of {country}, by field, updated daily. Check for free whether your resume gets through employers’ ATS.',
+  cityTitle: 'Jobs in {city}',
+  areaTitle: '{area} jobs in {city}',
+  countLine: '{count} open jobs, gathered from several sources and updated daily.',
+  countLineOne: '1 open job, gathered from several sources and updated daily.',
+  showingRecent: 'Showing the {n} most recent.',
+  metaTitleSuffix: '{count} open',
+  metaDescription: '{count} open jobs in {city}, updated daily. Browse them and check for free whether your resume gets through employers’ ATS.',
+  byArea: 'By field',
+  seeAllInCity: 'See all jobs in {city}',
+  seeJob: 'View job',
+  ctaTitle: 'Before you apply: can the employer’s system read your resume?',
+  ctaText: 'Most employers screen resumes with an ATS before anyone reads them. Check for free, no sign-up, how your resume looks to that system — then see its score across 8 dimensions.',
+  ctaFree: 'Check my resume for free',
+  ctaFull: 'Full resume analysis',
+  privacy: 'Privacy',
+  seniority: { intern: 'Internship', junior: 'Junior', mid: 'Mid-level', senior: 'Senior', lead: 'Lead', principal: 'Principal', director: 'Director', executive: 'Executive' },
+  remote: { remote: 'Remote', hybrid: 'Hybrid', onsite: 'On-site' },
+}
+
+const es: CityJobsCopy = {
+  navLabel: 'Empleos por ciudad',
+  breadcrumbRoot: 'Empleos',
+  hubTitle: 'Empleos por ciudad — {country}',
+  hubLead: '{count} ofertas abiertas en {n} ciudades, reunidas de varias fuentes y actualizadas cada día.',
+  hubMetaTitle: 'Empleos por ciudad — {country} | GriffoWork',
+  hubMetaDescription: 'Ofertas abiertas en las principales ciudades de {country}, por área, actualizadas cada día. Comprueba gratis si tu currículum pasa el ATS de las empresas.',
+  cityTitle: 'Empleos en {city}',
+  areaTitle: 'Empleos de {area} en {city}',
+  countLine: '{count} ofertas abiertas, reunidas de varias fuentes y actualizadas cada día.',
+  countLineOne: '1 oferta abierta, reunida de varias fuentes y actualizada cada día.',
+  showingRecent: 'Mostrando las {n} más recientes.',
+  metaTitleSuffix: '{count} abiertas',
+  metaDescription: '{count} ofertas abiertas en {city}, actualizadas cada día. Míralas y comprueba gratis si tu currículum pasa el ATS de las empresas.',
+  byArea: 'Por área',
+  seeAllInCity: 'Ver todos los empleos en {city}',
+  seeJob: 'Ver oferta',
+  ctaTitle: 'Antes de postularte: ¿el sistema de la empresa puede leer tu currículum?',
+  ctaText: 'La mayoría de las empresas filtra currículums con un ATS antes de que alguien los lea. Comprueba gratis, sin registro, cómo ve ese sistema tu currículum, y luego mira su nota en 8 dimensiones.',
+  ctaFree: 'Probar mi currículum gratis',
+  ctaFull: 'Análisis completo del currículum',
+  privacy: 'Privacidad',
+  seniority: { intern: 'Prácticas', junior: 'Junior', mid: 'Semi senior', senior: 'Senior', lead: 'Líder', principal: 'Especialista', director: 'Dirección', executive: 'Ejecutivo' },
+  remote: { remote: 'Remoto', hybrid: 'Híbrido', onsite: 'Presencial' },
+}
+
+const de: CityJobsCopy = {
+  navLabel: 'Jobs nach Stadt',
+  breadcrumbRoot: 'Jobs',
+  hubTitle: 'Jobs nach Stadt — {country}',
+  hubLead: '{count} offene Stellen in {n} Städten, aus mehreren Quellen gesammelt und täglich aktualisiert.',
+  hubMetaTitle: 'Jobs nach Stadt — {country} | GriffoWork',
+  hubMetaDescription: 'Offene Stellen in den wichtigsten Städten ({country}), nach Bereich, täglich aktualisiert. Prüfen Sie kostenlos, ob Ihr Lebenslauf durch das ATS der Arbeitgeber kommt.',
+  cityTitle: 'Jobs in {city}',
+  areaTitle: 'Jobs im Bereich {area} in {city}',
+  countLine: '{count} offene Stellen, aus mehreren Quellen gesammelt und täglich aktualisiert.',
+  countLineOne: '1 offene Stelle, aus mehreren Quellen gesammelt und täglich aktualisiert.',
+  showingRecent: 'Die {n} neuesten werden angezeigt.',
+  metaTitleSuffix: '{count} offen',
+  metaDescription: '{count} offene Stellen in {city}, täglich aktualisiert. Sehen Sie sie an und prüfen Sie kostenlos, ob Ihr Lebenslauf durch das ATS der Arbeitgeber kommt.',
+  byArea: 'Nach Bereich',
+  seeAllInCity: 'Alle Jobs in {city} ansehen',
+  seeJob: 'Stelle ansehen',
+  ctaTitle: 'Vor der Bewerbung: Kann das System des Arbeitgebers Ihren Lebenslauf lesen?',
+  ctaText: 'Die meisten Arbeitgeber filtern Lebensläufe mit einem ATS, bevor ein Mensch sie liest. Prüfen Sie kostenlos und ohne Anmeldung, wie Ihr Lebenslauf für dieses System aussieht — und sehen Sie danach seine Bewertung in 8 Dimensionen.',
+  ctaFree: 'Lebenslauf kostenlos prüfen',
+  ctaFull: 'Vollständige Lebenslauf-Analyse',
+  privacy: 'Datenschutz',
+  seniority: { intern: 'Praktikum', junior: 'Junior', mid: 'Professional', senior: 'Senior', lead: 'Teamleitung', principal: 'Experte', director: 'Direktor', executive: 'Führungskraft' },
+  remote: { remote: 'Remote', hybrid: 'Hybrid', onsite: 'Vor Ort' },
+}
+
+const fr: CityJobsCopy = {
+  navLabel: 'Offres par ville',
+  breadcrumbRoot: 'Offres',
+  hubTitle: 'Offres d’emploi par ville — {country}',
+  hubLead: '{count} offres ouvertes dans {n} villes, réunies depuis plusieurs sources et mises à jour chaque jour.',
+  hubMetaTitle: 'Offres d’emploi par ville — {country} | GriffoWork',
+  hubMetaDescription: 'Offres ouvertes dans les principales villes ({country}), par domaine, mises à jour chaque jour. Vérifiez gratuitement si votre CV passe l’ATS des employeurs.',
+  cityTitle: 'Offres d’emploi à {city}',
+  areaTitle: 'Offres en {area} à {city}',
+  countLine: '{count} offres ouvertes, réunies depuis plusieurs sources et mises à jour chaque jour.',
+  countLineOne: '1 offre ouverte, réunie depuis plusieurs sources et mise à jour chaque jour.',
+  showingRecent: 'Affichage des {n} plus récentes.',
+  metaTitleSuffix: '{count} ouvertes',
+  metaDescription: '{count} offres ouvertes à {city}, mises à jour chaque jour. Consultez-les et vérifiez gratuitement si votre CV passe l’ATS des employeurs.',
+  byArea: 'Par domaine',
+  seeAllInCity: 'Voir toutes les offres à {city}',
+  seeJob: 'Voir l’offre',
+  ctaTitle: 'Avant de postuler : le système de l’employeur peut-il lire votre CV ?',
+  ctaText: 'La plupart des employeurs filtrent les CV avec un ATS avant qu’un humain ne les lise. Vérifiez gratuitement, sans inscription, comment ce système voit votre CV — puis découvrez sa note sur 8 dimensions.',
+  ctaFree: 'Tester mon CV gratuitement',
+  ctaFull: 'Analyse complète du CV',
+  privacy: 'Confidentialité',
+  seniority: { intern: 'Stage', junior: 'Junior', mid: 'Confirmé', senior: 'Senior', lead: 'Responsable', principal: 'Expert', director: 'Direction', executive: 'Cadre dirigeant' },
+  remote: { remote: 'Télétravail', hybrid: 'Hybride', onsite: 'Sur site' },
+}
+
+const it: CityJobsCopy = {
+  navLabel: 'Lavoro per città',
+  breadcrumbRoot: 'Lavoro',
+  hubTitle: 'Offerte di lavoro per città — {country}',
+  hubLead: '{count} offerte aperte in {n} città, raccolte da più fonti e aggiornate ogni giorno.',
+  hubMetaTitle: 'Offerte di lavoro per città — {country} | GriffoWork',
+  hubMetaDescription: 'Offerte aperte nelle principali città ({country}), per area, aggiornate ogni giorno. Verifica gratis se il tuo CV supera l’ATS delle aziende.',
+  cityTitle: 'Offerte di lavoro a {city}',
+  areaTitle: 'Offerte di lavoro in {area} a {city}',
+  countLine: '{count} offerte aperte, raccolte da più fonti e aggiornate ogni giorno.',
+  countLineOne: '1 offerta aperta, raccolta da più fonti e aggiornata ogni giorno.',
+  showingRecent: 'Mostrate le {n} più recenti.',
+  metaTitleSuffix: '{count} aperte',
+  metaDescription: '{count} offerte aperte a {city}, aggiornate ogni giorno. Guardale e verifica gratis se il tuo CV supera l’ATS delle aziende.',
+  byArea: 'Per area',
+  seeAllInCity: 'Vedi tutte le offerte a {city}',
+  seeJob: 'Vedi offerta',
+  ctaTitle: 'Prima di candidarti: il sistema dell’azienda riesce a leggere il tuo CV?',
+  ctaText: 'La maggior parte delle aziende filtra i CV con un ATS prima che qualcuno li legga. Verifica gratis, senza registrazione, come quel sistema vede il tuo CV — poi scopri il suo punteggio in 8 dimensioni.',
+  ctaFree: 'Testa il mio CV gratis',
+  ctaFull: 'Analisi completa del CV',
+  privacy: 'Privacy',
+  seniority: { intern: 'Stage', junior: 'Junior', mid: 'Middle', senior: 'Senior', lead: 'Responsabile', principal: 'Specialista', director: 'Direzione', executive: 'Dirigente' },
+  remote: { remote: 'Da remoto', hybrid: 'Ibrido', onsite: 'In sede' },
+}
+
+const nl: CityJobsCopy = {
+  navLabel: 'Vacatures per stad',
+  breadcrumbRoot: 'Vacatures',
+  hubTitle: 'Vacatures per stad — {country}',
+  hubLead: '{count} open vacatures in {n} steden, verzameld uit meerdere bronnen en dagelijks bijgewerkt.',
+  hubMetaTitle: 'Vacatures per stad — {country} | GriffoWork',
+  hubMetaDescription: 'Open vacatures in de grootste steden ({country}), per vakgebied, dagelijks bijgewerkt. Controleer gratis of je cv door het ATS van werkgevers komt.',
+  cityTitle: 'Vacatures in {city}',
+  areaTitle: 'Vacatures {area} in {city}',
+  countLine: '{count} open vacatures, verzameld uit meerdere bronnen en dagelijks bijgewerkt.',
+  countLineOne: '1 open vacature, verzameld uit meerdere bronnen en dagelijks bijgewerkt.',
+  showingRecent: 'De {n} nieuwste worden getoond.',
+  metaTitleSuffix: '{count} open',
+  metaDescription: '{count} open vacatures in {city}, dagelijks bijgewerkt. Bekijk ze en controleer gratis of je cv door het ATS van werkgevers komt.',
+  byArea: 'Per vakgebied',
+  seeAllInCity: 'Alle vacatures in {city} bekijken',
+  seeJob: 'Bekijk vacature',
+  ctaTitle: 'Voordat je solliciteert: kan het systeem van de werkgever je cv lezen?',
+  ctaText: 'De meeste werkgevers filteren cv’s met een ATS voordat iemand ze leest. Controleer gratis en zonder account hoe dat systeem je cv ziet — en bekijk daarna de score op 8 dimensies.',
+  ctaFree: 'Mijn cv gratis testen',
+  ctaFull: 'Volledige cv-analyse',
+  privacy: 'Privacy',
+  seniority: { intern: 'Stage', junior: 'Junior', mid: 'Medior', senior: 'Senior', lead: 'Teamleider', principal: 'Specialist', director: 'Directeur', executive: 'Executive' },
+  remote: { remote: 'Op afstand', hybrid: 'Hybride', onsite: 'Op locatie' },
+}
+
+const sv: CityJobsCopy = {
+  navLabel: 'Jobb per stad',
+  breadcrumbRoot: 'Jobb',
+  hubTitle: 'Lediga jobb per stad — {country}',
+  hubLead: '{count} lediga jobb i {n} städer, samlade från flera källor och uppdaterade dagligen.',
+  hubMetaTitle: 'Lediga jobb per stad — {country} | GriffoWork',
+  hubMetaDescription: 'Lediga jobb i de största städerna ({country}), per område, uppdaterade dagligen. Testa gratis om ditt cv tar sig igenom arbetsgivarnas ATS.',
+  cityTitle: 'Lediga jobb i {city}',
+  areaTitle: 'Lediga jobb inom {area} i {city}',
+  countLine: '{count} lediga jobb, samlade från flera källor och uppdaterade dagligen.',
+  countLineOne: '1 ledigt jobb, samlat från flera källor och uppdaterat dagligen.',
+  showingRecent: 'Visar de {n} senaste.',
+  metaTitleSuffix: '{count} lediga',
+  metaDescription: '{count} lediga jobb i {city}, uppdaterade dagligen. Se dem och testa gratis om ditt cv tar sig igenom arbetsgivarnas ATS.',
+  byArea: 'Per område',
+  seeAllInCity: 'Se alla jobb i {city}',
+  seeJob: 'Visa jobbet',
+  ctaTitle: 'Innan du söker: kan arbetsgivarens system läsa ditt cv?',
+  ctaText: 'De flesta arbetsgivare sållar cv:n med ett ATS innan någon läser dem. Testa gratis, utan konto, hur systemet ser ditt cv — och se sedan dess betyg i 8 dimensioner.',
+  ctaFree: 'Testa mitt cv gratis',
+  ctaFull: 'Fullständig cv-analys',
+  privacy: 'Integritet',
+  seniority: { intern: 'Praktik', junior: 'Junior', mid: 'Medior', senior: 'Senior', lead: 'Teamledare', principal: 'Specialist', director: 'Direktör', executive: 'Chef' },
+  remote: { remote: 'Distans', hybrid: 'Hybrid', onsite: 'På plats' },
+}
+
+const ja: CityJobsCopy = {
+  navLabel: '都市別の求人',
+  breadcrumbRoot: '求人',
+  hubTitle: '都市別の求人 — {country}',
+  hubLead: '{n}都市で{count}件の募集中の求人。複数の情報源から集め、毎日更新しています。',
+  hubMetaTitle: '都市別の求人 — {country} | GriffoWork',
+  hubMetaDescription: '{country}の主要都市の求人を分野別に掲載、毎日更新。履歴書が企業のATSを通過するか無料でチェックできます。',
+  cityTitle: '{city}の求人',
+  areaTitle: '{city}の{area}の求人',
+  countLine: '募集中の求人{count}件。複数の情報源から集め、毎日更新しています。',
+  countLineOne: '募集中の求人1件。複数の情報源から集め、毎日更新しています。',
+  showingRecent: '新しい順に{n}件を表示しています。',
+  metaTitleSuffix: '{count}件募集中',
+  metaDescription: '{city}の募集中の求人{count}件、毎日更新。求人を見て、履歴書が企業のATSを通過するか無料でチェックできます。',
+  byArea: '分野別',
+  seeAllInCity: '{city}のすべての求人を見る',
+  seeJob: '求人を見る',
+  ctaTitle: '応募の前に：企業のシステムはあなたの履歴書を読み取れますか？',
+  ctaText: '多くの企業は、人が読む前にATSで履歴書を選別しています。登録不要・無料で、そのシステムに履歴書がどう見えるかを確認し、8つの観点でのスコアも確認できます。',
+  ctaFree: '履歴書を無料でチェック',
+  ctaFull: '履歴書の詳細分析',
+  privacy: 'プライバシー',
+  seniority: { intern: 'インターン', junior: 'ジュニア', mid: 'ミドル', senior: 'シニア', lead: 'リード', principal: 'プリンシパル', director: 'ディレクター', executive: 'エグゼクティブ' },
+  remote: { remote: 'リモート', hybrid: 'ハイブリッド', onsite: '出社' },
+}
+
+const zh: CityJobsCopy = {
+  navLabel: '按城市找工作',
+  breadcrumbRoot: '职位',
+  hubTitle: '按城市浏览职位 — {country}',
+  hubLead: '{n} 个城市共 {count} 个在招职位，汇集自多个来源，每日更新。',
+  hubMetaTitle: '按城市浏览职位 — {country} | GriffoWork',
+  hubMetaDescription: '{country}主要城市的在招职位，按领域分类，每日更新。免费检测你的简历能否通过企业的 ATS。',
+  cityTitle: '{city}的职位',
+  areaTitle: '{city}的{area}职位',
+  countLine: '{count} 个在招职位，汇集自多个来源，每日更新。',
+  countLineOne: '1 个在招职位，汇集自多个来源，每日更新。',
+  showingRecent: '显示最新的 {n} 个。',
+  metaTitleSuffix: '{count} 个在招',
+  metaDescription: '{city}共 {count} 个在招职位，每日更新。浏览职位，并免费检测你的简历能否通过企业的 ATS。',
+  byArea: '按领域',
+  seeAllInCity: '查看{city}的全部职位',
+  seeJob: '查看职位',
+  ctaTitle: '投递之前：企业的系统能读懂你的简历吗？',
+  ctaText: '大多数企业会先用 ATS 筛选简历，再由人阅读。无需注册，免费检测该系统如何读取你的简历，并查看简历在 8 个维度上的评分。',
+  ctaFree: '免费检测我的简历',
+  ctaFull: '完整简历分析',
+  privacy: '隐私',
+  seniority: { intern: '实习', junior: '初级', mid: '中级', senior: '高级', lead: '主管', principal: '专家', director: '总监', executive: '高管' },
+  remote: { remote: '远程', hybrid: '混合办公', onsite: '现场办公' },
+}
+
+const ar: CityJobsCopy = {
+  navLabel: 'الوظائف حسب المدينة',
+  breadcrumbRoot: 'الوظائف',
+  hubTitle: 'الوظائف حسب المدينة — {country}',
+  hubLead: '{count} وظيفة شاغرة في {n} مدينة، مجمعة من عدة مصادر ومحدّثة يوميًا.',
+  hubMetaTitle: 'الوظائف حسب المدينة — {country} | GriffoWork',
+  hubMetaDescription: 'وظائف شاغرة في أهم مدن {country}، حسب المجال، محدّثة يوميًا. اختبر مجانًا ما إذا كانت سيرتك الذاتية تجتاز نظام ATS لدى أصحاب العمل.',
+  cityTitle: 'وظائف في {city}',
+  areaTitle: 'وظائف {area} في {city}',
+  countLine: '{count} وظيفة شاغرة، مجمعة من عدة مصادر ومحدّثة يوميًا.',
+  countLineOne: 'وظيفة شاغرة واحدة، مجمعة من عدة مصادر ومحدّثة يوميًا.',
+  showingRecent: 'نعرض أحدث {n} وظيفة.',
+  metaTitleSuffix: '{count} شاغرة',
+  metaDescription: '{count} وظيفة شاغرة في {city}، محدّثة يوميًا. تصفحها واختبر مجانًا ما إذا كانت سيرتك الذاتية تجتاز نظام ATS لدى أصحاب العمل.',
+  byArea: 'حسب المجال',
+  seeAllInCity: 'عرض كل الوظائف في {city}',
+  seeJob: 'عرض الوظيفة',
+  ctaTitle: 'قبل التقديم: هل يستطيع نظام صاحب العمل قراءة سيرتك الذاتية؟',
+  ctaText: 'يفرز معظم أصحاب العمل السير الذاتية بنظام ATS قبل أن يقرأها أحد. اختبر مجانًا ودون تسجيل كيف يرى هذا النظام سيرتك الذاتية، ثم اطّلع على تقييمها في 8 أبعاد.',
+  ctaFree: 'اختبر سيرتي الذاتية مجانًا',
+  ctaFull: 'تحليل كامل للسيرة الذاتية',
+  privacy: 'الخصوصية',
+  seniority: { intern: 'تدريب', junior: 'مبتدئ', mid: 'متوسط الخبرة', senior: 'خبير', lead: 'قائد فريق', principal: 'أخصائي أول', director: 'مدير', executive: 'تنفيذي' },
+  remote: { remote: 'عن بُعد', hybrid: 'هجين', onsite: 'في الموقع' },
+}
+
+const ko: CityJobsCopy = {
+  navLabel: '도시별 채용',
+  breadcrumbRoot: '채용',
+  hubTitle: '도시별 채용 정보 — {country}',
+  hubLead: '{n}개 도시의 채용 중인 공고 {count}건. 여러 출처에서 모아 매일 업데이트합니다.',
+  hubMetaTitle: '도시별 채용 정보 — {country} | GriffoWork',
+  hubMetaDescription: '{country} 주요 도시의 채용 공고를 분야별로, 매일 업데이트. 이력서가 기업의 ATS를 통과하는지 무료로 확인하세요.',
+  cityTitle: '{city} 채용 정보',
+  areaTitle: '{city} {area} 채용 정보',
+  countLine: '채용 중인 공고 {count}건. 여러 출처에서 모아 매일 업데이트합니다.',
+  countLineOne: '채용 중인 공고 1건. 여러 출처에서 모아 매일 업데이트합니다.',
+  showingRecent: '최신 공고 {n}건을 표시합니다.',
+  metaTitleSuffix: '{count}건 채용 중',
+  metaDescription: '{city}의 채용 중인 공고 {count}건, 매일 업데이트. 공고를 보고 이력서가 기업의 ATS를 통과하는지 무료로 확인하세요.',
+  byArea: '분야별',
+  seeAllInCity: '{city}의 모든 채용 공고 보기',
+  seeJob: '공고 보기',
+  ctaTitle: '지원하기 전에: 기업의 시스템이 내 이력서를 읽을 수 있을까요?',
+  ctaText: '대부분의 기업은 사람이 읽기 전에 ATS로 이력서를 거릅니다. 가입 없이 무료로 그 시스템에 내 이력서가 어떻게 보이는지 확인하고, 8가지 항목의 점수도 확인하세요.',
+  ctaFree: '내 이력서 무료로 확인하기',
+  ctaFull: '이력서 전체 분석',
+  privacy: '개인정보',
+  seniority: { intern: '인턴', junior: '주니어', mid: '미들', senior: '시니어', lead: '리드', principal: '프린시펄', director: '디렉터', executive: '임원' },
+  remote: { remote: '원격', hybrid: '하이브리드', onsite: '사무실 근무' },
+}
+
+export const CITY_JOBS_COPY: Record<Language, CityJobsCopy> = { pt, en, es, de, fr, it, nl, sv, ja, zh, ar, ko }
+
+export function fill(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m))
+}

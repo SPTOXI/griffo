@@ -5,7 +5,10 @@ import { areaFromUrl, areaToUrl, buildCityIndex, cityName, slugify } from './cit
 test('cityName corta estado/país e recusa o que não é cidade', () => {
   assert.equal(cityName('São Paulo, São Paulo, Brazil'), 'São Paulo')
   assert.equal(cityName('Todo Brasil'), null)
-  assert.equal(cityName('Brasil'), null)
+  assert.equal(cityName('Brasil', new Set(['brasil'])), null)
+  assert.equal(cityName('Remote - US'), null)
+  assert.equal(cityName('Hybrid'), null)
+  assert.equal(slugify('東京'), '東京')
   assert.equal(cityName(null), null)
   assert.equal(slugify('Ribeirão Preto'), 'ribeirao-preto')
 })
