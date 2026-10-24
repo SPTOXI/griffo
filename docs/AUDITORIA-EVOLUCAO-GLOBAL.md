@@ -9108,3 +9108,61 @@ O e-mail de "conta já existe" do §2.147 continua sendo o canal privado que con
 - Textos nos 12 idiomas.
 
 **Complemento (13/10/2026):** o olho também foi para os campos de segredo do painel admin: chave de API dos provedores de IA, Stripe Secret Key e Stripe Webhook Secret. Eles usam o novo componente `components/ui/password-input.tsx`. O app não tem outros campos de senha: não há troca nem recuperação de senha.
+
+## 2.150 Ideias tiradas do meuemprego.com.br, llms.txt com instruções para agentes e ferramentas WebMCP (PR #125, 24/10/2026)
+
+**Pedido do operador:** analisar https://www.meuemprego.com.br e ver o que vale trazer para o Griffo. A análise sugeriu, nesta ordem: instruções para agentes de IA, páginas de vagas por cidade e área, uma isca melhor para converter o lead da home e prova social. O operador aprovou começar pelos dois primeiros.
+
+**O que entrou:**
+- `public/llms.txt` ganhou a seção "Instructions for AI agents": para que página mandar quem pergunta sobre currículo, ATS, vagas e preço.
+- WebMCP (`src/lib/webmcp/tools.ts`, `src/components/webmcp/webmcp-tools.tsx`, montado no `layout.tsx`): quatro ferramentas que um navegador com agente pode chamar: `griffo_how_it_works`, `check_resume_ats`, `get_hiring_temperature` e `open_griffo_page`. Só registra se `navigator.modelContext` existir. Sem isso, não faz nada.
+
+## 2.151 Páginas de vagas por cidade e área em todos os países, e a home sem a opção "apagar em 24 h" (PRs #126 e #127, 24/10/2026)
+
+**Regra do operador, permanente:** "qualquer alteração de funcionalidade tem que servir para todas as regiões atendidas". A primeira versão era só do Brasil. Foi refeita para todos os países atendidos, nos 12 idiomas, usando o idioma de vaga do país (`marketForCountry(code).jobLanguage`).
+
+**Rotas:** `/[país]/jobs` (lista de cidades), `/[país]/jobs/[cidade]` e `/[país]/jobs/[cidade]/[área]`. Cidade só ganha página com 5 vagas abertas ou mais (`MIN_JOBS_TO_INDEX`). Cidade abaixo disso redireciona para a lista do país, em vez de dar 404.
+
+**Limpeza dos nomes de cidade** (`src/lib/city-jobs/city-index.ts`): só conta o primeiro trecho antes de `, ; | ( /`. "Remote", "hybrid" e nomes de país nos 12 idiomas não viram cidade. Apelidos conhecidos se juntam numa cidade só (NYC → New York, Munich → München). Na exibição vale a grafia com acento.
+
+**Home:** a opção "apagar meus dados em 24 h" saiu, por pedido do operador. No lugar entrou uma caixa opcional para receber contato de recrutador.
+
+**#127:** o translation-reviewer revisou os textos das páginas novas (de, nl, sv, ja, ar).
+
+## 2.152 Conversão do lead da home, cadastro de cidades e agente de cidades (PR #128, 24/10/2026)
+
+**Pergunta do operador:** o que a pessoa vê ao mandar o currículo pela home, e que isca usar para virar venda. Antes, ela via só a nota e as vagas parecidas. Todos os problemas do currículo ficavam travados.
+
+**O que entrou:**
+- **Um problema real revelado de graça**: o mais grave pela ordem de severidade (`teaserFrom` → `revealed`). Mostra que a análise é real, e o resto continua travado.
+- **Sequência de e-mails opcional** (`marketingOptIn`), nos dias 1, 3 e 7 (`NURTURE_DAYS`). Quem aceita fica guardado 10 dias (`NURTURE_KEEP_DAYS`). O e-mail do dia 3 refaz o match sem IA e traz vagas novas. Descadastro em um clique: `/api/public/lead-unsubscribe`, com GET que mostra a tela e POST que descadastra, conforme a RFC 8058. O descadastro apaga o lead, a não ser que a pessoa tenha aceitado contato de recrutador. Para desligar tudo: `LEAD_NURTURE_ENABLED=false`. Roda no cron `visitor-leads`.
+- **Comparativo de nota**: "sua nota é maior que X% dos currículos". Aparece com 50 notas ou mais (`MIN_PERCENTILE_SAMPLE`). Nesta data havia 15.
+- **"N currículos analisados"**: aparece a partir de 100 (`MIN_SOCIAL_PROOF_COUNT`). Nesta data havia 96.
+- **Cadastro de cidades**: tabela `CityAlias` (país, grafia, tipo `city|alias|ignore`, cidade de destino, `decidedBy`) e a aba "Cadastro de Cidades" no admin. A página muda na hora, via `revalidateTag('city-jobs')`.
+- **Agente de cidades** (pedido do operador: "na API da DeepSeek flash"): tarefa `city_classification` no roteador, modelo forçado `deepseek-flash`, lotes de 40. Roda **depois** de cada atualização da base de vagas, como último passo do `jobbase-sync.yml` (pedido do operador). Faz até 8 voltas e para quando não sobra pendência ou quando nada é salvo. O `city-agent.yml` serve só para disparo manual. O admin pode corrigir qualquer decisão do agente, que aparece com o selo "IA".
+- Política de privacidade atualizada nos 12 idiomas (lead, e-mails, prazos).
+
+**Migrações aplicadas direto no banco (Supabase), todas aditivas:** `VisitorLead.marketingOptIn/nurtureStep/nurtureNextAt/unsubscribedAt`, tabela `CityAlias` (RLS ligado, sem acesso para `anon`/`authenticated`) e `CityAlias.decidedBy`.
+
+## 2.153 Tudo o que não dependia do operador: e-mails medidos, páginas de vagas completas e depoimentos (PR #129, 24/10/2026)
+
+**Pedido do operador:** "faça tudo o que não dependa de mim".
+
+- **E-mails medidos**: links com UTM e passagem por `/api/public/lead-click`, que grava `lead_email_clicked` e ignora robôs. O funil do admin ganhou o passo "Voltaram por um e-mail", com enviados → clicados por etapa. O e-mail de resultado também traz o problema revelado.
+- **Comparativo no `/ats-check`**: o mesmo percentil da home (`percentile-copy.ts`), com o mesmo piso de 50 notas.
+- **Páginas de vagas**: filtros por modelo de trabalho (`?work`) e senioridade (`?level`), página de vagas remotas por país (`/[país]/jobs/remote`, no sitemap quando tem 5 ou mais vagas), link para o guia do ATS da empresa quando o link da vaga revela o ATS (`src/lib/ats/from-url.ts`), tela de "nenhuma vaga com estes filtros" e chamada compacta antes da lista no celular. Página com filtro fica `noindex`, com canonical na página sem filtro.
+- **Paginação**: 40 vagas por página, com anterior e próxima. Um botão "Ver mais" chegou a entrar, mas foi revertido por decisão do operador: anterior e próxima de 40 em 40 basta.
+- **Depoimentos**: tabela `Testimonial`. Só quem tem conta e currículo desbloqueado pode enviar, com consentimento explícito. Um pendente por pessoa. A aprovação é feita na aba "Depoimentos" do admin. A seção da home só aparece com 3 depoimentos aprovados ou mais. Entra na exportação de dados do usuário e na política de privacidade (12 idiomas).
+- Correções: o aviso de upload da home dizia 5 MB, mas o limite é 3 MB. Revisão de tradução de fr/it (título da cidade sem preposição), de/sv/ko/ar (senioridade) e sv (descadastro).
+
+**Ainda não conferido ao vivo** (precisa de login ou de evento real): as abas do admin, o formulário de depoimento, o envio real da sequência de e-mails e a primeira rodada real do agente de cidades.
+
+**Fica com o operador, por depender de decisão de produto, preço ou conta:** escada de preços, regra de garantia/reembolso, conta do WhatsApp Business e busca de candidatos no Griffo Enterprise.
+
+## 2.154 Regra de trabalho do operador: questionar antes de trocar uma solução que já existe (24/10/2026)
+
+**Origem:** o operador sugeriu um "Ver mais" sem saber que a paginação de 40 em 40 já existia. O botão entrou e depois foi revertido.
+
+**Regra, nas palavras do operador:** "Quando você já tiver uma solução implementada e eu sugerir outra pode questionar me explicando a solução existente, assim consigo avaliar e vc pode dar sua sugestão também."
+
+**Na prática:** se o pedido substitui algo que já funciona, primeiro explique o que existe, como funciona e o que mudaria. Dê sua recomendação e só implemente depois da resposta.
