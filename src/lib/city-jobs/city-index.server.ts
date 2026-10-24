@@ -26,7 +26,8 @@ export const loadCityIndex = unstable_cache(
       exclude
     )
   },
-  ['city-jobs-index-v1'],
+  // Trocar a versão quando a regra de agrupamento mudar: o cache sobrevive a deploys.
+  ['city-jobs-index-v2'],
   { revalidate: 3600 }
 )
 
