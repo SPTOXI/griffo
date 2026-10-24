@@ -44,3 +44,24 @@ test('buildCityIndex prefere a grafia acentuada', () => {
   ])
   assert.equal(idx[0].name, 'Brasília')
 })
+
+test('cityName pega o primeiro lugar e descarta remoto em qualquer posição', () => {
+  assert.equal(cityName('San Francisco, CA | New York City, NY'), 'San Francisco')
+  assert.equal(cityName('New York, NY (HQ)'), 'New York')
+  assert.equal(cityName('US - Remote'), null)
+  assert.equal(cityName('Remote-Friendly, United States'), null)
+  assert.equal(cityName('US', new Set(['us'])), null)
+})
+
+test('buildCityIndex junta nomes da mesma cidade em outra língua', () => {
+  const idx = buildCityIndex([
+    { city: 'München', category: null, count: 41 },
+    { city: 'Munich', category: null, count: 30 },
+    { city: 'New York City', category: null, count: 75 },
+    { city: 'New York', category: null, count: 194 },
+  ])
+  assert.deepEqual(idx.map((c) => [c.slug, c.name, c.total]), [
+    ['new-york', 'New York', 269],
+    ['munchen', 'München', 71],
+  ])
+})

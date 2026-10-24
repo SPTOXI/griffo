@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { jsonLd } from '@/lib/json-ld'
 import { categoryLabel, type JobCategorySlug } from '@/lib/jobs/category-labels'
 import { MIN_JOBS_TO_INDEX, areaFromUrl, areaToUrl } from '@/lib/city-jobs/city-index'
@@ -148,8 +148,9 @@ export async function HubPage({ country }: { country: string }) {
   const ctx = cityJobsContext(country)
   if (!ctx) notFound()
   const cities = (await loadCityIndex(ctx.code)).filter((x) => x.total >= MIN_JOBS_TO_INDEX)
-  // País sem nenhuma cidade com vagas suficientes: página vazia não serve a ninguém.
-  if (cities.length === 0) notFound()
+  // País sem nenhuma cidade com vagas suficientes: página vazia não serve a
+  // ninguém, e 404 quebraria o link da home. Vai para a página do país.
+  if (cities.length === 0) redirect(`/${ctx.slug}`)
   const total = cities.reduce((s, x) => s + x.total, 0)
   return (
     <CityJobsShell ctx={ctx}>

@@ -34,7 +34,31 @@ const NOT_A_CITY = new Set([
   'bundesweit', 'deutschlandweit', 'toda-espana', 'todo-mexico', 'france-entiere', 'tutta-italia',
   'n-a', 'na', 'unknown',
 ])
-const NOT_A_CITY_PREFIX = ['remote', 'remoto', 'remota', 'home-office', 'homeoffice', 'teletrabajo', 'telearbeit', 'teletravail', 'hybrid']
+/** Palavra que, em qualquer posição do nome, diz que não é cidade ("US - Remote", "Remote-Friendly"). */
+const NOT_A_CITY_WORDS = new Set(['remote', 'remoto', 'remota', 'hybrid', 'homeoffice', 'teletrabajo', 'telearbeit', 'teletravail'])
+
+/**
+ * A mesma cidade com nome em outra língua ou apelido. Só as grandes, que as
+ * fontes de fato escrevem dos dois jeitos — o resto fica como veio.
+ */
+const CITY_ALIASES: Record<string, string> = {
+  'new-york-city': 'new-york',
+  nyc: 'new-york',
+  munich: 'munchen',
+  cologne: 'koln',
+  frankfurt: 'frankfurt-am-main',
+  vienna: 'wien',
+  rome: 'roma',
+  milan: 'milano',
+  turin: 'torino',
+  lisbon: 'lisboa',
+  'mexico-city': 'ciudad-de-mexico',
+  cdmx: 'ciudad-de-mexico',
+  'the-hague': 'den-haag',
+  gothenburg: 'goteborg',
+  bangalore: 'bengaluru',
+  bombay: 'mumbai',
+}
 
 const stripAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 
@@ -51,12 +75,20 @@ export function slugify(s: string): string {
 
 /** Nome da cidade como veio, sem estado/país depois da vírgula. `null` se não é cidade. */
 export function cityName(raw: string | null | undefined, exclude: ReadonlySet<string> = new Set()): string | null {
-  const name = (raw ?? '').split(',')[0].trim()
+  // Só o primeiro lugar e sem estado/país: "San Francisco, CA | New York, NY" e
+  // "New York, NY (HQ)" viram "San Francisco" e "New York".
+  const name = (raw ?? '').split(/[,;|(/]/)[0].trim()
   if (!name) return null
   const slug = slugify(name)
   if (!slug || NOT_A_CITY.has(slug) || exclude.has(slug)) return null
-  if (NOT_A_CITY_PREFIX.some((p) => slug === p || slug.startsWith(`${p}-`))) return null
+  if (slug.split('-').some((w) => NOT_A_CITY_WORDS.has(w)) || slug.startsWith('home-office')) return null
   return name
+}
+
+/** Slug canônico da cidade, juntando nomes em outra língua (`munich` → `munchen`). */
+export function citySlug(name: string): string {
+  const slug = slugify(name)
+  return CITY_ALIASES[slug] ?? slug
 }
 
 /** `recursos_humanos` ↔ `recursos-humanos`: hífen na URL, sublinhado no banco. */
@@ -98,7 +130,7 @@ export function buildCityIndex(rows: readonly CityRow[], exclude: ReadonlySet<st
   for (const r of rows) {
     const name = cityName(r.city, exclude)
     if (!name || !r.city) continue
-    const slug = slugify(name)
+    const slug = citySlug(name)
     let e = acc.get(slug)
     if (!e) acc.set(slug, (e = { names: new Map(), raw: new Set(), areas: new Map(), total: 0 }))
     e.total += r.count

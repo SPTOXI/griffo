@@ -19,7 +19,8 @@ export const loadCityIndex = unstable_cache(
       _count: { _all: true },
     })
     // O nome do próprio país, em qualquer idioma, não é cidade ("Brasil", "Deutschland").
-    const exclude = new Set(LANGUAGES.map((l) => slugify(countryLabel(country, l))))
+    // O código ISO também aparece sozinho como cidade ("US").
+    const exclude = new Set([country.toLowerCase(), ...LANGUAGES.map((l) => slugify(countryLabel(country, l)))])
     return buildCityIndex(
       rows.map((r) => ({ city: r.city, category: r.category, count: r._count._all })),
       exclude
