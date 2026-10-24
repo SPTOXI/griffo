@@ -65,3 +65,27 @@ test('buildCityIndex junta nomes da mesma cidade em outra língua', () => {
     ['munchen', 'München', 71],
   ])
 })
+
+test('cadastro de cidades: junta bairro sem roubar o nome, esconde o que não é cidade', async () => {
+  const { citySpellings } = await import('./city-index')
+  const rows = [
+    { city: 'Berlin', category: null, count: 192 },
+    { city: 'Mitte', category: null, count: 14 },
+    { city: 'Innenstadt', category: null, count: 14 },
+    { city: 'Berlim', category: null, count: 1 },
+  ]
+  const rules = new Map([
+    ['mitte', { rawSlug: 'mitte', kind: 'alias' as const, canonicalSlug: 'berlin' }],
+    ['innenstadt', { rawSlug: 'innenstadt', kind: 'ignore' as const }],
+    ['berlin', { rawSlug: 'berlin', kind: 'city' as const, displayName: 'Berlin' }],
+  ])
+  const idx = buildCityIndex(rows, new Set(), rules)
+  assert.deepEqual(idx.map((c) => [c.slug, c.name, c.total]), [
+    ['berlin', 'Berlin', 206],
+    ['berlim', 'Berlim', 1],
+  ])
+  // A fila mostra primeiro o que falta revisar.
+  const queue = citySpellings(rows, new Set(), rules)
+  assert.equal(queue[0].rawSlug, 'berlim')
+  assert.equal(queue[0].rule, null)
+})

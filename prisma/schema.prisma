@@ -1205,6 +1205,30 @@ model RadarOfferLog {
 ///
 /// O texto do currículo só é gravado quando a pessoa escolhe guardar. Quem
 /// escolhe apagar é processado em memória, e aqui fica só o resultado.
+/// Cadastro de cidades das páginas de vagas (`/[país]/jobs`), alimentado aos
+/// poucos pelo admin conforme grafias novas aparecem nas vagas coletadas.
+///
+/// Uma linha por grafia (já normalizada em slug) de um país. `kind`:
+/// - `city`: é uma cidade, fica como está (pode trocar o nome exibido);
+/// - `alias`: é outro nome, bairro ou região de `canonicalSlug` e soma nela;
+/// - `ignore`: não é cidade ("Remote", "Bay Area" sem cidade certa) e some.
+/// Grafia sem linha aqui continua aparecendo como veio — nada some esperando
+/// revisão; ela só entra na fila do painel.
+model CityAlias {
+  id            String   @id @default(cuid())
+  /// ISO do país, como em `Job.country`.
+  country       String
+  rawSlug       String
+  kind          String
+  canonicalSlug String?
+  /// Nome exibido da cidade, quando o admin quis corrigir a grafia.
+  displayName   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([country, rawSlug])
+}
+
 model VisitorLead {
   /// Também é a credencial de leitura do resultado: 32 caracteres hex
   /// aleatórios gerados no servidor, e não `cuid()`, que é previsível.
