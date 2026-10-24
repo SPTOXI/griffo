@@ -71,6 +71,8 @@ export interface PublicResult {
   lockedStrong: number
   recruiterOptIn: boolean
   expiresAt: string
+  /** Título e motivo do problema revelado, no idioma do envio. Preenchido por `loadLeadResult`. */
+  revealedIssue?: { title: string; why: string } | null
 }
 
 export interface LeadForResult {

@@ -43,7 +43,7 @@ test('todo problema do teste ATS tem categoria na isca', () => {
   }
 })
 
-test('a isca conta por categoria e nunca diz QUAL problema é', () => {
+test('a isca conta por categoria e revela só o mais grave', () => {
   const teaser = teaserFrom({
     issues: [
       { code: 'no_metrics', severity: 'tip' },
@@ -58,11 +58,12 @@ test('a isca conta por categoria e nunca diz QUAL problema é', () => {
     { category: 'formatting', count: 1 },
     { category: 'contact', count: 1 },
   ])
-  assert.ok(!JSON.stringify(teaser).includes('no_metrics'))
+  assert.equal(teaser.revealed, 'columns_suspected')
+  assert.ok(!JSON.stringify(teaser).includes('no_phone'))
 })
 
 test('currículo sem problema: isca vazia, e não "pode melhorar" inventado', () => {
-  assert.deepEqual(teaserFrom({ issues: [] }), { total: 0, byCategory: [] })
+  assert.deepEqual(teaserFrom({ issues: [] }), { total: 0, byCategory: [], revealed: null })
 })
 
 function job(id: string, over: Partial<PublicJobRow> = {}): PublicJobRow {

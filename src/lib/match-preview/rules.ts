@@ -1,4 +1,6 @@
-import type { AtsCheckResult, AtsIssueCode } from '../ats-check/score'
+import { ISSUE_PENALTY, type AtsCheckResult, type AtsIssueCode, type AtsSeverity } from '../ats-check/score'
+
+const SEVERITY_RANK: Record<AtsSeverity, number> = { critical: 0, warning: 1, tip: 2 }
 
 /**
  * Regras do envio sem conta da landing (§2.132) — puras, sem banco.
@@ -51,10 +53,11 @@ export function isValidToken(value: string | null | undefined): value is string 
 /**
  * As categorias da isca.
  *
- * A isca diz QUANTOS problemas existem e DE QUE TIPO, nunca QUAIS nem como
- * corrigir (decisão 4 e 5 do §2.132). Por isso o agrupamento é grosso de
- * propósito: "2 em formatação" não entrega o conserto; "colunas detectadas"
- * entregaria.
+ * A isca diz QUANTOS problemas existem e DE QUE TIPO. Desde 24/10/2026, por
+ * decisão do operador, ela também revela UM deles — o mais grave — de graça:
+ * ver um erro concreto do próprio currículo convence mais do que uma contagem,
+ * e o teste ATS público (`/ats-check`) já mostra todos. Os demais continuam
+ * só como contagem por categoria (decisões 4 e 5 do §2.132).
  */
 export type TeaserCategory = 'formatting' | 'keywords' | 'experience' | 'contact'
 
@@ -83,6 +86,8 @@ export interface Teaser {
   total: number
   /** Só as categorias com pelo menos um ponto, na ordem de `TEASER_ORDER`. */
   byCategory: { category: TeaserCategory; count: number }[]
+  /** O problema mais grave, revelado de graça. `null` quando não há nenhum. */
+  revealed: AtsIssueCode | null
 }
 
 export function teaserFrom(ats: Pick<AtsCheckResult, 'issues'>): Teaser {
@@ -95,5 +100,12 @@ export function teaserFrom(ats: Pick<AtsCheckResult, 'issues'>): Teaser {
     category,
     count: counts.get(category)!,
   }))
-  return { total: ats.issues.length, byCategory }
+  // O mais grave: severidade primeiro, depois quanto tira da nota — a mesma
+  // ordem de `scoreAtsReadability`, refeita aqui para não depender dela.
+  const worst = [...ats.issues].sort(
+    (a, b) =>
+      SEVERITY_RANK[ISSUE_PENALTY[a.code].severity] - SEVERITY_RANK[ISSUE_PENALTY[b.code].severity] ||
+      ISSUE_PENALTY[b.code].points - ISSUE_PENALTY[a.code].points
+  )[0]
+  return { total: ats.issues.length, byCategory, revealed: worst?.code ?? null }
 }

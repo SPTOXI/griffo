@@ -79,6 +79,8 @@ export interface MatchPreviewCopy {
   teaserCategories: Record<TeaserCategory, string>
   teaserClose: string
   teaserCta: string
+  /** Antes do problema revelado de graça. */
+  teaserRevealed: string
   keptNote: string
   deleteNote: string
   emailSubject: string
@@ -159,6 +161,7 @@ const pt: MatchPreviewCopy = {
   },
   teaserClose: 'Corrigir pode aumentar suas chances de receber convites para entrevista.',
   teaserCta: 'Ver o diagnóstico completo',
+  teaserRevealed: 'O mais importante, para você corrigir já:',
   keptNote: 'Seu currículo ficou guardado para empresas te encontrarem. Para apagar, escreva para {email}.',
   deleteNote: 'Seus dados serão apagados em até 24 horas.',
   emailSubject: 'Seu resultado na GriffoWork',
@@ -239,6 +242,7 @@ const en: MatchPreviewCopy = {
   },
   teaserClose: 'Fixing them can improve your chances of being invited to an interview.',
   teaserCta: 'See the full diagnosis',
+  teaserRevealed: 'The most important one, to fix right now:',
   keptNote: 'Your resume has been kept so companies can find you. To delete it, write to {email}.',
   deleteNote: 'Your data will be deleted within 24 hours.',
   emailSubject: 'Your GriffoWork results',
@@ -319,6 +323,7 @@ const es: MatchPreviewCopy = {
   },
   teaserClose: 'Corregirlos puede aumentar tus posibilidades de que te llamen a una entrevista.',
   teaserCta: 'Ver el diagnóstico completo',
+  teaserRevealed: 'El más importante, para que lo corrijas ya:',
   keptNote: 'Tu currículum quedó guardado para que las empresas te encuentren. Para borrarlo, escribe a {email}.',
   deleteNote: 'Tus datos se borrarán en un plazo de 24 horas.',
   emailSubject: 'Tu resultado en GriffoWork',
@@ -399,6 +404,7 @@ const de: MatchPreviewCopy = {
   },
   teaserClose: 'Wenn Sie sie beheben, kann das Ihre Chancen auf eine Einladung zum Vorstellungsgespräch verbessern.',
   teaserCta: 'Vollständige Diagnose ansehen',
+  teaserRevealed: 'Der wichtigste, den Sie sofort beheben können:',
   keptNote: 'Ihr Lebenslauf wurde gespeichert, damit Unternehmen Sie finden können. Zum Löschen schreiben Sie an {email}.',
   deleteNote: 'Ihre Daten werden innerhalb von 24 Stunden gelöscht.',
   emailSubject: 'Ihr Ergebnis bei GriffoWork',
@@ -479,6 +485,7 @@ const fr: MatchPreviewCopy = {
   },
   teaserClose: 'Les corriger peut augmenter vos chances d’obtenir un entretien.',
   teaserCta: 'Voir le diagnostic complet',
+  teaserRevealed: 'Le plus important, à corriger tout de suite :',
   keptNote: 'Votre CV a été conservé pour que des entreprises puissent vous trouver. Pour le supprimer, écrivez à {email}.',
   deleteNote: 'Vos données seront supprimées sous 24 heures.',
   emailSubject: 'Votre résultat GriffoWork',
@@ -559,6 +566,7 @@ const it: MatchPreviewCopy = {
   },
   teaserClose: 'Correggerli può aumentare le tue possibilità di ricevere un invito a un colloquio.',
   teaserCta: 'Vedi la diagnosi completa',
+  teaserRevealed: 'Il più importante, da correggere subito:',
   keptNote: 'Il tuo curriculum è stato conservato perché le aziende possano trovarti. Per cancellarlo, scrivi a {email}.',
   deleteNote: 'I tuoi dati saranno cancellati entro 24 ore.',
   emailSubject: 'Il tuo risultato su GriffoWork',
@@ -639,6 +647,7 @@ const nl: MatchPreviewCopy = {
   },
   teaserClose: 'Ze oplossen kan je kans op een uitnodiging voor een sollicitatiegesprek vergroten.',
   teaserCta: 'Volledige diagnose bekijken',
+  teaserRevealed: 'De belangrijkste, om meteen op te lossen:',
   keptNote: 'Je cv is bewaard zodat bedrijven je kunnen vinden. Om het te verwijderen, schrijf naar {email}.',
   deleteNote: 'Je gegevens worden binnen 24 uur verwijderd.',
   emailSubject: 'Je resultaat bij GriffoWork',
@@ -719,6 +728,7 @@ const sv: MatchPreviewCopy = {
   },
   teaserClose: 'Att åtgärda dem kan öka dina chanser att bli kallad till intervju.',
   teaserCta: 'Se hela diagnosen',
+  teaserRevealed: 'Det viktigaste, att åtgärda direkt:',
   keptNote: 'Ditt CV har sparats så att företag kan hitta dig. Skriv till {email} för att radera det.',
   deleteNote: 'Dina uppgifter raderas inom 24 timmar.',
   emailSubject: 'Ditt resultat hos GriffoWork',
@@ -799,6 +809,7 @@ const ja: MatchPreviewCopy = {
   },
   teaserClose: 'これらを直すことで、面接に呼ばれる可能性が高まることがあります。',
   teaserCta: '詳しい診断を見る',
+  teaserRevealed: '最も重要な問題（今すぐ直せます）：',
   keptNote: '企業に見つけてもらえるよう、履歴書を保存しました。削除するには {email} までご連絡ください。',
   deleteNote: 'あなたのデータは24時間以内に削除されます。',
   emailSubject: 'GriffoWork の結果',
@@ -879,6 +890,7 @@ const ko: MatchPreviewCopy = {
   },
   teaserClose: '이를 고치면 면접 기회가 늘어날 수 있습니다.',
   teaserCta: '전체 진단 보기',
+  teaserRevealed: '가장 중요한 문제 (지금 바로 고치세요):',
   keptNote: '기업이 찾을 수 있도록 이력서를 보관했습니다. 삭제하려면 {email}로 연락해 주세요.',
   deleteNote: '데이터는 24시간 이내에 삭제됩니다.',
   emailSubject: 'GriffoWork 결과',
@@ -959,6 +971,7 @@ const zh: MatchPreviewCopy = {
   },
   teaserClose: '修正这些问题可能会提高你获得面试邀请的机会。',
   teaserCta: '查看完整诊断',
+  teaserRevealed: '最重要的一个，现在就可以修改：',
   keptNote: '你的简历已保存，让企业可以找到你。如需删除，请写信至 {email}。',
   deleteNote: '你的数据将在 24 小时内删除。',
   emailSubject: '你的 GriffoWork 结果',
@@ -1039,6 +1052,7 @@ const ar: MatchPreviewCopy = {
   },
   teaserClose: 'تصحيحها قد يزيد فرص دعوتك إلى مقابلة.',
   teaserCta: 'عرض التشخيص الكامل',
+  teaserRevealed: 'الأهم، لتصلحه الآن:',
   keptNote: 'حُفظت سيرتك الذاتية كي تتمكن الشركات من العثور عليك. لحذفها، راسلنا على {email}.',
   deleteNote: 'ستُحذف بياناتك خلال 24 ساعة.',
   emailSubject: 'نتيجتك في GriffoWork',

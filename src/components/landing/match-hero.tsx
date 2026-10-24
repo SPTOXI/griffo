@@ -502,6 +502,13 @@ function Teaser({ c, result, onDiagnosis }: { c: Copy; result: PublicResult; onD
           ))}
         </ul>
       )}
+      {result.revealedIssue && (
+        <div className="mt-3 rounded-lg bg-white/10 p-3">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#8fa6c4]">{c.teaserRevealed}</p>
+          <p className="mt-1 text-sm font-bold">{result.revealedIssue.title}</p>
+          <p className="mt-0.5 text-sm text-[#cfdbeb]">{result.revealedIssue.why}</p>
+        </div>
+      )}
       {teaser.total > 0 && (
         <>
           <p className="mt-2 text-sm text-[#cfdbeb]">{c.teaserClose}</p>

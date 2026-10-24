@@ -1,10 +1,11 @@
 import 'server-only'
+import { ATS_CHECK_COPY } from '@/lib/ats-check/copy'
 import { randomBytes } from 'node:crypto'
 import { db } from '../db'
 import { executeAiTask } from '../ai-router/router'
 import { wrapUntrustedDocument } from '../analysis/untrusted'
 import { LANGUAGE_DIRECTIVE } from '../i18n/server'
-import type { Language } from '../i18n/types'
+import { LANGUAGES, type Language } from '../i18n/types'
 import {
   applySuggestion,
   parseProfileExtraction,
@@ -220,7 +221,7 @@ export async function loadLeadResult(id: string, now: Date = new Date()): Promis
     ? await db.job.findMany({ where: { id: { in: ids } }, select: PUBLIC_JOB_SELECT })
     : []
 
-  return buildPublicResult(
+  const result = buildPublicResult(
     {
       status: timedOut ? 'failed' : lead.status,
       failureCode: timedOut ? 'timeout' : lead.failureCode,
@@ -232,6 +233,11 @@ export async function loadLeadResult(id: string, now: Date = new Date()): Promis
     },
     new Map(rows.map((r) => [r.id, r]))
   )
+  // O texto do problema revelado sai pronto, no idioma do envio: a tela não
+  // precisa carregar o dicionário inteiro do teste ATS (12 idiomas).
+  const code = result.teaser.revealed
+  const lang: Language = (LANGUAGES as string[]).includes(lead.lang) ? (lead.lang as Language) : 'en'
+  return { ...result, revealedIssue: code ? ATS_CHECK_COPY[lang].issues[code] : null }
 }
 
 /** Apaga o que venceu. É a metade física da promessa de 24 horas. */
