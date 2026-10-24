@@ -43,6 +43,10 @@ export const sv: PrivacyContent = {
       title: "CV skickat utan konto (startsidan)",
       body: "Om du skickar ditt CV via formuläret på startsidan utan att skapa ett konto tar vi emot filen (eller den inklistrade texten) och din e-postadress. Vi använder CV:t för att identifiera din befattning, ditt område och dina kompetenser och jämföra dem med lediga jobb, och e-postadressen för att skicka länken till ditt resultat. Det finns två alternativ, båda avmarkerade från början: spara CV:t så att företag kan hitta dig, och få nya jobb och tips för CV:t via e-post (högst 3 mejl på 7 dagar, vart och ett med en länk för att avsluta). Väljer du inget raderar vi allt inom 24 timmar.",
     },
+    {
+      title: "Omdömen",
+      body: "Om du har köpt analysen kan du frivilligt skicka ett omdöme från rapportsidan. Det publiceras på webbplatsen först efter att du har kryssat i medgivandet och vi har godkänt det, och visas bara med det namn och den stad du angav. Du kan när som helst be oss ta bort det, och om du raderar kontot raderas även dess omdömen.",
+    },
   ],
 
   howWeUseHeading: 'Vad vi använder det till',

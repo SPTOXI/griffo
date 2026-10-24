@@ -43,6 +43,10 @@ export const en: PrivacyContent = {
       title: "Resume sent without an account (home page)",
       body: "If you send your resume through the form on the home page without creating an account, we receive the file (or the pasted text) and your email. We use the resume to identify your job title, field and skills and compare them with open jobs, and the email to send you the link to your results. There are two options, both unchecked by default: keep the resume so companies can find you, and get new jobs and resume tips by email (up to 3 emails over 7 days, each with a link to unsubscribe). If you check neither, we delete everything within 24 hours.",
     },
+    {
+      title: "Testimonials",
+      body: "If you bought the analysis, you can choose to send a testimonial from the report screen. It is only published on the website after you tick the authorization and we approve it, and it shows only the name and city you provided. You can ask us to take it down at any time, and deleting your account deletes its testimonials.",
+    },
   ],
 
   howWeUseHeading: 'What we use it for',

@@ -24,7 +24,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 })
     }
 
-    const [resumes, analysisLedger, creditTransactions, subscriptions, auditLogs, radarOffers] =
+    const [resumes, analysisLedger, creditTransactions, subscriptions, auditLogs, radarOffers, testimonials] =
       await Promise.all([
       db.resume.findMany({
         where: { userId: user.id },
@@ -59,6 +59,12 @@ export async function GET() {
         orderBy: { offeredAt: 'desc' },
         select: { title: true, company: true, country: true, offeredAt: true },
       }),
+      // Depoimentos que a pessoa enviou (aprovados ou não).
+      db.testimonial.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+        select: { displayName: true, city: true, role: true, text: true, status: true, createdAt: true },
+      }),
     ])
 
     const payload = {
@@ -84,6 +90,7 @@ export async function GET() {
         // titular, e exportá-la só ampliaria a superfície de vazamento.
       },
       radarOffers,
+      testimonials,
       resumes: resumes.map((r) => ({
         id: r.id,
         originalContent: r.originalContent,

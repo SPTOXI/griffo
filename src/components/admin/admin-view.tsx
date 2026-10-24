@@ -22,10 +22,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Shield, Users, CreditCard, Cpu, Search, Loader2, Save, RefreshCw, Activity,
   BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Award, UserPlus, Minus, Pencil, Globe,
-  Radar as RadarIcon, MapPin
+  Radar as RadarIcon, MapPin, MessageSquareQuote
 } from 'lucide-react'
 import { RadarQuotas } from './radar-quotas'
 import { CityRegistry } from './city-registry'
+import { TestimonialsAdmin } from './testimonials-admin'
 import { toast } from 'sonner'
 import { slowModelWarning } from '@/lib/model-warnings'
 import {
@@ -924,6 +925,9 @@ function AdminViewContent() {
           <TabsTrigger value="radar" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
             <RadarIcon className="w-5 h-5 text-indigo-600" /> <span className="font-semibold text-sm">Radar e Cotas</span>
           </TabsTrigger>
+          <TabsTrigger value="testimonials" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
+            <MessageSquareQuote className="w-5 h-5 text-teal-600" /> <span className="font-semibold text-sm">Depoimentos</span>
+          </TabsTrigger>
           <TabsTrigger value="cities" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
             <MapPin className="w-5 h-5 text-sky-600" /> <span className="font-semibold text-sm">Cadastro de Cidades</span>
           </TabsTrigger>
@@ -942,6 +946,10 @@ function AdminViewContent() {
         {/* Fila das grafias de cidade das páginas `/[país]/jobs`. */}
         <TabsContent value="cities" className="space-y-4">
           <CityRegistry />
+        </TabsContent>
+
+        <TabsContent value="testimonials" className="space-y-4">
+          <TestimonialsAdmin />
         </TabsContent>
 
         {/* USERS TAB - WITH SELECTION & ACTIONS */}

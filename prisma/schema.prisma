@@ -83,6 +83,7 @@ model User {
   // Griffo Enterprise (B2B) — ver Organization/OrganizationMembership abaixo.
   organizationMemberships OrganizationMembership[]
   candidateSubmissions    CandidateSubmission[]
+  testimonials Testimonial[]
 }
 
 /// Quem a pessoa é profissionalmente, e onde ela quer trabalhar.
@@ -1205,6 +1206,29 @@ model RadarOfferLog {
 ///
 /// O texto do currículo só é gravado quando a pessoa escolhe guardar. Quem
 /// escolhe apagar é processado em memória, e aqui fica só o resultado.
+/// Depoimento de quem comprou a análise (`unlockedAt` em algum currículo).
+/// Só aparece no site depois de aprovado no painel (`status = approved`), e
+/// só com o nome e a cidade que a pessoa autorizou publicar.
+model Testimonial {
+  id          String    @id @default(cuid())
+  userId      String
+  /// Apagar a conta apaga os depoimentos dela.
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Nome como a pessoa quer que apareça (ex.: "Ana S.").
+  displayName String
+  city        String?
+  role        String?
+  lang        String
+  text        String
+  /// pending | approved | rejected
+  status      String    @default("pending")
+  createdAt   DateTime  @default(now())
+  reviewedAt  DateTime?
+
+  @@index([status, lang])
+  @@index([userId])
+}
+
 /// Cadastro de cidades das páginas de vagas (`/[país]/jobs`), alimentado aos
 /// poucos pelo admin conforme grafias novas aparecem nas vagas coletadas.
 ///

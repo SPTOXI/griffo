@@ -43,6 +43,10 @@ export const fr: PrivacyContent = {
       title: "CV envoyé sans compte (page d’accueil)",
       body: "Si vous envoyez votre CV via le formulaire de la page d’accueil sans créer de compte, nous recevons le fichier (ou le texte collé) et votre adresse e-mail. Nous utilisons le CV pour identifier votre poste, votre domaine et vos compétences et les comparer aux offres ouvertes, et l’e-mail pour vous envoyer le lien vers votre résultat. Deux options sont proposées, toutes deux décochées par défaut : conserver le CV pour que des entreprises puissent vous trouver, et recevoir par e-mail de nouvelles offres et des conseils pour votre CV (jusqu’à 3 e-mails en 7 jours, chacun avec un lien de désinscription). Si vous ne cochez rien, nous supprimons tout sous 24 heures.",
     },
+    {
+      title: "Témoignages",
+      body: "Si vous avez acheté l’analyse, vous pouvez, si vous le souhaitez, envoyer un témoignage depuis l’écran du rapport. Il n’est publié sur le site qu’après que vous avez coché l’autorisation et que nous l’avons approuvé, et il n’apparaît qu’avec le nom et la ville que vous avez indiqués. Vous pouvez demander son retrait à tout moment, et la suppression du compte supprime ses témoignages.",
+    },
   ],
 
   howWeUseHeading: 'À quoi cela sert',
