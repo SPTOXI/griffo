@@ -15,7 +15,7 @@ import {
 import { cityJobsContext, type CityJobsContext } from '@/lib/city-jobs/context'
 import { fill } from '@/lib/city-jobs/copy'
 import { JobList } from './job-list'
-import { CityJobsShell, ResumeCta } from './shell'
+import { CityJobsShell, ResumeCta, ResumeCtaCompact } from './shell'
 
 const BASE = 'https://griffo.work'
 
@@ -127,14 +127,15 @@ export async function cityPageMetadata(country: string, city: string, area: stri
 
 function Chips({ label, items }: { label: string; items: { key: string; text: string; href: string; active: boolean }[] }) {
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 me-1">{label}</span>
+    // No celular, uma linha que desliza para o lado; a partir de `sm`, quebra normal.
+    <div className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+      <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-slate-500 me-1">{label}</span>
       {items.map((i) => (
         <Link
           key={i.key}
           href={i.href}
           rel="nofollow"
-          className={`rounded-full border px-3 py-1 text-xs ${
+          className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs ${
             i.active ? 'border-[#0B63E5] bg-[#0B63E5] text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0B63E5]'
           }`}
         >
@@ -205,12 +206,12 @@ export async function CityPage({ country, city: citySlug, area: areaParam, searc
       {city && !area && city.areas.length > 0 && (
         <section className="space-y-2">
           <h2 className="font-bold text-[#0B192E]">{c.byArea}</h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
             {city.areas.map((a) => (
               <Link
                 key={a.area}
                 href={pathFor(ctx, city.slug, a.area)}
-                className="rounded-full border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700 hover:border-[#0B63E5] hover:text-[#0B63E5]"
+                className="shrink-0 whitespace-nowrap rounded-full border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700 hover:border-[#0B63E5] hover:text-[#0B63E5]"
               >
                 {categoryLabel(a.area, lang)} <span className="text-slate-400">({fmt(ctx, a.count)})</span>
               </Link>
@@ -238,9 +239,18 @@ export async function CityPage({ country, city: citySlug, area: areaParam, searc
         />
       </section>
 
-      <ResumeCta ctx={ctx} />
+      {/* Chamada curta antes da lista; a completa vem depois, para as vagas
+          aparecerem cedo no celular. */}
+      <ResumeCtaCompact ctx={ctx} />
 
-      {jobs.length > 0 && <JobList ctx={ctx} jobs={jobs} />}
+      {jobs.length > 0 ? (
+        <JobList ctx={ctx} jobs={jobs} />
+      ) : (
+        <p className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
+          {c.noResults}{' '}
+          <Link href={basePath(r)} className="font-semibold text-[#0B63E5] hover:underline">{c.clearFilters}</Link>
+        </p>
+      )}
 
       {pages > 1 && (
         <nav className="flex items-center justify-between gap-3 text-sm">
@@ -261,6 +271,8 @@ export async function CityPage({ country, city: citySlug, area: areaParam, searc
           )}
         </nav>
       )}
+
+      <ResumeCta ctx={ctx} />
 
       {area && city && (
         <p className="text-sm">
