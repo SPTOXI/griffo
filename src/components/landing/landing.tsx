@@ -38,6 +38,8 @@ export interface LandingProps {
   forcedLang?: Language
   /** Contagem real de vagas ativas (resolvida no servidor) — ver `src/app/page.tsx`. */
   openJobsCount?: number
+  /** Currículos já analisados (ver `social-proof.server.ts`). */
+  resumesAnalyzed?: number
   /** Vagas por país, mesma fonte — só a home (`src/app/page.tsx`) resolve
    *  isto hoje; as 41 rotas de país recebem lista vazia e a seção não
    *  aparece (ver `jobsByCountry` em `landing.tsx`). */
@@ -49,6 +51,7 @@ export function Landing({
   countryCode,
   forcedLang,
   openJobsCount = 0,
+  resumesAnalyzed = 0,
   jobsByCountry = [],
 }: LandingProps) {
   const { user } = useAuth()
@@ -204,7 +207,7 @@ export function Landing({
       {/* Envio de currículo — a porta de entrada desde o §2.132: quem procura
           emprego recebe oportunidades, e a auditoria aparece como a ponte. Vem
           antes do Hero D, que desce para explicar a cadeia. */}
-      <MatchHero lang={lang} openJobsCount={openJobsCount} countryCode={countryCode} onNavigate={onNavigate} />
+      <MatchHero lang={lang} openJobsCount={openJobsCount} resumesAnalyzed={resumesAnalyzed} countryCode={countryCode} onNavigate={onNavigate} />
 
       {/* HERO D — única direção aprovada do handoff de design; ver hero-d.tsx */}
       <HeroD t={t} lang={lang} openJobsCount={openJobsCount} onNavigate={onNavigate} />

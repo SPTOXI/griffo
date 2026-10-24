@@ -145,6 +145,16 @@ export async function POST(req: Request) {
     stage = 'ats-score'
     const ats = scoreAtsReadability(text, { pages })
     const token = newLeadToken()
+    // A nota entra no evento da reserva, como no teste ATS: é dela que sai o
+    // "melhor que X% dos currículos testados" (`social-proof.server.ts`).
+    if (claimId) {
+      await db.analyticsEvent
+        .update({
+          where: { id: claimId },
+          data: { meta: JSON.stringify({ ipKey, keep, marketing, score: ats.score, ...(country ? { country } : {}) }) },
+        })
+        .catch(() => {})
+    }
 
     stage = 'create-lead'
     await createLead({

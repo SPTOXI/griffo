@@ -1,5 +1,7 @@
 import 'server-only'
 import { ATS_CHECK_COPY } from '@/lib/ats-check/copy'
+import { percentileBelow } from '@/lib/analytics/social-proof'
+import { loadAtsScoreDistribution } from '@/lib/analytics/social-proof.server'
 import { randomBytes } from 'node:crypto'
 import { db } from '../db'
 import { executeAiTask } from '../ai-router/router'
@@ -245,7 +247,8 @@ export async function loadLeadResult(id: string, now: Date = new Date()): Promis
   // precisa carregar o dicionário inteiro do teste ATS (12 idiomas).
   const code = result.teaser.revealed
   const lang: Language = (LANGUAGES as string[]).includes(lead.lang) ? (lead.lang as Language) : 'en'
-  return { ...result, revealedIssue: code ? ATS_CHECK_COPY[lang].issues[code] : null }
+  const percentile = percentileBelow(await loadAtsScoreDistribution().catch(() => []), result.ats.score)
+  return { ...result, revealedIssue: code ? ATS_CHECK_COPY[lang].issues[code] : null, percentile }
 }
 
 /** Apaga o que venceu. É a metade física da promessa de 24 horas. */

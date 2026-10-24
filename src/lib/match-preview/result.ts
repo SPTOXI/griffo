@@ -74,6 +74,8 @@ export interface PublicResult {
   expiresAt: string
   /** Título e motivo do problema revelado, no idioma do envio. Preenchido por `loadLeadResult`. */
   revealedIssue?: { title: string; why: string } | null
+  /** Em que % dos currículos já testados a nota é menor. Nulo sem amostra suficiente. */
+  percentile?: number | null
 }
 
 export interface LeadForResult {

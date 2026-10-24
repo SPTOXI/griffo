@@ -7,6 +7,7 @@ import { localeForLang, type Language } from '@/lib/i18n'
 import { contactEmail } from '@/lib/i18n/contact'
 import { countryLabel } from '@/lib/jobs/country-labels'
 import { fill, matchPreviewCopy } from '@/lib/match-preview/copy'
+import { MIN_SOCIAL_PROOF_COUNT } from '@/lib/analytics/social-proof'
 import { isValidToken } from '@/lib/match-preview/rules'
 import type { PublicOpportunity, PublicResult } from '@/lib/match-preview/result'
 import { getVisitorId, trackOnce } from '@/components/analytics/track-client'
@@ -22,6 +23,8 @@ type Phase = 'form' | 'submitting' | 'processing' | 'result' | 'limit' | 'expire
 export interface MatchHeroProps {
   lang: Language
   openJobsCount: number
+  /** Currículos já analisados, para a prova social sob o título. */
+  resumesAnalyzed?: number
   countryCode?: string
   onNavigate: (v: 'login' | 'signup' | 'app') => void
 }
@@ -44,7 +47,7 @@ function readAsBase64(file: File): Promise<string> {
  * resultado vai para a URL (`?lead=`), que é também o link do e-mail: recarregar
  * a página ou abrir o e-mail volta para o mesmo resultado.
  */
-export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: MatchHeroProps) {
+export function MatchHero({ lang, openJobsCount, resumesAnalyzed = 0, countryCode, onNavigate }: MatchHeroProps) {
   const c = matchPreviewCopy(lang)
   const locale = localeForLang(lang)
   const [phase, setPhase] = useState<Phase>('form')
@@ -199,6 +202,11 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
                   })()}
                 </p>
               </div>
+            )}
+            {resumesAnalyzed >= MIN_SOCIAL_PROOF_COUNT && (
+              <p className="text-sm font-semibold text-slate-600">
+                {fill(c.socialProof, { n: new Intl.NumberFormat(locale).format(resumesAnalyzed) })}
+              </p>
             )}
           </div>
 
@@ -503,6 +511,9 @@ function Teaser({ c, result, onDiagnosis }: { c: Copy; result: PublicResult; onD
       <p className="text-[11px] font-bold uppercase tracking-wider text-[#8fa6c4]">
         {c.atsScoreLabel}: <span className="text-white">{ats.score}/100</span>
       </p>
+      {result.percentile != null && (
+        <p className="mt-1 text-xs text-[#cfdbeb]">{fill(c.percentileLine, { p: result.percentile })}</p>
+      )}
       <p className="mt-1.5 text-sm font-bold leading-snug">{headline}</p>
       {teaser.byCategory.length > 0 && (
         <ul className="mt-2 flex flex-col gap-1 text-sm text-[#cfdbeb]">

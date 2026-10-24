@@ -28,11 +28,12 @@ type Screen = 'landing' | 'login' | 'signup' | 'app'
 export interface HomeClientProps {
   /** Contagem real de vagas ativas, resolvida no servidor em `page.tsx`. */
   openJobsCount: number
+  resumesAnalyzed?: number
   /** Vagas abertas por país, mesma fonte e mesmo momento — ver `page.tsx`. */
   jobsByCountry: CountryJobCount[]
 }
 
-export function HomeClient({ openJobsCount, jobsByCountry }: HomeClientProps) {
+export function HomeClient({ openJobsCount, resumesAnalyzed, jobsByCountry }: HomeClientProps) {
   const { user, hydrated, hydrate } = useAuth()
   const setNavView = useNav((s) => s.setView)
   const [screen, setScreen] = useState<Screen>('landing')
@@ -66,7 +67,7 @@ export function HomeClient({ openJobsCount, jobsByCountry }: HomeClientProps) {
   // SSR e primeiro render: entrega o HTML completo da Landing Page para motores de busca,
   // bots de IA (GPTBot, ClaudeBot, PerplexityBot) e visitantes sem flash de carregamento.
   if (!hydrated) {
-    return <Landing onNavigate={(v) => setScreen(v)} openJobsCount={openJobsCount} jobsByCountry={jobsByCountry} />
+    return <Landing onNavigate={(v) => setScreen(v)} openJobsCount={openJobsCount} resumesAnalyzed={resumesAnalyzed} jobsByCountry={jobsByCountry} />
   }
 
   if (effectiveScreen === 'app') {
@@ -77,5 +78,5 @@ export function HomeClient({ openJobsCount, jobsByCountry }: HomeClientProps) {
     return <AuthScreen initialMode={effectiveScreen} onBack={() => setScreen('landing')} />
   }
 
-  return <Landing onNavigate={(v) => setScreen(v)} openJobsCount={openJobsCount} jobsByCountry={jobsByCountry} />
+  return <Landing onNavigate={(v) => setScreen(v)} openJobsCount={openJobsCount} resumesAnalyzed={resumesAnalyzed} jobsByCountry={jobsByCountry} />
 }

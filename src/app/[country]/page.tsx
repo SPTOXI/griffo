@@ -8,6 +8,7 @@ import { DICTIONARIES, dirForLang } from '@/lib/i18n'
 import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
 import { resumeTermFor } from '@/lib/market/regional-terms'
 import { getOpenJobsCount } from '@/lib/jobs/open-count.server'
+import { loadResumesAnalyzedCount } from '@/lib/analytics/social-proof.server'
 import { CountryPageClient } from './country-client'
 
 export const dynamicParams = true
@@ -290,7 +291,7 @@ export default async function CountryPage({ params }: PageProps) {
   const market = isGlobal ? GLOBAL_MARKET : marketForCountry(code)
   const effectiveCountry = isGlobal ? 'US' : code
   const price = priceFor(effectiveCountry, 'single')
-  const openJobsCount = await getOpenJobsCount()
+  const [openJobsCount, resumesAnalyzed] = await Promise.all([getOpenJobsCount(), loadResumesAnalyzedCount()])
 
   // Schema.org com preço e moeda do mercado específico
   const countryJsonLd = {
@@ -342,7 +343,7 @@ export default async function CountryPage({ params }: PageProps) {
           tem o mesmo efeito visual — e vale também para o app autenticado, que
           o `CountryPageClient` monta neste mesmo lugar depois de hidratar. */}
       <div dir={dirForLang(market.jobLanguage)}>
-        <CountryPageClient countryCode={effectiveCountry} lang={market.jobLanguage} openJobsCount={openJobsCount} />
+        <CountryPageClient countryCode={effectiveCountry} lang={market.jobLanguage} openJobsCount={openJobsCount} resumesAnalyzed={resumesAnalyzed} />
       </div>
     </>
   )

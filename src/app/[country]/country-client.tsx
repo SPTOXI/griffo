@@ -25,9 +25,10 @@ export interface CountryPageClientProps {
   lang: Language
   /** Contagem real de vagas ativas, resolvida no servidor em `page.tsx`. */
   openJobsCount: number
+  resumesAnalyzed?: number
 }
 
-export function CountryPageClient({ countryCode, lang, openJobsCount }: CountryPageClientProps) {
+export function CountryPageClient({ countryCode, lang, openJobsCount, resumesAnalyzed }: CountryPageClientProps) {
   const { user, hydrated, hydrate } = useAuth()
   const setNavView = useNav((s) => s.setView)
   const [screen, setScreen] = useState<Screen>('landing')
@@ -50,7 +51,7 @@ export function CountryPageClient({ countryCode, lang, openJobsCount }: CountryP
 
   // Durante SSR e primeiro render: entrega a Landing Page localizada para o país
   if (!hydrated) {
-    return <Landing onNavigate={(v) => setScreen(v)} countryCode={countryCode} forcedLang={lang} openJobsCount={openJobsCount} />
+    return <Landing onNavigate={(v) => setScreen(v)} countryCode={countryCode} forcedLang={lang} openJobsCount={openJobsCount} resumesAnalyzed={resumesAnalyzed} />
   }
 
   if (effectiveScreen === 'app') {
@@ -67,6 +68,7 @@ export function CountryPageClient({ countryCode, lang, openJobsCount }: CountryP
       countryCode={countryCode}
       forcedLang={lang}
       openJobsCount={openJobsCount}
+      resumesAnalyzed={resumesAnalyzed}
     />
   )
 }
