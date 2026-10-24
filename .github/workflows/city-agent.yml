@@ -1,16 +1,17 @@
 name: Revisão automática de cidades (DeepSeek Flash)
 
 # Classifica as grafias de cidade novas das páginas de vagas (`/[país]/jobs`):
-# cidade, bairro/região/outro nome de qual cidade, ou não é cidade. Cada rodada
-# trabalha até o prazo da função e para; a seguinte continua de onde parou.
-# O que o admin já decidiu no painel nunca é tocado.
+# cidade, bairro/região/outro nome de qual cidade, ou não é cidade. O que o
+# admin já decidiu no painel nunca é tocado.
+#
+# Não tem agendamento próprio: roda como último passo de `jobbase-sync.yml`,
+# logo depois que a base de vagas é atualizada. Este arquivo fica para rodar
+# à mão (aba Actions → "Run workflow").
 #
 # Fora do vercel.json pelo mesmo motivo da retenção: o plano Hobby agenda só
 # dois crons e os dois estão ocupados. Usa o mesmo secret CRON_SECRET.
 
 on:
-  schedule:
-    - cron: '43 */6 * * *'
   workflow_dispatch: {}
 
 jobs:

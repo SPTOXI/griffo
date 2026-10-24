@@ -93,7 +93,7 @@ export function CityRegistry() {
         <CardDescription>
           Grafias de cidade que aparecem nas vagas abertas, usadas nas páginas <code>/{country.toLowerCase()}/jobs</code>.
           Marque o que é cidade, junte outros nomes e bairros na cidade certa, e esconda o que não é cidade. A página
-          muda na hora. Um agente (DeepSeek Flash) revisa sozinho as grafias novas a cada 6 horas; as decisões dele
+          muda na hora. Um agente (DeepSeek Flash) revisa sozinho as grafias novas logo depois de cada atualização da base de vagas; as decisões dele
           aparecem com o selo IA em &quot;Mostrar já revisadas&quot;, e qualquer uma pode ser corrigida aqui.
         </CardDescription>
       </CardHeader>

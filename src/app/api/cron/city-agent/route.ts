@@ -8,8 +8,9 @@ import { runCityAgent } from '@/lib/city-jobs/city-agent.server'
 
 /**
  * Revisão automática das grafias de cidade das páginas de vagas, no DeepSeek
- * Flash (`city-jobs/city-agent.server.ts`). Roda de 6 em 6 horas
- * (`.github/workflows/city-agent.yml`); cada rodada trabalha até o prazo e
+ * Flash (`city-jobs/city-agent.server.ts`). Roda como último passo da
+ * sincronização diária da base de vagas (`.github/workflows/jobbase-sync.yml`),
+ * logo depois que as vagas novas chegam; cada chamada trabalha até o prazo e
  * para, e a seguinte continua.
  *
  * Mesma autenticação das outras rotas de cron: sem `CRON_SECRET`, 503.

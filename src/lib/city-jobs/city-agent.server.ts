@@ -23,6 +23,8 @@ export interface CityAgentRun {
   countries: number
   reviewed: number
   saved: number
+  /** Grafias ainda sem regra depois desta rodada (aproximado: as descartadas voltam). */
+  pending: number
   costUsd: number
   errors: string[]
 }
@@ -34,13 +36,16 @@ export interface CityAgentRun {
  * a rodada seguinte continua de onde parou, porque o que foi decidido sai da
  * fila sozinho.
  *
+ * Roda logo depois da sincronização da base de vagas (`jobbase-sync.yml`),
+ * quando as grafias novas acabaram de chegar.
+ *
  * Sem failover para outro provedor de propósito (`maxProviderAttempts: 1`): o
  * operador escolheu o DeepSeek Flash para isto. Fora do ar, a rodada para e a
  * próxima tenta de novo.
  */
 export async function runCityAgent(opts: { deadlineMs: number }): Promise<CityAgentRun> {
   const start = Date.now()
-  const run: CityAgentRun = { countries: 0, reviewed: 0, saved: 0, costUsd: 0, errors: [] }
+  const run: CityAgentRun = { countries: 0, reviewed: 0, saved: 0, pending: 0, costUsd: 0, errors: [] }
 
   // Pendências por país, numa consulta só.
   const grouped = await db.job.groupBy({
@@ -63,6 +68,7 @@ export async function runCityAgent(opts: { deadlineMs: number }): Promise<CityAg
     if (pending.length > 0) queue.push({ country, pending })
   }
   queue.sort((a, b) => b.pending.length - a.pending.length)
+  const totalPending = queue.reduce((n, q) => n + q.pending.length, 0)
 
   for (const { country, pending } of queue) {
     // Cada chamada leva até ~15s; não começa uma que não termina no prazo.
@@ -119,6 +125,7 @@ export async function runCityAgent(opts: { deadlineMs: number }): Promise<CityAg
     }
   }
 
+  run.pending = Math.max(0, totalPending - run.saved)
   if (run.saved > 0) revalidateTag(CITY_JOBS_CACHE_TAG, { expire: 0 })
   return run
 }
