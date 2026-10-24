@@ -17,7 +17,7 @@ import { submitUrlsToIndexNow } from '../lib/seo/indexnow'
 loadEnvFile()
 
 async function main() {
-  const urls = sitemap().map((route) => route.url)
+  const urls = (await sitemap()).map((route) => route.url)
   console.log(`Enviando ${urls.length} URLs ao IndexNow...`)
 
   const result = await submitUrlsToIndexNow(urls)

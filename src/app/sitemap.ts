@@ -4,6 +4,8 @@ import { atsLanguagesFor } from '@/lib/ats/content'
 import { ATS_CHECK_LANGS, ATS_CHECK_PATH } from '@/lib/ats-check/copy'
 import { localeForLang, LANGUAGES } from '@/lib/i18n'
 import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
+import { MIN_JOBS_TO_INDEX, areaToUrl } from '@/lib/city-jobs/city-index'
+import { CITY_JOBS_COUNTRY_SLUGS } from '@/lib/city-jobs/context'
 
 // A MESMA lista que gera as rotas estáticas, não uma cópia.
 //
@@ -16,7 +18,7 @@ import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
 // arquivo ao lado.
 const COUNTRIES = SUPPORTED_COUNTRY_SLUGS
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://griffo.work'
   const lastModified = new Date()
 
@@ -159,6 +161,31 @@ export default function sitemap(): MetadataRoute.Sitemap {
           }
         : {}),
     })
+  }
+
+  // 5. Vagas por país, cidade e área (`/[país]/jobs/...`), em todos os países
+  // com rota própria. Só as páginas com vagas suficientes para não serem
+  // ralas — as outras existem com `noindex`. Se o banco falhar, o sitemap sai
+  // sem elas em vez de não sair. Import dinâmico: o módulo é `server-only`, e
+  // `submit-indexnow.ts` roda este arquivo fora do Next — lá a falha cai no
+  // `catch` em vez de derrubar o script.
+  try {
+    const { loadCityIndex } = await import('@/lib/city-jobs/city-index.server')
+    for (const slug of CITY_JOBS_COUNTRY_SLUGS) {
+      const cities = (await loadCityIndex(slug.toUpperCase())).filter((c) => c.total >= MIN_JOBS_TO_INDEX)
+      if (cities.length === 0) continue
+      routes.push({ url: `${baseUrl}/${slug}/jobs`, lastModified, changeFrequency: 'daily', priority: 0.8 })
+      for (const c of cities) {
+        const city = `${baseUrl}/${slug}/jobs/${encodeURIComponent(c.slug)}`
+        routes.push({ url: city, lastModified, changeFrequency: 'daily', priority: 0.7 })
+        for (const a of c.areas) {
+          if (a.count < MIN_JOBS_TO_INDEX) continue
+          routes.push({ url: `${city}/${areaToUrl(a.area)}`, lastModified, changeFrequency: 'daily', priority: 0.6 })
+        }
+      }
+    }
+  } catch (e) {
+    console.error('sitemap: city jobs index failed', e)
   }
 
   return routes
