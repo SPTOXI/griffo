@@ -13,6 +13,9 @@ const SENIORITY: Record<string, string> = {
 }
 const REMOTE: Record<string, string> = { remote: 'Remoto', hybrid: 'Híbrido', onsite: 'Presencial' }
 
+/** Fontes que não informam a empresa mandam um marcador em vez de nada. */
+const NO_COMPANY = new Set(['unknown', 'n/a', 'confidencial', 'confidential', ''])
+
 const dateFmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' })
 
 /** Lista de vagas. O link vai para a candidatura na fonte, fora do Griffo. */
@@ -30,7 +33,8 @@ export function JobList({ jobs }: { jobs: CityJob[] }) {
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-[#0B192E] break-words">{j.title}</h3>
               <p className="text-sm text-slate-600">
-                {j.company} · {j.city}
+                {NO_COMPANY.has(j.company.trim().toLowerCase()) ? '' : `${j.company} · `}
+                {j.city}
                 {j.region && j.region !== j.city ? ` – ${j.region}` : ''}
               </p>
               {tags.length > 0 && (

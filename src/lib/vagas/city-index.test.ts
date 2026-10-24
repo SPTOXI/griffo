@@ -33,3 +33,11 @@ test('buildCityIndex junta grafias da mesma cidade', () => {
   assert.deepEqual(idx[0].areas, [{ area: 'ti', count: 10 }, { area: 'vendas', count: 3 }])
   assert.deepEqual(idx[1].areas, [{ area: 'ti', count: 5 }])
 })
+
+test('buildCityIndex prefere a grafia acentuada', () => {
+  const idx = buildCityIndex([
+    { city: 'Brasilia', category: null, count: 9 },
+    { city: 'Brasília', category: null, count: 4 },
+  ])
+  assert.equal(idx[0].name, 'Brasília')
+})

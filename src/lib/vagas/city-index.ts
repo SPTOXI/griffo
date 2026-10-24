@@ -66,6 +66,17 @@ export interface CityRow {
   count: number
 }
 
+/**
+ * Grafia exibida: a mais comum entre as acentuadas, se houver alguma — senão a
+ * mais comum. Sem isso "Brasilia" (fonte sem acento, mais vagas) vencia
+ * "Brasília".
+ */
+function displayName(names: Map<string, number>): string {
+  const all = [...names.entries()].sort((a, b) => b[1] - a[1])
+  const accented = all.filter(([n]) => n !== n.normalize('NFD').replace(/[\u0300-\u036f]/g, ''))
+  return (accented[0] ?? all[0])[0]
+}
+
 /** Agrupa as contagens por (cidade crua, área) em cidades normalizadas, maiores primeiro. */
 export function buildCityIndex(rows: readonly CityRow[]): CityEntry[] {
   const acc = new Map<string, { names: Map<string, number>; raw: Set<string>; areas: Map<string, number>; total: number }>()
@@ -85,7 +96,7 @@ export function buildCityIndex(rows: readonly CityRow[]): CityEntry[] {
   return [...acc.entries()]
     .map(([slug, e]) => ({
       slug,
-      name: [...e.names.entries()].sort((a, b) => b[1] - a[1])[0][0],
+      name: displayName(e.names),
       total: e.total,
       rawCities: [...e.raw].sort(),
       areas: [...e.areas.entries()]
