@@ -78,6 +78,8 @@ export async function POST(req: NextRequest) {
   }
   const { country, rawSlug, kind, canonicalSlug, displayName } = parsed.data
   const data = {
+    // Decisão do painel sempre vence e marca a linha como do admin, mesmo se o agente a criou.
+    decidedBy: 'admin',
     kind,
     canonicalSlug: kind === 'alias' ? canonicalSlug! : null,
     displayName: kind === 'city' ? displayName ?? null : null,

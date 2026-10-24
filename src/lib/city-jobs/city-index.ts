@@ -131,6 +131,8 @@ export interface CityRule {
   kind: 'city' | 'alias' | 'ignore'
   canonicalSlug?: string | null
   displayName?: string | null
+  /** `admin` ou `agent` (revisão automática). */
+  decidedBy?: string
 }
 
 export type CityRules = ReadonlyMap<string, CityRule>

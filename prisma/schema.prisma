@@ -1223,6 +1223,9 @@ model CityAlias {
   canonicalSlug String?
   /// Nome exibido da cidade, quando o admin quis corrigir a grafia.
   displayName   String?
+  /// `admin` (painel) ou `agent` (revisão automática, `city-agent.server.ts`).
+  /// O agente só decide grafias sem regra; o admin pode corrigir qualquer uma.
+  decidedBy     String   @default("admin")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

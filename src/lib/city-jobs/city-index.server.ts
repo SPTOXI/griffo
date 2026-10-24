@@ -22,7 +22,7 @@ export async function loadCityRules(country: string): Promise<CityRules> {
   return new Map(
     rows.map((r): [string, CityRule] => [
       r.rawSlug,
-      { rawSlug: r.rawSlug, kind: r.kind as CityRule['kind'], canonicalSlug: r.canonicalSlug, displayName: r.displayName },
+      { rawSlug: r.rawSlug, kind: r.kind as CityRule['kind'], canonicalSlug: r.canonicalSlug, displayName: r.displayName, decidedBy: r.decidedBy },
     ])
   )
 }

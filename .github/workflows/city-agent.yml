@@ -1,0 +1,30 @@
+name: Revisão automática de cidades (DeepSeek Flash)
+
+# Classifica as grafias de cidade novas das páginas de vagas (`/[país]/jobs`):
+# cidade, bairro/região/outro nome de qual cidade, ou não é cidade. Cada rodada
+# trabalha até o prazo da função e para; a seguinte continua de onde parou.
+# O que o admin já decidiu no painel nunca é tocado.
+#
+# Fora do vercel.json pelo mesmo motivo da retenção: o plano Hobby agenda só
+# dois crons e os dois estão ocupados. Usa o mesmo secret CRON_SECRET.
+
+on:
+  schedule:
+    - cron: '43 */6 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar /api/cron/city-agent
+        run: |
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" --max-time 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://griffo.work/api/cron/city-agent)
+          echo "HTTP $status"
+          cat /tmp/response.json
+          if [ "$status" -ge 300 ]; then
+            echo "Revisão de cidades falhou (HTTP $status)."
+            exit 1
+          fi

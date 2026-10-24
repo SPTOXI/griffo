@@ -89,3 +89,27 @@ test('cadastro de cidades: junta bairro sem roubar o nome, esconde o que não é
   assert.equal(queue[0].rawSlug, 'berlim')
   assert.equal(queue[0].rule, null)
 })
+
+test('agente de cidades: só aproveita decisão válida do lote', async () => {
+  const { validateDecisions } = await import('./city-agent')
+  const content = JSON.stringify({
+    decisions: [
+      { rawSlug: 'munich', kind: 'alias', canonicalSlug: 'munchen' },
+      { rawSlug: 'mitte', kind: 'alias', canonicalSlug: 'cidade-inventada' },
+      { rawSlug: 'kaarst', kind: 'city' },
+      { rawSlug: 'neuss-sud', kind: 'alias', canonicalSlug: 'kaarst' },
+      { rawSlug: 'multiple', kind: 'ignore' },
+      { rawSlug: 'fora-do-lote', kind: 'city' },
+      { rawSlug: 'kaarst', kind: 'ignore' },
+      { rawSlug: 'x', kind: 'apagar' },
+    ],
+  })
+  const out = validateDecisions(content, ['munich', 'mitte', 'kaarst', 'neuss-sud', 'multiple', 'x'], new Set(['munchen', 'berlin']))
+  assert.deepEqual(out, [
+    { rawSlug: 'munich', kind: 'alias', canonicalSlug: 'munchen' },
+    { rawSlug: 'kaarst', kind: 'city' },
+    { rawSlug: 'neuss-sud', kind: 'alias', canonicalSlug: 'kaarst' },
+    { rawSlug: 'multiple', kind: 'ignore' },
+  ])
+  assert.deepEqual(validateDecisions('não é json', ['a'], new Set()), [])
+})

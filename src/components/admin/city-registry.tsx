@@ -22,6 +22,7 @@ interface Rule {
   kind: 'city' | 'alias' | 'ignore'
   canonicalSlug?: string | null
   displayName?: string | null
+  decidedBy?: string
 }
 
 interface Spelling {
@@ -92,7 +93,8 @@ export function CityRegistry() {
         <CardDescription>
           Grafias de cidade que aparecem nas vagas abertas, usadas nas páginas <code>/{country.toLowerCase()}/jobs</code>.
           Marque o que é cidade, junte outros nomes e bairros na cidade certa, e esconda o que não é cidade. A página
-          muda na hora.
+          muda na hora. Um agente (DeepSeek Flash) revisa sozinho as grafias novas a cada 6 horas; as decisões dele
+          aparecem com o selo IA em &quot;Mostrar já revisadas&quot;, e qualquer uma pode ser corrigida aqui.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -136,6 +138,9 @@ export function CityRegistry() {
                       {' · '}
                       <span className="font-semibold">{KIND_LABEL[s.rule.kind]}</span>
                       {s.rule.kind === 'alias' && ` ${s.rule.canonicalSlug}`}
+                      {s.rule.decidedBy === 'agent' && (
+                        <Badge variant="outline" className="ml-2 border-violet-200 bg-violet-50 text-[10px] text-violet-700">IA</Badge>
+                      )}
                     </>
                   )}
                 </p>
