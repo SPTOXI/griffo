@@ -57,7 +57,7 @@ export function ResumeCtaCompact({ ctx }: { ctx: CityJobsContext }) {
   return (
     <Link
       href={`/ats-check?lang=${lang}`}
-      className="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-[#0B192E] hover:bg-blue-100"
+      className="flex flex-col items-start gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-[#0B192E] hover:bg-blue-100 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
     >
       <span>{c.ctaTitle}</span>
       <span className="shrink-0 rounded-lg bg-[#0B63E5] px-3 py-1.5 text-xs text-white">{c.ctaFree}</span>
