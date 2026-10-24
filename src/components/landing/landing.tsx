@@ -577,6 +577,11 @@ export function Landing({
                   `/enterprise`, que ainda não tem nenhum outro backlink
                   interno além do sitemap. */}
               <li><a href="/enterprise" className="hover:text-[#0B63E5] transition-colors">{t.footer.forCompanies}</a></li>
+              {/* `/vagas` só existe em português (vagas do Brasil): o link
+                  aparece só na tela em português, sem chave de tradução. */}
+              {lang === 'pt' && (
+                <li><a href="/vagas" className="hover:text-[#0B63E5] transition-colors">Vagas por cidade</a></li>
+              )}
             </ul>
           </div>
           <div>
