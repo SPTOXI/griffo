@@ -1232,6 +1232,15 @@ model VisitorLead {
   resumeText  String?
   /// A pessoa escolheu guardar os dados para empresas a encontrarem.
   recruiterOptIn Boolean  @default(false)
+  /// A pessoa pediu vagas novas e dicas por e-mail (até 3 e-mails em 7 dias).
+  /// Consentimento separado de `recruiterOptIn`: um não implica o outro.
+  marketingOptIn Boolean  @default(false)
+  /// Quantos e-mails da sequência já saíram (0 a 3).
+  nurtureStep    Int      @default(0)
+  /// Quando sai o próximo. Nulo quando a sequência acabou ou não se aplica.
+  nurtureNextAt  DateTime?
+  /// Pediu para sair da sequência pelo link do e-mail.
+  unsubscribedAt DateTime?
   consentAt      DateTime @default(now())
   expiresAt      DateTime
   /// E-mail de resultado já enviado. Nulo quando não saiu.
@@ -1243,6 +1252,7 @@ model VisitorLead {
   updatedAt      DateTime @updatedAt
 
   @@index([expiresAt])
+  @@index([nurtureNextAt])
   @@index([ipKey, createdAt])
   @@index([visitorId, createdAt])
 }

@@ -41,7 +41,7 @@ export const fr: PrivacyContent = {
     },
     {
       title: "CV envoyé sans compte (page d’accueil)",
-      body: "Si vous envoyez votre CV via le formulaire de la page d’accueil sans créer de compte, nous recevons le fichier (ou le texte collé) et votre adresse e-mail. Nous utilisons le CV pour identifier votre poste, votre domaine et vos compétences et les comparer aux offres ouvertes, et l’e-mail pour vous envoyer le lien vers votre résultat. Lors de l’envoi, vous choisissez : tout supprimer sous 24 heures, ou conserver le CV pour que des entreprises puissent vous trouver. La conservation exige que vous cochiez cette option ; par défaut, tout est supprimé.",
+      body: "Si vous envoyez votre CV via le formulaire de la page d’accueil sans créer de compte, nous recevons le fichier (ou le texte collé) et votre adresse e-mail. Nous utilisons le CV pour identifier votre poste, votre domaine et vos compétences et les comparer aux offres ouvertes, et l’e-mail pour vous envoyer le lien vers votre résultat. Deux options sont proposées, toutes deux décochées par défaut : conserver le CV pour que des entreprises puissent vous trouver, et recevoir par e-mail de nouvelles offres et des conseils pour votre CV (jusqu’à 3 e-mails en 7 jours, chacun avec un lien de désinscription). Si vous ne cochez rien, nous supprimons tout sous 24 heures.",
     },
   ],
 
@@ -94,7 +94,8 @@ export const fr: PrivacyContent = {
     { category: "Journal d'audit (registre de conformité et de sécurité)", period: "Jusqu'à 730 jours" },
     { category: 'Enregistrements de paiement/webhook', period: "Jusqu'à 90 jours" },
     { category: "Historique des offres du Radar (postes que le Radar vous a présentés)", period: "Jusqu'à 730 jours" },
-    { category: "CV envoyé sans compte, avec l’option « tout supprimer sous 24 heures »", period: "Jusqu’à 24 heures. Le texte du CV n’est pas conservé ; seuls le résultat et l’e-mail le sont, supprimés dans le même délai" },
+    { category: "CV envoyé sans compte, sans option cochée", period: "Jusqu’à 24 heures. Le texte du CV n’est pas conservé ; seuls le résultat et l’e-mail le sont, supprimés dans le même délai" },
+    { category: "CV envoyé sans compte, avec l’option « recevoir offres et conseils par e-mail »", period: "Jusqu’à 10 jours, ou jusqu’à votre désinscription. Le texte du CV n’est pas conservé ; seuls le résultat, le profil extrait et l’e-mail le sont" },
     { category: "CV envoyé sans compte, avec l’option « conserver pour les entreprises »", period: "Jusqu’à 730 jours, ou jusqu’à ce que vous en demandiez la suppression" },
   ],
 

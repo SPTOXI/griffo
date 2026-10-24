@@ -54,6 +54,7 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
   const [pasted, setPasted] = useState('')
   const [email, setEmail] = useState('')
   const [keep, setKeep] = useState(false)
+  const [marketing, setMarketing] = useState(false)
   const [result, setResult] = useState<PublicResult | null>(null)
   // Cada consulta em andamento tem um número; trocar o número (novo envio,
   // "enviar de novo", desmontar) faz o laço anterior parar sozinho.
@@ -121,6 +122,7 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
           ...payload,
           email: email.trim(),
           keep,
+          marketing,
           lang,
           ...(countryCode ? { country: countryCode } : {}),
           visitorId: getVisitorId(),
@@ -215,6 +217,8 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
                 setEmail={setEmail}
                 keep={keep}
                 setKeep={setKeep}
+                marketing={marketing}
+                setMarketing={setMarketing}
                 error={error}
                 onSubmit={submit}
               />
@@ -267,6 +271,8 @@ function Form(props: {
   setEmail: (v: string) => void
   keep: boolean
   setKeep: (v: boolean) => void
+  marketing: boolean
+  setMarketing: (v: boolean) => void
   error: string | null
   onSubmit: () => void
 }) {
@@ -327,22 +333,13 @@ function Form(props: {
         <span className="text-xs font-normal text-slate-500">{c.emailHint}</span>
       </label>
 
-      {/* Guardar o currículo é opt-in: sem marcar, vale a regra de sempre
-          (apagado depois do resultado). A opção explícita "apagar em 24h"
-          saiu da tela a pedido do operador. */}
+      {/* Dois consentimentos separados, os dois opt-in: guardar o currículo
+          para empresas e receber a sequência de e-mails. Sem marcar nada,
+          vale a regra de sempre (apagado depois do resultado). A opção
+          explícita "apagar em 24h" saiu da tela a pedido do operador. */}
       <div className="flex flex-col gap-2">
-        <label className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${props.keep ? 'border-[#0B63E5] bg-blue-50/60' : 'border-slate-200'}`}>
-          <input
-            type="checkbox"
-            checked={props.keep}
-            onChange={(e) => props.setKeep(e.target.checked)}
-            className="mt-1 accent-[#0B63E5]"
-          />
-          <span className="flex flex-col">
-            <span className="text-sm font-semibold text-[#0B192E]">{c.retentionKeep}</span>
-            <span className="text-xs text-slate-500">{c.retentionKeepHint}</span>
-          </span>
-        </label>
+        <OptIn checked={props.marketing} onChange={props.setMarketing} title={c.marketingOptIn} hint={c.marketingOptInHint} />
+        <OptIn checked={props.keep} onChange={props.setKeep} title={c.retentionKeep} hint={c.retentionKeepHint} />
         <a href={`/privacy?lang=${props.lang}`} target="_blank" rel="noopener noreferrer" className="w-fit text-xs text-slate-500 underline decoration-dotted underline-offset-2 hover:text-[#0B63E5]">
           {c.privacyLink}
         </a>
@@ -354,6 +351,18 @@ function Form(props: {
         {c.submitCta} <ArrowRight className="ms-2 h-5 w-5 rtl:rotate-180" />
       </Button>
     </form>
+  )
+}
+
+function OptIn({ checked, onChange, title, hint }: { checked: boolean; onChange: (v: boolean) => void; title: string; hint: string }) {
+  return (
+    <label className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${checked ? 'border-[#0B63E5] bg-blue-50/60' : 'border-slate-200'}`}>
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-1 accent-[#0B63E5]" />
+      <span className="flex flex-col">
+        <span className="text-sm font-semibold text-[#0B192E]">{title}</span>
+        <span className="text-xs text-slate-500">{hint}</span>
+      </span>
+    </label>
   )
 }
 
@@ -430,7 +439,7 @@ function Result({
 
       <p className="flex items-start gap-1.5 text-[11px] text-slate-500">
         <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        {result.recruiterOptIn ? fill(c.keptNote, { email: contactEmail(lang) }) : c.deleteNote}
+        {result.recruiterOptIn ? fill(c.keptNote, { email: contactEmail(lang) }) : result.marketingOptIn ? c.nurtureNote : c.deleteNote}
       </p>
     </div>
   )

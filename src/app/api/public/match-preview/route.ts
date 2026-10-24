@@ -43,6 +43,8 @@ const schema = z
     text: z.string().max(MAX_RESUME_CHARS).optional(),
     email: z.string().trim().toLowerCase().email().max(254),
     keep: z.boolean(),
+    /** Pediu vagas e dicas por e-mail. Opcional: telas antigas em cache não mandam. */
+    marketing: z.boolean().optional(),
     lang: z.string().max(5),
     country: z.string().regex(/^[A-Za-z]{2}$/).optional(),
     visitorId: z.string().max(100).optional(),
@@ -75,6 +77,7 @@ export async function POST(req: Request) {
     }
 
     const { pdfBase64, email, keep, visitorId } = parsed.data
+    const marketing = parsed.data.marketing === true
     const lang: Language = (LANGUAGES as string[]).includes(parsed.data.lang) ? (parsed.data.lang as Language) : 'en'
     const country = edgeCountry(req) || parsed.data.country?.toUpperCase() || null
     const bot = isLikelyBot(req.headers.get('user-agent'))
@@ -112,7 +115,7 @@ export async function POST(req: Request) {
           data: {
             event: bot ? 'lead_bot' : 'lead_submitted',
             visitorId: visitorId || null,
-            meta: JSON.stringify({ ipKey, keep, ...(country ? { country } : {}) }),
+            meta: JSON.stringify({ ipKey, keep, marketing, ...(country ? { country } : {}) }),
           },
           select: { id: true },
         })
@@ -151,6 +154,7 @@ export async function POST(req: Request) {
       country,
       ats,
       recruiterOptIn: keep,
+      marketingOptIn: marketing,
       resumeText: text,
       visitorId: visitorId || null,
       ipKey,

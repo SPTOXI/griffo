@@ -18,6 +18,8 @@ export interface LeadEmailInput {
   resultUrl: string
   matches: number
   recruiterOptIn: boolean
+  /** Pediu a sequência de e-mails: os dados ficam até 10 dias, não 24 horas. */
+  marketingOptIn?: boolean
 }
 
 export function buildLeadEmail(input: LeadEmailInput): EmailMessage {
@@ -26,7 +28,7 @@ export function buildLeadEmail(input: LeadEmailInput): EmailMessage {
     input.matches > 1 ? fill(c.emailBodyMatches, { count: input.matches })
     : input.matches === 1 ? c.emailBodyOne
     : c.emailBodyNone
-  const retention = input.recruiterOptIn ? c.emailKeepNote : c.emailDeleteNote
+  const retention = input.recruiterOptIn ? c.emailKeepNote : input.marketingOptIn ? c.nurtureNote : c.emailDeleteNote
   const dir = input.lang === 'ar' ? 'rtl' : 'ltr'
 
   const html = [

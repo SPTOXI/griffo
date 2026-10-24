@@ -41,7 +41,7 @@ export const it: PrivacyContent = {
     },
     {
       title: "Curriculum inviato senza account (pagina iniziale)",
-      body: "Se invii il curriculum tramite il modulo della pagina iniziale senza creare un account, riceviamo il file (o il testo incollato) e la tua email. Usiamo il curriculum per individuare il tuo ruolo, il tuo settore e le tue competenze e confrontarli con le offerte aperte, e l’email per inviarti il link al risultato. Al momento dell’invio scegli: cancellare tutto entro 24 ore, oppure conservare il curriculum perché le aziende possano trovarti. Per conservarlo devi selezionare questa opzione; l’impostazione predefinita è la cancellazione.",
+      body: "Se invii il curriculum tramite il modulo della pagina iniziale senza creare un account, riceviamo il file (o il testo incollato) e la tua email. Usiamo il curriculum per individuare il tuo ruolo, il tuo settore e le tue competenze e confrontarli con le offerte aperte, e l’email per inviarti il link al risultato. Ci sono due opzioni, entrambe non selezionate per impostazione predefinita: conservare il curriculum perché le aziende possano trovarti, e ricevere via email nuove offerte e consigli per il curriculum (fino a 3 email in 7 giorni, ognuna con un link per annullare l’iscrizione). Se non ne selezioni nessuna, cancelliamo tutto entro 24 ore.",
     },
   ],
 
@@ -94,7 +94,8 @@ export const it: PrivacyContent = {
     { category: 'Registro di audit (registro di conformità e sicurezza)', period: 'Fino a 730 giorni' },
     { category: 'Registri di pagamento/webhook', period: 'Fino a 90 giorni' },
     { category: 'Cronologia delle offerte del Radar (posizioni che il Radar ti ha mostrato)', period: 'Fino a 730 giorni' },
-    { category: "Curriculum inviato senza account, con l’opzione «cancellare entro 24 ore»", period: "Fino a 24 ore. Il testo del curriculum non viene conservato; solo il risultato e l’email, cancellati nello stesso termine" },
+    { category: "Curriculum inviato senza account, senza opzioni selezionate", period: "Fino a 24 ore. Il testo del curriculum non viene conservato; solo il risultato e l’email, cancellati nello stesso termine" },
+    { category: "Curriculum inviato senza account, con l’opzione «ricevere offerte e consigli via email»", period: "Fino a 10 giorni, o finché non annulli l’iscrizione. Il testo del curriculum non viene conservato; solo il risultato, il profilo letto e l’email" },
     { category: "Curriculum inviato senza account, con l’opzione «conservare per le aziende»", period: "Fino a 730 giorni, o finché non ne chiedi la cancellazione" },
   ],
 

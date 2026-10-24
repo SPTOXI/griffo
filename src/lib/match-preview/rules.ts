@@ -21,11 +21,36 @@ const SEVERITY_RANK: Record<AtsSeverity, number> = { critical: 0, warning: 1, ti
 export const DELETE_AFTER_HOURS = 22
 export const KEEP_FOR_DAYS = 730
 
-export function expiresAtFor(recruiterOptIn: boolean, now: Date = new Date()): Date {
+/**
+ * Quem pediu e-mails (e não pediu para guardar) fica o tempo da sequência, e
+ * mais um pouco para o último link ainda abrir o resultado. Nada além disso:
+ * o texto do currículo continua sem ser gravado.
+ */
+export const NURTURE_KEEP_DAYS = 10
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+export function expiresAtFor(recruiterOptIn: boolean, now: Date = new Date(), marketingOptIn = false): Date {
   const ms = recruiterOptIn
-    ? KEEP_FOR_DAYS * 24 * 60 * 60 * 1000
-    : DELETE_AFTER_HOURS * 60 * 60 * 1000
+    ? KEEP_FOR_DAYS * DAY_MS
+    : marketingOptIn
+      ? NURTURE_KEEP_DAYS * DAY_MS
+      : DELETE_AFTER_HOURS * 60 * 60 * 1000
   return new Date(now.getTime() + ms)
+}
+
+/**
+ * A sequência de e-mails para quem pediu (§ conversão de leads, 24/10/2026):
+ * dia 1, o problema principal do currículo; dia 3, vagas novas com o perfil;
+ * dia 7, último lembrete. Dias contados do envio do currículo.
+ */
+export const NURTURE_DAYS = [1, 3, 7] as const
+export type NurtureStep = 1 | 2 | 3
+
+/** Quando sai o e-mail de número `step` (1 a 3), ou `null` depois do último. */
+export function nurtureAt(step: number, createdAt: Date): Date | null {
+  const day = NURTURE_DAYS[step - 1]
+  return day === undefined ? null : new Date(createdAt.getTime() + day * DAY_MS)
 }
 
 /**
