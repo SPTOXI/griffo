@@ -35,8 +35,7 @@ function parseFilters(sp: Record<string, string | string[] | undefined>): Filter
   const one = (k: string) => (typeof sp[k] === 'string' ? (sp[k] as string) : null)
   const work = one('work')
   const level = one('level')
-  // Teto de 25 levas (1.000 vagas numa página só).
-  const page = Math.max(1, Math.min(25, parseInt(one('page') ?? '1', 10) || 1))
+  const page = Math.max(1, Math.min(50, parseInt(one('page') ?? '1', 10) || 1))
   return {
     work: work && (WORK_FILTERS as readonly string[]).includes(work) ? work : null,
     level: level && (LEVEL_FILTERS as readonly string[]).includes(level) ? level : null,
@@ -156,6 +155,7 @@ export async function CityPage({ country, city: citySlug, area: areaParam, searc
   const { total, jobs } = await listJobs(query(r, f))
   // Página remota do país sem nenhuma vaga remota: não há o que mostrar.
   if (!city && total === 0 && f.page === 1 && !f.level) notFound()
+  const pages = Math.max(1, Math.ceil(total / JOBS_PER_PAGE))
   const title = heading(r)
 
   const breadcrumb = {
@@ -199,6 +199,7 @@ export async function CityPage({ country, city: citySlug, area: areaParam, searc
         <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0B192E]">{title}</h1>
         <p className="text-slate-600">
           {total === 1 ? c.countLineOne : fill(c.countLine, { count: fmt(ctx, total) })}
+          {pages > 1 && ` ${fill(c.page, { n: f.page })} / ${pages}.`}
         </p>
       </div>
 
@@ -251,20 +252,24 @@ export async function CityPage({ country, city: citySlug, area: areaParam, searc
         </p>
       )}
 
-      {jobs.length > 0 && total > jobs.length && (
-        <div className="flex flex-col items-center gap-2">
-          {/* Link de verdade (a página com mais uma leva), sem rolar para o topo:
-              funciona sem JavaScript e o Google segue; com JavaScript, o Next
-              troca só o conteúdo e a lista cresce no lugar. */}
-          <Link
-            href={hrefWith(r, f, { page: f.page + 1 })}
-            scroll={false}
-            className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:border-[#0B63E5] hover:text-[#0B63E5]"
-          >
-            {c.loadMore}
-          </Link>
-          <span className="text-xs text-slate-500">{fill(c.showing, { n: fmt(ctx, jobs.length), total: fmt(ctx, total) })}</span>
-        </div>
+      {pages > 1 && (
+        <nav className="flex items-center justify-between gap-3 text-sm">
+          {f.page > 1 ? (
+            <Link href={hrefWith(r, f, { page: f.page - 1 })} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-800 hover:bg-slate-50">
+              ← {c.prev}
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="text-slate-500">{fill(c.page, { n: f.page })} / {pages}</span>
+          {f.page < pages ? (
+            <Link href={hrefWith(r, f, { page: f.page + 1 })} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-800 hover:bg-slate-50">
+              {c.next} →
+            </Link>
+          ) : (
+            <span />
+          )}
+        </nav>
       )}
 
       <ResumeCta ctx={ctx} />
