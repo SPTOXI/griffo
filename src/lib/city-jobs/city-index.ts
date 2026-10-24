@@ -44,6 +44,7 @@ const NOT_A_CITY_WORDS = new Set(['remote', 'remoto', 'remota', 'hybrid', 'homeo
 const CITY_ALIASES: Record<string, string> = {
   'new-york-city': 'new-york',
   nyc: 'new-york',
+  sf: 'san-francisco',
   munich: 'munchen',
   cologne: 'koln',
   frankfurt: 'frankfurt-am-main',
