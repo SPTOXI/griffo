@@ -46,6 +46,10 @@ export type TaskType =
   /// não `dimensions` nem `coverLetter` — reaproveitar outro validador
   /// reprovaria uma resposta correta.
   | 'interview_prep'
+  /// Revisão automática das grafias de cidade das páginas de vagas
+  /// (`city-jobs/city-agent.ts`): é cidade, apelido/bairro de qual, ou não é
+  /// cidade. Resposta JSON curta, sem dado pessoal.
+  | 'city_classification'
 
 export type ProviderId = 'gemini' | 'deepseek' | 'claude' | 'kimi' | 'openai'
 

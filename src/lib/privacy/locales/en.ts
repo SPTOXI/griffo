@@ -41,7 +41,7 @@ export const en: PrivacyContent = {
     },
     {
       title: "Resume sent without an account (home page)",
-      body: "If you send your resume through the form on the home page without creating an account, we receive the file (or the pasted text) and your email. We use the resume to identify your job title, field and skills and compare them with open jobs, and the email to send you the link to your results. When you send it, you choose: delete everything within 24 hours, or keep the resume so companies can find you. Keeping it requires you to select that option; the default is to delete.",
+      body: "If you send your resume through the form on the home page without creating an account, we receive the file (or the pasted text) and your email. We use the resume to identify your job title, field and skills and compare them with open jobs, and the email to send you the link to your results. There are two options, both unchecked by default: keep the resume so companies can find you, and get new jobs and resume tips by email (up to 3 emails over 7 days, each with a link to unsubscribe). If you check neither, we delete everything within 24 hours.",
     },
   ],
 
@@ -94,7 +94,8 @@ export const en: PrivacyContent = {
     { category: 'Audit trail (compliance and security log)', period: 'Up to 730 days' },
     { category: 'Payment/webhook records', period: 'Up to 90 days' },
     { category: 'Radar offer history (roles the Radar showed you)', period: 'Up to 730 days' },
-    { category: "Resume sent without an account, with the \"delete within 24 hours\" option", period: "Up to 24 hours. The resume text is not stored; only the results and the email, deleted within the same period" },
+    { category: "Resume sent without an account, with no option checked", period: "Up to 24 hours. The resume text is not stored; only the results and the email, deleted within the same period" },
+    { category: "Resume sent without an account, with the \"get jobs and tips by email\" option", period: "Up to 10 days, or until you unsubscribe. The resume text is not stored; only the results, the profile read from it and the email" },
     { category: "Resume sent without an account, with the \"keep so companies can find me\" option", period: "Up to 730 days, or until you ask us to delete it" },
   ],
 

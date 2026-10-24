@@ -43,7 +43,7 @@ test('todo problema do teste ATS tem categoria na isca', () => {
   }
 })
 
-test('a isca conta por categoria e nunca diz QUAL problema é', () => {
+test('a isca conta por categoria e revela só o mais grave', () => {
   const teaser = teaserFrom({
     issues: [
       { code: 'no_metrics', severity: 'tip' },
@@ -58,11 +58,12 @@ test('a isca conta por categoria e nunca diz QUAL problema é', () => {
     { category: 'formatting', count: 1 },
     { category: 'contact', count: 1 },
   ])
-  assert.ok(!JSON.stringify(teaser).includes('no_metrics'))
+  assert.equal(teaser.revealed, 'columns_suspected')
+  assert.ok(!JSON.stringify(teaser).includes('no_phone'))
 })
 
 test('currículo sem problema: isca vazia, e não "pode melhorar" inventado', () => {
-  assert.deepEqual(teaserFrom({ issues: [] }), { total: 0, byCategory: [] })
+  assert.deepEqual(teaserFrom({ issues: [] }), { total: 0, byCategory: [], revealed: null })
 })
 
 function job(id: string, over: Partial<PublicJobRow> = {}): PublicJobRow {
@@ -188,4 +189,41 @@ test('o e-mail escapa HTML, leva o link e não cita vaga nenhuma', () => {
   assert.ok(!kept.html.includes('<script>'))
   assert.ok(kept.html.includes('dir="rtl"'))
   assert.ok(kept.html.includes(MATCH_PREVIEW_COPY.ar.emailKeepNote))
+})
+
+test('sequência de e-mails: dias 1, 3 e 7, depois acabou', async () => {
+  const { nurtureAt, expiresAtFor, NURTURE_KEEP_DAYS } = await import('./rules')
+  const t0 = new Date('2026-10-24T12:00:00Z')
+  const day = 24 * 60 * 60 * 1000
+  assert.equal(nurtureAt(1, t0)!.getTime() - t0.getTime(), 1 * day)
+  assert.equal(nurtureAt(2, t0)!.getTime() - t0.getTime(), 3 * day)
+  assert.equal(nurtureAt(3, t0)!.getTime() - t0.getTime(), 7 * day)
+  assert.equal(nurtureAt(4, t0), null)
+  // Quem pediu e-mails fica o tempo da sequência; guardar para empresas vence.
+  assert.equal(expiresAtFor(false, t0, true).getTime() - t0.getTime(), NURTURE_KEEP_DAYS * day)
+  assert.ok(expiresAtFor(true, t0, true).getTime() > expiresAtFor(false, t0, true).getTime())
+  assert.ok(nurtureAt(3, t0)!.getTime() < expiresAtFor(false, t0, true).getTime())
+})
+
+test('e-mails da sequência: descadastro no corpo e no cabeçalho, nos 12 idiomas', async () => {
+  const { buildNurtureEmail } = await import('./nurture-email')
+  const { LANGUAGES } = await import('../i18n/types')
+  for (const lang of LANGUAGES) {
+    for (const step of [1, 2, 3] as const) {
+      const m = buildNurtureEmail({
+        to: 'a@b.co',
+        lang,
+        step,
+        resultUrl: 'https://griffo.work/?lead=x',
+        unsubscribeUrl: 'https://griffo.work/api/public/lead-unsubscribe?t=x',
+        issue: { title: 'T', why: 'W' },
+        moreIssues: 2,
+        newJobs: 3,
+        openJobs: 5,
+      })
+      assert.ok(m.html.includes('lead-unsubscribe'), `${lang} ${step}`)
+      assert.ok(m.headers?.['List-Unsubscribe'])
+      assert.ok(!/\{\w+\}/.test(m.subject + m.text), `marcador sobrando: ${lang} ${step}`)
+    }
+  }
 })

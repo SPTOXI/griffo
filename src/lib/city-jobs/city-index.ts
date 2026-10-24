@@ -125,18 +125,48 @@ function displayName(names: Map<string, number>): string {
   return (accented[0] ?? all[0])[0]
 }
 
+/** Uma linha do cadastro de cidades (`CityAlias`), já lida do banco. */
+export interface CityRule {
+  rawSlug: string
+  kind: 'city' | 'alias' | 'ignore'
+  canonicalSlug?: string | null
+  displayName?: string | null
+  /** `admin` ou `agent` (revisão automática). */
+  decidedBy?: string
+}
+
+export type CityRules = ReadonlyMap<string, CityRule>
+
+/**
+ * Para onde vai uma grafia: o slug da cidade, `null` se não é cidade, e se é
+ * apelido (o nome dela não concorre ao nome exibido da cidade).
+ */
+function resolve(raw: string | null, exclude: ReadonlySet<string>, rules: CityRules) {
+  const name = cityName(raw, exclude)
+  if (!name) return null
+  const rawSlug = citySlug(name)
+  const rule = rules.get(rawSlug)
+  if (rule?.kind === 'ignore') return null
+  if (rule?.kind === 'alias' && rule.canonicalSlug) return { name, rawSlug, slug: rule.canonicalSlug, alias: true }
+  return { name, rawSlug, slug: rawSlug, alias: false }
+}
+
 /** Agrupa as contagens por (cidade crua, área) em cidades normalizadas, maiores primeiro. */
-export function buildCityIndex(rows: readonly CityRow[], exclude: ReadonlySet<string> = new Set()): CityEntry[] {
+export function buildCityIndex(
+  rows: readonly CityRow[],
+  exclude: ReadonlySet<string> = new Set(),
+  rules: CityRules = new Map()
+): CityEntry[] {
   const acc = new Map<string, { names: Map<string, number>; raw: Set<string>; areas: Map<string, number>; total: number }>()
   for (const r of rows) {
-    const name = cityName(r.city, exclude)
-    if (!name || !r.city) continue
-    const slug = citySlug(name)
-    let e = acc.get(slug)
-    if (!e) acc.set(slug, (e = { names: new Map(), raw: new Set(), areas: new Map(), total: 0 }))
+    const hit = resolve(r.city, exclude, rules)
+    if (!hit || !r.city) continue
+    let e = acc.get(hit.slug)
+    if (!e) acc.set(hit.slug, (e = { names: new Map(), raw: new Set(), areas: new Map(), total: 0 }))
     e.total += r.count
     e.raw.add(r.city)
-    e.names.set(name, (e.names.get(name) ?? 0) + r.count)
+    // "Mitte" soma em Berlim, mas não pode virar o nome de Berlim.
+    if (!hit.alias) e.names.set(hit.name, (e.names.get(hit.name) ?? 0) + r.count)
     if (r.category && areaFromUrl(r.category.replace(/_/g, '-'))) {
       e.areas.set(r.category, (e.areas.get(r.category) ?? 0) + r.count)
     }
@@ -144,7 +174,7 @@ export function buildCityIndex(rows: readonly CityRow[], exclude: ReadonlySet<st
   return [...acc.entries()]
     .map(([slug, e]) => ({
       slug,
-      name: displayName(e.names),
+      name: rules.get(slug)?.displayName || (e.names.size ? displayName(e.names) : slug),
       total: e.total,
       rawCities: [...e.raw].sort(),
       areas: [...e.areas.entries()]
@@ -152,4 +182,37 @@ export function buildCityIndex(rows: readonly CityRow[], exclude: ReadonlySet<st
         .sort((a, b) => b.count - a.count),
     }))
     .sort((a, b) => b.total - a.total || a.slug.localeCompare(b.slug))
+}
+
+export interface CitySpelling {
+  rawSlug: string
+  /** A grafia mais comum entre as que dão este slug. */
+  name: string
+  count: number
+  rule: CityRule | null
+}
+
+/**
+ * As grafias de um país, para a fila do painel: as sem regra primeiro (a
+ * revisar), maiores primeiro. Usa a mesma limpeza das páginas (`cityName`),
+ * então "Remote" e o nome do país nem chegam à fila.
+ */
+export function citySpellings(
+  rows: readonly CityRow[],
+  exclude: ReadonlySet<string> = new Set(),
+  rules: CityRules = new Map()
+): CitySpelling[] {
+  const acc = new Map<string, { names: Map<string, number>; count: number }>()
+  for (const r of rows) {
+    const name = cityName(r.city, exclude)
+    if (!name) continue
+    const rawSlug = citySlug(name)
+    let e = acc.get(rawSlug)
+    if (!e) acc.set(rawSlug, (e = { names: new Map(), count: 0 }))
+    e.count += r.count
+    e.names.set(name, (e.names.get(name) ?? 0) + r.count)
+  }
+  return [...acc.entries()]
+    .map(([rawSlug, e]) => ({ rawSlug, name: displayName(e.names), count: e.count, rule: rules.get(rawSlug) ?? null }))
+    .sort((a, b) => Number(a.rule !== null) - Number(b.rule !== null) || b.count - a.count)
 }

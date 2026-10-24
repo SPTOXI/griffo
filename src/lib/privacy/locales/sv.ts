@@ -41,7 +41,7 @@ export const sv: PrivacyContent = {
     },
     {
       title: "CV skickat utan konto (startsidan)",
-      body: "Om du skickar ditt CV via formuläret på startsidan utan att skapa ett konto tar vi emot filen (eller den inklistrade texten) och din e-postadress. Vi använder CV:t för att identifiera din befattning, ditt område och dina kompetenser och jämföra dem med lediga jobb, och e-postadressen för att skicka länken till ditt resultat. När du skickar väljer du: radera allt inom 24 timmar, eller spara CV:t så att företag kan hitta dig. Att spara kräver att du väljer det alternativet; standard är att radera.",
+      body: "Om du skickar ditt CV via formuläret på startsidan utan att skapa ett konto tar vi emot filen (eller den inklistrade texten) och din e-postadress. Vi använder CV:t för att identifiera din befattning, ditt område och dina kompetenser och jämföra dem med lediga jobb, och e-postadressen för att skicka länken till ditt resultat. Det finns två alternativ, båda avmarkerade från början: spara CV:t så att företag kan hitta dig, och få nya jobb och tips för CV:t via e-post (högst 3 mejl på 7 dagar, vart och ett med en länk för att avsluta). Väljer du inget raderar vi allt inom 24 timmar.",
     },
   ],
 
@@ -94,7 +94,8 @@ export const sv: PrivacyContent = {
     { category: 'Granskningslogg (efterlevnads- och säkerhetslogg)', period: 'Upp till 730 dagar' },
     { category: 'Betalnings-/webhook-poster', period: 'Upp till 90 dagar' },
     { category: 'Radarhistorik över erbjudanden (tjänster som Radarn visade dig)', period: 'Upp till 730 dagar' },
-    { category: "CV skickat utan konto, med alternativet ”radera inom 24 timmar”", period: "Upp till 24 timmar. CV-texten sparas inte, bara resultatet och e-postadressen, som raderas inom samma tid" },
+    { category: "CV skickat utan konto, utan valt alternativ", period: "Upp till 24 timmar. CV-texten sparas inte, bara resultatet och e-postadressen, som raderas inom samma tid" },
+    { category: "CV skickat utan konto, med alternativet ”få jobb och tips via e-post”", period: "Upp till 10 dagar, eller tills du avslutar. CV-texten sparas inte, bara resultatet, den lästa profilen och e-postadressen" },
     { category: "CV skickat utan konto, med alternativet ”spara för företag”", period: "Upp till 730 dagar, eller tills du ber oss radera det" },
   ],
 

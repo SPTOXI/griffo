@@ -1205,6 +1205,33 @@ model RadarOfferLog {
 ///
 /// O texto do currículo só é gravado quando a pessoa escolhe guardar. Quem
 /// escolhe apagar é processado em memória, e aqui fica só o resultado.
+/// Cadastro de cidades das páginas de vagas (`/[país]/jobs`), alimentado aos
+/// poucos pelo admin conforme grafias novas aparecem nas vagas coletadas.
+///
+/// Uma linha por grafia (já normalizada em slug) de um país. `kind`:
+/// - `city`: é uma cidade, fica como está (pode trocar o nome exibido);
+/// - `alias`: é outro nome, bairro ou região de `canonicalSlug` e soma nela;
+/// - `ignore`: não é cidade ("Remote", "Bay Area" sem cidade certa) e some.
+/// Grafia sem linha aqui continua aparecendo como veio — nada some esperando
+/// revisão; ela só entra na fila do painel.
+model CityAlias {
+  id            String   @id @default(cuid())
+  /// ISO do país, como em `Job.country`.
+  country       String
+  rawSlug       String
+  kind          String
+  canonicalSlug String?
+  /// Nome exibido da cidade, quando o admin quis corrigir a grafia.
+  displayName   String?
+  /// `admin` (painel) ou `agent` (revisão automática, `city-agent.server.ts`).
+  /// O agente só decide grafias sem regra; o admin pode corrigir qualquer uma.
+  decidedBy     String   @default("admin")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([country, rawSlug])
+}
+
 model VisitorLead {
   /// Também é a credencial de leitura do resultado: 32 caracteres hex
   /// aleatórios gerados no servidor, e não `cuid()`, que é previsível.
@@ -1232,6 +1259,15 @@ model VisitorLead {
   resumeText  String?
   /// A pessoa escolheu guardar os dados para empresas a encontrarem.
   recruiterOptIn Boolean  @default(false)
+  /// A pessoa pediu vagas novas e dicas por e-mail (até 3 e-mails em 7 dias).
+  /// Consentimento separado de `recruiterOptIn`: um não implica o outro.
+  marketingOptIn Boolean  @default(false)
+  /// Quantos e-mails da sequência já saíram (0 a 3).
+  nurtureStep    Int      @default(0)
+  /// Quando sai o próximo. Nulo quando a sequência acabou ou não se aplica.
+  nurtureNextAt  DateTime?
+  /// Pediu para sair da sequência pelo link do e-mail.
+  unsubscribedAt DateTime?
   consentAt      DateTime @default(now())
   expiresAt      DateTime
   /// E-mail de resultado já enviado. Nulo quando não saiu.
@@ -1243,6 +1279,7 @@ model VisitorLead {
   updatedAt      DateTime @updatedAt
 
   @@index([expiresAt])
+  @@index([nurtureNextAt])
   @@index([ipKey, createdAt])
   @@index([visitorId, createdAt])
 }

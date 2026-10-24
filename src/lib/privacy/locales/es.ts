@@ -41,7 +41,7 @@ export const es: PrivacyContent = {
     },
     {
       title: "Currículum enviado sin cuenta (página de inicio)",
-      body: "Si envías tu currículum desde el formulario de la página de inicio sin crear una cuenta, recibimos el archivo (o el texto pegado) y tu correo electrónico. Usamos el currículum para identificar tu cargo, tu área y tus competencias y compararlos con las ofertas abiertas, y el correo para enviarte el enlace del resultado. Al enviarlo eliges: borrar todo en un plazo de 24 horas, o guardar el currículum para que las empresas puedan encontrarte. Guardarlo exige que marques esa opción; por defecto se borra.",
+      body: "Si envías tu currículum desde el formulario de la página de inicio sin crear una cuenta, recibimos el archivo (o el texto pegado) y tu correo electrónico. Usamos el currículum para identificar tu cargo, tu área y tus competencias y compararlos con las ofertas abiertas, y el correo para enviarte el enlace del resultado. Hay dos opciones, ambas desmarcadas por defecto: guardar el currículum para que las empresas puedan encontrarte, y recibir por correo ofertas nuevas y consejos para el currículum (hasta 3 correos en 7 días, cada uno con un enlace para darte de baja). Si no marcas ninguna, borramos todo en un plazo de 24 horas.",
     },
   ],
 
@@ -94,7 +94,8 @@ export const es: PrivacyContent = {
     { category: 'Registro de auditoría (registro de cumplimiento y seguridad)', period: 'Hasta 730 días' },
     { category: 'Registros de pago/webhook', period: 'Hasta 90 días' },
     { category: 'Historial de ofertas del Radar (vacantes que el Radar te mostró)', period: 'Hasta 730 días' },
-    { category: "Currículum enviado sin cuenta, con la opción \"borrar en un plazo de 24 horas\"", period: "Hasta 24 horas. El texto del currículum no se guarda; solo el resultado y el correo, que se borran en el mismo plazo" },
+    { category: "Currículum enviado sin cuenta, sin marcar ninguna opción", period: "Hasta 24 horas. El texto del currículum no se guarda; solo el resultado y el correo, que se borran en el mismo plazo" },
+    { category: "Currículum enviado sin cuenta, con la opción \"recibir ofertas y consejos por correo\"", period: "Hasta 10 días, o hasta que te des de baja. El texto del currículum no se guarda; solo el resultado, el perfil leído y el correo" },
     { category: "Currículum enviado sin cuenta, con la opción \"guardar para las empresas\"", period: "Hasta 730 días, o hasta que pidas que lo borremos" },
   ],
 

@@ -11,12 +11,14 @@ const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 /**
  * Rotas isentas de verificação de Origin:
  * - Webhooks externos assinados por HMAC (ex: Stripe).
- * - Descadastro público do Radar via RFC 8058 (POST do Gmail/Outlook).
+ * - Descadastro público do Radar e da sequência de e-mails dos leads via
+ *   RFC 8058 (POST do Gmail/Outlook).
  * - Rotas de Cron protegidas por token Bearer secreto.
  */
 const CSRF_EXEMPT_PREFIXES = [
   '/api/webhooks/',
   '/api/radar/unsubscribe',
+  '/api/public/lead-unsubscribe',
   '/api/cron/',
 ]
 

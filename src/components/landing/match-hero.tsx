@@ -7,6 +7,7 @@ import { localeForLang, type Language } from '@/lib/i18n'
 import { contactEmail } from '@/lib/i18n/contact'
 import { countryLabel } from '@/lib/jobs/country-labels'
 import { fill, matchPreviewCopy } from '@/lib/match-preview/copy'
+import { MIN_SOCIAL_PROOF_COUNT } from '@/lib/analytics/social-proof'
 import { isValidToken } from '@/lib/match-preview/rules'
 import type { PublicOpportunity, PublicResult } from '@/lib/match-preview/result'
 import { getVisitorId, trackOnce } from '@/components/analytics/track-client'
@@ -22,6 +23,8 @@ type Phase = 'form' | 'submitting' | 'processing' | 'result' | 'limit' | 'expire
 export interface MatchHeroProps {
   lang: Language
   openJobsCount: number
+  /** Currículos já analisados, para a prova social sob o título. */
+  resumesAnalyzed?: number
   countryCode?: string
   onNavigate: (v: 'login' | 'signup' | 'app') => void
 }
@@ -44,7 +47,7 @@ function readAsBase64(file: File): Promise<string> {
  * resultado vai para a URL (`?lead=`), que é também o link do e-mail: recarregar
  * a página ou abrir o e-mail volta para o mesmo resultado.
  */
-export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: MatchHeroProps) {
+export function MatchHero({ lang, openJobsCount, resumesAnalyzed = 0, countryCode, onNavigate }: MatchHeroProps) {
   const c = matchPreviewCopy(lang)
   const locale = localeForLang(lang)
   const [phase, setPhase] = useState<Phase>('form')
@@ -54,6 +57,7 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
   const [pasted, setPasted] = useState('')
   const [email, setEmail] = useState('')
   const [keep, setKeep] = useState(false)
+  const [marketing, setMarketing] = useState(false)
   const [result, setResult] = useState<PublicResult | null>(null)
   // Cada consulta em andamento tem um número; trocar o número (novo envio,
   // "enviar de novo", desmontar) faz o laço anterior parar sozinho.
@@ -121,6 +125,7 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
           ...payload,
           email: email.trim(),
           keep,
+          marketing,
           lang,
           ...(countryCode ? { country: countryCode } : {}),
           visitorId: getVisitorId(),
@@ -198,6 +203,11 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
                 </p>
               </div>
             )}
+            {resumesAnalyzed >= MIN_SOCIAL_PROOF_COUNT && (
+              <p className="text-sm font-semibold text-slate-600">
+                {fill(c.socialProof, { n: new Intl.NumberFormat(locale).format(resumesAnalyzed) })}
+              </p>
+            )}
           </div>
 
           <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-xl sm:p-7">
@@ -215,6 +225,8 @@ export function MatchHero({ lang, openJobsCount, countryCode, onNavigate }: Matc
                 setEmail={setEmail}
                 keep={keep}
                 setKeep={setKeep}
+                marketing={marketing}
+                setMarketing={setMarketing}
                 error={error}
                 onSubmit={submit}
               />
@@ -267,6 +279,8 @@ function Form(props: {
   setEmail: (v: string) => void
   keep: boolean
   setKeep: (v: boolean) => void
+  marketing: boolean
+  setMarketing: (v: boolean) => void
   error: string | null
   onSubmit: () => void
 }) {
@@ -327,22 +341,13 @@ function Form(props: {
         <span className="text-xs font-normal text-slate-500">{c.emailHint}</span>
       </label>
 
-      {/* Guardar o currículo é opt-in: sem marcar, vale a regra de sempre
-          (apagado depois do resultado). A opção explícita "apagar em 24h"
-          saiu da tela a pedido do operador. */}
+      {/* Dois consentimentos separados, os dois opt-in: guardar o currículo
+          para empresas e receber a sequência de e-mails. Sem marcar nada,
+          vale a regra de sempre (apagado depois do resultado). A opção
+          explícita "apagar em 24h" saiu da tela a pedido do operador. */}
       <div className="flex flex-col gap-2">
-        <label className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${props.keep ? 'border-[#0B63E5] bg-blue-50/60' : 'border-slate-200'}`}>
-          <input
-            type="checkbox"
-            checked={props.keep}
-            onChange={(e) => props.setKeep(e.target.checked)}
-            className="mt-1 accent-[#0B63E5]"
-          />
-          <span className="flex flex-col">
-            <span className="text-sm font-semibold text-[#0B192E]">{c.retentionKeep}</span>
-            <span className="text-xs text-slate-500">{c.retentionKeepHint}</span>
-          </span>
-        </label>
+        <OptIn checked={props.marketing} onChange={props.setMarketing} title={c.marketingOptIn} hint={c.marketingOptInHint} />
+        <OptIn checked={props.keep} onChange={props.setKeep} title={c.retentionKeep} hint={c.retentionKeepHint} />
         <a href={`/privacy?lang=${props.lang}`} target="_blank" rel="noopener noreferrer" className="w-fit text-xs text-slate-500 underline decoration-dotted underline-offset-2 hover:text-[#0B63E5]">
           {c.privacyLink}
         </a>
@@ -354,6 +359,18 @@ function Form(props: {
         {c.submitCta} <ArrowRight className="ms-2 h-5 w-5 rtl:rotate-180" />
       </Button>
     </form>
+  )
+}
+
+function OptIn({ checked, onChange, title, hint }: { checked: boolean; onChange: (v: boolean) => void; title: string; hint: string }) {
+  return (
+    <label className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${checked ? 'border-[#0B63E5] bg-blue-50/60' : 'border-slate-200'}`}>
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-1 accent-[#0B63E5]" />
+      <span className="flex flex-col">
+        <span className="text-sm font-semibold text-[#0B192E]">{title}</span>
+        <span className="text-xs text-slate-500">{hint}</span>
+      </span>
+    </label>
   )
 }
 
@@ -430,7 +447,7 @@ function Result({
 
       <p className="flex items-start gap-1.5 text-[11px] text-slate-500">
         <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        {result.recruiterOptIn ? fill(c.keptNote, { email: contactEmail(lang) }) : c.deleteNote}
+        {result.recruiterOptIn ? fill(c.keptNote, { email: contactEmail(lang) }) : result.marketingOptIn ? c.nurtureNote : c.deleteNote}
       </p>
     </div>
   )
@@ -494,6 +511,9 @@ function Teaser({ c, result, onDiagnosis }: { c: Copy; result: PublicResult; onD
       <p className="text-[11px] font-bold uppercase tracking-wider text-[#8fa6c4]">
         {c.atsScoreLabel}: <span className="text-white">{ats.score}/100</span>
       </p>
+      {result.percentile != null && (
+        <p className="mt-1 text-xs text-[#cfdbeb]">{fill(c.percentileLine, { p: result.percentile })}</p>
+      )}
       <p className="mt-1.5 text-sm font-bold leading-snug">{headline}</p>
       {teaser.byCategory.length > 0 && (
         <ul className="mt-2 flex flex-col gap-1 text-sm text-[#cfdbeb]">
@@ -501,6 +521,13 @@ function Teaser({ c, result, onDiagnosis }: { c: Copy; result: PublicResult; onD
             <li key={b.category}>• {fill(c.teaserCategories[b.category], { n: b.count })}</li>
           ))}
         </ul>
+      )}
+      {result.revealedIssue && (
+        <div className="mt-3 rounded-lg bg-white/10 p-3">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#8fa6c4]">{c.teaserRevealed}</p>
+          <p className="mt-1 text-sm font-bold">{result.revealedIssue.title}</p>
+          <p className="mt-0.5 text-sm text-[#cfdbeb]">{result.revealedIssue.why}</p>
+        </div>
       )}
       {teaser.total > 0 && (
         <>

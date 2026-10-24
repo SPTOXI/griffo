@@ -41,7 +41,7 @@ export const pt: PrivacyContent = {
     },
     {
       title: "Currículo enviado sem conta (página inicial)",
-      body: "Se você envia o currículo pelo formulário da página inicial sem criar conta, recebemos o arquivo (ou o texto colado) e o seu e-mail. Usamos o currículo para identificar seu cargo, sua área e suas competências e compará-los com as vagas abertas, e o e-mail para mandar o link do resultado. No envio, você escolhe: apagar tudo em até 24 horas, ou guardar o currículo para que empresas possam te encontrar. Guardar exige que você marque a opção; o padrão é apagar.",
+      body: "Se você envia o currículo pelo formulário da página inicial sem criar conta, recebemos o arquivo (ou o texto colado) e o seu e-mail. Usamos o currículo para identificar seu cargo, sua área e suas competências e compará-los com as vagas abertas, e o e-mail para mandar o link do resultado. Há duas opções, e as duas vêm desmarcadas: guardar o currículo para que empresas possam te encontrar, e receber por e-mail vagas novas e dicas para o currículo (até 3 e-mails em 7 dias, com um link para cancelar em cada um). Sem marcar nenhuma, apagamos tudo em até 24 horas.",
     },
   ],
 
@@ -94,7 +94,8 @@ export const pt: PrivacyContent = {
     { category: 'Trilha de auditoria (registro de conformidade e segurança)', period: 'Até 730 dias' },
     { category: 'Registros de pagamento/webhook', period: 'Até 90 dias' },
     { category: 'Histórico de ofertas do Radar (vagas que o Radar te mostrou)', period: 'Até 730 dias' },
-    { category: "Currículo enviado sem conta, com a opção \"apagar em até 24 horas\"", period: "Até 24 horas. O texto do currículo não é gravado; só o resultado e o e-mail, apagados no mesmo prazo" },
+    { category: "Currículo enviado sem conta, sem marcar nenhuma opção", period: "Até 24 horas. O texto do currículo não é gravado; só o resultado e o e-mail, apagados no mesmo prazo" },
+    { category: "Currículo enviado sem conta, com a opção \"receber vagas e dicas por e-mail\"", period: "Até 10 dias, ou até você cancelar os e-mails. O texto do currículo não é gravado; só o resultado, o perfil lido e o e-mail" },
     { category: "Currículo enviado sem conta, com a opção \"guardar para empresas\"", period: "Até 730 dias, ou até você pedir a exclusão" },
   ],
 

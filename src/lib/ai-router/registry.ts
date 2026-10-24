@@ -260,6 +260,8 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
   normalization: 'deepseek',
+  // DeepSeek Flash por decisão do operador (24/10/2026): classificação curta e barata.
+  city_classification: 'deepseek',
   // Agente de deduplicação semântica de vagas: Kimi K3 prioritário.
   job_deduplication: 'kimi',
 }

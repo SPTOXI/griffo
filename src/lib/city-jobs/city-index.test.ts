@@ -65,3 +65,51 @@ test('buildCityIndex junta nomes da mesma cidade em outra língua', () => {
     ['munchen', 'München', 71],
   ])
 })
+
+test('cadastro de cidades: junta bairro sem roubar o nome, esconde o que não é cidade', async () => {
+  const { citySpellings } = await import('./city-index')
+  const rows = [
+    { city: 'Berlin', category: null, count: 192 },
+    { city: 'Mitte', category: null, count: 14 },
+    { city: 'Innenstadt', category: null, count: 14 },
+    { city: 'Berlim', category: null, count: 1 },
+  ]
+  const rules = new Map([
+    ['mitte', { rawSlug: 'mitte', kind: 'alias' as const, canonicalSlug: 'berlin' }],
+    ['innenstadt', { rawSlug: 'innenstadt', kind: 'ignore' as const }],
+    ['berlin', { rawSlug: 'berlin', kind: 'city' as const, displayName: 'Berlin' }],
+  ])
+  const idx = buildCityIndex(rows, new Set(), rules)
+  assert.deepEqual(idx.map((c) => [c.slug, c.name, c.total]), [
+    ['berlin', 'Berlin', 206],
+    ['berlim', 'Berlim', 1],
+  ])
+  // A fila mostra primeiro o que falta revisar.
+  const queue = citySpellings(rows, new Set(), rules)
+  assert.equal(queue[0].rawSlug, 'berlim')
+  assert.equal(queue[0].rule, null)
+})
+
+test('agente de cidades: só aproveita decisão válida do lote', async () => {
+  const { validateDecisions } = await import('./city-agent')
+  const content = JSON.stringify({
+    decisions: [
+      { rawSlug: 'munich', kind: 'alias', canonicalSlug: 'munchen' },
+      { rawSlug: 'mitte', kind: 'alias', canonicalSlug: 'cidade-inventada' },
+      { rawSlug: 'kaarst', kind: 'city' },
+      { rawSlug: 'neuss-sud', kind: 'alias', canonicalSlug: 'kaarst' },
+      { rawSlug: 'multiple', kind: 'ignore' },
+      { rawSlug: 'fora-do-lote', kind: 'city' },
+      { rawSlug: 'kaarst', kind: 'ignore' },
+      { rawSlug: 'x', kind: 'apagar' },
+    ],
+  })
+  const out = validateDecisions(content, ['munich', 'mitte', 'kaarst', 'neuss-sud', 'multiple', 'x'], new Set(['munchen', 'berlin']))
+  assert.deepEqual(out, [
+    { rawSlug: 'munich', kind: 'alias', canonicalSlug: 'munchen' },
+    { rawSlug: 'kaarst', kind: 'city' },
+    { rawSlug: 'neuss-sud', kind: 'alias', canonicalSlug: 'kaarst' },
+    { rawSlug: 'multiple', kind: 'ignore' },
+  ])
+  assert.deepEqual(validateDecisions('não é json', ['a'], new Set()), [])
+})

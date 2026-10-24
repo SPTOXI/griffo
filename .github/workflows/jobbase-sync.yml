@@ -2,8 +2,9 @@ name: Sincronização do JobBase (todas as vagas abertas + encerradas)
 
 # A coleta do Radar só cabe nas 5 mil vagas mais novas do JobBase, que tem mais
 # de 12 mil (§2.144). Este workflow lê a base inteira em várias chamadas de
-# 60s, fecha aqui o que o JobBase encerrou e, por fim, dá algumas rodadas da
-# ficha da vaga para as descrições que acabaram de chegar.
+# 60s, fecha aqui o que o JobBase encerrou, dá algumas rodadas da ficha da
+# vaga para as descrições que acabaram de chegar e, por fim, roda o agente de
+# cidades (DeepSeek Flash) sobre as grafias de cidade que chegaram junto.
 #
 # Fora do vercel.json pelo motivo de sempre: o plano Hobby agenda dois crons e
 # os dois estão ocupados. Usa o secret CRON_SECRET, o mesmo das outras rotas.
@@ -51,4 +52,20 @@ jobs:
             echo "[$i] HTTP $status $(cat /tmp/r.json)"
             if [ "$status" -ge 300 ]; then exit 1; fi
             if [ "$(jq -r '.pending' /tmp/r.json)" = "0" ]; then exit 0; fi
+          done
+
+      # Depois da base atualizada, mesmo que a ficha acima tenha falhado: as
+      # cidades novas já estão no banco. Para quando não há mais pendência ou
+      # quando uma rodada não grava nada (o resto fica para amanhã).
+      - name: Revisar as cidades novas (agente, DeepSeek Flash)
+        if: ${{ !cancelled() }}
+        run: |
+          for i in $(seq 1 8); do
+            status=$(curl -s -o /tmp/r.json -w "%{http_code}" --max-time 90 \
+              -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+              https://griffo.work/api/cron/city-agent)
+            echo "[$i] HTTP $status $(cat /tmp/r.json)"
+            if [ "$status" -ge 300 ]; then exit 1; fi
+            if [ "$(jq -r '.pending' /tmp/r.json)" = "0" ]; then exit 0; fi
+            if [ "$(jq -r '.saved' /tmp/r.json)" = "0" ]; then exit 0; fi
           done

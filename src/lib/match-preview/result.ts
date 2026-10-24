@@ -70,7 +70,12 @@ export interface PublicResult {
   /** Quantas das trancadas são de alta compatibilidade — número, sem nome. */
   lockedStrong: number
   recruiterOptIn: boolean
+  marketingOptIn: boolean
   expiresAt: string
+  /** Título e motivo do problema revelado, no idioma do envio. Preenchido por `loadLeadResult`. */
+  revealedIssue?: { title: string; why: string } | null
+  /** Em que % dos currículos já testados a nota é menor. Nulo sem amostra suficiente. */
+  percentile?: number | null
 }
 
 export interface LeadForResult {
@@ -80,6 +85,7 @@ export interface LeadForResult {
   matchesJson: string | null
   profileInsufficient: boolean
   recruiterOptIn: boolean
+  marketingOptIn?: boolean
   expiresAt: Date
 }
 
@@ -148,6 +154,7 @@ export function buildPublicResult(lead: LeadForResult, jobs: Map<string, PublicJ
     lockedCount: locked.length,
     lockedStrong: locked.filter((m) => m.overall === 'strong').length,
     recruiterOptIn: lead.recruiterOptIn,
+    marketingOptIn: lead.marketingOptIn ?? false,
     expiresAt: lead.expiresAt.toISOString(),
   }
 }

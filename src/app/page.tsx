@@ -1,4 +1,5 @@
 import { getOpenJobsCount, getOpenJobsCountByCountry } from '@/lib/jobs/open-count.server'
+import { loadResumesAnalyzedCount } from '@/lib/analytics/social-proof.server'
 import { HomeClient } from './home-client'
 
 // A landing (Hero D) cita a contagem real de vagas ativas — nunca um número
@@ -16,9 +17,10 @@ import { HomeClient } from './home-client'
 export const revalidate = 300
 
 export default async function Page() {
-  const [openJobsCount, jobsByCountry] = await Promise.all([
+  const [openJobsCount, jobsByCountry, resumesAnalyzed] = await Promise.all([
     getOpenJobsCount(),
     getOpenJobsCountByCountry(),
+    loadResumesAnalyzedCount(),
   ])
-  return <HomeClient openJobsCount={openJobsCount} jobsByCountry={jobsByCountry} />
+  return <HomeClient openJobsCount={openJobsCount} resumesAnalyzed={resumesAnalyzed} jobsByCountry={jobsByCountry} />
 }

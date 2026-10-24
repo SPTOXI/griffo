@@ -1,10 +1,13 @@
 import 'server-only'
+import { ATS_CHECK_COPY } from '@/lib/ats-check/copy'
+import { percentileBelow } from '@/lib/analytics/social-proof'
+import { loadAtsScoreDistribution } from '@/lib/analytics/social-proof.server'
 import { randomBytes } from 'node:crypto'
 import { db } from '../db'
 import { executeAiTask } from '../ai-router/router'
 import { wrapUntrustedDocument } from '../analysis/untrusted'
 import { LANGUAGE_DIRECTIVE } from '../i18n/server'
-import type { Language } from '../i18n/types'
+import { LANGUAGES, type Language } from '../i18n/types'
 import {
   applySuggestion,
   parseProfileExtraction,
@@ -19,9 +22,10 @@ import { sendEmail } from '../email/send'
 import { getAppUrl, getDigestFrom, getDigestReplyTo } from '../env'
 import { trackServerEvent } from '../analytics/track.server'
 import type { AtsCheckResult } from '../ats-check/score'
-import { MAX_STORED_MATCHES, PROCESSING_TIMEOUT_MS, expiresAtFor } from './rules'
+import { MAX_STORED_MATCHES, PROCESSING_TIMEOUT_MS, expiresAtFor, nurtureAt, teaserFrom, type NurtureStep } from './rules'
 import { buildPublicResult, parseStoredMatches, type PublicJobRow, type PublicResult, type StoredMatch } from './result'
 import { buildLeadEmail } from './email'
+import { buildNurtureEmail } from './nurture-email'
 
 /**
  * O envio de currículo sem conta da landing, do lado do servidor (§2.132).
@@ -43,6 +47,8 @@ export interface CreateLeadInput {
   country: string | null
   ats: AtsCheckResult
   recruiterOptIn: boolean
+  /** Pediu vagas e dicas por e-mail: entra na sequência de `sendDueNurtureEmails`. */
+  marketingOptIn: boolean
   /** Só é gravado quando `recruiterOptIn`. */
   resumeText: string
   visitorId: string | null
@@ -50,6 +56,7 @@ export interface CreateLeadInput {
 }
 
 export async function createLead(input: CreateLeadInput): Promise<void> {
+  const now = new Date()
   await db.visitorLead.create({
     data: {
       id: input.id,
@@ -58,8 +65,10 @@ export async function createLead(input: CreateLeadInput): Promise<void> {
       country: input.country,
       atsJson: JSON.stringify(input.ats),
       recruiterOptIn: input.recruiterOptIn,
+      marketingOptIn: input.marketingOptIn,
+      nurtureNextAt: input.marketingOptIn ? nurtureAt(1, now) : null,
       resumeText: input.recruiterOptIn ? input.resumeText : null,
-      expiresAt: expiresAtFor(input.recruiterOptIn),
+      expiresAt: expiresAtFor(input.recruiterOptIn, now, input.marketingOptIn),
       visitorId: input.visitorId,
       ipKey: input.ipKey,
     },
@@ -174,7 +183,7 @@ async function notifyLead(id: string): Promise<void> {
   try {
     const lead = await db.visitorLead.findUnique({
       where: { id },
-      select: { email: true, lang: true, matchesJson: true, recruiterOptIn: true, notifiedAt: true },
+      select: { email: true, lang: true, matchesJson: true, recruiterOptIn: true, marketingOptIn: true, notifiedAt: true },
     })
     if (!lead || lead.notifiedAt) return
 
@@ -184,6 +193,7 @@ async function notifyLead(id: string): Promise<void> {
       resultUrl: `${getAppUrl()}/?lead=${id}`,
       matches: parseStoredMatches(lead.matchesJson).length,
       recruiterOptIn: lead.recruiterOptIn,
+      marketingOptIn: lead.marketingOptIn,
     })
     await sendEmail(message, { apiKey, from: getDigestFrom(), replyTo: getDigestReplyTo() })
     await db.visitorLead.update({ where: { id }, data: { notifiedAt: new Date() } })
@@ -220,7 +230,7 @@ export async function loadLeadResult(id: string, now: Date = new Date()): Promis
     ? await db.job.findMany({ where: { id: { in: ids } }, select: PUBLIC_JOB_SELECT })
     : []
 
-  return buildPublicResult(
+  const result = buildPublicResult(
     {
       status: timedOut ? 'failed' : lead.status,
       failureCode: timedOut ? 'timeout' : lead.failureCode,
@@ -228,14 +238,134 @@ export async function loadLeadResult(id: string, now: Date = new Date()): Promis
       matchesJson: lead.matchesJson,
       profileInsufficient: lead.profileInsufficient,
       recruiterOptIn: lead.recruiterOptIn,
+      marketingOptIn: lead.marketingOptIn && !lead.unsubscribedAt,
       expiresAt: lead.expiresAt,
     },
     new Map(rows.map((r) => [r.id, r]))
   )
+  // O texto do problema revelado sai pronto, no idioma do envio: a tela não
+  // precisa carregar o dicionário inteiro do teste ATS (12 idiomas).
+  const code = result.teaser.revealed
+  const lang: Language = (LANGUAGES as string[]).includes(lead.lang) ? (lead.lang as Language) : 'en'
+  const percentile = percentileBelow(await loadAtsScoreDistribution().catch(() => []), result.ats.score)
+  return { ...result, revealedIssue: code ? ATS_CHECK_COPY[lang].issues[code] : null, percentile }
 }
 
 /** Apaga o que venceu. É a metade física da promessa de 24 horas. */
 export async function purgeExpiredVisitorLeads(now: Date = new Date()): Promise<number> {
   const r = await db.visitorLead.deleteMany({ where: { expiresAt: { lt: now } } })
   return r.count
+}
+
+/**
+ * Cruza o perfil guardado com as vagas abertas de novo. Sem IA: é o mesmo
+ * pipeline do Radar, só regras. Devolve as oportunidades na ordem de exibição.
+ */
+async function rematchLead(profileJson: string, country: string | null): Promise<StoredMatch[]> {
+  const suggestion = parseProfileExtraction(profileJson)
+  const { profile } = applySuggestion({ ...EMPTY_PROFILE, residenceCountry: country }, suggestion)
+  if (!hasMatchableSignal(profile)) return []
+  const { opportunities } = await evaluateOpenJobsForProfile(profile)
+  const curated = curate(opportunities, {
+    preferences: { ...DEFAULT_RADAR_PREFERENCES, maxPerDigest: MAX_STORED_MATCHES },
+  })
+  return curated.selected.map((o) => ({ jobId: o.jobId, overall: o.match.overall, recommendation: o.match.recommendation }))
+}
+
+/** Por rodada do cron. O resto fica para a hora seguinte. */
+const NURTURE_BATCH = 15
+
+/**
+ * A sequência de e-mails para quem pediu vagas e dicas (dias 1, 3 e 7). Roda
+ * de hora em hora junto com a purga. Desliga com `LEAD_NURTURE_ENABLED=false`.
+ *
+ * Um passo que não tem o que dizer é pulado, não enviado vazio: sem problema
+ * no currículo não há dica do dia 1; sem perfil legível não há vagas no dia 3.
+ */
+export async function sendDueNurtureEmails(now: Date = new Date()): Promise<{ sent: number; skipped: number }> {
+  if (process.env.LEAD_NURTURE_ENABLED?.trim() === 'false') return { sent: 0, skipped: 0 }
+  const apiKey = process.env.RESEND_API_KEY?.trim()
+  if (!apiKey) return { sent: 0, skipped: 0 }
+
+  const due = await db.visitorLead.findMany({
+    where: {
+      marketingOptIn: true,
+      unsubscribedAt: null,
+      status: 'ready',
+      nurtureNextAt: { lte: now },
+      expiresAt: { gt: now },
+    },
+    orderBy: { nurtureNextAt: 'asc' },
+    take: NURTURE_BATCH,
+  })
+
+  let sent = 0
+  let skipped = 0
+  for (const lead of due) {
+    const step = (lead.nurtureStep + 1) as NurtureStep
+    try {
+      const appUrl = getAppUrl()
+      const base = {
+        to: lead.email,
+        lang: lead.lang,
+        step,
+        resultUrl: `${appUrl}/?lead=${lead.id}`,
+        unsubscribeUrl: `${appUrl}/api/public/lead-unsubscribe?t=${lead.id}`,
+      }
+      let message: ReturnType<typeof buildNurtureEmail> | null = null
+
+      if (step === 1) {
+        const teaser = teaserFrom(JSON.parse(lead.atsJson))
+        if (teaser.revealed) {
+          const lang: Language = (LANGUAGES as string[]).includes(lead.lang) ? (lead.lang as Language) : 'en'
+          message = buildNurtureEmail({ ...base, issue: ATS_CHECK_COPY[lang].issues[teaser.revealed], moreIssues: teaser.total - 1 })
+        }
+      } else if (step === 2) {
+        if (lead.profileJson && !lead.profileInsufficient) {
+          const known = parseStoredMatches(lead.matchesJson)
+          const knownIds = new Set(known.map((m) => m.jobId))
+          const current = await rematchLead(lead.profileJson, lead.country)
+          const fresh = current.filter((m) => !knownIds.has(m.jobId))
+          if (current.length > 0) {
+            // As novas entram no fim da lista guardada: a tela passa a mostrá-las.
+            const merged = [...known, ...fresh].slice(0, MAX_STORED_MATCHES)
+            await db.visitorLead.update({ where: { id: lead.id }, data: { matchesJson: JSON.stringify(merged) } })
+            message = buildNurtureEmail({ ...base, newJobs: fresh.length, openJobs: current.length })
+          }
+        }
+      } else {
+        message = buildNurtureEmail(base)
+      }
+
+      if (message) {
+        await sendEmail(message, { apiKey, from: getDigestFrom(), replyTo: getDigestReplyTo() })
+        sent++
+      } else {
+        skipped++
+      }
+      await db.visitorLead.update({
+        where: { id: lead.id },
+        data: { nurtureStep: step, nurtureNextAt: nurtureAt(step + 1, lead.createdAt) },
+      })
+    } catch (e: any) {
+      // Falha de envio: fica para a próxima rodada, sem avançar o passo.
+      console.warn('[match-preview] e-mail da sequência não saiu:', e?.message || e)
+    }
+  }
+  return { sent, skipped }
+}
+
+/**
+ * Sai da sequência. Quem não pediu para guardar o currículo tem os dados
+ * apagados na hora: eles só existiam para os e-mails.
+ */
+export async function unsubscribeLead(id: string, now: Date = new Date()): Promise<boolean> {
+  const lead = await db.visitorLead.findUnique({ where: { id }, select: { recruiterOptIn: true } })
+  if (!lead) return false
+  if (lead.recruiterOptIn) {
+    await db.visitorLead.update({ where: { id }, data: { unsubscribedAt: now, nurtureNextAt: null, marketingOptIn: false } })
+  } else {
+    await db.visitorLead.delete({ where: { id } })
+  }
+  return true
 }
