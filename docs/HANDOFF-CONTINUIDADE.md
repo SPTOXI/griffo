@@ -1505,6 +1505,14 @@ painel e pedem correções opostas.
 - **Conferir depois do deploy:** a primeira rodada do passo "Coordenadas das cidades novas" no `jobbase-sync`, que deve achar ~3.500 cidades na primeira vez. Conferir também o mapa no celular e o evento `jobs_map_cta_clicked`.
 - **Nomes ambíguos** (Greenville, Álvaro Obregón) podem cair na cidade errada. Não há tela de correção de coordenada no admin. Se fizer falta, a linha com `source = admin` já está prevista e o cron não a sobrescreve.
 - **Regiões e bairros sem coordenada** ficam fora do mapa até virarem cidade no cadastro de cidades.
+
+### 7.15 Próximas ideias do operador, em ordem (29/10/2026)
+
+1. **Mapa na home como isca de lead.**
+   - Ao passar o mouse ou tocar numa marcação, aparece só o nome da vaga.
+   - Depois que a pessoa manda o currículo pela home, a vaga gratuita do resultado aparece em vermelho no mapa.
+   - Em discussão com o operador, ainda não implementado.
+2. **Criação de currículo por IA**, para quem não sabe nem por onde começar. O operador pediu para deixar para **depois** de terminar as alterações já combinadas. Ainda não tem desenho nem decisão.
 ---
 
 ## 8. O que fazer antes de tocar em qualquer coisa
