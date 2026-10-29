@@ -206,7 +206,7 @@ const ja: HomeMapCopy = {
   indexLine: '労働市場 · {country}：{phase}',
   indexSource: '公式データ：{source}',
   indexLink: 'GriffoWork指数を見る',
-  hintUp: '採用を増やす企業が増えています。応募の好機です。',
+  hintUp: '採用に動く企業が増えています。応募の好機です。',
   hintDown: '求人の募集が減る時期ほど、選考システム（ATS）を通過できる履歴書が差をつけます。',
 }
 
