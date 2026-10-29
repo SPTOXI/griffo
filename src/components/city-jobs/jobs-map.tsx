@@ -93,6 +93,13 @@ export function JobsMap({ countryCode, locale, lang, copy, seeJob, remoteLabels,
 
         map.on('load', () => {
           if (!map) return
+          // Nomes de país e cidade do mapa base no idioma da página ("Alemanha", "Deutschland"),
+          // com o nome local quando o OpenStreetMap não tem a tradução.
+          for (const layer of map.getStyle().layers) {
+            if (layer.type === 'symbol' && map.getLayoutProperty(layer.id, 'text-field')) {
+              map.setLayoutProperty(layer.id, 'text-field', ['coalesce', ['get', `name:${lang}`], ['get', 'name']])
+            }
+          }
           map.addSource('cities', {
             type: 'geojson',
             data: {
@@ -161,7 +168,7 @@ export function JobsMap({ countryCode, locale, lang, copy, seeJob, remoteLabels,
       cancelled = true
       map?.remove()
     }
-  }, [countryCode])
+  }, [countryCode, lang])
 
   useEffect(() => {
     if (!selected) return
