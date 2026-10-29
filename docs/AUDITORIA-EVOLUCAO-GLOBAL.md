@@ -9337,3 +9337,4 @@ O Índice tinha botão no topo da home, item no menu e uma faixa no meio da pág
 - O "112 currículos" sumiu da home, porque um número pequeno passa menos confiança que nenhum.
 - 12 idiomas (`socialProofJobs` em `match-preview/copy.ts`). O número sai como a língua diz: "31 mil" em pt/es, "31 mila" em it e "31.000"/"31,000" nos outros (`thousandsLabel`).
 - Contagens guardadas por 1 h (`loadJobsAnalyzedCount`, `loadSocialProof`).
+- **Destaque (pedido do operador, mesmo dia):** o selo virou um selo azul com ícone de IA, texto maior e o número em azul e negrito. O texto do idioma é partido em volta de `{n}`, então as 12 traduções não mudaram.

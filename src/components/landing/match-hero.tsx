@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowRight, Briefcase, CheckCircle2, ExternalLink, FileUp, Loader2, Lock, MapPin, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Briefcase, CheckCircle2, ExternalLink, FileUp, Loader2, Lock, MapPin, ShieldCheck, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { localeForLang, type Language } from '@/lib/i18n'
 import { contactEmail } from '@/lib/i18n/contact'
@@ -216,10 +216,27 @@ export function MatchHero({ lang, openJobsCount, socialProof = null, countryCode
               </div>
             )}
             {socialProof && (
-              <p className="text-sm font-semibold text-slate-600">
-                {socialProof.kind === 'resumes'
-                  ? fill(c.socialProof, { n: new Intl.NumberFormat(locale).format(socialProof.n) })
-                  : fill(c.socialProofJobs, { n: thousandsLabel(lang, socialProof.n, locale) })}
+              // Selo em destaque (pedido do operador): o número em azul e negrito, partindo
+              // o texto do idioma em volta de `{n}` para não mudar as 12 traduções.
+              <p className="inline-flex w-fit items-center gap-2.5 rounded-2xl border border-blue-200 sm:rounded-full bg-blue-50 px-4 py-2 text-base font-semibold text-[#0B192E] shadow-sm sm:text-lg">
+                <Sparkles className="h-5 w-5 shrink-0 text-[#0B63E5]" aria-hidden="true" />
+                <span>
+                  {(() => {
+                    const template = socialProof.kind === 'resumes' ? c.socialProof : c.socialProofJobs
+                    const n =
+                      socialProof.kind === 'resumes'
+                        ? new Intl.NumberFormat(locale).format(socialProof.n)
+                        : thousandsLabel(lang, socialProof.n, locale)
+                    const [before, after = ''] = template.split('{n}')
+                    return (
+                      <>
+                        {before}
+                        <strong className="font-extrabold text-[#0B63E5]">{n}</strong>
+                        {after}
+                      </>
+                    )
+                  })()}
+                </span>
               </p>
             )}
           </div>
