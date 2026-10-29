@@ -1301,6 +1301,10 @@ model VisitorLead {
   profileInsufficient Boolean @default(false)
   /// Só preenchido quando `recruiterOptIn` é verdadeiro.
   resumeText  String?
+  /// Criador de currículo da home (§2.160): a amostra grátis — a primeira
+  /// experiência reescrita e a CONTAGEM do resto (`BuilderTeaser`). Nulo
+  /// quando a pessoa enviou um currículo pronto. Some com a linha no mesmo prazo.
+  builderJson String?
   /// A pessoa escolheu guardar os dados para empresas a encontrarem.
   recruiterOptIn Boolean  @default(false)
   /// A pessoa pediu vagas novas e dicas por e-mail (até 3 e-mails em 7 dias).

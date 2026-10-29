@@ -28,6 +28,8 @@ import { buildPublicResult, parseStoredMatches, type PublicJobRow, type PublicRe
 import { buildLeadEmail } from './email'
 import { buildNurtureEmail } from './nurture-email'
 import { leadClickUrl } from './links'
+import { parseBuilderTeaser, type BuilderAnswers } from '../resume-builder/answers'
+import { buildTeaser } from '../resume-builder/teaser.server'
 
 /**
  * O envio de currículo sem conta da landing, do lado do servidor (§2.132).
@@ -91,15 +93,22 @@ export async function processLead(
     visitorId: string | null
     /** A reserva da cota diária, devolvida se a falha for nossa. */
     claimId: string | null
+    /** Currículo criado na home (§2.160): a amostra grátis roda junto da leitura do perfil. */
+    builder?: BuilderAnswers
   }
 ): Promise<void> {
+  // Em paralelo com a leitura do perfil, e esperada antes de marcar `ready`:
+  // a tela para de consultar quando o resultado fica pronto.
+  const teaser = input.builder ? buildTeaser(input.builder, input.lang, input.country) : null
+  const withTeaser = async <T extends object>(data: T) =>
+    teaser ? { ...data, builderJson: JSON.stringify(await teaser) } : data
   try {
     // Currículo sem camada de texto (PDF escaneado) não tem o que ler. O teste
     // de legibilidade já disse isso à pessoa; não se paga IA para repetir.
     if (input.text.trim().length < 30) {
       await db.visitorLead.update({
         where: { id },
-        data: { status: 'ready', profileInsufficient: true, matchesJson: '[]' },
+        data: await withTeaser({ status: 'ready', profileInsufficient: true, matchesJson: '[]' }),
       })
       await notifyLead(id)
       return
@@ -123,12 +132,12 @@ export async function processLead(
     if (!hasMatchableSignal(profile)) {
       await db.visitorLead.update({
         where: { id },
-        data: {
+        data: await withTeaser({
           status: 'ready',
           profileJson: JSON.stringify(suggestion),
           profileInsufficient: true,
           matchesJson: '[]',
-        },
+        }),
       })
       await notifyLead(id)
       return
@@ -149,11 +158,11 @@ export async function processLead(
 
     await db.visitorLead.update({
       where: { id },
-      data: {
+      data: await withTeaser({
         status: 'ready',
         profileJson: JSON.stringify(suggestion),
         matchesJson: JSON.stringify(matches),
-      },
+      }),
     })
 
     if (matches.length > 0) {
@@ -194,6 +203,7 @@ async function notifyLead(id: string): Promise<void> {
         notifiedAt: true,
         atsJson: true,
         visitorId: true,
+        builderJson: true,
       },
     })
     if (!lead || lead.notifiedAt) return
@@ -203,7 +213,8 @@ async function notifyLead(id: string): Promise<void> {
       lang: lead.lang,
       resultUrl: leadClickUrl(getAppUrl(), id, 'result'),
       matches: parseStoredMatches(lead.matchesJson).length,
-      issue: revealedIssueFor(lead.atsJson, lead.lang),
+      // Currículo criado aqui: o "problema" seria do rascunho que nós montamos.
+      issue: lead.builderJson ? null : revealedIssueFor(lead.atsJson, lead.lang),
       recruiterOptIn: lead.recruiterOptIn,
       marketingOptIn: lead.marketingOptIn,
     })
@@ -282,7 +293,14 @@ export async function loadLeadResult(id: string, now: Date = new Date()): Promis
     console.warn('[match-preview] mapa do resultado indisponível:', e?.message || e)
     return []
   })
-  return { ...result, revealedIssue: code ? ATS_CHECK_COPY[lang].issues[code] : null, percentile, mapPins }
+  const builder = parseBuilderTeaser(lead.builderJson)
+  return {
+    ...result,
+    revealedIssue: code && !builder ? ATS_CHECK_COPY[lang].issues[code] : null,
+    percentile,
+    mapPins,
+    builder,
+  }
 }
 
 /** Apaga o que venceu. É a metade física da promessa de 24 horas. */
@@ -350,7 +368,8 @@ export async function sendDueNurtureEmails(now: Date = new Date()): Promise<{ se
 
       if (step === 1) {
         const teaser = teaserFrom(JSON.parse(lead.atsJson))
-        if (teaser.revealed) {
+        // Currículo criado aqui não tem "problema principal" a apontar: o dia 1 é pulado.
+        if (teaser.revealed && !lead.builderJson) {
           message = buildNurtureEmail({ ...base, issue: revealedIssueFor(lead.atsJson, lead.lang), moreIssues: teaser.total - 1 })
         }
       } else if (step === 2) {

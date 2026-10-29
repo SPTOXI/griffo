@@ -14,6 +14,12 @@ import { getVisitorId, trackOnce } from '@/components/analytics/track-client'
 import { LEAD_UNLOCK_EVENT, publishLeadPins } from './lead-pins'
 import { HOME_MAP_COPY } from '@/lib/landing/home-map-copy'
 import { thousandsLabel, type SocialProof } from '@/lib/analytics/social-proof'
+import { useNav } from '@/store/auth'
+import { RESUME_BUILDER_COPY } from '@/lib/resume-builder/copy'
+import { assembleResumeText, type BuilderAnswers, type BuilderTeaser } from '@/lib/resume-builder/answers'
+import { saveResumeDraft } from '@/lib/resume-builder/draft'
+import { SECTION_TITLES } from '@/lib/resume-rewrite/section-titles'
+import { EMPTY_BUILDER_DRAFT, ResumeBuilderForm, type BuilderDraft } from './resume-builder-form'
 
 const MAX_BYTES = 3 * 1024 * 1024
 const POLL_MS = 2000
@@ -62,6 +68,12 @@ export function MatchHero({ lang, openJobsCount, socialProof = null, countryCode
   const [keep, setKeep] = useState(false)
   const [marketing, setMarketing] = useState(false)
   const [result, setResult] = useState<PublicResult | null>(null)
+  // Criador de currículo (§2.160): as respostas ficam aqui, e não no
+  // formulário, para sobreviver a uma falha de envio que volta ao formulário.
+  const [builderOpen, setBuilderOpen] = useState(false)
+  const [builderDraft, setBuilderDraft] = useState<BuilderDraft>(EMPTY_BUILDER_DRAFT)
+  const [builderStep, setBuilderStep] = useState(0)
+  const setNavView = useNav((s) => s.setView)
   // Cada consulta em andamento tem um número; trocar o número (novo envio,
   // "enviar de novo", desmontar) faz o laço anterior parar sozinho.
   const pollRun = useRef(0)
@@ -93,16 +105,19 @@ export function MatchHero({ lang, openJobsCount, socialProof = null, countryCode
   }, [])
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get('lead')
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('lead')
     if (isValidToken(token)) startPolling(token)
+    // Vindo do link "não tenho currículo" de outra página (teste ATS).
+    else if (params.get('builder') === '1') setBuilderOpen(true)
     return () => {
       pollRun.current++
     }
   }, [startPolling])
 
-  const submit = async () => {
+  const submit = async (builder?: BuilderAnswers) => {
     setError(null)
-    if (!file && pasted.trim().length < 30) return setError(c.errorFile)
+    if (!builder && !file && pasted.trim().length < 30) return setError(c.errorFile)
     if (!EMAIL_PATTERN.test(email.trim())) return setError(c.errorEmail)
     if (file && file.size > MAX_BYTES) return setError(c.errorTooLarge)
 
@@ -115,12 +130,12 @@ export function MatchHero({ lang, openJobsCount, socialProof = null, countryCode
       setError(message)
       trackOnce('lead_submit_failed', `match_hero_${stage}`, {
         stage,
-        ...(file ? { fileKb: Math.round(file.size / 1024), fileType: file.type || 'none' } : { pasted: true }),
+        ...(builder ? { builder: true } : file ? { fileKb: Math.round(file.size / 1024), fileType: file.type || 'none' } : { pasted: true }),
         ...meta,
       })
     }
     try {
-      const payload = file ? { pdfBase64: await readAsBase64(file) } : { text: pasted }
+      const payload = builder ? { builder } : file ? { pdfBase64: await readAsBase64(file) } : { text: pasted }
       stage = 'network'
       const r = await fetch('/api/public/match-preview', {
         method: 'POST',
@@ -149,6 +164,9 @@ export function MatchHero({ lang, openJobsCount, socialProof = null, countryCode
         )
         return
       }
+      // O currículo criado vai para o aparelho: é ele que abre preenchido no
+      // app depois do cadastro, quando a pessoa libera a versão completa.
+      if (builder) saveResumeDraft(assembleResumeText(builder, lang), builder.targetRole)
       const url = new URL(window.location.href)
       url.searchParams.set('lead', data.token)
       window.history.replaceState(null, '', url.toString())
@@ -160,6 +178,13 @@ export function MatchHero({ lang, openJobsCount, socialProof = null, countryCode
 
   const unlock = () => {
     trackOnce('lead_unlock_clicked', 'match_hero', { locked: result?.lockedCount ?? 0 })
+    onNavigate('signup')
+  }
+
+  // Liberar o currículo criado: cadastro, e o app abre no envio, já preenchido.
+  const unlockBuilder = () => {
+    trackOnce('lead_unlock_clicked', 'match_hero_builder', { builder: true })
+    setNavView('upload')
     onNavigate('signup')
   }
 
@@ -242,7 +267,36 @@ export function MatchHero({ lang, openJobsCount, socialProof = null, countryCode
           </div>
 
           <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-xl sm:p-7">
-            {phase === 'form' && (
+            {phase === 'form' && builderOpen && (
+              <ResumeBuilderForm
+                lang={lang}
+                value={builderDraft}
+                onChange={setBuilderDraft}
+                step={builderStep}
+                setStep={setBuilderStep}
+                error={error}
+                setError={setError}
+                onClose={() => {
+                  setError(null)
+                  setBuilderOpen(false)
+                }}
+                onSubmit={(answers) => submit(answers)}
+                contactSlot={
+                  <ContactFields
+                    c={c}
+                    lang={lang}
+                    email={email}
+                    setEmail={setEmail}
+                    keep={keep}
+                    setKeep={setKeep}
+                    marketing={marketing}
+                    setMarketing={setMarketing}
+                  />
+                }
+              />
+            )}
+
+            {phase === 'form' && !builderOpen && (
               <Form
                 c={c}
                 lang={lang}
@@ -259,7 +313,12 @@ export function MatchHero({ lang, openJobsCount, socialProof = null, countryCode
                 marketing={marketing}
                 setMarketing={setMarketing}
                 error={error}
-                onSubmit={submit}
+                onSubmit={() => submit()}
+                onOpenBuilder={() => {
+                  setError(null)
+                  setBuilderOpen(true)
+                  trackOnce('builder_opened', 'match_hero')
+                }}
               />
             )}
 
@@ -286,7 +345,15 @@ export function MatchHero({ lang, openJobsCount, socialProof = null, countryCode
             )}
 
             {phase === 'result' && result && (
-              <Result c={c} lang={lang} locale={locale} result={result} onUnlock={unlock} onDiagnosis={() => onNavigate('signup')} />
+              <Result
+                c={c}
+                lang={lang}
+                locale={locale}
+                result={result}
+                onUnlock={unlock}
+                onDiagnosis={() => onNavigate('signup')}
+                onUnlockBuilder={unlockBuilder}
+              />
             )}
           </div>
         </div>
@@ -314,6 +381,7 @@ function Form(props: {
   setMarketing: (v: boolean) => void
   error: string | null
   onSubmit: () => void
+  onOpenBuilder: () => void
 }) {
   const { c } = props
   const fileRef = useRef<HTMLInputElement>(null)
@@ -347,6 +415,11 @@ function Form(props: {
             {c.pasteToggle}
           </button>
         )}
+        {!props.file && (
+          <button type="button" className="mt-1 text-sm font-bold text-[#0B63E5] hover:underline" onClick={props.onOpenBuilder}>
+            {RESUME_BUILDER_COPY[props.lang].openLink}
+          </button>
+        )}
         {props.pasteOpen && (
           <textarea
             value={props.pasted}
@@ -358,6 +431,31 @@ function Form(props: {
         )}
       </div>
 
+      <ContactFields {...props} />
+
+      {props.error && <p className="text-sm text-red-600" role="alert">{props.error}</p>}
+
+      <Button type="submit" size="lg" className="h-12 bg-[#0B192E] font-bold text-white hover:bg-[#13294a]">
+        {c.submitCta} <ArrowRight className="ms-2 h-5 w-5 rtl:rotate-180" />
+      </Button>
+    </form>
+  )
+}
+
+/** E-mail e consentimentos: os mesmos no envio de arquivo e no criador de currículo. */
+function ContactFields(props: {
+  c: Copy
+  lang: Language
+  email: string
+  setEmail: (v: string) => void
+  keep: boolean
+  setKeep: (v: boolean) => void
+  marketing: boolean
+  setMarketing: (v: boolean) => void
+}) {
+  const { c } = props
+  return (
+    <>
       <label className="flex flex-col gap-1.5 text-sm font-semibold text-[#0B192E]">
         {c.emailLabel}
         <input
@@ -383,13 +481,7 @@ function Form(props: {
           {c.privacyLink}
         </a>
       </div>
-
-      {props.error && <p className="text-sm text-red-600" role="alert">{props.error}</p>}
-
-      <Button type="submit" size="lg" className="h-12 bg-[#0B192E] font-bold text-white hover:bg-[#13294a]">
-        {c.submitCta} <ArrowRight className="ms-2 h-5 w-5 rtl:rotate-180" />
-      </Button>
-    </form>
+    </>
   )
 }
 
@@ -427,6 +519,7 @@ function Result({
   result,
   onUnlock,
   onDiagnosis,
+  onUnlockBuilder,
 }: {
   c: Copy
   lang: Language
@@ -434,6 +527,7 @@ function Result({
   result: PublicResult
   onUnlock: () => void
   onDiagnosis: () => void
+  onUnlockBuilder: () => void
 }) {
   const title = result.profileInsufficient
     ? c.resultTitleNone
@@ -445,6 +539,8 @@ function Result({
 
   return (
     <div className="flex flex-col gap-5" aria-live="polite">
+      {result.builder && <BuilderCard lang={lang} teaser={result.builder} onUnlock={onUnlockBuilder} />}
+
       <h2 className="text-xl font-extrabold leading-snug text-[#0B192E]">{title}</h2>
 
       {result.profileInsufficient && <p className="text-sm text-slate-600">{c.profileInsufficientText}</p>}
@@ -489,7 +585,9 @@ function Result({
         </button>
       )}
 
-      <Teaser c={c} lang={lang} result={result} onDiagnosis={onDiagnosis} />
+      {/* Currículo criado aqui: a lista de problemas seria do rascunho que nós
+          montamos, e o cartão do currículo acima já faz a oferta. */}
+      {!result.builder && <Teaser c={c} lang={lang} result={result} onDiagnosis={onDiagnosis} />}
 
       <p className="flex items-start gap-1.5 text-[11px] text-slate-500">
         <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -583,6 +681,64 @@ function Teaser({ c, lang, result, onDiagnosis }: { c: Copy; lang: Language; res
           </Button>
         </>
       )}
+    </div>
+  )
+}
+
+/**
+ * O currículo criado na home (§2.160): a primeira experiência escrita pela IA
+ * e, no lugar do resto, linhas borradas. As linhas são desenho, não texto: o
+ * servidor só mandou a contagem do que falta (`BuilderTeaser.locked`).
+ */
+function BuilderCard({ lang, teaser, onUnlock }: { lang: Language; teaser: BuilderTeaser; onUnlock: () => void }) {
+  const c = RESUME_BUILDER_COPY[lang]
+  const titles = SECTION_TITLES[lang] ?? SECTION_TITLES.en
+  const { first, locked } = teaser
+  const lockedSections = [
+    ...(locked.experiences > 0 ? [{ title: titles.experience, lines: Math.min(6, locked.experiences * 3) }] : []),
+    ...(locked.education > 0 ? [{ title: titles.education, lines: Math.min(4, locked.education * 2) }] : []),
+    ...(locked.skills ? [{ title: titles.skills, lines: 2 }] : []),
+    ...(locked.languages ? [{ title: titles.languages, lines: 1 }] : []),
+    // Sempre há o resumo profissional, que só a versão completa escreve.
+    { title: titles.summary, lines: 3 },
+  ]
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border-2 border-[#0B63E5]/30 bg-blue-50/40 p-4">
+      <p className="flex items-center gap-1.5 text-lg font-extrabold text-[#0B192E]">
+        <Sparkles className="h-5 w-5 text-[#0B63E5]" aria-hidden="true" /> {c.resultTitle}
+      </p>
+      <p className="text-sm text-slate-600">{c.resultIntro}</p>
+      <article className="rounded-lg border border-slate-200 bg-white p-3.5">
+        <h3 className="text-[15px] font-extrabold text-[#0B192E]">{first.role}</h3>
+        {(first.company || first.period) && (
+          <p className="text-sm text-slate-600">{[first.company, first.period].filter(Boolean).join(' · ')}</p>
+        )}
+        <ul className="mt-2 flex list-disc flex-col gap-1 ps-5 text-sm text-slate-800">
+          {first.bullets.map((b, i) => (
+            <li key={i}>{b}</li>
+          ))}
+        </ul>
+      </article>
+      <div className="relative overflow-hidden rounded-lg border border-slate-200 bg-white p-3.5">
+        <div aria-hidden="true" className="flex select-none flex-col gap-3 blur-[3px]">
+          {lockedSections.map((sec) => (
+            <div key={sec.title} className="flex flex-col gap-1.5">
+              <div className="h-3.5 w-2/5 rounded bg-slate-300" />
+              {Array.from({ length: sec.lines }).map((_, i) => (
+                <div key={i} className={`h-2.5 rounded bg-slate-200 ${i % 2 ? 'w-4/5' : 'w-full'}`} />
+              ))}
+            </div>
+          ))}
+        </div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-white/70 px-4 text-center">
+          <Lock className="h-5 w-5 text-[#0B63E5]" />
+          <p className="text-sm font-extrabold text-[#0B192E]">{c.lockedTitle}</p>
+          <p className="text-xs text-slate-600">{c.lockedText}</p>
+          <Button size="sm" onClick={onUnlock} className="mt-1 bg-[#0B63E5] font-bold hover:bg-[#0052CC]">
+            {c.lockedCta}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

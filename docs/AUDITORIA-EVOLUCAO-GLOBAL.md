@@ -9338,3 +9338,46 @@ O Índice tinha botão no topo da home, item no menu e uma faixa no meio da pág
 - 12 idiomas (`socialProofJobs` em `match-preview/copy.ts`). O número sai como a língua diz: "31 mil" em pt/es, "31 mila" em it e "31.000"/"31,000" nos outros (`thousandsLabel`).
 - Contagens guardadas por 1 h (`loadJobsAnalyzedCount`, `loadSocialProof`).
 - **Destaque (pedido do operador, mesmo dia):** o selo virou um selo azul com ícone de IA, texto maior e o número em azul e negrito. O texto do idioma é partido em volta de `{n}`, então as 12 traduções não mudaram.
+
+## 2.160 Criador de currículo por IA na home, com amostra grátis e o resto trancado (29/10/2026)
+
+**Pedido do operador:** uma forma de criar currículo pela IA para quem não sabe nem por onde começar.
+
+**Decisões do operador, nesta ordem:**
+- Recusou o currículo inteiro de graça em troca do e-mail: "nem tudo de graça gera valor aos olhos dos usuários".
+- Aprovou: de graça (com e-mail) a pessoa vê **só uma parte**, a primeira experiência reescrita pela IA. O resto aparece borrado, com cadeado.
+- O currículo completo e o PDF saem só com o **Essencial** (a Análise Completa). Não entrou produto nem preço novo: o catálogo continua com dois produtos, e um "só o currículo" mais barato tiraria venda da análise.
+- Sem criar conta para começar. Entradas na home e no `/ats-check`.
+
+**Como funciona:**
+- **Entradas:** link "Não tenho currículo — criar com a IA" no cartão de envio da home e no `/ats-check` (`/?builder=1#upload`).
+- **Perguntas:** 5 passos curtos (`components/landing/resume-builder-form.tsx`):
+  1. trabalho procurado e cidade;
+  2. experiências, com as palavras da pessoa;
+  3. estudos (opcional);
+  4. cursos, habilidades e idiomas;
+  5. nome e telefone.
+
+  O e-mail e os dois consentimentos são os mesmos do envio de arquivo.
+- **"Nunca tive emprego formal":** bicos, voluntariado, negócio da família e projetos da escola contam como experiência. A IA é avisada para não fingir que foi emprego registrado.
+- **Montagem sem IA:** as respostas viram um currículo em texto (`resume-builder/answers.ts`, `assembleResumeText`), com as seções no idioma da página.
+- **Mesmo caminho de um currículo enviado:** `/api/public/match-preview` aceita `builder` no lugar de `pdfBase64`/`text`. Valem a mesma cota de 1 envio por dia, o teste de legibilidade, a leitura do perfil e as vagas no mapa.
+- **Amostra grátis:**
+  - Uma chamada curta (`resume_builder_teaser`, Haiku 4.5) reescreve só a primeira experiência em 2 a 4 tópicos. A regra é não inventar número, ferramenta nem resultado.
+  - Roda junto com a leitura do perfil e fica em `VisitorLead.builderJson`, que some com a linha no mesmo prazo.
+  - Sem resposta da IA, sai a frase da própria pessoa.
+- **Resto trancado no servidor:** do que falta vai só a contagem (`BuilderTeaser.locked`). As linhas borradas são desenho, não texto: quem abre o inspetor do navegador não encontra nada.
+- **Depois do pagamento:**
+  - "Liberar currículo completo" leva ao cadastro e abre o app no envio, já preenchido com o currículo montado.
+  - Esse currículo fica no aparelho da pessoa (`resume-builder/draft.ts`, 2 dias), e não no servidor, porque o servidor só guarda currículo de quem pediu. É apagado quando o envio no app dá certo.
+  - Daí em diante é o fluxo pago de sempre: a reescrita da Análise Completa escreve o currículo inteiro, com a mesma regra de não inventar, e libera o PDF.
+- **Sem lista de problemas:** quem cria o currículo aqui não vê os "problemas do currículo", que seriam do rascunho montado por nós. Pelo mesmo motivo, o e-mail de resultado não aponta problema e o e-mail do dia 1 da sequência é pulado.
+- **Fora do percentil:** a nota de legibilidade do rascunho não entra no "melhor que X% dos currículos" (`meta` sem `score`, com `builder: true`).
+- **Medição:** evento novo `builder_opened`. O envio é o `lead_submitted` de sempre, com `builder: true`.
+- **Idiomas:** 12 idiomas (`resume-builder/copy.ts`), com teste de chaves e marcadores.
+
+**Custo:** quem não paga custa uma chamada curta de Haiku (até 600 tokens de saída), mais a leitura do perfil que a home já fazia. **Medir no `AiLog` depois do deploy** (`taskType = resume_builder_teaser`).
+
+**Ainda não feito:**
+- **Fase 2:** editar o currículo por seção, com "melhorar com IA", e guardá-lo na conta.
+- **Fase 3:** responder por voz no celular.

@@ -9,6 +9,7 @@ import { AlertTriangle, CheckCircle2, FileUp, Info, Loader2, Lock, Share2, Shiel
 import { ATS_CHECK_COPY, ATS_CHECK_PATH, type AtsCheckLang } from '@/lib/ats-check/copy'
 import type { AtsCheckResult, AtsSeverity } from '@/lib/ats-check/score'
 import { getVisitorId, trackOnce } from '@/components/analytics/track-client'
+import { RESUME_BUILDER_COPY } from '@/lib/resume-builder/copy'
 import { percentileLine } from '@/lib/analytics/percentile-copy'
 
 const MAX_BYTES = 3 * 1024 * 1024
@@ -234,6 +235,10 @@ export function AtsCheckClient({ lang }: { lang: AtsCheckLang }) {
               <FileUp className="w-5 h-5 mr-2" /> {c.uploadCta}
             </Button>
             <p className="text-xs text-slate-500">{c.uploadHint}</p>
+            {/* Sem currículo para testar: o criador da home (§2.160) abre direto. */}
+            <Link href={`/?builder=1&lang=${lang}&utm_source=ats_check&utm_medium=builder#upload`} className="text-sm font-bold text-[#0B63E5] hover:underline">
+              {RESUME_BUILDER_COPY[lang].openLink}
+            </Link>
             {!pasteOpen ? (
               <button className="text-xs font-semibold text-[#0B63E5] underline" onClick={() => setPasteOpen(true)}>
                 {c.pasteToggle}

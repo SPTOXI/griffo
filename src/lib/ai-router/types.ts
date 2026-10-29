@@ -37,6 +37,10 @@ export type TaskType =
   /// A mesma ficha, para ler o estoque de uma vez (§2.138): tipo próprio só
   /// para rotear a outro provedor — o do dia a dia fica onde está.
   | 'job_intelligence_backfill'
+  /// Criador de currículo da home (§2.160): só a primeira experiência,
+  /// reescrita em tópicos, com a pessoa esperando na tela. Tipo próprio
+  /// porque a validação é "veio JSON com `bullets`", não tamanho de texto.
+  | 'resume_builder_teaser'
   | 'support_chat'
   /// Análise semântica de similaridade entre pares de vagas para deduplicação avançada.
   | 'job_deduplication'

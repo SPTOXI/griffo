@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAuth, useNav } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,8 @@ import { toast } from 'sonner'
 import { UploadProgressModal } from './upload-progress-modal'
 import { useI18n } from '@/context/i18n-context'
 import { localeForLang } from '@/lib/i18n'
+import { clearResumeDraft, readResumeDraft } from '@/lib/resume-builder/draft'
+import { RESUME_BUILDER_COPY } from '@/lib/resume-builder/copy'
 
 export interface CustomSocialField {
   id: string
@@ -102,6 +104,15 @@ export function UploadView() {
   const [jobUrl, setJobUrl] = useState('')
   const [fetchingUrl, setFetchingUrl] = useState(false)
   const [format, setFormat] = useState<'text' | 'markdown' | 'pdf'>('text')
+  // Currículo criado na home (§2.160): abre já preenchido, e a pessoa só confere e envia.
+  const [fromBuilder, setFromBuilder] = useState(false)
+  useEffect(() => {
+    const draft = readResumeDraft()
+    if (!draft) return
+    setContent((cur) => cur || draft.text)
+    setTargetJob((cur) => cur || draft.targetJob)
+    setFromBuilder(true)
+  }, [])
 
   const handleFetchJobFromUrl = async () => {
     let cleanUrl = jobUrl.trim()
@@ -279,6 +290,7 @@ export function UploadView() {
       // Agora é uma espera só, com relógio à vista, e a tela seguinte já abre
       // com a nota pronta.
       setLoadingStep(up.loadingStepPreview)
+      if (fromBuilder) clearResumeDraft()
       await warmPreview(data.resume.id)
 
       setLoading(false)
@@ -304,6 +316,15 @@ export function UploadView() {
           {up.heroDesc}
         </p>
       </div>
+
+      {fromBuilder && (
+        <Alert className="border-primary/30 bg-primary/5">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-sm font-medium text-slate-800">
+            {(RESUME_BUILDER_COPY[lang] ?? RESUME_BUILDER_COPY.en).appNotice}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* FEATURE BADGES — mesma cor pros 4, diferenciados por número/ícone, não por tom solto */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

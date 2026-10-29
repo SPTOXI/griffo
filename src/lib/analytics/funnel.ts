@@ -26,6 +26,9 @@ export const CLIENT_EVENTS = [
   'jobs_map_cta_clicked',
   // Clique na chamada do mapa da home ("envie seu currículo..."), que leva ao envio.
   'home_map_cta_clicked',
+  // Abriu o criador de currículo da home (§2.160). O envio dele é o
+  // `lead_submitted` do servidor, com `builder: true` em `meta`.
+  'builder_opened',
   // Mantido por compatibilidade: versões antigas da tela ainda o enviam.
   'checkout_initiated',
 ] as const

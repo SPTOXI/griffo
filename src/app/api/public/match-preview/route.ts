@@ -15,6 +15,7 @@ import { edgeCountry } from '@/lib/pricing/edge-country'
 import { LANGUAGES, type Language } from '@/lib/i18n/types'
 import { MAX_RESUME_CHARS } from '@/lib/validation'
 import { createLead, newLeadToken, processLead } from '@/lib/match-preview/server'
+import { assembleResumeText, builderAnswersSchema } from '@/lib/resume-builder/answers'
 
 /**
  * Envio de currículo sem conta, no topo da landing (§2.132).
@@ -41,6 +42,8 @@ const schema = z
   .object({
     pdfBase64: z.string().max(PUBLIC_MAX_BASE64).optional(),
     text: z.string().max(MAX_RESUME_CHARS).optional(),
+    /** Criador de currículo da home (§2.160): as respostas no lugar do arquivo. */
+    builder: builderAnswersSchema.optional(),
     email: z.string().trim().toLowerCase().email().max(254),
     keep: z.boolean(),
     /** Pediu vagas e dicas por e-mail. Opcional: telas antigas em cache não mandam. */
@@ -49,7 +52,10 @@ const schema = z
     country: z.string().regex(/^[A-Za-z]{2}$/).optional(),
     visitorId: z.string().max(100).optional(),
   })
-  .refine((b) => Boolean(b.pdfBase64) !== Boolean(b.text), 'Envie um PDF ou um texto.')
+  .refine(
+    (b) => [b.pdfBase64, b.text, b.builder].filter(Boolean).length === 1,
+    'Envie um PDF, um texto ou as respostas do criador.'
+  )
 
 const noStore = { 'Cache-Control': 'no-store' }
 
@@ -126,7 +132,10 @@ export async function POST(req: Request) {
       if (bot) return NextResponse.json({ error: 'GENERIC' }, { status: 400, headers: noStore })
     }
 
-    let text = parsed.data.text ?? ''
+    const builder = parsed.data.builder
+    // O currículo criado entra no MESMO caminho de um currículo enviado: cota,
+    // teste de legibilidade, leitura do perfil e vagas. Só a amostra é a mais.
+    let text = builder ? assembleResumeText(builder, lang) : (parsed.data.text ?? '')
     let pages: number | undefined
     if (pdfBase64) {
       stage = 'pdf'
@@ -151,7 +160,17 @@ export async function POST(req: Request) {
       await db.analyticsEvent
         .update({
           where: { id: claimId },
-          data: { meta: JSON.stringify({ ipKey, keep, marketing, score: ats.score, ...(country ? { country } : {}) }) },
+          data: {
+            meta: JSON.stringify({
+              ipKey,
+              keep,
+              marketing,
+              // Nota do rascunho montado, não de um currículo de verdade: fica
+              // fora do "melhor que X%" (`social-proof.server.ts`) pela marca.
+              ...(builder ? { builder: true } : { score: ats.score }),
+              ...(country ? { country } : {}),
+            }),
+          },
         })
         .catch(() => {})
     }
@@ -174,7 +193,9 @@ export async function POST(req: Request) {
     // Daqui em diante a reserva pertence ao processamento: é ele que a devolve
     // se falhar. O `catch` abaixo não deve devolvê-la de novo.
     claimId = null
-    after(() => processLead(token, { text, lang, country, visitorId: visitorId || null, claimId: claim }))
+    after(() =>
+      processLead(token, { text, lang, country, visitorId: visitorId || null, claimId: claim, ...(builder ? { builder } : {}) })
+    )
 
     return NextResponse.json({ token, status: 'processing' }, { status: 202, headers: noStore })
   } catch (e: any) {

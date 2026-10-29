@@ -1509,7 +1509,10 @@ painel e pedem correções opostas.
 ### 7.15 Próximas ideias do operador, em ordem (29/10/2026)
 
 1. ✅ **Mapa na home como isca de lead** (§2.157): até 3 nomes de vaga por cidade e, depois do envio, a vaga grátis em vermelho e as trancadas com cadeado.
-2. **Criação de currículo por IA**, para quem não sabe nem por onde começar. O operador pediu para deixar para **depois** de terminar as alterações já combinadas. Ainda não tem desenho nem decisão.
+2. ✅ **Criação de currículo por IA**, Fase 1 (§2.160): grátis com e-mail, só a primeira experiência reescrita; currículo completo e PDF com o Essencial.
+   - **Medir o custo** da amostra no `AiLog` (`resume_builder_teaser`).
+   - **Medir o funil:** quantos abrem (`builder_opened`), enviam (`lead_submitted` com `builder`) e liberam (`lead_unlock_clicked` com `match_hero_builder`).
+   - **Ainda não feitas:** Fase 2 (edição por seção, guardar na conta) e Fase 3 (voz no celular).
 ---
 
 ## 8. O que fazer antes de tocar em qualquer coisa
