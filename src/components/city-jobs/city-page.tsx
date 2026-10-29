@@ -14,6 +14,7 @@ import {
 } from '@/lib/city-jobs/city-index.server'
 import { cityJobsContext, type CityJobsContext } from '@/lib/city-jobs/context'
 import { fill } from '@/lib/city-jobs/copy'
+import { JOBS_MAP_COPY } from '@/lib/city-jobs/map-copy'
 import { JobList } from './job-list'
 import { CityJobsShell, ResumeCta, ResumeCtaCompact } from './shell'
 
@@ -322,14 +323,22 @@ export async function HubPage({ country }: { country: string }) {
         </h1>
         <p className="text-slate-600">{fill(ctx.c.hubLead, { count: fmt(ctx, total), n: fmt(ctx, cities.length) })}</p>
       </div>
-      {remote > 0 && (
+      <div className="flex flex-wrap gap-2">
         <Link
-          href={pathFor(ctx, REMOTE_SLUG, null)}
-          className="flex w-fit items-center gap-2 rounded-full border border-[#0B63E5] bg-blue-50 px-4 py-2 text-sm font-semibold text-[#0B63E5] hover:bg-blue-100"
+          href={`/${ctx.slug}/jobs/map`}
+          className="flex w-fit items-center gap-2 rounded-full border border-[#0B63E5] bg-white px-4 py-2 text-sm font-semibold text-[#0B63E5] hover:bg-blue-50"
         >
-          {ctx.c.remoteHubLink} <span className="font-normal text-slate-500">({fmt(ctx, remote)})</span>
+          {JOBS_MAP_COPY[ctx.lang].navLabel}
         </Link>
-      )}
+        {remote > 0 && (
+          <Link
+            href={pathFor(ctx, REMOTE_SLUG, null)}
+            className="flex w-fit items-center gap-2 rounded-full border border-[#0B63E5] bg-blue-50 px-4 py-2 text-sm font-semibold text-[#0B63E5] hover:bg-blue-100"
+          >
+            {ctx.c.remoteHubLink} <span className="font-normal text-slate-500">({fmt(ctx, remote)})</span>
+          </Link>
+        )}
+      </div>
       <ResumeCtaCompact ctx={ctx} />
       <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {cities.map((x) => (

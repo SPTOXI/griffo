@@ -9166,3 +9166,76 @@ O e-mail de "conta já existe" do §2.147 continua sendo o canal privado que con
 **Regra, nas palavras do operador:** "Quando você já tiver uma solução implementada e eu sugerir outra pode questionar me explicando a solução existente, assim consigo avaliar e vc pode dar sua sugestão também."
 
 **Na prática:** se o pedido substitui algo que já funciona, primeiro explique o que existe, como funciona e o que mudaria. Dê sua recomendação e só implemente depois da resposta.
+
+## 2.155 Mapa de vagas por país, ideia do map.rezi.ai (29/10/2026)
+
+**Pedido do operador:** analisar o https://map.rezi.ai/ e ver se dá para ter uma ferramenta igual. A análise foi feita lendo o HTML e o JavaScript do site, porque o Cloudflare deles bloqueia navegador automatizado.
+
+**O que o Rezi faz:**
+- Mapa-múndi de vagas com MapLibre e Protomaps. Bolhas agrupadas mostram a contagem.
+- Filtros por área e por remoto.
+- Na vaga, um teste A/B da chamada: nenhuma, "adapte o currículo" ou "veja sua nota".
+- Páginas de SEO por cidade e cargo, que já existem no Griffo desde o §2.151.
+- Um mapa público de candidatos, que **não** foi copiado. Expor perfis de pessoas num mapa vai contra a nossa política de privacidade e a LGPD/GDPR. Se um dia existir, é no Griffo Enterprise, com consentimento e por decisão do operador.
+
+**O que entrou:**
+- **`/[país]/jobs/map`** em todos os países da regra do §2.151, no idioma do mercado, em 12 idiomas (`city-jobs/map-copy.ts`, revisado pelo translation-reviewer).
+  - O mapa abre enquadrado no país, mas tem as cidades do mundo inteiro.
+  - Bolhas agrupadas somam as **vagas**, não as cidades.
+  - Clicar numa cidade abre as 20 vagas mais novas dela, com link para a página da cidade quando ela tem 5 vagas ou mais.
+- **Chamada em cada vaga** (texto pedido pelo operador, com o ATS explicado porque nem todo mundo conhece a sigla): "Veja a nota do seu currículo e se ele passa no filtro (ATS) desta vaga" → `/ats-check`. O clique grava o evento `jobs_map_cta_clicked`.
+- **Mapa base:** OpenFreeMap (estilo positron), gratuito, sem chave e sem arquivo grande no deploy, por causa do limite da Vercel do §7.12.
+  - Biblioteca: `maplibre-gl@5.24.0`, carregada só nesta página.
+  - A versão 6 foi descartada porque procura o arquivo do worker ao lado do próprio script, e isso quebra no bundle do Next.
+  - A CSP ganhou `worker-src 'self' blob:`, porque o worker do MapLibre nasce de um blob.
+- **Coordenadas** (`city-jobs/city-coords.ts` e `.server.ts`): base GeoNames `cities5000` (CC BY 4.0, crédito na página).
+  - O arquivo inteiro teria de 1,5 a 6 MB, então não vai no código. A tabela **`CityCoord`** (país, slug, lat, lng, fonte) guarda só as cidades que existem nas vagas.
+  - A rota `/api/cron/city-coords` roda no fim do `jobbase-sync.yml`, depois do agente de cidades.
+  - Ela baixa o zip (5,7 MB), lê com um descompactador próprio (sem dependência nova) e grava só as cidades novas.
+  - Cidade não achada fica `source = none` e é tentada de novo depois de 7 dias.
+- **Regras de escolha quando o nome se repete:**
+  - A cidade vence o bairro homônimo (`PPLX`): Cachoeirinha, RS, e não o distrito de São Paulo.
+  - Entre iguais, vence a maior.
+  - O nome alternativo vence o principal quando é de uma cidade 10 vezes maior e tem mais de 3 letras: "Juárez" vai para Ciudad Juárez, e "Saint Louis" para St. Louis, MO. Siglas ficam com a cidade que se chama assim: "Poá" é Poá, não Porto Alegre, apesar de "POA".
+- **Links:** o hub `/[país]/jobs` ganhou o botão "Mapa de vagas". O sitemap inclui o mapa dos países com 3 cidades ou mais no mapa. O `llms.txt` também cita o mapa.
+- **APIs públicas:** `/api/public/jobs-map` (pontos, cache de 1 h) e `/api/public/jobs-map/jobs` (vagas de uma cidade). Limite de 300 por 10 min no middleware.
+
+**Migração aplicada direto no Supabase**, aditiva: tabela `CityCoord`, com RLS e sem acesso para `anon`/`authenticated`. Semeada com as 548 cidades que tinham 5 vagas ou mais (15,4 mil vagas). O resto entra na primeira rodada do cron.
+
+**Cobertura medida em 29/10:** 84% das vagas com cidade têm coordenada. As que faltam são quase todas região ou bairro ("Greater Vancouver", "Cape Town City Centre", "Haute-Garonne"). Somem do mapa até o agente ou o admin juntá-las numa cidade, mas continuam na página delas.
+
+**Conferido na prévia** (computador e iPhone, `/br` e `/de`): bolhas, zoom no agrupamento, painel de vagas com a chamada, e o botão no hub. Três ajustes saíram dessa conferência:
+- O contêiner do mapa estava com 0 px de altura: o CSS do MapLibre põe `position: relative` e anulava o `absolute inset-0`. Agora tem altura e largura explícitas.
+- No celular, a página rola até as vagas quando se toca numa cidade, porque o painel fica embaixo do mapa.
+- Os nomes do mapa base saem no idioma da página (`name:<idioma>`, com o nome local quando o OpenStreetMap não tem a tradução).
+
+**Limites conhecidos:**
+- Alguns nomes ambíguos podem cair na cidade errada, porque a GeoNames não diz o estado pelo nome: "Greenville" existe na Carolina do Norte e na do Sul, "Álvaro Obregón" em Michoacán e na Cidade do México.
+- Não há tela no admin para corrigir coordenada. O campo `source = admin` está reservado para isso.
+
+## 2.156 Suíça, Estônia e Hungria cadastradas, e coordenadas a partir de mil habitantes (29/10/2026)
+
+**Pedido do operador:** depois da pergunta "a marcação das cidades serve para qualquer local do mundo, dentro dos países cadastrados?", ele pediu para incluir a Suíça em alemão, a Estônia e a Hungria, e para trocar a base de cidades.
+
+**Por que esses três:** são os únicos países com vagas abertas e sem rota no Griffo. Em 29/10 eram 550 vagas na Suíça, 54 na Estônia e 24 na Hungria. Essas vagas não apareciam em página de vagas nenhuma nem no mapa.
+
+**O que entrou:**
+- `ch`, `ee` e `hu` em `SUPPORTED_COUNTRY_SLUGS`. Com isso ganham página de país (gerada no build), páginas de vagas por cidade, mapa, sitemap e o redirecionamento por país no middleware: quem acessa da Suíça cai em `/ch`, não mais em `/global`.
+- **Suíça com mercado próprio** (`id: 'CH'` em `lib/market/index.ts`), em alemão, porque é a língua da maior parte das vagas.
+  - Não entrou no mercado alemão porque o salário é em franco suíço (CHF) e os sites de vaga são outros: jobs.ch e jobup.ch.
+  - ATS mais comuns: SAP SuccessFactors, Workday, Abacus Umantis.
+  - Currículo: foto é o costume, e para estrangeiro conta a autorização de trabalho (Ausweis B/C).
+- **Estônia e Hungria** usam o mercado genérico, em inglês, como Polônia, Romênia e os outros países sem mercado declarado. Estoniano e húngaro não estão entre os 12 idiomas do produto.
+- Nome "Suíça" nos 12 idiomas em `country-labels.ts`. Faltava, e a página mostraria "CH".
+- **Coordenadas a partir de mil habitantes:** a base passou de `cities5000` para `cities1000` (zip de 11 MB, 32 MB abertos). Com 5 mil, vagas de cidade pequena ficavam fora do mapa. As 548 cidades já gravadas continuam valendo, e a primeira rodada do cron preenche o resto com a base nova.
+- Semeadura imediata no Supabase: 150 cidades da Suíça, Tallinn e Budapeste.
+
+**Conferido na prévia:** `/ch` sai em alemão, com o título "GriffoWork Schweiz — Karriere-Intelligenz". `/ee` e `/hu` saem em inglês. As páginas de vagas e os mapas dos três funcionam.
+
+Dois ajustes saíram dessa conferência:
+- O título da página de país usava "Suíça", em português, porque faltavam `ch`, `ee` e `hu` em `COUNTRY_NAME_BY_SLUG` (`[country]/page.tsx`).
+- A lista "cidades com mais vagas" do mapa suíço não aparecia. O cache de `loadMapPoints` sobrevive a deploys e ainda tinha a lista de países antiga, então a chave passou para `city-jobs-map-points-v2`. **Regra:** trocar a versão dessa chave sempre que a lista de países mudar.
+
+**Preço, que fica com o operador:** os três países não estão em `lib/pricing/catalog.ts`. Por isso caem na faixa padrão, a 1, e veem USD 9,90. É a regra "país não mapeado não fica mais barato". Pôr a Estônia e a Hungria numa faixa menor, ou cobrar a Suíça em CHF, é decisão de preço do operador.
+
+**Efeito conhecido:** o mapa da Estônia e o da Hungria têm uma cidade cada. Eles existem, mas saem do sitemap e ficam com `noindex` até ter 3 cidades (`MIN_CITIES_TO_INDEX_MAP`).

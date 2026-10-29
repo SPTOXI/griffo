@@ -26,6 +26,7 @@ import type { Language } from '@/lib/i18n'
  */
 const NAMES: Record<Language, Record<string, string>> = {
   pt: {
+    CH: 'Suíça',
     BR: 'Brasil', US: 'Estados Unidos', GB: 'Reino Unido', AU: 'Austrália', SG: 'Singapura',
     CA: 'Canadá', IN: 'Índia', IE: 'Irlanda', JP: 'Japão', DE: 'Alemanha', MX: 'México',
     BE: 'Bélgica', AT: 'Áustria', EE: 'Estônia', FR: 'França', NL: 'Holanda', KR: 'Coreia do Sul',
@@ -34,6 +35,7 @@ const NAMES: Record<Language, Record<string, string>> = {
     NZ: 'Nova Zelândia', TR: 'Turquia', CZ: 'República Tcheca',
   },
   en: {
+    CH: 'Switzerland',
     BR: 'Brazil', US: 'United States', GB: 'United Kingdom', AU: 'Australia', SG: 'Singapore',
     CA: 'Canada', IN: 'India', IE: 'Ireland', JP: 'Japan', DE: 'Germany', MX: 'Mexico',
     BE: 'Belgium', AT: 'Austria', EE: 'Estonia', FR: 'France', NL: 'Netherlands', KR: 'South Korea',
@@ -42,6 +44,7 @@ const NAMES: Record<Language, Record<string, string>> = {
     NZ: 'New Zealand', TR: 'Turkey', CZ: 'Czech Republic',
   },
   es: {
+    CH: 'Suiza',
     BR: 'Brasil', US: 'Estados Unidos', GB: 'Reino Unido', AU: 'Australia', SG: 'Singapur',
     CA: 'Canadá', IN: 'India', IE: 'Irlanda', JP: 'Japón', DE: 'Alemania', MX: 'México',
     BE: 'Bélgica', AT: 'Austria', EE: 'Estonia', FR: 'Francia', NL: 'Países Bajos', KR: 'Corea del Sur',
@@ -50,6 +53,7 @@ const NAMES: Record<Language, Record<string, string>> = {
     NZ: 'Nueva Zelanda', TR: 'Turquía', CZ: 'República Checa',
   },
   de: {
+    CH: 'Schweiz',
     BR: 'Brasilien', US: 'Vereinigte Staaten', GB: 'Vereinigtes Königreich', AU: 'Australien',
     SG: 'Singapur', CA: 'Kanada', IN: 'Indien', IE: 'Irland', JP: 'Japan', DE: 'Deutschland',
     MX: 'Mexiko', BE: 'Belgien', AT: 'Österreich', EE: 'Estland', FR: 'Frankreich',
@@ -59,6 +63,7 @@ const NAMES: Record<Language, Record<string, string>> = {
     CZ: 'Tschechien',
   },
   fr: {
+    CH: 'Suisse',
     BR: 'Brésil', US: 'États-Unis', GB: 'Royaume-Uni', AU: 'Australie', SG: 'Singapour',
     CA: 'Canada', IN: 'Inde', IE: 'Irlande', JP: 'Japon', DE: 'Allemagne', MX: 'Mexique',
     BE: 'Belgique', AT: 'Autriche', EE: 'Estonie', FR: 'France', NL: 'Pays-Bas',
@@ -68,6 +73,7 @@ const NAMES: Record<Language, Record<string, string>> = {
     CZ: 'République Tchèque',
   },
   it: {
+    CH: 'Svizzera',
     BR: 'Brasile', US: 'Stati Uniti', GB: 'Regno Unito', AU: 'Australia', SG: 'Singapore',
     CA: 'Canada', IN: 'India', IE: 'Irlanda', JP: 'Giappone', DE: 'Germania', MX: 'Messico',
     BE: 'Belgio', AT: 'Austria', EE: 'Estonia', FR: 'Francia', NL: 'Paesi Bassi',
@@ -77,6 +83,7 @@ const NAMES: Record<Language, Record<string, string>> = {
     CZ: 'Repubblica Ceca',
   },
   ja: {
+    CH: 'スイス',
     BR: 'ブラジル', US: 'アメリカ合衆国', GB: 'イギリス', AU: 'オーストラリア', SG: 'シンガポール',
     CA: 'カナダ', IN: 'インド', IE: 'アイルランド', JP: '日本', DE: 'ドイツ', MX: 'メキシコ',
     BE: 'ベルギー', AT: 'オーストリア', EE: 'エストニア', FR: 'フランス', NL: 'オランダ',
@@ -85,6 +92,7 @@ const NAMES: Record<Language, Record<string, string>> = {
     ZA: '南アフリカ', AE: 'アラブ首長国連邦', NZ: 'ニュージーランド', TR: 'トルコ', CZ: 'チェコ',
   },
   nl: {
+    CH: 'Zwitserland',
     BR: 'Brazilië', US: 'Verenigde Staten', GB: 'Verenigd Koninkrijk', AU: 'Australië',
     SG: 'Singapore', CA: 'Canada', IN: 'India', IE: 'Ierland', JP: 'Japan', DE: 'Duitsland',
     MX: 'Mexico', BE: 'België', AT: 'Oostenrijk', EE: 'Estland', FR: 'Frankrijk',
@@ -94,6 +102,7 @@ const NAMES: Record<Language, Record<string, string>> = {
     CZ: 'Tsjechië',
   },
   sv: {
+    CH: 'Schweiz',
     BR: 'Brasilien', US: 'USA', GB: 'Storbritannien', AU: 'Australien', SG: 'Singapore',
     CA: 'Kanada', IN: 'Indien', IE: 'Irland', JP: 'Japan', DE: 'Tyskland', MX: 'Mexiko',
     BE: 'Belgien', AT: 'Österrike', EE: 'Estland', FR: 'Frankrike', NL: 'Nederländerna',
@@ -102,6 +111,7 @@ const NAMES: Record<Language, Record<string, string>> = {
     AE: 'Förenade Arabemiraten', NZ: 'Nya Zeeland', TR: 'Turkiet', CZ: 'Tjeckien',
   },
   zh: {
+    CH: '瑞士',
     BR: '巴西', US: '美国', GB: '英国', AU: '澳大利亚', SG: '新加坡', CA: '加拿大', IN: '印度',
     IE: '爱尔兰', JP: '日本', DE: '德国', MX: '墨西哥', BE: '比利时', AT: '奥地利', EE: '爱沙尼亚',
     FR: '法国', NL: '荷兰', KR: '韩国', ES: '西班牙', IT: '意大利', CN: '中国', PL: '波兰',
@@ -109,6 +119,7 @@ const NAMES: Record<Language, Record<string, string>> = {
     AE: '阿拉伯联合酋长国', NZ: '新西兰', TR: '土耳其', CZ: '捷克',
   },
   ar: {
+    CH: 'سويسرا',
     BR: 'البرازيل', US: 'الولايات المتحدة', GB: 'المملكة المتحدة', AU: 'أستراليا',
     SG: 'سنغافورة', CA: 'كندا', IN: 'الهند', IE: 'أيرلندا', JP: 'اليابان', DE: 'ألمانيا',
     MX: 'المكسيك', BE: 'بلجيكا', AT: 'النمسا', EE: 'إستونيا', FR: 'فرنسا', NL: 'هولندا',
@@ -118,6 +129,7 @@ const NAMES: Record<Language, Record<string, string>> = {
     CZ: 'التشيك',
   },
   ko: {
+    CH: '스위스',
     BR: '브라질', US: '미국', GB: '영국', AU: '오스트레일리아', SG: '싱가포르', CA: '캐나다',
     IN: '인도', IE: '아일랜드', JP: '일본', DE: '독일', MX: '멕시코', BE: '벨기에', AT: '오스트리아',
     EE: '에스토니아', FR: '프랑스', NL: '네덜란드', KR: '대한민국', ES: '스페인', IT: '이탈리아',

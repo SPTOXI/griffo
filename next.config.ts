@@ -70,6 +70,9 @@ const securityHeaders = [
       // aceito em `script-src` acima.
       "style-src 'self' 'unsafe-inline'",
       "connect-src 'self' https: wss:",
+      // O mapa de vagas (MapLibre) roda o desenho num Web Worker criado a partir
+      // de um blob. Sem isto o fallback é `script-src`, que não aceita `blob:`.
+      "worker-src 'self' blob:",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data: https:",
       "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
