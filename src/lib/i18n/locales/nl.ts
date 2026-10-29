@@ -33,7 +33,7 @@ export const nl: TranslationDictionary = {
     title: 'Wij verbinden je met kansen, niet met vacatures.',
     paragraph: 'Je kennis en ervaring bestaan al. GriffoWork zorgt ervoor dat ze begrepen, gevonden en verbonden worden met de juiste kansen. Meer dan {N} openstaande vacatures op dit moment — wij helpen je de vacature te vinden die het beste bij je past.',
     ctaPrimary: 'Controleer nu mijn cv',
-    ctaSecondary: 'Bekijk de arbeidsmarktkaart',
+    ctaSecondary: 'Bekijk de vacatures op de kaart',
     quote: 'Je cv moet niet alleen je verhaal vertellen. Het moet door de markt gevonden worden.',
     trustFree: 'Gratis voorbeeld, geen creditcard',
     trustLanguages: '{count} talen',

@@ -33,7 +33,7 @@ export const fr: TranslationDictionary = {
     title: 'Nous vous connectons à des opportunités, pas à des offres d’emploi.',
     paragraph: 'Vos connaissances et votre expérience existent déjà. GriffoWork fait en sorte qu’elles soient comprises, trouvées et connectées aux bonnes opportunités. Plus de {N} postes ouverts en ce moment — nous vous aidons à trouver celui qui vous correspond le mieux.',
     ctaPrimary: 'Auditer mon CV maintenant',
-    ctaSecondary: 'Voir la carte de l’emploi',
+    ctaSecondary: 'Voir les offres sur la carte',
     quote: 'Votre CV ne doit pas seulement raconter votre histoire. Il doit être trouvé par le marché.',
     trustFree: 'Aperçu gratuit, sans carte',
     trustLanguages: '{count} langues',

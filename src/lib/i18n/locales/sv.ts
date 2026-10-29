@@ -33,7 +33,7 @@ export const sv: TranslationDictionary = {
     title: 'Vi kopplar dig till möjligheter, inte jobbannonser.',
     paragraph: 'Din kunskap och erfarenhet finns redan. GriffoWork arbetar för att den ska förstås, hittas och kopplas till rätt möjligheter. Fler än {N} öppna tjänster just nu — vi hjälper dig hitta den som passar dig bäst.',
     ctaPrimary: 'Granska mitt CV nu',
-    ctaSecondary: 'Se kartan över arbetsmarknaden',
+    ctaSecondary: 'Se jobben på kartan',
     quote: 'Ditt CV ska inte bara berätta din historia. Det måste hittas av marknaden.',
     trustFree: 'Gratis förhandsgranskning, inget kort',
     trustLanguages: '{count} språk',

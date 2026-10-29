@@ -2,6 +2,8 @@
 
 import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl'
 import type { MapPoint } from '@/lib/city-jobs/city-coords'
+import { MAP_LOCALE } from '@/lib/city-jobs/map-locale'
+import type { Language } from '@/lib/i18n/types'
 
 /**
  * O que o mapa de vagas (`/[país]/jobs/map`) e o mapa da home têm em comum:
@@ -46,6 +48,8 @@ export async function createBubbleMap(opts: BubbleMapOptions) {
     zoom: 1.3,
     attributionControl: { compact: true },
     cooperativeGestures: opts.cooperativeGestures ?? true,
+    // Avisos e botões da própria biblioteca no idioma da página (em inglês sem isto).
+    locale: MAP_LOCALE[(opts.lang in MAP_LOCALE ? opts.lang : 'en') as Language],
   })
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 

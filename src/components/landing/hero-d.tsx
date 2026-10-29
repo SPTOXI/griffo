@@ -102,7 +102,7 @@ export function HeroD({ t, lang, openJobsCount, onNavigate }: HeroDProps) {
                 size="lg"
                 className="h-[54px] rounded-lg border-white/[0.22] bg-transparent px-[22px] text-base font-medium text-white hover:bg-white/[0.06] hover:text-white"
               >
-                <a href="/market-pulse">{t.heroD.ctaSecondary}</a>
+                <a href="#home-jobs-map">{t.heroD.ctaSecondary}</a>
               </Button>
             </div>
 

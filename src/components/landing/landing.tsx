@@ -26,10 +26,10 @@ import { countryLabel } from '@/lib/jobs/country-labels'
 import { CITY_JOBS_COPY } from '@/lib/city-jobs/copy'
 import { TestimonialsSection } from '@/components/testimonials/testimonials-section'
 import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
-import { HiringIndexTeaser } from './hiring-index-teaser'
 import { HeroD } from './hero-d'
 import { MatchHero } from './match-hero'
 import { HomeJobsMap } from './home-jobs-map'
+import { JOBS_MAP_COPY } from '@/lib/city-jobs/map-copy'
 import { TrackWhenVisible } from '@/components/analytics/track-when-visible'
 import { AtsCheckBanner } from '@/components/ats-check/ats-check-banner'
 import { OrderBand } from './order-band'
@@ -69,6 +69,9 @@ export function Landing({
   const jobsCountrySlug = SUPPORTED_COUNTRY_SLUGS.includes(effectiveCountry.toLowerCase()) && effectiveCountry.toLowerCase() !== 'global'
     ? effectiveCountry.toLowerCase()
     : null
+  // "Mapa de vagas" no menu: o mapa completo do país; sem país com página de vagas, o mapa da própria home.
+  // O Índice GriffoWork (`/market-pulse`) segue no rodapé e na seção de preços para empresas (§2.158).
+  const jobsMapHref = jobsCountrySlug ? `/${jobsCountrySlug}/jobs/map` : '#home-jobs-map'
   // O país da borda ou rota serve para ESCOLHER A MOEDA que a landing exibe, e para
   // nada além disso. Quem decide o que será cobrado é o país do meio de
   // pagamento, resolvido no servidor — ver lib/pricing/resolve.ts.
@@ -136,7 +139,7 @@ export function Landing({
               <a href="#pricing" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.plans}</a>
               <a href="#how" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.howItWorks}</a>
               <a href="#faq" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.faq}</a>
-              <a href="/market-pulse" className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{t.nav.marketPulse}</a>
+              <a href={jobsMapHref} className="whitespace-nowrap text-slate-600 hover:text-[#0B63E5] transition-colors">{JOBS_MAP_COPY[lang].navLabel}</a>
             </nav>
 
             <span className="hidden h-9 w-px shrink-0 bg-slate-200 lg:block" aria-hidden="true" />
@@ -183,7 +186,7 @@ export function Landing({
               <a href="#how" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">{t.nav.howItWorks}</a>
               <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">{t.nav.plans}</a>
               <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">{t.nav.faq}</a>
-              <a href="/market-pulse" className="px-3 py-2 rounded-md hover:bg-slate-50">{t.nav.marketPulse}</a>
+              <a href={jobsMapHref} onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-md hover:bg-slate-50">{JOBS_MAP_COPY[lang].navLabel}</a>
             </nav>
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
               {user ? (
@@ -213,7 +216,18 @@ export function Landing({
 
       {/* Mapa das vagas, a isca do envio: o nome de algumas vagas por cidade e,
           depois do envio, a vaga grátis e as trancadas no mapa. Ver home-jobs-map.tsx. */}
-      <HomeJobsMap lang={lang} locale={localeForLang(lang)} countryCode={effectiveCountry.toUpperCase()} />
+      <HomeJobsMap
+        lang={lang}
+        locale={localeForLang(lang)}
+        countryCode={effectiveCountry.toUpperCase()}
+        phaseLabels={{
+          cooling: t.hiringIndex.phaseCooling,
+          bottoming_out: t.hiringIndex.phaseBottomingOut,
+          recovering: t.hiringIndex.phaseRecovering,
+          heating_up: t.hiringIndex.phaseHeatingUp,
+          stable: t.hiringIndex.phaseStable,
+        }}
+      />
 
       {/* HERO D — única direção aprovada do handoff de design; ver hero-d.tsx */}
       <HeroD t={t} lang={lang} openJobsCount={openJobsCount} onNavigate={onNavigate} />
@@ -317,8 +331,6 @@ export function Landing({
           <Stat icon={<Download className="w-5 h-5" />} value={t.stats.pdfTitle} label={t.stats.pdfSub} />
         </div>
       </section>
-
-      <HiringIndexTeaser t={t} />
 
       {/* GLOBAL SOCIAL PRESENCE FEATURE HIGHLIGHT */}
       <section id="social" className="py-14 sm:py-20 md:py-24 bg-gradient-to-br from-[#0B192E] via-slate-950 to-[#0B192E] text-white relative overflow-hidden">
