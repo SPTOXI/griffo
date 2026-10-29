@@ -1,7 +1,7 @@
 import 'server-only'
 import { unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
-import { scoreFromMeta } from './social-proof'
+import { pickSocialProof, scoreFromMeta, type SocialProof } from './social-proof'
 
 /** Eventos que são um currículo de verdade lido pelo teste (robôs ficam de fora). */
 const SCORED_EVENTS = ['ats_check_done', 'lead_submitted']
@@ -50,3 +50,23 @@ export const loadResumesAnalyzedCount = unstable_cache(
   ['resumes-analyzed-count-v1'],
   { revalidate: 3600 }
 )
+
+/** Vagas que a IA já analisou (inteligência da vaga gerada). Nunca lança. */
+export const loadJobsAnalyzedCount = unstable_cache(
+  async (): Promise<number> => {
+    try {
+      return await db.job.count({ where: { intelligenceJson: { not: null } } })
+    } catch (e: any) {
+      console.warn('[social-proof] contagem de vagas falhou:', e?.message || e)
+      return 0
+    }
+  },
+  ['jobs-analyzed-count-v1'],
+  { revalidate: 3600 }
+)
+
+/** O número do selo da home: currículos quando já são muitos, senão vagas analisadas pela IA. */
+export async function loadSocialProof(): Promise<SocialProof | null> {
+  const [resumes, jobs] = await Promise.all([loadResumesAnalyzedCount(), loadJobsAnalyzedCount()])
+  return pickSocialProof(resumes, jobs)
+}
