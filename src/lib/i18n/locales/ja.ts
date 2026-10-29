@@ -1047,7 +1047,7 @@ export const ja: TranslationDictionary = {
     phaseBottomingOutHint: '下げ止まり、この国自身の推移のなかで最も低い水準の近くにあります。',
     phaseRecovering: '回復基調',
     phaseRecoveringHint: '再び上向いていますが、まだこの国の平常の水準には届いていません。',
-    phaseHeatingUp: '過熱ぎみ',
+    phaseHeatingUp: '活況',
     phaseHeatingUpHint: '上向きで、すでにこの国の平常の水準を上回っています。',
     phaseStable: '横ばい',
     phaseStableHint: '上下いずれにも目立った動きがありません。',

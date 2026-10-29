@@ -9306,3 +9306,15 @@ O Índice tinha botão no topo da home, item no menu e uma faixa no meio da pág
 - A faixa do Índice no meio da home (`hiring-index-teaser.tsx`) saiu. O selo cumpre esse papel com menos espaço, e o arquivo foi apagado.
 - No menu, "Mapa de Contratação" virou "Mapa de vagas" e leva a `/[país]/jobs/map`, ou ao mapa da home quando a página não tem país com página de vagas.
 - O Índice segue no rodapé e no link de dados para empresas da seção de preços.
+
+**Conferido na prévia** em `/br`, `/de` e `/global`:
+- Botão do topo, menu ("Mapa de vagas" → `/br/jobs/map`, "Jobkarte" → `/de/jobs/map`) e selo funcionando.
+- Em `/global`, o menu e o selo usam o país de quem visita.
+
+**Ajuste que saiu da conferência:** o selo dizia "Kühlt ab" na Alemanha e "Cooling down" nos EUA, ou seja, "o mercado está esfriando" logo acima das vagas.
+- Esconder a fase ruim seria mostrar só o que nos convém e quebraria a confiança que o selo existe para dar.
+- Por isso a fase continua aparecendo para todo país, e uma linha diz o que ela significa para quem procura emprego (`PHASE_HINT` em `home-jobs-map.tsx`):
+  - Alta ou recuperação: "Mais empresas contratando: bom momento para se candidatar."
+  - Baixa ou fundo: "Com menos vagas abrindo, um currículo que passa no filtro (ATS) faz mais diferença."
+  - Estável: sem linha.
+- Também mudou o rótulo da fase "aquecido" em japonês e coreano, porque soava como alerta de superaquecimento: 過熱ぎみ → 活況 e 과열 조짐 → 활황.

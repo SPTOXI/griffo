@@ -1047,7 +1047,7 @@ export const ko: TranslationDictionary = {
     phaseBottomingOutHint: '하락이 멈췄고, 해당 국가 자체 흐름의 최저 수준 부근에 있습니다.',
     phaseRecovering: '회복 중',
     phaseRecoveringHint: '다시 오르고 있지만 아직 그 나라의 평상시 수준에는 못 미칩니다.',
-    phaseHeatingUp: '과열 조짐',
+    phaseHeatingUp: '활황',
     phaseHeatingUpHint: '상승세이며, 이미 그 나라의 평상시 수준을 넘어섰습니다.',
     phaseStable: '보합',
     phaseStableHint: '위로도 아래로도 뚜렷한 움직임이 없습니다.',

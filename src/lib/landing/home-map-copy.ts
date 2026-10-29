@@ -24,6 +24,10 @@ export interface HomeMapCopy {
   indexLine: string
   indexSource: string
   indexLink: string
+  /** Ao lado do selo quando o mercado do país esquenta ou se recupera. */
+  hintUp: string
+  /** Ao lado do selo quando esfria ou está perto do fundo: o dado continua, e diz o que fazer com ele. */
+  hintDown: string
 }
 
 const pt: HomeMapCopy = {
@@ -42,6 +46,8 @@ const pt: HomeMapCopy = {
   indexLine: 'Mercado de trabalho · {country}: {phase}',
   indexSource: 'fonte oficial: {source}',
   indexLink: 'Ver o Índice GriffoWork',
+  hintUp: 'Mais empresas contratando: bom momento para se candidatar.',
+  hintDown: 'Com menos vagas abrindo, um currículo que passa no filtro (ATS) faz mais diferença.',
 }
 
 const en: HomeMapCopy = {
@@ -60,6 +66,8 @@ const en: HomeMapCopy = {
   indexLine: 'Job market · {country}: {phase}',
   indexSource: 'official source: {source}',
   indexLink: 'See the GriffoWork Index',
+  hintUp: 'More companies are hiring: a good time to apply.',
+  hintDown: 'With fewer jobs opening, a resume that gets past the screening filter (ATS) matters more.',
 }
 
 const es: HomeMapCopy = {
@@ -78,6 +86,8 @@ const es: HomeMapCopy = {
   indexLine: 'Mercado laboral · {country}: {phase}',
   indexSource: 'fuente oficial: {source}',
   indexLink: 'Ver el Índice GriffoWork',
+  hintUp: 'Más empresas contratando: buen momento para postularte.',
+  hintDown: 'Con menos ofertas abriéndose, un currículum que pasa el filtro (ATS) marca más la diferencia.',
 }
 
 const de: HomeMapCopy = {
@@ -96,6 +106,8 @@ const de: HomeMapCopy = {
   indexLine: 'Arbeitsmarkt · {country}: {phase}',
   indexSource: 'amtliche Quelle: {source}',
   indexLink: 'Zum GriffoWork-Index',
+  hintUp: 'Mehr Unternehmen stellen ein: ein guter Zeitpunkt für Bewerbungen.',
+  hintDown: 'Wenn weniger Stellen ausgeschrieben werden, zählt ein Lebenslauf, der den Bewerberfilter (ATS) passiert, umso mehr.',
 }
 
 const fr: HomeMapCopy = {
@@ -114,6 +126,8 @@ const fr: HomeMapCopy = {
   indexLine: 'Marché du travail · {country} : {phase}',
   indexSource: 'source officielle : {source}',
   indexLink: 'Voir l’Indice GriffoWork',
+  hintUp: 'Plus d’entreprises recrutent : c’est le bon moment pour postuler.',
+  hintDown: 'Avec moins d’offres qui s’ouvrent, un CV qui passe le filtre (ATS) fait davantage la différence.',
 }
 
 const it: HomeMapCopy = {
@@ -132,6 +146,8 @@ const it: HomeMapCopy = {
   indexLine: 'Mercato del lavoro · {country}: {phase}',
   indexSource: 'fonte ufficiale: {source}',
   indexLink: 'Vedi l’Indice GriffoWork',
+  hintUp: 'Più aziende assumono: è un buon momento per candidarsi.',
+  hintDown: 'Con meno offerte in apertura, un curriculum che supera il filtro (ATS) fa più la differenza.',
 }
 
 const nl: HomeMapCopy = {
@@ -150,6 +166,8 @@ const nl: HomeMapCopy = {
   indexLine: 'Arbeidsmarkt · {country}: {phase}',
   indexSource: 'officiële bron: {source}',
   indexLink: 'Bekijk de GriffoWork-index',
+  hintUp: 'Meer bedrijven nemen mensen aan: een goed moment om te solliciteren.',
+  hintDown: 'Nu er minder vacatures bijkomen, maakt een cv dat door het selectiesysteem (ATS) komt meer verschil.',
 }
 
 const sv: HomeMapCopy = {
@@ -168,6 +186,8 @@ const sv: HomeMapCopy = {
   indexLine: 'Arbetsmarknad · {country}: {phase}',
   indexSource: 'officiell källa: {source}',
   indexLink: 'Se GriffoWork-index',
+  hintUp: 'Fler företag anställer: ett bra läge att söka.',
+  hintDown: 'När färre jobb utlyses gör ett CV som tar sig igenom urvalssystemet (ATS) större skillnad.',
 }
 
 const ja: HomeMapCopy = {
@@ -186,6 +206,8 @@ const ja: HomeMapCopy = {
   indexLine: '労働市場 · {country}：{phase}',
   indexSource: '公式データ：{source}',
   indexLink: 'GriffoWork指数を見る',
+  hintUp: '採用を増やす企業が増えています。応募の好機です。',
+  hintDown: '求人の募集が減る時期ほど、選考システム（ATS）を通過できる履歴書が差をつけます。',
 }
 
 const zh: HomeMapCopy = {
@@ -204,6 +226,8 @@ const zh: HomeMapCopy = {
   indexLine: '就业市场 · {country}：{phase}',
   indexSource: '官方来源：{source}',
   indexLink: '查看 GriffoWork 指数',
+  hintUp: '招聘的企业在增加：现在是投递的好时机。',
+  hintDown: '新开职位减少时，能通过筛选系统（ATS）的简历更能拉开差距。',
 }
 
 const ar: HomeMapCopy = {
@@ -222,6 +246,8 @@ const ar: HomeMapCopy = {
   indexLine: 'سوق العمل · {country}: {phase}',
   indexSource: 'المصدر الرسمي: {source}',
   indexLink: 'اطّلع على مؤشر GriffoWork',
+  hintUp: 'المزيد من الشركات توظّف: وقت مناسب للتقديم.',
+  hintDown: 'مع قلة الوظائف الجديدة، تُحدث السيرة الذاتية التي تجتاز نظام الفرز (ATS) فرقًا أكبر.',
 }
 
 const ko: HomeMapCopy = {
@@ -240,6 +266,8 @@ const ko: HomeMapCopy = {
   indexLine: '고용 시장 · {country}: {phase}',
   indexSource: '공식 출처: {source}',
   indexLink: 'GriffoWork 지수 보기',
+  hintUp: '채용하는 기업이 늘고 있습니다. 지원하기 좋은 때입니다.',
+  hintDown: '새 공고가 줄어드는 시기일수록 서류 필터(ATS)를 통과하는 이력서가 더 큰 차이를 만듭니다.',
 }
 
 export const HOME_MAP_COPY: Record<Language, HomeMapCopy> = { pt, en, es, de, fr, it, nl, sv, ja, zh, ar, ko }

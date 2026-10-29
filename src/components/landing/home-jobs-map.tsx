@@ -34,6 +34,19 @@ import { countryLabel } from '@/lib/jobs/country-labels'
  * da home não fica mais pesado por causa dela.
  */
 
+/**
+ * O que a fase do país quer dizer para quem procura emprego. Fase de baixa não
+ * some da home (esconder o dado ruim quebraria a confiança que o selo existe
+ * para dar): ela vem com o que fazer, que é exatamente o que o Griffo oferece.
+ */
+const PHASE_HINT: Record<HiringPhase, 'hintUp' | 'hintDown' | null> = {
+  heating_up: 'hintUp',
+  recovering: 'hintUp',
+  stable: null,
+  bottoming_out: 'hintDown',
+  cooling: 'hintDown',
+}
+
 const RED = '#E5243B'
 const LOCK_SVG =
   '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
@@ -276,6 +289,9 @@ export function HomeJobsMap({
                 {m.indexLink}
               </a>
             </p>
+          )}
+          {reading && PHASE_HINT[reading.phase] && (
+            <p className="text-sm text-slate-700">{m[PHASE_HINT[reading.phase]!]}</p>
           )}
         </div>
         <div className="relative h-[55vh] min-h-[360px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
