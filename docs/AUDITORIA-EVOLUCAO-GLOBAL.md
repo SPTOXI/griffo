@@ -9318,3 +9318,4 @@ O Índice tinha botão no topo da home, item no menu e uma faixa no meio da pág
   - Baixa ou fundo: "Com menos vagas abrindo, um currículo que passa no filtro (ATS) faz mais diferença."
   - Estável: sem linha.
 - Também mudou o rótulo da fase "aquecido" em japonês e coreano, porque soava como alerta de superaquecimento: 過熱ぎみ → 活況 e 과열 조짐 → 활황.
+- O aviso da própria biblioteca do mapa ("Use Ctrl + scroll to zoom the map", "use dois dedos" no celular) e os botões de zoom saíam em inglês em todas as páginas, inclusive no `/jobs/map` já publicado. Agora estão nos 12 idiomas (`city-jobs/map-locale.ts`, passados ao MapLibre em `map-core.ts`).
