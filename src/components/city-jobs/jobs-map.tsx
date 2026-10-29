@@ -51,6 +51,7 @@ const NO_COMPANY = new Set(['unknown', 'n/a', 'confidencial', 'confidential', ''
 
 export function JobsMap({ countryCode, locale, lang, copy, seeJob, remoteLabels, minJobsForPage }: JobsMapProps) {
   const box = useRef<HTMLDivElement>(null)
+  const panel = useRef<HTMLElement>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'failed' | 'empty'>('loading')
   const [selected, setSelected] = useState<Selected | null>(null)
   const [jobs, setJobs] = useState<PanelJob[] | null>(null)
@@ -166,6 +167,8 @@ export function JobsMap({ countryCode, locale, lang, copy, seeJob, remoteLabels,
     if (!selected) return
     let cancelled = false
     setJobs(null)
+    // No celular o painel fica embaixo do mapa: sem rolar até ele, o toque na cidade parece não fazer nada.
+    if (window.matchMedia('(max-width: 1023px)').matches) panel.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     fetch(`/api/public/jobs-map/jobs?country=${selected.country.toLowerCase()}&city=${encodeURIComponent(selected.slug)}`)
       .then((r) => (r.ok ? r.json() : { jobs: [] }))
       .then((d) => !cancelled && setJobs(d.jobs ?? []))
@@ -190,7 +193,7 @@ export function JobsMap({ countryCode, locale, lang, copy, seeJob, remoteLabels,
         )}
       </div>
 
-      <aside className="rounded-2xl border border-slate-200 bg-white p-4 lg:h-[60vh] lg:min-h-[380px] lg:overflow-y-auto" aria-live="polite">
+      <aside ref={panel} className="rounded-2xl border border-slate-200 bg-white p-4 lg:h-[60vh] lg:min-h-[380px] lg:overflow-y-auto" aria-live="polite">
         {!selected ? (
           <p className="text-sm text-slate-600">{copy.pickCity}</p>
         ) : (
