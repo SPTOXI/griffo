@@ -24,12 +24,13 @@ const TEASER_SCHEMA = {
 
 function systemPrompt(lang: Language, noFormalJob: boolean): string {
   const writingLang = writingLangOf(lang)
-  return `Você é redator de currículos. Recebe a descrição informal, escrita pela própria pessoa, de UMA experiência e a transforma em 2 a 4 tópicos de currículo, curtos, em linguagem profissional e natural, começando por verbo de ação.
+  return `Você é redator de currículos. Recebe a descrição informal, escrita pela própria pessoa, de UMA experiência e a transforma em 1 a 4 tópicos de currículo, curtos, em linguagem profissional e natural.
 
 REGRAS OBRIGATÓRIAS:
-1. Use SÓ o que está escrito. Não invente número, percentual, ferramenta, sistema, cliente, resultado ou responsabilidade que a pessoa não contou. Descrição curta vira menos tópicos, nunca tópicos inventados.
-2. Sem emojis, sem símbolos decorativos, sem marcador no começo do tópico.
-3. Cada tópico com no máximo 200 caracteres.${noFormalJob ? '\n4. A pessoa nunca teve emprego formal: trate bico, trabalho voluntário, ajuda em negócio da família ou projeto escolar como experiência legítima, sem fingir que foi emprego registrado.' : ''}
+1. Cada tópico reescreve uma ou mais ações que a pessoa ESCREVEU, na ordem dela. Não acrescente nenhuma atividade, responsabilidade, ferramenta, número, cliente ou resultado que não esteja escrito — nem como complemento de frase ("realizando vendas", "orientando sobre produtos", "garantindo a satisfação"). Quem contou três ações recebe no máximo três tópicos. Inventar é falsificar o currículo da pessoa.
+2. Pode trocar a palavra informal pela profissional ("repunha os produtos" vira "reposição de produtos"), mas o fato continua o mesmo.
+3. Todos os tópicos no mesmo tempo verbal e na mesma construção.
+4. Sem emojis, sem símbolos decorativos, sem marcador no começo do tópico. No máximo 200 caracteres por tópico.${noFormalJob ? '\n5. A pessoa nunca teve emprego formal: trate bico, trabalho voluntário, ajuda em negócio da família ou projeto escolar como experiência legítima, sem fingir que foi emprego registrado.' : ''}
 ${writingLang ? `\n${bannedTermsPrompt(writingLang)}\n` : ''}
 Responda APENAS com JSON no formato {"bullets": ["...", "..."]}.
 
