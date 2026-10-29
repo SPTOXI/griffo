@@ -208,6 +208,22 @@ export function auditQualityOfAiResult(taskType: string, content: string): Quali
    * outro provedor atrás de uma resposta mais cheia, que só poderia ser mais
    * cheia inventando. Quem descarta campo ruim é `lib/profile/extract.ts`.
    */
+  /**
+   * Amostra do criador de currículo: JSON com `bullets`. Uma lista curta é
+   * legítima (descrição curta vira poucos tópicos) e reprová-la levaria o
+   * roteador a buscar uma resposta mais cheia — que só viria inventando.
+   */
+  if (taskType === 'resume_builder_teaser') {
+    const match = text.match(/\{[\s\S]*\}/)
+    try {
+      const json = match ? JSON.parse(match[0]) : null
+      if (json && Array.isArray(json.bullets) && json.bullets.length > 0) return { approved: true, score: 9.0 }
+    } catch {
+      // cai na reprovação abaixo
+    }
+    return { approved: false, score: 3, feedback: 'A amostra do currículo não veio como JSON com tópicos.' }
+  }
+
   if (taskType === 'profile_extraction' || taskType === 'lead_profile_extraction') {
     const stripped = text.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim()
     let json: any

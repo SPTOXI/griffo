@@ -30,6 +30,7 @@ import { useI18n } from '@/context/i18n-context'
 import { DocumentLanguage } from '@/components/i18n/document-language'
 import { dirForLang, brandTaglineForLang } from '@/lib/i18n'
 import { useAnalyses } from '@/hooks/use-analyses'
+import { readResumeDraft } from '@/lib/resume-builder/draft'
 
 export function AppShell({ onExit }: { onExit: () => void }) {
   const { lang, t } = useI18n()
@@ -59,6 +60,14 @@ export function AppShell({ onExit }: { onExit: () => void }) {
       setView('dashboard')
     }
   }, [hydrated, user, view, setView])
+
+  // Currículo criado na home esperando no aparelho (§2.160): quem entra pelo
+  // painel inicial (cadastro confirmado por e-mail, por exemplo) vai direto ao
+  // envio, onde ele abre preenchido.
+  useEffect(() => {
+    if (hydrated && user && view === 'dashboard' && readResumeDraft()) setView('upload')
+    // Só na entrada (sem `view` nas dependências): depois disso, o painel é escolha da pessoa.
+  }, [hydrated, user])
 
   useEffect(() => {
     if (typeof window === 'undefined') return

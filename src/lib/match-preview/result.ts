@@ -2,6 +2,7 @@ import type { AtsLevel } from '../ats-check/score'
 import type { OverallFit, Recommendation } from '../matching/compatibility'
 import { safeHttpUrl } from '../safe-url'
 import { FREE_OPPORTUNITIES, teaserFrom, type Teaser } from './rules'
+import type { BuilderTeaser } from '../resume-builder/answers'
 
 /**
  * O que a tela recebe — e, principalmente, o que ela NÃO recebe.
@@ -101,6 +102,11 @@ export interface PublicResult {
   percentile?: number | null
   /** Vaga grátis e trancadas no mapa da home. Preenchido por `loadLeadResult`. */
   mapPins?: ResultMapPin[]
+  /**
+   * Currículo criado na home (§2.160): a primeira experiência reescrita e só a
+   * contagem do resto. Nulo quando a pessoa enviou um currículo pronto.
+   */
+  builder?: BuilderTeaser | null
 }
 
 export interface LeadForResult {

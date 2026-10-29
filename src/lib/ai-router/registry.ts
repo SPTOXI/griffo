@@ -257,6 +257,9 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   // Voltou ao DeepSeek (§2.143); o tipo próprio fica para reapontar ao Kimi
   // se a conta subir de faixa.
   job_intelligence_backfill: 'deepseek',
+  // Amostra grátis do criador de currículo: alguém esperando na tela, como a
+  // leitura de perfil da home — Claude com `modelOverride` Haiku 4.5 na chamada.
+  resume_builder_teaser: 'claude',
   // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
   normalization: 'deepseek',
