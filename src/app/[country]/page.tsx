@@ -75,6 +75,9 @@ const COUNTRY_NAME_BY_SLUG: Record<string, string> = {
   sg: 'Singapore',
   nl: 'Nederland',
   ie: 'Ireland',
+  ch: 'Schweiz',
+  ee: 'Estonia',
+  hu: 'Hungary',
 }
 
 /**
@@ -96,6 +99,7 @@ const COUNTRY_NAME_EN_BY_SLUG: Partial<Record<string, string>> = {
   jp: 'Japan',
   ae: 'United Arab Emirates',
   nl: 'Netherlands',
+  ch: 'Switzerland',
 }
 
 /** Nome do país em inglês, pra texto que é sempre em inglês (o JSON-LD). */
