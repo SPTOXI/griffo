@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { useAuth, useNav } from '@/store/auth'
 import { Landing } from '@/components/landing/landing'
 import type { CountryJobCount } from '@/lib/jobs/open-count.server'
+import type { SocialProof } from '@/lib/analytics/social-proof'
 
 // `AuthScreen` e, principalmente, `AppShell` puxam a árvore inteira do app
 // autenticado (dashboard, laudo com `recharts`, admin) — código que quem só
@@ -28,12 +29,12 @@ type Screen = 'landing' | 'login' | 'signup' | 'app'
 export interface HomeClientProps {
   /** Contagem real de vagas ativas, resolvida no servidor em `page.tsx`. */
   openJobsCount: number
-  resumesAnalyzed?: number
+  socialProof?: SocialProof | null
   /** Vagas abertas por país, mesma fonte e mesmo momento — ver `page.tsx`. */
   jobsByCountry: CountryJobCount[]
 }
 
-export function HomeClient({ openJobsCount, resumesAnalyzed, jobsByCountry }: HomeClientProps) {
+export function HomeClient({ openJobsCount, socialProof, jobsByCountry }: HomeClientProps) {
   const { user, hydrated, hydrate } = useAuth()
   const setNavView = useNav((s) => s.setView)
   const [screen, setScreen] = useState<Screen>('landing')
@@ -67,7 +68,7 @@ export function HomeClient({ openJobsCount, resumesAnalyzed, jobsByCountry }: Ho
   // SSR e primeiro render: entrega o HTML completo da Landing Page para motores de busca,
   // bots de IA (GPTBot, ClaudeBot, PerplexityBot) e visitantes sem flash de carregamento.
   if (!hydrated) {
-    return <Landing onNavigate={(v) => setScreen(v)} openJobsCount={openJobsCount} resumesAnalyzed={resumesAnalyzed} jobsByCountry={jobsByCountry} />
+    return <Landing onNavigate={(v) => setScreen(v)} openJobsCount={openJobsCount} socialProof={socialProof} jobsByCountry={jobsByCountry} />
   }
 
   if (effectiveScreen === 'app') {
@@ -78,5 +79,5 @@ export function HomeClient({ openJobsCount, resumesAnalyzed, jobsByCountry }: Ho
     return <AuthScreen initialMode={effectiveScreen} onBack={() => setScreen('landing')} />
   }
 
-  return <Landing onNavigate={(v) => setScreen(v)} openJobsCount={openJobsCount} resumesAnalyzed={resumesAnalyzed} jobsByCountry={jobsByCountry} />
+  return <Landing onNavigate={(v) => setScreen(v)} openJobsCount={openJobsCount} socialProof={socialProof} jobsByCountry={jobsByCountry} />
 }

@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { useAuth, useNav } from '@/store/auth'
 import { Landing } from '@/components/landing/landing'
 import type { Language } from '@/lib/i18n'
+import type { SocialProof } from '@/lib/analytics/social-proof'
 
 // Mesmo motivo de `src/app/page.tsx`: `AppShell` puxa o app autenticado
 // inteiro (dashboard, laudo com `recharts`, admin), e isto AQUI é a segunda
@@ -25,10 +26,10 @@ export interface CountryPageClientProps {
   lang: Language
   /** Contagem real de vagas ativas, resolvida no servidor em `page.tsx`. */
   openJobsCount: number
-  resumesAnalyzed?: number
+  socialProof?: SocialProof | null
 }
 
-export function CountryPageClient({ countryCode, lang, openJobsCount, resumesAnalyzed }: CountryPageClientProps) {
+export function CountryPageClient({ countryCode, lang, openJobsCount, socialProof }: CountryPageClientProps) {
   const { user, hydrated, hydrate } = useAuth()
   const setNavView = useNav((s) => s.setView)
   const [screen, setScreen] = useState<Screen>('landing')
@@ -51,7 +52,7 @@ export function CountryPageClient({ countryCode, lang, openJobsCount, resumesAna
 
   // Durante SSR e primeiro render: entrega a Landing Page localizada para o país
   if (!hydrated) {
-    return <Landing onNavigate={(v) => setScreen(v)} countryCode={countryCode} forcedLang={lang} openJobsCount={openJobsCount} resumesAnalyzed={resumesAnalyzed} />
+    return <Landing onNavigate={(v) => setScreen(v)} countryCode={countryCode} forcedLang={lang} openJobsCount={openJobsCount} socialProof={socialProof} />
   }
 
   if (effectiveScreen === 'app') {
@@ -68,7 +69,7 @@ export function CountryPageClient({ countryCode, lang, openJobsCount, resumesAna
       countryCode={countryCode}
       forcedLang={lang}
       openJobsCount={openJobsCount}
-      resumesAnalyzed={resumesAnalyzed}
+      socialProof={socialProof}
     />
   )
 }

@@ -33,6 +33,7 @@ import { JOBS_MAP_COPY } from '@/lib/city-jobs/map-copy'
 import { TrackWhenVisible } from '@/components/analytics/track-when-visible'
 import { AtsCheckBanner } from '@/components/ats-check/ats-check-banner'
 import { OrderBand } from './order-band'
+import type { SocialProof } from '@/lib/analytics/social-proof'
 
 export interface LandingProps {
   onNavigate: (v: 'login' | 'signup' | 'app') => void
@@ -41,7 +42,7 @@ export interface LandingProps {
   /** Contagem real de vagas ativas (resolvida no servidor) — ver `src/app/page.tsx`. */
   openJobsCount?: number
   /** Currículos já analisados (ver `social-proof.server.ts`). */
-  resumesAnalyzed?: number
+  socialProof?: SocialProof | null
   /** Vagas por país, mesma fonte — só a home (`src/app/page.tsx`) resolve
    *  isto hoje; as 41 rotas de país recebem lista vazia e a seção não
    *  aparece (ver `jobsByCountry` em `landing.tsx`). */
@@ -53,7 +54,7 @@ export function Landing({
   countryCode,
   forcedLang,
   openJobsCount = 0,
-  resumesAnalyzed = 0,
+  socialProof = null,
   jobsByCountry = [],
 }: LandingProps) {
   const { user } = useAuth()
@@ -212,7 +213,7 @@ export function Landing({
       {/* Envio de currículo — a porta de entrada desde o §2.132: quem procura
           emprego recebe oportunidades, e a auditoria aparece como a ponte. Vem
           antes do Hero D, que desce para explicar a cadeia. */}
-      <MatchHero lang={lang} openJobsCount={openJobsCount} resumesAnalyzed={resumesAnalyzed} countryCode={countryCode} onNavigate={onNavigate} />
+      <MatchHero lang={lang} openJobsCount={openJobsCount} socialProof={socialProof} countryCode={countryCode} onNavigate={onNavigate} />
 
       {/* Mapa das vagas, a isca do envio: o nome de algumas vagas por cidade e,
           depois do envio, a vaga grátis e as trancadas no mapa. Ver home-jobs-map.tsx. */}

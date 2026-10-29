@@ -86,6 +86,8 @@ export interface MatchPreviewCopy {
   teaserRevealed: string
   /** Contagem pública de currículos analisados, sob o título. Marcador {n}. */
   socialProof: string
+  /** Selo enquanto os currículos não passam de 1.000 (§2.159). {n} chega pronto: "31 mil" em pt/es, "31 mila" em it, "31,000" nos outros. */
+  socialProofJobs: string
   keptNote: string
   deleteNote: string
   /** Para quem pediu os e-mails e não pediu para guardar o currículo. */
@@ -172,6 +174,7 @@ const pt: MatchPreviewCopy = {
   teaserCta: 'Ver o diagnóstico completo',
   teaserRevealed: 'O mais importante, para você corrigir já:',
   socialProof: '{n} currículos já analisados na GriffoWork',
+  socialProofJobs: 'Mais de {n} vagas já analisadas pela GRIFFO AI',
   keptNote: 'Seu currículo ficou guardado para empresas te encontrarem. Para apagar, escreva para {email}.',
   deleteNote: 'Seus dados serão apagados em até 24 horas.',
   nurtureNote: 'Vamos te mandar até 3 e-mails em 7 dias. Seus dados são apagados em até 10 dias, ou na hora em que você cancelar.',
@@ -257,6 +260,7 @@ const en: MatchPreviewCopy = {
   teaserCta: 'See the full diagnosis',
   teaserRevealed: 'The most important one, to fix right now:',
   socialProof: '{n} resumes already analyzed on GriffoWork',
+  socialProofJobs: 'More than {n} jobs already analyzed by GRIFFO AI',
   keptNote: 'Your resume has been kept so companies can find you. To delete it, write to {email}.',
   deleteNote: 'Your data will be deleted within 24 hours.',
   nurtureNote: 'We’ll send you up to 3 emails over 7 days. Your data is deleted within 10 days, or as soon as you unsubscribe.',
@@ -342,6 +346,7 @@ const es: MatchPreviewCopy = {
   teaserCta: 'Ver el diagnóstico completo',
   teaserRevealed: 'El más importante, para que lo corrijas ya:',
   socialProof: '{n} currículums ya analizados en GriffoWork',
+  socialProofJobs: 'Más de {n} ofertas ya analizadas por GRIFFO AI',
   keptNote: 'Tu currículum quedó guardado para que las empresas te encuentren. Para borrarlo, escribe a {email}.',
   deleteNote: 'Tus datos se borrarán en un plazo de 24 horas.',
   nurtureNote: 'Te enviaremos hasta 3 correos en 7 días. Tus datos se borran en un plazo de 10 días, o en cuanto te des de baja.',
@@ -427,6 +432,7 @@ const de: MatchPreviewCopy = {
   teaserCta: 'Vollständige Diagnose ansehen',
   teaserRevealed: 'Der wichtigste Punkt, den Sie sofort beheben können:',
   socialProof: '{n} Lebensläufe bereits bei GriffoWork analysiert',
+  socialProofJobs: 'Über {n} Stellen bereits von GRIFFO AI analysiert',
   keptNote: 'Ihr Lebenslauf wurde gespeichert, damit Unternehmen Sie finden können. Zum Löschen schreiben Sie an {email}.',
   deleteNote: 'Ihre Daten werden innerhalb von 24 Stunden gelöscht.',
   nurtureNote: 'Wir senden Ihnen bis zu 3 E-Mails in 7 Tagen. Ihre Daten werden innerhalb von 10 Tagen gelöscht oder sofort, wenn Sie sich abmelden.',
@@ -512,6 +518,7 @@ const fr: MatchPreviewCopy = {
   teaserCta: 'Voir le diagnostic complet',
   teaserRevealed: 'Le plus important, à corriger tout de suite :',
   socialProof: '{n} CV déjà analysés sur GriffoWork',
+  socialProofJobs: 'Plus de {n} offres déjà analysées par GRIFFO AI',
   keptNote: 'Votre CV a été conservé pour que des entreprises puissent vous trouver. Pour le supprimer, écrivez à {email}.',
   deleteNote: 'Vos données seront supprimées sous 24 heures.',
   nurtureNote: 'Nous vous enverrons jusqu’à 3 e-mails en 7 jours. Vos données sont supprimées sous 10 jours, ou dès votre désinscription.',
@@ -597,6 +604,7 @@ const it: MatchPreviewCopy = {
   teaserCta: 'Vedi la diagnosi completa',
   teaserRevealed: 'Il più importante, da correggere subito:',
   socialProof: '{n} CV già analizzati su GriffoWork',
+  socialProofJobs: 'Oltre {n} offerte già analizzate da GRIFFO AI',
   keptNote: 'Il tuo curriculum è stato conservato perché le aziende possano trovarti. Per cancellarlo, scrivi a {email}.',
   deleteNote: 'I tuoi dati saranno cancellati entro 24 ore.',
   nurtureNote: 'Ti invieremo fino a 3 email in 7 giorni. I tuoi dati vengono cancellati entro 10 giorni, o appena annulli l’iscrizione.',
@@ -682,6 +690,7 @@ const nl: MatchPreviewCopy = {
   teaserCta: 'Volledige diagnose bekijken',
   teaserRevealed: 'De belangrijkste, om meteen op te lossen:',
   socialProof: '{n} cv’s al geanalyseerd op GriffoWork',
+  socialProofJobs: 'Meer dan {n} vacatures al geanalyseerd door GRIFFO AI',
   keptNote: 'Je cv is bewaard zodat bedrijven je kunnen vinden. Om het te verwijderen, schrijf naar {email}.',
   deleteNote: 'Je gegevens worden binnen 24 uur verwijderd.',
   nurtureNote: 'We sturen je maximaal 3 e-mails in 7 dagen. Je gegevens worden binnen 10 dagen verwijderd, of zodra je je afmeldt.',
@@ -767,6 +776,7 @@ const sv: MatchPreviewCopy = {
   teaserCta: 'Se hela diagnosen',
   teaserRevealed: 'Det viktigaste, att åtgärda direkt:',
   socialProof: '{n} cv:n redan analyserade på GriffoWork',
+  socialProofJobs: 'Över {n} jobb redan analyserade av GRIFFO AI',
   keptNote: 'Ditt CV har sparats så att företag kan hitta dig. Skriv till {email} för att radera det.',
   deleteNote: 'Dina uppgifter raderas inom 24 timmar.',
   nurtureNote: 'Vi skickar högst 3 mejl på 7 dagar. Dina uppgifter raderas inom 10 dagar, eller direkt när du avslutar.',
@@ -852,6 +862,7 @@ const ja: MatchPreviewCopy = {
   teaserCta: '詳しい診断を見る',
   teaserRevealed: '最も重要な問題（今すぐ直せます）：',
   socialProof: 'GriffoWorkで分析済みの履歴書：{n}件',
+  socialProofJobs: 'GRIFFO AIが分析した求人は{n}件以上',
   keptNote: '企業に見つけてもらえるよう、履歴書を保存しました。削除するには {email} までご連絡ください。',
   deleteNote: 'あなたのデータは24時間以内に削除されます。',
   nurtureNote: '7日間で最大3通のメールをお送りします。データは10日以内、または配信停止した時点で削除されます。',
@@ -937,6 +948,7 @@ const ko: MatchPreviewCopy = {
   teaserCta: '전체 진단 보기',
   teaserRevealed: '가장 중요한 문제 (지금 바로 고치세요):',
   socialProof: 'GriffoWork에서 분석한 이력서 {n}건',
+  socialProofJobs: 'GRIFFO AI가 분석한 채용 공고 {n}건 이상',
   keptNote: '기업이 찾을 수 있도록 이력서를 보관했습니다. 삭제하려면 {email}로 연락해 주세요.',
   deleteNote: '데이터는 24시간 이내에 삭제됩니다.',
   nurtureNote: '7일 동안 최대 3통의 이메일을 보내드립니다. 데이터는 10일 이내 또는 수신 거부 즉시 삭제됩니다.',
@@ -1022,6 +1034,7 @@ const zh: MatchPreviewCopy = {
   teaserCta: '查看完整诊断',
   teaserRevealed: '最重要的一个，现在就可以修改：',
   socialProof: 'GriffoWork 已分析 {n} 份简历',
+  socialProofJobs: 'GRIFFO AI 已分析超过 {n} 个职位',
   keptNote: '你的简历已保存，让企业可以找到你。如需删除，请写信至 {email}。',
   deleteNote: '你的数据将在 24 小时内删除。',
   nurtureNote: '我们会在 7 天内最多给你发 3 封邮件。你的数据会在 10 天内删除，或在你退订时立即删除。',
@@ -1107,6 +1120,7 @@ const ar: MatchPreviewCopy = {
   teaserCta: 'عرض التشخيص الكامل',
   teaserRevealed: 'الأهم، لتصلحه الآن:',
   socialProof: 'السير الذاتية التي حللتها GriffoWork: {n}',
+  socialProofJobs: 'أكثر من {n} وظيفة حللتها GRIFFO AI',
   keptNote: 'حُفظت سيرتك الذاتية كي تتمكن الشركات من العثور عليك. لحذفها، راسلنا على {email}.',
   deleteNote: 'ستُحذف بياناتك خلال 24 ساعة.',
   nurtureNote: 'سنرسل إليك ثلاث رسائل كحد أقصى خلال 7 أيام. تُحذف بياناتك خلال 10 أيام، أو فور إلغاء اشتراكك.',

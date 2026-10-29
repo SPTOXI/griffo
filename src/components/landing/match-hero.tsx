@@ -7,13 +7,13 @@ import { localeForLang, type Language } from '@/lib/i18n'
 import { contactEmail } from '@/lib/i18n/contact'
 import { countryLabel } from '@/lib/jobs/country-labels'
 import { fill, matchPreviewCopy } from '@/lib/match-preview/copy'
-import { MIN_SOCIAL_PROOF_COUNT } from '@/lib/analytics/social-proof'
 import { percentileLine } from '@/lib/analytics/percentile-copy'
 import { isValidToken } from '@/lib/match-preview/rules'
 import type { PublicOpportunity, PublicResult } from '@/lib/match-preview/result'
 import { getVisitorId, trackOnce } from '@/components/analytics/track-client'
 import { LEAD_UNLOCK_EVENT, publishLeadPins } from './lead-pins'
 import { HOME_MAP_COPY } from '@/lib/landing/home-map-copy'
+import { thousandsLabel, type SocialProof } from '@/lib/analytics/social-proof'
 
 const MAX_BYTES = 3 * 1024 * 1024
 const POLL_MS = 2000
@@ -27,7 +27,7 @@ export interface MatchHeroProps {
   lang: Language
   openJobsCount: number
   /** Currículos já analisados, para a prova social sob o título. */
-  resumesAnalyzed?: number
+  socialProof?: SocialProof | null
   countryCode?: string
   onNavigate: (v: 'login' | 'signup' | 'app') => void
 }
@@ -50,7 +50,7 @@ function readAsBase64(file: File): Promise<string> {
  * resultado vai para a URL (`?lead=`), que é também o link do e-mail: recarregar
  * a página ou abrir o e-mail volta para o mesmo resultado.
  */
-export function MatchHero({ lang, openJobsCount, resumesAnalyzed = 0, countryCode, onNavigate }: MatchHeroProps) {
+export function MatchHero({ lang, openJobsCount, socialProof = null, countryCode, onNavigate }: MatchHeroProps) {
   const c = matchPreviewCopy(lang)
   const locale = localeForLang(lang)
   const [phase, setPhase] = useState<Phase>('form')
@@ -215,9 +215,11 @@ export function MatchHero({ lang, openJobsCount, resumesAnalyzed = 0, countryCod
                 </p>
               </div>
             )}
-            {resumesAnalyzed >= MIN_SOCIAL_PROOF_COUNT && (
+            {socialProof && (
               <p className="text-sm font-semibold text-slate-600">
-                {fill(c.socialProof, { n: new Intl.NumberFormat(locale).format(resumesAnalyzed) })}
+                {socialProof.kind === 'resumes'
+                  ? fill(c.socialProof, { n: new Intl.NumberFormat(locale).format(socialProof.n) })
+                  : fill(c.socialProofJobs, { n: thousandsLabel(lang, socialProof.n, locale) })}
               </p>
             )}
           </div>

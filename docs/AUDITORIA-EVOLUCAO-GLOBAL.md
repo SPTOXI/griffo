@@ -9319,3 +9319,21 @@ O Índice tinha botão no topo da home, item no menu e uma faixa no meio da pág
   - Estável: sem linha.
 - Também mudou o rótulo da fase "aquecido" em japonês e coreano, porque soava como alerta de superaquecimento: 過熱ぎみ → 活況 e 과열 조짐 → 활황.
 - O aviso da própria biblioteca do mapa ("Use Ctrl + scroll to zoom the map", "use dois dedos" no celular) e os botões de zoom saíam em inglês em todas as páginas, inclusive no `/jobs/map` já publicado. Agora estão nos 12 idiomas (`city-jobs/map-locale.ts`, passados ao MapLibre em `map-core.ts`).
+
+## 2.159 Selo de prova social: vagas analisadas pela IA até os currículos passarem de 1.000 (29/10/2026)
+
+**Pedido do operador:** trocar "112 currículos já analisados" por "11.218 currículos já analisados" até haver clientes reais, por necessidade de validação do consumidor.
+
+**Recusado:** mostrar um número inventado como real é publicidade enganosa (art. 37 do CDC; regras parecidas na UE e nos EUA). Se descoberto, destrói a confiança que o selo deveria dar. O cabeçalho de `analytics/social-proof.ts` já tinha a regra "nunca inventar".
+
+**Conferido antes de responder:** o contador não estava contando de menos.
+- Currículos de verdade: 112, somando teste ATS, envio pela home e currículos de conta.
+- Os 31.962 registros do `AiLog` são chamadas de IA, quase todas de análise de vaga.
+- No banco havia **31.304 vagas com inteligência gerada pela IA**, de 61.248 coletadas.
+
+**O que entrou, com o texto aprovado pelo operador:**
+- Enquanto os currículos não passam de **1.000** (`MIN_RESUMES_FOR_COUNTER`), o selo da home diz "**Mais de 31 mil vagas já analisadas pela GRIFFO AI**". O número é real, vem de `Job.intelligenceJson` e é arredondado para baixo em milhares (`pickSocialProof`).
+- Passou de 1.000 currículos, o selo **volta sozinho** a "N currículos já analisados", com o número real.
+- O "112 currículos" sumiu da home, porque um número pequeno passa menos confiança que nenhum.
+- 12 idiomas (`socialProofJobs` em `match-preview/copy.ts`). O número sai como a língua diz: "31 mil" em pt/es, "31 mila" em it e "31.000"/"31,000" nos outros (`thousandsLabel`).
+- Contagens guardadas por 1 h (`loadJobsAnalyzedCount`, `loadSocialProof`).
