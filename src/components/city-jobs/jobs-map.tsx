@@ -181,7 +181,8 @@ export function JobsMap({ countryCode, locale, lang, copy, seeJob, remoteLabels,
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
       <div className="relative h-[60vh] min-h-[380px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-        <div ref={box} className="absolute inset-0" />
+        {/* Altura e largura explícitas: o CSS do MapLibre põe `position: relative` no contêiner, e com `absolute inset-0` ele ficava com 0 px de altura. */}
+        <div ref={box} className="h-full w-full" />
         {state !== 'ready' && (
           <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-slate-600">
             {state === 'loading' ? copy.loading : state === 'empty' ? copy.noData : copy.unavailable}
