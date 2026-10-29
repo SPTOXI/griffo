@@ -29,6 +29,7 @@ import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
 import { HiringIndexTeaser } from './hiring-index-teaser'
 import { HeroD } from './hero-d'
 import { MatchHero } from './match-hero'
+import { HomeJobsMap } from './home-jobs-map'
 import { TrackWhenVisible } from '@/components/analytics/track-when-visible'
 import { AtsCheckBanner } from '@/components/ats-check/ats-check-banner'
 import { OrderBand } from './order-band'
@@ -209,6 +210,10 @@ export function Landing({
           emprego recebe oportunidades, e a auditoria aparece como a ponte. Vem
           antes do Hero D, que desce para explicar a cadeia. */}
       <MatchHero lang={lang} openJobsCount={openJobsCount} resumesAnalyzed={resumesAnalyzed} countryCode={countryCode} onNavigate={onNavigate} />
+
+      {/* Mapa das vagas, a isca do envio: o nome de algumas vagas por cidade e,
+          depois do envio, a vaga grátis e as trancadas no mapa. Ver home-jobs-map.tsx. */}
+      <HomeJobsMap lang={lang} locale={localeForLang(lang)} countryCode={effectiveCountry.toUpperCase()} />
 
       {/* HERO D — única direção aprovada do handoff de design; ver hero-d.tsx */}
       <HeroD t={t} lang={lang} openJobsCount={openJobsCount} onNavigate={onNavigate} />

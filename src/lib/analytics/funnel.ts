@@ -24,6 +24,8 @@ export const CLIENT_EVENTS = [
   'lead_submit_failed',
   // Clique na chamada "veja a nota do seu currículo" de uma vaga do mapa de vagas.
   'jobs_map_cta_clicked',
+  // Clique na chamada do mapa da home ("envie seu currículo..."), que leva ao envio.
+  'home_map_cta_clicked',
   // Mantido por compatibilidade: versões antigas da tela ainda o enviam.
   'checkout_initiated',
 ] as const

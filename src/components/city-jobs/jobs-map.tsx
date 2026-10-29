@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl'
+import type { Map as MapLibreMap } from 'maplibre-gl'
+import { createBubbleMap, hitAt } from './map-core'
 import type { MapPoint } from '@/lib/city-jobs/city-coords'
 import type { JobsMapCopy } from '@/lib/city-jobs/map-copy'
 import { fill } from '@/lib/city-jobs/copy'
@@ -17,8 +18,6 @@ import { trackOnce } from '@/components/analytics/track-client'
  * deploy. A biblioteca (MapLibre) só carrega nesta página, depois que ela abre.
  */
 
-const STYLE_URL = 'https://tiles.openfreemap.org/styles/positron'
-const BLUE = '#0B63E5'
 
 interface PanelJob {
   id: string
@@ -62,102 +61,19 @@ export function JobsMap({ countryCode, locale, lang, copy, seeJob, remoteLabels,
     let cancelled = false
     ;(async () => {
       try {
-        const [{ default: maplibregl }, res] = await Promise.all([import('maplibre-gl'), fetch('/api/public/jobs-map')])
+        const res = await fetch('/api/public/jobs-map')
         const { points } = (await res.json()) as { points: MapPoint[] }
         if (cancelled || !box.current) return
         if (!points?.length) return setState('empty')
-
-        map = new maplibregl.Map({
-          container: box.current,
-          style: STYLE_URL,
-          center: [0, 20],
-          zoom: 1.3,
-          attributionControl: { compact: true },
-          cooperativeGestures: true,
-        })
-        map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
-
         // Abre enquadrado no país da página; o resto do mundo fica a um zoom de distância.
-        const own = points.filter((p) => p.c === countryCode)
-        if (own.length) {
-          const lng = own.map((p) => p.lng)
-          const lat = own.map((p) => p.lat)
-          map.fitBounds(
-            [
-              [Math.min(...lng), Math.min(...lat)],
-              [Math.max(...lng), Math.max(...lat)],
-            ],
-            { padding: 40, maxZoom: 9, duration: 0 }
-          )
-        }
-
-        map.on('load', () => {
-          if (!map) return
-          // Nomes de país e cidade do mapa base no idioma da página ("Alemanha", "Deutschland"),
-          // com o nome local quando o OpenStreetMap não tem a tradução.
-          for (const layer of map.getStyle().layers) {
-            if (layer.type === 'symbol' && map.getLayoutProperty(layer.id, 'text-field')) {
-              map.setLayoutProperty(layer.id, 'text-field', ['coalesce', ['get', `name:${lang}`], ['get', 'name']])
-            }
-          }
-          map.addSource('cities', {
-            type: 'geojson',
-            data: {
-              type: 'FeatureCollection',
-              features: points.map((p) => ({
-                type: 'Feature',
-                geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
-                properties: { c: p.c, s: p.s, n: p.n, t: p.t },
-              })),
-            },
-            cluster: true,
-            clusterRadius: 45,
-            clusterMaxZoom: 8,
-            // Soma de vagas, não de cidades: o número da bolha é o que interessa a quem procura emprego.
-            clusterProperties: { jobs: ['+', ['get', 't']] },
-          })
-          const count: any = ['coalesce', ['get', 'jobs'], ['get', 't']]
-          map.addLayer({
-            id: 'bubbles',
-            type: 'circle',
-            source: 'cities',
-            paint: {
-              'circle-color': BLUE,
-              'circle-opacity': 0.85,
-              'circle-stroke-color': '#ffffff',
-              'circle-stroke-width': 2,
-              'circle-radius': ['interpolate', ['linear'], ['sqrt', count], 1, 10, 10, 18, 40, 34],
-            },
-          })
-          map.addLayer({
-            id: 'bubble-count',
-            type: 'symbol',
-            source: 'cities',
-            layout: {
-              'text-field': ['to-string', count],
-              'text-font': ['Noto Sans Bold'],
-              'text-size': 12,
-              'text-allow-overlap': true,
-            },
-            paint: { 'text-color': '#ffffff' },
-          })
-
-          map.on('click', 'bubbles', async (e) => {
-            const f = e.features?.[0]
-            if (!f || !map) return
-            const p = f.properties as Record<string, any>
-            const center = (f.geometry as { coordinates: [number, number] }).coordinates
-            if (p.cluster) {
-              const zoom = await (map.getSource('cities') as GeoJSONSource).getClusterExpansionZoom(p.cluster_id)
-              map.easeTo({ center, zoom })
-              return
-            }
-            setSelected({ country: p.c, slug: p.s, name: p.n, total: p.t })
-          })
-          map.on('mouseenter', 'bubbles', () => map && (map.getCanvas().style.cursor = 'pointer'))
-          map.on('mouseleave', 'bubbles', () => map && (map.getCanvas().style.cursor = ''))
-          setState('ready')
+        const built = await createBubbleMap({ container: box.current, points, lang, countryCode })
+        map = built.map
+        if (cancelled) return
+        map.on('click', 'bubbles', async (e) => {
+          const hit = await hitAt(built.map, e.features?.[0] as any, true)
+          if (hit && !('cluster' in hit)) setSelected({ country: hit.country, slug: hit.slug, name: hit.name, total: hit.total })
         })
+        setState('ready')
       } catch (e) {
         // Sem WebGL, ou a biblioteca não carregou: a lista de cidades da página continua servindo.
         console.warn('[jobs-map] mapa indisponível:', e)

@@ -1508,10 +1508,7 @@ painel e pedem correções opostas.
 
 ### 7.15 Próximas ideias do operador, em ordem (29/10/2026)
 
-1. **Mapa na home como isca de lead.**
-   - Ao passar o mouse ou tocar numa marcação, aparece só o nome da vaga.
-   - Depois que a pessoa manda o currículo pela home, a vaga gratuita do resultado aparece em vermelho no mapa.
-   - Em discussão com o operador, ainda não implementado.
+1. ✅ **Mapa na home como isca de lead** (§2.157): até 3 nomes de vaga por cidade e, depois do envio, a vaga grátis em vermelho e as trancadas com cadeado.
 2. **Criação de currículo por IA**, para quem não sabe nem por onde começar. O operador pediu para deixar para **depois** de terminar as alterações já combinadas. Ainda não tem desenho nem decisão.
 ---
 

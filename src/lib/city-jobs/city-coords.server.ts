@@ -5,6 +5,7 @@ import { CITY_JOBS_COUNTRY_SLUGS } from './context'
 import { CITY_JOBS_CACHE_TAG, loadCityIndex } from './city-index.server'
 import { buildGazetteer, findCoords, GEONAMES_CITIES_FILE, GEONAMES_CITIES_URL, lookupSlugs, unzipEntry, type MapPoint } from './city-coords'
 import type { CityEntry } from './city-index'
+import type { ResultMapPin } from '@/lib/match-preview/result'
 
 const COUNTRY_CODES = CITY_JOBS_COUNTRY_SLUGS.map((s) => s.toUpperCase())
 
@@ -88,3 +89,34 @@ export const loadMapPoints = unstable_cache(
   ['city-jobs-map-points-v2'],
   { revalidate: 3600, tags: [CITY_JOBS_CACHE_TAG] }
 )
+
+export interface PlaceToPin {
+  country: string | null
+  city: string | null
+  kind: 'free' | 'locked'
+  title?: string
+  count: number
+}
+
+/**
+ * Coordenada das vagas de um resultado da home (a grátis e as trancadas). A
+ * cidade crua da vaga vira a cidade da página pelo mesmo índice das páginas de
+ * cidade, então "Sao Paulo, SP" cai no mesmo ponto de "São Paulo". Vaga sem
+ * cidade, ou de cidade sem coordenada, simplesmente não aparece no mapa.
+ */
+export async function pinsFor(places: readonly PlaceToPin[]): Promise<ResultMapPin[]> {
+  const points = await loadMapPoints()
+  const at = new Map(points.map((p) => [`${p.c}|${p.s}`, p]))
+  const indexes = new Map<string, CityEntry[]>()
+  const pins: ResultMapPin[] = []
+  for (const place of places) {
+    const country = place.country?.toUpperCase()
+    if (!country || !place.city || !COUNTRY_CODES.includes(country)) continue
+    if (!indexes.has(country)) indexes.set(country, await loadCityIndex(country))
+    const city = indexes.get(country)!.find((c) => c.rawCities.includes(place.city!))
+    const point = city && at.get(`${country}|${city.slug}`)
+    if (!point) continue
+    pins.push({ kind: place.kind, lat: point.lat, lng: point.lng, city: point.n, count: place.count, ...(place.title ? { title: place.title } : {}) })
+  }
+  return pins
+}

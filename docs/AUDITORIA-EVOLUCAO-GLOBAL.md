@@ -9239,3 +9239,35 @@ Dois ajustes saíram dessa conferência:
 **Preço, que fica com o operador:** os três países não estão em `lib/pricing/catalog.ts`. Por isso caem na faixa padrão, a 1, e veem USD 9,90. É a regra "país não mapeado não fica mais barato". Pôr a Estônia e a Hungria numa faixa menor, ou cobrar a Suíça em CHF, é decisão de preço do operador.
 
 **Efeito conhecido:** o mapa da Estônia e o da Hungria têm uma cidade cada. Eles existem, mas saem do sitemap e ficam com `noindex` até ter 3 cidades (`MIN_CITIES_TO_INDEX_MAP`).
+
+## 2.157 Mapa na home como isca do envio de currículo (29/10/2026)
+
+**Pedido do operador:** mostrar o mapa na home para atrair lead.
+- Passando o mouse ou tocando numa marcação, aparece só o nome da vaga.
+- Depois do envio do currículo, a vaga gratuita aparece em vermelho.
+- Decisões dele sobre a proposta: até **3 nomes de vaga e o total** por marcação, e as vagas compatíveis que ficaram travadas **com cadeado** no mapa.
+
+**Antes do envio** (`components/landing/home-jobs-map.tsx`, logo abaixo do envio):
+- Bolhas por cidade, enquadradas no país da página. Com o país sem cidade no mapa, o mapa abre no mundo.
+- Mouse sobre uma cidade: até 3 nomes de vaga, sem repetir, e "e mais N vagas em {cidade}". Sem empresa e sem link.
+- Clique ou toque abre o mesmo balão fixo, com a chamada "Envie seu currículo e veja quais combinam com você". Ela rola até o envio e grava o evento `home_map_cta_clicked`.
+- Os nomes vêm da mesma API pública do `/jobs/map` (`/api/public/jobs-map/jobs`), pedidos só quando o mouse para sobre a cidade e guardados na página.
+
+**Depois do envio:**
+- A vaga grátis vira um ponto vermelho, com o balão já aberto mostrando "Sua vaga gratuita" e o título.
+- As compatíveis trancadas viram pontos vermelhos com cadeado, mostrando só "N vagas compatíveis com você em {cidade}" e o botão "Desbloquear para ver". O botão leva ao mesmo cadastro do resultado e grava `lead_unlock_clicked` com `where: home_map`.
+- O resultado do envio ganhou o link "Ver no mapa onde estão suas vagas".
+- **O que é trancado continua trancado no servidor.** `buildPublicResult` passou a mandar `lockedPlaces` (país, cidade e quantidade) e nada mais das trancadas. Há teste conferindo que título, empresa e link delas não saem no JSON.
+- `loadLeadResult` converte a cidade crua da vaga em coordenada (`pinsFor`, em `city-coords.server.ts`) pelo mesmo índice das páginas de cidade. Isso só acontece com o resultado pronto, porque enquanto processa a tela consulta o servidor a cada 2 s. Se falhar, o resultado sai sem mapa.
+
+**Peso da home:** a biblioteca do mapa só é baixada quando a seção chega a ~400 px da tela (`IntersectionObserver`), então o topo da home não fica mais lento. O desenho das bolhas saiu para `components/city-jobs/map-core.ts`, usado pelo mapa da home e pelo `/[país]/jobs/map`.
+
+**Os dois mapas ficam como estão:** o `/[país]/jobs/map` continua completo, com empresa e candidatura, para quem chega pelo Google. O da home é só isca.
+
+Textos nos 12 idiomas em `lib/landing/home-map-copy.ts`, revisados pelo translation-reviewer.
+
+**Conferido na prévia** (computador e iPhone, `/br`):
+- O balão de agrupamento diz "4.692 vagas nesta região. Aproxime para ver as cidades."
+- O balão de Boa Vista mostra 3 nomes de vaga e "e mais 2 vagas em Boa Vista".
+- O resultado foi simulado pelo mesmo evento que o envio dispara, sem criar lead de verdade. O ponto vermelho da vaga grátis abre com o título, os cadeados de Campinas e Barueri mostram a quantidade, e "Desbloquear para ver" abre a criação de conta.
+- Ajuste que saiu da conferência: o crédito do mapa base agora abre recolhido no botão ⓘ, porque no celular ele cobria o pé do mapa.
