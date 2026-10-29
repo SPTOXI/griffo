@@ -69,3 +69,14 @@ jobs:
             if [ "$(jq -r '.pending' /tmp/r.json)" = "0" ]; then exit 0; fi
             if [ "$(jq -r '.saved' /tmp/r.json)" = "0" ]; then exit 0; fi
           done
+
+      # Coordenadas das cidades novas para o mapa de vagas, depois do agente:
+      # uma cidade juntada ou escondida por ele já não precisa de coordenada.
+      - name: Coordenadas das cidades novas (mapa de vagas)
+        if: ${{ !cancelled() }}
+        run: |
+          status=$(curl -s -o /tmp/r.json -w "%{http_code}" --max-time 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://griffo.work/api/cron/city-coords)
+          echo "HTTP $status $(cat /tmp/r.json)"
+          if [ "$status" -ge 300 ]; then exit 1; fi

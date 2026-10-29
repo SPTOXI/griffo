@@ -22,6 +22,8 @@ export const CLIENT_EVENTS = [
   // Envio da landing que falhou antes de virar lead: o servidor não vê esses
   // casos (leitura do arquivo no aparelho, rede, bloqueio antes da rota).
   'lead_submit_failed',
+  // Clique na chamada "veja a nota do seu currículo" de uma vaga do mapa de vagas.
+  'jobs_map_cta_clicked',
   // Mantido por compatibilidade: versões antigas da tela ainda o enviam.
   'checkout_initiated',
 ] as const

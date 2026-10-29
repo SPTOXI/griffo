@@ -1256,6 +1256,26 @@ model CityAlias {
   @@unique([country, rawSlug])
 }
 
+/// Coordenada de uma cidade das páginas de vagas, para o mapa (`/[país]/jobs/map`).
+/// Preenchida sozinha depois de cada atualização da base de vagas
+/// (`city-jobs/city-coords.server.ts`), pela base GeoNames (CC BY 4.0). Cidade
+/// que a GeoNames não conhece fica com `source = "none"` e sem coordenada: some
+/// do mapa, não da página dela, e é tentada de novo depois de uma semana.
+model CityCoord {
+  /// ISO do país, como em `Job.country`.
+  country   String
+  /// O mesmo slug das páginas de cidade (`CityEntry.slug`).
+  slug      String
+  lat       Float?
+  lng       Float?
+  /// `geonames` | `none` (não achada) | `admin`
+  source    String
+  geonameId Int?
+  updatedAt DateTime @updatedAt
+
+  @@id([country, slug])
+}
+
 model VisitorLead {
   /// Também é a credencial de leitura do resultado: 32 caracteres hex
   /// aleatórios gerados no servidor, e não `cuid()`, que é previsível.

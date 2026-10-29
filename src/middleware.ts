@@ -145,6 +145,9 @@ const RULES: Rule[] = [
   // A consulta do resultado é chamada a cada 2s enquanto ele fica pronto. Prefixo
   // PRÓPRIO, sem nada em comum com o envio, e limite alto: ver `rate-rules.ts`.
   { prefix: '/api/public/match-result', limit: 300, windowMs: 10 * 60_000 },
+  // Mapa de vagas: só leitura, em cache, mas cada cidade clicada é uma
+  // chamada. O limite folgado só barra quem raspa o mapa inteiro.
+  { prefix: '/api/public/jobs-map', limit: 300, windowMs: 10 * 60_000 },
   // Exportação lê todos os dados do titular de uma vez; exclusão é
   // irreversível. Ambas são legítimas e raras — o limite é baixo de propósito.
   { prefix: '/api/user/export', limit: 5, windowMs: 60 * 60_000 },

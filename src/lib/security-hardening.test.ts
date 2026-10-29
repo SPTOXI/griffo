@@ -76,4 +76,6 @@ test('next.config.ts define cabeçalhos de segurança completos (OWASP ASVS / N�
   assert.ok(csp!.includes("frame-ancestors 'none'"))
   assert.ok(csp!.includes("object-src 'none'"))
   assert.ok(csp!.includes("base-uri 'self'"))
+  // Worker do mapa de vagas (MapLibre) nasce de um blob; sem isto o mapa não desenha.
+  assert.ok(csp!.includes("worker-src 'self' blob:"))
 })

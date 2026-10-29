@@ -5,6 +5,7 @@ import { ATS_CHECK_LANGS, ATS_CHECK_PATH } from '@/lib/ats-check/copy'
 import { localeForLang, LANGUAGES } from '@/lib/i18n'
 import { SUPPORTED_COUNTRY_SLUGS } from '@/lib/market/supported-slugs'
 import { MIN_JOBS_TO_INDEX, areaToUrl } from '@/lib/city-jobs/city-index'
+import { MIN_CITIES_TO_INDEX_MAP } from '@/lib/city-jobs/city-coords'
 import { CITY_JOBS_COUNTRY_SLUGS } from '@/lib/city-jobs/context'
 
 // A MESMA lista que gera as rotas estáticas, não uma cópia.
@@ -171,6 +172,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // `catch` em vez de derrubar o script.
   try {
     const { loadCityIndex, listJobs } = await import('@/lib/city-jobs/city-index.server')
+    const { loadMapPoints } = await import('@/lib/city-jobs/city-coords.server')
+    const mapCities = new Map<string, number>()
+    for (const p of await loadMapPoints().catch(() => [])) mapCities.set(p.c, (mapCities.get(p.c) ?? 0) + 1)
     for (const slug of CITY_JOBS_COUNTRY_SLUGS) {
       const code = slug.toUpperCase()
       const cities = (await loadCityIndex(code)).filter((c) => c.total >= MIN_JOBS_TO_INDEX)
@@ -179,6 +183,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       routes.push({ url: `${baseUrl}/${slug}/jobs`, lastModified, changeFrequency: 'daily', priority: 0.8 })
       if (remote >= MIN_JOBS_TO_INDEX) {
         routes.push({ url: `${baseUrl}/${slug}/jobs/remote`, lastModified, changeFrequency: 'daily', priority: 0.7 })
+      }
+      if ((mapCities.get(code) ?? 0) >= MIN_CITIES_TO_INDEX_MAP) {
+        routes.push({ url: `${baseUrl}/${slug}/jobs/map`, lastModified, changeFrequency: 'daily', priority: 0.6 })
       }
       for (const c of cities) {
         const city = `${baseUrl}/${slug}/jobs/${encodeURIComponent(c.slug)}`
