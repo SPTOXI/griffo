@@ -33,7 +33,7 @@ export const ko: TranslationDictionary = {
     title: '채용 공고가 아닌, 기회로 연결합니다.',
     paragraph: '당신의 지식과 경험은 이미 존재합니다. GriffoWork는 그것이 이해되고, 발견되고, 올바른 기회로 연결되도록 만듭니다. 현재 {N}개 이상의 채용 공고가 열려 있습니다 — 당신에게 가장 잘 맞는 공고를 찾도록 돕겠습니다.',
     ctaPrimary: '지금 내 이력서 진단받기',
-    ctaSecondary: '채용 지도 보기',
+    ctaSecondary: '지도에서 채용 공고 보기',
     quote: '이력서는 당신의 이야기를 들려주는 것만으로는 부족합니다. 시장에 의해 발견되어야 합니다.',
     trustFree: '무료 미리보기, 카드 등록 불필요',
     trustLanguages: '{count}개 언어 지원',

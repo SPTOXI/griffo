@@ -33,7 +33,7 @@ export const en: TranslationDictionary = {
       title: 'We connect you to opportunities, not job postings.',
       paragraph: 'Your knowledge and experience already exist. GriffoWork works to make them understood, findable, and connected to the right opportunities. More than {N} open positions right now — we help you find the one that fits you best.',
       ctaPrimary: 'Audit my resume now',
-      ctaSecondary: 'See the hiring map',
+      ctaSecondary: 'See the jobs on the map',
       quote: "Your resume shouldn't just tell your story. It needs to be found by the market.",
       trustFree: 'Free preview, no card',
       trustLanguages: '{count} languages',

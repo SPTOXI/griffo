@@ -21,6 +21,9 @@ export interface HomeMapCopy {
   seeOnMap: string
   legendFree: string
   legendLocked: string
+  indexLine: string
+  indexSource: string
+  indexLink: string
 }
 
 const pt: HomeMapCopy = {
@@ -36,6 +39,9 @@ const pt: HomeMapCopy = {
   seeOnMap: 'Ver no mapa onde estão suas vagas',
   legendFree: 'Sua vaga gratuita',
   legendLocked: 'Vagas compatíveis travadas',
+  indexLine: 'Mercado de trabalho · {country}: {phase}',
+  indexSource: 'fonte oficial: {source}',
+  indexLink: 'Ver o Índice GriffoWork',
 }
 
 const en: HomeMapCopy = {
@@ -51,6 +57,9 @@ const en: HomeMapCopy = {
   seeOnMap: 'See on the map where your jobs are',
   legendFree: 'Your free job match',
   legendLocked: 'Matching jobs, locked',
+  indexLine: 'Job market · {country}: {phase}',
+  indexSource: 'official source: {source}',
+  indexLink: 'See the GriffoWork Index',
 }
 
 const es: HomeMapCopy = {
@@ -66,6 +75,9 @@ const es: HomeMapCopy = {
   seeOnMap: 'Mira en el mapa dónde están tus ofertas',
   legendFree: 'Tu oferta gratuita',
   legendLocked: 'Ofertas compatibles bloqueadas',
+  indexLine: 'Mercado laboral · {country}: {phase}',
+  indexSource: 'fuente oficial: {source}',
+  indexLink: 'Ver el Índice GriffoWork',
 }
 
 const de: HomeMapCopy = {
@@ -81,6 +93,9 @@ const de: HomeMapCopy = {
   seeOnMap: 'Auf der Karte sehen, wo Ihre Stellen sind',
   legendFree: 'Ihre kostenlose Stelle',
   legendLocked: 'Passende Stellen, gesperrt',
+  indexLine: 'Arbeitsmarkt · {country}: {phase}',
+  indexSource: 'amtliche Quelle: {source}',
+  indexLink: 'Zum GriffoWork-Index',
 }
 
 const fr: HomeMapCopy = {
@@ -96,6 +111,9 @@ const fr: HomeMapCopy = {
   seeOnMap: 'Voir sur la carte où sont vos offres',
   legendFree: 'Votre offre gratuite',
   legendLocked: 'Offres compatibles verrouillées',
+  indexLine: 'Marché du travail · {country} : {phase}',
+  indexSource: 'source officielle : {source}',
+  indexLink: 'Voir l’Indice GriffoWork',
 }
 
 const it: HomeMapCopy = {
@@ -111,6 +129,9 @@ const it: HomeMapCopy = {
   seeOnMap: 'Guarda sulla mappa dove sono le tue offerte',
   legendFree: 'La tua offerta gratuita',
   legendLocked: 'Offerte compatibili bloccate',
+  indexLine: 'Mercato del lavoro · {country}: {phase}',
+  indexSource: 'fonte ufficiale: {source}',
+  indexLink: 'Vedi l’Indice GriffoWork',
 }
 
 const nl: HomeMapCopy = {
@@ -126,6 +147,9 @@ const nl: HomeMapCopy = {
   seeOnMap: 'Zie op de kaart waar je vacatures zijn',
   legendFree: 'Je gratis vacature',
   legendLocked: 'Passende vacatures, vergrendeld',
+  indexLine: 'Arbeidsmarkt · {country}: {phase}',
+  indexSource: 'officiële bron: {source}',
+  indexLink: 'Bekijk de GriffoWork-index',
 }
 
 const sv: HomeMapCopy = {
@@ -141,6 +165,9 @@ const sv: HomeMapCopy = {
   seeOnMap: 'Se på kartan var dina jobb finns',
   legendFree: 'Ditt kostnadsfria jobb',
   legendLocked: 'Matchande jobb, låsta',
+  indexLine: 'Arbetsmarknad · {country}: {phase}',
+  indexSource: 'officiell källa: {source}',
+  indexLink: 'Se GriffoWork-index',
 }
 
 const ja: HomeMapCopy = {
@@ -156,6 +183,9 @@ const ja: HomeMapCopy = {
   seeOnMap: 'あなたの求人の場所を地図で見る',
   legendFree: '無料で見られる求人',
   legendLocked: 'ロック中のマッチした求人',
+  indexLine: '労働市場 · {country}：{phase}',
+  indexSource: '公式データ：{source}',
+  indexLink: 'GriffoWork指数を見る',
 }
 
 const zh: HomeMapCopy = {
@@ -171,6 +201,9 @@ const zh: HomeMapCopy = {
   seeOnMap: '在地图上查看你的职位在哪里',
   legendFree: '你的免费匹配职位',
   legendLocked: '已锁定的匹配职位',
+  indexLine: '就业市场 · {country}：{phase}',
+  indexSource: '官方来源：{source}',
+  indexLink: '查看 GriffoWork 指数',
 }
 
 const ar: HomeMapCopy = {
@@ -186,6 +219,9 @@ const ar: HomeMapCopy = {
   seeOnMap: 'شاهد على الخريطة أين توجد وظائفك',
   legendFree: 'وظيفتك المجانية',
   legendLocked: 'وظائف مناسبة مقفلة',
+  indexLine: 'سوق العمل · {country}: {phase}',
+  indexSource: 'المصدر الرسمي: {source}',
+  indexLink: 'اطّلع على مؤشر GriffoWork',
 }
 
 const ko: HomeMapCopy = {
@@ -201,6 +237,9 @@ const ko: HomeMapCopy = {
   seeOnMap: '내 공고가 있는 곳을 지도에서 보기',
   legendFree: '무료로 공개된 공고',
   legendLocked: '잠긴 맞춤 공고',
+  indexLine: '고용 시장 · {country}: {phase}',
+  indexSource: '공식 출처: {source}',
+  indexLink: 'GriffoWork 지수 보기',
 }
 
 export const HOME_MAP_COPY: Record<Language, HomeMapCopy> = { pt, en, es, de, fr, it, nl, sv, ja, zh, ar, ko }

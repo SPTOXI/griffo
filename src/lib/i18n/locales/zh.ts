@@ -33,7 +33,7 @@ export const zh: TranslationDictionary = {
     title: '我们连接的是机会，而不是职位空缺。',
     paragraph: '您的知识和经验早已存在。GriffoWork 致力于让它们被理解、被发现，并与合适的机会相连。目前有超过 {N} 个职位空缺 — 我们帮您找到与您最匹配的那一个。',
     ctaPrimary: '立即诊断我的简历',
-    ctaSecondary: '查看招聘地图',
+    ctaSecondary: '在地图上查看职位',
     quote: '简历不应只是讲述您的故事，它必须能被市场发现。',
     trustFree: '免费预览，无需信用卡',
     trustLanguages: '支持 {count} 种语言',

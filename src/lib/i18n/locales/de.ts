@@ -33,7 +33,7 @@ export const de: TranslationDictionary = {
     title: 'Wir verbinden Sie mit Chancen, nicht mit Stellenanzeigen.',
     paragraph: 'Ihr Wissen und Ihre Erfahrung existieren bereits. GriffoWork sorgt dafür, dass sie verstanden, gefunden und mit den richtigen Chancen verbunden werden. Mehr als {N} offene Stellen in diesem Moment — wir helfen Ihnen, die zu finden, die am besten zu Ihnen passt.',
     ctaPrimary: 'Meinen Lebenslauf jetzt prüfen',
-    ctaSecondary: 'Die Einstellungslandkarte ansehen',
+    ctaSecondary: 'Stellen auf der Karte ansehen',
     quote: 'Ihr Lebenslauf sollte nicht nur Ihre Geschichte erzählen. Er muss vom Markt gefunden werden.',
     trustFree: 'Kostenlose Vorschau, keine Kreditkarte',
     trustLanguages: '{count} Sprachen',

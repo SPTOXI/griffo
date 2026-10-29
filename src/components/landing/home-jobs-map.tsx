@@ -12,6 +12,11 @@ import { HOME_MAP_COPY } from '@/lib/landing/home-map-copy'
 import type { ResultMapPin } from '@/lib/match-preview/result'
 import type { Language } from '@/lib/i18n/types'
 import { LEAD_PINS_EVENT, LEAD_UNLOCK_EVENT } from './lead-pins'
+import { internalFetch } from '@/lib/internal-fetch'
+import type { HiringAtlas } from '@/lib/hiring-index/atlas'
+import { PHASE_FILL } from '@/lib/hiring-index/map-model'
+import type { HiringPhase } from '@/lib/hiring-index/phase'
+import { countryLabel } from '@/lib/jobs/country-labels'
 
 /**
  * Mapa da home, a isca do envio de currículo.
@@ -41,7 +46,18 @@ function el(tag: string, className: string, text?: string): HTMLElement {
   return e
 }
 
-export function HomeJobsMap({ lang, countryCode, locale }: { lang: Language; countryCode?: string; locale: string }) {
+export function HomeJobsMap({
+  lang,
+  countryCode,
+  locale,
+  phaseLabels,
+}: {
+  lang: Language
+  countryCode?: string
+  locale: string
+  /** Nome das fases do Índice GriffoWork no idioma da página (`t.hiringIndex`). */
+  phaseLabels: Record<HiringPhase, string>
+}) {
   const m = HOME_MAP_COPY[lang]
   const base = JOBS_MAP_COPY[lang]
   const section = useRef<HTMLElement>(null)
@@ -50,6 +66,7 @@ export function HomeJobsMap({ lang, countryCode, locale }: { lang: Language; cou
   const [state, setState] = useState<'loading' | 'ready' | 'failed' | 'empty'>('loading')
   const [summary, setSummary] = useState<{ jobs: number; cities: number } | null>(null)
   const [hasPins, setHasPins] = useState(false)
+  const [reading, setReading] = useState<{ phase: HiringPhase; source: string } | null>(null)
   const nf = new Intl.NumberFormat(locale)
 
   // Só monta o mapa quando a seção está a ~400 px de aparecer.
@@ -63,6 +80,24 @@ export function HomeJobsMap({ lang, countryCode, locale }: { lang: Language; cou
     io.observe(node)
     return () => io.disconnect()
   }, [])
+
+  // Selo de confiança: a leitura oficial do Índice GriffoWork para o país da
+  // página, numa linha acima do mapa (no lugar da faixa do Índice que ficava no
+  // meio da home, §2.158). País sem fase classificada: a linha não aparece.
+  useEffect(() => {
+    if (!visible || !countryCode) return
+    let alive = true
+    internalFetch('/api/hiring-index')
+      .then((r) => (r.ok ? (r.json() as Promise<HiringAtlas>) : null))
+      .then((atlas) => {
+        const c = atlas?.countries.find((x) => x.country === countryCode)
+        if (alive && c?.phase && c.sourceName) setReading({ phase: c.phase, source: c.sourceName })
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [visible, countryCode])
 
   useEffect(() => {
     if (!visible) return
@@ -229,6 +264,18 @@ export function HomeJobsMap({ lang, countryCode, locale }: { lang: Language; cou
           <h2 className="text-2xl font-extrabold text-[#0B192E] sm:text-3xl">{m.heading}</h2>
           {summary && (
             <p className="text-slate-600">{fill(m.intro, { n: nf.format(summary.jobs), cities: nf.format(summary.cities) })}</p>
+          )}
+          {reading && countryCode && (
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-semibold text-[#0B192E]">
+                <span className="h-2 w-2 rounded-full" style={{ background: PHASE_FILL[reading.phase] }} />
+                {fill(m.indexLine, { country: countryLabel(countryCode, lang), phase: phaseLabels[reading.phase] })}
+              </span>
+              <span className="text-slate-500">{fill(m.indexSource, { source: reading.source })}</span>
+              <a href={`/market-pulse?lang=${lang}`} className="font-semibold text-[#0B63E5] hover:underline">
+                {m.indexLink}
+              </a>
+            </p>
           )}
         </div>
         <div className="relative h-[55vh] min-h-[360px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">

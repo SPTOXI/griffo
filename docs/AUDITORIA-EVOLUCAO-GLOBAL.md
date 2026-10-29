@@ -9271,3 +9271,38 @@ Textos nos 12 idiomas em `lib/landing/home-map-copy.ts`, revisados pelo translat
 - O balão de Boa Vista mostra 3 nomes de vaga e "e mais 2 vagas em Boa Vista".
 - O resultado foi simulado pelo mesmo evento que o envio dispara, sem criar lead de verdade. O ponto vermelho da vaga grátis abre com o título, os cadeados de Campinas e Barueri mostram a quantidade, e "Desbloquear para ver" abre a criação de conta.
 - Ajuste que saiu da conferência: o crédito do mapa base agora abre recolhido no botão ⓘ, porque no celular ele cobria o pé do mapa.
+
+## 2.158 Home: um caminho só, do mapa de vagas ao envio, com o Índice como selo de confiança (29/10/2026)
+
+**Pergunta do operador:** o "Ver o mapa de contratação" da home deveria levar ao mapa novo de vagas, num mapa-múndi sobreposto ao do Índice Griffo, ou o Índice deveria sair? Ele pediu uma opinião com foco em confiança, leads e vendas.
+
+**Dado que decidiu**, visitantes em 60 dias até 29/10:
+
+| Página | Visitantes |
+|---|---|
+| Home e páginas de país | 656 |
+| Páginas de vagas por cidade (poucos dias no ar) | 323 |
+| `/hiring` | 25 |
+| `/market-pulse`, o Índice | 17 |
+
+O Índice tinha botão no topo da home, item no menu e uma faixa no meio da página, e mesmo assim quase ninguém entrava. Para quem procura emprego, "temperatura de contratação" é abstrato. "2.590 vagas em São Paulo" é concreto e leva ao envio.
+
+**Recusado: sobrepor os dois mapas.**
+- Duas escalas no mesmo mapa (cor de fase do país e bolha de vagas) se confundem: a cor parece quantidade de vaga.
+- A cobertura não bate: 98 países no Índice e 47 com vagas. Um país colorido sem bolha parece "não tem vaga aqui", o que corrói a confiança.
+- O peso também conta contra.
+
+**Recusado: tirar o Índice.**
+- Dado oficial com fonte e método é o que dá credibilidade ao produto.
+- `/market-pulse` existe para ser achada pelo Google e citada por IAs, em 12 idiomas.
+- A seção de preços já aponta para ela como dado para empresas.
+- Mantê-la não custa nada.
+
+**O que mudou na home:**
+- O botão secundário do topo (`heroD.ctaSecondary`) virou "Ver as vagas no mapa" nos 12 idiomas e rola até o mapa da home (`#home-jobs-map`).
+- **Selo de confiança** acima do mapa da home, com a leitura oficial do Índice para o país da página: "Mercado de trabalho · Brasil: Viés de alta · fonte oficial: IBGE", com link "Ver o Índice GriffoWork" para `/market-pulse`.
+  - Sai do mesmo `/api/hiring-index` e só aparece quando o país tem fase classificada.
+  - Também só é buscado quando o mapa chega perto da tela.
+- A faixa do Índice no meio da home (`hiring-index-teaser.tsx`) saiu. O selo cumpre esse papel com menos espaço, e o arquivo foi apagado.
+- No menu, "Mapa de Contratação" virou "Mapa de vagas" e leva a `/[país]/jobs/map`, ou ao mapa da home quando a página não tem país com página de vagas.
+- O Índice segue no rodapé e no link de dados para empresas da seção de preços.

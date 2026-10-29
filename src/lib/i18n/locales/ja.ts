@@ -33,7 +33,7 @@ export const ja: TranslationDictionary = {
     title: '「求人」ではなく「機会」へつなぐ。',
     paragraph: 'あなたの知識と経験は、すでに存在しています。GriffoWorkは、それが理解され、見つけられ、正しい機会につながるよう機能します。現在{N}件以上の求人が公開中 — あなたに最も合う一件を見つけるお手伝いをします。',
     ctaPrimary: '今すぐ職務経歴書を診断する',
-    ctaSecondary: '採用マップを見る',
+    ctaSecondary: '求人を地図で見る',
     quote: '職務経歴書はあなたの物語を語るだけでは足りません。市場に見つけられる必要があります。',
     trustFree: '無料プレビュー・クレジットカード不要',
     trustLanguages: '{count}言語対応',
