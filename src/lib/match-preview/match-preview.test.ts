@@ -101,9 +101,14 @@ test('a lista trancada é trancada no servidor: só a grátis sai com nome', () 
     overall: i < 2 ? 'strong' : 'good',
     recommendation: 'apply',
   }))
-  const jobs = new Map(['a', 'b', 'c', 'd'].map((id) => [id, job(id)]))
+  const jobs = new Map(['a', 'b', 'c', 'd'].map((id) => [id, job(id, id === 'd' ? { city: 'Campinas' } : {})]))
   const result = buildPublicResult({ ...baseLead, matchesJson: JSON.stringify(matches) }, jobs)
 
+  // As trancadas vão para o mapa só como cidade e quantidade.
+  assert.deepEqual(result.lockedPlaces, [
+    { country: 'BR', city: 'São Paulo', count: 2 },
+    { country: 'BR', city: 'Campinas', count: 1 },
+  ])
   assert.equal(result.free.length, 1)
   assert.equal(result.free[0].title, 'Cargo a')
   assert.equal(result.lockedCount, 3)

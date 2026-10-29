@@ -12,6 +12,8 @@ import { percentileLine } from '@/lib/analytics/percentile-copy'
 import { isValidToken } from '@/lib/match-preview/rules'
 import type { PublicOpportunity, PublicResult } from '@/lib/match-preview/result'
 import { getVisitorId, trackOnce } from '@/components/analytics/track-client'
+import { LEAD_UNLOCK_EVENT, publishLeadPins } from './lead-pins'
+import { HOME_MAP_COPY } from '@/lib/landing/home-map-copy'
 
 const MAX_BYTES = 3 * 1024 * 1024
 const POLL_MS = 2000
@@ -79,6 +81,7 @@ export function MatchHero({ lang, openJobsCount, resumesAnalyzed = 0, countryCod
         if (data.status === 'failed') return setPhase('failed')
         if (data.status === 'ready') {
           setResult(data)
+          publishLeadPins(data.mapPins ?? [])
           return setPhase('result')
         }
       } catch {
@@ -160,12 +163,20 @@ export function MatchHero({ lang, openJobsCount, resumesAnalyzed = 0, countryCod
     onNavigate('signup')
   }
 
+  // O cadeado do mapa da home (outra seção) pede o mesmo cadastro; a telemetria sai lá, com `home_map`.
+  useEffect(() => {
+    const go = () => onNavigate('signup')
+    window.addEventListener(LEAD_UNLOCK_EVENT, go)
+    return () => window.removeEventListener(LEAD_UNLOCK_EVENT, go)
+  }, [onNavigate])
+
   const reset = () => {
     const url = new URL(window.location.href)
     url.searchParams.delete('lead')
     window.history.replaceState(null, '', url.toString())
     pollRun.current++
     setResult(null)
+    publishLeadPins([])
     setFile(null)
     setPhase('form')
   }
@@ -446,6 +457,17 @@ function Result({
             </Button>
           </div>
         </div>
+      )}
+
+      {(result.mapPins?.length ?? 0) > 0 && (
+        <button
+          type="button"
+          onClick={() => document.getElementById('home-jobs-map')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="flex items-center gap-1.5 self-start text-sm font-bold text-[#E5243B] hover:underline"
+        >
+          <MapPin className="h-4 w-4" />
+          {HOME_MAP_COPY[lang].seeOnMap}
+        </button>
       )}
 
       <Teaser c={c} lang={lang} result={result} onDiagnosis={onDiagnosis} />

@@ -55,6 +55,23 @@ export interface PublicOpportunity {
   overall: OverallFit
 }
 
+export interface LockedPlace {
+  country: string | null
+  city: string
+  count: number
+}
+
+/** Um ponto do resultado no mapa da home, já com coordenada (`loadLeadResult`). */
+export interface ResultMapPin {
+  kind: 'free' | 'locked'
+  lat: number
+  lng: number
+  city: string
+  /** Só na grátis, que já sai inteira no resultado. */
+  title?: string
+  count: number
+}
+
 export type PublicStatus = 'processing' | 'ready' | 'failed'
 
 export interface PublicResult {
@@ -69,6 +86,12 @@ export interface PublicResult {
   lockedCount: number
   /** Quantas das trancadas são de alta compatibilidade — número, sem nome. */
   lockedStrong: number
+  /**
+   * Onde estão as trancadas, para o mapa da home (cadeado vermelho): só país,
+   * cidade e quantidade. Nada de título, empresa ou link — a cidade sozinha não
+   * abre a vaga, e é ela que faz a pessoa ver no mapa o que está perdendo.
+   */
+  lockedPlaces: LockedPlace[]
   recruiterOptIn: boolean
   marketingOptIn: boolean
   expiresAt: string
@@ -76,6 +99,8 @@ export interface PublicResult {
   revealedIssue?: { title: string; why: string } | null
   /** Em que % dos currículos já testados a nota é menor. Nulo sem amostra suficiente. */
   percentile?: number | null
+  /** Vaga grátis e trancadas no mapa da home. Preenchido por `loadLeadResult`. */
+  mapPins?: ResultMapPin[]
 }
 
 export interface LeadForResult {
@@ -121,6 +146,20 @@ function toPublic(row: PublicJobRow, overall: OverallFit): PublicOpportunity {
   }
 }
 
+/** Vagas agrupadas por país e cidade, maiores primeiro. Vaga sem cidade fica de fora. */
+function placesOf(rows: PublicJobRow[]): LockedPlace[] {
+  const acc = new Map<string, LockedPlace>()
+  for (const r of rows) {
+    const city = r.city?.trim()
+    if (!city) continue
+    const k = `${r.country ?? ''}|${city}`
+    const p = acc.get(k) ?? { country: r.country, city, count: 0 }
+    p.count++
+    acc.set(k, p)
+  }
+  return [...acc.values()].sort((a, b) => b.count - a.count)
+}
+
 /**
  * Monta a resposta pública.
  *
@@ -153,6 +192,7 @@ export function buildPublicResult(lead: LeadForResult, jobs: Map<string, PublicJ
     free,
     lockedCount: locked.length,
     lockedStrong: locked.filter((m) => m.overall === 'strong').length,
+    lockedPlaces: placesOf(locked.map((m) => jobs.get(m.jobId)!)),
     recruiterOptIn: lead.recruiterOptIn,
     marketingOptIn: lead.marketingOptIn ?? false,
     expiresAt: lead.expiresAt.toISOString(),

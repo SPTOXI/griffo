@@ -23,6 +23,7 @@ import { getAppUrl, getDigestFrom, getDigestReplyTo } from '../env'
 import { trackServerEvent } from '../analytics/track.server'
 import type { AtsCheckResult } from '../ats-check/score'
 import { MAX_STORED_MATCHES, PROCESSING_TIMEOUT_MS, expiresAtFor, nurtureAt, teaserFrom, type NurtureStep } from './rules'
+import { pinsFor } from '../city-jobs/city-coords.server'
 import { buildPublicResult, parseStoredMatches, type PublicJobRow, type PublicResult, type StoredMatch } from './result'
 import { buildLeadEmail } from './email'
 import { buildNurtureEmail } from './nurture-email'
@@ -272,7 +273,16 @@ export async function loadLeadResult(id: string, now: Date = new Date()): Promis
   const code = result.teaser.revealed
   const lang: Language = (LANGUAGES as string[]).includes(lead.lang) ? (lead.lang as Language) : 'en'
   const percentile = percentileBelow(await loadAtsScoreDistribution().catch(() => []), result.ats.score)
-  return { ...result, revealedIssue: code ? ATS_CHECK_COPY[lang].issues[code] : null, percentile }
+  // O mapa é enfeite do resultado: se falhar, o resultado sai sem ele. Só no
+  // resultado pronto: enquanto processa, a tela consulta isto a cada 2 s.
+  const mapPins = result.status !== 'ready' ? [] : await pinsFor([
+    ...result.free.map((o) => ({ country: o.country, city: o.city, kind: 'free' as const, title: o.title, count: 1 })),
+    ...result.lockedPlaces.map((p) => ({ ...p, kind: 'locked' as const })),
+  ]).catch((e: any) => {
+    console.warn('[match-preview] mapa do resultado indisponível:', e?.message || e)
+    return []
+  })
+  return { ...result, revealedIssue: code ? ATS_CHECK_COPY[lang].issues[code] : null, percentile, mapPins }
 }
 
 /** Apaga o que venceu. É a metade física da promessa de 24 horas. */
