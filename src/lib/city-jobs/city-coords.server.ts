@@ -83,6 +83,8 @@ export const loadMapPoints = unstable_cache(
     }
     return points
   },
-  ['city-jobs-map-points-v1'],
+  // Trocar a versão quando a lista de países mudar: o cache sobrevive a deploys, e a
+  // página continuaria sem o país novo por até uma hora (aconteceu com a Suíça).
+  ['city-jobs-map-points-v2'],
   { revalidate: 3600, tags: [CITY_JOBS_CACHE_TAG] }
 )
