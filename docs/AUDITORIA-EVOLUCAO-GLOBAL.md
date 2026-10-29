@@ -9230,4 +9230,12 @@ O e-mail de "conta já existe" do §2.147 continua sendo o canal privado que con
 - **Coordenadas a partir de mil habitantes:** a base passou de `cities5000` para `cities1000` (zip de 11 MB, 32 MB abertos). Com 5 mil, vagas de cidade pequena ficavam fora do mapa. As 548 cidades já gravadas continuam valendo, e a primeira rodada do cron preenche o resto com a base nova.
 - Semeadura imediata no Supabase: 150 cidades da Suíça, Tallinn e Budapeste.
 
+**Conferido na prévia:** `/ch` sai em alemão, com o título "GriffoWork Schweiz — Karriere-Intelligenz". `/ee` e `/hu` saem em inglês. As páginas de vagas e os mapas dos três funcionam.
+
+Dois ajustes saíram dessa conferência:
+- O título da página de país usava "Suíça", em português, porque faltavam `ch`, `ee` e `hu` em `COUNTRY_NAME_BY_SLUG` (`[country]/page.tsx`).
+- A lista "cidades com mais vagas" do mapa suíço não aparecia. O cache de `loadMapPoints` sobrevive a deploys e ainda tinha a lista de países antiga, então a chave passou para `city-jobs-map-points-v2`. **Regra:** trocar a versão dessa chave sempre que a lista de países mudar.
+
+**Preço, que fica com o operador:** os três países não estão em `lib/pricing/catalog.ts`. Por isso caem na faixa padrão, a 1, e veem USD 9,90. É a regra "país não mapeado não fica mais barato". Pôr a Estônia e a Hungria numa faixa menor, ou cobrar a Suíça em CHF, é decisão de preço do operador.
+
 **Efeito conhecido:** o mapa da Estônia e o da Hungria têm uma cidade cada. Eles existem, mas saem do sitemap e ficam com `noindex` até ter 3 cidades (`MIN_CITIES_TO_INDEX_MAP`).
