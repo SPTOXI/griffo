@@ -13,7 +13,7 @@ import { CountryPageClient } from './country-client'
 
 export const dynamicParams = true
 
-// As 41 rotas continuam estaticamente geradas (`generateStaticParams` abaixo)
+// As rotas de país continuam estaticamente geradas (`generateStaticParams` abaixo)
 // — só passam a revalidar em segundo plano a cada 5 minutos, igual à home em
 // `src/app/page.tsx`, para que a contagem de vagas do Hero D não fique presa
 // no valor do último build. A contagem em si vive em
@@ -30,7 +30,7 @@ export const revalidate = 300
  * lista da tela de perfil, documentada como tal ali. Usá-la aqui, onde a
  * página muda de idioma por rota, misturava os dois.
  *
- * Cobre só as 40 rotas não-`global` de `SUPPORTED_COUNTRY_SLUGS` — não as
+ * Cobre só as rotas não-`global` de `SUPPORTED_COUNTRY_SLUGS` — não as
  * 173 da lista de perfil — porque é só disso que o título/description de
  * CADA página precisa: o nome de SI MESMA, no idioma que ela já renderiza.
  */
@@ -104,7 +104,7 @@ function countryNameEn(slug: string, code: string): string {
 }
 
 /**
- * hreflang completo das 41 rotas de país, derivado de `SUPPORTED_COUNTRY_SLUGS`
+ * hreflang completo das rotas de país, derivado de `SUPPORTED_COUNTRY_SLUGS`
  * + `marketForCountry` — nunca uma lista copiada à mão.
  *
  * Antes desta correção (achado ao investigar por que o site não tinha
@@ -214,7 +214,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ko: `채용 공고가 아닌, ${cName}의 기회로 연결합니다. AI 이력서 8차원 감사와 ${atsList} ATS 호환성 검증을 단 ${price.formatted}에 제공합니다.`,
   }
 
-  // `/global` é a única das 41 rotas travada em inglês (`GLOBAL_MARKET.jobLanguage
+  // `/global` é a única das rotas de país travada em inglês (`GLOBAL_MARKET.jobLanguage
   // = 'en'`, fixo — a página nunca resolve `?lang=`/cookie/geo como `/market-pulse`
   // e `/hiring` fazem, decisão mantida por enquanto: mudar isso tornaria a rota
   // dinâmica e derrubaria o SSG que ela tem hoje). Por isso o título/descrição de

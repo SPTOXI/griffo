@@ -9212,3 +9212,22 @@ O e-mail de "conta já existe" do §2.147 continua sendo o canal privado que con
 **Limites conhecidos:**
 - Alguns nomes ambíguos podem cair na cidade errada, porque a GeoNames não diz o estado pelo nome: "Greenville" existe na Carolina do Norte e na do Sul, "Álvaro Obregón" em Michoacán e na Cidade do México.
 - Não há tela no admin para corrigir coordenada. O campo `source = admin` está reservado para isso.
+
+## 2.156 Suíça, Estônia e Hungria cadastradas, e coordenadas a partir de mil habitantes (29/10/2026)
+
+**Pedido do operador:** depois da pergunta "a marcação das cidades serve para qualquer local do mundo, dentro dos países cadastrados?", ele pediu para incluir a Suíça em alemão, a Estônia e a Hungria, e para trocar a base de cidades.
+
+**Por que esses três:** são os únicos países com vagas abertas e sem rota no Griffo. Em 29/10 eram 550 vagas na Suíça, 54 na Estônia e 24 na Hungria. Essas vagas não apareciam em página de vagas nenhuma nem no mapa.
+
+**O que entrou:**
+- `ch`, `ee` e `hu` em `SUPPORTED_COUNTRY_SLUGS`. Com isso ganham página de país (gerada no build), páginas de vagas por cidade, mapa, sitemap e o redirecionamento por país no middleware: quem acessa da Suíça cai em `/ch`, não mais em `/global`.
+- **Suíça com mercado próprio** (`id: 'CH'` em `lib/market/index.ts`), em alemão, porque é a língua da maior parte das vagas.
+  - Não entrou no mercado alemão porque o salário é em franco suíço (CHF) e os sites de vaga são outros: jobs.ch e jobup.ch.
+  - ATS mais comuns: SAP SuccessFactors, Workday, Abacus Umantis.
+  - Currículo: foto é o costume, e para estrangeiro conta a autorização de trabalho (Ausweis B/C).
+- **Estônia e Hungria** usam o mercado genérico, em inglês, como Polônia, Romênia e os outros países sem mercado declarado. Estoniano e húngaro não estão entre os 12 idiomas do produto.
+- Nome "Suíça" nos 12 idiomas em `country-labels.ts`. Faltava, e a página mostraria "CH".
+- **Coordenadas a partir de mil habitantes:** a base passou de `cities5000` para `cities1000` (zip de 11 MB, 32 MB abertos). Com 5 mil, vagas de cidade pequena ficavam fora do mapa. As 548 cidades já gravadas continuam valendo, e a primeira rodada do cron preenche o resto com a base nova.
+- Semeadura imediata no Supabase: 150 cidades da Suíça, Tallinn e Budapeste.
+
+**Efeito conhecido:** o mapa da Estônia e o da Hungria têm uma cidade cada. Eles existem, mas saem do sitemap e ficam com `noindex` até ter 3 cidades (`MIN_CITIES_TO_INDEX_MAP`).

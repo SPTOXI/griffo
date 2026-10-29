@@ -4,8 +4,8 @@ import { cityName, citySlug, slugify, type CityEntry } from './city-index'
 /**
  * Coordenadas das cidades para o mapa de vagas — a parte pura.
  *
- * A fonte é o arquivo `cities5000` da GeoNames: todas as cidades do mundo com
- * 5 mil habitantes ou mais, com nome, nome sem acento e nomes alternativos
+ * A fonte é o arquivo `cities1000` da GeoNames: todas as cidades do mundo com
+ * mil habitantes ou mais, com nome, nome sem acento e nomes alternativos
  * ("München", "Munich", "Muenchen"), em licença CC BY 4.0. A gente não grava o
  * arquivo inteiro (seriam ~200 mil nomes, uns 6 MB): baixa, procura só as
  * cidades que existem nas vagas e guarda essas em `CityCoord`.
@@ -16,7 +16,9 @@ import { cityName, citySlug, slugify, type CityEntry } from './city-index'
 /** Abaixo disso o mapa do país sai do sitemap e leva `noindex`: um mapa quase vazio não ajuda ninguém. */
 export const MIN_CITIES_TO_INDEX_MAP = 3
 
-export const GEONAMES_CITIES_URL = 'https://download.geonames.org/export/dump/cities5000.zip'
+// A partir de mil habitantes (§2.156): com 5 mil, vagas de cidade pequena ficavam fora do mapa.
+export const GEONAMES_CITIES_URL = 'https://download.geonames.org/export/dump/cities1000.zip'
+export const GEONAMES_CITIES_FILE = 'cities1000.txt'
 
 export interface GazetteerHit {
   lat: number
@@ -50,7 +52,7 @@ function keep(map: Map<string, GazetteerHit>, k: string, hit: GazetteerHit) {
 }
 
 /**
- * Lê o texto do `cities5000.txt` (uma cidade por linha, colunas separadas por
+ * Lê o texto do arquivo de cidades da GeoNames (uma cidade por linha, colunas separadas por
  * tab) e indexa só os países pedidos.
  */
 export function buildGazetteer(text: string, countries: ReadonlySet<string>): Gazetteer {

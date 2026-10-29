@@ -3,7 +3,7 @@ import { unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { CITY_JOBS_COUNTRY_SLUGS } from './context'
 import { CITY_JOBS_CACHE_TAG, loadCityIndex } from './city-index.server'
-import { buildGazetteer, findCoords, GEONAMES_CITIES_URL, lookupSlugs, unzipEntry, type MapPoint } from './city-coords'
+import { buildGazetteer, findCoords, GEONAMES_CITIES_FILE, GEONAMES_CITIES_URL, lookupSlugs, unzipEntry, type MapPoint } from './city-coords'
 import type { CityEntry } from './city-index'
 
 const COUNTRY_CODES = CITY_JOBS_COUNTRY_SLUGS.map((s) => s.toUpperCase())
@@ -36,7 +36,7 @@ export async function syncCityCoords(): Promise<{ needed: number; found: number;
 
   const res = await fetch(GEONAMES_CITIES_URL, { signal: AbortSignal.timeout(30_000) })
   if (!res.ok) throw new Error(`GeoNames respondeu HTTP ${res.status}`)
-  const text = unzipEntry(Buffer.from(await res.arrayBuffer()), 'cities5000.txt').toString('utf8')
+  const text = unzipEntry(Buffer.from(await res.arrayBuffer()), GEONAMES_CITIES_FILE).toString('utf8')
   const gaz = buildGazetteer(text, new Set(needed.map((n) => n.country)))
 
   let found = 0

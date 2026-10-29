@@ -17,5 +17,10 @@ export const SUPPORTED_COUNTRY_SLUGS = [
   // renderizando a cada requisição em vez de serem geradas no build. Anunciar
   // uma rota como canônica de um idioma e não pré-gerá-la é incoerência
   // gratuita: os dados de mercado já resolviam as três corretamente.
-  'se', 'cn', 'kr'
+  'se', 'cn', 'kr',
+  // `ch`, `ee` e `hu` entraram em 29/10/2026 (§2.156): já tinham vagas abertas
+  // (550, 54 e 24) que não apareciam em página nenhuma. A Suíça tem mercado
+  // próprio em alemão; Estônia e Hungria seguem o genérico, em inglês, como
+  // Polônia, Romênia e os outros sem mercado declarado.
+  'ch', 'ee', 'hu',
 ]

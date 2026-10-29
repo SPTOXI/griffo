@@ -285,6 +285,27 @@ export const MARKETS: MarketConfig[] = [
     },
   },
   {
+    // Mercado próprio, não o alemão: o salário é em franco suíço e os sites de
+    // vaga são outros. Alemão porque é a língua da maior parte das vagas.
+    id: 'CH',
+    name: 'Switzerland',
+    countries: ['CH'],
+    jobLanguage: 'de',
+    salaryCurrency: 'CHF',
+    ats: ['SAP SuccessFactors', 'Workday', 'Abacus Umantis', 'Personio', 'Greenhouse'],
+    jobSources: ['jobs.ch', 'jobup.ch', 'LinkedIn Jobs', 'Company career pages'],
+    socialPlatforms: ['LinkedIn', 'Xing', 'GitHub', 'Personal portfolio'],
+    resume: {
+      photo: 'expected',
+      maxPages: 2,
+      personalData: 'Name, email, phone, city, nationality and work permit (Ausweis B/C) for foreigners, and LinkedIn. A photo is customary; employers often ask for references and work certificates (Arbeitszeugnisse).',
+    },
+    employment: {
+      contractTypes: ['Unbefristet (permanent)', 'Befristet (fixed-term)', 'Temporär', 'Praktikum'],
+      workAuthorizationMatters: true,
+    },
+  },
+  {
     id: 'FR',
     name: 'France',
     countries: ['FR', 'BE', 'LU'],
