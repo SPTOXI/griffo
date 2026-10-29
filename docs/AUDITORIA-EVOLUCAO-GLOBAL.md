@@ -9204,6 +9204,11 @@ O e-mail de "conta já existe" do §2.147 continua sendo o canal privado que con
 
 **Cobertura medida em 29/10:** 84% das vagas com cidade têm coordenada. As que faltam são quase todas região ou bairro ("Greater Vancouver", "Cape Town City Centre", "Haute-Garonne"). Somem do mapa até o agente ou o admin juntá-las numa cidade, mas continuam na página delas.
 
+**Conferido na prévia** (computador e iPhone, `/br` e `/de`): bolhas, zoom no agrupamento, painel de vagas com a chamada, e o botão no hub. Três ajustes saíram dessa conferência:
+- O contêiner do mapa estava com 0 px de altura: o CSS do MapLibre põe `position: relative` e anulava o `absolute inset-0`. Agora tem altura e largura explícitas.
+- No celular, a página rola até as vagas quando se toca numa cidade, porque o painel fica embaixo do mapa.
+- Os nomes do mapa base saem no idioma da página (`name:<idioma>`, com o nome local quando o OpenStreetMap não tem a tradução).
+
 **Limites conhecidos:**
 - Alguns nomes ambíguos podem cair na cidade errada, porque a GeoNames não diz o estado pelo nome: "Greenville" existe na Carolina do Norte e na do Sul, "Álvaro Obregón" em Michoacán e na Cidade do México.
 - Não há tela no admin para corrigir coordenada. O campo `source = admin` está reservado para isso.
