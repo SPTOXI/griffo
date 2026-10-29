@@ -9265,3 +9265,9 @@ Dois ajustes saíram dessa conferência:
 **Os dois mapas ficam como estão:** o `/[país]/jobs/map` continua completo, com empresa e candidatura, para quem chega pelo Google. O da home é só isca.
 
 Textos nos 12 idiomas em `lib/landing/home-map-copy.ts`, revisados pelo translation-reviewer.
+
+**Conferido na prévia** (computador e iPhone, `/br`):
+- O balão de agrupamento diz "4.692 vagas nesta região. Aproxime para ver as cidades."
+- O balão de Boa Vista mostra 3 nomes de vaga e "e mais 2 vagas em Boa Vista".
+- O resultado foi simulado pelo mesmo evento que o envio dispara, sem criar lead de verdade. O ponto vermelho da vaga grátis abre com o título, os cadeados de Campinas e Barueri mostram a quantidade, e "Desbloquear para ver" abre a criação de conta.
+- Ajuste que saiu da conferência: o crédito do mapa base agora abre recolhido no botão ⓘ, porque no celular ele cobria o pé do mapa.

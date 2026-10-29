@@ -53,6 +53,9 @@ export async function createBubbleMap(opts: BubbleMapOptions) {
   if (own.length) fitTo(map, own.map((p) => [p.lng, p.lat]), 9, 0)
 
   await new Promise<void>((resolve) => map.on('load', () => resolve()))
+  // O crédito do mapa base abre recolhido no botão ⓘ: aberto, ele cobre o pé do mapa no celular.
+  // Continua a um toque, e o crédito completo também vai escrito embaixo do mapa.
+  map.getContainer().querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show')
   // Nomes de país e cidade do mapa base no idioma da página ("Alemanha", "Deutschland"),
   // com o nome local quando o OpenStreetMap não tem a tradução.
   for (const layer of map.getStyle().layers) {
