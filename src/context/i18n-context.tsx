@@ -10,6 +10,12 @@ interface I18nContextType {
   setLang: (lang: Language) => void
   detectedCountry?: string
   langManuallySet: boolean
+  /**
+   * Adota o idioma da página (rota de país) sem gravar como escolha: o
+   * cadastro e o app seguem a página em que a pessoa estava, e quem escolheu
+   * idioma no seletor continua com a escolha dela.
+   */
+  adoptPageLang: (lang: Language) => void
 }
 
 const I18nContext = createContext<I18nContextType>({
@@ -17,6 +23,7 @@ const I18nContext = createContext<I18nContextType>({
   t: DICTIONARIES.pt,
   setLang: () => {},
   langManuallySet: false,
+  adoptPageLang: () => {},
 })
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
@@ -67,6 +74,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const adoptPageLang = (pageLang: Language) => {
+    if (!langManuallySet && LANGUAGES.includes(pageLang)) setLangState(pageLang)
+  }
+
   return (
     <I18nContext.Provider
       value={{
@@ -75,6 +86,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         setLang,
         detectedCountry,
         langManuallySet,
+        adoptPageLang,
       }}
     >
       {children}

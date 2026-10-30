@@ -1531,10 +1531,19 @@ painel e pedem correções opostas.
 **A fazer (combinado com o operador)**
 - **Fase 3 do criador:** responder às perguntas por voz no celular.
 
+**Decididas e feitas em 30/10 (§2.163)**
+- ✅ Preço de Suíça, Estônia e Hungria.
+- ✅ Cadastro no idioma da página.
+- ✅ Regra de reembolso, com a aba "Reembolsos" no admin.
+- ⏸ Escada de preços (Passe 24h): segurada até o funil mostrar gente clicando em "ver todas" sem comprar.
+
+**Reembolso: o que conferir**
+- **Preencher o e-mail de alertas:** `ADMIN_ALERT_EMAIL` em Configurações do admin. Sem ele, o aviso vai para as contas de admin.
+- **Fazer os reembolsos pela aba, e não pelo painel da Stripe:** não há webhook de `charge.refunded`, então um reembolso feito direto na Stripe não atualiza o saldo no GriffoWork.
+
 **Decisões do operador ainda abertas**
-- Preço de Suíça, Estônia e Hungria (hoje Faixa 1, US$ 9,90).
-- Se a tela de cadastro deve seguir o idioma da página. No teste, a home /br abriu o cadastro em inglês.
-- As de §7.13: escada de preços, regra de garantia/reembolso, WhatsApp Business e busca de candidatos no Enterprise.
+- WhatsApp Business.
+- Busca de candidatos no Enterprise.
 
 **Para um falante nativo confirmar, sem urgência**
 - Ordem das palavras em algumas frases em árabe.

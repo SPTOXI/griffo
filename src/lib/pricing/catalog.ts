@@ -82,7 +82,7 @@ export interface RegionalPrice {
 export const TIERS: RegionalPrice[] = [
   {
     tier: 1,
-    countries: ['US', 'CA', 'GB', 'DE', 'FR', 'AU', 'JP', 'SG', 'NL', 'IE'],
+    countries: ['US', 'CA', 'GB', 'DE', 'FR', 'AU', 'JP', 'SG', 'NL', 'IE', 'CH'],
     displayCurrency: 'USD',
     unitPriceUSD: 9.9,
     quarterlyPriceUSD: 35.9,
@@ -90,7 +90,7 @@ export const TIERS: RegionalPrice[] = [
   },
   {
     tier: 2,
-    countries: ['PT', 'ES', 'IT', 'PL', 'CZ', 'CL', 'MY', 'TR', 'ZA', 'AE'],
+    countries: ['PT', 'ES', 'IT', 'PL', 'CZ', 'CL', 'MY', 'TR', 'ZA', 'AE', 'EE', 'HU'],
     displayCurrency: 'EUR',
     unitPriceUSD: 6.9,
     quarterlyPriceUSD: 23.9,
@@ -136,6 +136,8 @@ export const COUNTRY_CURRENCY: Record<string, string> = {
   AU: 'AUD',
   JP: 'JPY',
   SG: 'SGD',
+  // Suíça (30/10/2026): mercado próprio em alemão desde §2.156.
+  CH: 'CHF',
   // Faixa 2
   PT: 'EUR',
   ES: 'EUR',
@@ -147,6 +149,9 @@ export const COUNTRY_CURRENCY: Record<string, string> = {
   TR: 'TRY',
   ZA: 'ZAR',
   AE: 'AED',
+  // Estônia e Hungria (30/10/2026): renda perto de Polônia e Tchéquia.
+  EE: 'EUR',
+  HU: 'HUF',
   // Faixa 3
   BR: 'BRL',
   MX: 'MXN',
@@ -188,6 +193,8 @@ export const USD_TO_LOCAL: Record<string, number> = {
   AUD: 1.5,
   JPY: 150,
   SGD: 1.34,
+  CHF: 0.8,
+  HUF: 360,
   PLN: 3.95,
   CZK: 23,
   CLP: 950,
@@ -240,11 +247,14 @@ export const LOCAL_PRICES: Record<string, LocalPrice> = {
   AUD: { single: 14.9, quarterly: 53.9 },
   JPY: { single: 1490, quarterly: 5390 },
   SGD: { single: 12.9, quarterly: 47.9 },
+  // CHF 9,90 daria ~US$ 12,40, 25% acima da âncora: fora da tolerância de 15%.
+  CHF: { single: 8.9, quarterly: 31.9 },
   // Faixa 2 — âncora $6,90 / $23,90. EUR vive aqui: os países de euro da
   // Faixa 1 (DE, FR, NL, IE) usam `EUR_TIER1`, resolvido por país.
   EUR: { single: 6.49, quarterly: 21.9 },
   PLN: { single: 27.9, quarterly: 93.9 },
   CZK: { single: 159, quarterly: 539 },
+  HUF: { single: 2490, quarterly: 8490 },
   CLP: { single: 6490, quarterly: 21990 },
   MYR: { single: 29.9, quarterly: 109 },
   TRY: { single: 229, quarterly: 799 },
@@ -284,9 +294,9 @@ const EUR_TIER3: LocalPrice = { single: 3.49, quarterly: 14.9 }
 /** Locale de formatação por país. Separador e posição do símbolo são locais. */
 const COUNTRY_LOCALE: Record<string, string> = {
   US: 'en-US', CA: 'en-CA', GB: 'en-GB', IE: 'en-IE', AU: 'en-AU', SG: 'en-SG',
-  DE: 'de-DE', FR: 'fr-FR', NL: 'nl-NL', JP: 'ja-JP',
+  DE: 'de-DE', FR: 'fr-FR', NL: 'nl-NL', JP: 'ja-JP', CH: 'de-CH',
   PT: 'pt-PT', ES: 'es-ES', IT: 'it-IT', PL: 'pl-PL', CZ: 'cs-CZ', CL: 'es-CL',
-  MY: 'ms-MY', TR: 'tr-TR', ZA: 'en-ZA', AE: 'ar-AE',
+  MY: 'ms-MY', TR: 'tr-TR', ZA: 'en-ZA', AE: 'ar-AE', EE: 'et-EE', HU: 'hu-HU',
   BR: 'pt-BR', MX: 'es-MX', CO: 'es-CO', AR: 'es-AR', TH: 'th-TH', RO: 'ro-RO', BG: 'bg-BG',
   IN: 'en-IN', ID: 'id-ID', PH: 'en-PH', VN: 'vi-VN', NG: 'en-NG', EG: 'ar-EG',
   PK: 'en-PK', BD: 'bn-BD', KE: 'en-KE',

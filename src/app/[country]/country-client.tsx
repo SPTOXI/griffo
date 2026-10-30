@@ -6,6 +6,7 @@ import { useAuth, useNav } from '@/store/auth'
 import { Landing } from '@/components/landing/landing'
 import type { Language } from '@/lib/i18n'
 import type { SocialProof } from '@/lib/analytics/social-proof'
+import { useI18n } from '@/context/i18n-context'
 
 // Mesmo motivo de `src/app/page.tsx`: `AppShell` puxa o app autenticado
 // inteiro (dashboard, laudo com `recharts`, admin), e isto AQUI é a segunda
@@ -33,10 +34,19 @@ export function CountryPageClient({ countryCode, lang, openJobsCount, socialProo
   const { user, hydrated, hydrate } = useAuth()
   const setNavView = useNav((s) => s.setView)
   const [screen, setScreen] = useState<Screen>('landing')
+  const { adoptPageLang, langManuallySet } = useI18n()
 
   useEffect(() => {
     hydrate()
   }, [])
+
+  // O cadastro e o app seguem o idioma da página (/br em português), não o do
+  // navegador. No teste, a home /br abria o cadastro em inglês.
+  useEffect(() => {
+    adoptPageLang(lang)
+    // De novo ao abrir o cadastro: o palpite automático (geo-IP) termina depois
+    // da primeira rodada e trocaria o idioma de volta.
+  }, [lang, langManuallySet, screen])
 
   useEffect(() => {
     if (hydrated && typeof window !== 'undefined') {

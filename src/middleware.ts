@@ -128,6 +128,8 @@ const RULES: Rule[] = [
   // Editor por partes (§2.161): salvar e "melhorar com IA". O teto por
   // currículo (`MAX_BLOCK_IMPROVEMENTS`) já limita o gasto; isto segura rajada.
   { prefix: '/api/resume/edit', limit: 40, windowMs: 10 * 60_000 },
+  // Pedido de reembolso: barato, mas manda e-mail ao admin a cada caso novo.
+  { prefix: '/api/refunds', limit: 20, windowMs: 10 * 60_000 },
   { prefix: '/api/radar/prepare', limit: 10, windowMs: 10 * 60_000 },
   { prefix: '/api/radar/interview-prep', limit: 10, windowMs: 10 * 60_000 },
   { prefix: '/api/radar/search-now', limit: 10, windowMs: 10 * 60_000 },

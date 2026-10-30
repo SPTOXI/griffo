@@ -9450,3 +9450,60 @@ O Índice tinha botão no topo da home, item no menu e uma faixa no meio da pág
   - **Japonês:** o editor (dentro do app) usa 職務経歴書, como o resto do app. A entrada do criador cita 履歴書・職務経歴書, para atender quem está começando e quem já trabalhou.
   - **Títulos de seção do currículo em fr/it/nl/sv:** maiúscula só no começo, que é a grafia padrão desses idiomas. Isso vale também para as reescritas novas.
   - **Árabe:** sem mudança. As frases estavam corretas e mexer não traria ganho.
+
+## 2.163 Preços de Suíça, Estônia e Hungria, cadastro no idioma da página e regra de reembolso (30/10/2026)
+
+**Decisões do operador**, sobre as pendências de §7.16:
+
+1. **Suíça, Estônia e Hungria entram na tabela de preços.** Antes caíam no preço padrão: US$ 9,90, cobrado em dólar.
+
+   | País | Faixa | Moeda | Essencial | Recolocação |
+   |---|---|---|---|---|
+   | Suíça (CH) | 1 | CHF | 8,90 | 31,90 |
+   | Estônia (EE) | 2 | EUR | 6,49 | 21,90 |
+   | Hungria (HU) | 2 | HUF | 2.490 | 8.490 |
+
+   - A Suíça tinha sido proposta a CHF 9,90 / 34,90. Isso daria ~US$ 12,40, 25% acima da âncora de US$ 9,90 da Faixa 1, e o teste do catálogo (tolerância de 15%) recusa. CHF 8,90 / 31,90 ficam 11–12% acima.
+   - A Estônia usa a tabela de euro da Faixa 2, a mesma de Portugal, Espanha e Itália.
+   - Cotações de referência: 1 USD = 0,80 CHF e 360 HUF.
+   - Locales de formatação: de-CH, et-EE e hu-HU.
+   - A Stripe recebe o valor por `price_data` na hora do checkout, então não foi preciso cadastrar preço na Stripe.
+
+2. **O cadastro segue o idioma da página.**
+   - Antes: na rota de país (/br), a tela de cadastro usava o idioma do navegador. No teste, a /br abriu o cadastro em inglês.
+   - Agora a rota de país adota o idioma da página (`adoptPageLang` no contexto de i18n), sem gravar isso como escolha.
+   - Quem escolheu idioma no seletor continua com a escolha dele.
+   - A adoção roda de novo ao abrir o cadastro, porque o palpite de geo-IP termina depois da primeira rodada e trocaria o idioma de volta.
+
+3. **Escada de preços (Passe 24h): segurada.** Recomendação aceita pelo operador: com 112 currículos ainda não se sabe se as pessoas travam no preço do Essencial. O sinal para retomar é muita gente clicando em "ver todas as oportunidades" e não comprando.
+
+4. **Regra de reembolso:** reembolso em até 24 h depois do pedido, sinalizado ao admin.
+   - **Quem tem direito** (`refunds/rules.ts`):
+     - **até 7 dias depois da compra, com a análise não usada:** sem perguntas. É o direito de arrependimento do CDC (art. 49), aplicado a todos os países;
+     - **análise paga e não entregue:** reembolso mesmo depois dos 7 dias.
+   - **Análise não usada:** o saldo ainda cobre tudo o que a compra deu. No Recolocação, se uma das cinco foi usada, a compra fica fora da regra.
+   - **Falha de entrega:**
+     - a análise foi destravada e não ficou pronta: o job falhou, ou está há mais de 2 h sem terminar;
+     - sem job não conta, porque a análise nunca foi pedida;
+     - o cron de hora em hora (`visitor-leads`) abre esses casos sozinho, mesmo que a pessoa não peça.
+   - **Pedido do cliente:** seção "Reembolso" na tela de planos (`refund-section.tsx`), com a regra escrita e as compras dos últimos 30 dias. Cada compra mostra o que a regra diz e o botão de pedir. **Regra do operador, dada durante a implementação: o reembolso só pode ser pedido se o serviço não tiver sido executado.** Fora da regra (análise já entregue, ou não usada depois dos 7 dias), a tela não mostra o botão: explica que a compra não tem direito. A rota recusa com 403 (`NOT_ELIGIBLE`) e nada é aberto. É um pedido por pagamento (`paymentRef` único).
+   - **O texto ao cliente** diz "iniciamos a devolução em até 24 horas", e não "o dinheiro volta em 24 h". A Stripe devolve na hora, mas o prazo até aparecer na fatura é do banco do cliente. Isso está nos 12 idiomas.
+   - **Aviso ao admin:**
+     - e-mail na abertura e outro 4 h antes do fim do prazo;
+     - vai para `ADMIN_ALERT_EMAIL` (Configurações). Como esse campo estava vazio em 30/10, o aviso vai para as contas de admin;
+     - só marca como avisado se o e-mail saiu.
+   - **Aba "Reembolsos" no admin** (`refunds-admin.tsx`):
+     - mostra a contagem regressiva das 24 h, se o caso está dentro ou fora da regra e se veio do cliente ou do sistema;
+     - avisa quando a análise ficou pronta depois que o caso abriu (a pessoa tentou de novo).
+   - **"Reembolsar"** (`executeRefund`):
+     - devolve pela Stripe na hora, a partir da `checkout.session` → `payment_intent`, com chave de idempotência pelo id do pedido. Clicar duas vezes não devolve duas vezes;
+     - fora a falha de entrega, tira da conta as análises da compra (até o saldo) e grava `refund` no `AnalysisLedger`;
+     - no Recolocação, encerra o passe.
+   - **"Recusar"** grava uma nota interna.
+   - **Banco:** tabela nova `RefundRequest`, com RLS ligado e sem acesso para `anon`/`authenticated`. Os pedidos entram na exportação de dados do titular, sem a nota interna.
+   - **Limite de rajada:** `/api/refunds` aceita 20 pedidos a cada 10 min.
+   - **Testes** (`refunds.test.ts`): regra, prazos, lembrete, falha de entrega e os 12 idiomas.
+
+**Ainda não feito:**
+- Um reembolso feito direto no painel da Stripe não atualiza o GriffoWork: não há webhook de `charge.refunded`. Faça os reembolsos pela aba.
+- O cliente não recebe e-mail próprio do GriffoWork quando o reembolso sai. Fica o recibo da Stripe, se os recibos estiverem ligados na conta.
