@@ -33,7 +33,7 @@ export const REFUND_COPY: Record<Language, RefundCopy> = {
   de: {
     title: 'Rückerstattung',
     policy: 'Sie können innerhalb von 7 Tagen nach dem Kauf eine Rückerstattung beantragen, sofern die Leistung nicht erbracht wurde: Die Analyse wurde noch nicht genutzt, oder sie wurde bezahlt und nicht geliefert. Nach 7 Tagen ist keine Rückerstattung mehr möglich. Wenn eine Analyse fehlschlägt, können Sie sie ohne erneute Zahlung noch einmal erstellen. Nach Genehmigung Ihres Antrags veranlassen wir die Rückerstattung innerhalb von 24 Stunden über dieselbe Zahlungsart; wann sie auf Ihrem Kontoauszug erscheint, hängt von Ihrer Bank ab.',
-    requestHow: 'Schreiben Sie dafür an {email}, mit der E-Mail-Adresse Ihres Kontos.',
+    requestHow: 'Schreiben Sie dafür von der E-Mail-Adresse Ihres Kontos an {email}.',
   },
   fr: {
     title: 'Remboursement',
@@ -62,7 +62,7 @@ export const REFUND_COPY: Record<Language, RefundCopy> = {
   },
   zh: {
     title: '退款',
-    policy: '在服务尚未提供的情况下，你可以在购买后 7 天内申请退款：即分析尚未使用，或已付款但未交付。超过 7 天不予退款。如果分析失败，你可以免费重新生成。申请获批后，我们会在 24 小时内通过原支付方式发起退款；款项显示在账单上的时间取决于你的银行。',
+    policy: '在服务尚未提供的情况下，你可以在购买后 7 天内申请退款：即分析尚未使用，或已付款但未交付。超过 7 天不予退款。如果分析失败，你可以重新生成，无需再次付费。申请获批后，我们会在 24 小时内通过原支付方式发起退款；款项显示在账单上的时间取决于你的银行。',
     requestHow: '如需申请，请使用账户邮箱发送邮件至 {email}。',
   },
   ar: {
