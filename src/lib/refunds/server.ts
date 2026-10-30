@@ -10,7 +10,6 @@ import {
   eligibilityOf,
   isDeliveryFailure,
   needsReminder,
-  windowEndsAt,
   type RefundEligibility,
 } from './rules'
 
@@ -21,17 +20,6 @@ import {
  */
 
 const DAY = 24 * 60 * 60 * 1000
-
-export interface PurchaseView {
-  paymentRef: string
-  purchasedAt: Date
-  quantity: number
-  currency: string | null
-  amountLocal: number | null
-  eligibility: RefundEligibility
-  windowEndsAt: Date
-  request: { status: string; createdAt: Date; dueAt: Date } | null
-}
 
 type Purchase = {
   userId: string
@@ -84,36 +72,6 @@ async function factsFor(p: Purchase, now: Date) {
   return { eligibility, failedResumeId }
 }
 
-/** Compras pagas dos últimos 30 dias, com o que a regra diz de cada uma. */
-export async function purchasesForUser(userId: string, now: Date = new Date()): Promise<PurchaseView[]> {
-  const rows = await db.analysisLedger.findMany({
-    where: { userId, type: 'purchase', paymentRef: { not: null }, createdAt: { gte: new Date(now.getTime() - 30 * DAY) } },
-    orderBy: { createdAt: 'desc' },
-    select: { userId: true, paymentRef: true, createdAt: true, delta: true, currency: true, amountLocal: true },
-  })
-  const requests = await db.refundRequest.findMany({
-    where: { paymentRef: { in: rows.map((r) => r.paymentRef!) } },
-    select: { paymentRef: true, status: true, createdAt: true, dueAt: true },
-  })
-  const byRef = new Map(requests.map((r) => [r.paymentRef, r]))
-  const out: PurchaseView[] = []
-  for (const r of rows) {
-    const { eligibility } = await factsFor(r, now)
-    const req = byRef.get(r.paymentRef!)
-    out.push({
-      paymentRef: r.paymentRef!,
-      purchasedAt: r.createdAt,
-      quantity: r.delta,
-      currency: r.currency,
-      amountLocal: r.amountLocal,
-      eligibility,
-      windowEndsAt: windowEndsAt(r.createdAt),
-      request: req ? { status: req.status, createdAt: req.createdAt, dueAt: req.dueAt } : null,
-    })
-  }
-  return out
-}
-
 /**
  * Abre o pedido. Um por pagamento (`paymentRef` único): pedir de novo devolve
  * o que já existe. Fora da regra (serviço já executado) não abre: devolve
@@ -122,7 +80,7 @@ export async function purchasesForUser(userId: string, now: Date = new Date()): 
 export async function openRefundRequest(input: {
   userId: string
   paymentRef: string
-  source: 'customer' | 'auto_failure'
+  source: 'support' | 'auto_failure'
   reason?: string | null
   now?: Date
 }): Promise<{ created: boolean; id: string; eligibility: RefundEligibility } | null> {
@@ -154,7 +112,11 @@ export async function openRefundRequest(input: {
         dueAt: dueAtFor(now),
       },
     })
-    await notifyAdmin(row.id, 'new').catch((e: any) => console.warn('[refunds] aviso ao admin não saiu:', e?.message || e))
+    // Pedido registrado pelo próprio admin (veio pelo suporte) não precisa de
+    // aviso de abertura; o lembrete de 4 h vale para os dois.
+    if (input.source === 'auto_failure') {
+      await notifyAdmin(row.id, 'new').catch((e: any) => console.warn('[refunds] aviso ao admin não saiu:', e?.message || e))
+    }
     return { created: true, id: row.id, eligibility }
   } catch (e: any) {
     // Dois pedidos ao mesmo tempo: o segundo colide no índice único.
@@ -211,7 +173,7 @@ export async function sendRefundReminders(now: Date = new Date()): Promise<numbe
 
 const ELIGIBILITY_LABEL: Record<RefundEligibility, string> = {
   unused: 'dentro da regra: até 7 dias e análise não usada',
-  failure: 'dentro da regra: análise paga e não entregue',
+  failure: 'dentro da regra: até 7 dias, análise paga e não entregue',
   outside_rules: 'FORA da regra (fora dos 7 dias ou análise já usada) — decisão sua',
 }
 
@@ -240,7 +202,7 @@ async function notifyAdmin(id: string, kind: 'new' | 'reminder'): Promise<boolea
   const lines = [
     kind === 'new' ? 'Novo pedido de reembolso.' : 'Lembrete: este reembolso vence em até 4 horas.',
     `Cliente: ${r.user.email}`,
-    `Origem: ${r.source === 'auto_failure' ? 'aberto pelo sistema (análise paga não entregue)' : 'pedido do cliente'}`,
+    `Origem: ${r.source === 'auto_failure' ? 'aberto pelo sistema (análise paga não entregue)' : 'pedido do cliente pelo suporte'}`,
     `Regra: ${ELIGIBILITY_LABEL[r.eligibility as RefundEligibility] ?? r.eligibility}`,
     `Valor: ${amount} (${r.quantity} análise${r.quantity > 1 ? 's' : ''})`,
     r.reason ? `Motivo: ${r.reason}` : null,
@@ -325,4 +287,35 @@ export async function rejectRefund(id: string, adminId: string, note: string): P
     data: { status: 'rejected', decidedAt: new Date(), decidedBy: adminId, adminNote: note.slice(0, 1000) },
   })
   return r.count ? { ok: true } : { ok: false, error: 'Este pedido já foi decidido.' }
+}
+
+/**
+ * O cliente pede pelo suporte; o admin registra aqui, pelo e-mail da conta.
+ * Abre um pedido para cada compra paga dos últimos 7 dias que esteja dentro
+ * da regra, e devolve o que encontrou — inclusive o que ficou de fora e por quê.
+ */
+export async function registerSupportRequest(
+  email: string,
+  reason: string | null,
+  now: Date = new Date()
+): Promise<{ found: boolean; opened: number; items: { paymentRef: string; purchasedAt: Date; eligibility: RefundEligibility; already: boolean }[] }> {
+  const user = await db.user.findFirst({ where: { email: { equals: email.trim(), mode: 'insensitive' } }, select: { id: true } })
+  if (!user) return { found: false, opened: 0, items: [] }
+  const purchases = await db.analysisLedger.findMany({
+    where: { userId: user.id, type: 'purchase', paymentRef: { not: null }, createdAt: { gte: new Date(now.getTime() - REFUND_WINDOW_DAYS * DAY) } },
+    orderBy: { createdAt: 'desc' },
+    select: { userId: true, paymentRef: true, createdAt: true, delta: true, currency: true, amountLocal: true },
+  })
+  let opened = 0
+  const items: { paymentRef: string; purchasedAt: Date; eligibility: RefundEligibility; already: boolean }[] = []
+  for (const p of purchases) {
+    const existing = await db.refundRequest.findUnique({ where: { paymentRef: p.paymentRef! }, select: { id: true } })
+    const { eligibility } = await factsFor(p, now)
+    if (!existing && eligibility !== 'outside_rules') {
+      const r = await openRefundRequest({ userId: user.id, paymentRef: p.paymentRef!, source: 'support', reason, now })
+      if (r?.created) opened++
+    }
+    items.push({ paymentRef: p.paymentRef!, purchasedAt: p.createdAt, eligibility, already: Boolean(existing) })
+  }
+  return { found: true, opened, items }
 }

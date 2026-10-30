@@ -9477,32 +9477,27 @@ O Índice tinha botão no topo da home, item no menu e uma faixa no meio da pág
 
 3. **Escada de preços (Passe 24h): segurada.** Recomendação aceita pelo operador: com 112 currículos ainda não se sabe se as pessoas travam no preço do Essencial. O sinal para retomar é muita gente clicando em "ver todas as oportunidades" e não comprando.
 
-4. **Regra de reembolso:** reembolso em até 24 h depois do pedido, sinalizado ao admin.
-   - **Quem tem direito** (`refunds/rules.ts`):
-     - **até 7 dias depois da compra, com a análise não usada:** sem perguntas. É o direito de arrependimento do CDC (art. 49), aplicado a todos os países;
-     - **análise paga e não entregue:** reembolso mesmo depois dos 7 dias.
-   - **Análise não usada:** o saldo ainda cobre tudo o que a compra deu. No Recolocação, se uma das cinco foi usada, a compra fica fora da regra.
-   - **Falha de entrega:**
-     - a análise foi destravada e não ficou pronta: o job falhou, ou está há mais de 2 h sem terminar;
-     - sem job não conta, porque a análise nunca foi pedida;
-     - o cron de hora em hora (`visitor-leads`) abre esses casos sozinho, mesmo que a pessoa não peça.
-   - **Pedido do cliente:** seção "Reembolso" na tela de planos (`refund-section.tsx`), com a regra escrita e as compras dos últimos 30 dias. Cada compra mostra o que a regra diz e o botão de pedir. **Regra do operador, dada durante a implementação: o reembolso só pode ser pedido se o serviço não tiver sido executado.** Fora da regra (análise já entregue, ou não usada depois dos 7 dias), a tela não mostra o botão: explica que a compra não tem direito. A rota recusa com 403 (`NOT_ELIGIBLE`) e nada é aberto. É um pedido por pagamento (`paymentRef` único).
-   - **O texto ao cliente** diz "iniciamos a devolução em até 24 horas", e não "o dinheiro volta em 24 h". A Stripe devolve na hora, mas o prazo até aparecer na fatura é do banco do cliente. Isso está nos 12 idiomas.
-   - **Aviso ao admin:**
-     - e-mail na abertura e outro 4 h antes do fim do prazo;
-     - vai para `ADMIN_ALERT_EMAIL` (Configurações). Como esse campo estava vazio em 30/10, o aviso vai para as contas de admin;
-     - só marca como avisado se o e-mail saiu.
-   - **Aba "Reembolsos" no admin** (`refunds-admin.tsx`):
-     - mostra a contagem regressiva das 24 h, se o caso está dentro ou fora da regra e se veio do cliente ou do sistema;
-     - avisa quando a análise ficou pronta depois que o caso abriu (a pessoa tentou de novo).
+4. **Regra de reembolso.** É a versão final, depois de três ajustes do operador no mesmo dia.
+   - **Só se o serviço não foi executado, e só até 7 dias depois da compra.** Valem dois casos: a análise ainda não foi usada, ou foi paga e não entregue. **Um segundo depois dos 7 dias, não há reembolso**, nem por falha. A análise que falhou pode ser gerada de novo sem pagar outra vez, porque o currículo continua destravado. Os 7 dias são o direito de arrependimento do CDC (art. 49), aplicado a todos os países (`refunds/rules.ts`).
+   - **Análise não usada:** o saldo ainda cobre tudo o que a compra deu. No Recolocação, se uma das cinco já foi usada, a compra fica fora da regra.
+   - **Falha de entrega:** a análise foi destravada e não ficou pronta, porque o job falhou ou está há mais de 2 h sem terminar. Sem job não conta, porque a análise nunca foi pedida. O cron horário (`visitor-leads`) abre esses casos sozinho e manda e-mail ao admin.
+   - **Sem botão para o cliente** (decisão do operador). A tela de compra só mostra a regra e diz para escrever ao suporte (`refund-section.tsx`, 12 idiomas). O texto diz "iniciamos a devolução em até 24 horas", não "o dinheiro volta em 24 h": a Stripe devolve na hora, mas o prazo até aparecer na fatura é do banco. A primeira versão tinha um botão e uma rota pública `/api/refunds`, que saíram antes do merge.
+   - **O admin registra o pedido** na aba "Reembolsos", pelo e-mail da conta do cliente (`registerSupportRequest`). O sistema procura as compras pagas dos últimos 7 dias e só abre pedido para as que estão dentro da regra. Quando nada se encaixa, diz por quê: fora do prazo, análise já usada ou pedido já registrado. É um pedido por pagamento (`paymentRef` único).
+   - **Prazo e avisos:**
+     - 24 h para devolver, contadas da abertura do pedido;
+     - e-mail ao admin na abertura automática (falha de entrega) e 4 h antes do fim de qualquer pedido;
+     - os e-mails vão para `ADMIN_ALERT_EMAIL` (Configurações). Como o campo estava vazio em 30/10, vão para as contas de admin;
+     - o pedido só fica marcado como avisado se o e-mail saiu.
+   - **Aba "Reembolsos"** (`refunds-admin.tsx`):
+     - contagem regressiva, se o pedido está dentro ou fora da regra e de onde veio (sistema ou suporte);
+     - aviso quando a análise ficou pronta depois que o caso abriu.
    - **"Reembolsar"** (`executeRefund`):
-     - devolve pela Stripe na hora, a partir da `checkout.session` → `payment_intent`, com chave de idempotência pelo id do pedido. Clicar duas vezes não devolve duas vezes;
-     - fora a falha de entrega, tira da conta as análises da compra (até o saldo) e grava `refund` no `AnalysisLedger`;
+     - devolve pela Stripe na hora (`checkout.session` → `payment_intent`), com chave de idempotência pelo id do pedido;
+     - fora a falha de entrega, tira da conta as análises da compra e grava `refund` no `AnalysisLedger`;
      - no Recolocação, encerra o passe.
    - **"Recusar"** grava uma nota interna.
-   - **Banco:** tabela nova `RefundRequest`, com RLS ligado e sem acesso para `anon`/`authenticated`. Os pedidos entram na exportação de dados do titular, sem a nota interna.
-   - **Limite de rajada:** `/api/refunds` aceita 20 pedidos a cada 10 min.
-   - **Testes** (`refunds.test.ts`): regra, prazos, lembrete, falha de entrega e os 12 idiomas.
+   - **Banco:** tabela nova `RefundRequest`, com RLS e sem acesso para `anon`/`authenticated`. Os pedidos entram na exportação de dados do titular, sem a nota interna.
+   - **Testes** (`refunds.test.ts`): regra, prazo rígido, lembrete, falha de entrega e os 12 idiomas.
 
 **Ainda não feito:**
 - Um reembolso feito direto no painel da Stripe não atualiza o GriffoWork: não há webhook de `charge.refunded`. Faça os reembolsos pela aba.

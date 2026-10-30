@@ -16,7 +16,7 @@ import { timeLeft } from '@/lib/refunds/rules'
 
 interface Row {
   id: string
-  source: 'customer' | 'auto_failure'
+  source: 'support' | 'auto_failure'
   eligibility: 'unused' | 'failure' | 'outside_rules'
   reason: string | null
   quantity: number
@@ -42,6 +42,9 @@ export function RefundsAdmin() {
   const [rows, setRows] = useState<Row[] | null>(null)
   const [notes, setNotes] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState<string | null>(null)
+  const [regEmail, setRegEmail] = useState('')
+  const [regReason, setRegReason] = useState('')
+  const [registering, setRegistering] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -56,6 +59,36 @@ export function RefundsAdmin() {
   useEffect(() => {
     load()
   }, [load])
+
+  const register = async () => {
+    setRegistering(true)
+    try {
+      const r = await internalFetch('/api/admin/refunds', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: regEmail, reason: regReason || undefined }),
+      })
+      const data = await r.json().catch(() => ({}))
+      if (!r.ok) return toast.error(data.error || 'Não deu certo.')
+      if (!data.found) return toast.error('Nenhuma conta com esse e-mail.')
+      if (data.opened > 0) {
+        toast.success(`${data.opened} pedido${data.opened > 1 ? 's' : ''} aberto${data.opened > 1 ? 's' : ''}.`)
+        setRegEmail('')
+        setRegReason('')
+      } else if (data.items.length === 0) {
+        toast.error('Sem compra paga nos últimos 7 dias: fora do prazo de reembolso.')
+      } else {
+        toast.error(
+          data.items.some((i: any) => i.already)
+            ? 'Essa compra já tem pedido registrado.'
+            : 'A compra está fora da regra: a análise já foi usada e entregue.'
+        )
+      }
+      load()
+    } finally {
+      setRegistering(false)
+    }
+  }
 
   const decide = async (id: string, action: 'refund' | 'reject') => {
     if (action === 'refund' && !window.confirm('Devolver o dinheiro pela Stripe agora? Não há como desfazer.')) return
@@ -82,12 +115,36 @@ export function RefundsAdmin() {
       <CardHeader>
         <CardTitle>Reembolsos {pending > 0 && <Badge className="ms-2 bg-red-600">{pending} pendente{pending > 1 ? 's' : ''}</Badge>}</CardTitle>
         <CardDescription>
-          Regra: até 7 dias depois da compra com a análise não usada, ou análise paga e não entregue (o sistema abre esse
-          caso sozinho). O prazo para devolver é de 24 h depois do pedido. Você recebe e-mail na abertura e 4 h antes do fim
+          Regra: só se o serviço não foi executado e só até 7 dias depois da compra — análise não usada, ou paga e não
+          entregue (o sistema abre esse caso sozinho e avisa por e-mail). Não há botão para o cliente: o pedido chega pelo
+          suporte e você o registra abaixo. O prazo para devolver é de 24 h; o e-mail de lembrete sai 4 h antes do fim
           (endereço em Configurações → ADMIN_ALERT_EMAIL).
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
+        <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 space-y-2">
+          <p className="text-sm font-semibold">Registrar pedido que chegou pelo suporte</p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              value={regEmail}
+              onChange={(e) => setRegEmail(e.target.value)}
+              placeholder="E-mail da conta do cliente"
+              className="h-9 flex-1 rounded-md border border-slate-300 px-2.5 text-sm"
+            />
+            <input
+              value={regReason}
+              onChange={(e) => setRegReason(e.target.value)}
+              placeholder="Motivo (opcional)"
+              className="h-9 flex-1 rounded-md border border-slate-300 px-2.5 text-sm"
+            />
+            <Button size="sm" disabled={registering || !regEmail.trim()} onClick={register}>
+              Registrar
+            </Button>
+          </div>
+          <p className="text-xs text-slate-500">
+            O sistema procura as compras pagas dos últimos 7 dias dessa conta e só abre pedido para as que estão dentro da regra.
+          </p>
+        </div>
         {rows && rows.length === 0 && <p className="text-sm text-slate-500">Nenhum pedido de reembolso.</p>}
         {rows?.map((r) => {
           const left = timeLeft(new Date(r.dueAt))
@@ -96,7 +153,7 @@ export function RefundsAdmin() {
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="font-semibold">{r.user.email}</span>
                 <Badge variant="outline" className={ELIGIBILITY[r.eligibility].className}>{ELIGIBILITY[r.eligibility].label}</Badge>
-                <Badge variant="outline">{r.source === 'auto_failure' ? 'Aberto pelo sistema' : 'Pedido do cliente'}</Badge>
+                <Badge variant="outline">{r.source === 'auto_failure' ? 'Aberto pelo sistema' : 'Pedido pelo suporte'}</Badge>
                 <Badge variant="outline">{STATUS[r.status]}</Badge>
                 {r.status === 'pending' && (
                   <span className={`text-xs font-bold ${left.overdue ? 'text-red-600' : left.hours < 4 ? 'text-amber-700' : 'text-slate-600'}`}>

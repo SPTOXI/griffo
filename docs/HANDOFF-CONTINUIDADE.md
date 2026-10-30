@@ -1534,7 +1534,7 @@ painel e pedem correções opostas.
 **Decididas e feitas em 30/10 (§2.163)**
 - ✅ Preço de Suíça, Estônia e Hungria.
 - ✅ Cadastro no idioma da página.
-- ✅ Regra de reembolso, com a aba "Reembolsos" no admin.
+- ✅ Regra de reembolso: só se o serviço não foi executado, só até 7 dias. Sem botão para o cliente: o pedido chega pelo suporte e é registrado na aba "Reembolsos" do admin.
 - ⏸ Escada de preços (Passe 24h): segurada até o funil mostrar gente clicando em "ver todas" sem comprar.
 
 **Reembolso: o que conferir**

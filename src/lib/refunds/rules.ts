@@ -1,11 +1,12 @@
 /**
  * Regra de reembolso (§2.163), decidida pelo operador em 30/10/2026:
  *
- * - Até 7 dias depois da compra, com a análise ainda não usada: reembolso sem
- *   perguntas. Os 7 dias são o direito de arrependimento do CDC (art. 49) para
- *   compra pela internet, aplicado a todos os países.
- * - Análise paga e não entregue (falha nossa): reembolso, mesmo sem a pessoa
- *   pedir — o sistema abre o caso sozinho.
+ * - Só se o serviço não foi executado, e só até 7 dias depois da compra (o
+ *   direito de arrependimento do CDC, art. 49, aplicado a todos os países):
+ *   análise ainda não usada, ou paga e não entregue (falha nossa — o sistema
+ *   abre esse caso sozinho). Um segundo depois dos 7 dias, nada.
+ * - Não há botão para o cliente: o pedido chega pelo suporte e o admin o
+ *   registra na aba "Reembolsos".
  * - O dinheiro volta em até 24 h depois de o pedido ser aberto (`dueAt`). Quem
  *   aprova é o admin; o sistema avisa por e-mail na abertura e 4 h antes do fim.
  *
@@ -39,9 +40,13 @@ export interface PurchaseFacts {
  * se o saldo não cobre as duas — o admin decide.
  */
 export function eligibilityOf(f: PurchaseFacts, now: Date = new Date()): RefundEligibility {
-  if (f.hasFailedDelivery) return 'failure'
+  // Prazo rígido (operador, 30/10/2026): um segundo depois dos 7 dias não há
+  // reembolso, nem por falha. Análise que falhou pode ser gerada de novo sem
+  // pagar outra vez — o currículo continua destravado.
   const withinWindow = now.getTime() - f.purchasedAt.getTime() <= REFUND_WINDOW_DAYS * DAY
-  if (withinWindow && f.balance >= f.quantity) return 'unused'
+  if (!withinWindow) return 'outside_rules'
+  if (f.hasFailedDelivery) return 'failure'
+  if (f.balance >= f.quantity) return 'unused'
   return 'outside_rules'
 }
 

@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getAdminUser } from '@/lib/admin'
 import { db } from '@/lib/db'
-import { executeRefund, rejectRefund } from '@/lib/refunds/server'
+import { executeRefund, registerSupportRequest, rejectRefund } from '@/lib/refunds/server'
 
 /** Fila de reembolsos do admin (§2.163): pendentes primeiro, pelo prazo. */
 export async function GET() {
@@ -40,4 +40,14 @@ export async function PATCH(req: Request) {
   const { id, action, note } = parsed.data
   const result = action === 'refund' ? await executeRefund(id, admin.id) : await rejectRefund(id, admin.id, note || '')
   return NextResponse.json(result, { status: result.ok ? 200 : 409 })
+}
+
+/** Pedido que chegou pelo suporte: o admin registra pelo e-mail da conta. */
+export async function POST(req: Request) {
+  if (!(await getAdminUser())) return NextResponse.json({ error: 'Acesso restrito a administradores.' }, { status: 403 })
+  const parsed = z
+    .object({ email: z.string().trim().email().max(254), reason: z.string().trim().max(1000).optional() })
+    .safeParse(await req.json().catch(() => null))
+  if (!parsed.success) return NextResponse.json({ error: 'Informe um e-mail válido.' }, { status: 400 })
+  return NextResponse.json(await registerSupportRequest(parsed.data.email, parsed.data.reason || null))
 }

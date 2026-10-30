@@ -21,8 +21,10 @@ test('depois dos 7 dias, ou com a análise usada: fora da regra', () => {
   assert.equal(eligibilityOf({ purchasedAt: ago(D), quantity: 5, balance: 4, hasFailedDelivery: false }, now), 'outside_rules')
 })
 
-test('análise paga e não entregue vale mesmo depois dos 7 dias', () => {
-  assert.equal(eligibilityOf({ purchasedAt: ago(20 * D), quantity: 1, balance: 0, hasFailedDelivery: true }, now), 'failure')
+test('análise paga e não entregue vale dentro dos 7 dias, e nada vale depois deles', () => {
+  assert.equal(eligibilityOf({ purchasedAt: ago(3 * D), quantity: 1, balance: 0, hasFailedDelivery: true }, now), 'failure')
+  assert.equal(eligibilityOf({ purchasedAt: ago(7 * D + 1000), quantity: 1, balance: 0, hasFailedDelivery: true }, now), 'outside_rules')
+  assert.equal(eligibilityOf({ purchasedAt: ago(7 * D + 1000), quantity: 1, balance: 1, hasFailedDelivery: false }, now), 'outside_rules')
 })
 
 test('falha de entrega: job falhou, ou destravado há mais de 2 h sem análise', () => {
@@ -59,8 +61,12 @@ test('os 12 idiomas do reembolso têm as mesmas chaves e marcadores', () => {
   }
 })
 
-test('o texto da regra não promete dinheiro na conta em 24 h', () => {
+test('o texto da regra cita os 7 dias e não promete dinheiro na conta em 24 h', () => {
   // A Stripe devolve na hora; o tempo até a fatura é do banco do cliente.
-  for (const lang of LANGUAGES) assert.match(REFUND_COPY[lang].policy, /24/)
-  assert.match(REFUND_COPY.pt.policy, /Iniciamos a devolução/)
+  for (const lang of LANGUAGES) {
+    assert.match(REFUND_COPY[lang].policy, /24/, lang)
+    assert.match(REFUND_COPY[lang].policy, /7/, lang)
+    assert.match(REFUND_COPY[lang].requestHow, /\{email\}/, lang)
+  }
+  assert.match(REFUND_COPY.pt.policy, /iniciamos a devolução/)
 })
