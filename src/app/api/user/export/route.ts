@@ -24,7 +24,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 })
     }
 
-    const [resumes, analysisLedger, creditTransactions, subscriptions, auditLogs, radarOffers, testimonials] =
+    const [resumes, analysisLedger, creditTransactions, subscriptions, auditLogs, radarOffers, testimonials, refundRequests] =
       await Promise.all([
       db.resume.findMany({
         where: { userId: user.id },
@@ -65,6 +65,12 @@ export async function GET() {
         orderBy: { createdAt: 'desc' },
         select: { displayName: true, city: true, role: true, text: true, status: true, createdAt: true },
       }),
+      // Pedidos de reembolso (§2.163). A nota interna do admin fica de fora.
+      db.refundRequest.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+        select: { source: true, eligibility: true, reason: true, quantity: true, currency: true, amountLocal: true, status: true, createdAt: true, decidedAt: true },
+      }),
     ])
 
     const payload = {
@@ -91,6 +97,7 @@ export async function GET() {
       },
       radarOffers,
       testimonials,
+      refundRequests,
       resumes: resumes.map((r) => ({
         id: r.id,
         originalContent: r.originalContent,

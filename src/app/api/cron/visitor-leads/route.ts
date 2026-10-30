@@ -5,6 +5,7 @@ export const maxDuration = 60
 import { cronAuthorized } from '@/lib/cron-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { purgeExpiredVisitorLeads, sendDueNurtureEmails } from '@/lib/match-preview/server'
+import { detectDeliveryFailures, sendRefundReminders } from '@/lib/refunds/server'
 
 /**
  * Purga horária dos currículos enviados sem conta na landing (§2.132).
@@ -15,6 +16,9 @@ import { purgeExpiredVisitorLeads, sendDueNurtureEmails } from '@/lib/match-prev
  * hora em hora (`.github/workflows/visitor-leads-hourly.yml`), e a linha vence
  * em 22h (`DELETE_AFTER_HOURS`), com folga para o atraso de agendamento do
  * GitHub Actions.
+ *
+ * Também roda aqui a fila de reembolso (casos de falha de entrega e lembrete
+ * ao admin, §2.163).
  *
  * Na mesma rodada sai a sequência de e-mails de quem pediu vagas e dicas
  * (`sendDueNurtureEmails`, dias 1, 3 e 7), para não ocupar outro agendamento.
@@ -42,7 +46,15 @@ export async function GET(req: NextRequest) {
       console.error('[cron/visitor-leads] Falha na sequência de e-mails:', e?.message || e)
       return null
     })
-    return NextResponse.json({ ok: true, deleted, nurture })
+    // Reembolso (§2.163): análise paga não entregue vira caso aberto, e o admin
+    // é lembrado 4 h antes do prazo de 24 h. Na mesma rodada horária.
+    const refunds = await Promise.all([detectDeliveryFailures(), sendRefundReminders()])
+      .then(([opened, reminded]) => ({ opened, reminded }))
+      .catch((e: any) => {
+        console.error('[cron/visitor-leads] Falha nos reembolsos:', e?.message || e)
+        return null
+      })
+    return NextResponse.json({ ok: true, deleted, nurture, refunds })
   } catch (e: any) {
     console.error('[cron/visitor-leads] Falha na purga:', e?.message || e)
     return NextResponse.json({ ok: false, error: 'Falha na purga.' }, { status: 500 })

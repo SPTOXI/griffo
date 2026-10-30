@@ -9413,3 +9413,92 @@ O Índice tinha botão no topo da home, item no menu e uma faixa no meio da pág
 **Idiomas:** 12 idiomas (`resume-editor/copy.ts`), com teste de chaves e marcadores.
 
 **Ainda não feito:** Fase 3, responder por voz no celular.
+
+## 2.162 Testes reais do criador e do editor, correções e decisões de tradução (29–30/10/2026)
+
+**Criador de currículo (§2.160), teste no preview pelo celular:**
+- **O fluxo funcionou do começo ao fim:** perguntas, amostra grátis, cadeado no resto, vagas no mapa e rascunho guardado no aparelho.
+- **A IA inventou no primeiro teste.** "Atendia os clientes no balcão" virou "realizando vendas e prestando orientação sobre produtos", que a pessoa não tinha contado.
+  - A regra foi endurecida: um tópico por ação escrita, nenhum complemento de frase, o mesmo tempo verbal em todos os tópicos.
+  - No novo teste a IA não acrescentou nada: "Atendimento de clientes no balcão", "Reposição de produtos na vitrine"...
+- **Custo medido no `AiLog`:** US$ 0,0014 por amostra (Haiku, 967 tokens de entrada e 88 de saída, 3,3 s).
+- **Linha de teste no banco:** os testes criaram linhas em `VisitorLead` e `AnalyticsEvent`. Um evento `lead_submitted` com `builder: true` (id `cmvtvi9g2000008jv5x7kv96t`, 29/10 18:25 UTC) não foi apagado, porque a confirmação do Supabase ficou sem resposta. Ele conta 1 envio a mais naquele dia.
+- As vagas do teste vieram dos EUA porque o servidor de teste fica lá: o país sai do IP de quem acessa. Para quem está no Brasil saem vagas do Brasil.
+
+**Editor por partes (§2.161), teste em produção com uma conta paga de teste:**
+- **O fluxo inteiro funcionou:**
+  1. a reescrita foi gerada;
+  2. "Editar por partes" mostrou cada experiência num bloco;
+  3. "Melhorar com IA" foi pedido com "deixe mais curto e direto";
+  4. a sugestão apareceu ao lado, sem inventar;
+  5. a pessoa usou a versão sugerida e salvou;
+  6. o PDF baixado em seguida trazia o texto novo (conferido no PDF);
+  7. o contador passou a "Restam 19".
+- **Correções do PR #137:**
+  - o título de cada bloco aparecia duas vezes;
+  - no celular, o editor abria fora da tela e agora a tela rola até ele;
+  - a barra de salvar deixava o texto aparecer por trás e agora é opaca.
+
+**Revisão de tradução dos textos novos (agente de tradução):**
+- **Escopo:** criador, editor, mapas, selo das vagas, títulos de seção, botão do mapa e Suíça/Estônia/Hungria.
+- **Resultado:** nenhuma chave faltando, nenhum texto sem traduzir e nenhum marcador quebrado.
+- **Correções do PR #138:**
+  - sueco: "cv" passou a "CV";
+  - inglês: "Complete Analysis", como no app, e "+ Add more education".
+- **Decisões do operador ("o mais eficiente e funcional"), também no PR #138:**
+  - **Nome do produto:** `productTitle` passa ao nome curto em todos os idiomas, o mesmo do criador ("Vollständige Analyse", "Analyse Complète", "フル分析"...). A tela de compra usava nomes longos de marketing, que apareciam até como unidade de preço ("/ vollständige lebenslauf- & karriere-auditanalyse").
+  - **Japonês:** o editor (dentro do app) usa 職務経歴書, como o resto do app. A entrada do criador cita 履歴書・職務経歴書, para atender quem está começando e quem já trabalhou.
+  - **Títulos de seção do currículo em fr/it/nl/sv:** maiúscula só no começo, que é a grafia padrão desses idiomas. Isso vale também para as reescritas novas.
+  - **Árabe:** sem mudança. As frases estavam corretas e mexer não traria ganho.
+
+## 2.163 Preços de Suíça, Estônia e Hungria, cadastro no idioma da página e regra de reembolso (30/10/2026)
+
+**Decisões do operador**, sobre as pendências de §7.16:
+
+1. **Suíça, Estônia e Hungria entram na tabela de preços.** Antes caíam no preço padrão: US$ 9,90, cobrado em dólar.
+
+   | País | Faixa | Moeda | Essencial | Recolocação |
+   |---|---|---|---|---|
+   | Suíça (CH) | 1 | CHF | 8,90 | 31,90 |
+   | Estônia (EE) | 2 | EUR | 6,49 | 21,90 |
+   | Hungria (HU) | 2 | HUF | 2.490 | 8.490 |
+
+   - A Suíça tinha sido proposta a CHF 9,90 / 34,90. Isso daria ~US$ 12,40, 25% acima da âncora de US$ 9,90 da Faixa 1, e o teste do catálogo (tolerância de 15%) recusa. CHF 8,90 / 31,90 ficam 11–12% acima.
+   - A Estônia usa a tabela de euro da Faixa 2, a mesma de Portugal, Espanha e Itália.
+   - Cotações de referência: 1 USD = 0,80 CHF e 360 HUF.
+   - Locales de formatação: de-CH, et-EE e hu-HU.
+   - A Stripe recebe o valor por `price_data` na hora do checkout, então não foi preciso cadastrar preço na Stripe.
+
+2. **O cadastro segue o idioma da página.**
+   - Antes: na rota de país (/br), a tela de cadastro usava o idioma do navegador. No teste, a /br abriu o cadastro em inglês.
+   - Agora a rota de país adota o idioma da página (`adoptPageLang` no contexto de i18n), sem gravar isso como escolha.
+   - Quem escolheu idioma no seletor continua com a escolha dele.
+   - A adoção roda de novo ao abrir o cadastro, porque o palpite de geo-IP termina depois da primeira rodada e trocaria o idioma de volta.
+
+3. **Escada de preços (Passe 24h): segurada.** Recomendação aceita pelo operador: com 112 currículos ainda não se sabe se as pessoas travam no preço do Essencial. O sinal para retomar é muita gente clicando em "ver todas as oportunidades" e não comprando.
+
+4. **Regra de reembolso.** É a versão final, depois de três ajustes do operador no mesmo dia.
+   - **Só se o serviço não foi executado, e só até 7 dias depois da compra.** Valem dois casos: a análise ainda não foi usada, ou foi paga e não entregue. **Um segundo depois dos 7 dias, não há reembolso**, nem por falha. A análise que falhou pode ser gerada de novo sem pagar outra vez, porque o currículo continua destravado. Os 7 dias são o direito de arrependimento do CDC (art. 49), aplicado a todos os países (`refunds/rules.ts`).
+   - **Análise não usada:** o saldo ainda cobre tudo o que a compra deu. No Recolocação, se uma das cinco já foi usada, a compra fica fora da regra.
+   - **Falha de entrega:** a análise foi destravada e não ficou pronta, porque o job falhou ou está há mais de 2 h sem terminar. Sem job não conta, porque a análise nunca foi pedida. O cron horário (`visitor-leads`) abre esses casos sozinho e manda e-mail ao admin.
+   - **Sem botão para o cliente** (decisão do operador). A tela de compra só mostra a regra e diz para escrever ao suporte (`refund-section.tsx`, 12 idiomas). O texto diz "iniciamos a devolução em até 24 horas", não "o dinheiro volta em 24 h": a Stripe devolve na hora, mas o prazo até aparecer na fatura é do banco. A primeira versão tinha um botão e uma rota pública `/api/refunds`, que saíram antes do merge.
+   - **O admin registra o pedido** na aba "Reembolsos", pelo e-mail da conta do cliente (`registerSupportRequest`). O sistema procura as compras pagas dos últimos 7 dias e só abre pedido para as que estão dentro da regra. Quando nada se encaixa, diz por quê: fora do prazo, análise já usada ou pedido já registrado. É um pedido por pagamento (`paymentRef` único).
+   - **Prazo e avisos:**
+     - 24 h para devolver, contadas da abertura do pedido;
+     - e-mail ao admin na abertura automática (falha de entrega) e 4 h antes do fim de qualquer pedido;
+     - os e-mails vão para `ADMIN_ALERT_EMAIL` (Configurações). Como o campo estava vazio em 30/10, vão para as contas de admin;
+     - o pedido só fica marcado como avisado se o e-mail saiu.
+   - **Aba "Reembolsos"** (`refunds-admin.tsx`):
+     - contagem regressiva, se o pedido está dentro ou fora da regra e de onde veio (sistema ou suporte);
+     - aviso quando a análise ficou pronta depois que o caso abriu.
+   - **"Reembolsar"** (`executeRefund`):
+     - devolve pela Stripe na hora (`checkout.session` → `payment_intent`), com chave de idempotência pelo id do pedido;
+     - fora a falha de entrega, tira da conta as análises da compra e grava `refund` no `AnalysisLedger`;
+     - no Recolocação, encerra o passe.
+   - **"Recusar"** grava uma nota interna.
+   - **Banco:** tabela nova `RefundRequest`, com RLS e sem acesso para `anon`/`authenticated`. Os pedidos entram na exportação de dados do titular, sem a nota interna.
+   - **Testes** (`refunds.test.ts`): regra, prazo rígido, lembrete, falha de entrega e os 12 idiomas.
+
+**Ainda não feito:**
+- Um reembolso feito direto no painel da Stripe não atualiza o GriffoWork: não há webhook de `charge.refunded`. Faça os reembolsos pela aba.
+- O cliente não recebe e-mail próprio do GriffoWork quando o reembolso sai. Fica o recibo da Stripe, se os recibos estiverem ligados na conta.

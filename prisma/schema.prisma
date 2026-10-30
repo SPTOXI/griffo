@@ -84,6 +84,7 @@ model User {
   organizationMemberships OrganizationMembership[]
   candidateSubmissions    CandidateSubmission[]
   testimonials Testimonial[]
+  refundRequests RefundRequest[]
 }
 
 /// Quem a pessoa é profissionalmente, e onde ela quer trabalhar.
@@ -1334,4 +1335,38 @@ model VisitorLead {
   @@index([nurtureNextAt])
   @@index([ipKey, createdAt])
   @@index([visitorId, createdAt])
+}
+
+/// Pedido de reembolso (§2.163). Regra do operador: pedido em até 7 dias com
+/// a análise ainda não usada, ou falha na entrega; o admin aprova e o
+/// dinheiro volta em até 24 h (`dueAt`). Um pedido por pagamento.
+model RefundRequest {
+  id          String  @id @default(cuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// `checkout.session.id` da compra (o mesmo `paymentRef` do `AnalysisLedger`).
+  paymentRef  String  @unique
+  /// customer | auto_failure
+  source      String
+  /// unused | failure | outside_rules
+  eligibility String
+  reason      String?
+  resumeId    String?
+  quantity    Int
+  currency    String?
+  amountLocal Float?
+  /// pending | refunded | rejected
+  status      String  @default("pending")
+  dueAt       DateTime
+  remindedAt  DateTime?
+  notifiedAt  DateTime?
+  decidedAt   DateTime?
+  decidedBy   String?
+  adminNote   String?
+  stripeRefundId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@index([status, dueAt])
+  @@index([userId, createdAt])
 }

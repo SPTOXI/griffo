@@ -1514,6 +1514,40 @@ painel e pedem correções opostas.
    - **Medir o funil:** quantos abrem (`builder_opened`), enviam (`lead_submitted` com `builder`) e liberam (`lead_unlock_clicked` com `match_hero_builder`).
    - ✅ **Fase 2** (§2.161): editor por partes com "Melhorar com IA" (20 por currículo). **Medir** o uso em `AiLog` (`resume_block_improve`) e em `AuditLog` (`resume_edited`).
    - **Ainda não feita:** Fase 3 (voz no celular).
+
+### 7.16 Pendências em aberto depois das PRs #130 a #138 (30/10/2026)
+
+**Segurança e limpeza**
+- **Conta de teste** `teste@teste.com.br`: a senha foi passada no chat em 30/10. **Trocar a senha** ou apagar a conta (§2.162).
+- **Evento de teste** `lead_submitted` `cmvtvi9g2000008jv5x7kv96t` (29/10 18:25 UTC): apagar quando o Supabase deixar. Soma 1 envio no funil daquele dia.
+
+**Medir nas próximas semanas**
+- **Criador de currículo:**
+  - custo no `AiLog` (`resume_builder_teaser`, ~US$ 0,0014 cada);
+  - funil: `builder_opened` → `lead_submitted` com `builder` → `lead_unlock_clicked` com `match_hero_builder` → compra.
+- **Editor:** `resume_block_improve` no `AiLog` e `resume_edited` no `AuditLog`. Quantos chegam ao teto de 20.
+- **Selo da home:** volta sozinho a "N currículos analisados" quando os currículos passarem de 1.000.
+
+**A fazer (combinado com o operador)**
+- **Fase 3 do criador:** responder às perguntas por voz no celular.
+
+**Decididas e feitas em 30/10 (§2.163)**
+- ✅ Preço de Suíça, Estônia e Hungria.
+- ✅ Cadastro no idioma da página.
+- ✅ Regra de reembolso: só se o serviço não foi executado, só até 7 dias. Sem botão para o cliente: o pedido chega pelo suporte e é registrado na aba "Reembolsos" do admin.
+- ⏸ Escada de preços (Passe 24h): segurada até o funil mostrar gente clicando em "ver todas" sem comprar.
+
+**Reembolso: o que conferir**
+- **Preencher o e-mail de alertas:** `ADMIN_ALERT_EMAIL` em Configurações do admin. Sem ele, o aviso vai para as contas de admin.
+- **Fazer os reembolsos pela aba, e não pelo painel da Stripe:** não há webhook de `charge.refunded`, então um reembolso feito direto na Stripe não atualiza o saldo no GriffoWork.
+
+**Decisões do operador ainda abertas**
+- WhatsApp Business.
+- Busca de candidatos no Enterprise.
+
+**Para um falante nativo confirmar, sem urgência**
+- Ordem das palavras em algumas frases em árabe.
+- Tom formal ou informal entre idiomas: alemão usa "Sie", e holandês, espanhol, italiano e chinês usam "você".
 ---
 
 ## 8. O que fazer antes de tocar em qualquer coisa

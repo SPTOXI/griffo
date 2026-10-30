@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { useI18n } from '@/context/i18n-context'
 import { salesMailto } from '@/lib/i18n/contact'
 import { useAnalyses, startCheckout, type CheckoutSku } from '@/hooks/use-analyses'
+import { RefundSection } from './refund-section'
 
 /**
  * A tela de compra.
@@ -256,6 +257,9 @@ export function PlansView() {
           </CardContent>
         </Card>
       )}
+
+      {/* Reembolso (§2.163): a regra escrita e o pedido por compra. */}
+      <RefundSection lang={lang} />
     </div>
   )
 }

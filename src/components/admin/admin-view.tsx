@@ -22,11 +22,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Shield, Users, CreditCard, Cpu, Search, Loader2, Save, RefreshCw, Activity,
   BarChart3, Zap, DollarSign, TrendingUp, Percent, Trash2, Power, Plus, Key, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Award, UserPlus, Minus, Pencil, Globe,
-  Radar as RadarIcon, MapPin, MessageSquareQuote
+  Radar as RadarIcon, MapPin, MessageSquareQuote,
+  RotateCcw,
 } from 'lucide-react'
 import { RadarQuotas } from './radar-quotas'
 import { CityRegistry } from './city-registry'
 import { TestimonialsAdmin } from './testimonials-admin'
+import { RefundsAdmin } from './refunds-admin'
 import { toast } from 'sonner'
 import { slowModelWarning } from '@/lib/model-warnings'
 import {
@@ -925,6 +927,9 @@ function AdminViewContent() {
           <TabsTrigger value="radar" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
             <RadarIcon className="w-5 h-5 text-indigo-600" /> <span className="font-semibold text-sm">Radar e Cotas</span>
           </TabsTrigger>
+          <TabsTrigger value="refunds" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
+            <RotateCcw className="w-5 h-5 text-red-600" /> <span className="font-semibold text-sm">Reembolsos</span>
+          </TabsTrigger>
           <TabsTrigger value="testimonials" className="h-14 flex justify-start px-4 border bg-white shadow-sm data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 transition-all gap-3">
             <MessageSquareQuote className="w-5 h-5 text-teal-600" /> <span className="font-semibold text-sm">Depoimentos</span>
           </TabsTrigger>
@@ -946,6 +951,11 @@ function AdminViewContent() {
         {/* Fila das grafias de cidade das páginas `/[país]/jobs`. */}
         <TabsContent value="cities" className="space-y-4">
           <CityRegistry />
+        </TabsContent>
+
+        {/* Reembolsos (§2.163): prazo de 24 h por pedido. */}
+        <TabsContent value="refunds" className="space-y-4">
+          <RefundsAdmin />
         </TabsContent>
 
         <TabsContent value="testimonials" className="space-y-4">
