@@ -125,6 +125,9 @@ const RULES: Rule[] = [
   { prefix: '/api/resume/upload', limit: 15, windowMs: 10 * 60_000 },
   { prefix: '/api/resume/profile-pdf-text', limit: 10, windowMs: 10 * 60_000 },
   { prefix: '/api/resume/cover-letter', limit: 10, windowMs: 10 * 60_000 },
+  // Editor por partes (§2.161): salvar e "melhorar com IA". O teto por
+  // currículo (`MAX_BLOCK_IMPROVEMENTS`) já limita o gasto; isto segura rajada.
+  { prefix: '/api/resume/edit', limit: 40, windowMs: 10 * 60_000 },
   { prefix: '/api/radar/prepare', limit: 10, windowMs: 10 * 60_000 },
   { prefix: '/api/radar/interview-prep', limit: 10, windowMs: 10 * 60_000 },
   { prefix: '/api/radar/search-now', limit: 10, windowMs: 10 * 60_000 },

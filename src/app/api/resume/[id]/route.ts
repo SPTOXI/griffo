@@ -34,6 +34,7 @@ export async function GET(
           socialLinksJson: true,
           previewJson: true,
           unlockedAt: true,
+          blockImprovements: true,
         },
       })
       if (!resume) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })

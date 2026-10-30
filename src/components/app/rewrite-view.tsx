@@ -20,6 +20,8 @@ import { toast } from 'sonner'
 import ReactMarkdown from 'react-markdown'
 import { useI18n } from '@/context/i18n-context'
 import type { Language } from '@/lib/i18n'
+import { ResumeSectionEditor } from './resume-section-editor'
+import { RESUME_EDITOR_COPY } from '@/lib/resume-editor/copy'
 
 interface Resume {
   id: string
@@ -27,6 +29,8 @@ interface Resume {
   originalContent: string
   rewrittenContent: string | null
   analysis: any
+  /** Melhorias com IA já usadas no editor por partes (§2.161). */
+  blockImprovements?: number
 }
 
 const TARGET_MARKET_OPTIONS = [
@@ -59,6 +63,7 @@ export function RewriteView() {
   const [authorized, setAuthorized] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showOriginal, setShowOriginal] = useState(false)
+  const [editorOpen, setEditorOpen] = useState(false)
   const [downloadingType, setDownloadingType] = useState<string | null>(null)
   const [selectedMarket, setSelectedMarket] = useState<string>(() => {
     const defaultMarket = TARGET_MARKET_OPTIONS.find((m) => m.lang === lang)?.id || 'BR'
@@ -434,7 +439,24 @@ export function RewriteView() {
             </Card>
           )}
 
+          {editorOpen && resume.rewrittenContent ? (
+            <ResumeSectionEditor
+              resumeId={resume.id}
+              content={resume.rewrittenContent}
+              used={resume.blockImprovements ?? 0}
+              lang={lang}
+              onSaved={() => void loadResume(resume.id)}
+              onClose={() => {
+                setEditorOpen(false)
+                void loadResume(resume.id)
+              }}
+            />
+          ) : (
+          <>
           <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => { setShowOriginal(false); setEditorOpen(true) }} className="bg-primary font-bold">
+              <FileEdit className="w-4 h-4 mr-1" /> {(RESUME_EDITOR_COPY[lang] ?? RESUME_EDITOR_COPY.en).openCta}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setShowOriginal(!showOriginal)}>
               <Eye className="w-4 h-4 mr-1" /> {showOriginal ? rw.viewRewrittenCta : rw.viewOriginalCta}
             </Button>
@@ -539,6 +561,8 @@ export function RewriteView() {
               </ScrollArea>
             </CardContent>
           </Card>
+          </>
+          )}
 
           {/* CONFIRMATION */}
           <Card>

@@ -290,6 +290,10 @@ model Resume {
   /// vezes o usuário quiser, sem nova cobrança.
   unlockedAt DateTime?
 
+  /// Quantas vezes a pessoa usou "melhorar com IA" num bloco deste currículo
+  /// (editor por partes, §2.161). O teto é `MAX_BLOCK_IMPROVEMENTS`.
+  blockImprovements Int @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
