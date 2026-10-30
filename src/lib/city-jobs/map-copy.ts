@@ -174,7 +174,7 @@ const sv: JobsMapCopy = {
   jobsIn: 'Jobb i {city}',
   seeAll: 'Se alla {n} jobb i {city}',
   close: 'Stäng',
-  jobCta: 'Se ditt cv:s betyg och om det tar sig igenom jobbets urvalssystem (ATS)',
+  jobCta: 'Se ditt CV:s betyg och om det tar sig igenom jobbets urvalssystem (ATS)',
   topCities: 'Städer med flest jobb',
   listLink: 'Visa som lista',
   noData: 'Det finns inga städer på kartan för det här landet ännu.',
