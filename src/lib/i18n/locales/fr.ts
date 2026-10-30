@@ -184,7 +184,7 @@ export const fr: TranslationDictionary = {
     badge: 'Tarification Transparente',
     title: 'Investissez dans votre avenir professionnel',
     subtitle: 'Paiement unique sans abonnement caché ni renouvellement automatique.',
-    productTitle: 'Audit Complet du CV & Intelligence de Carrière',
+    productTitle: 'Analyse Complète',
     singleTitle: 'Essentiel',
     singleDesc: 'Vous cherchez un emploi maintenant ? Découvrez pourquoi votre CV ne passe pas les filtres et recevez la version corrigée, la lettre et les bonnes offres pour vous.',
     productDesc: 'Paiement unique pour une évaluation technique complète et l\'optimisation de votre CV.',

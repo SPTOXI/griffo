@@ -184,7 +184,7 @@ export const nl: TranslationDictionary = {
     badge: 'Transparante Prijzen',
     title: 'Investeer in je professionele toekomst',
     subtitle: 'Eenmalige betaling zonder verborgen kosten of automatische verlengingen.',
-    productTitle: 'Volledige Cv-Audit & Carrière-intelligentie',
+    productTitle: 'Volledige Analyse',
     singleTitle: 'Essentieel',
     singleDesc: 'Zoek je nu werk? Ontdek waarom je cv niet door de filters komt en krijg de verbeterde versie, de brief en de juiste vacatures voor jou.',
     productDesc: 'Eenmalige aankoop voor een diepgaande technische beoordeling en optimalisatie.',

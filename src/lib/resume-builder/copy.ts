@@ -405,8 +405,8 @@ export const RESUME_BUILDER_COPY: Record<Language, ResumeBuilderCopy> = {
     appNotice: 'CV:t du skapade på startsidan finns redan här. Granska det och skicka in det så skriver AI:n den fullständiga versionen.',
   },
   ja: {
-    openLink: '履歴書がない方は — AIで作成',
-    backToUpload: '履歴書を持っています',
+    openLink: '履歴書・職務経歴書がない方は — AIで作成',
+    backToUpload: '履歴書・職務経歴書を持っています',
     title: '履歴書を作成しましょう',
     intro: 'ご自身の言葉で答えてください。AIが何も付け加えずに、プロフェッショナルな履歴書に仕上げます。',
     stepOf: 'ステップ {n} / {total}',

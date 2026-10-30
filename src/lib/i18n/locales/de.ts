@@ -184,7 +184,7 @@ export const de: TranslationDictionary = {
     badge: 'Transparente Preise',
     title: 'Investieren Sie in Ihren nächsten Karriereschritt',
     subtitle: 'Einmalige Zahlung ohne versteckte Abonnements oder automatische Verlängerungen.',
-    productTitle: 'Vollständige Lebenslauf- & Karriere-Auditanalyse',
+    productTitle: 'Vollständige Analyse',
     singleTitle: 'Basis',
     singleDesc: 'Sie suchen gerade eine Stelle? Erfahren Sie, warum Ihr Lebenslauf an den Filtern scheitert, und erhalten Sie die korrigierte Fassung, das Anschreiben und passende Stellen.',
     productDesc: 'Einmaliger Kauf für eine umfassende technische Lebenslaufanalyse und -optimierung.',

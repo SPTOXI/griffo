@@ -184,7 +184,7 @@ export const sv: TranslationDictionary = {
     badge: 'Tydliga Priser',
     title: 'Investera i din professionella framtid',
     subtitle: 'Engångsbetalning utan dolda avgifter eller automatiska förnyelser.',
-    productTitle: 'Komplett CV-Granskning & Karriärintelligens',
+    productTitle: 'Fullständig Analys',
     singleTitle: 'Bas',
     singleDesc: 'Söker du jobb just nu? Ta reda på varför ditt CV fastnar i filtren och få den rättade versionen, brevet och rätt tjänster för dig.',
     productDesc: 'Engångsköp för en djupgående teknisk utvärdering och CV-optimering.',
