@@ -191,7 +191,7 @@ export function ResumeSectionEditor(props: {
           )
         )}
 
-        <div className="sticky bottom-0 flex flex-col gap-2 border-t border-slate-200 bg-white/95 pt-3 sm:flex-row sm:items-center">
+        <div className="sticky bottom-0 z-10 flex flex-col gap-2 border-t border-slate-200 bg-white py-3 sm:flex-row sm:items-center">
           {dirty && <p className="text-xs font-semibold text-amber-700">{c.unsaved}</p>}
           <div className="flex gap-2 sm:ms-auto">
             <Button variant="outline" onClick={props.onClose}>
