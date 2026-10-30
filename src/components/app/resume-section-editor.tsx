@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { toast } from 'sonner'
 import { Check, Loader2, Pencil, Save, Sparkles, X } from 'lucide-react'
@@ -44,6 +44,9 @@ export function ResumeSectionEditor(props: {
   const [remaining, setRemaining] = useState(Math.max(0, MAX_BLOCK_IMPROVEMENTS - props.used))
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
+  // No celular o editor abre abaixo das palavras-chave, fora da tela: rola até ele.
+  const rootRef = useRef<HTMLDivElement>(null)
+  useEffect(() => rootRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), [])
 
   const setText = (i: number, text: string) => {
     setBlocks((bs) => bs.map((b, j) => (j === i ? { ...b, text } : b)))
@@ -112,7 +115,7 @@ export function ResumeSectionEditor(props: {
   }
 
   return (
-    <Card className="border-primary/30">
+    <Card ref={rootRef} className="scroll-mt-20 border-primary/30">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Pencil className="h-4 w-4 text-primary" /> {c.title}
@@ -128,9 +131,10 @@ export function ResumeSectionEditor(props: {
             </p>
           ) : (
             <div key={i} className="rounded-xl border border-slate-200 bg-white p-3">
-              <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                {b.heading ? b.heading.replace(/^#+\s*/, '') : c.topBlock}
-              </p>
+              {/* O título do bloco já aparece no próprio texto; só o topo ganha rótulo. */}
+              {!b.heading && (
+                <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">{c.topBlock}</p>
+              )}
               {editing === i ? (
                 <textarea
                   value={b.text}
@@ -187,7 +191,7 @@ export function ResumeSectionEditor(props: {
           )
         )}
 
-        <div className="sticky bottom-0 flex flex-col gap-2 border-t border-slate-200 bg-white/95 pt-3 sm:flex-row sm:items-center">
+        <div className="sticky bottom-0 z-10 flex flex-col gap-2 border-t border-slate-200 bg-white py-3 sm:flex-row sm:items-center">
           {dirty && <p className="text-xs font-semibold text-amber-700">{c.unsaved}</p>}
           <div className="flex gap-2 sm:ms-auto">
             <Button variant="outline" onClick={props.onClose}>
