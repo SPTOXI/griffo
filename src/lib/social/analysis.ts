@@ -168,10 +168,17 @@ Responda APENAS o JSON do schema, sem texto antes ou depois.`,
   // Medição, não bloqueio — mesma postura de `runners/cover-letter.ts`: os
   // limiares ainda não foram calibrados, então primeiro a distribuição aparece
   // no log. O headline sozinho é curto demais para ser julgado; vai junto.
+  //
+  // Diferente da carta, o "Sobre" pedido aqui tem até 6 linhas e costuma
+  // ficar abaixo do piso de `assessWriting` — sem juízo, o nível fica 'ok'
+  // mesmo com "profissional proativo" no meio. O clichê encontrado é fato, não
+  // tendência, então vai para o log com ou sem juízo.
   const writing = writingLang ? assessWriting(`${headline}\n\n${aboutSummary}`, writingLang) : null
-  if (writing && writing.judged && writing.level !== 'ok') {
+  const flagged =
+    writing && (writing.hits.length > 0 || writing.structures.length > 0 || (writing.judged && writing.level !== 'ok'))
+  if (writing && flagged) {
     console.warn(
-      `[slop] social ${profile.platform} ${writing.level} resume=${ctx.resumeId} ` +
+      `[slop] social ${profile.platform} ${writing.judged ? writing.level : 'sem-juízo'} resume=${ctx.resumeId} ` +
         `clichês/100=${writing.slopPer100.toFixed(2)} ` +
         `variação=${writing.burstiness.toFixed(2)} ` +
         `concretude/100=${writing.concretePer100.toFixed(2)} ` +
