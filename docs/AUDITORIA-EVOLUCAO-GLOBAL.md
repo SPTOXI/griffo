@@ -9413,3 +9413,40 @@ O Índice tinha botão no topo da home, item no menu e uma faixa no meio da pág
 **Idiomas:** 12 idiomas (`resume-editor/copy.ts`), com teste de chaves e marcadores.
 
 **Ainda não feito:** Fase 3, responder por voz no celular.
+
+## 2.162 Testes reais do criador e do editor, correções e decisões de tradução (29–30/10/2026)
+
+**Criador de currículo (§2.160), teste no preview pelo celular:**
+- **O fluxo funcionou do começo ao fim:** perguntas, amostra grátis, cadeado no resto, vagas no mapa e rascunho guardado no aparelho.
+- **A IA inventou no primeiro teste.** "Atendia os clientes no balcão" virou "realizando vendas e prestando orientação sobre produtos", que a pessoa não tinha contado.
+  - A regra foi endurecida: um tópico por ação escrita, nenhum complemento de frase, o mesmo tempo verbal em todos os tópicos.
+  - No novo teste a IA não acrescentou nada: "Atendimento de clientes no balcão", "Reposição de produtos na vitrine"...
+- **Custo medido no `AiLog`:** US$ 0,0014 por amostra (Haiku, 967 tokens de entrada e 88 de saída, 3,3 s).
+- **Linha de teste no banco:** os testes criaram linhas em `VisitorLead` e `AnalyticsEvent`. Um evento `lead_submitted` com `builder: true` (id `cmvtvi9g2000008jv5x7kv96t`, 29/10 18:25 UTC) não foi apagado, porque a confirmação do Supabase ficou sem resposta. Ele conta 1 envio a mais naquele dia.
+- As vagas do teste vieram dos EUA porque o servidor de teste fica lá: o país sai do IP de quem acessa. Para quem está no Brasil saem vagas do Brasil.
+
+**Editor por partes (§2.161), teste em produção com uma conta paga de teste:**
+- **O fluxo inteiro funcionou:**
+  1. a reescrita foi gerada;
+  2. "Editar por partes" mostrou cada experiência num bloco;
+  3. "Melhorar com IA" foi pedido com "deixe mais curto e direto";
+  4. a sugestão apareceu ao lado, sem inventar;
+  5. a pessoa usou a versão sugerida e salvou;
+  6. o PDF baixado em seguida trazia o texto novo (conferido no PDF);
+  7. o contador passou a "Restam 19".
+- **Correções do PR #137:**
+  - o título de cada bloco aparecia duas vezes;
+  - no celular, o editor abria fora da tela e agora a tela rola até ele;
+  - a barra de salvar deixava o texto aparecer por trás e agora é opaca.
+
+**Revisão de tradução dos textos novos (agente de tradução):**
+- **Escopo:** criador, editor, mapas, selo das vagas, títulos de seção, botão do mapa e Suíça/Estônia/Hungria.
+- **Resultado:** nenhuma chave faltando, nenhum texto sem traduzir e nenhum marcador quebrado.
+- **Correções do PR #138:**
+  - sueco: "cv" passou a "CV";
+  - inglês: "Complete Analysis", como no app, e "+ Add more education".
+- **Decisões do operador ("o mais eficiente e funcional"), também no PR #138:**
+  - **Nome do produto:** `productTitle` passa ao nome curto em todos os idiomas, o mesmo do criador ("Vollständige Analyse", "Analyse Complète", "フル分析"...). A tela de compra usava nomes longos de marketing, que apareciam até como unidade de preço ("/ vollständige lebenslauf- & karriere-auditanalyse").
+  - **Japonês:** o editor (dentro do app) usa 職務経歴書, como o resto do app. A entrada do criador cita 履歴書・職務経歴書, para atender quem está começando e quem já trabalhou.
+  - **Títulos de seção do currículo em fr/it/nl/sv:** maiúscula só no começo, que é a grafia padrão desses idiomas. Isso vale também para as reescritas novas.
+  - **Árabe:** sem mudança. As frases estavam corretas e mexer não traria ganho.

@@ -1514,6 +1514,31 @@ painel e pedem correções opostas.
    - **Medir o funil:** quantos abrem (`builder_opened`), enviam (`lead_submitted` com `builder`) e liberam (`lead_unlock_clicked` com `match_hero_builder`).
    - ✅ **Fase 2** (§2.161): editor por partes com "Melhorar com IA" (20 por currículo). **Medir** o uso em `AiLog` (`resume_block_improve`) e em `AuditLog` (`resume_edited`).
    - **Ainda não feita:** Fase 3 (voz no celular).
+
+### 7.16 Pendências em aberto depois das PRs #130 a #138 (30/10/2026)
+
+**Segurança e limpeza**
+- **Conta de teste** `teste@teste.com.br`: a senha foi passada no chat em 30/10. **Trocar a senha** ou apagar a conta (§2.162).
+- **Evento de teste** `lead_submitted` `cmvtvi9g2000008jv5x7kv96t` (29/10 18:25 UTC): apagar quando o Supabase deixar. Soma 1 envio no funil daquele dia.
+
+**Medir nas próximas semanas**
+- **Criador de currículo:**
+  - custo no `AiLog` (`resume_builder_teaser`, ~US$ 0,0014 cada);
+  - funil: `builder_opened` → `lead_submitted` com `builder` → `lead_unlock_clicked` com `match_hero_builder` → compra.
+- **Editor:** `resume_block_improve` no `AiLog` e `resume_edited` no `AuditLog`. Quantos chegam ao teto de 20.
+- **Selo da home:** volta sozinho a "N currículos analisados" quando os currículos passarem de 1.000.
+
+**A fazer (combinado com o operador)**
+- **Fase 3 do criador:** responder às perguntas por voz no celular.
+
+**Decisões do operador ainda abertas**
+- Preço de Suíça, Estônia e Hungria (hoje Faixa 1, US$ 9,90).
+- Se a tela de cadastro deve seguir o idioma da página. No teste, a home /br abriu o cadastro em inglês.
+- As de §7.13: escada de preços, regra de garantia/reembolso, WhatsApp Business e busca de candidatos no Enterprise.
+
+**Para um falante nativo confirmar, sem urgência**
+- Ordem das palavras em algumas frases em árabe.
+- Tom formal ou informal entre idiomas: alemão usa "Sie", e holandês, espanhol, italiano e chinês usam "você".
 ---
 
 ## 8. O que fazer antes de tocar em qualquer coisa
