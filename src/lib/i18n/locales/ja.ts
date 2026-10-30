@@ -184,7 +184,7 @@ export const ja: TranslationDictionary = {
     badge: '明瞭な料金体系',
     title: 'キャリアの次のステージへの確かな投資',
     subtitle: '追加料金や自動更新のない、安心の都度払いシステム。',
-    productTitle: '総合経歴書診断＆キャリアインテリジェンス',
+    productTitle: 'フル分析',
     singleTitle: 'エッセンシャル',
     singleDesc: '今すぐ仕事を探していますか？履歴書が選考フィルターを通らない理由を知り、修正版・カバーレター・あなたに合う求人を受け取れます。',
     productDesc: '専門的な技術診断と経歴書最適化をすべて含む一括プラン。',

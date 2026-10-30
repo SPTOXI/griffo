@@ -184,7 +184,7 @@ export const ko: TranslationDictionary = {
     badge: '투명한 요금제',
     title: '당신의 커리어 성공을 위한 투자',
     subtitle: '숨겨진 수수료나 자동 정기 결제가 없는 단 1회 결제 플랜.',
-    productTitle: '이력서 종합 감사 및 커리어 인텔리전스',
+    productTitle: '전체 분석',
     singleTitle: '에센셜',
     singleDesc: '지금 일자리를 찾고 계신가요? 이력서가 필터를 통과하지 못하는 이유를 알고, 수정본과 자기소개서, 맞춤 채용 공고를 받아보세요.',
     productDesc: '1회 결제로 심층 기술 평가와 이력서 재작성 권한을 모두 이용하세요.',

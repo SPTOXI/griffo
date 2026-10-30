@@ -184,7 +184,7 @@ export const zh: TranslationDictionary = {
     badge: '透明定价',
     title: '投资您的职业未来',
     subtitle: '单次买断制，绝无任何隐藏扣费或自动续订。',
-    productTitle: '全面简历审计与职业智能服务',
+    productTitle: '完整分析',
     singleTitle: '基础版',
     singleDesc: '正在找工作？了解你的简历为何过不了筛选，并获得修改版简历、求职信和适合你的职位。',
     productDesc: '一次性购买即可获得深度技术评估与完整的简历重写优化。',

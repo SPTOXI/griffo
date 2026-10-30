@@ -184,7 +184,7 @@ export const it: TranslationDictionary = {
     badge: 'Prezzi Trasparenti',
     title: 'Investi nel tuo futuro professionale',
     subtitle: 'Pagamento una tantum senza abbonamenti nascosti o rinnovi automatici.',
-    productTitle: 'Audit Completo del CV & Career Intelligence',
+    productTitle: 'Analisi Completa',
     singleTitle: 'Essenziale',
     singleDesc: 'Cerchi lavoro adesso? Scopri perché il tuo CV non supera i filtri e ricevi la versione corretta, la lettera e le offerte giuste per te.',
     productDesc: 'Acquisto una tantum per una valutazione tecnica approfondita e l\'ottimizzazione del CV.',
