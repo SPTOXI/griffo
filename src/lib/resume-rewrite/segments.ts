@@ -83,7 +83,7 @@ NÃO produza experiências, formação, habilidades, idiomas ou certificações 
 
 SUA SEÇÃO: '## ${titles.experience}' — e SÓ ela, completa, sem cortar nenhuma vaga do currículo original.
 
-Reescreva TODAS as experiências profissionais do currículo original, com empresa, cargo e datas, traduzindo e adaptando com fluência nativa e técnica para o idioma e mercado de destino. Em cada uma, escreva realizações que tragam o RESULTADO alcançado, a EVIDÊNCIA desse resultado e a AÇÃO que o produziu — é o conteúdo das metodologias STAR e XYZ.
+Cada experiência começa numa linha própria no formato '### Cargo — Empresa (datas)': é por esse título que o editor do currículo separa uma experiência da outra. Reescreva TODAS as experiências profissionais do currículo original, com empresa, cargo e datas, traduzindo e adaptando com fluência nativa e técnica para o idioma e mercado de destino. Em cada uma, escreva realizações que tragam o RESULTADO alcançado, a EVIDÊNCIA desse resultado e a AÇÃO que o produziu — é o conteúdo das metodologias STAR e XYZ.
 NÃO reproduza a fórmula como texto fixo artificial. Varie a construção entre as experiências e escreva em linguagem executiva natural e precisa, como um profissional sênior escreveria no mercado local.
 
 NÃO produza cabeçalho, resumo, formação, habilidades, idiomas ou certificações — isso é responsabilidade de outra seção.`,

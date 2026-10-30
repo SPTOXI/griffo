@@ -1512,7 +1512,8 @@ painel e pedem correções opostas.
 2. ✅ **Criação de currículo por IA**, Fase 1 (§2.160): grátis com e-mail, só a primeira experiência reescrita; currículo completo e PDF com o Essencial.
    - **Medir o custo** da amostra no `AiLog` (`resume_builder_teaser`).
    - **Medir o funil:** quantos abrem (`builder_opened`), enviam (`lead_submitted` com `builder`) e liberam (`lead_unlock_clicked` com `match_hero_builder`).
-   - **Ainda não feitas:** Fase 2 (edição por seção, guardar na conta) e Fase 3 (voz no celular).
+   - ✅ **Fase 2** (§2.161): editor por partes com "Melhorar com IA" (20 por currículo). **Medir** o uso em `AiLog` (`resume_block_improve`) e em `AuditLog` (`resume_edited`).
+   - **Ainda não feita:** Fase 3 (voz no celular).
 ---
 
 ## 8. O que fazer antes de tocar em qualquer coisa

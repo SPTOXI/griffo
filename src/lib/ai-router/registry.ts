@@ -260,6 +260,9 @@ export const INITIAL_TASK_ROUTING: Record<TaskType, ProviderId> = {
   // Amostra grátis do criador de currículo: alguém esperando na tela, como a
   // leitura de perfil da home — Claude com `modelOverride` Haiku 4.5 na chamada.
   resume_builder_teaser: 'claude',
+  // Melhorar um bloco do currículo no editor: alguém esperando na tela, texto
+  // curto — Claude com `modelOverride` Haiku 4.5 na chamada.
+  resume_block_improve: 'claude',
   // Maquinário interno e tarefas sem chamador.
   support_chat: 'deepseek',
   normalization: 'deepseek',

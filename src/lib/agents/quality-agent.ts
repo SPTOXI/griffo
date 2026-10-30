@@ -213,6 +213,14 @@ export function auditQualityOfAiResult(taskType: string, content: string): Quali
    * legítima (descrição curta vira poucos tópicos) e reprová-la levaria o
    * roteador a buscar uma resposta mais cheia — que só viria inventando.
    */
+  // Bloco do editor por partes: basta vir texto. Quem confere o título e o
+  // tamanho é `cleanImprovedBlock`, e a pessoa decide se usa ou descarta.
+  if (taskType === 'resume_block_improve') {
+    return text.trim().length >= 10
+      ? { approved: true, score: 9.0 }
+      : { approved: false, score: 3, feedback: 'Bloco melhorado vazio.' }
+  }
+
   if (taskType === 'resume_builder_teaser') {
     const match = text.match(/\{[\s\S]*\}/)
     try {

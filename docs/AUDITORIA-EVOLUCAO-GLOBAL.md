@@ -9381,3 +9381,35 @@ O Índice tinha botão no topo da home, item no menu e uma faixa no meio da pág
 **Ainda não feito:**
 - **Fase 2:** editar o currículo por seção, com "melhorar com IA", e guardá-lo na conta.
 - **Fase 3:** responder por voz no celular.
+
+## 2.161 Editor do currículo por partes, com "Melhorar com IA" por bloco (30/10/2026)
+
+**Pedido do operador:** implementar a Fase 2 do criador de currículo (§2.160). É para quem já pagou e tem o currículo reescrito.
+
+**Como funciona (aba "Reescrita" do app, botão "Editar por partes"):**
+- **Blocos:** o currículo reescrito é dividido em blocos (`resume-editor/sections.ts`):
+  - o topo, com nome e contato;
+  - cada seção `##`;
+  - cada experiência `###`.
+
+  Juntar os blocos devolve o mesmo texto, e há teste para isso.
+- **Editar à mão:** cada bloco tem "Editar", que abre o texto do bloco para ser alterado diretamente.
+- **"Melhorar com IA":** reescreve só aquele bloco, com um pedido opcional da pessoa ("deixe mais curto").
+  - A regra é não inventar: o currículo original vai junto, só para conferir os fatos.
+  - O título do bloco é mantido à força (`cleanImprovedBlock`).
+  - A sugestão aparece ao lado do texto atual. A pessoa usa ou descarta, e nada é gravado sem "Salvar alterações".
+- **Salvar:** grava em `Resume.rewrittenContent` (`PUT /api/resume/edit`). É dele que saem o PDF, o TXT e o MD, então a próxima baixada já vem com as alterações. "Guardar na conta" já existia por esse campo; não foi preciso modelo novo.
+- **Só para currículo liberado:** as duas rotas exigem a Análise Completa (`requireUnlockedResume`). O editor é parte do que se compra, não uma porta para reescrita grátis.
+
+**Custo e limite:**
+- Cada melhoria é uma chamada de Haiku (`resume_block_improve`).
+- O teto é de **20 por currículo** (`MAX_BLOCK_IMPROVEMENTS`, contado em `Resume.blockImprovements`). No pior caso dá cerca de US$ 0,06, longe do piso de US$ 2,60 da análise.
+- A reserva é feita antes da chamada, numa atualização condicional, e é devolvida se a IA falhar.
+- Limite de rajada no middleware: 40 por 10 min.
+- Esgotado o teto, a edição à mão continua.
+
+**Reescrita:** o prompt da seção de experiências passa a exigir `### Cargo — Empresa (datas)` em cada experiência. Hoje 5 dos 10 currículos reescritos já usavam `###`; os outros usavam negrito, e neles a seção inteira de experiência vira um bloco só (funciona, só é menos fino).
+
+**Idiomas:** 12 idiomas (`resume-editor/copy.ts`), com teste de chaves e marcadores.
+
+**Ainda não feito:** Fase 3, responder por voz no celular.

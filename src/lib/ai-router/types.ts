@@ -41,6 +41,10 @@ export type TaskType =
   /// reescrita em tópicos, com a pessoa esperando na tela. Tipo próprio
   /// porque a validação é "veio JSON com `bullets`", não tamanho de texto.
   | 'resume_builder_teaser'
+  /// Editor por partes (§2.161): reescreve UM bloco do currículo já pago, com
+  /// um pedido opcional da pessoa. Tipo próprio porque a validação é "veio
+  /// Markdown curto", não o tamanho de uma reescrita inteira.
+  | 'resume_block_improve'
   | 'support_chat'
   /// Análise semântica de similaridade entre pares de vagas para deduplicação avançada.
   | 'job_deduplication'
