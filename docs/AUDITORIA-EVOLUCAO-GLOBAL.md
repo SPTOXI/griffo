@@ -9502,3 +9502,25 @@ O Índice tinha botão no topo da home, item no menu e uma faixa no meio da pág
 **Ainda não feito:**
 - Um reembolso feito direto no painel da Stripe não atualiza o GriffoWork: não há webhook de `charge.refunded`. Faça os reembolsos pela aba.
 - O cliente não recebe e-mail próprio do GriffoWork quando o reembolso sai. Fica o recibo da Stripe, se os recibos estiverem ligados na conta.
+
+## 2.164 Crivo de escrita e critérios de LinkedIn na análise de presença digital, PR #140 (31/10/2026)
+
+**Origem.** O operador instalou o linkedin-agent-skill (Jake Schincariol, MIT) e pediu para ver o que agregava. O `detect.py` do `/li-human` já tinha virado `writing/slop.ts` no §2.130. Das outras dez skills, duas viraram código; as demais ficaram como ideia (ver §7.17 do handoff).
+
+1. **Crivo de escrita no headline e no "Sobre"** (`social/analysis.ts`).
+   - São textos gerados que a pessoa cola no próprio perfil, e não passavam por crivo nenhum. A carta, a edição e a reescrita já passavam.
+   - O prompt de cada perfil recebe `bannedTermsPrompt` (pt, en, es) e a saída é medida por `assessWriting`. É só log (`[slop] social ...`), sem bloquear, como na carta.
+   - **Achado no teste:** o "Sobre" de até 6 linhas tem ~40 palavras, abaixo do piso de 60 do `assessWriting`. Um texto com "profissional proativo" e "agregar valor" saía `ok` e sem log. Corrigido: termo encontrado é fato e vai para o log com ou sem juízo, marcado `sem-juízo`.
+   - Headline do LinkedIn acima de 220 caracteres vai para o log e **não** é cortado, porque cortar no meio da frase entrega título quebrado.
+
+2. **Critérios de LinkedIn** (`social/linkedin-checklist.ts`, novo).
+   - Adaptado do `rubric.json` do `/li-profile`. Entra no prompt só quando o perfil é do LinkedIn.
+   - Cobre: headline (o que faz, para quem, uma prova, sem "Ajudando..."/"Apaixonado por..."), as duas primeiras linhas do "Sobre" (o que aparece antes do "ver mais"), corpo do "Sobre" até 1.400 caracteres com um número do currículo, cargo atual com resultados, coerência com o currículo e habilidades.
+   - **Sem nota de 0 a 100**, pelo mesmo motivo do `slop.ts`: o peso de cada item é escolha nossa.
+   - Foto, banner e "Em destaque" não chegam no texto colado nem no PDF. O prompt manda **não** descrevê-los e só sugerir que a pessoa confira, para o modelo não inventar.
+
+**Teste.** Sem chave de IA nem banco no ambiente, o teste foi com IA simulada: critérios só no LinkedIn, lista de proibidos só em pt/en/es, log disparando no texto com clichê. Teste com modelo real ainda não feito. `tsc`, `eslint` e suíte (**1266/1266**) limpos; CI verde.
+
+**Ainda não feito:**
+- Teste com modelo real no preview ou em produção (conta com currículo pago, perfil do LinkedIn).
+- Um "Sobre" bem escrito do teste recebeu `attention` por variação de frase baixa (0,20, piso 0,35). Se isso se repetir em texto bom nos logs, o `BURSTINESS_FLOOR` precisa de calibragem.

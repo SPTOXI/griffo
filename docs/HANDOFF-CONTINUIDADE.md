@@ -29,7 +29,8 @@ o quanto confiar nele.
 
 | | |
 |---|---|
-| Última revisão | 29/10/2026: **Mapa de vagas por país (§2.155)**. `/[país]/jobs/map` com bolhas por cidade e as vagas da cidade no clique, e em cada vaga a chamada "Veja a nota do seu currículo e se ele passa no filtro (ATS) desta vaga". Coordenadas da GeoNames na tabela nova `CityCoord` (**já criada e semeada** no Supabase), preenchida sozinha pelo passo novo do `jobbase-sync.yml`. CSP com `worker-src 'self' blob:`. O mapa de candidatos do Rezi foi recusado por privacidade. Também em 29/10: **Suíça (alemão, mercado próprio com CHF), Estônia e Hungria cadastradas, e coordenadas a partir de mil habitantes (§2.156)**. |
+| Última revisão | 31/10/2026: **LinkedIn na presença digital, PR #140 (§2.164)**. Headline e "Sobre" gerados passam pela lista de clichês e pela medição do `slop.ts`, com log também em texto curto. Perfis do LinkedIn ganham critérios adaptados do `/li-profile` (linkedin-agent-skill, MIT), sem nota e sem avaliar o que o texto não mostra. Pendências no §7.17. |
+| Anterior (00000) | 29/10/2026: **Mapa de vagas por país (§2.155)**. `/[país]/jobs/map` com bolhas por cidade e as vagas da cidade no clique, e em cada vaga a chamada "Veja a nota do seu currículo e se ele passa no filtro (ATS) desta vaga". Coordenadas da GeoNames na tabela nova `CityCoord` (**já criada e semeada** no Supabase), preenchida sozinha pelo passo novo do `jobbase-sync.yml`. CSP com `worker-src 'self' blob:`. O mapa de candidatos do Rezi foi recusado por privacidade. Também em 29/10: **Suíça (alemão, mercado próprio com CHF), Estônia e Hungria cadastradas, e coordenadas a partir de mil habitantes (§2.156)**. |
 | Anterior (0000) | 24/10/2026: **Ideias do meuemprego.com.br, PRs #125 a #129 (§2.150 a §2.154)**. `llms.txt` com instruções para agentes e WebMCP. Páginas de vagas por cidade, área e remotas em todos os países e 12 idiomas, com filtros e paginação de 40. Lead da home com problema revelado, e-mails opcionais medidos no funil, percentil e "N analisados" (aparecem sozinhos quando os pisos de dado são atingidos). Cadastro de cidades no admin e agente DeepSeek Flash rodando depois do `jobbase-sync`. Depoimentos com aprovação no admin. Migrações aditivas **já aplicadas** no Supabase (`VisitorLead` nurture, `CityAlias`, `Testimonial`). Nova regra do operador no §5: antes de trocar uma solução existente, explicar a que existe e recomendar. Pendências no §7.13. |
 | Anterior (000) | 11/10/2026: **Confirmação de e-mail no cadastro (§2.147)**. O cadastro responde igual para e-mail novo e existente, e a conta só abre pelo link enviado ao e-mail, que vence em 48 h. Isso fecha a enumeração de contas (F23 do §2.146) por decisão do operador, que aceitou um passo a mais no funil. Migração aditiva `User.emailVerificationPending`/`emailVerificationSentAt`, **com `db push` obrigatório antes do deploy**. Contas antigas não são afetadas. 13/10/2026: **Varredura das áreas restantes (§2.148)**: 5 achados de risco baixo, todos corrigidos. Nenhum crítico, alto ou médio. 13/10/2026: **Tela de cadastro (§2.149)**: mensagem neutra com caminho para quem já tem conta, e olho para ver a senha. |
 | Anterior (00) | 09/10/2026: **Auditoria de segurança e PR #106 (§2.146)** — os alertas do GitGuardian conferem só com valores de exemplo (falso positivo provável). A varredura em duas rodadas, parcial por limite de uso, confirmou 14 achados, e 13 foram corrigidos: edge-trust falha fechado em produção, trava de login por conta, TLS do Postgres verificável (`DATABASE_CA_CERT`, configurado em 09/10, §10.14), ReDoS no ats-check/job-fetch/JSON-LD, ids do dedup decididos em código, anúncio envelopado no interview-prep, cotas atômicas no match-preview e na busca avulsa, DNS rebinding no url-guard e URL base de IA restrita. O 14º, enumeração no cadastro, ficou aberto por ser decisão de produto. `CF_ORIGIN_SECRET` + `x-griffo-edge` conferidos em produção (ver §10.13). O Actions da conta ficou sem runner por cerca de 17 h, parando CI e crons. `tsc`, `eslint` e suíte — **1197/1197** — limpos; CI verde em `855ee7c`. |
@@ -1548,6 +1549,19 @@ painel e pedem correções opostas.
 **Para um falante nativo confirmar, sem urgência**
 - Ordem das palavras em algumas frases em árabe.
 - Tom formal ou informal entre idiomas: alemão usa "Sie", e holandês, espanhol, italiano e chinês usam "você".
+---
+
+### 7.17 Pendências da PR #140, LinkedIn na presença digital (31/10/2026)
+
+**Medir**
+- Testar com modelo real: uma análise de presença digital com perfil do LinkedIn, numa conta com currículo pago. Conferir o headline e o "Sobre" e as linhas `[slop] social` no log da Vercel.
+- Se `attention` por variação de frase aparecer em texto bom, calibrar `BURSTINESS_FLOOR` (§2.164).
+
+**Ideias do linkedin-agent-skill ainda não feitas**
+- Mensagem ao recrutador por vaga do Radar (`/li-dm`): convite de 200 caracteres, primeira mensagem e dois follow-ups, dentro da compra.
+- Marketing do próprio GriffoWork com `/li-post`, `/li-carousel` e `/li-plan`, usando os dados do `/market-pulse`. Pede um `voice.md` da marca.
+- Lista de clichês em mais idiomas: hoje só pt, en e es (`writingLangOf`).
+
 ---
 
 ## 8. O que fazer antes de tocar em qualquer coisa
