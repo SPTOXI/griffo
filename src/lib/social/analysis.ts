@@ -3,7 +3,9 @@ import { executeAiTask } from '../ai-router/router'
 import type { Language } from '../i18n'
 import { LANGUAGE_DIRECTIVE } from '../i18n/server'
 import { marketPromptContext, type MarketConfig } from '../market'
+import { assessWriting, bannedTermsPrompt, writingLangOf } from '../writing/slop'
 import type { SocialProfileData } from './fetchers'
+import { LINKEDIN_HEADLINE_MAX, linkedinChecklistPrompt } from './linkedin-checklist'
 
 /**
  * A auditoria de presença digital em uma chamada por perfil, em vez de uma só.
@@ -121,6 +123,11 @@ async function analyzeOneProfile(
     timeBudgetMs: number
   }
 ): Promise<SocialProfileAdvice> {
+  // Headline e "Sobre" são prosa gerada que a pessoa cola no próprio perfil,
+  // onde recrutador lê dezenas por dia. Mesmo crivo da carta de apresentação.
+  const writingLang = writingLangOf(ctx.lang)
+  const isLinkedin = profile.platform === 'linkedin'
+
   const result = await executeAiTask({
     taskType: 'social_advice',
     userId: ctx.userId,
@@ -137,6 +144,10 @@ Analise UM único perfil, o que vier na mensagem, e produza:
 - "headline": um título pronto para o candidato copiar, até 220 caracteres, escrito a partir da experiência real dele.
 - "aboutSummary": um texto "Sobre" pronto para copiar, até 6 linhas, também a partir da experiência real.
 - "tips": 3 a 4 ações curtas e concretas para este perfil.
+${isLinkedin ? `\n${linkedinChecklistPrompt()}\n` : ''}
+${writingLang ? bannedTermsPrompt(writingLang) : ''}
+
+Escreva o headline e o "Sobre" como a própria pessoa escreveria: frases de comprimentos diferentes e fatos do currículo (números, empresas, sistemas) em vez de adjetivos sobre ela.
 
 Responda APENAS o JSON do schema, sem texto antes ou depois.`,
     userPrompt: `PERFIL A ANALISAR:\n${profileBlock(profile)}`,
@@ -151,13 +162,42 @@ Responda APENAS o JSON do schema, sem texto antes ou depois.`,
     throw new Error(`Perfil ${profile.platform}: resposta sem achados.`)
   }
 
+  const headline = String(parsed?.headline || '').trim()
+  const aboutSummary = String(parsed?.aboutSummary || '').trim()
+
+  // Medição, não bloqueio — mesma postura de `runners/cover-letter.ts`: os
+  // limiares ainda não foram calibrados, então primeiro a distribuição aparece
+  // no log. O headline sozinho é curto demais para ser julgado; vai junto.
+  //
+  // Diferente da carta, o "Sobre" pedido aqui tem até 6 linhas e costuma
+  // ficar abaixo do piso de `assessWriting` — sem juízo, o nível fica 'ok'
+  // mesmo com "profissional proativo" no meio. O clichê encontrado é fato, não
+  // tendência, então vai para o log com ou sem juízo.
+  const writing = writingLang ? assessWriting(`${headline}\n\n${aboutSummary}`, writingLang) : null
+  const flagged =
+    writing && (writing.hits.length > 0 || writing.structures.length > 0 || (writing.judged && writing.level !== 'ok'))
+  if (writing && flagged) {
+    console.warn(
+      `[slop] social ${profile.platform} ${writing.judged ? writing.level : 'sem-juízo'} resume=${ctx.resumeId} ` +
+        `clichês/100=${writing.slopPer100.toFixed(2)} ` +
+        `variação=${writing.burstiness.toFixed(2)} ` +
+        `concretude/100=${writing.concretePer100.toFixed(2)} ` +
+        `termos=${writing.hits.join('|')} estruturas=${writing.structures.join('|')}`
+    )
+  }
+  if (isLinkedin && headline.length > LINKEDIN_HEADLINE_MAX) {
+    // Não cortamos: cortar no meio da frase entrega um título quebrado. O
+    // LinkedIn recusa ao colar, e a pessoa vê; o log diz com que frequência.
+    console.warn(`[social] headline do LinkedIn com ${headline.length} caracteres resume=${ctx.resumeId}`)
+  }
+
   return {
     platform: profile.platform,
     url: profile.url,
     analyzed: profile.status === 'fetched',
     findings,
-    headline: String(parsed?.headline || '').trim(),
-    aboutSummary: String(parsed?.aboutSummary || '').trim(),
+    headline,
+    aboutSummary,
     tips: normalizeTips(parsed?.tips),
   }
 }
